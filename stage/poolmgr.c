@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.20 2000/05/19 14:08:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.21 2000/05/22 12:39:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.20 $ $Date: 2000/05/19 14:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.21 $ $Date: 2000/05/22 12:39:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-extern int stg_s; /* listening socket that we close in forked migration */
+extern int maxfds;
 
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
@@ -1277,8 +1277,9 @@ int migpoolfiles(migr_p)
     }
 
     /* We do not want any connection but the one to the stgdaemon */
-    close(stg_s);
-    close(rpfd);
+	for (c = 0; c < maxfds; c++)
+		close (c);
+
 #ifndef _WIN32
 	sa_poolmgr.sa_handler = poolmgr_wait4child;
 	sa_poolmgr.sa_flags = SA_RESTART;
