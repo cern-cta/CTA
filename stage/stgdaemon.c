@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.79 2000/11/25 11:22:53 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.80 2000/11/27 17:01:52 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.79 $ $Date: 2000/11/25 11:22:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.80 $ $Date: 2000/11/27 17:01:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -950,8 +950,10 @@ build_ipath(upath, stcp, pool_user)
 
 	/* allocate space */
 
-	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath) < 0)
+	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath) < 0) {
+		stcp->ipath[0] = '\0';
 		return (-1);	/* not enough space */
+	}
 
 	/* build full internal path name */
 
@@ -987,10 +989,13 @@ build_ipath(upath, stcp, pool_user)
 	(void) umask (stcp->mask);
 	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
 	(void) umask (0);
+	/* If rfio_open fails, it can be a real open error or a client/or/server error */
+	/* We reset our internal path */
 	if (fd < 0) {
 		if (errno != ENOENT && rfio_errno != ENOENT) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
 							 rfio_serror());
+			stcp->ipath[0] = '\0';
 			return (SYERR);
 		}
 
@@ -1000,16 +1005,21 @@ build_ipath(upath, stcp, pool_user)
 		c = create_dir (stcp->ipath, 0, stcp->gid, 0755);
 		*p_u = '/';
 		if (c) {
+			stcp->ipath[0] = '\0';
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
+			stcp->ipath[0] = '\0';
 			return (SYERR);
 		}
 		*p_f = '\0';
 		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, 0775);
 		*p_f = '/';
-		if (c) return (c);
+		if (c) {
+			stcp->ipath[0] = '\0';
+			return (c);
+        }
 
 		/* try again to create file */
 
@@ -1017,15 +1027,21 @@ build_ipath(upath, stcp, pool_user)
 		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
 		(void) umask (0);
 		if (fd < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
-							 rfio_serror());
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
+			stcp->ipath[0] = '\0';
 			return (SYERR);
 		}
 	}
-	rfio_close (fd);
+	if (rfio_close(fd) != 0) {
+		stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
+	}
 	if (rfio_chown (stcp->ipath, stcp->uid, stcp->gid) < 0) {
-		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown",
-						 rfio_serror());
+		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown", rfio_serror());
+		/* Here file has been created but we cannot chown... We erase the file */
+        if (rfio_unlink(stcp->ipath) != 0 && (errno != ENOENT && rfio_errno != ENOENT)) {
+			stglogit (func, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+        }
+		stcp->ipath[0] = '\0';
 		return (SYERR);
 	}
 	return (0);
