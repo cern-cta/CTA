@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.34 2000/08/07 10:11:17 baud Exp $
+ * $Id: procio.c,v 1.35 2000/08/07 15:06:39 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.34 $ $Date: 2000/08/07 10:11:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.35 $ $Date: 2000/08/07 15:06:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -724,6 +724,13 @@ void procioreq(req_type, req_data, clienthost)
 			case STAGEWRT:
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
+				if (stcp->t_or_d == 'h') {
+					/* update access time in Cns */
+					struct Cns_fileid Cnsfileid;
+					strcpy (Cnsfileid.server, stcp->u1.h.server);
+					Cnsfileid.fileid = stcp->u1.h.fileid;
+					(void) Cns_setatime (NULL, &Cnsfileid);
+				}
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
