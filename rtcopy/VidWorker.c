@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/08/13 06:39:11 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/08/20 11:20:41 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/08/13 06:39:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/08/20 11:20:41 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,6 +74,9 @@ extern int (*rtcpc_ClientCallback) _PROTO((
 static int callbackThreadPool = -1;
 static void *segmCountLock = NULL;
 static int segmSubmitted = 0, segmCompleted = 0, segmFailed = 0;
+static void *abortLock = NULL;
+static int requestAborted = 0;
+static int segmentFailed = 0;
 
 Cuuid_t childUuid, mainUuid;
 tape_list_t *vidChildTape = NULL;
@@ -98,9 +101,12 @@ int inChild = 1;
                     ); \
     serrno = _save_serrno;}
 
-static int initSegmCountLock() 
+static int initLocks() 
 {
   int rc;
+  /*
+   * Segment processing count lock
+   */
   rc = Cthread_mutex_lock(&segmSubmitted);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_lock()");
@@ -110,9 +116,28 @@ static int initSegmCountLock()
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_unlock()");
     return(-1);
+  }  
+  segmCountLock = Cthread_mutex_lock_addr(&segmSubmitted);
+  if ( segmCountLock == NULL ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_addr()");
+    return(-1);
+  }
+
+  /*
+   * Abort lock
+   */
+  rc = Cthread_mutex_lock(&requestAborted);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock()");
+    return(-1);
+  }
+  rc = Cthread_mutex_unlock(&requestAborted);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock()");
+    return(-1);
   }
   
-  segmCountLock = Cthread_mutex_lock_addr(&segmSubmitted);
+  abortLock = Cthread_mutex_lock_addr(&requestAborted);
   if ( segmCountLock == NULL ) {
     LOG_SYSCALL_ERR("Cthread_mutex_lock_addr()");
     return(-1);
@@ -197,6 +222,48 @@ static int nbRunningSegms()
   return(nbRunning);
 }
 
+static int checkAbort(
+                      segmFailed
+                      )
+     int *segmFailed;
+{
+  int aborted = 0, rc;
+  rc = Cthread_mutex_lock_ext(abortLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
+    return(-1);
+  }
+  aborted = requestAborted;
+  if ( segmFailed != NULL ) *segmFailed = segmentFailed;
+
+  rc = Cthread_mutex_unlock_ext(abortLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
+    return(-1);
+  }
+  return(aborted);
+}
+
+static void setAborted(
+                       segmFailed
+                       )
+     int segmFailed;
+{
+  int rc;
+  rc = Cthread_mutex_lock_ext(abortLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
+  }
+  requestAborted = 1;
+  if ( segmFailed > segmentFailed ) segmentFailed = segmFailed;
+
+  rc = Cthread_mutex_unlock_ext(abortLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
+  }
+  return;
+}
+
 static int processTapePositionCallback(
                                        tapereq,
                                        filereq
@@ -248,11 +315,15 @@ static int processGetMoreWorkCallback(
    * always serialize the RQST_REQUEST_MORE_WORK callbacks.
    */
   static int nbInProgress = 0;
-  int rc, found, allFinished = 0, totalWaittime = 0;
+  int rc, save_serrno, found, allFinished = 0, totalWaittime = 0;
   time_t tBefore, tNow;
   char *p;
   file_list_t *fl = NULL;
 
+  /*
+   * skip callback if we are in the process of aborting
+   */
+  if ( checkAborted(NULL) == 1) return(-1);
   if ( tapereq == NULL || filereq == NULL ) {
     serrno = EINVAL;
     return(-1);
@@ -277,11 +348,13 @@ static int processGetMoreWorkCallback(
        */
       tBefore = time(NULL);
       for (;;) {
+        if ( checkAborted(NULL) != 0 ) return(-1);
         rc = rtcpcld_getReqsForVID(
                                    vidChildTape
                                    );
         if ( rc == 0 ) break;
         if ( rc == -1 ) {
+          save_serrno = serrno;
           if ( serrno == EAGAIN ) {
             if ( nbInProgress > 0 ) break; /* There was already something todo */
             tNow = time(NULL);
@@ -340,6 +413,7 @@ static int processGetMoreWorkCallback(
                           sstrerror(serrno),
                           RTCPCLD_LOG_WHERE
                           );
+          serrno = save_serrno;
           return(-1);
         }
       }
@@ -438,7 +512,7 @@ int rtcpcld_Callback(
 {
   char *func, *vid = "", *blkid = NULL, *disk_path = ".", *errmsgtxt = "";
   int fseq = -1, proc_status = -1, msgNo = -1, rc, status, getMoreWork = 0;
-  int cprc = -1, severity = RTCP_OK, errorcode=0;
+  int cprc = -1, save_serrno, severity = RTCP_OK, errorcode=0;
   struct Cns_fileid fileId;
   Cuuid_t stgUuid, rtcpUuid;
 
@@ -488,6 +562,7 @@ int rtcpcld_Callback(
                                        );
     }
     if ( rc == -1 ) {
+      save_serrno = serrno;
       (void)dlf_write(
                       childUuid,
                       DLF_LVL_ERROR,
@@ -502,6 +577,7 @@ int rtcpcld_Callback(
                       sstrerror(serrno),
                       RTCPCLD_LOG_WHERE
                       );
+      serrno = save_serrno;
       return(-1);
     }
 
@@ -514,13 +590,17 @@ int rtcpcld_Callback(
     if ( filereq->cprc == -1 || 
          (getMoreWork == 0 && filereq->proc_status == RTCP_FINISHED) ) {
       if ( filereq->cprc == 0 ) status = SEGMENT_FILECOPIED;
-      else status = SEGMENT_FAILED;
+      else {
+        status = SEGMENT_FAILED;
+        setAborted(1);
+      }
       rc = rtcpcld_setFileStatus(
                                  filereq,
                                  status,
                                  (status == SEGMENT_FAILED ? 1 : 0)
                                  );
       if ( rc == -1 ) {
+        save_serrno = serrno;
         (void)dlf_write(
                         childUuid,
                         DLF_LVL_ERROR,
@@ -535,6 +615,7 @@ int rtcpcld_Callback(
                         sstrerror(serrno),
                         RTCPCLD_LOG_WHERE
                         );
+        serrno = save_serrno;
         return(-1);
       }
     }
@@ -697,7 +778,7 @@ static int updateClientInfo(
   vdqmVolReq_t volReq;
   vdqmDrvReq_t drvReq;
   struct passwd *pw;
-  int rc;
+  int rc, save_serrno;
   uid_t myUid;
   gid_t myGid;
 
@@ -738,6 +819,7 @@ static int updateClientInfo(
                     sstrerror(serrno),
                     RTCPCLD_LOG_WHERE
                     );
+    serrno = SESYSERR;
     return(-1);
   }
   strncpy(
@@ -770,6 +852,7 @@ static int updateClientInfo(
                        &drvReq
                        );
   if ( rc == -1 ) {
+    save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
@@ -784,6 +867,7 @@ static int updateClientInfo(
                     sstrerror(serrno),
                     RTCPCLD_LOG_WHERE
                     );
+    serrno = save_serrno;
     return(-1);
   }
   closesocket(
@@ -1301,6 +1385,46 @@ static int initTapeReq(
   return(0);
 }
 
+static void setErrorInfo(
+                         tape,
+                         errorCode,
+                         errMsgTxt
+                         )
+     tape_list_t *tape;
+     char *errMsgTxt;
+     int errorCode;
+{
+  file_list_t *fl;
+  int rc, segmFailed = 0;
+  
+  if ( tape == NULL ) return;
+  
+  rc = checkAbort(&segmFailed);
+  if ( (rc == 1) && (segmFailed == 0) ) {
+    if ( tape->tapereq.tprc == 0 ) tape->tapereq.tprc = -1;
+    if ( tape->tapereq.err.errorcode == 0 ) 
+      tape->tapereq.err.errorcode = errorCode;
+    if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
+      if ( errMsgTxt != NULL ) {
+        strncpy(tape->tapereq.err.errmsgtxt,
+                errMsgTxt,
+                sizeof(tape->tapereq.err.errmsgtxt)-1);
+      } else {
+        strncpy(tape->tapereq.err.errmsgtxt,
+                sstrerror(errorCode),
+                sizeof(tape->tapereq.err.errmsgtxt)-1);
+      }
+    }
+    if ( (tape->tapereq.err.severity == RTCP_OK) ||
+         (tape->tapereq.err.severity == 0 ) ) {
+      tape->tapereq.err.severity = RTCP_UNERR|RTCP_FAILED;
+    }
+  }
+  return;  
+}
+
+  
+
 int main(
          argc,
          argv
@@ -1319,7 +1443,7 @@ int main(
    * duplicated to file descriptor 0
    */
   SOCKET origSocket = 0;
-  
+
   /* Initializing the C++ log */
   /* Necessary at start of program and after any fork */
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
@@ -1534,7 +1658,7 @@ int main(
                    );
   if ( rc == -1 ) return(2);  
 
-  rc = initSegmCountLock();
+  rc = initLocks();
   if ( rc == -1 ) return(2);
 
   /*
@@ -1548,6 +1672,7 @@ int main(
   save_serrno = serrno;
   retval = 0;
   if ( rc == -1 ) {
+    setAborted(0);
     (void)rtcp_RetvalSHIFT(vidChildTape,NULL,&retval);
     if ( retval == 0 ) retval = UNERR;
   }
@@ -1600,6 +1725,7 @@ int main(
                   shiftMsg
                   );
   if ( rc == -1 ) {
+    setErrorInfo(vidChildTape,save_serrno,shiftMsg);
     (void)rtcpcld_setVIDFailedStatus(vidChildTape);
   } else {
     (void)rtcpcld_updateVIDStatus(
