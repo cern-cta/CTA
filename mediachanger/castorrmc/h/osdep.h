@@ -1,10 +1,14 @@
 /*
+ * $Id: osdep.h,v 1.9 1999/12/09 13:46:17 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.8 $ $Date: 1999/11/21 14:09:33 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.9 $ $Date: 1999/12/09 13:46:17 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
