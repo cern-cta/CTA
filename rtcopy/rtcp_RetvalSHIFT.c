@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.11 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.12 $ $Date: 2001/08/17 13:58:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -46,7 +46,7 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     tape_list_t *tl;
     file_list_t *fl;
     rtcpErrMsg_t *err;
-    int retval, rc;
+    int retval, rc, incomplete;
 
     if ( tape == NULL ) {
         serrno = EINVAL;
@@ -56,6 +56,7 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     err = NULL;
     tl = NULL;
     fl = NULL;
+    incomplete = 0;
     CLIST_ITERATE_BEGIN(tape,tl) {
         if ( tl->tapereq.tprc != 0 ) {
             err = &(tl->tapereq.err);
@@ -70,10 +71,12 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
                              fl->filereq.cprc);
                     break;
                 }
+                if ( fl->filereq.proc_status < RTCP_FINISHED ) incomplete++;
             } CLIST_ITERATE_END(tl->file,fl);
         } else {
             fl = file;
             err = &(fl->filereq.err);
+            if ( fl->filereq.proc_status < RTCP_FINISHED ) incomplete++;
         }
         if ( fl != NULL && fl->filereq.cprc != 0 ) break;
     } CLIST_ITERATE_END(tape,tl);
@@ -112,6 +115,13 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
         }
         rtcp_log(LOG_DEBUG,"rtcp_Retval() map severity %d to status %d\n",err->severity,retval);
     } else retval = 0;
+
+    if ( retval == 0 && incomplete > 0 ) {
+        rtcp_log(LOG_DEBUG,"rtcp_Retval() found %d unprocessed file requests\n",
+            incomplete);
+        if ( what == map_castor ) retval = SEINTERNAL;
+        else retval = UNERR;
+    }
 
     if ( Retval != NULL ) *Retval = retval;
     return(0);
