@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.10 $ $Date: 2002/07/29 10:27:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.11 $ $Date: 2002/12/02 16:22:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.10 $ $Date: 200
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* arpa internet routines               */
 #include "dmc.h"
+#include "rmc_api.h"
 #include "smc.h"
 #include "Ctape.h"
 extern char msg[];
@@ -1054,8 +1055,10 @@ DMCreply_t *rep;
 
 static int drvord;
 static int got_robot_info = 0;
+static char *rmc_host = NULL;
 static int smc_fd = -1;
-static char smc_ldr[14];
+static char rmc_errbuf[256];
+static char smc_ldr[CA_MAXRBTNAMELEN+6];
 static struct robot_info robot_info;
 
 opensmc(loader)
@@ -1081,6 +1084,14 @@ char *loader;
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
 		    cur_vid, cur_unm, "invalid loader");
 		RETURN (RBT_NORETRY);
+	}
+	if (p = strchr (smc_ldr, '@')) {
+		*p = '\0';
+		rmc_host = p + 1;
+	}
+	if (rmc_host) {
+		(void) rmc_seterrbuf (rmc_errbuf, sizeof(rmc_errbuf));
+		RETURN (0);
 	}
 #if defined(SOLARIS25) || defined(hpux)
         /* open the SCSI picker device
@@ -1134,6 +1145,17 @@ char *loader;
 	ENTRY (smcmount);
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
+	if (rmc_host) {
+		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
+		if (c) {
+			p = strrchr (rmc_errbuf, ':');
+			sprintf (msg, TP041, "mount", vid, cur_unm,
+				p ? p + 2 : rmc_errbuf);
+			usrmsg (func, "%s\n", msg);
+			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
+		}
+		RETURN (c);
+	}
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
@@ -1186,6 +1208,17 @@ int force;
 	ENTRY (smcdismount);
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
+	if (rmc_host) {
+		c = rmc_dismount (rmc_host, smc_ldr, vid, drvord, force);
+		if (c) {
+			p = strrchr (rmc_errbuf, ':');
+			sprintf (msg, TP041, "mount", vid, cur_unm,
+				p ? p + 2 : rmc_errbuf);
+			usrmsg (func, "%s\n", msg);
+			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
+		}
+		RETURN (c);
+	}
 	if ((c = smc_read_elem_status (smc_fd, smc_ldr, 4,
 	    robot_info.device_start+drvord, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
