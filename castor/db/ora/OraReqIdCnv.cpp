@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/26 08:34:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/01 09:11:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -36,6 +36,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/ReqId.hpp"
@@ -155,19 +156,26 @@ void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);
-  switch (type) {
-  case castor::OBJ_ReqIdRequest :
-    fillRepReqIdRequest(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_ReqIdRequest :
+      fillRepReqIdRequest(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -175,7 +183,7 @@ void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
 // fillRepReqIdRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->request()) {
     // Check checkReqIdRequestExist statement
     if (0 == m_checkReqIdRequestExistStatement) {

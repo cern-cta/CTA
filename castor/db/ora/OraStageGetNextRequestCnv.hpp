@@ -174,7 +174,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSvcClass(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type SubRequest refered by a given object.
@@ -182,7 +182,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSubRequest(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type IClient refered by a given object.
@@ -190,7 +190,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepIClient(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type Request refered by a given object.
@@ -198,7 +198,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepRequest(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

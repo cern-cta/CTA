@@ -36,6 +36,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/DiskCopy.hpp"
@@ -194,25 +195,32 @@ void castor::db::ora::OraFileSystemCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
-  switch (type) {
-  case castor::OBJ_DiskPool :
-    fillRepDiskPool(obj);
-    break;
-  case castor::OBJ_DiskCopy :
-    fillRepDiskCopy(obj);
-    break;
-  case castor::OBJ_DiskServer :
-    fillRepDiskServer(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_DiskPool :
+      fillRepDiskPool(obj);
+      break;
+    case castor::OBJ_DiskCopy :
+      fillRepDiskCopy(obj);
+      break;
+    case castor::OBJ_DiskServer :
+      fillRepDiskServer(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -220,7 +228,7 @@ void castor::db::ora::OraFileSystemCnv::fillRep(castor::IAddress* address,
 // fillRepDiskPool
 //------------------------------------------------------------------------------
 void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSystem* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->diskPool()) {
     // Check checkDiskPoolExist statement
     if (0 == m_checkDiskPoolExistStatement) {
@@ -250,7 +258,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSyst
 // fillRepDiskCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraFileSystemCnv::fillRepDiskCopy(castor::stager::FileSystem* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // check select statement
   if (0 == m_selectDiskCopyStatement) {
     m_selectDiskCopyStatement = createStatement(s_selectDiskCopyStatementString);
@@ -298,7 +306,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyst
 // fillRepDiskServer
 //------------------------------------------------------------------------------
 void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSystem* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->diskserver()) {
     // Check checkDiskServerExist statement
     if (0 == m_checkDiskServerExistStatement) {

@@ -37,6 +37,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Request.hpp"
@@ -244,28 +245,35 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRep(castor::IAddress* addre
   throw (castor::exception::Exception) {
   castor::stager::StageGetNextRequest* obj = 
     dynamic_cast<castor::stager::StageGetNextRequest*>(object);
-  switch (type) {
-  case castor::OBJ_SvcClass :
-    fillRepSvcClass(obj);
-    break;
-  case castor::OBJ_SubRequest :
-    fillRepSubRequest(obj);
-    break;
-  case castor::OBJ_IClient :
-    fillRepIClient(obj);
-    break;
-  case castor::OBJ_Request :
-    fillRepRequest(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_SvcClass :
+      fillRepSvcClass(obj);
+      break;
+    case castor::OBJ_SubRequest :
+      fillRepSubRequest(obj);
+      break;
+    case castor::OBJ_IClient :
+      fillRepIClient(obj);
+      break;
+    case castor::OBJ_Request :
+      fillRepRequest(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -273,7 +281,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRep(castor::IAddress* addre
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepSvcClass(castor::stager::StageGetNextRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -303,7 +311,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRepSvcClass(castor::stager:
 // fillRepSubRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepSubRequest(castor::stager::StageGetNextRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // check select statement
   if (0 == m_selectSubRequestStatement) {
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
@@ -351,7 +359,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRepSubRequest(castor::stage
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepIClient(castor::stager::StageGetNextRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check selectIClient statement
   if (0 == m_selectIClientStatement) {
     m_selectIClientStatement = createStatement(s_selectIClientStatementString);
@@ -411,7 +419,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRepIClient(castor::stager::
 // fillRepRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepRequest(castor::stager::StageGetNextRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->parent()) {
     // Check checkRequestExist statement
     if (0 == m_checkRequestExistStatement) {

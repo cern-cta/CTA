@@ -151,7 +151,7 @@ void CppHOraCnvWriter::writeBasicFillRep(Assoc* as) {
             << fixTypeName("Exception",
                            "castor.exception",
                            m_classInfo->packageName)
-            << ");"
+            << ", oracle::occi::SQLException);"
             << endl << endl;
 }
 

@@ -845,6 +845,8 @@ void CppCppOraCnvWriter::writeFillRep() {
             << m_classInfo->className << "*>(object);"
             << endl;
   // Call the dedicated method
+  *m_stream << getIndent() << "try {" << endl;
+  m_indent++;
   *m_stream << getIndent() << "switch (type) {" << endl;
   AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();
@@ -884,6 +886,23 @@ void CppCppOraCnvWriter::writeFillRep() {
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
             << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent()
+            << "} catch (oracle::occi::SQLException e) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("Internal",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << " ex; // XXX Fix it, depending on ORACLE error"
+            << endl << getIndent()
+            << "ex.getMessage() << \"Error in fillRep for type \" << type"
+            << endl << getIndent()
+            << "                << std::endl << e.what() << std::endl;"
+            << endl << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
@@ -1017,7 +1036,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << fixTypeName("Exception",
                            "castor.exception",
                            "")
-            << ") {"
+            << ", oracle::occi::SQLException) {"
             << endl;
   m_indent++;
   if (as->type.multiLocal == MULT_ONE) {
@@ -1359,7 +1378,7 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << fixTypeName("Exception",
                            "castor.exception",
                            "")
-            << ") {"
+            << ", oracle::occi::SQLException) {"
             << endl;
   m_indent++;
   *m_stream << getIndent() << "// check select statement"

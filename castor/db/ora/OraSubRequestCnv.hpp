@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepDiskCopy(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type CastorFile refered by a given object.
@@ -181,7 +181,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepCastorFile(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type SubRequest refered by a given object.
@@ -189,7 +189,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSubRequest(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type Request refered by a given object.
@@ -197,7 +197,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepRequest(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/29 08:17:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/01 09:11:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -37,6 +37,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/StageClrRequest.hpp"
@@ -229,25 +230,32 @@ void castor::db::ora::OraStageClrRequestCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::stager::StageClrRequest* obj = 
     dynamic_cast<castor::stager::StageClrRequest*>(object);
-  switch (type) {
-  case castor::OBJ_SvcClass :
-    fillRepSvcClass(obj);
-    break;
-  case castor::OBJ_SubRequest :
-    fillRepSubRequest(obj);
-    break;
-  case castor::OBJ_IClient :
-    fillRepIClient(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_SvcClass :
+      fillRepSvcClass(obj);
+      break;
+    case castor::OBJ_SubRequest :
+      fillRepSubRequest(obj);
+      break;
+    case castor::OBJ_IClient :
+      fillRepIClient(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -255,7 +263,7 @@ void castor::db::ora::OraStageClrRequestCnv::fillRep(castor::IAddress* address,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageClrRequestCnv::fillRepSvcClass(castor::stager::StageClrRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -285,7 +293,7 @@ void castor::db::ora::OraStageClrRequestCnv::fillRepSvcClass(castor::stager::Sta
 // fillRepSubRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageClrRequestCnv::fillRepSubRequest(castor::stager::StageClrRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // check select statement
   if (0 == m_selectSubRequestStatement) {
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
@@ -333,7 +341,7 @@ void castor::db::ora::OraStageClrRequestCnv::fillRepSubRequest(castor::stager::S
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageClrRequestCnv::fillRepIClient(castor::stager::StageClrRequest* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check selectIClient statement
   if (0 == m_selectIClientStatement) {
     m_selectIClientStatement = createStatement(s_selectIClientStatementString);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 10:03:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/01 09:11:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSvcClass(castor::stager::StageOutRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type SubRequest refered by a given object.
@@ -181,7 +181,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSubRequest(castor::stager::StageOutRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type IClient refered by a given object.
@@ -189,7 +189,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepIClient(castor::stager::StageOutRequest* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

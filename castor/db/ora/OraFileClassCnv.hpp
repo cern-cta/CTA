@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepCastorFile(castor::stager::FileClass* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

@@ -36,6 +36,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -216,28 +217,35 @@ void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
-  switch (type) {
-  case castor::OBJ_SvcClass :
-    fillRepSvcClass(obj);
-    break;
-  case castor::OBJ_FileClass :
-    fillRepFileClass(obj);
-    break;
-  case castor::OBJ_DiskCopy :
-    fillRepDiskCopy(obj);
-    break;
-  case castor::OBJ_TapeCopy :
-    fillRepTapeCopy(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_SvcClass :
+      fillRepSvcClass(obj);
+      break;
+    case castor::OBJ_FileClass :
+      fillRepFileClass(obj);
+      break;
+    case castor::OBJ_DiskCopy :
+      fillRepDiskCopy(obj);
+      break;
+    case castor::OBJ_TapeCopy :
+      fillRepTapeCopy(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -245,7 +253,7 @@ void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -275,7 +283,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFi
 // fillRepFileClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->fileClass()) {
     // Check checkFileClassExist statement
     if (0 == m_checkFileClassExistStatement) {
@@ -305,7 +313,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorF
 // fillRepDiskCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // check select statement
   if (0 == m_selectDiskCopyStatement) {
     m_selectDiskCopyStatement = createStatement(s_selectDiskCopyStatementString);
@@ -353,7 +361,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
 // fillRepTapeCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // check select statement
   if (0 == m_selectTapeCopyStatement) {
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);

@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepStream(castor::stager::TapeCopy* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type Segment refered by a given object.
@@ -181,7 +181,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSegment(castor::stager::TapeCopy* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Fill the database with objects of type CastorFile refered by a given object.
@@ -189,7 +189,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepCastorFile(castor::stager::TapeCopy* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

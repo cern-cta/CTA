@@ -36,6 +36,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Segment.hpp"
@@ -172,22 +173,29 @@ void castor::db::ora::OraSegmentCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
-  switch (type) {
-  case castor::OBJ_Tape :
-    fillRepTape(obj);
-    break;
-  case castor::OBJ_TapeCopy :
-    fillRepTapeCopy(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_Tape :
+      fillRepTape(obj);
+      break;
+    case castor::OBJ_TapeCopy :
+      fillRepTapeCopy(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -195,7 +203,7 @@ void castor::db::ora::OraSegmentCnv::fillRep(castor::IAddress* address,
 // fillRepTape
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->tape()) {
     // Check checkTapeExist statement
     if (0 == m_checkTapeExistStatement) {
@@ -225,7 +233,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
 // fillRepTapeCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->copy()) {
     // Check checkTapeCopyExist statement
     if (0 == m_checkTapeCopyExistStatement) {

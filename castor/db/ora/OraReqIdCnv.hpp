@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/29 10:03:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/01 09:11:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepReqIdRequest(castor::stager::ReqId* obj)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
          * Retrieve from the database some of the objects refered by a given object.

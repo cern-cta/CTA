@@ -36,6 +36,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/rh/Client.hpp"
@@ -176,19 +177,26 @@ void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
   throw (castor::exception::Exception) {
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);
-  switch (type) {
-  case castor::OBJ_Request :
-    fillRepRequest(obj);
-    break;
-  default :
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "fillRep called on type " << type 
-                    << " on object of type " << obj->type() 
-                    << ". This is meaningless.";
+  try {
+    switch (type) {
+    case castor::OBJ_Request :
+      fillRepRequest(obj);
+      break;
+    default :
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "fillRep called on type " << type 
+                      << " on object of type " << obj->type() 
+                      << ". This is meaningless.";
+      throw ex;
+    }
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in fillRep for type " << type
+                    << std::endl << e.what() << std::endl;
     throw ex;
-  }
-  if (autocommit) {
-    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -196,7 +204,7 @@ void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
 // fillRepRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check selectRequest statement
   if (0 == m_selectRequestStatement) {
     m_selectRequestStatement = createStatement(s_selectRequestStatementString);
