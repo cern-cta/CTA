@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.17 $ $Date: 2000/01/13 09:01:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.18 $ $Date: 2000/01/13 13:11:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1172,14 +1172,16 @@ static int DiskToMemory(int disk_fd, int pool_index,
      */
     rc = 0;
     disk_fd = -1;
-    disk_fd = DiskFileOpen(pool_index,tape,file);
+    severity = RTCP_OK;
+    rc = DiskFileOpen(pool_index,tape,file);
     if ( (severity & RTCP_EOD) == 0 ) {
-    if ( disk_fd == -1 ) {
+    if ( rc == -1 ) {
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
         if ( (severity & RTCP_EOD) == 0 && 
              (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) 
             rtcpd_SetProcError(RTCP_FAILED | UNERR);
     } else {
+        disk_fd = rc;
         if ( tapereq->mode == WRITE_DISABLE ) {
             rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
@@ -1242,7 +1244,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
             (unsigned long)filereq->bytes_out,filereq->cprc,
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
-        if ( rc == 0 && (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) 
+        if ( (rc == -1) || ((rtcpd_CheckProcError() & RTCP_FAILED) == 0) ) 
             tellClient(&client_socket,NULL,file,rc);
 
     rtcp_CloseConnection(&client_socket);
