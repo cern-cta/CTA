@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/05 15:38:39 $ $Author: motiakov $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/06 08:33:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.37 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.38 $ $Date: 2004/08/06 08:33:26 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1078,6 +1078,7 @@ static int getUpdates(
                  sstrerror(tape->tapereq.err.errorcode)
                  );
         tape->tapereq.tprc = -1;
+        serrno = tape->tapereq.err.errorcode;
         return(-1);
       }
 
