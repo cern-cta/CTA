@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.2 $ $Date: 2000/03/02 08:31:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.3 $ $Date: 2000/03/02 08:38:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletetape - delete a tape volume */
@@ -43,7 +43,7 @@ char **argv;
         }
  
 	if (vmgr_deletetape (vid) < 0) {
-		fprintf (stderr, "vmgrdeletetapei %s: %s\n", vid, sstrerror(serrno));
+		fprintf (stderr, "vmgrdeletetape %s: %s\n", vid, sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);
