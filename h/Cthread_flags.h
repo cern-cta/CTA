@@ -1,7 +1,12 @@
 /*
- * $Id: Cthread_flags.h,v 1.2 1999/07/26 15:18:25 jdurand Exp $
+ * $Id: Cthread_flags.h,v 1.3 1999/10/20 19:09:52 jdurand Exp $
  *
  * $Log: Cthread_flags.h,v $
+ * Revision 1.3  1999/10/20 19:09:52  jdurand
+ * Introduced a _CTHREAD_WIN32MTX sequence following imake's rule UseMtx.
+ * If not present, default is Win32 CriticalSection way, then Cthread_flags.h
+ * makes sure that _WIN32_WINNT version is >= 0x0400
+ *
  * Revision 1.2  1999/07/26 15:18:25  jdurand
  * Some Raima interface
  *
@@ -62,6 +67,13 @@
 #ifndef CTHREAD
 #define CTHREAD
 #endif
+/* Makes sure that Windows/NT version is correct */
+#ifndef _CTHREAD_WIN32MTX
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x0400
+#endif /* _CTHREAD_WIN32MTX */
 #endif /* ifdef _WIN32 */
 
 /* -------------------------------------------- */
