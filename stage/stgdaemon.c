@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.76 2000/11/15 18:08:30 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.77 2000/11/21 10:43:02 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.76 $ $Date: 2000/11/15 18:08:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.77 $ $Date: 2000/11/21 10:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -92,6 +92,7 @@ struct winsize {
 #include "Cnetdb.h"
 #include "Cns_api.h"
 #include "Cpwd.h"
+#include "Cgrp.h"
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -275,6 +276,12 @@ main(argc,argv)
 	/* We get information on generic stage:st uid/gid */
 	if ((stpasswd = Cgetpwnam("stage")) == NULL) {
 		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "stage");
+ 		exit (SYERR);
+	}
+	if (Cgetgrgid(stpasswd->pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stpasswd->pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", stpasswd->pw_gid, "stage");
  		exit (SYERR);
 	}
 
@@ -1028,12 +1035,7 @@ checkovlstatus(pid, status)
 		reqid = 0;
 		stglogit (func, "cleaner process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
-	/* was it a "migration" overlay ? */
-	} else if (ismigovl (pid, status)) {
-		reqid = 0;
-		stglogit (func, "migration process %d exiting with status %x\n",
-							pid, status & 0xFFFF);
-	} else {	/* it was a "stager" or a "stageqry" overlay */
+	} else {	/* it was a "stager" or a "stageqry" or a "migrator" overlay */
 		found =  0;
 		wqp = waitqp;
 		while (wqp) {
@@ -1049,7 +1051,7 @@ checkovlstatus(pid, status)
 				pid, status & 0xFFFF);
 		} else {
 			reqid = wqp->reqid;
-			stglogit (func, "stager process %d exiting with status %x\n",
+			stglogit (func, "%s process %d exiting with status %x\n", ismigovl (pid, status) ? "migration" : "stager",
 				pid, status & 0xFFFF);
 			wqp->ovl_pid = 0;
 			if (wqp->status == 0)
