@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.5 2001/02/01 08:39:24 jdurand Exp $
+ * $Id: stage_api.c,v 1.6 2001/02/01 10:36:28 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -132,11 +132,12 @@ int copyrc_castor2shift(copyrc)
   }
 }
 
-int DLL_DECL stage_iowc(req_type,t_or_d,flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
      int req_type;
      char t_or_d;
      u_signed64 flags;
-     mode_t mode;
+     int openflags;
+     mode_t openmode;
      char *hostname;
      char *pooluser;
      int nstcp_input;
@@ -316,7 +317,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,mode,hostname,pooluser,nstcp_input
   sendbuf_size += LONGSIZE;                /* Pid */
   sendbuf_size += strlen(User) + 1;        /* User for internal path (default to "stage" in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
-  sendbuf_size += LONGSIZE;                /* mode */
+  sendbuf_size += LONGSIZE;                /* openflags */
+  sendbuf_size += LONGSIZE;                /* openmode */
   sendbuf_size += BYTESIZE;                /* t_or_d */
   sendbuf_size += LONGSIZE;                /* Number of catalog structures */
   sendbuf_size += LONGSIZE;                /* Number of path structures */
@@ -462,7 +464,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,mode,hostname,pooluser,nstcp_input
   marshall_LONG (sbp, pid);                  /* pid */
   marshall_STRING (sbp, User);               /* User internal path (default to "stage" in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
-  marshall_LONG (sbp, mode);                 /* mode */
+  marshall_LONG (sbp, openflags);            /* openflags */
+  marshall_LONG (sbp, openmode);             /* openmode */
   marshall_BYTE (sbp, t_or_d);               /* Type of request (you cannot merge Tape/Disk/Allocation/Hsm) */
   marshall_LONG (sbp, nstcp_input);          /* Number of input stgcat_entry structures */
   marshall_LONG (sbp, nstpp_input);          /* Number of input stgpath_entry structures */
@@ -848,12 +851,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   char Gname[CA_MAXUSRNAMELEN+1]; /* Forced effective name (-G option) */
   char User[CA_MAXUSRNAMELEN+1];  /* Forced internal path with user (-u options) */
   gid_t egid;                   /* Current effective gid */
-#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
-  int mask;                     /* User mask */
-#else
-  mode_t mask;                  /* User mask */
-#endif
-  int pid;                      /* Current pid */
   int status;                   /* Variable overwritten by macros in header */
   int errflg = 0;               /* Error flag */
   int build_linkname_status;    /* Status of build_linkname() call */
@@ -1129,7 +1126,7 @@ int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_o
   strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.t.vid[0],tape); /* Cannot be zero-length */
   strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
-  return(stage_qry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stageqry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
@@ -1160,7 +1157,7 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
-  return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stageqry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 
@@ -1192,7 +1189,7 @@ int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_ou
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.d.xfile,diskname); /* Cannot be zero-length */
-  return(stage_qry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stageqry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 

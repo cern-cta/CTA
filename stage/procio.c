@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.72 2001/02/01 07:47:49 jdurand Exp $
+ * $Id: procio.c,v 1.73 2001/02/01 10:36:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.72 $ $Date: 2001/02/01 07:47:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.73 $ $Date: 2001/02/01 10:36:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -204,6 +204,7 @@ void procioreq(req_type, req_data, clienthost)
 	int  nstpp_input, path_status;
 	u_signed64  flags;
 	mode_t openmode = 0;
+	int openflags = 0;
 	struct stgcat_entry *stcp_input = NULL;
 	struct stgpath_entry *stpp_input = NULL;
 	uid_t save_uid;
@@ -323,6 +324,7 @@ void procioreq(req_type, req_data, clienthost)
 		local_unmarshall_STRING(rbp, User);
 		if (User[0] != '\0') pool_user = User;
 		unmarshall_HYPER(rbp, flags);
+		unmarshall_LONG(rbp, openflags);
 		unmarshall_LONG(rbp, openmode);
 		{
 			char tmpbyte;
@@ -1569,6 +1571,7 @@ void procioreq(req_type, req_data, clienthost)
 									Upluspath, reqid, req_type, nbdskf, &wfp, NULL, 
 									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 					wqp->api_out = api_out;
+					wqp->openflags = openflags;
 					wqp->openmode = openmode;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
