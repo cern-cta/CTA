@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.7 $ $Date: 1999/12/29 10:44:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.8 $ $Date: 2000/01/04 08:48:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1763,7 +1763,14 @@ static int rtcpc_diskfiles(int mode,
         last_filename = NULL;
         disk_fseq = 0;
         fl = tl->file->prev;
-        if ( fl->filereq.tape_fseq == 0 ) CLIST_DELETE(tl->file,fl);
+        if ( fl->filereq.tape_fseq == 0 ) {
+            /*
+             * There was a trailing minus ("-"). Set CONCAT to EOD for
+             * last specified file and remove the place holder element.
+             */
+            fl->prev->filereq.concat = CONCAT_TO_EOD;
+            CLIST_DELETE(tl->file,fl);
+        }
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
             if ( *filereq->file_path == '\0' ) {
