@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.22 2000/03/30 15:36:23 jdurand Exp $
+ * $Id: stager.c,v 1.23 2000/03/31 08:07:53 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.22 $ $Date: 2000/03/30 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.23 $ $Date: 2000/03/31 08:07:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -977,6 +977,7 @@ int stagewrt_castor_hsm_file() {
 int stage_tape() {
 	int rtcp_rc;
 
+ stage_tape_retry:
 	/* We "interrogate" for the number of structures */
 	if (build_rtcpcreq(&nrtcpcreqs, NULL, stcs, stce, stcs, stce) != 0) {
 		RETURN (USERR);
@@ -1005,12 +1006,49 @@ int stage_tape() {
 
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 
-	if (rtcp_rc != 0) {
-		/* stglogit (func, "rtcpc exited with status %d (%s)\n", rtcp_rc, sstrerror(serrno)); */
-		sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",
-						 sstrerror (serrno));
-	}
-	RETURN (rtcp_rc);
+	if (rtcp_rc < 0) {
+      int stage_tape_retry_flag = 0;
+      int i;
+
+      sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror (serrno));
+      switch (rtcpcreqs[0]->tapereq.err.errorcode) {
+      case ETPARIT:
+      case ETUNREC:
+        sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
+        RETURN (SYERR);
+        break;
+      case ETVBSY:
+        sendrep(rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
+        RETURN (SYERR);
+        break;
+      default:
+        break;
+      }
+
+      for (i = 0; i < nbcat_ent; i++) {
+        if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT || 
+            rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC) {
+          sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
+          RETURN (SYERR);
+          break;
+        } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
+          stage_tape_retry_flag = 1;
+          break;
+        }
+      }
+      if (stage_tape_retry_flag != 0) {
+        sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Internal retry as rtcpc suggests");
+        goto stage_tape_retry;
+      }
+
+      RETURN (USERR);
+
+    } else if (rtcp_rc > 0) {
+      sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
+      RETURN (SYERR);
+    }
+
+	RETURN (0);
 }
 
 int filecopy(stcp, key, hostname)
@@ -1483,7 +1521,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						break;
 					}
 					if (trailing2 == '-') {
-						if (nbcat_ent >= nbtpf) {
+						if ((nbcat_ent >= nbtpf) && (j == nbcat_ent - 1)) {
 							fl[j].filereq.concat = CONCAT_TO_EOD;
 						} else {
 							fl[j].filereq.concat = NOCONCAT_TO_EOD;
