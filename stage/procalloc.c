@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.47 2002/09/17 11:02:44 jdurand Exp $
+ * $Id: procalloc.c,v 1.48 2002/09/17 11:06:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.47 $ $Date: 2002/09/17 11:02:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.48 $ $Date: 2002/09/17 11:06:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,6 +62,7 @@ extern int sendrep _PROTO((int *, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int isvalidpool _PROTO((char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern int cleanpool _PROTO((char *));
@@ -198,6 +199,8 @@ void procallocreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 		}
+		/* Print the general flags */
+		stglogflags(func,LOGFILE,flags);
 		nargs = Coptind = 1;
 	} else {
 		nargs = req2argv (rbp, &argv);
@@ -472,6 +475,8 @@ void procgetreq(req_type, magic, req_data, clienthost)
 			}
 			strcpy(poolname,stcp_input.poolname);
 		}
+		/* Print the general flags */
+		stglogflags(func,LOGFILE,flags);
 		nargs = Coptind = 1;
 	} else {
 		nargs = req2argv (rbp, &argv);
