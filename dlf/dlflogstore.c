@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.6 $ $Date: 2004/06/07 16:28:58 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.7 $ $Date: 2004/10/20 11:22:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -190,8 +190,8 @@ int main(argc, argv)
 	        errflg++;
 	}
         if (errflg) {
-                fprintf (stderr, "usage: %s %s", argv[0],
-		    "-f file_name -h host_name [-p port_number] [-s severity_level]\n");
+                fprintf (stderr, "usage: %s %s\n", argv[0],
+		    "-f file_name -h host_name [-p port_number] [-s severity_level]");
                 exit (USERR);
 	}
 #if defined(_WIN32)

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflisttext.c,v $ $Revision: 1.2 $ $Date: 2003/11/06 07:26:22 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflisttext.c,v $ $Revision: 1.3 $ $Date: 2004/10/20 11:22:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,8 +64,8 @@ char **argv;
                 errflg++;
 	}
         if (errflg) {
-                fprintf (stderr, "usage: %s %s", argv[0],
-		    "-F facility_name\n");
+                fprintf (stderr, "usage: %s %s\n", argv[0],
+		    "-F facility_name");
                 exit (USERR);
 	}
 
