@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.24 2000/05/02 11:57:06 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.25 2000/05/08 10:52:27 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.24 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.25 $ $Date: 2000/05/08 10:52:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -114,6 +114,7 @@ int nbpath_ent;
 fd_set readfd, readmask;
 int reqid;
 int rpfd;
+int stg_s;
 #ifndef _WIN32
 struct sigaction sa;
 #endif
@@ -143,7 +144,12 @@ void delreq _PROTO((struct stgcat_entry *, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
-void wait4child _PROTO(());
+void stgdaemon_wait4child _PROTO(());
+int req2argv _PROTO((char *, char ***));
+extern void procmigpoolreq _PROTO((char *, char *));
+extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern int iscleanovl _PROTO((int, int));
+extern int ismigovl _PROTO((int, int));
 
 main(argc,argv)
 		 int argc;
@@ -168,7 +174,6 @@ main(argc,argv)
 	struct servent *sp;
 	struct stat st;
 	struct stgcat_entry *stcp;
-	int stg_s;
 	struct stgpath_entry *stpp;
 	struct timeval timeval;
 	int errflg = 0;
@@ -244,7 +249,7 @@ main(argc,argv)
 	}
 #endif /* not TEST */
 #ifndef _WIN32
-	sa.sa_handler = wait4child;
+	sa.sa_handler = stgdaemon_wait4child;
 	sa.sa_flags = SA_RESTART;
 	sigaction (SIGCHLD, &sa, NULL);
 #endif
@@ -471,6 +476,7 @@ main(argc,argv)
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
 		checkwaitq ();	/* scan the wait queue */
+		checkfile2mig ();	/* scan the pools vs. their migration policies */
 		if (initreq_reqid && (waitqp == NULL || force_init)) {
 			/* reread pool configuration + adjust space */
 			reqid = initreq_reqid;
@@ -484,7 +490,7 @@ main(argc,argv)
 						stcp->actual_size = st.st_size;
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 						}
 #endif
 					}
@@ -561,6 +567,9 @@ main(argc,argv)
 						break;
 					case STAGEGET:
 						procgetreq (req_data, clienthost);
+						break;
+					case STAGEMIGPOOL:
+						procmigpoolreq (req_data, clienthost);
 						break;
 					default:
 						sendrep (rpfd, MSG_ERR, STG03, req_type);
@@ -823,6 +832,11 @@ checkovlstatus(pid, status)
 		reqid = 0;
 		stglogit (func, "cleaner process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
+	/* was it a "migration" overlay ? */
+	} else if (ismigovl (pid, status)) {
+		reqid = 0;
+		stglogit (func, "migration process %d exiting with status %x\n",
+							pid, status & 0xFFFF);
 	} else {	/* it was a "stager" or a "stageqry" overlay */
 		found =  0;
 		wqp = waitqp;
@@ -888,7 +902,7 @@ void checkpoolstatus()
 							stcp->status &= 0xF;
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-								stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
 							*wqp->waiting_pool = '\0';
@@ -1180,7 +1194,7 @@ void create_link(stcp, upath)
 	savepath ();
 #ifdef USECDB
 	if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
-		stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 }
@@ -1235,6 +1249,10 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					stglogit (func, STG02, stcp->ipath, "rfio_unlink",
 										rfio_serror());
 			}
+			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+				/* This was a file coming from automatic migration */
+				update_migpool(stcp,-1);
+			}
 			updfreespace (stcp->poolname, stcp->ipath, (freersv) ?
 										(stcp->size*1024*1024) : actual_size);
 		}
@@ -1270,7 +1288,7 @@ void dellink(stpp)
 	stglogit (func, STG93, stpp->upath);
 #ifdef USECDB
 	if (stgdb_del_stgpath(&dbfd,stpp) != 0) {
-		stglogit (func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit(func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	sendrep (rpfd, RMSYMLINK, stpp->upath);
@@ -1295,7 +1313,7 @@ void delreq(stcp,nodb_delete_flag)
 #ifdef USECDB
 	if (nodb_delete_flag == 0) {
 		if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-			stglogit (func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit(func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 		}
 	}
 #endif
@@ -1314,7 +1332,7 @@ void delreq(stcp,nodb_delete_flag)
 fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2];
+	char arg_Aflag[2], arg_Migrationflag[2];
 	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3];
 	int c, i;
 	static int pfd[2];
@@ -1373,19 +1391,20 @@ fork_exec_stager(wqp)
 		sprintf (arg_nbsubreqs, "%d", wqp->nbdskf - wqp->nb_waiting_on_req);
 		sprintf (arg_nretry, "%d", wqp->nretry);
 		sprintf (arg_Aflag, "%d", wqp->Aflag);
+		sprintf (arg_Migrationflag, "%d", wqp->Migrationflag);
 
 #ifdef __INSURE__
-		stglogit (func, "execing stager %s %s %s %s %s %s %s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s tmpfile=%s, pid=%d\n",
 							arg_reqid, arg_key, arg_rpfd,
-							arg_nbsubreqs, arg_nretry, arg_Aflag, tmpfile, getpid());
+							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, tmpfile, getpid());
 		execl (progfullpath, "stager", arg_reqid, arg_key, arg_rpfd,
-					 arg_nbsubreqs, arg_nretry, arg_Aflag, tmpfile, NULL);
+					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, tmpfile, NULL);
 #else
-		stglogit (func, "execing stager %s %s %s %s %s %s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s, pid=%d\n",
 							arg_reqid, arg_key, arg_rpfd,
-							arg_nbsubreqs, arg_nretry, arg_Aflag, getpid());
+							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, getpid());
 		execl (progfullpath, "stager", arg_reqid, arg_key, arg_rpfd,
-					 arg_nbsubreqs, arg_nretry, arg_Aflag, NULL);
+					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
 		exit (SYERR);
@@ -1460,7 +1479,7 @@ nextreqid()
 	}
 }
 
-req2argv(rbp, argvp)
+int req2argv(rbp, argvp)
 		 char *rbp;
 		 char ***argvp;
 {
@@ -1628,16 +1647,23 @@ upd_stageout(req_type, upath, subreqid)
 		updfreespace (stcp->poolname, stcp->ipath,
 									stcp->size*1024*1024 - (int)stcp->actual_size);
 	}
-	if (req_type == STAGEPUT)
+	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;
-	else if (req_type == STAGEUPDC)
-		stcp->status |= STAGED;
+	} else if (req_type == STAGEUPDC) {
+		if (stcp->status == STAGEOUT && stcp->t_or_d == 'm') {
+			stcp->status |= CAN_BE_MIGR;
+			/* We update the corresponding poolname structure */
+			update_migpool(stcp,1);
+        } else {
+			stcp->status |= STAGED;
+		}
+    }
 	stcp->a_time = time (0);
 	*subreqid = stcp->reqid;
 
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-		stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 
@@ -1645,7 +1671,7 @@ upd_stageout(req_type, upath, subreqid)
 }
 
 #if ! defined(_WIN32)
-void wait4child()
+void stgdaemon_wait4child()
 {
 }
 
