@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.11 2005/02/11 09:51:30 jdurand Exp $
+ * $Id: stager_constants.h,v 1.12 2005/03/17 15:01:19 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -19,6 +19,7 @@
 #define STAGER_DEFAULT_DEBUG         0                   /* Default debug mode (!= 0 means yes) */
 #define STAGER_DEFAULT_TRACE         0                   /* Default trace mode (!= 0 means yes) */
 #define STAGER_DEFAULT_DB_NBTHREAD   5                   /* Default number of db threads */
+#define STAGER_DEFAULT_GC_NBTHREAD   5                   /* Default number of GC threads */
 #define STAGER_DEFAULT_QUERY_NBTHREAD 5                  /* Default number of query threads */
 #define STAGER_DEFAULT_UPDATE_NBTHREAD 5                 /* Default number of update threads */
 #define STAGER_DEFAULT_GETNEXT_NBTHREAD 5                /* Default number of getnext threads */
@@ -42,6 +43,7 @@
 #define STAGER_CLASS_DEBUG        "DEBUG"                /* Sub-label in config file for debug */
 #define STAGER_CLASS_TRACE        "TRACE"                /* Sub-label in config file for trace */
 #define STAGER_CLASS_DB_NBTHREAD  "DB_NBTHREAD"          /* Sub-label in config file for db_nbthread */
+#define STAGER_CLASS_GC_NBTHREAD  "GC_NBTHREAD"          /* Sub-label in config file for gc_nbthread */
 #define STAGER_CLASS_QUERY_NBTHREAD "QUERY_NBTHREAD"     /* Sub-label in config file for query_nbthread */
 #define STAGER_CLASS_UPDATE_NBTHREAD "UPDATE_NBTHREAD"   /* Sub-label in config file for update_nbthread */
 #define STAGER_CLASS_GETNEXT_NBTHREAD "GETNEXT_NBTHREAD" /* Sub-label in config file for getnext_nbthread */
@@ -63,6 +65,7 @@
 #define STAGER_ENV_DEBUG          "STAGER_DEBUG"         /* Environment variable for debug */
 #define STAGER_ENV_TRACE          "STAGER_TRACE"         /* Environment variable for trace */
 #define STAGER_ENV_DB_NBTHREAD    "STAGER_DB_NBTHREAD"   /* Environment variable for db_nbthread */
+#define STAGER_ENV_GC_NBTHREAD    "STAGER_GC_NBTHREAD"   /* Environment variable for gc_nbthread */
 #define STAGER_ENV_QUERY_NBTHREAD "STAGER_QUERY_NBTHREAD" /* Environment variable for query_nbthread */
 #define STAGER_ENV_UPDATE_NBTHREAD "STAGER_UPDATE_NBTHREAD" /* Environment variable for update_nbthread */
 #define STAGER_ENV_GETNEXT_NBTHREAD "STAGER_GETNEXT_NBTHREAD" /* Environment variable for getnext_nbthread */
