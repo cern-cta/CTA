@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.90 2001/02/01 10:08:05 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.91 2001/02/01 12:16:56 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.90 $ $Date: 2001/02/01 10:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.91 $ $Date: 2001/02/01 12:16:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -153,7 +153,8 @@ struct stgdb_fd dbfd;
 struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 struct passwd start_passwd;
 char localhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
-time_t upd_fileclasses_int = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
+time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
+time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 
 void prockilreq _PROTO((int, char *, char *));
@@ -272,6 +273,9 @@ int main(argc,argv)
 	struct passwd *this_passwd;             /* password structure pointer */
 	struct passwd root_passwd;
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1];
+	char *upd_fileclasses_int_p;
+	int upd_fileclasses_int_from_getenv = 0;
+	int upd_fileclasses_int_from_config = 0;
 
 	Coptind = 1;
 	Copterr = 0;
@@ -649,11 +653,42 @@ int main(argc,argv)
 		} else stcp++;
 	}
 
+	/* Get default upd_fileclasses_int from configuration if any (not from getenv because conf is re-checked again) */
+	if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
+		if ((upd_fileclasses_int = atoi(upd_fileclasses_int_p)) <= 0) {
+			stglogit(func, STG02, "upd_fileclasses_int init", "upd_fileclasses_int value from config", upd_fileclasses_int_p);
+			stglogit(func, STG33, "upd_fileclasses_int init value from default", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
+			upd_fileclasses_int = upd_fileclasses_int_default;
+		} else {
+			stglogit(func, STG33, "upd_fileclasses_int init value from config", upd_fileclasses_int_p);
+			upd_fileclasses_int_from_config = 1;
+		}
+	} else {
+		stglogit(func, STG33, "upd_fileclasses_int init value from default", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
+		upd_fileclasses_int = upd_fileclasses_int_default;
+	}
+
 	/* Initialize check_upd_fileclasses time */
 	last_upd_fileclasses = time(NULL);
 
 	/* main loop */
 	while (1) {
+		int upd_fileclasses_int_old_value;
+
+		upd_fileclasses_int_old_value = upd_fileclasses_int;
+		/* Run-time update upd_fileclasses parameter from configuration if needed */
+		if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
+			if ((upd_fileclasses_int = atoi(upd_fileclasses_int_p)) <= 0) {
+				stglogit(func, STG02, "upd_fileclasses_int update", "upd_fileclasses_int value from config", upd_fileclasses_int_p);
+				stglogit(func, STG33, "upd_fileclasses_int update - value unchanged", u64tostr((u_signed64) upd_fileclasses_int_old_value, tmpbuf, 0));
+				upd_fileclasses_int = upd_fileclasses_int_old_value;
+			} else if (upd_fileclasses_int != upd_fileclasses_int_old_value) {
+				/* Should happen very frequently... */
+				stglogit(func, STG33, "upd_fileclasses_int update - value changed", upd_fileclasses_int_p);
+			}
+		} else if ((upd_fileclasses_int = upd_fileclasses_int_default) != upd_fileclasses_int_old_value) {
+			stglogit(func, STG33, "upd_fileclasses_int update - value changed", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
+		}
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
 		check_retenp_on_disk (); /* remove all CASTOR files that are out of disk retention time */
 		check_child_exit(); /* check childs [pid,status] */
@@ -977,6 +1012,9 @@ void procshutdownreq(req_data, clienthost)
 	int nargs;
 	char *rbp;
 	char *user;
+	char *stghost = NULL;
+	int errflg = 0;
+	int force_shutdown = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -995,13 +1033,34 @@ void procshutdownreq(req_data, clienthost)
 
 	Coptind = 1;
 	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "Fh")) != -1) {
+	while ((c = Cgetopt (nargs, argv, "Fh:")) != -1) {
 		switch (c) {
 		case 'F':
 			force_shutdown = 1;
 			break;
+		case 'h':
+			stghost = Coptarg;
+			break;
+		case '?':
+			errflg++;
+			break;
+		default:
+			errflg++;
+			break;
 		}
 	}
+	/* We force -h parameter to appear in the parameters */
+	if (stghost == NULL) {
+		errflg++;
+	}
+
+	if (errflg != 0) {
+		free (argv);
+		sendrep (rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
+		sendrep (rpfd, STAGERC, STAGESHUTDOWN, USERR);
+		return;
+	}
+
 	shutdownreq_reqid = reqid;
 	shutdownreq_rpfd = rpfd;
 	free (argv);
