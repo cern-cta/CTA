@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.26 2000/03/31 14:10:04 baud Exp $
+ * $Id: Ctape.h,v 1.27 2000/04/12 11:44:49 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.26 $ $Date: 2000/03/31 14:10:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.27 $ $Date: 2000/04/12 11:44:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -158,6 +158,7 @@
 #define TP006	"TP006 - invalid value for %s\n"
 #define	TP007	"TP007 - fid is mandatory when TPPOSIT_FID\n"
 #define TP008	"TP008 - %s not accessible\n"
+#define TP009	"TP009 - could not configure %s: %s\n"
 #define TP010	"TP010 - resources already reserved for this job\n"
 #define TP011	"TP011 - too many tape users\n"
 #define TP012	"TP012 - too many drives requested\n"
