@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.95 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stager.c,v 1.96 2000/11/07 15:30:58 jdurand Exp $
  */
 
 /*
@@ -15,8 +15,11 @@
 /* when a tape pool turnaround occurs.                                       */
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
+/* If you want to force a specific tape server, compile it with: */
+/* -DTAPESRVR=\"your_tape_server_hostname\" */
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.95 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.96 $ $Date: 2000/11/07 15:30:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -114,6 +117,9 @@ int *hsm_oksegment = NULL;          /* Valid segment index in the total segment 
 int *hsm_status = NULL;             /* Global status per hsm file */
 struct Cns_segattrs **hsm_segments = NULL; /* Total list of segments per hsm file */
 int *hsm_fseq = NULL;               /* Current file sequence on current tape (vid) */
+typedef unsigned char blockid_t[4];
+blockid_t nullblockid = { '\0', '\0', '\0', '\0' };
+blockid_t *hsm_blockid = NULL;      /* Current file sequence on current tape (vid) */
 int *hsm_flag = NULL;               /* Flag saying to hsmidx() not to consider this entry while scanning */
 char **hsm_vid = NULL;              /* Current vid pointer or NULL if not in current rtcpc request */
 char cns_error_buffer[512];         /* Cns error buffer */
@@ -244,6 +250,7 @@ int save_euid, save_egid;
       (hsm_oksegment = (int *) calloc(nbcat_ent,sizeof(int)))                      == NULL ||              \
       (hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))   == NULL ||              \
       (hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
+      (hsm_blockid = (blockid_t *) calloc(nbcat_ent,sizeof(blockid_t)))            == NULL ||              \
       (hsm_flag = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
       (hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {              \
@@ -268,6 +275,7 @@ int save_euid, save_egid;
   if (hsm_nsegments != NULL) free(hsm_nsegments);                            \
   if (hsm_oksegment != NULL) free(hsm_oksegment);                            \
   if (hsm_fseq != NULL) free(hsm_fseq);                                      \
+  if (hsm_blockid != NULL) free(hsm_blockid);                                \
   if (hsm_flag != NULL) free(hsm_flag);                                      \
   if (hsm_status != NULL) free(hsm_status);                                  \
   if (hsm_vid != NULL) free(hsm_vid);                                        \
@@ -768,7 +776,6 @@ int stagein_castor_hsm_file() {
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 #endif
-	unsigned char blockid[4];
 	char fseg_status;
     struct devinfo *devinfo;
     int isegments;
@@ -882,6 +889,7 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		hsm_vid[i] = NULL;
 		hsm_fseq[i] = -1;
+		memset(&(hsm_blockid[i]),0,sizeof(blockid_t));
 	}
 
 	/* We initialize the latest vid from vmgr_gettape() */
@@ -910,12 +918,18 @@ int stagein_castor_hsm_file() {
 		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
 			hsm_vid[i] = hsm_segments[i][hsm_oksegment[i]].vid;
 			hsm_fseq[i] = hsm_segments[i][hsm_oksegment[i]].fseq;
+			memcpy(hsm_blockid[i],hsm_segments[i][hsm_oksegment[i]].blockid,sizeof(blockid_t));
 			hsm_oksegment[i]++;
 #ifdef STAGER_DEBUG
 			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Got vid.fseq=%s.%d, last_vid=%s\n",
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Got vid.fseq=%s.%d (blockid '\\%d\\%d\\%d\\%d') last_vid=%s\n",
 							castor_hsm,
-							hsm_vid[i],hsm_fseq[i],last_vid);
+							hsm_vid[i],hsm_fseq[i],
+							(int) hsm_blockid[i][0],
+							(int) hsm_blockid[i][1],
+							(int) hsm_blockid[i][2],
+							(int) hsm_blockid[i][3],
+							last_vid);
 			RESTORE_EID;
 #endif
 			
@@ -1192,7 +1206,6 @@ int stagewrt_castor_hsm_file() {
 	char *castor_hsm;
 	char tmpbuf[21];
 	extern char* poolname2tapepool _PROTO((char *));
-	unsigned char blockid[4];
     struct devinfo *devinfo;
 #ifdef SKIP_TAPE_POOL_TURNAROUND
     char tape_pool_first[CA_MAXPOOLNAMELEN + 1];
@@ -1997,7 +2010,11 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				strcpy((*rtcpcreqs_in)[i]->tapereq.dgn      , stcp->u1.t.dgn      );
 				strcpy((*rtcpcreqs_in)[i]->tapereq.density  , stcp->u1.t.den      );
 #endif
+#ifdef TAPESRVR
+				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR );
+#else
 				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcp->u1.t.tapesrvr );
+#endif
 				switch (stcp->status & 0xF) {
 				case STAGEWRT:
 				case STAGEPUT:
@@ -2358,6 +2375,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			strcpy((*rtcpcreqs_in)[i]->tapereq.dgn     ,dgn    );
 			strcpy((*rtcpcreqs_in)[i]->tapereq.density ,aden   );
 #endif
+#ifdef TAPESRVR
+			strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR );
+#endif
 			if ((*rtcpcreqs_in)[i]->file == NULL) {
 				/* First file for this VID */
 				if (((*rtcpcreqs_in)[i]->file = (file_list_t *) calloc(1,sizeof(file_list_t))) == NULL) {
@@ -2444,8 +2464,13 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			} else {
 				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
 			}
-            */
-			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
+			*/
+			if (memcmp(hsm_blockid[ihsm],nullblockid,sizeof(blockid_t)) != 0) {
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_BLKID;
+				memcpy((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blockid,hsm_blockid[ihsm],sizeof(blockid_t));
+			} else {
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
+			}
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 			/* We set the hsm_flag[ihsm] so that this entry cannot be returned twice */
 			hsm_flag[ihsm] = 1;
@@ -2689,7 +2714,6 @@ int stager_hsm_callback(tapereq,filereq)
 	int i;
 	struct stgcat_entry *stcp;
 	char *castor_hsm;
-	unsigned char blockid[4];
 	struct Cns_fileid Cnsfileid;
 
 	if (tapereq == NULL || filereq == NULL) {
@@ -2871,7 +2895,7 @@ int stager_hsm_callback(tapereq,filereq)
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].compression = compression_factor;
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].s_status = '-';
 			strcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid,tapereq->vid);
-			memcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].blockid,filereq->blockid,sizeof(blockid));
+			memcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].blockid,filereq->blockid,sizeof(blockid_t));
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].fseq = filereq->tape_fseq;
 			hsm_nsegments[stager_client_true_i]++;
 			if (hsm_transferedsize[stager_client_true_i] >= hsm_totalsize[stager_client_true_i]) {
@@ -3285,5 +3309,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Friday 27 October, 2000 at 13:50:45 CEST by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 07 November, 2000 at 14:51:49 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
