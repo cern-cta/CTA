@@ -1,0 +1,71 @@
+.\"   $Id: Cmutex.man,v 1.1 2000/07/07 11:26:16 jdurand Exp $
+.\"
+.TH CMUTEX "3" "$Date: 2000/07/07 11:26:16 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
+.SH SYNOPSIS
+.B #include <Cmutex.h>
+.P
+.BI "void Cmutex_init(int (*" lockroutine ")(void *" addr ", int " timeout "), int (*" unlockroutine ")(void * "addr "));"
+.P
+.BI "int Cmutex_lock(void *" addr ", int " timeout ");"
+.P
+.BI "int Cmutex_unlock(void *" addr ");"
+
+.SH ERRORS
+If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable.
+
+.SH DESCRIPTION
+
+\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions, 
+.BI lockfunction
+and
+.BI unlockfunction
+respectively, then all \fBCmutex\fP calls are dummy operations.
+.P
+Otherwise any call to \fBCmutex_lock\fP will raise a call to
+.BI lockfunction
+, and any call to \fBCmutex_unlock\fP will raise a call to
+.BI unlockfunction.
+.P
+Please note that the \fBCmutex\fP package is initially meant to be interfaced with \fBCthread\fP only.
+
+.SH EXAMPLE
+.nf
+/*
+ * Here follows an example. The call to \fBCthread_init\fP routine shows
+ * that multi-threaded mode is explicitely activated by the application
+ * (you will then have to link with the thread library). Neverthless,
+ * you can very well call some other external library, and leave as it is
+ * the \fBCmutex\fP calls.
+ */
+#include <Cmutex.h>
+#include <Cthread_api.h>
+#include <serrno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <log.h>
+
+int this;
+extern int Cthread_debug;
+
+int main() {
+  Cthread_init();        /* Comment this and Cmutex calls will become dummy */
+
+  initlog("testit",LOG_INFO,"");
+
+  if (Cmutex_lock(&this,10) != 0) {
+    fprintf(stderr,"### Cmutex_lock (%s)\n",sstrerror(serrno));
+  }
+  if (Cmutex_unlock(&this) != 0) {
+    fprintf(stderr,"### Cmutex_unlock (%s)\n",sstrerror(serrno));
+  }
+}
+.fi
+
+.SH SEE ALSO
+\fBCthread\fP, \fBserrno\fP
+
+.SH AUTHOR
+\fBJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
