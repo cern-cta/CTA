@@ -1,0 +1,27 @@
+.\"   $Id: Cpwd.man,v 1.1 2000/10/27 13:32:49 jdurand Exp $
+.\"
+.TH CPWD "3" "$Date: 2000/10/27 13:32:49 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCpwd\fP \- \fBCASTOR\fP \fBP\fPassword file Thread-Safe inferface
+.SH SYNOPSIS
+.B #include <Cpwd.h>
+.P
+.BI "struct passwd *Cgetpwnam(char *" name ");"
+.P
+.BI "struct passwd *Cgetpwuid(uid_t " uid ");"
+
+.SH ERRORS
+If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable.
+
+.SH DESCRIPTION
+
+\fBCmutex\fP is a common Thread-Safe API interface to get entries in the password file vs.
+.BI name
+or
+.BI uid.
+
+.SH SEE ALSO
+\fBserrno\fP, \fBgetpwnam\fP, \fBgetpwuid\fP
+
+.SH AUTHOR
+\fBOlof Barring\fP (Olof.Barring@cern.ch)
