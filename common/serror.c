@@ -233,6 +233,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
          "Request list is not circular",
          "Bad request structure", 
          "Request partially processed",
+         "Catalogue DB error",
          "BAD ERROR NUMBER"
         };
 
