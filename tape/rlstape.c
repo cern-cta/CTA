@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.25 $ $Date: 2002/12/17 08:28:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.26 $ $Date: 2003/08/26 14:17:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -228,8 +228,10 @@ vol_unmount:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
-	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status,
-		NULL, 0);
+	while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
+		&vdqm_status, NULL, 0)) &&
+		(serrno == SECOMERR || serrno == EVQHOLD))
+			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
