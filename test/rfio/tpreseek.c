@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpreseek.c,v $ $Revision: 1.1 $ $Date: 2001/05/29 06:10:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpreseek.c,v $ $Revision: 1.2 $ $Date: 2001/05/29 06:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpreseek - write NBRECORDS_TOWRITE records and
@@ -26,9 +26,9 @@ char **argv;
 	struct iovec iov[NBRECORDS_TOREAD];
 	int iovnb = NBRECORDS_TOREAD;
 	int j;
-	int lengths[NBRECORDS_TOWRITE] = {4096, 32768, 16384, 8192, 65536,
+	static int lengths[NBRECORDS_TOWRITE] = {4096, 32768, 16384, 8192, 65536,
 					  32768, 16384, 4096, 65536, 8192};
-	int records_toread[NBRECORDS_TOREAD] = {2, 4, 5, 8, 9};
+	static int records_toread[NBRECORDS_TOREAD] = {2, 4, 5, 8, 9};
 
 	if (argc != 2) {
 		fprintf (stderr, "usage: tpreseek pathname\n");
@@ -63,8 +63,9 @@ char **argv;
 	}
 	for (j = 0; j < NBRECORDS_TOREAD; j++) {
 		/* compute record offset */
+		iov[j].iov_base = 0;
 		for (i = 0; i < records_toread[j]; i++)
-			iov[j].iov_base += lengths[i];
+			iov[j].iov_base = (char *) iov[j].iov_base + lengths[i];
 		/* set length */
 		iov[j].iov_len = lengths[records_toread[j]];
 	}
