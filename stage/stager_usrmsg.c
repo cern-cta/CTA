@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.14 2001/03/04 08:46:50 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.15 2001/03/09 10:58:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.14 $ $Date: 2001/03/04 08:46:50 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.15 $ $Date: 2001/03/09 10:58:27 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -82,7 +82,11 @@ void stager_usrmsg(int level, ...)
 #endif /* IRIX5 || __Lynx__ */
 
 	format = va_arg(args, char *);
+#if (defined(__osf__) && defined(__alpha))
+	vsprintf(line,format,args);
+#else
 	vsnprintf(line,BUFSIZ,format,args);
+#endif
 	line[BUFSIZ-1] = '\0';
 #ifdef STAGER_DEBUG
     /* In debug mode - we always want to have all messages in stager log-file */
@@ -122,7 +126,11 @@ void stager_migmsg(int level, ...)
 #endif /* IRIX5 || __Lynx__ */
 
 	format = va_arg(args, char *);
+#if (defined(__osf__) && defined(__alpha))
+	vsprintf(line,format,args);
+#else
 	vsnprintf(line,BUFSIZ,format,args);
+#endif
 	line[BUFSIZ-1] = '\0';
 	save_euid = geteuid();
 	save_egid = getegid();

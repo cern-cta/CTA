@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.9 $ $Date: 2001/03/04 08:46:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.10 $ $Date: 2001/03/09 10:58:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -187,13 +187,21 @@ int DLL_DECL stage_errmsg(va_alist)
 	func = va_arg (args, char *);
 	msg = va_arg (args, char *);
 	if (func) {
+#if (defined(__osf__) && defined(__alpha))
+		sprintf (prtbuf, "%s: ", func);
+#else
 		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
     }
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
+#if (defined(__osf__) && defined(__alpha))
+		vsprintf (prtbuf + strlen(prtbuf), msg, args);
+#else
 		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
 
@@ -240,13 +248,21 @@ int DLL_DECL stage_outmsg(va_alist)
 	msg = va_arg (args, char *);
 
 	if (func) {
+#if (defined(__osf__) && defined(__alpha))
+		sprintf (prtbuf, "%s: ", func);
+#else
 		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
     }
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
+#if (defined(__osf__) && defined(__alpha))
+		vsprintf (prtbuf + strlen(prtbuf), msg, args);
+#else
 		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit_term.c,v 1.6 2001/03/05 13:38:11 jdurand Exp $
+ * $Id: stglogit_term.c,v 1.7 2001/03/09 10:58:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.6 $ $Date: 2001/03/05 13:38:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.7 $ $Date: 2001/03/09 10:58:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -35,10 +35,21 @@ int stglogit(va_alist) va_dcl
 	msg = va_arg (args, char *);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
+#if (defined(__osf__) && defined(__alpha))
+	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+#else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
-	if ((strlen(prtbuf) + 1) < PRTBUFSZ) vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
+#if (defined(__osf__) && defined(__alpha))
+		vsprintf (prtbuf+strlen(prtbuf), msg, args);
+#else
+		vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#endif
+    }
 	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);
 	fprintf(stdout, prtbuf, strlen(prtbuf));
