@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.13 2000/09/11 15:28:58 jdurand Exp $
+ * $Id: stageclr.c,v 1.14 2000/09/20 11:30:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.13 $ $Date: 2000/09/11 15:28:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.14 $ $Date: 2000/09/20 11:30:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -139,30 +139,33 @@ int main(argc, argv)
 			}
 			/* We want to know if there is no ':' in the string or, if there is such a ':' */
 			/* if there is no '/' before (then is will indicate a hostname)                */
-			if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
-				if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-					if (attached != 0) {
-						strcpy (hsm_path, "-M");
-						strcat (hsm_path, hsm_host);
+			if (! ISCASTOR(optarg)) {
+				/* We prepend HSM_HOST only for non CASTOR-like files */
+				if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
+					if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+						if (attached != 0) {
+							strcpy (hsm_path, "-M");
+							strcat (hsm_path, hsm_host);
+						} else {
+							strcpy (hsm_path, hsm_host);
+						}
+						strcat (hsm_path, ":");
+						strcat (hsm_path, optarg);
+						argv[optind - 1] = hsm_path;
+					} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+						if (attached != 0) {
+							strcpy (hsm_path, "-M");
+							strcat (hsm_path, hsm_host);
+						} else {
+							strcpy (hsm_path, hsm_host);
+						}
+						strcat (hsm_path, ":");
+						strcat (hsm_path, optarg);
+						argv[optind - 1] = hsm_path;
 					} else {
-						strcpy (hsm_path, hsm_host);
+						fprintf (stderr, STG54);
+						errflg++;
 					}
-					strcat (hsm_path, ":");
-					strcat (hsm_path, optarg);
-					argv[optind - 1] = hsm_path;
-				} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-					if (attached != 0) {
-						strcpy (hsm_path, "-M");
-						strcat (hsm_path, hsm_host);
-					} else {
-						strcpy (hsm_path, hsm_host);
-					}
-					strcat (hsm_path, ":");
-					strcat (hsm_path, optarg);
-					argv[optind - 1] = hsm_path;
-				} else {
-					fprintf (stderr, STG54);
-					errflg++;
 				}
 			}
 			break;
