@@ -1,6 +1,9 @@
 /*
- * $Id: Cglobals.c,v 1.8 1999/08/18 13:56:30 obarring Exp $
+ * $Id: Cglobals.c,v 1.9 1999/09/10 15:49:41 jdurand Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.9  1999/09/10 15:49:41  jdurand
+ * Made non __STDC__ compliant
+ *
  * Revision 1.8  1999/08/18 13:56:30  obarring
  * Externalize the local_getspec() and local_setspec() functions
  *
@@ -22,7 +25,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.8 1999/08/18 13:56:30 obarring Exp $";
+static char cvsId[] = "$Id: Cglobals.c,v 1.9 1999/09/10 15:49:41 jdurand Exp $";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -58,17 +61,30 @@ typedef struct Cglobals {
  * Cglobals_init() is called from Cthread_init() or at process
  * startup before any threads (except main) have been created.
  */
+#ifdef __STDC__
 extern int (*local_getspec)(int *, void **);
 extern int (*local_setspec)(int *, void *);
 int (*local_getspec)(int *, void **) = NULL;
 int (*local_setspec)(int *, void *) = NULL;
 static int (*local_getTid)(void) = NULL;
+#else
+extern int (*local_getspec)();
+extern int (*local_setspec)();
+int (*local_getspec)() = NULL;
+int (*local_setspec)() = NULL;
+static int (*local_getTid)() = NULL;
+#endif
+
 static Cglobals_t **single_thread_globals = NULL;
 static int nb_globals = 0;
 /*
  * Single thread globals table allocation size.
  */
+#ifdef __STDC__
 const int alloc_size = 1000;
+#else
+int alloc_size = 1000;
+#endif
 
 /*
  * Castor errno externals (used as keys in multi-thread env.)
@@ -111,9 +127,17 @@ int *__h_errno();
  * Globals that existed prior to this call are all re-assigned as
  * thread-specific to calling thread (normally the main thread).
  */
-void Cglobals_init(int (*getspec)(int *, void **),
-                   int (*setspec)(int *, void *),
-                   int (*getTid)(void) ) {
+void Cglobals_init(getspec,setspec,getTid)
+#ifdef __STDC__
+     int (*getspec)(int *, void **);
+     int (*setspec)(int *, void *);
+     int (*getTid)(void);
+#else
+     int (*getspec)();
+     int (*setspec)();
+     int (*getTid)();
+#endif
+{
     int i,rc;
     int *key;
     void *addr;
@@ -159,7 +183,11 @@ void Cglobals_init(int (*getspec)(int *, void **),
  * in multi-thread environment. This routine should be called for
  * every internal static storage in the Castor library.
  */
-void Cglobals_get(int *key, void **addr, size_t size) {
+void Cglobals_get(key, addr, size)
+     int *key;
+     void **addr;
+     size_t size;
+{
     int rc;
     Cglobals_t *tmp;
 
@@ -206,7 +234,9 @@ void Cglobals_get(int *key, void **addr, size_t size) {
  * thread has *NOT* been created with a Cthread_create()).
  * 
  */ 
-void Cglobals_getTid(int *Tid) {
+void Cglobals_getTid(Tid)
+     int *Tid;
+{
     if ( Tid == NULL ) return;
     if ( local_getTid == NULL ) *Tid = -1;
     else *Tid = local_getTid();
