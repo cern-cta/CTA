@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.49 $ $Release$ $Date: 2004/11/10 16:55:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.50 $ $Release$ $Date: 2004/11/12 14:29:43 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -117,7 +117,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamMessageAckCnv.cpp \
               io/StreamPtrCnv.cpp \
               io/StreamSegmentCnv.cpp \
-              io/StreamStageGetNextRequestCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
               io/StreamTapeCnv.cpp \
@@ -132,11 +131,13 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamStagePrepareToPutRequestCnv.cpp \
               io/StreamStagePrepareToUpdateRequestCnv.cpp \
               io/StreamStagePutDoneRequestCnv.cpp \
+              io/StreamStagePutNextRequestCnv.cpp \
               io/StreamStagePutRequestCnv.cpp \
               io/StreamStageReleaseFilesRequestCnv.cpp \
               io/StreamStageRequestQueryRequestCnv.cpp \
               io/StreamStageRmRequestCnv.cpp \
               io/StreamStageUpdateFileStatusRequestCnv.cpp \
+              io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQueryResponseCnv.cpp \
@@ -196,8 +197,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/SegmentCInt.cpp \
               stager/StageAbortRequest.cpp \
               stager/StageAbortRequestCInt.cpp \
-              stager/StageGetNextRequest.cpp \
-              stager/StageGetNextRequestCInt.cpp \
 	      stager/StageFileQueryRequest.cpp \
 	      stager/StageFileQueryRequestCInt.cpp \
 	      stager/StageFindRequestRequest.cpp \
@@ -214,6 +213,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
 	      stager/StagePrepareToUpdateRequestCInt.cpp \
 	      stager/StagePutDoneRequest.cpp \
 	      stager/StagePutDoneRequestCInt.cpp \
+              stager/StagePutNextRequest.cpp \
+              stager/StagePutNextRequestCInt.cpp \
 	      stager/StagePutRequest.cpp \
 	      stager/StagePutRequestCInt.cpp \
 	      stager/StageReleaseFilesRequest.cpp \
@@ -224,6 +225,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
 	      stager/StageRmRequestCInt.cpp \
 	      stager/StageUpdateFileStatusRequest.cpp \
 	      stager/StageUpdateFileStatusRequestCInt.cpp \
+              stager/StageUpdateNextRequest.cpp \
+              stager/StageUpdateNextRequestCInt.cpp \
 	      stager/StageUpdateRequest.cpp \
 	      stager/StageUpdateRequestCInt.cpp \
               stager/Stream.cpp \
@@ -252,7 +255,6 @@ STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 
 #if BuildDlfClient
 STGLIB_SRCS += DlfMsgSvc.cpp \
-               DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
 
