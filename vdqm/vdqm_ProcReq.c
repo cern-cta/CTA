@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.12 $ $Date: 2000/03/13 11:17:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.13 $ $Date: 2000/05/18 09:13:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -84,6 +84,7 @@ void *vdqm_ProcReq(void *arg) {
         }
         if ( hold ) {
             log(LOG_INFO,"vdqm_ProcReq(): server in HOLD\n");
+            vdqm_SetError(EVQHOLD);
             rc = -1;
         }
         Cthread_mutex_unlock(&hold);
