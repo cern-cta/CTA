@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.13 1999/12/22 07:23:40 jdurand Exp $
+ * $Id: procqry.c,v 1.14 2000/01/03 09:47:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.13 $ $Date: 1999/12/22 07:23:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.14 $ $Date: 2000/01/03 09:47:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,7 +39,9 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.13 $ $Date: 199
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
+#endif
 #include <serrno.h>
 #include "osdep.h"
 
@@ -70,10 +72,11 @@ static regex_t preg;
 #else
 static char expbuf[256];
 #endif
+#ifdef USECDB
 extern struct stgdb_fd dbfd;
-
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
+#endif
 
 void procqryreq(req_data, clienthost)
 char *req_data;
@@ -262,6 +265,7 @@ char *clienthost;
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
+#ifdef USECDB
             strcpy(dbfd_in_fork.username,dbfd.username);
             strcpy(dbfd_in_fork.password,dbfd.password);
 
@@ -283,10 +287,13 @@ char *clienthost;
 
 			/* We set the pointer to use to the correct dbfd structure */
 			dbfd_query = &dbfd_in_fork;
+#endif
 		}
 	} else {
+#ifdef USECDB
 		/* No fork : the dbfd to use is the one of the main process */
 		dbfd_query = &dbfd;
+#endif
 	}
 
 	if (Lflag) {
@@ -403,9 +410,11 @@ char *clienthost;
             has_been_updated = 1;
           }
           if (has_been_updated != 0) {
+#ifdef USECDB
             if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
           }
 		}
 		if (stcp->t_or_d == 't') {
@@ -533,12 +542,14 @@ reply:
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
+#ifdef USECDB
       if (stgdb_close(dbfd_query) != 0) {
         sendrep(rpfd, MSG_ERR, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
       }
       if (stgdb_logout(dbfd_query) != 0) {
         sendrep(rpfd, MSG_ERR, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
       }
+#endif
       exit (c);
     }
 }
@@ -713,9 +724,11 @@ char *mfile;
             has_been_updated = 1;
           }
           if (has_been_updated != 0) {
+#ifdef USECDB
             if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
           }
 		}
 		sci->weight = (double)stcp->a_time;

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.10 1999/12/22 07:23:39 jdurand Exp $
+ * $Id: procio.c,v 1.11 2000/01/03 09:47:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.10 $ $Date: 1999/12/22 07:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.11 $ $Date: 2000/01/03 09:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -32,7 +32,9 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.10 $ $Date: 1999
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
+#endif
 #include <serrno.h>
 #include "osdep.h"
 
@@ -51,7 +53,9 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 struct waitq *add2wq();
 char *findpoolname();
 int last_tape_file;
+#ifdef USECDB
 extern struct stgdb_fd dbfd;
+#endif
 
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
@@ -508,9 +512,11 @@ char *clienthost;
 			case STAGEIN:	/* stage in progress */
 			case STAGEIN|WAITING_SPC:	/* waiting space */
 				stcp->nbaccesses++;
+#ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
                   sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
                 }
+#endif
 				savereqid = stcp->reqid;
 				stcp = newreq ();
 				memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -523,9 +529,11 @@ char *clienthost;
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
 				stcp->status |= WAITING_REQ;
+#ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
                   sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
                 }
+#endif
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
 					stcp->uid, stcp->gid, clientpid,
@@ -577,9 +585,11 @@ char *clienthost;
 			case STAGEWRT:
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
+#ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
                   sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
                 }
+#endif
 #if SACCT
 				stageacct (STGFILS, stgreq.uid, stgreq.gid,
 				    clienthost, reqid, req_type, 0, 0, stcp, "");
@@ -642,9 +652,11 @@ notstaged:
 						goto reply;
 					}
 				}
+#ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
                   sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
                 }
+#endif
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
 				wfp++;
@@ -723,9 +735,11 @@ notstaged:
 				    strcmp (stcp->ipath, argv[optind+1]))
 					create_link (stcp, argv[optind+1]);
 			}
+#ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
 			break;
 		case STAGEWRT:
 			if (p = findpoolname (upath)) {
@@ -778,9 +792,11 @@ notstaged:
 			}
 			stcp->a_time = time (0);
 			strcpy (stcp->ipath, upath);
+#ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
 				stcp->gid, clientpid, Upluspath, reqid, req_type,
 				nbdskf, &wfp);
@@ -831,9 +847,11 @@ notstaged:
 			stcp->a_time = st.st_atime;
 			stcp->nbaccesses = 1;
 			strcpy (stcp->ipath, upath);
+#ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
 			break;
 		}
 	}
@@ -1021,9 +1039,11 @@ char *clienthost;
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
+#ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 				clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 			wfp->subreqid = stcp->reqid;
@@ -1061,9 +1081,11 @@ char *clienthost;
 		}
 		stcp->status = STAGEPUT;
 		stcp->a_time = time (0);
+#ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
           sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
         }
+#endif
 		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 			clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 		wfp->subreqid = stcp->reqid;
@@ -1106,9 +1128,11 @@ reply:
 					break;
 			}
 			stcp->status = STAGEOUT|PUT_FAILED;
+#ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
               sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
             }
+#endif
 		}
 		rmfromwq (wqp);
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.10 1999/12/22 07:23:38 jdurand Exp $
+ * $Id: procalloc.c,v 1.11 2000/01/03 09:47:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.10 $ $Date: 1999/12/22 07:23:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.11 $ $Date: 2000/01/03 09:47:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -29,7 +29,9 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.10 $ $Date: 1
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
+#endif
 #include <serrno.h>
 #include "osdep.h"
 
@@ -42,7 +44,9 @@ extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 struct waitq *add2wq();
+#ifdef USECDB
 extern struct stgdb_fd dbfd;
+#endif
 
 void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
@@ -193,9 +197,11 @@ char *clienthost;
 		    strcmp (stcp->ipath, argv[optind+1]))
 			create_link (stcp, argv[optind+1]);
 	}
+#ifdef USECDB
 	if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
       sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
     }
+#endif
 	savepath ();
 	savereqs ();
 	c = 0;
@@ -342,9 +348,11 @@ char *clienthost;
 	}
 	stcp->a_time = time (0);
 	stcp->nbaccesses++;
+#ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
       sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
     }
+#endif
 	if (Pflag)
 		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))
