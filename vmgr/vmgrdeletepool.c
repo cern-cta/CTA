@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletepool.c,v $ $Revision: 1.1 $ $Date: 2001/02/23 15:09:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletepool.c,v $ $Revision: 1.2 $ $Date: 2002/01/18 08:15:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletepool - delete a tape pool definition */
@@ -40,7 +40,7 @@ char **argv;
                         break;
                 }
         }
-        if (Coptind < argc) {
+        if (Coptind < argc || pool_name == NULL) {
                 errflg++;
         }
         if (errflg) {
