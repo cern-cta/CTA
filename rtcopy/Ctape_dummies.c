@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.15 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.16 $ $Date: 2004/09/06 14:13:38 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -300,6 +300,7 @@ int stage_setlog(void (*a) _PROTO((int, char *))) {
     return(0);
 }
 
+/*
 int stage_updc_tppos(char *a, int b, int c, int d, char *e, char *f, int g, 
                      int h, char *i, char *j) {
     CTAPE_DECL
@@ -329,7 +330,7 @@ int stage_updc_filcp(char *a, int b, int c, char *d, u_signed64 e, int f, int g,
     }
     return(rc);
 }
-
+*/
 ebc2asc(p, len)
 char *p;
 int len;
