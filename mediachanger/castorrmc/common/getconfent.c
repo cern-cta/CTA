@@ -1,28 +1,10 @@
 /*
- * $Id: getconfent.c,v 1.7 1999/07/27 09:25:30 obarring Exp $
- * $Log: getconfent.c,v $
- * Revision 1.7  1999/07/27 09:25:30  obarring
- * Add cvsID string constant
- *
- * Revision 1.6  1999/07/22 15:29:53  obarring
- * Go back to use strtok_r instead of strpbrk
- *
- * Revision 1.5  1999/07/21 12:42:20  jdurand
- * HP-UX's cc [without options] don't like function prototypes. Changed it
- * to old C style.
- *
- * Revision 1.4  1999/07/20 15:11:39  obarring
- * Add CVS log directive
- *
- */
-
-/*
  * Copyright (C) 1991-1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getconfent.c,v 1.7 1999/07/27 09:25:30 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.8 $ $Date: 1999/09/30 13:12:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
