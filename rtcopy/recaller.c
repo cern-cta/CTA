@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/15 07:37:33 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 09:41:14 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/15 07:37:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 09:41:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -667,7 +667,7 @@ int main(
   /*
    * Create our tape list
    */
-  rc = rtcp_NewTapeList(&tape,NULL,WRITE_ENABLE);
+  rc = rtcp_NewTapeList(&tape,NULL,WRITE_DISABLE);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcp_NewTapeList()");
     return(1);
