@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.7 $ $Date: 1999/11/02 17:56:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.8 $ $Date: 1999/11/05 10:01:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -415,9 +415,15 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
 
 static int AddVolRecord(dgn_element_t *dgn_context,
                         vdqm_volrec_t *volrec) {
+    vdqm_volrec_t *vol;
     
     if ( volrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
-    
+    /*
+     * Make sure it is not already there
+     */
+    CLIST_ITERATE_BEGIN(dgn_context->vol_queue,vol) {
+        if ( volrec == vol ) return(-1);
+    } CLIST_ITERATE_END(dgn_context->vol_queue,vol); 
     if ( volrec->vol.VolReqID <= 0 ) volrec->vol.VolReqID = NewVolReqID();
     CLIST_INSERT(dgn_context->vol_queue,volrec);
     return(0);
@@ -437,9 +443,17 @@ static int NewVolRecord(vdqm_volrec_t **volrec) {
 
 static int AddDrvRecord(dgn_element_t *dgn_context,
                         vdqm_drvrec_t *drvrec) {
+    vdqm_drvrec_t *drv;
     
     if ( drvrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
+    /*
+     * Make sure it is not already there
+     */
+    CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+        if ( drvrec == drv ) return(-1);
+    } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+
     if ( drvrec->drv.DrvReqID <= 0 ) drvrec->drv.DrvReqID = NewDrvReqID();
     CLIST_INSERT(dgn_context->drv_queue,drvrec);
     return(0);
