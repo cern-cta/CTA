@@ -27,10 +27,18 @@
 /* 07-JUN-1999       Jean-Damien Durand and Olof Barring     */
 
 #ifndef _WIN32
+#ifndef malloc
 #define malloc(a)        Cpool_malloc(__FILE__,__LINE__,a)
+#endif
+#ifndef free
 #define free(a)          Cpool_free(__FILE__,__LINE__,a)
+#endif
+#ifndef realloc
 #define realloc(a,b)     Cpool_realloc(__FILE__,__LINE__,a,b)
+#endif
+#ifndef calloc
 #define calloc(a,b)      Cpool_calloc(__FILE__,__LINE__,a,b)
+#endif
 #endif /* _WIN32 */
 
 #ifndef _WIN32
