@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.4 $ $Date: 2000/01/10 14:49:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.5 $ $Date: 2000/01/11 07:47:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -20,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.4 $ $Date: 2000/
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
@@ -33,6 +34,8 @@ static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.4 $ $Date: 2000/
 #include <serrno.h>
 
 extern int tpread_command;
+static int AbortFlag = 0;
+
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 static int CheckRetry(tape_list_t *tape) {
@@ -47,6 +50,11 @@ static int CheckRetry(tape_list_t *tape) {
         } CLIST_ITERATE_END(tl->file,fl);
     } CLIST_ITERATE_END(tape,tl);
     return(FALSE);
+}
+
+int CntlC_handler(int sig) {
+    AbortFlag = 1;
+    return(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -67,12 +75,14 @@ int main(int argc, char *argv[]) {
         rtcp_log(LOG_ERR,"%s rtcpc_BuildReq(): %s\n",argv[0],sstrerror(serrno));
         return(1);
     }
+    signal(SIGINT,(void (*)(int))CntlC_handler);
 
     /*
      * Retry loop to break out of
      */
     for (;;) {
         rc = rtcpc(tape);
+        if ( AbortFlag != 0 ) break;
         if ( rc == -1 ) {
             if ( CheckRetry(tape) == TRUE ) {
                 rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
@@ -82,6 +92,12 @@ int main(int argc, char *argv[]) {
                 break;
             }
         } else break;
+    }
+    if ( AbortFlag != 0 ) {
+        rtcp_log(LOG_DEBUG,"Cancelling VDQM request\n");
+        rtcpc_cancel(tape);
+        rtcp_log(LOG_INFO,"command failed\n\n") ;
+        return(USERR);
     }
 
     CLIST_ITERATE_BEGIN(tape,tl) {
