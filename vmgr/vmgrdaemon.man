@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.1 $ $Date: 2000/04/19 13:50:49 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.2 $ $Date: 2001/04/30 08:29:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 1 "$Date: 2000/04/19 13:50:49 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 1 "$Date: 2001/04/30 08:29:34 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
@@ -26,7 +26,7 @@ automatically retried by the client API.
 .LP
 All error messages and statistical information are kept in a log.
 .LP
-The volume manager listen port number must be defined on all client hosts
+The volume manager listen port number can be defined on client hosts
 (stagers) and on the machine where the volume manager runs in either of the
 following ways:
 .RS
@@ -52,10 +52,12 @@ like:
 .HP
 vmgr           5013/tcp                        # CASTOR volume manager
 .RE
-.LP
 .RE
 .LP
-The volume manager host name must be defined on all client hosts
+If none of these methods is used, the default port number is taken from the
+definition of VMGR_PORT in vmgr_constants.h.
+.LP
+The volume manager host name can be defined on client hosts
 in either of the following ways:
 .RS
 .LP
@@ -73,6 +75,9 @@ for example:
 VMGR	HOST	castor5
 .RE
 .RE
+.LP
+If none of these methods is used, the default host is taken from the
+definition of VmgrHost in site.def.
 .LP
 The volume manager database keeps the information about tapes like vid, vsn,
 device group, density and status.
