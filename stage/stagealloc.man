@@ -1,15 +1,16 @@
-.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.9 $ $Date: 2002/05/02 07:49:10 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" $Id: stagealloc.man,v 1.10 2002/10/03 13:57:34 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.10 $ $Date: 2002/10/03 13:57:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEALLOC l "$Date: 2002/05/02 07:49:10 $"
+.TH STAGEALLOC "1" "$Date: 2002/10/03 13:57:34 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagealloc \- allocate space in a disk pool
+
 .SH SYNOPSIS
 .B stagealloc  
 [
-.BI \-G 
-] [
 .BI \-h " host"
 ] [
 .BI \-P 
@@ -17,10 +18,6 @@ stagealloc \- allocate space in a disk pool
 .BI \-p " pool"
 ] [
 .BI \-s " size"
-] [
-.BI \-U " fun"
-] [
-.BI \-u " user"
 ]
 .I file
 .SH DESCRIPTION
@@ -43,15 +40,6 @@ or absent if a Fortran unit number is specified.
 .LP
 .SH OPTIONS
 .TP
-.B \-G
-Specifies that the disk file allocation should be issued by
-the 'group user'. A 'group user' may be defined for each group in 
-.B /etc/shift.conf.
-.br
-For example: 
-.br
-	GRPUSER ws	opalprod
-.TP
 .BI \-h " host"
 Sends the request to the stager on
 .IR host .
@@ -70,25 +58,7 @@ If specified, only
 .I size 
 Mbytes will be allocated.
 Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte.
-.TP
-.BI \-U " fun"
-Fortran unit number.
-This is internally converted to a local path
-.BR "fort.fun" .
-The
-.B \-U
-option and the
-.I file
-parameter may be both specified but at least one of them must be present.
-.TP
-.BI \-u " user"
-A file allocated in a pool will be stored in a subdirectory
-.IR user .
-This may also be specified thru the environment variable STAGE_USER.
-The default subdirectory name is
-.BR stage .
-.I user
-must be a valid user name and belong to the same group as the requestor.
+
 .SH EXAMPLES
 To allocate space for a 10 Mbytes file, write data and update the stager
 catalog, the following set of commands could be used:
@@ -113,5 +83,9 @@ stageupdc out
 28	ENOSPC: unable to find enough disk space.
 .br
 192	Request cancelled by stageclr.
+
+.SH SEE ALSO
+\fBstage_other_options\fP(3)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
