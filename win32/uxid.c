@@ -1,14 +1,14 @@
 /*
- * $Id: uxid.c,v 1.8 2001/05/03 13:02:33 jdurand Exp $
+ * $Id: uxid.c,v 1.9 2001/05/03 15:38:03 baud Exp $
  */
 
 /*
- * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1997-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.8 $ $Date: 2001/05/03 13:02:33 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.9 $ $Date: 2001/05/03 15:38:03 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -21,12 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.8 $ $Date: 2001/05
 #include "pwd.h"
 #include "Castor_limits.h"
 
-#ifndef UXGRPFILE
-#define UXGRPFILE "%SystemRoot%\\system32\\drivers\\etc\\group"
-#endif
-#ifndef UXPWDFILE
-#define UXPWDFILE "%SystemRoot%\\system32\\drivers\\etc\\passwd"
-#endif
 FILE *fopen();
 char *getenv();
 
@@ -344,14 +338,26 @@ gid_t gid;
   FILE *s;
   char uxgrpfile[256];
   char getgrbuf[1024];
+  OSVERSIONINFO osvi;
 
   if (gid < 0)
     return (NULL);
-  if (strncmp (UXGRPFILE, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (uxgrpfile, "%s%s", p, strchr (UXGRPFILE, '\\'));
-  else
-    strcpy (uxgrpfile, UXGRPFILE);
+  memset (&osvi, 0, sizeof(osvi));
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  GetVersionEx (&osvi);
+  if (osvi.dwMajorVersion >= 5) {
+    if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxgrpfile, "%s%s\\group", p, strchr (W2000MAPDIR, '\\'));
+    else
+      sprintf (uxgrpfile, "%s\\group", W2000MAPDIR);
+  } else {
+    if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxgrpfile, "%s%s\\group", p, strchr (WNTMAPDIR, '\\'));
+    else
+      sprintf (uxgrpfile, "%s\\group", WNTMAPDIR);
+  }
   if ((s = fopen (uxgrpfile, "r")) == NULL)
     return (NULL);
   while (fgets (getgrbuf, sizeof(getgrbuf), s) != NULL) {
@@ -383,14 +389,26 @@ char *name;
   FILE *s;
   char uxgrpfile[256];
   char getgrbuf[1024];
+  OSVERSIONINFO osvi;
 
   if (name == NULL || *name == '\0')
     return (NULL);
-  if (strncmp (UXGRPFILE, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (uxgrpfile, "%s%s", p, strchr (UXGRPFILE, '\\'));
-  else
-    strcpy (uxgrpfile, UXGRPFILE);
+  memset (&osvi, 0, sizeof(osvi));
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  GetVersionEx (&osvi);
+  if (osvi.dwMajorVersion >= 5) {
+    if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxgrpfile, "%s%s\\group", p, strchr (W2000MAPDIR, '\\'));
+    else
+      sprintf (uxgrpfile, "%s\\group", W2000MAPDIR);
+  } else {
+    if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxgrpfile, "%s%s\\group", p, strchr (WNTMAPDIR, '\\'));
+    else
+      sprintf (uxgrpfile, "%s\\group", WNTMAPDIR);
+  }
   if ((s = fopen (uxgrpfile, "r")) == NULL)
     return (NULL);
   while (fgets (getgrbuf, sizeof(getgrbuf), s) != NULL) {
@@ -417,14 +435,26 @@ char    *name;
   FILE *s;
   char uxpwdfile[256];
   char getpwbuf[1024];
+  OSVERSIONINFO osvi;
 
   if (name == NULL || *name == '\0')
     return (NULL);
-  if (strncmp (UXPWDFILE, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (uxpwdfile, "%s%s", p, strchr (UXPWDFILE, '\\'));
-  else
-    strcpy (uxpwdfile, UXPWDFILE);
+  memset (&osvi, 0, sizeof(osvi));
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  GetVersionEx (&osvi);
+  if (osvi.dwMajorVersion >= 5) {
+    if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxpwdfile, "%s%s\\passwd", p, strchr (W2000MAPDIR, '\\'));
+    else
+      sprintf (uxpwdfile, "%s\\passwd", W2000MAPDIR);
+  } else {
+    if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxpwdfile, "%s%s\\passwd", p, strchr (WNTMAPDIR, '\\'));
+    else
+      sprintf (uxpwdfile, "%s\\passwd", WNTMAPDIR);
+  }
   if ((s = fopen (uxpwdfile, "r")) == NULL)
     return (NULL);
   while (fgets (getpwbuf, sizeof(getpwbuf), s) != NULL) {
@@ -453,14 +483,26 @@ uid_t uid;
   FILE *s;
   char uxpwdfile[256];
   char getpwbuf[1024];
+  OSVERSIONINFO osvi;
 
   if (uid < 0)
     return (NULL);
-  if (strncmp (UXPWDFILE, "%SystemRoot%\\", 13) == 0 &&
-      (p = getenv ("SystemRoot")))
-    sprintf (uxpwdfile, "%s%s", p, strchr (UXPWDFILE, '\\'));
-  else
-    strcpy (uxpwdfile, UXPWDFILE);
+  memset (&osvi, 0, sizeof(osvi));
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  GetVersionEx (&osvi);
+  if (osvi.dwMajorVersion >= 5) {
+    if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxpwdfile, "%s%s\\passwd", p, strchr (W2000MAPDIR, '\\'));
+    else
+      sprintf (uxpwdfile, "%s\\passwd", W2000MAPDIR);
+  } else {
+    if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot")))
+      sprintf (uxpwdfile, "%s%s\\passwd", p, strchr (WNTMAPDIR, '\\'));
+    else
+      sprintf (uxpwdfile, "%s\\passwd", WNTMAPDIR);
+  }
   if ((s = fopen (uxpwdfile, "r")) == NULL)
     return (NULL);
   while (fgets (getpwbuf, sizeof(getpwbuf), s) != NULL) {
