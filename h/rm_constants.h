@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.10 2005/01/29 15:37:40 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.11 2005/02/01 22:51:07 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -134,12 +134,12 @@
 #ifdef RM_SPACE_DEFAULT_FREQUENCY
 #undef RM_SPACE_DEFAULT_FREQUENCY
 #endif
-#define RM_SPACE_DEFAULT_FREQUENCY 60
+#define RM_SPACE_DEFAULT_FREQUENCY 30
 
 #ifdef RM_IORATE_DEFAULT_FREQUENCY
 #undef RM_IORATE_DEFAULT_FREQUENCY
 #endif
-#define RM_IORATE_DEFAULT_FREQUENCY 10
+#define RM_IORATE_DEFAULT_FREQUENCY 30
 
 #ifdef RM_LOAD_DEFAULT_FREQUENCY
 #undef RM_LOAD_DEFAULT_FREQUENCY
