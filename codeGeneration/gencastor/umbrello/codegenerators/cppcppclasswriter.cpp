@@ -3,7 +3,7 @@
 #include <qvaluelist.h>
 #include <../class.h>
 #include <../interface.h>
-
+#include <vector>
 // local
 #include "cppcppclasswriter.h"
 
@@ -48,18 +48,31 @@ void CppCppClassWriter::writeClass(UMLClassifier *c) {
     QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
     writeWideHeaderComment
       (m_classInfo->className + "Strings", getIndent(), *m_stream);
+    std::vector<QString> values;
+    int n = 0;
+    for (UMLAttribute *at=atl->first(); at; at = atl->next()) {
+      QString value = at->getInitialValue();
+      if (!value.isEmpty()) {
+        int index = atoi(value.ascii());
+        while (index > n) {
+          values.push_back("DELETED VALUE");
+          n++;
+        }
+      }
+      values.push_back(at->getName());
+      n++;
+    }
     *m_stream << getIndent() << "const char* "
               << m_classInfo->fullPackageName
               << m_classInfo->className << "Strings["
-              << atl->count() << "] = {" << endl;
+              << n << "] = {" << endl;
     m_indent++;
-    for (UMLAttribute *at=atl->first(); at ; ) {
-      QString attrName = at->getName();
-      *m_stream << getIndent() << "\"" << attrName << "\"";
-      UMLAttribute *next = atl->next();
-      bool isLast = next == 0;
+    for (std::vector<QString>::iterator it = values.begin();
+         it != values.end(); ) {
+      *m_stream << getIndent() << "\"" << *it << "\"";
+      it++;
+      bool isLast = it == values.end();
       if (!isLast) *m_stream << "," << endl;
-      at = next;
     }
     *m_stream << endl;
     m_indent--;

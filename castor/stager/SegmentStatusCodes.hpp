@@ -47,7 +47,7 @@ namespace castor {
      * Names of the differents representations, used to display
      * correctly the SegmentStatusCodes enum
      */
-    extern const char* SegmentStatusCodesStrings[3];
+    extern const char* SegmentStatusCodesStrings[7];
 
 #ifdef __cplusplus
   }; // end of namespace stager

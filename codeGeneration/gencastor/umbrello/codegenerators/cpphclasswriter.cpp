@@ -2,6 +2,7 @@
 #include <qstring.h>
 #include <qregexp.h>
 #include <qvaluelist.h>
+#include <vector>
 
 // local
 #include "cpphclasswriter.h"
@@ -101,6 +102,15 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
   if (!m_classInfo->isInterface && m_classInfo->isEnum) {
     UMLClass* k = dynamic_cast<UMLClass*>(c);
     QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
+    int n = 0;
+    for (UMLAttribute *at=atl->first(); at; at = atl->next()) {
+      QString value = at->getInitialValue();
+      if (!value.isEmpty()) {
+        int index = atoi(value.ascii());
+        if (index > n) n = index;
+      }
+      n++;
+    }
     *m_stream << getIndent() << "/**" << endl
               << getIndent()
               << " * Names of the differents representations, used to display"
@@ -110,7 +120,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
               << " */" << endl << getIndent()
               << "extern const char* "
               << m_classInfo->className << "Strings["
-              << atl->count() << "];" << endl << endl;
+              << n << "];" << endl << endl;
   }
 
 }
