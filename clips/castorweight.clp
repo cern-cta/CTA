@@ -269,23 +269,9 @@
 	; filesystem
 	(bind ?correctedFilesystemReadRate (create$ ))
 	(bind ?correctedFilesystemWriteRate (create$ ))
-	(bind ?maxCorrectedFilesystemReadRate 0.)
-	(bind ?maxCorrectedFilesystemWriteRate 0.)
         (loop-for-count (?index 1 ?diskserverNfs)
 		(bind ?thisFilesystemReadRate  (* (nth$ ?index ?filesystemReadRate) (nth$ ?index ?filesystemReadFactor)))
 		(bind ?thisFilesystemWriteRate (* (nth$ ?index ?filesystemWriteRate) (nth$ ?index ?filesystemWriteFactor)))
-		(if (> ?thisFilesystemReadRate
-		       ?maxCorrectedFilesystemReadRate)
-		    then
-		  (bind ?maxCorrectedFilesystemReadRate
-			?thisFilesystemReadRate)
-		)
-		(if (> ?thisFilesystemWriteRate
-		       ?maxCorrectedFilesystemWriteRate)
-		    then
-		  (bind ?maxCorrectedFilesystemWriteRate
-			?thisFilesystemWriteRate)
-		)
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[filesystemCorrectedIo] " ?diskserverName ":"
 			    (nth$ ?index ?filesystemName) " filesystemReadRate is "
@@ -317,52 +303,8 @@
 		  )
 		 )
 	)
-	(if (!= 0 ?*Debug*) then
-	  (printout t "[filesystemCorrectedIo] " ?diskserverName ": maxCorrectedFilesystemReadRate is " ?maxCorrectedFilesystemReadRate crlf)
-	  (printout t "[filesystemCorrectedIo] " ?diskserverName ": maxCorrectedFilesystemWriteRate is " ?maxCorrectedFilesystemWriteRate crlf)
-	)
-	; We have found the maximum - we now weight v.s. it
+	; We compute the fIo on that diskserver
         (loop-for-count (?index 1 ?diskserverNfs)
-		(if (> ?maxCorrectedFilesystemReadRate 0.) then
-		  (bind ?newCorrectedFilesystemReadRate
-			(/ (nth$ ?index
-				 ?correctedFilesystemReadRate)
-			   ?maxCorrectedFilesystemReadRate)
-		  )
-		  (bind ?correctedFilesystemReadRate
-			(replace$
-			 ?correctedFilesystemReadRate
-			 ?index
-			 ?index
-			 ?newCorrectedFilesystemReadRate
-			 )
-		  )
-		  (if (!= 0 ?*Debug*) then
-		    (printout t "[filesystemCorrectedIo] " ?diskserverName ":"
-			      (nth$ ?index ?filesystemName) " correctedFilesystemReadRate is "
-			      (nth$ ?index ?correctedFilesystemReadRate) crlf)
-		  )
-		)
-		(if (> ?maxCorrectedFilesystemWriteRate 0.) then
-		  (bind ?newCorrectedFilesystemWriteRate
-			(/ (nth$ ?index
-				 ?correctedFilesystemWriteRate)
-			   ?maxCorrectedFilesystemWriteRate)
-		  )
-		  (bind ?correctedFilesystemWriteRate
-			(replace$
-			 ?correctedFilesystemWriteRate
-			 ?index
-			 ?index
-			 ?newCorrectedFilesystemWriteRate
-			 )
-		  )
-		  (if (!= 0 ?*Debug*) then
-		    (printout t "[filesystemCorrectedIo] " ?diskserverName ":"
-			      (nth$ ?index ?filesystemName) " correctedFilesystemWriteRate is "
-			      (nth$ ?index ?correctedFilesystemWriteRate) crlf)
-		  )
-		)
 		(if (< (length ?filesystemReadImportance) ?index)
 		    then
 		  (if (!= 0 ?*Debug*) then
@@ -667,7 +609,11 @@
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName)
-			    " Rdonly/Wronly/ReadWrite/IoRead/IoWrite -> NStreams/Io is "
+			    " diskserverNbTot/diskserverIo/nbRdonly/nbWronly/nbReadWrite/readRate/writeRate -> NStreamsTot/IoTot is "
+			    ?diskserverNbTot
+			    "/"
+			    ?diskserverIo
+			    "/"
 			    ?thisFilesystemNbRdonly
 			    "/"
 			    ?thisFilesystemNbWronly
@@ -694,25 +640,21 @@
 				)
 			)
 		 )
-		(if (< ?thisWeight 0.1) then
-			(bind ?thisWeight 0.1)
+		(if (< ?thisWeight .1) then
+			(bind ?thisWeight .1)
 		)
-		(bind ?thisReadWeight ?thisWeight)
-		(bind ?thisWriteWeight ?thisWeight)
-		(bind ?thisReadWriteWeight ?thisWeight)
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName )
-			    " Rdonly/Wronly/ReadWrite weigth is "
-			    ?thisReadWeight
-			    "/"
-			    ?thisWriteWeight
-			    "/"
-			    ?thisReadWriteWeight
+			    " fsWeight initialy is "
+			    ?thisWeight
 			    crlf
 		   )
 		)
+		(bind ?thisReadWeight ?thisWeight)
+		(bind ?thisWriteWeight ?thisWeight)
+		(bind ?thisReadWriteWeight ?thisWeight)
 		; We can now use factor of importance and the sign for each type of stream
 		(bind ?thisReadWeight (* ?thisReadWeight ?readImportance))
 		(bind ?thisWriteWeight (* ?thisWriteWeight ?writeImportance))
@@ -721,14 +663,12 @@
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName )
-			    " Rdonly/Wronly/ReadWrite factorised weigth is "
+			    " After ponderation on stream directions, Rdonly/Wronly/ReadWrite factorised weigth is "
 			    ?thisReadWeight
 			    "/"
 			    ?thisWriteWeight
 			    "/"
 			    ?thisReadWriteWeight
-			    ", newfIo is "
-			    ?newfIo
 			    crlf
 		   )
 		)
@@ -811,21 +751,21 @@
 (deffunction filesystemWeight> (?a ?b)
   (bind ?diskWeightA (send ?a get-diskserverWeight))
   (bind ?fsWeightA (send ?a get-filesystemWeight))
-  (bind ?weightA (* ?diskWeightA (+ 1. ?fsWeightA)))
+  (bind ?weightA (* ?diskWeightA ?fsWeightA))
   (if (!= 0 ?*Debug*) then
     (printout t "[filesystemWeight>] " (send ?a get-diskserverName)
 	      ":" (send ?a get-filesystemName)
-	      ", diskWeightA=" ?diskWeightA " * (1 + fsWeightA=" ?fsWeightA
-	      ") = " ?weightA crlf)
+	      ", diskWeightA=" ?diskWeightA " * fsWeightA=" ?fsWeightA
+	      " = " ?weightA crlf)
   )
   (bind ?diskWeightB (send ?b get-diskserverWeight))
   (bind ?fsWeightB (send ?b get-filesystemWeight))
-  (bind ?weightB (* ?diskWeightB (+ 1. ?fsWeightB)))
+  (bind ?weightB (* ?diskWeightB ?fsWeightB))
   (if (!= 0 ?*Debug*) then
     (printout t "[filesystemWeight>] " (send ?a get-diskserverName)
 	      ":" (send ?a get-filesystemName)
-	      ", diskWeightB=" ?diskWeightB " * (1 + fsWeightB=" ?fsWeightB
-	      ") = " ?weightB crlf)
+	      ", diskWeightB=" ?diskWeightB " * fsWeightB=" ?fsWeightB
+	      " = " ?weightB crlf)
   )
   (> ?weightA ?weightB)
 )
@@ -836,21 +776,21 @@
 (deffunction filesystemWeight_lt (?a ?b)
   (bind ?diskWeightA (send ?a get-diskserverWeight))
   (bind ?fsWeightA (send ?a get-filesystemWeight))
-  (bind ?weightA (* ?diskWeightA (+ 1. ?fsWeightA)))
+  (bind ?weightA (* ?diskWeightA ?fsWeightA))
   (if (!= 0 ?*Debug*) then
-    (printout t "[filesystemWeight>] " (send ?a get-diskserverName)
+    (printout t "[filesystemWeight_lt] " (send ?a get-diskserverName)
 	      ":" (send ?a get-filesystemName)
-	      ", diskWeightA=" ?diskWeightA " * (1 + fsWeightA=" ?fsWeightA
-	      ") = " ?weightA crlf)
+	      ", diskWeightA=" ?diskWeightA " * fsWeightA=" ?fsWeightA
+	      " = " ?weightA crlf)
   )
   (bind ?diskWeightB (send ?b get-diskserverWeight))
   (bind ?fsWeightB (send ?b get-filesystemWeight))
-  (bind ?weightB (* ?diskWeightB (+ 1. ?fsWeightB)))
+  (bind ?weightB (* ?diskWeightB ?fsWeightB))
   (if (!= 0 ?*Debug*) then
-    (printout t "[filesystemWeight>] " (send ?a get-diskserverName)
+    (printout t "[filesystemWeight_lt] " (send ?a get-diskserverName)
 	      ":" (send ?a get-filesystemName)
-	      ", diskWeightB=" ?diskWeightB " * (1 + fsWeightB=" ?fsWeightB
-	      ") = " ?weightB crlf)
+	      ", diskWeightB=" ?diskWeightB " * fsWeightB=" ?fsWeightB
+	      " = " ?weightB crlf)
   )
   (< ?weightA ?weightB)
 )

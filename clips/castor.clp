@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.3 2005/01/25 20:31:54 jdurand Exp $
+; $Id: castor.clp,v 1.4 2005/02/09 06:05:53 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -45,14 +45,20 @@
 	?*memImportance* = 1.           ; How mem counts into a diskserver weight
 	?*swapImportance* = 1.          ; How swap counts into a diskserver weight
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
-	?*loadImportance* = 3.          ; How load counts into a diskserver weight
-	?*ioImportance* = 2.            ; How i/o counts into a diskserver weight
+	?*loadImportance* = 2.          ; How load counts into a diskserver weight
+	?*ioImportance* = 5.            ; How i/o counts into a diskserver weight
 	?*streamImportance* = 1.        ; How number of streams counts into a diskserver weight
-	?*filesystemReadImportance* = 1.; How readRate counts into a filesystem weight
-	?*filesystemWriteImportance* = 1.; How writeRate counts into a filesystem weight
-	?*readImportance* = 1.          ; How a read stream counts into a diskserver weight
-	?*writeImportance* = 1.         ; How a read stream counts into a diskserver weight
-	?*readWriteImportance* = 1.     ; How a read/write stream counts into a diskserver weight
+
+	;; Please make sure that filesystemReadImportance + filesystemWriteImportance gives 1.
+
+	?*filesystemReadImportance* = 0.5; How readRate counts into a filesystem weight
+	?*filesystemWriteImportance* = 0.5; How writeRate counts into a filesystem weight
+
+	;; Please make sure that readImportance + writeImportance + readWriteImportance gives 1.
+
+	?*readImportance* = 0.34        ; How a read stream counts into a diskserver weight
+	?*writeImportance* = 0.33       ; How a read stream counts into a diskserver weight
+	?*readWriteImportance* = 0.66   ; How a read/write stream counts into a diskserver weight
 	?*minIo* = 0.                   ; Minimum i/o, forced if necessary
 )
 
