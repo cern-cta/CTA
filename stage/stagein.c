@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.10 2000/03/23 01:41:38 jdurand Exp $
+ * $Id: stagein.c,v 1.11 2000/03/24 10:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.11 $ $Date: 2000/03/24 10:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -541,8 +541,8 @@ int main(argc, argv)
 	
 	while (1) {
 		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == BLKSKPD || serrno == TPE_LSZ ||
-				serrno == MNYPARI || serrno == LIMBYSZ || serrno == CLEARED ||
+		if (c == 0 || serrno == EINVAL || serrno == ERTBLKSKPD || serrno == ERTTPE_LSZ ||
+				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == CLEARED ||
 				serrno == ENOSPC) break;
 		if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
 			serrno = USERR;

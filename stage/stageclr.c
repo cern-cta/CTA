@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.10 2000/03/23 01:41:36 jdurand Exp $
+ * $Id: stageclr.c,v 1.11 2000/03/24 10:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.11 $ $Date: 2000/03/24 10:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -244,7 +244,7 @@ int main(argc, argv)
 
 			while (1) {
 				c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
-				if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == EBUSY) break;
+				if (c == 0 || serrno == EINVAL || serrno == EBUSY) break;
 				if (serrno == ENOUGHF) break;
 				if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 				sleep (RETRYI);
@@ -271,7 +271,7 @@ int main(argc, argv)
 
 		while (1) {
 			c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
-			if (c == 0 || serrno == USERR || serrno == EINVAL) break;
+			if (c == 0 || serrno == EINVAL) break;
 			if (serrno == ENOUGHF) {
 				c = 0;
 				break;
