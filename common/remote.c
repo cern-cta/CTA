@@ -1,5 +1,5 @@
 /*
- * $Id: remote.c,v 1.6 1999/12/10 19:40:38 baran Exp $
+ * $Id: remote.c,v 1.7 2000/03/10 18:46:32 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.6 $ $Date: 1999/12/10 19:40:38 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.7 $ $Date: 2000/03/10 18:46:32 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -18,7 +18,6 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.6 $ $Date: 1999/1
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <ws_errmsg.h>
-#define MAXHOSTNAMELEN 64
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -141,7 +140,7 @@ char *host_name ;
     if ( host_name != NULL ) {
         FILE *fs;
         char *cp ;
-        char s[MAXHOSTNAMELEN+1];
+        char s[CA_MAXHOSTNAMELEN+1];
 #if defined(_WIN32)
         char path[256];
 #endif   
@@ -156,7 +155,7 @@ char *host_name ;
 #endif
         log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, rthfile);
         if ( (fs = fopen( rthfile, "r")) != NULL ) {
-            while ( fgets(s,MAXHOSTNAMELEN+1,fs) != NULL ) {
+            while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
                 if ( (cp= strtok(s," \n\t"))!=NULL ) {
                     if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of external hosts\n",cp);
@@ -194,7 +193,7 @@ char *host_name ;
 #endif
         log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, lhfile);
         if ( (fs = fopen( lhfile, "r")) != NULL ) {
-            while ( fgets(s,MAXHOSTNAMELEN+1,fs) != NULL ) {
+            while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
                 if ( (cp= strtok(s," \n\t")) != NULL ) {
                     if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of local hosts\n",cp);
