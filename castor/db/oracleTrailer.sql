@@ -106,6 +106,22 @@ BEGIN
      AND Stream = :new.parent;
 END;
 
+/* Updates the count of tapecopies in NbTapeCopiesInFS
+   whenever a TapeCopy has failed to be migrated and is
+   put back in WAITINSTREAM from the SELECTED status */
+CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
+AFTER UPDATE of status ON TapeCopy
+FOR EACH ROW
+WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
+BEGIN
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
+   WHERE FS IN (SELECT DiskCopy.FileSystem
+                  FROM DiskCopy, TapeCopy
+                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                   AND TapeCopy.id = :new.id)
+     AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = :new.id);
+END;
+
 /* XXX update count into NbTapeCopiesInFS when a Disk2Disk copy occurs
    FOR a file in CANBEMIGR */
 
