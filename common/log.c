@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.13 $ $Date: 2003/04/22 09:50:06 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.14 $ $Date: 2003/04/28 12:36:53 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -35,7 +35,7 @@ static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.13 $ $Date: 2003/04
 #include <Cglobals.h>           /* Thread globals. Get Thread ID.       */
 
 
-static mode_t logbits=0664;
+static mode_t logbits=0666;
 static int loglevel=LOG_NOLOG;  /* logging level                        */
 static char logname[64];        /* logging facility name                */
 static char logfilename[64]=""; /* log file name                        */
