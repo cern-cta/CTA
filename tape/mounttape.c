@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.7 $ $Date: 1999/11/17 11:03:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 06:55:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,6 +33,10 @@ static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.7 $ $Date: 19
 #include "sacct.h"
 #endif
 #include "serrno.h"
+#if VDQM
+#include "net.h"
+#include "vdqm_api.h"
+#endif
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
@@ -93,6 +97,8 @@ char	**argv;
 	int tpmode;
 	char tpvsn[CA_MAXVIDLEN+1];
 	int ux;
+	int vdqm_rc;
+	int vdqm_status;
 	char *vid;
 	char *vsn;
 	char vol1[LBLBUFSZ];
@@ -550,6 +556,13 @@ unload_loop1:
 #ifdef TMS
 	if (c = sendtmsmount (mode, "CO", vid, jid, name, acctname, drive))
 		goto reply;
+#endif
+#if VDQM
+	vdqm_status = VDQM_VOL_MOUNT;
+	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	tplogit (func, "vdqm_UnitStatus returned %s\n",
+		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
 
 positp:

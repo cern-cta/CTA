@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.6 $ $Date: 1999/11/17 11:03:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.7 $ $Date: 1999/11/19 06:55:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,11 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.6 $ $Date: 1999
 #include "marshall.h"
 #if SACCT
 #include "sacct.h"
+#endif
+#include "serrno.h"
+#if VDQM
+#include "net.h"
+#include "vdqm_api.h"
 #endif
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -53,7 +58,6 @@ char	**argv;
 	char *drive;
 	char *dvn;
 	gid_t gid;
-	int keeprsv;
 	char *loader;
 	int mode;
 	int msglen;
@@ -61,12 +65,15 @@ char	**argv;
 	char name[CA_MAXUSRNAMELEN+1];
 	struct passwd *pwd;
 	char *q;
+	int rlsflags;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	int sonyraw;
 	int tapefd;
 	uid_t uid;
 	int ux;
+	int vdqm_rc;
+	int vdqm_status;
 	char *vid;
 
 	ENTRY (rlstape);
@@ -80,7 +87,7 @@ char	**argv;
 	acctname = argv[7];
 	jid = atoi (argv[8]);
 	ux = atoi (argv[9]);
-	keeprsv = atoi (argv[10]);
+	rlsflags = atoi (argv[10]);
 	dgn = argv[11];
 	devtype = argv[12];
 	dvrname = argv[13];
@@ -109,6 +116,18 @@ char	**argv;
 
 	pwd = getpwuid (uid);
 	strcpy (name, pwd->pw_name);
+
+#if VDQM
+	vdqm_status = VDQM_UNIT_RELEASE;
+	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	tplogit (func, "vdqm_UnitStatus returned %s\n",
+		vdqm_rc ? sstrerror(serrno) : "ok");
+	if (vdqm_status != VDQM_VOL_UNMOUNT && (rlsflags & TPRLS_UNLOAD) == 0)
+		goto freevol;
+#endif
+	if (rlsflags & TPRLS_NOUNLOAD)
+		goto freevol;
 
 unload_loop:
 #if SONYRAW
@@ -180,9 +199,17 @@ unload_loop:
 		} while (n == 1);
 		if (n == 2) goto unload_loop;
 	}
+freevol:
 reply:
 #ifdef TMS
 	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
+#endif
+#if VDQM
+	vdqm_status = VDQM_VOL_UNMOUNT;
+	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	tplogit (func, "vdqm_UnitStatus returned %s\n",
+		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
 
 	/* Build FREEDRV request header */
@@ -199,7 +226,7 @@ reply:
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
-	marshall_WORD (sbp, keeprsv);
+	marshall_WORD (sbp, rlsflags);
 	marshall_WORD (sbp, rpfd);
 	marshall_WORD (sbp, ux);
  
