@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/18 08:46:32 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 15:53:09 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.8 $ $Date: 2004/06/18 08:46:32 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.9 $ $Date: 2004/06/18 15:53:09 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -89,7 +89,6 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.8 $ $Date: 2
 TpReqMap_t *runningReqsMap = NULL;
 
 static int ENOSPCkey = -1;
-static int dbSvcKey = -1;
 
 int (*rtcpcld_ClientCallback) _PROTO((
                                       rtcpTapeRequest_t *,
@@ -468,12 +467,6 @@ static int updateSegment(
                              segment->segment,
                              filereq->blockid
                              );
-  dbSvc = NULL;
-  rc = Cglobals_get(&dbSvcKey,(void **)&dbSvc,sizeof(struct C_Services_t **));
-  if ( rc == -1 || dbSvc == NULL ) {
-    LOG_FAILED_CALL("Cglobals_get()");
-    return(-1);
-  }
   
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
@@ -488,18 +481,15 @@ static int updateSegment(
   }
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
-  if ( *dbSvc == NULL ) {
-    serrno = 0;
-    rc = C_Services_create(dbSvc);
-    if ( rc == -1 ) {
-      LOG_FAILED_CALL("C_Services_create()");
-      save_serrno = serrno;
-      if ( serrno == 0 ) save_serrno = errno;
-      C_Services_delete(*dbSvc);
-      *dbSvc = NULL;
-      serrno = save_serrno;
-      return(-1);
-    }
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+    serrno = save_serrno;
+    return(-1);
   }
   segmIObj = Cstager_Segment_getIObject(segment->segment);
   rc = C_Services_updateRep(*dbSvc,iAddr,segmIObj,1);
@@ -957,16 +947,6 @@ int rtcpcldc_appendFileReqs(tape,file)
     }
   CLIST_ITERATE_END(file,fl);
 
-  dbSvc = NULL;
-  rc = Cglobals_get(&dbSvcKey,(void **)&dbSvc,sizeof(struct C_Services_t **));
-  if ( rc == -1 || dbSvc == NULL ) {
-    LOG_FAILED_CALL("Cglobals_get()");
-    save_serrno = serrno;
-    (void)Cmutex_unlock(tape);
-    serrno = save_serrno;
-    return(-1);
-  }
-  
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
@@ -981,19 +961,15 @@ int rtcpcldc_appendFileReqs(tape,file)
   }
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
-  if ( *dbSvc == NULL ) {
-    serrno = 0;
-    rc = C_Services_create(dbSvc);
-    if ( rc == -1 ) {
-      LOG_FAILED_CALL("C_Services_create()");
-      save_serrno = serrno;
-      if ( serrno == 0 ) save_serrno = errno;
-      C_Services_delete(*dbSvc);
-      *dbSvc = NULL;
-      (void)Cmutex_unlock(tape);
-      serrno = save_serrno;
-      return(-1);
-    }
+
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("C_Services_create()");
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
   }
   flCp = file;
   while ( (fl = flCp) != NULL ) {
@@ -1041,6 +1017,81 @@ int rtcpcldc_appendFileReqs(tape,file)
   return(0);
 }
 
+int rtcpcldc_deleteFromDB(tape)
+     tape_list_t *tape;
+{
+  int rc, save_serrno;
+  RtcpcldTapeList_t *tpList = NULL;
+  struct C_Services_t **dbSvc = NULL;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *tapeIObj;
+  
+  if ( tape == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  rc = Cmutex_lock(tape,-1);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("Cmutex_lock()");
+    return(-1);
+  }
+  
+  rc = rtcpcld_findTpReqMap(tape,&tpList);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("rtcpcld_findTpReqMap()");
+    save_serrno = serrno;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  if ( rc == 0 || tpList == NULL ) {
+    (void)Cmutex_unlock(tape);
+    serrno = ENOENT;
+    return(-1);
+  }
+
+  serrno = 0;
+  rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("C_BaseAddress_create()");
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  tapeIObj = Cstager_Tape_getIObject(tpList->tp);
+  rc = C_Services_deleteRep(*dbSvc,iAddr,tapeIObj,1);
+  if ( rc != 0 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("C_Services_deleteRep()");
+    rtcp_log(LOG_ERR,"DB error: %s\n",C_Services_errorMsg(*dbSvc));
+    C_IAddress_delete(iAddr);
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  (void)Cmutex_unlock(tape);
+
+  C_IAddress_delete(iAddr);
+  return(0);
+}
+
 void rtcpcldc_cleanup(tape)
      tape_list_t *tape;
 {
@@ -1050,8 +1101,8 @@ void rtcpcldc_cleanup(tape)
   int rc;
   
   dbSvc = NULL;
-  (void)Cglobals_get(&dbSvcKey,(void **)&dbSvc,sizeof(struct C_Services_t **));
-  if ( dbSvc != NULL && *dbSvc != NULL ) {
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == 0 && dbSvc != NULL && *dbSvc != NULL ) {
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
   }
@@ -1191,16 +1242,6 @@ int rtcpcldc(tape)
     }
   CLIST_ITERATE_END(tape,tl);
 
-  dbSvc = NULL;
-  rc = Cglobals_get(&dbSvcKey,(void **)&dbSvc,sizeof(struct C_Services_t **));
-  if ( rc == -1 || dbSvc == NULL ) {
-    LOG_FAILED_CALL("Cglobals_get()");
-    save_serrno = serrno;
-    (void)Cmutex_unlock(tape);
-    serrno = save_serrno;
-    return(-1);
-  }
-  
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
@@ -1215,19 +1256,16 @@ int rtcpcldc(tape)
   }
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
-  if ( *dbSvc == NULL ) {
-    serrno = 0;
-    rc = C_Services_create(dbSvc);
-    if ( rc == -1 ) {
-      LOG_FAILED_CALL("C_Services_create()");
-      save_serrno = serrno;
-      if ( serrno == 0 ) save_serrno = errno;
-      C_Services_delete(*dbSvc);
-      *dbSvc = NULL;
-      (void)Cmutex_unlock(tape);
-      serrno = save_serrno;
-      return(-1);
-    }
+
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    *dbSvc = NULL;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
   }
   
   CLIST_ITERATE_BEGIN(rtcpcldTpList,rtcpcldTp) 
