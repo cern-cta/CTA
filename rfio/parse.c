@@ -65,7 +65,7 @@ int   	ln ; 	/* solve links or not ? */
     if (turl.rfioPort > 0) {
       int hostlen, portlen;
       hostlen = strlen(turl.rfioHostName);
-      snprintf(buf, CA_MAXHOSTNAMELEN, ":%lx", turl.rfioPort);
+      snprintf(buf, CA_MAXHOSTNAMELEN, ":%ld", turl.rfioPort);
       buf[CA_MAXHOSTNAMELEN] = '\0';
       portlen = strlen(buf);
       *host =(char *)malloc(hostlen + portlen + 1);
@@ -95,7 +95,11 @@ int   	ln ; 	/* solve links or not ? */
       serrno = ENOMEM;
       return -1;
     }
+  } else {
+    *path = "";
+    /*  Setting path to empty string rather than NULL */
   }
+  
   
   return hasHost;
 }
