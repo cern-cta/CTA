@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/04/05 11:51:33 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/logstream.h"
+#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
