@@ -601,6 +601,10 @@ int stagein_castor_hsm_file() {
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 					free(stcs_tmp);
 					RETURN (SYERR);
+				} else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
+							(rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
+					/* Reselect a server - we retry, though */
+					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
 					/* This is *serious* error, most probably tape info inconsistency with, for ex., TMS */
 					Flags |= DISABLED;
@@ -608,9 +612,6 @@ int stagein_castor_hsm_file() {
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 					free(stcs_tmp);
 					RETURN (SYERR);
-				} else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
-					/* Reselect a server - we retry, though */
-					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode != ENOENT) {
 					Flags |= DISABLED;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
@@ -1047,7 +1048,8 @@ int stage_tape() {
           sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
           RETURN (SYERR);
           break;
-        } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
+        } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
+                   (rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
           stage_tape_retry_flag = 1;
           break;
         }
