@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.119 2001/02/02 17:51:12 jdurand Exp $
+ * $Id: stager.c,v 1.120 2001/02/02 22:42:47 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #define USE_SUBREQID
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.119 $ $Date: 2001/02/02 17:51:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.120 $ $Date: 2001/02/02 22:42:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -121,6 +121,8 @@ u_signed64 *hsm_totalsize = NULL;   /* Total size per hsm file */
 u_signed64 *hsm_transferedsize = NULL; /* Yet transfered size per hsm file */
 int *hsm_nsegments = NULL;          /* Total number of segments per hsm file */
 int *hsm_oksegment = NULL;          /* Valid segment index in the total segment list */
+int *hsm_startsegment = NULL;       /* Valid segment start index in the total segment list */
+int *hsm_endsegment = NULL;         /* Valid segment end index in the total segment list */
 int *hsm_status = NULL;             /* Global status per hsm file */
 struct Cns_segattrs **hsm_segments = NULL; /* Total list of segments per hsm file */
 int *hsm_fseq = NULL;               /* Current file sequence on current tape (vid) */
@@ -151,6 +153,16 @@ char tape_pool[CA_MAXPOOLNAMELEN + 1]; /* Global tape pool for write migration *
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
+
+#ifdef STGSEGMENT_OK
+#undef STGSEGMENT_OK
+#endif
+#define STGSEGMENT_OK '-'
+
+#ifdef STGSEGMENT_NOTOK
+#undef STGSEGMENT_NOTOK
+#endif
+#define STGSEGMENT_NOTOK ' '
 
 #ifdef STAGER_DEBUG
 #ifdef RETRYI
@@ -259,6 +271,8 @@ int save_euid, save_egid;
       (hsm_nsegments = (int *) calloc(nbcat_ent,sizeof(int)))                      == NULL ||              \
       (hsm_segments = (struct Cns_segattrs **) calloc(nbcat_ent,sizeof(struct Cns_segattrs *))) == NULL || \
       (hsm_oksegment = (int *) calloc(nbcat_ent,sizeof(int)))                      == NULL ||              \
+      (hsm_startsegment = (int *) calloc(nbcat_ent,sizeof(int)))                   == NULL ||              \
+      (hsm_endsegment = (int *) calloc(nbcat_ent,sizeof(int)))                     == NULL ||              \
       (hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))   == NULL ||              \
       (hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_blockid = (blockid_t *) calloc(nbcat_ent,sizeof(blockid_t)))            == NULL ||              \
@@ -285,6 +299,8 @@ int save_euid, save_egid;
   if (hsm_segments != NULL) free(hsm_segments);                              \
   if (hsm_nsegments != NULL) free(hsm_nsegments);                            \
   if (hsm_oksegment != NULL) free(hsm_oksegment);                            \
+  if (hsm_startsegment != NULL) free(hsm_startsegment);                      \
+  if (hsm_endsegment != NULL) free(hsm_endsegment);                          \
   if (hsm_fseq != NULL) free(hsm_fseq);                                      \
   if (hsm_blockid != NULL) free(hsm_blockid);                                \
   if (hsm_flag != NULL) free(hsm_flag);                                      \
@@ -844,6 +860,8 @@ int stagein_castor_hsm_file() {
 #endif
     struct devinfo *devinfo;
     int isegments;
+    int jsegments;
+    int ksegments;
     int save_serrno;
 
     ALLOCHSM;
@@ -907,28 +925,129 @@ int stagein_castor_hsm_file() {
 		hsm_transferedsize[i] = 0;
 
 		/* Determine which valid copy to use */
-		hsm_oksegment[i] = -1;
+		hsm_startsegment[i] = -1;
+		hsm_endsegment[i] = -1;
 		for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
-			if (hsm_segments[i][isegments].s_status != '-') {
+			if (hsm_segments[i][isegments].s_status != STGSEGMENT_OK) {
 				/* This copy number is not available for recall */
+	            /* We makes sure that all segments with the same copy number are really invalid */
+				for (jsegments = 0; jsegments < hsm_nsegments[i]; jsegments++) {
+					if (jsegments == isegments) continue;
+					if (hsm_segments[i][jsegments].copyno != hsm_segments[i][isegments].copyno) continue;
+					if (hsm_segments[i][jsegments].s_status == STGSEGMENT_OK) {
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][isegments].copyno, jsegments, isegments);
+						RESTORE_EID;
+						hsm_segments[i][jsegments].s_status = STGSEGMENT_NOTOK;
+					}
+            	}
 				continue;
-			} else {
-				hsm_oksegment[i] = isegments;
+			}
+
+			/* We have found a copy number to start with */
+			/* We now search to the end in the index list, based */
+			/* onto the copy number which have to be the same for */
+			/* all segments of the same file */
+
+			/* PLEASE NOTE THAT THE FOLLOWING ASSUMES THAT ALL SEGMENTS ARE GROUPED BY COPY NUMBER */
+
+			for (jsegments = isegments; jsegments < hsm_nsegments[i]; jsegments++) {
+				if (hsm_segments[i][jsegments].copyno != hsm_segments[i][isegments].copyno) {
+					/* We have reached a segment which does not have the same copynumber */
+					/* this means that the previous one should be our candidate */
+
+					/* Please note that by construction, here, jsegments > isegments, always */
+					hsm_startsegment[i] = isegments;
+					hsm_endsegment[i] = (jsegments - 1);
+					break;
+				} else if (jsegments == (hsm_nsegments[i] - 1)) {
+					/* Or we basically have reached the end of the segments list */
+					/* In this case this is is normal to not have touched any segment with another */
+					/* copy number */
+					/* If this last segment is not the first one, we just check that its status */
+					/* is correctly STGSEGMENT_OK */
+					if (jsegments != isegments) {
+						if (hsm_segments[i][jsegments].s_status == STGSEGMENT_OK) {
+							hsm_startsegment[i] = isegments;
+							hsm_endsegment[i] = jsegments;
+							break;
+						} else {
+							/* This copy number is not available for recall */
+				            /* We makes sure that all segments with the same copy number are really invalid */
+							for (ksegments = 0; ksegments < hsm_nsegments[i]; ksegments++) {
+								if (ksegments == jsegments) continue;
+								if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
+								if (hsm_segments[i][ksegments].s_status == STGSEGMENT_OK) {
+									SAVE_EID;
+									sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][ksegments].copyno, ksegments, jsegments);
+									RESTORE_EID;
+									hsm_segments[i][ksegments].s_status = STGSEGMENT_NOTOK;
+								}
+			            	}
+							break;
+						}
+					} else {
+						/* This copy number is is one single segment */
+						hsm_startsegment[i] = isegments;
+						hsm_endsegment[i] = jsegments;
+						break;
+					}
+				}
+				/* This segment does not have status STGSEGMENT_OK. This is not ok for us because we did */
+				/* have not yet determined the end inside of the segment list with the same copy number */
+				if (hsm_segments[i][jsegments].s_status != STGSEGMENT_OK) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG136, castor_hsm, hsm_segments[i][isegments].copyno, isegments, jsegments, hsm_segments[i][isegments].copyno);
+					RESTORE_EID;
+					for (ksegments = 0; ksegments < hsm_nsegments[i]; ksegments++) {
+						if (ksegments == jsegments) continue;
+						if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
+						if (hsm_segments[i][ksegments].s_status == STGSEGMENT_OK) {
+							sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][jsegments].copyno, ksegments, jsegments);
+							hsm_segments[i][ksegments].s_status = STGSEGMENT_NOTOK;
+						}
+        	    	}
+					break;
+				}
+			}
+			/* We exit of the loop if both hsm_startsegment and hsm_endsegment are set */
+			if ((hsm_startsegment[i] >= 0) && (hsm_endsegment[i] >= 0)) {
+				/* With a small consistency check... */
+				if (hsm_endsegment[i] < hsm_startsegment[i]) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "end segment < start segment", sstrerror(SEINTERNAL));
+					RESTORE_EID;
+					RETURN (SYERR);
+				}
 				break;
 			}
 		}
-		if (hsm_oksegment[i] < 0) {
+
+		/* So we have finally scanned everything */
+		if (hsm_startsegment[i] < 0) {
+			/* We found no start segment ? */
 			if (hsm_totalsize[i] > 0) {
-				/* This file is very probably BEEING migrated ! */
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-						"File probably already beeing migrated",sstrerror (EBUSY));
-				RESTORE_EID;
-				RETURN (EBUSY);
+				/* But file is not of zero-size !? */
+				if (hsm_nsegments[i] <= 0) {
+					/* This file is very probably BEEING migrated ! Then it is normal */
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
+							"File probably currently beeing migrated",sstrerror(EBUSY));
+					RESTORE_EID;
+					RETURN (EBUSY);
+				} else {
+					/* But here, we found no valid segment - are they all STGSEGMENT_NOTOK */
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
+							"File has not valid segment",sstrerror(USERR));
+					RESTORE_EID;
+					RETURN (USERR);
+				}
 			} else {
+				/* This is really an empty file... */
 				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-						"Empty file (size == 0, no segment information)",sstrerror (USERR));
+						"Empty file (size == 0, no valid segment information)",sstrerror(USERR));
 				RESTORE_EID;
 				RETURN (USERR);
 			}
@@ -948,7 +1067,7 @@ int stagein_castor_hsm_file() {
 			}
 		}
 #ifndef USE_SUBREQID
-		if (hsm_segments[i][hsm_oksegment[i]].segsize < hsm_totalsize[i]) {
+		if (hsm_segments[i][hsm_startsegment[i]].segsize < hsm_totalsize[i]) {
 			/* The stagein of this CASTOR file will require multiple segments */
 			/* and we know in advance that this is supported, when async callback */
 			/* is disabled only if this file is the last one on the command-line */
@@ -969,11 +1088,12 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		hsm_vid[i] = NULL;
 		hsm_fseq[i] = -1;
+		hsm_oksegment[i] = -1;
 		memset(hsm_blockid[i],0,sizeof(blockid_t));
 	}
 
 	/* We initialize the latest vid from vmgr_gettape() */
-	strcpy(last_vid,"");
+	last_vid[0] = '\0';
 
 	/* We loop on all the requests, choosing those that requires the same tape */
 	new_tape = 0;
@@ -994,6 +1114,42 @@ int stagein_castor_hsm_file() {
 		RESTORE_EID;
 #endif
 		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+			u_signed64 virtual_size;
+			u_signed64 previous_virtual_size;
+
+			/* We search at which segment to start the transfer. It depends on the size */
+			/* yet transfered and the size of each of the segments for file No i */
+			virtual_size = previous_virtual_size = 0;
+			for (isegments = hsm_startsegment[i]; isegments <= hsm_endsegment[i]; isegments++) {
+				/* We add the size of this segment to total virtual_size up to this segment */
+				/* and compares with the size physically yet transfered */
+				virtual_size += hsm_segments[i][isegments].segsize;
+				if (virtual_size > hsm_transferedsize[i]) {
+					/* Well... in principle if this segment is NOT the first of the segments */
+					/* then what we had already transfered should end up exactly to the previous */
+					/* virtual size, e.g. the sum of all previous segments */
+					if (isegments > hsm_startsegment[i]) {
+						if (hsm_transferedsize[i] != previous_virtual_size) {
+							SAVE_EID;
+							sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "yet transfered size does not match the sum of all previous segments",
+							 sstrerror (SEINTERNAL));
+							RESTORE_EID;
+							RETURN (SYERR);
+						}
+					}
+					hsm_oksegment[i] = isegments;
+					break;
+                }
+				previous_virtual_size = virtual_size;
+			}
+			if (hsm_oksegment[i] < 0) {
+				/* Impossible ! */
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "could not find segment to transfer",
+					sstrerror (SEINTERNAL));
+				RESTORE_EID;
+				RETURN (SYERR);
+			}
 			hsm_vid[i] = hsm_segments[i][hsm_oksegment[i]].vid;
 			hsm_fseq[i] = hsm_segments[i][hsm_oksegment[i]].fseq;
 			memcpy(hsm_blockid[i],hsm_segments[i][hsm_oksegment[i]].blockid,sizeof(blockid_t));
@@ -1017,9 +1173,7 @@ int stagein_castor_hsm_file() {
 					/* We are moving from one tape to another : we will */
 					/* run current and partial rtcp request             */
 					new_tape = 1;
-					/* We remember this vid */
-					/* strcpy(last_vid,vid); */
-					/* And we reset the last found one : we will have to redo it */
+					/* We reset the last found one : we will have to redo it */
 					hsm_vid[i] = NULL;
 					hsm_oksegment[i]--;
 				}
@@ -1035,7 +1189,8 @@ int stagein_castor_hsm_file() {
 			if (new_tape == 0 && stcp == (stce - 1)) {
 				/* This is the special case where all file HSM files share the same vid */
 				/* from the first not yet completely transfered up to the last one */
-				/* Then the first test (when last_vid == "") leads only to strcpy(last_vid,hsm_vid[i]) */
+				/* Then the first test (when last_vid[0] == '\0') leads only to */
+				/* strcpy(last_vid,hsm_vid[i]) */
 				/* the second, third, etc... leads only to strcmp(last_vid,hsm_vid[i]) == 0 */
 				new_tape = 1;
 			}
@@ -1063,7 +1218,7 @@ int stagein_castor_hsm_file() {
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Calling vmgr_querytape(vid=\"%s\",vsn,dgn,aden,lbltype,model,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm,last_vid);
 			RESTORE_EID;
 #endif
-			strcpy(vid,"");
+			vid[0] = '\0';
 			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, model, NULL, NULL,
 								NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &tape_status) == 0) {
 				if (((tape_status & DISABLED) == DISABLED) ||
@@ -1074,13 +1229,13 @@ int stagein_castor_hsm_file() {
                             ((tape_status & DISABLED) == DISABLED) ? "DISABLED" :
                             (((tape_status & EXPORTED) == EXPORTED) ? "EXPORTED" : "ARCHIVED"));
 					RESTORE_EID;
-					strcpy(vid,"");
+					vid[0] = '\0';
 					RETURN (USERR);
 				}
 				strcpy(vid,last_vid);
 				break;
 			}
-			strcpy(vid,"");
+			vid[0] = '\0';
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "vmgr_querytape",
 							 sstrerror (serrno));
@@ -1408,7 +1563,7 @@ int stagewrt_castor_hsm_file() {
 			}
 
 			/* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
-			strcpy(vid,"");
+			vid[0] = '\0';
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",sstrerror (serrno));
 			RESTORE_EID;
@@ -3311,6 +3466,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Friday 02 February, 2001 at 18:49:25 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 02 February, 2001 at 22:59:29 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
