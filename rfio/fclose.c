@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.8 2000/11/20 15:01:16 jdurand Exp $
+ * $Id: fclose.c,v 1.9 2001/06/20 09:59:57 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.8 $ $Date: 2000/11/20 15:01:16 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.9 $ $Date: 2001/06/20 09:59:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -26,6 +26,7 @@ RFILE *fp;                      /* Remote file pointer                  */
 {
    static char     buf[256];       /* General input/output buffer          */
    char    *p = buf;
+   int     HsmType;
    int     status;
 
 
@@ -38,6 +39,15 @@ RFILE *fp;                      /* Remote file pointer                  */
       return -1 ;
    }
 
+   /*
+    * Check if file is Hsm. For CASTOR HSM files, the file is
+    * closed using normal RFIO (local or remote) close().
+    */
+   HsmType = rfio_HsmIf_GetHsmType(fp->s,NULL);
+   if ( HsmType > 0 ) {
+       status = rfio_HsmIf_close(fp->s);
+       if ( HsmType != RFIO_HSM_CNS ) return(status);
+   }
    /*
     * The file is local : this is the only way to detect it !
     */
