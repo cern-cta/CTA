@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/18 16:16:39 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:43:40 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/18 16:16:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:43:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -315,7 +315,7 @@ int rtcpcld_Callback(
   char *func, *vid = "", *blkid = NULL, *disk_path = ".";
   int fseq = -1, proc_status = -1, msgNo = -1, rc, status, getMoreWork = 0;
   struct Cns_fileid fileId;
-  Cuuid_t rtcpUuid, stgUuid;
+  Cuuid_t stgUuid, rtcpUuid;
 
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
@@ -601,7 +601,10 @@ static int updateClientInfo(
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SYSCALL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "vdqm_SendToRTCP()",
                     "ERROR_STRING",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
@@ -661,7 +664,7 @@ static int vidWorker(
                   "MODE",
                   DLF_MSG_PARAM_INT,
                   vidChildTape->tapereq.mode,
-                  "VOLREQID",
+                  "VDQMID",
                   DLF_MSG_PARAM_INT,
                   vidChildTape->tapereq.VolReqID
                   );
@@ -757,7 +760,10 @@ static int vidWorker(
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SYSCALL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcpc_InitReq()",
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(save_serrno),
@@ -800,7 +806,10 @@ static int vidWorker(
                       DLF_LVL_ERROR,
                       RTCPCLD_MSG_VDQM,
                       (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "vdqm_SendVolReq()",
                       "ERROR_STR", 
                       DLF_MSG_PARAM_STR,
                       sstrerror(save_serrno),
@@ -1121,7 +1130,7 @@ int main(
      char **argv;
 {
   char *vid = NULL, *dgn = NULL, *lbltype = NULL, *density = NULL;
-  char  *unit = NULL, *mainUuidStr = NULL, *shiftMsg;
+  char  *unit = NULL, *mainUuidStr = NULL, *shiftMsg, optstr[3];
   char *vidChildFacility = RTCPCLIENTD_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   int i, vdqmVolReqID = -1, c, rc, mode = WRITE_DISABLE, modeSet = 0, side = 0;
   int save_serrno, retval, tStartRequest = 0;
@@ -1298,15 +1307,16 @@ int main(
       modeSet++;
       break;
     default:
+      sprintf(optstr,"-%c",c);
       (void)dlf_write(
                       childUuid,
                       DLF_LVL_ERROR,
-                      RTCPCLD_MSG_INTERNAL,
+                      RTCPCLD_MSG_UNKNOPT,
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+1,
-                      "ERROR_STRING",
+                      "OPTION",
                       DLF_MSG_PARAM_STR,
-                      "Unknown option",
+                      optstr,
                       RTCPCLD_LOG_WHERE
                       );
       return(2);
@@ -1383,19 +1393,16 @@ int main(
                   DLF_LVL_SYSTEM,
                   RTCPCLD_MSG_VIDWORKER_ENDED,
                   (struct Cns_fileid *)NULL,
-                  7,
+                  6,
                   "",
                   DLF_MSG_PARAM_TPVID,
                   vidChildTape->tapereq.vid,
                   "MODE",
                   DLF_MSG_PARAM_INT,
                   vidChildTape->tapereq.mode,
-                  "VOLREQID",
+                  "VDQMID",
                   DLF_MSG_PARAM_INT,
                   vidChildTape->tapereq.VolReqID,
-                  "PID",
-                  DLF_MSG_PARAM_INT,
-                  getpid(),
                   "rtcpRC",
                   DLF_MSG_PARAM_INT,
                   rc,
