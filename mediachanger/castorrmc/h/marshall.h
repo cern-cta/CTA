@@ -1,5 +1,5 @@
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.2 $ $Date: 1999/09/16 15:23:49 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.3 $ $Date: 1999/09/17 05:40:32 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -85,14 +85,14 @@ typedef  char*          bitvct; /* bit vector type definition           */
  *    S H O R T
  */
 
-#define marshall_SHORT(ptr,n)	{ SHORT n_ = htons((u_short)(n)); \
+#define marshall_SHORT(ptr,n)	{ SHORT n_ = htons((unsigned short)(n)); \
 				  (void) memcpy((ptr),SHORTADDR(n_),SHORTSIZE); \
 				  INC_PTR(ptr,SHORTSIZE); \
 				}
                                                                  
 #define unmarshall_SHORT(ptr,n)	{ SHORT n_ = 0;  \
 				  (void) memcpy(SHORTADDR(n_),(ptr),SHORTSIZE); \
-                                  n = ntohs((u_short)(n_)); \
+                                  n = ntohs((unsigned short)(n_)); \
 				  if ( BIT_ISSET(ptr,0) && sizeof(SHORT)-SHORTSIZE > 0 ) \
 					 (void) memset((char *)&n,255,sizeof(SHORT)-SHORTSIZE); \
 				  INC_PTR(ptr,SHORTSIZE); \
@@ -102,14 +102,14 @@ typedef  char*          bitvct; /* bit vector type definition           */
  *    L O N G
  */
 
-#define marshall_LONG(ptr,n)	{ LONG n_ = htonl((u_long)(n)); \
+#define marshall_LONG(ptr,n)	{ LONG n_ = htonl((unsigned long)(n)); \
 				  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 				  INC_PTR(ptr,LONGSIZE); \
 				}
                                                                  
 #define unmarshall_LONG(ptr,n)	{ LONG n_ = 0;  \
 				  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-                                  n = ntohl((u_long)(n_)); \
+                                  n = ntohl((unsigned long)(n_)); \
 				  if ( BIT_ISSET(ptr,0) && sizeof(LONG)-LONGSIZE > 0 ) \
 					 (void) memset((char *)&n,255,sizeof(LONG)-LONGSIZE); \
 				  INC_PTR(ptr,LONGSIZE); \
@@ -132,22 +132,22 @@ typedef  char*          bitvct; /* bit vector type definition           */
  */
 
 #if !defined(__alpha) && !defined(i386)
-#define  marshall_HYPER(ptr,n)          { LONG n_ = htonl(*((u_long *)&(n))); \
+#define  marshall_HYPER(ptr,n)          { LONG n_ = htonl(*((unsigned long *)&(n))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = htonl(*((u_long *)((char *)&(n)+LONGSIZE))); \
+					  n_ = htonl(*((unsigned long *)((char *)&(n)+LONGSIZE))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 
 #define  unmarshall_HYPER(ptr,n)        { LONG n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)&(n)) = ntohl((u_long)(n_)); \
+					  *((LONG *)&(n)) = ntohl((unsigned long)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					  n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
 					  *((LONG *)((char *)&(n)+LONGSIZE)) = \
-						ntohl((u_long)(n_)); \
+						ntohl((unsigned long)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 #else
