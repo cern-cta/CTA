@@ -1,16 +1,13 @@
-.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:51 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.4 $ $Date: 2002/03/08 06:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPETOHSM 1 "$Date: 2001/09/26 09:13:51 $" CASTOR "vmgr Administrator Commands"
+.TH TAPETOHSM 1 "$Date: 2002/03/08 06:48:42 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 .SH SYNOPSIS
 .B tapetohsm
-[
 .BI -d " density"
-]
-.BI -g " dgn"
 [
 .BI -i
 ] [
@@ -27,7 +24,9 @@ tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 .BI -V " vid"
 [
 .BI -v " vsn"
-] [
+]
+.BI --li " library"
+[
 .BI --ml " media_letter"
 ]
 .BI --mo " model"
@@ -41,32 +40,40 @@ tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 catalogs in the CASTOR Name Server files from a non HSM tape.
 .TP
 .I density
-The supported alphanumeric densities are:
-.br
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
-.BR 10G ,
-.BR 10GC ,
-.BR 25G ,
-.BR 25GC ,
-.B 50G
+.B 40G
 or
-.B 50GC
-for Redwood cartridges,
+.B 40GC
+for IBM 3590K cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
-.TP
-.I dgn
-The device group name must be a member of an installation defined set of
-"device groups".
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
 .TP
 .I lbltype
 may be
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
@@ -85,16 +92,27 @@ It must be at most six characters long.
 is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
 "J" for IBM 3590, "R" for STK 9840.
 .TP
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
+.TP
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
+The list of models can be obtained with
+.BR vmgrlistmodel .
 .TP
 .I poolname
 is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
 .LP
 Only
 .IR vid ,
-.I dgn
+.IR density ,
+.I library
 and
 .I model
 are mandatory. The other tape fields can be set later.
@@ -103,10 +121,10 @@ or in a directive file.
 .SH EXAMPLE
 .nf
 .ft CW
-tapetohsm -V RT0001 -d 20GC -l al -g 9840R3 --model 9840 --verbose \\
+tapetohsm -V RT0001 -d 20GC -l al --li STK_ACS5 --model 9840 --verbose \\
 	-M /castor/cern.ch/user/b/baud/RT0001.dat -q 1 -s 111111
 
-tapetohsm -V RT0001 -d 20GC -l al -g 9840R3 --model 9840 --verbose \\
+tapetohsm -V RT0001 -d 20GC -l al --li STK_ACS5 --model 9840 --verbose \\
 	-i < tapetohsm.inp
 .ft
 .fi
