@@ -430,6 +430,25 @@ int Cstager_IStagerSvc_selectCastorFile
  const char* nsHost);
 
 /**
+ * Retrieves a FileSystem from the database based on its
+ * mount point and diskServer name.
+ * Caller is in charge of the deletion of the allocated
+ * objects, including the DiskServer Object
+ * @param stgSvc the IStagerSvc used
+ * @param mountPoint the mountPoint of the FileSystem
+ * @param diskServer the name of the disk server hosting this file system
+ * @param fileSystem the FileSystem linked to its DiskServer, or 0 if none found
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectFileSystem(struct Cstager_IStagerSvc_t* stgSvc,
+                                        struct Cstager_FileSystem_t** fileSystem,
+                                        const char* mountPoint,
+                                        const char* diskServer);
+
+/**
  * Updates a SubRequest status in the DB and tells
  * whether the request to which it belongs still
  * has some SubRequests in SUBREQUEST_START status.
