@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/02/19 09:24:12 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/03/24 16:44:48 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/02/19 09:24:12 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/03/24 16:44:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -956,7 +956,7 @@ int getMigrCandidates(
     }
     Cstager_CastorFile_fileSize(castorFile,&sz);
     *initialSizeToTransfer += sz;
-    if ( (legacyMode == 1) || (migratorPolicy != NULL) ) {
+    if ( (legacyMode == 1) || (migratorPolicy != NULL && *migratorPolicy != '\0') ) {
       rc = Cns_statx(castorFileName,&fileId,&statbuf);
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
@@ -986,7 +986,7 @@ int getMigrCandidates(
         fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
         memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
       }
-      if ( migratorPolicy != NULL ) {
+      if ( migratorPolicy != NULL && *migratorPolicy != '\0') {
         rc = callExpert(
                         migratorPolicy,
                         castorFileName,
@@ -1302,7 +1302,7 @@ int main(int argc, char *argv[])
         continue;
       }
       
-      if ( nbOldStreams > 0 ) {
+      if ( nbOldStreams >= 0 ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Found %d streams for %s. Create new streams if necessary\n",
                   nbOldStreams,argv[i]);
