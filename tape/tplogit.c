@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.3 $ $Date: 2000/06/05 05:22:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.4 $ $Date: 2003/08/28 10:16:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,15 +12,13 @@ static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.3 $ $Date: 2000
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Ctape.h"
 extern int jid;
 
-tplogit(va_alist) va_dcl
+tplogit(char *func, char *msg, ...)
 {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;
 	struct tm *tm;
@@ -28,9 +26,7 @@ tplogit(va_alist) va_dcl
 	int fd_log;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.6 $ $Date: 2000/05/04 10:12:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.7 $ $Date: 2003/08/28 10:16:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -13,14 +13,12 @@ static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.6 $ $Date: 2000/
 #endif
 #include <string.h>
 #include <sys/types.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Ctape.h"
 
-usrmsg(va_alist) va_dcl
+usrmsg(char *func, char *msg, ...)
 {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 #ifndef NOTRACE
 	char *p;
@@ -29,9 +27,7 @@ usrmsg(va_alist) va_dcl
 	int save_errno;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 #ifdef NOTRACE
 	vsprintf (prtbuf, msg, args);
 	Ctape_errmsg (func, "%s\n", prtbuf);

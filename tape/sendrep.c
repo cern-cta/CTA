@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.7 $ $Date: 2000/03/01 07:22:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.8 $ $Date: 2003/08/28 10:16:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -15,11 +15,11 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.7 $ $Date: 2000
 #include <netinet/in.h>
 #endif
 #include <string.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Ctape.h"
 #include "marshall.h"
 #include "net.h"
-sendrep(va_alist) va_dcl
+sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
 	char func[16];
@@ -30,18 +30,13 @@ sendrep(va_alist) va_dcl
 	char *q;
 	char *rbp;
 	int rc;
-	int rep_type;
-	int req_type;
 	char repbuf[REPBUFSZ];
 	int repsize;
-	int rpfd;
 
 	strcpy (func, "sendrep");
 	rbp = repbuf;
 	marshall_LONG (rbp, TPMAGIC);
-	va_start (args);
-	rpfd = va_arg (args, int);
-	rep_type = va_arg (args, int);
+	va_start (args, rep_type);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
 	case MSG_ERR:

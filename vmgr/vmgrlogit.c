@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.4 $ $Date: 2000/08/15 15:09:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.5 $ $Date: 2003/08/28 10:16:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,16 +12,14 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.4 $ $Date: 20
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Cglobals.h"
 #include "vmgr.h"
 extern int jid;
 
-vmgrlogit(va_alist) va_dcl
+vmgrlogit(char *func, char *msg, ...)
 {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[LOGBUFSZ];
 	int save_errno;
 	int Tid = 0;
@@ -33,9 +31,7 @@ vmgrlogit(va_alist) va_dcl
 	int fd_log;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	(void) time (&current_time);		/* Get current time */
 #if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
 	(void) localtime_r (&current_time, &tmstruc);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.30 $ $Date: 2003/02/07 12:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.31 $ $Date: 2003/08/28 10:16:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -13,7 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.30 $ $Date: 2003
 #include <string.h>
 #include <sys/types.h>
 #include <signal.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Cgetopt.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
@@ -23,15 +23,11 @@ char *dvrname;
 char infil[CA_MAXPATHLEN+1];
 int reserve_done;
 
-void tpdump_usrmsg(va_alist) va_dcl
+void tpdump_usrmsg(int msg_type, char *msg, ...)
 {
 	va_list args;
-	char *msg;
-	int msg_type;
 
-	va_start (args);
-	msg_type = va_arg (args, int);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	if (msg_type == MSG_OUT)
 		vprintf (msg, args);
 	else {
@@ -46,7 +42,7 @@ char	**argv;
 {
 	static char aden[CA_MAXDENLEN+1] = "";
 	int c;
-	void cleanup();
+	void cleanup _PROTO((int));
 	int code = 0;
 	int count;
 	char devtype[CA_MAXDVTLEN+1];
