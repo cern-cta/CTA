@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.23 2002/02/25 16:46:15 jdurand Exp $
+ * $Id: mstat.c,v 1.24 2002/02/26 06:47:45 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.23 $ $Date: 2002/02/25 16:46:15 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.24 $ $Date: 2002/02/26 06:47:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -18,11 +18,6 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.23 $ $Date: 2002/
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
-#else
-#include <sys/param.h>
-#endif
 #include <osdep.h>
 #include "log.h"
 #define RFIO_KERNEL 1
@@ -174,7 +169,6 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
 	  pw_tmp = Cgetpwuid(uid);
 	  if( pw_tmp  == NULL ) {
         TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
-        END_TRACE();
         rfio_end_this(s,1);
         END_TRACE();
         return(-1);
@@ -206,7 +200,6 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   TRACE(2,"rfio","rfio_stat: sending %d bytes",RQSTSIZE+len) ;
   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
-    END_TRACE();
     rfio_end_this(s,0);
     END_TRACE();
     return(-1);
@@ -320,8 +313,6 @@ static int rfio_end_this(s,flag)
   char *p=buf ;
   int rc = 0;
 
-  INIT_TRACE("RFIO_TRACE");
-
   Cglobals_getTid(&Tid);
 
   TRACE(3,"rfio","rfio_end_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
@@ -329,7 +320,6 @@ static int rfio_end_this(s,flag)
   TRACE(3,"rfio","rfio_end: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_end_this: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
@@ -359,7 +349,6 @@ static int rfio_end_this(s,flag)
     rc = -1;
   }
 
-  END_TRACE();
   return(rc);
 }
 
