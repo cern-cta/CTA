@@ -49,9 +49,6 @@ int main(argc,argv)
 	if (stage_setlog(&log_callback) != 0) {
 		stage_errmsg(func,"startup : Cannot set log callback (%s)\n", sstrerror(serrno));
 	}
-	if (stage_setcallback(&qry_callback) != 0) {
-		stage_errmsg(func,"startup : Cannot set callback (%s)\n", sstrerror(serrno));
-	}
 
 	Coptind = 1;
 	Copterr = 1;
@@ -118,6 +115,10 @@ int main(argc,argv)
 			close(fd_stcp);
 			exit(EXIT_FAILURE);
 		}
+	}
+
+	if (stage_setcallback(&qry_callback) != 0) {
+		stage_errmsg(func,"startup : Cannot set callback (%s)\n", sstrerror(serrno));
 	}
 
 	memset(&stcp_dummy, 0, sizeof(struct stgcat_entry));
@@ -192,7 +193,7 @@ void qry_callback(stcp,stpp)
 	if ((stcp != NULL) && (stcp_output != NULL)) {
 		/* stcp record */
 		PRE_RFIO;
-		if (rfio_write(fd_stcp, stcp, sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+		if (rfio_write(fd_stcp, stcp, (int) sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
 			stage_errmsg(func,"write of stcp error : %s\n", rfio_serror());
 		}
 		
@@ -200,7 +201,7 @@ void qry_callback(stcp,stpp)
 	if ((stpp != NULL) && (stpp_output != NULL)) {
 		/* stpp record */
 		PRE_RFIO;
-		if (rfio_write(fd_stpp, stpp, sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
+		if (rfio_write(fd_stpp, stpp, (int) sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
 			stage_errmsg(func,"write of stpp error : %s\n", rfio_serror());
 		}
 		
