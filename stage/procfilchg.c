@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.17 2002/01/23 13:52:00 jdurand Exp $
+ * $Id: procfilchg.c,v 1.18 2002/01/24 17:46:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.17 $ $Date: 2002/01/23 13:52:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.18 $ $Date: 2002/01/24 17:46:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -77,6 +77,7 @@ extern int max_setretenp _PROTO((char *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern void redomigpool _PROTO(());
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
@@ -114,7 +115,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	int donereqid = 0;
 	int thisretenp_on_disk = -1;
 	int doneretenp_on_disk = 0;
-	int thisunit_retenp = ONE_SECOND; /* Default is second */
+	int thisunit_retenp = ONE_DAY; /* Default is day */
 	int thisunit_mintime = ONE_SECOND; /* Default is second */
 	int thisstatus = -1;
 	int donestatus = 0;
@@ -194,7 +195,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					switch (Coptarg[strlen(Coptarg) - 1]) {
 					case 'S':
 					case 's':
-						/* Second - already the default */
+						thisunit_mintime = ONE_SECOND; /* Second */
 						Coptarg[strlen(Coptarg) - 1] = '\0';
 						break;
 					case 'H':
@@ -238,7 +239,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					switch (Coptarg[strlen(Coptarg) - 1]) {
 					case 'S':
 					case 's':
-						/* Second - already the default */
+						thisunit_retenp = ONE_SECOND; /* Second */
 						Coptarg[strlen(Coptarg) - 1] = '\0';
 						break;
 					case 'H':
@@ -597,18 +598,23 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				loop_break = 1;
 			}
 			if (changed) {
-#ifdef USECDB
 				if (donemintime_beforemigr) { /* --mintime_beforemigr */
 					stcp->u1.h.mintime_beforemigr = thisstcp.u1.h.mintime_beforemigr;
 				}
 				if (doneretenp_on_disk) { /* --retenp_on_disk */
 					stcp->u1.h.retenp_on_disk = thisstcp.u1.h.retenp_on_disk;
 				}
+#ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				savereqs();
+				if (donemintime_beforemigr) { /* --mintime_beforemigr */
+					/* This introduce changes in migration counters and it is safer to recalculate everything */
+					/* because we need to have exactly the same time baseline for all of the records */
+					redomigpool();
+				}
 			}
 			if (loop_break) break;
 		}
