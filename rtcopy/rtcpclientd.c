@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/25 15:22:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 11:30:29 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/25 15:22:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 11:30:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -538,7 +538,7 @@ static int startWorker(
   ID_TYPE key;
   int usePipe = 0;
   int rc, c, i, argc, maxfds;
-  char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
+  char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[32];
   char usePipeStr[16], startFseqStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
 
@@ -634,7 +634,7 @@ static int startWorker(
   argv[5] = "-U";
   argv[6] = rtcp_voidToString((void *)&mainUuid,sizeof(mainUuid));
   argv[7] = "-k";
-  sprintf(keyStr,"%ld",key);  
+  u64tostr(key,keyStr,-sizeof(keyStr));
   argv[8] = keyStr;
   c = 9;
   if ( *tape->tapereq.dgn != '\0' ) {

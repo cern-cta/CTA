@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/01 12:54:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/02 11:30:29 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/01 12:54:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/02 11:30:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1238,7 +1238,7 @@ int rtcpcld_parseWorkerCmd(
       vdqmVolReqID = atoi(Coptarg);
       break;
     case 'k':
-      key = atoll(Coptarg);
+      key = strtou64(Coptarg);
       tape->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
       if ( tape->dbRef == NULL ) {
         LOG_SYSCALL_ERR("calloc()");
