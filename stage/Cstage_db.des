@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.13 2001/01/31 18:59:47 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.14 2001/07/12 10:55:59 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -127,6 +127,8 @@ database stage {         /* STAGE Database Description */
     u_signed64 fileid;   /* Fileid within Host name */
     short fileclass;     /* Associated fileclass number */
     char tppool[CA_MAXPOOLNAMELEN+1];
+    int retenp_on_disk;  /* Overwriten retention period on disk */
+    int mintime_beforemigr;  /* Overwriten retention period on disk */
     unique key stgcat_hsm_per_reqid {
       order none;
       reqid;

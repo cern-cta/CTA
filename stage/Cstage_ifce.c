@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.9 2001/01/31 18:59:47 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.10 2001/07/12 10:55:59 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "stage.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.9 $ $Date: 2001/01/31 18:59:47 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.10 $ $Date: 2001/07/12 10:55:59 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -143,6 +143,8 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		castor->fileid      =   stcp->u1.h.fileid;
 		castor->fileclass   =   stcp->u1.h.fileclass;
 		strcpy(castor->tppool,  stcp->u1.h.tppool);
+		castor->retenp_on_disk =  stcp->u1.h.retenp_on_disk;
+		castor->mintime_beforemigr =  stcp->u1.h.mintime_beforemigr;
 		break;
 	case 'a':
 		memset(alloc,0,sizeof(struct stgcat_alloc));
@@ -327,6 +329,8 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 		stcp->u1.h.fileid =      castor->fileid;
 		stcp->u1.h.fileclass =   castor->fileclass;
 		strcpy(stcp->u1.h.tppool, castor->tppool);
+		stcp->u1.h.retenp_on_disk = castor->retenp_on_disk;
+		stcp->u1.h.mintime_beforemigr = castor->mintime_beforemigr;
 	} else if (alloc != NULL) {
 		/* No blksize member in alloc database */
 		/* No filler member in alloc database */
