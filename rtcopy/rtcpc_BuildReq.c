@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.23 $ $Date: 2000/03/10 14:38:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.24 $ $Date: 2000/03/31 14:43:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2164,8 +2164,8 @@ int dumpFileReq(file_list_t *fl) {
     DUMPINT(indent,filereq->TEndTransferDisk);
     DUMPINT(indent,filereq->TStartTransferTape);
     DUMPINT(indent,filereq->TEndTransferTape);
+    DUMPINT(indent,(unsigned long)*filereq->blockid);
 
-    DUMPI64(indent,filereq->blockid);
     DUMPI64(indent,filereq->bytes_in);
     DUMPI64(indent,filereq->bytes_out);
     DUMPI64(indent,filereq->host_bytes);

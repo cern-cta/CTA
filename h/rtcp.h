@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.12 $ $Date: 2000/03/10 14:40:07 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.13 $ $Date: 2000/03/31 14:38:26 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -101,7 +101,7 @@ typedef struct rtcpFileRequest {
     int TEndTransferDisk;              /* End time for transfer to/from disk */
     int TStartTransferTape;            /* Start time for tranfser to/from tape */
     int TEndTransferTape;              /* End time for tranfser to/from tape */
-    unsigned int blockid;              /* If position_method == TPPOSIT_BLKID */
+    unsigned char blockid[4];          /* If position_method == TPPOSIT_BLKID */
 
     /*
      * 64 bit quantities

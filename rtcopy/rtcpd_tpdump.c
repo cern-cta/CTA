@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.4 $ $Date: 2000/03/13 11:38:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.5 $ $Date: 2000/03/31 14:43:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -131,7 +131,6 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     filereq->position_method = TPPOSIT_FSEQ;
     filereq->tape_fseq = 1;
     fl->tape_fsec = 1;
-    filereq->blockid = 0;
     filereq->check_fid = CHECK_FILE;
     *filereq->fid = '\0';
     strcpy(filereq->recfm,"U");
