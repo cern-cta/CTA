@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.206 2002/06/05 04:34:29 jdurand Exp $
+ * $Id: poolmgr.c,v 1.207 2002/06/05 13:22:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.206 $ $Date: 2002/06/05 04:34:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.207 $ $Date: 2002/06/05 13:22:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,6 +49,9 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.206 $ $Date: 20
 #include "Cns_api.h"
 #include "Cupv_api.h"
 #include "Castor_limits.h"
+#ifndef CA_MAXDOMAINNAMELEN
+#define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
+#endif
 #include "Cpwd.h"
 #include "Cgrp.h"
 
@@ -113,7 +116,8 @@ static int nbfileclasses;
 extern struct stgdb_fd dbfd;
 #endif
 extern int savereqs _PROTO(());
-extern char localhost[CA_MAXHOSTNAMELEN+1];
+extern char *localhost; /* Fully qualified hostname */
+extern char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
 
 struct files_per_stream {
 	struct stgcat_entry *stcp;
@@ -865,16 +869,30 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			if (pool_p->gc[0] != '\0') {
 				char save_gc[CA_MAXHOSTNAMELEN+MAXPATH+1];
 				char *gc_host = NULL;
+				char *gc_host2 = NULL;
 				char *gc_path = NULL;
 			
 				strcpy(save_gc,pool_p->gc);
 				rfio_parseln (save_gc, &gc_host, &gc_path, NORDLINKS);
+				if (gc_host != NULL) {
+					if ((gc_host2 = (char *) malloc(strlen(gc_host) + 1 + strlen(localdomain) + 1)) == NULL) {
+						stglogit (func, "... Pool %s : malloc error building fully qualified GC %s hostname: %s\n", pool_p->name, pool_p->gc, strerror(errno));
+					} else {
+						strcpy(gc_host2,gc_host);
+						strcat(gc_host2,".");
+						strcat(gc_host2,localdomain);
+						gc_host = gc_host2;
+					}
+				} else {
+					gc_host = localhost;
+				}
 				/* Note : gc_host can be NULL - this is valid in the call to Cupv_check() */
 				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, localhost, P_ADMIN) != 0) {
-					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv\n", pool_p->name, pool_p->gc, (gc_host != NULL) ? gc_host : localhost, localhost);
+					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv\n", pool_p->name, pool_p->gc, gc_host, localhost);
 				} else {
-					stglogit (func, "... Pool %s : GC %s : Cupv check ok\n", pool_p->name, pool_p->gc);
+					stglogit (func, "... Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] ok\n", pool_p->name, pool_p->gc, gc_host, localhost);
 				}
+				if (gc_host2 != NULL) free(gc_host2);
 			} else {
 				stglogit (func, "... Pool %s have no garbage collector\n", pool_p->name);
 			}

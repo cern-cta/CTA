@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.12 2002/05/29 13:19:54 jdurand Exp $
+ * $Id: procping.c,v 1.13 2002/06/05 13:22:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.12 $ $Date: 2002/05/29 13:19:54 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.13 $ $Date: 2002/06/05 13:22:34 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	char *user;
 	gid_t gid;
 	struct group *gr;
-	extern char localhost[CA_MAXHOSTNAMELEN+1];
+	extern char *localhost; /* Fully qualified hostname */
 	extern time_t started_time;
 	char timestr[64] ;   /* Time in its ASCII format             */
 	static struct Coptions longopts[] =

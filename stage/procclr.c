@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.62 2002/06/03 13:33:59 jdurand Exp $
+ * $Id: procclr.c,v 1.63 2002/06/05 13:22:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.62 $ $Date: 2002/06/03 13:33:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.63 $ $Date: 2002/06/05 13:22:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -119,7 +119,7 @@ int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, in
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 extern u_signed64 stage_uniqueid;
-extern char localhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
+extern char *localhost;  /* Fully qualified local hostname */
 
 static int nbtpf = 0;
 static int side_flag = 0;

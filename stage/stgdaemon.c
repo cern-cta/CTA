@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.201 2002/06/03 13:34:00 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.202 2002/06/05 13:22:34 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.201 $ $Date: 2002/06/03 13:34:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.202 $ $Date: 2002/06/05 13:22:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -103,6 +103,9 @@ struct winsize {
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "Castor_limits.h"
+#ifndef CA_MAXDOMAINNAMELEN
+#define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
+#endif
 
 #ifdef STAGE_CSETPROCNAME
 #define STAGE_CSETPROCNAME_FORMAT "%s PORT=%d NBCAT=%d NBPATH=%d QUEUED=%d FREE_FD=%d"
@@ -207,7 +210,9 @@ struct stgdb_fd dbfd;
 #endif
 struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 struct passwd start_passwd;
-char localhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
+char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
+char *deflocalhost = "localhost.localdomain";
+char *localhost;
 unsigned long ipaddrlocal;
 int have_ipaddrlocal;
 time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
@@ -318,6 +323,7 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
+EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
 
 /*
  * Number of reserved/used socket connections:
@@ -392,6 +398,7 @@ int main(argc,argv)
 	static int rlimit_nofile_flag;
 	int done_rlimit_nproc;
 	int done_rlimit_nofile;
+	char thislocalhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
 	static struct Coptions longopts[] =
 	{
 		{"foreground",         NO_ARGUMENT,        NULL,      'f'},
@@ -584,14 +591,38 @@ int main(argc,argv)
 #endif
 
 	/* Get localhostname */
-	if (gethostname(localhost,sizeof(localhost)) != 0)   {
+	if (gethostname(thislocalhost,sizeof(thislocalhost)) != 0)   {
 		stglogit(func, "Cannot get local hostname (%s) - forcing \"localhost\"\n", strerror(errno));
-		strcpy(localhost,"localhost");
+		strcpy(thislocalhost,"localhost");
 	}
+	stglogit(func, "Local hostname is \"%s\"\n", thislocalhost);
+
+	/* Is it a fully qualified hostname ? */
+	{
+		char *p;
+		
+		if ((p = strchr(thislocalhost,'.')) == NULL) {
+			if (Cdomainname(localdomain,CA_MAXDOMAINNAMELEN) != 0) {
+				stglogit(func, "Cannot get local domain (%s) - forcing \"localdomain\"\n", strerror(errno));
+				strcpy(localdomain,"localdomain");
+			}
+			stglogit(func, "Local domain is \"%s\"\n", localdomain);
+			/* Malloc area */
+			if ((localhost = (char *) malloc(strlen(thislocalhost) + 1 + strlen(localdomain) + 1)) == NULL) {
+				stglogit(func, "Cannot malloc (%s) - forcing \"localhost.localdomain\"\n", strerror(errno));
+				localhost = deflocalhost;
+			} else {
+				strcpy(localhost,thislocalhost);
+				strcat(localhost,".");
+				strcat(localhost,localdomain);
+			}
+		}
+	}
+	stglogit(func, "Fully qualified hostname is \"%s\"\n", localhost);
 
 	/* Get localhostname IP addr */
 	if ((hp = Cgethostbyname(localhost)) == NULL) {
-		stglogit (func, STG02, localhost, "Cgethostbyname", sstrerror(serrno));
+		stglogit (func, STG02, localhost, "Cgethostbyname", strerror(errno));
 		have_ipaddrlocal = 0;
 	} else {
 		have_ipaddrlocal = 1;
