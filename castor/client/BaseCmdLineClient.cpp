@@ -166,39 +166,6 @@ castor::client::BaseCmdLineClient::responseHandler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// setRhPort
-//------------------------------------------------------------------------------
-void castor::client::BaseCmdLineClient::setRhPort()
-  throw (castor::exception::Exception) {
-  char* port;
-  // RH server port. Can be given through the environment
-  // variable RH_PORT or in the castor.conf file as a
-  // RH/PORT entry. If none is given, default is used
-  if ((port = getenv ("RH_PORT")) != 0 ||
-      (port = getconfent("RH","PORT",0)) != 0) {
-    int iport;
-    char* dp;
-    if (stage_strtoi(&iport, port, &dp, 0) != 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Bad port value." << std::endl;
-      throw e;
-    }
-    if (iport < 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage()
-        << "Invalid port value : " << iport
-        << ". Must be > 0." << std::endl;
-      throw e;        
-    }
-    m_rhPort = iport;
-  } else {
-    clog() << "Contacting RH server on default port ("
-           << CSP_RHSERVER_PORT << ")." << std::endl;
-    m_rhPort = CSP_RHSERVER_PORT;
-  }
-}
-
-//------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
 void castor::client::BaseCmdLineClient::setRhHost()
@@ -209,17 +176,8 @@ void castor::client::BaseCmdLineClient::setRhHost()
   char* host;
   if (m_inputFlags.find("h") != m_inputFlags.end()) {
     m_rhHost = m_inputFlags["h"];
-  } else if ((host = getenv ("RH_HOST")) != 0 ||
-             (host = getconfent("RH","HOST",0)) != 0) {
-    m_rhHost = host;
   } else {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "Unable to deduce the name of the RH server.\n"
-      << "No -h option was given, RH_HOST is not set and "
-      << "your castor.conf file does not contain a RH/HOST entry."
-      << std::endl;
-    throw e;
+    this->BaseClient::setRhHost();
   }
 }
 

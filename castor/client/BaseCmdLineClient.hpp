@@ -36,8 +36,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/client/BaseClient.hpp"
 
-#define CSP_RHSERVER_PORT 9002
-
 namespace castor {
 
   namespace rh {
@@ -106,16 +104,11 @@ namespace castor {
       // of some very common parameters
 
       /**
-       * gets the request handler port to use and put it
-       * into m_rhPort
-       */
-      void setRhPort() throw (castor::exception::Exception);
-
-      /**
        * gets the request handler host to use and put it
-       * into m_rhHost
+       * into m_rhHost. Reimplements the default in order
+       * to take the command line into account
        */
-      void setRhHost() throw (castor::exception::Exception);
+      virtual void setRhHost() throw (castor::exception::Exception);
 
       /**
        * returns the pool name to use

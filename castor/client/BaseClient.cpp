@@ -46,8 +46,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "stage_api.h"
 extern "C" {
 #include <Cgetopt.h>
+#include <common.h>
 }
 
 // Local includes
@@ -74,6 +76,9 @@ void castor::client::BaseClient::sendRequest
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
   // Now the common part of the request
+  // Request handler host and port
+  setRhHost();
+  setRhPort();
   // Uid
   uid_t euid;
   if (0 != getenv("STAGE_EUID")) {
@@ -169,7 +174,7 @@ void castor::client::BaseClient::sendRequest
         dynamic_cast<castor::rh::Response*>(result);
       if (0 == res) {
         castor::exception::Internal e;
-        e.getMessage() << "Receive bad repsonse type :"
+        e.getMessage() << "Receive bad response type :"
                        << result->type();
         delete res;
         throw e;
@@ -273,3 +278,60 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
   delete s;
   return obj;
 }
+
+//------------------------------------------------------------------------------
+// setRhPort
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setRhPort()
+  throw (castor::exception::Exception) {
+  char* port;
+  // RH server port. Can be given through the environment
+  // variable RH_PORT or in the castor.conf file as a
+  // RH/PORT entry. If none is given, default is used
+  if ((port = getenv ("RH_PORT")) != 0 ||
+      (port = getconfent("RH","PORT",0)) != 0) {
+    int iport;
+    char* dp;
+    if (stage_strtoi(&iport, port, &dp, 0) != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Bad port value." << std::endl;
+      throw e;
+    }
+    if (iport < 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage()
+        << "Invalid port value : " << iport
+        << ". Must be > 0." << std::endl;
+      throw e;
+    }
+    m_rhPort = iport;
+  } else {
+    clog() << "Contacting RH server on default port ("
+           << CSP_RHSERVER_PORT << ")." << std::endl;
+    m_rhPort = CSP_RHSERVER_PORT;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setRhHost
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setRhHost()
+  throw (castor::exception::Exception) {
+  // RH server host. Can be passed given through the
+  // RH_HOST environment variable or in the castor.conf
+  // file as a RH/HOST entry
+  char* host;
+  if ((host = getenv ("RH_HOST")) != 0 ||
+      (host = getconfent("RH","HOST",0)) != 0) {
+    m_rhHost = host;
+  } else {
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "Unable to deduce the name of the RH server.\n"
+      << "No -h option was given, RH_HOST is not set and "
+      << "your castor.conf file does not contain a RH/HOST entry."
+      << std::endl;
+    throw e;
+  }
+}
+

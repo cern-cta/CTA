@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 17:34:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/20 16:00:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -50,8 +50,6 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   rejectFlags(rejected, "stageout");
   // uses some other flags
   u_signed64 flags = 0;
-  setRhHost();
-  setRhPort();
   std::string poolName = getPoolName();
   if (m_inputFlags.find("K") != m_inputFlags.end()) {
     flags |= STAGE_KEEP;

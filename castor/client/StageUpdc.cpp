@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/29 17:34:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/08/20 16:00:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -52,9 +52,6 @@ castor::rh::Request* castor::client::StageUpdc::buildRequest()
   rejected.push_back("noretry");
   rejected.push_back("rdonly");
   rejectFlags(rejected, "stageqry");
-  // uses some other flags
-  setRhHost();
-  setRhPort();
   // Build request
   castor::rh::StageUpdcRequest* req =
     new castor::rh::StageUpdcRequest();

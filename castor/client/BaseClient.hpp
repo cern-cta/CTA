@@ -33,6 +33,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 
+#define CSP_RHSERVER_PORT 9002
+
 namespace castor {
 
   // Forward declaration
@@ -83,6 +85,28 @@ namespace castor {
       void sendRequest(castor::rh::Request* req,
                        castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
+
+    protected:
+
+      /**
+       * gets the request handler port to use and put it
+       * into m_rhPort. First try environment (RH_PORT)
+       * then castor.conf (RH PORT entry) and if nothing
+       * available use a default.
+       * May be overwritten in case this behavior should be
+       * modified.
+       */
+      virtual void setRhPort() throw (castor::exception::Exception);
+
+      /**
+       * gets the request handler host to use and put it
+       * into m_rhHost. First try environment (RH_HOST)
+       * then castor.conf (RH HOST entry) and if nothing
+       * available use the local machine.
+       * May be overwritten in case this behavior should be
+       * modified.
+       */
+      virtual void setRhHost() throw (castor::exception::Exception);
 
     private:
 
