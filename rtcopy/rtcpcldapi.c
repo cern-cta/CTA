@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/06 08:33:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/06 12:44:41 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.38 $ $Date: 2004/08/06 08:33:26 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.39 $ $Date: 2004/08/06 12:44:41 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -539,8 +539,10 @@ static int updateSegmentInDB(
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *segmIObj;
+  tape_list_t *tape;
   rtcpFileRequest_t *filereq;
   int rc, save_serrno;
+  ID_TYPE key = 0;
 
   if ( segment == NULL || segment->segment == NULL || segment->file == NULL ) {
     serrno = EINVAL;
@@ -548,6 +550,8 @@ static int updateSegmentInDB(
   }
 
   filereq = &(segment->file->filereq);
+  tape = segment->file->tape;
+  
   Cstager_Segment_setDiskPath(
                               segment->segment,
                               filereq->file_path
@@ -585,6 +589,8 @@ static int updateSegmentInDB(
     return(-1);
   }
   segmIObj = Cstager_Segment_getIObject(segment->segment);
+  Cstager_Segment_id(segment->segment,&key);
+  if ( rtcpcld_killed(tape) != 0 ) return(-1);
   rc = C_Services_updateRepNoRec(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
     LOG_FAILED_CALL("C_Services_updateRepNoRec()",C_Services_errorMsg(*dbSvc));
@@ -596,7 +602,7 @@ static int updateSegmentInDB(
     C_IAddress_delete(iAddr);
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
-    rtcp_log(LOG_ERR,"DB error: %s\n",filereq->err.errmsgtxt);
+    rtcp_log(LOG_ERR,"DB error key=%lu: %s\n",key,filereq->err.errmsgtxt);
     serrno = save_serrno;
     return(-1);
   }
@@ -860,12 +866,15 @@ static int addSegmentToDB(
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *segmIObj;
+  tape_list_t *tape = NULL;
   int rc, save_serrno;
   
   if ( segment == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
+  if ( segment->file != NULL ) tape = segment->file->tape;
+  
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
@@ -889,6 +898,7 @@ static int addSegmentToDB(
     return(-1);
   }
   segmIObj = Cstager_Segment_getIObject(segment->segment);
+  if ( rtcpcld_killed(tape) != 0 ) return(-1);
   rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
     LOG_FAILED_CALL("C_Services_createRep()",C_Services_errorMsg(*dbSvc));
@@ -918,7 +928,8 @@ static int doFullUpdate(
   file_list_t *fl;
   RtcpcldSegmentList_t *segm = NULL;
   int rc = 0;
-  
+
+  if ( rtcpcld_killed(tape) == 1 ) return(-1);
   CLIST_ITERATE_BEGIN(tape,tl) 
     {
       CLIST_ITERATE_BEGIN(tl->file,fl) 
@@ -1304,11 +1315,33 @@ int rtcpcld_findTpReqMap(tape,tpList)
 int rtcpcld_killed(tape)
      tape_list_t *tape;
 {
-  int killed = 0, rc;
+  int killed = 0, rc, save_serrno;
 
   rc = findTpReqMap(tape,NULL,&killed,NULL);
-  if ( rc == -1 ) return(-1);
-  if ( killed > 0 ) return(1);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    rtcp_log(LOG_DEBUG,"rtcpcld_killed() findTpReqMap() failed: %s\n",
+             sstrerror(serrno));
+    (void)rtcpc_SetLocalErrorStatus(tape,
+                                    save_serrno,
+                                    "rtcpcld_killed() findTpReqMap() failed",
+                                    RTCP_FAILED|RTCP_UNERR,
+                                    -1);
+    serrno = save_serrno;
+    return(-1);
+  }
+  
+  if ( killed > 0 ) {
+    rtcp_log(LOG_ERR,"rtcpcld_killed(): request aborting\n");
+    (void)rtcpc_SetLocalErrorStatus(tape,
+                                    ERTUSINTR,
+                                    "request aborting",
+                                    RTCP_FAILED|RTCP_USERR,
+                                    -1);
+    serrno = ERTUSINTR;
+    return(1);
+  }
+  
   return(0);
 }
 
@@ -1508,6 +1541,7 @@ int rtcpcldc_appendFileReqs(tape,file)
     {
       if ( rtcpcldSegm->file == fl ) {
         segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
+        if ( rtcpcld_killed(tape) != 0 ) return(-1);
         rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
         if ( rc != 0 ) {
           LOG_FAILED_CALL("C_Services_createRep()",
@@ -1908,6 +1942,18 @@ int rtcpcldc(tape)
   CLIST_ITERATE_BEGIN(rtcpcldTpList,rtcpcldTp) 
     {
       tapeIObj = Cstager_Tape_getIObject(rtcpcldTp->tp);
+
+      if ( rtcpcld_killed(tape) != 0 ) {
+        save_serrno = serrno;
+        (void)C_Services_rollback(*dbSvc,iAddr);
+        C_IAddress_delete(iAddr);
+        rtcpcldc_cleanup(tape);
+        (void)Cmutex_unlock(tape);
+        rtcp_log(LOG_ERR,"Request aborted\n");
+        serrno = save_serrno;
+        return(-1);
+      }
+      
       rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
       if ( rc != 0 ) {
         LOG_FAILED_CALL("C_Services_updateRep()",
