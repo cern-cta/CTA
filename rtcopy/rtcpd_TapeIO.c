@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.16 $ $Date: 2000/02/16 17:09:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.17 $ $Date: 2000/02/26 15:10:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -640,9 +640,11 @@ int twrite(int fd,char *ptr,int len,
             return(0);
         }
     } else {
-        return (write_sony(fd, ptr, len));
+        if ( file->trec == 0 ) filereq->TStartTransferTape = (int)time(NULL);
+        file->trec ++ ;
+        rc = write_sony(fd, ptr, len);
     }
-  return(rc);
+    return(rc);
 }
 
 /*
@@ -733,6 +735,7 @@ int tread(int fd,char *ptr,int len,
         } else
             return(rc);
     } else {
+        file->trec ++ ;
         return (read_sony(fd, ptr, len));
     }
 }

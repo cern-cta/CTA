@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.37 $ $Date: 2000/02/23 15:47:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.38 $ $Date: 2000/02/26 15:10:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -619,24 +619,24 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 if ( f77conv_context != NULL ) free(f77conv_context);
                 break;
             }
-            /*
-             * At this point we know that the tape->memory has
-             * started. Thus it is now safe to take the blocksize and
-             * record length. Before this was not the case because 
-             * for tape read the call to Ctape_info() in the 
-             * tape IO thread is not synchronised with the start up 
-             * of the disk IO thread.
-             */
-            if ( blksiz < 0 ) {
-                blksiz = filereq->blocksize;
-                lrecl = filereq->recordlength;
-                if ( (lrecl <= 0) && ((Uformat == FALSE) ||
-                     ((convert & NOF77CW) != 0)) ) lrecl = blksiz;
-                else if ( (Uformat == TRUE) &&
-                          ((convert & NOF77CW) == 0) ) lrecl = 0;
-                filereq->TStartTransferDisk = (int)time(NULL);
-            }
         } /* while (databufs[i]->flag == BUFFER_EMPTY) */
+        /*
+         * At this point we know that the tape->memory has
+         * started. Thus it is now safe to take the blocksize and
+         * record length. Before this was not the case because
+         * for tape read the call to Ctape_info() in the
+         * tape IO thread is not synchronised with the start up
+         * of the disk IO thread.
+         */
+        if ( blksiz < 0 ) {
+            blksiz = filereq->blocksize;
+            lrecl = filereq->recordlength;
+            if ( (lrecl <= 0) && ((Uformat == FALSE) ||
+                 ((convert & NOF77CW) != 0)) ) lrecl = blksiz;
+            else if ( (Uformat == TRUE) &&
+                      ((convert & NOF77CW) == 0) ) lrecl = 0;
+            filereq->TStartTransferDisk = (int)time(NULL);
+        }
 
         if ( (proc_err & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 && 
              (concat & (NOCONCAT_TO_EOD | CONCAT_TO_EOD)) != 0 ) { 
@@ -668,7 +668,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         /*
          * Verify that actual buffer size matches block size
          */
-        if ( (databufs[i]->length % blksiz) != 0 ) {
+        if ( (databufs[i]->length % blksiz) != 0 || blksiz < 0 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() blocksize mismatch\n");
             rtcpd_AppendClientMsg(NULL, file, "Internal error. %s: blocksize mismatch (%d,%d)\n",
                         filereq->file_path,databufs[i]->length,blksiz);
