@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.166 2001/12/19 17:23:03 jdurand Exp $
+ * $Id: poolmgr.c,v 1.167 2001/12/20 12:47:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.166 $ $Date: 2001/12/19 17:23:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.167 $ $Date: 2001/12/20 12:47:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -194,6 +194,7 @@ struct pool_element *betterfs_vs_pool _PROTO((char *, int, u_signed64, int *));
 int pool_elements_cmp _PROTO((CONST void *, CONST void *));
 void get_global_stream_count _PROTO((char *, int *, int *));
 char *findpoolname _PROTO((char *));
+int findfs _PROTO((char *, char **, char **));
 u_signed64 findblocksize _PROTO((char *));
 #if defined(_WIN32)
 extern int create_dir _PROTO((char *, uid_t, gid_t, int));
@@ -936,8 +937,8 @@ findpoolname(path)
   } else {
     p = NULL;
   }
-  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-    for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++)
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
       if (p) {
         if (strcmp (server, elemp->server) == 0 &&
             strncmp (p + 1, elemp->dirpath, strlen (elemp->dirpath)) == 0 &&
@@ -948,7 +949,53 @@ findpoolname(path)
             *(path + strlen (elemp->dirpath)) == '/')
           return (pool_p->name);
       }
+    }
+  }
   return (NULL);
+}
+
+int
+findfs(path,found_server,found_dirpath)
+     char *path;
+     char **found_server;
+     char **found_dirpath;
+{
+  struct pool_element *elemp;
+  int i, j;
+  char *p;
+  struct pool *pool_p;
+  char server[CA_MAXHOSTNAMELEN + 1];
+
+  server[0] = '\0';
+  /* If we find a ":/" set - it is a hostname specification if there is no '/' before */
+  if (((p = strstr (path, ":/")) != NULL) && (strchr(path, '/') > p)) {
+    /* Note that per construction strchr() returns != NULL, because we know there is a '/' */
+    strncpy (server, path, p - path);
+    server[p - path] = '\0';
+  } else {
+    p = NULL;
+  }
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+      if (p) {
+        if (strcmp (server, elemp->server) == 0 &&
+            strncmp (p + 1, elemp->dirpath, strlen (elemp->dirpath)) == 0 &&
+            *(p + 1 + strlen (elemp->dirpath)) == '/') {
+          if (found_server != NULL) *found_server = elemp->server;
+          if (found_dirpath != NULL) *found_dirpath = elemp->dirpath;
+          return (0);
+        }
+      } else {
+        if (strncmp (path, elemp->dirpath, strlen (elemp->dirpath)) == 0 &&
+            *(path + strlen (elemp->dirpath)) == '/') {
+          if (found_server != NULL) *found_server = elemp->server;
+          if (found_dirpath != NULL) *found_dirpath = elemp->dirpath;
+          return (0);
+        }
+      }
+    }
+  }
+  return(-1);
 }
 
 u_signed64
