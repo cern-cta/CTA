@@ -142,12 +142,13 @@ char **argv;
   } 
 
   if (errflg) {
-    fprintf (stderr, "usage: %s %s%s%s%s%s%s", argv[0],
+    fprintf (stderr, "usage: %s %s%s%s%s%s%s%s", argv[0],
 	     "[--uid uid | --user username] [--gid gid | --group groupname]\n",
 	     "--src SourceHost --tgt TargetHost --newsrc NewSourceHost\n",
 	     "-- newtgt NewTargetHost --priv privilege\n",
-	     "Where privilege is one of: OPER, TP_OPER, ADMIN, GRP_ADMIN or NONE\n",
-	     "--uid, --gid, --src and --tgt are mandatory\n",
+	     "Where privilege is one of:", 
+	     STR_PRIV_LIST,
+	     "\n--uid, --gid, --src and --tgt are mandatory\n",
 	     "At least one of --priv, --newsrc and --newtgt must be specified.\n");
     exit (USERR);
   }
