@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.27 2001/02/02 14:18:02 jdurand Exp $
+ * $Id: stagein.c,v 1.28 2001/02/02 15:31:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.27 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.28 $ $Date: 2001/02/02 15:31:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -195,6 +195,8 @@ int main(argc, argv)
 		case 'b':
 			break;
 		case 'C':
+			break;
+		case 'c':
 			break;
 		case 'd':
 			stagetape++;
