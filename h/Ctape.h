@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.43 2004/01/23 10:08:05 bcouturi Exp $
+ * Ctape.h,v 1.43 2004/01/23 10:08:05 bcouturi Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.43 $ $Date: 2004/01/23 10:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)Ctape.h,v 1.43 2004/01/23 10:08:05 CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -63,6 +63,7 @@
 #define D100G	0x14
 #define D200G	0x15
 #define D110G	0x16
+#define D160G   0x17
 #define IDRC	0x100
 #define	D38KC	(D38000 | IDRC)
 #define	D38KDC	(D38KD | IDRC)
@@ -78,6 +79,7 @@
 #define D60GC	(D60G | IDRC)
 #define D100GC	(D100G | IDRC)
 #define D110GC	(D110G | IDRC)
+#define D160GC  (D160G | IDRC)
 #define D200GC	(D200G | IDRC)
 
 #ifdef NOTRACE
