@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.3 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.4 $ $Date: 2003/11/03 15:02:09 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ int dlflogit(const char *args, ...)
 		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, Tid, args);
 	vsprintf (prtbuf+strlen(prtbuf), msg, ap);
 	va_end (ap);
-	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) > 0) {
+	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) > -1) {
 	  write (fd_log, prtbuf, strlen(prtbuf));
 	  close (fd_log);
 	}
