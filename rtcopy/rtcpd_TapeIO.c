@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.34 $ $Date: 2004/02/24 14:13:22 $ CERN/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.35 $ $Date: 2004/03/31 07:54:11 $ CERN/ADC Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -855,7 +855,7 @@ int twrite(int fd,char *ptr,int len,
       file->cksumRoutine(
                          filereq->castorSegAttr.segmCksum,
                          ptr,
-                         (unsigned int)len
+                         (unsigned int)rc
                          );
   }
     
