@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.12 $ $Date: 2000/09/14 16:10:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.13 $ $Date: 2001/08/17 13:52:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -99,6 +99,8 @@ static char unit[CA_MAXUNMLEN+1];
     } \
     if ( _rc == -1 ) rtcp_log(LOG_ERR,"%s: vdqm_UnitStatus(): %s\n",#Z,sstrerror(serrno)); \
     return(rc);
+
+void (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
 
 int Ctape_InitDummy() {
     int status;

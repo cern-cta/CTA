@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rtcpd_MainCntl.c,v 1.80 2001/02/05 09:20:46 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.83 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rtcpd_ConvertData.c,v 1.3 1999/12/08 10:03:34 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.5 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
