@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.5 2004/12/01 10:02:21 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.6 2004/12/01 14:56:10 bcouturi Exp $
  */
 
 /*
@@ -8,19 +8,21 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.5 $ $Date: 2004/12/01 10:02:21 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.6 $ $Date: 2004/12/01 14:56:10 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
 /* System headers */
 /* ============== */
 #include <stdlib.h>
+#include <sstream>
 
 /* ============= */
 /* Local headers */
 /* ============= */
-#include "stager_client_api.h"
+#include "stager_api.h"
 #include "castor/stager/SubRequest.hpp"
+#include <serrno.h>
 
 
 /* ================= */
@@ -173,7 +175,38 @@ FREE_STRUCT_LIST(findrequest_resp)
 
 
 
-char *stage_statusName(int statusCode) 
-{
+EXTERN_C char *stage_statusName(int statusCode) {
   return (char *)castor::stager::SubRequestStatusCodesStrings[statusCode];
+}
+
+
+EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
+  
+  char *func = "stage_geturl";
+  
+  if (io == NULL) {
+    serrno = EINVAL;
+    stage_errmsg(func, "io is NULL");
+    return NULL;
+  }
+  
+  std::stringstream sst;
+  
+  if (io->protocol != NULL) {
+    sst << io->protocol << "://";
+  }
+
+  if (io->server != NULL) {
+    sst << io->server;
+    if (io->port > 0) {
+      sst << ":" << io->port;
+    }    
+    sst << "/";
+  }
+  
+  if (io->filename != NULL) {
+    sst << io->filename;
+  }
+  
+  return strdup(sst.str().c_str());
 }
