@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 11:59:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.5 $ $Date: 1999/12/13 13:42:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -285,9 +285,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         tape,
                         file);
             TP_STATUS(RTCP_PS_NOBLOCKING);
-            if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) ) {
-                if ( rc == -1 ) 
-                    rtcp_log(LOG_ERR,"MemoryToTape() tape write error\n");
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"MemoryToTape() tape write error\n");
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( (convert & FIXVAR) != 0 ) {
@@ -623,9 +622,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                            tape,
                            file);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
-                if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) ) {
-                    if ( rc == -1 ) 
-                        rtcp_log(LOG_ERR,"TapeToMemory() tape read error\n");
+                if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"TapeToMemory() tape read error\n");
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                     return(-1);
