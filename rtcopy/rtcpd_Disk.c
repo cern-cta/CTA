@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.93 $ $Date: 2000/12/08 11:13:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.94 $ $Date: 2001/01/28 10:42:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1339,7 +1339,7 @@ void *diskIOthread(void *arg) {
     int disk_fd = -1;
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
-    int rc, mode, severity, save_errno,save_serrno;
+    int rc, save_rc, mode, severity, save_errno,save_serrno;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
     extern int ENOSPC_occurred;
 
@@ -1447,6 +1447,8 @@ void *diskIOthread(void *arg) {
         }
     }
 
+    save_rc = rc;
+
     if ( mode == WRITE_ENABLE && (filereq->concat & VOLUME_SPANNING) != 0 ) {
         /*
          * If disk files are concatenated into a single tape file that
@@ -1505,7 +1507,8 @@ void *diskIOthread(void *arg) {
                             filereq = &fl->filereq;
                         } else {
                             fl->filereq.proc_status = RTCP_EOV_HIT;
-                            tellClient(&client_socket,NULL,fl,rc);
+                            rc = tellClient(&client_socket,NULL,fl,save_rc);
+                            CHECK_PROC_ERR(NULL,fl,"tellClient() error");
                         }
                     }
                 } CLIST_ITERATE_END(tl->file,fl);
@@ -1539,6 +1542,14 @@ void *diskIOthread(void *arg) {
             filereq = &file->filereq;
             filereq->bytes_out = file->diskbytes_sofar - filereq->startsize;
         }
+
+        rtcp_log(LOG_DEBUG,
+           "diskIOthread() send %d status for FSEQ %d, FSEC %d on volume %s\n",
+           filereq->proc_status,filereq->tape_fseq,
+           file->tape_fsec,tapereq->vid);
+
+        rc = tellClient(&client_socket,NULL,file,save_rc);
+        CHECK_PROC_ERR(NULL,file,"tellClient() error");
         /*
          * If we are reading from tape, we must tell the
          * stager that the data has successfully arrived at
@@ -1546,15 +1557,10 @@ void *diskIOthread(void *arg) {
          * the tape IO thread who will update the stager.
          */
         DK_STATUS(RTCP_PS_STAGEUPDC);
-        (void)rtcpd_stageupdc(tape,file);
+        rc = rtcpd_stageupdc(tape,file);
         DK_STATUS(RTCP_PS_NOBLOCKING);
+        CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
 
-        rtcp_log(LOG_DEBUG,
-           "diskIOthread() send %d status for FSEQ %d, FSEC %d on volume %s\n",
-           filereq->proc_status,filereq->tape_fseq,
-           file->tape_fsec,tapereq->vid);
-
-        tellClient(&client_socket,NULL,file,rc);
         (void)rtcp_WriteAccountRecord(client,tape,file,RTCPPRC); 
 
         rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d, proc_status=%d severity=%d\n",
@@ -1562,7 +1568,7 @@ void *diskIOthread(void *arg) {
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
             filereq->proc_status,severity);
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
-    } 
+    } /* if ( mode == WRITE_DISABLE ) */
 
     DiskIOfinished();
     tellClient(&client_socket,NULL,NULL,0);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.75 $ $Date: 2000/11/08 14:01:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.76 $ $Date: 2001/01/28 10:42:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1144,6 +1144,7 @@ void *tapeIOthread(void *arg) {
     int firstblk = 0;
     int tape_fd = -1;
     int rc,BroadcastInfo,mode,diskIOfinished,severity,save_errno,save_serrno;
+    int save_rc;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
 
     if ( arg == NULL ) {
@@ -1271,7 +1272,8 @@ void *tapeIOthread(void *arg) {
                      */
                     nextfile->filereq.proc_status = RTCP_FINISHED;
                     nextfile->filereq.cprc = prevfile->filereq.cprc;
-                    tellClient(&client_socket,NULL,nextfile,0);
+                    rc = tellClient(&client_socket,NULL,nextfile,0);
+                    CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
                 }
             }
             /*
@@ -1403,8 +1405,11 @@ void *tapeIOthread(void *arg) {
 
                 nextfile->filereq.proc_status = RTCP_POSITIONED;
 
-                tellClient(&client_socket,nexttape,NULL,rc);
-                tellClient(&client_socket,NULL,nextfile,rc);
+                save_rc = rc;
+                tellClient(&client_socket,nexttape,NULL,save_rc);
+                CHECK_PROC_ERR(nexttape,NULL,"tellClient() error");
+                tellClient(&client_socket,NULL,nextfile,save_rc);
+                CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
                 if ( mode == WRITE_ENABLE ) {
                     TP_STATUS(RTCP_PS_STAGEUPDC);
                     rc = rtcpd_stageupdc(nexttape,nextfile);
@@ -1473,7 +1478,7 @@ void *tapeIOthread(void *arg) {
                         rtcpd_SetReqStatus(NULL,tmpfile,serrno,severity);
                         rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
-                            tellClient(&client_socket,NULL,tmpfile,-1);
+                            (void)tellClient(&client_socket,NULL,tmpfile,-1);
                             TP_STATUS(RTCP_PS_STAGEUPDC);
                             rc = rtcpd_stageupdc(nexttape,tmpfile);
                             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -1484,7 +1489,7 @@ void *tapeIOthread(void *arg) {
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
                         TP_STATUS(RTCP_PS_NOBLOCKING);
-                        tellClient(&client_socket,NULL,NULL,0);
+                        (void)tellClient(&client_socket,NULL,NULL,0);
                         (void) rtcp_CloseConnection(&client_socket);
                         return((void *)&failure);
                     } else {
@@ -1613,7 +1618,8 @@ void *tapeIOthread(void *arg) {
                        "network interface for data transfer (%s bytes) is %s\n",
                        u64buf,nextfile->filereq.ifce);
                 }
-                tellClient(&client_socket,NULL,nextfile,0);
+                rc = tellClient(&client_socket,NULL,nextfile,0);
+                CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -1639,7 +1645,7 @@ void *tapeIOthread(void *arg) {
     rtcpd_Release(nexttape->prev,NULL);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     TapeIOfinished();
-    tellClient(&client_socket,NULL,NULL,0);
+    (void)tellClient(&client_socket,NULL,NULL,0);
     (void) rtcp_CloseConnection(&client_socket);
     return((void *)&success);
 }
