@@ -1,29 +1,15 @@
 /*
- * $Id: vdqm_Replica.c,v 1.3 1999/09/02 15:21:50 obarring Exp $
- * $Log: vdqm_Replica.c,v $
- * Revision 1.3  1999/09/02 15:21:50  obarring
- * Add osdep.h because of new u_signed64 decl. in vdqm.h
- *
- * Revision 1.2  1999/09/01 15:11:46  obarring
- * Fix sccsid string
- *
- * Revision 1.1  1999/07/27 09:21:39  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.4 $ $Date: 1999/09/27 15:31:17 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqm_Replica.c - Update VDQM replica database (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_Replica.c,v 1.3 1999/09/02 15:21:50 obarring Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
