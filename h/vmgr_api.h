@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.17 2000/05/09 19:17:34 baud Exp $
+ * $Id: vmgr_api.h,v 1.18 2000/05/15 06:49:48 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.17 $ $Date: 2000/05/09 19:17:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.18 $ $Date: 2000/05/15 06:49:48 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -17,8 +17,8 @@
 #include "vmgr_constants.h"
 #include "vmgr_struct.h"
 
-int *__vmgr_errno();
-#define vmgr_errno (*__vmgr_errno())
+int *C__vmgr_errno();
+#define vmgr_errno (*C__vmgr_errno())
 
 #define	VMGR_LIST_BEGIN		0
 #define	VMGR_LIST_CONTINUE	1
