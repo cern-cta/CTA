@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.4 $ $Date: 1999/09/08 12:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)Ctape_position.man,v 1.4 1999-09-08 14:16:33+02 CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "$Date: 1999/09/08 12:16:33 $"
+.TH CTAPE_POSITION l "1999-09-08 14:16:33+02"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -31,6 +31,7 @@ checks if a tape is mounted on the device identified by
 .IR path ,
 positions it, checks if necessary the HDR1 label and eventually takes the
 information from the HDR2 label.
+In case of failure the drive is freed.
 .TP
 .I path
 specifies the pathname relative to the current directory or the full pathname
