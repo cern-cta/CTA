@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# expertd         Start/Stop expertd.
+# rhserver         Start/Stop rhserver.
 #
-# chkconfig: 345 75 30
-# description: EXPERT server daemon
+# chkconfig: 345 63 52
+# description: Request Handler daemon
 #
 
 sysname=`uname -s`
@@ -31,18 +31,18 @@ else
 fi
 
 RETVAL=0
-prog="expertd"
-PIDFILE=/var/run/expertd.pid
+prog="rhserver"
+PIDFILE=/var/run/rhserver.pid
 PIDDIR=/var/run
-SUBSYS=/var/lock/subsys/expertd
+SUBSYS=/var/lock/subsys/rhserver
 SUBSYSDIR=/var/lock/subsys
 [ -z "$SILENTSTOP" ] && SILENTSTOP=0
-EXPERTD=/usr/local/bin/expertd
+RHSERVER=/usr/local/bin/rhserver
 # Not yet supported
-EXPERTDLOGFILE=/var/log/expertd
+RHSERVERLOGFILE=/var/log/rhserver
 # Maui mode
 OPTIONS=""
-SYSCONFIGEXPERTD=/etc/sysconfig/expertd
+SYSCONFIGRHSERVER=/etc/sysconfig/rhserver
 
 #
 ## Blindly attempt to create useful directories
@@ -63,24 +63,24 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5045|\*:expertd' | grep LISTEN | grep expertd > /dev/null
+        netstat -ap | egrep '\*:9002|\*:rhserver' | grep LISTEN | grep rhserver > /dev/null
     else
-        netstat -a  | egrep '\*:5045|\*:expertd' | egrep 'LISTEN *$' > /dev/null
+        netstat -a  | egrep '\*:9002|\*:rhserver' | egrep 'LISTEN *$' > /dev/null
     fi
-	# ps -eo ppid,$format4comm | egrep '^[ \t]+1 expertd' > /dev/null
+	# ps -eo ppid,$format4comm | egrep '^[ \t]+1 rhserver' > /dev/null
 	if [ $? -eq 0 ]; then
-		echo $ECHOOPT "expertd already started: "
-		[ -n "$FAILURE" ] && $FAILURE "expertd already started: "
+		echo $ECHOOPT "rhserver already started: "
+		[ -n "$FAILURE" ] && $FAILURE "rhserver already started: "
 		RETVAL=1
 	else
-        if [ -r $SYSCONFIGEXPERTD ]; then
+        if [ -r $SYSCONFIGRHSERVER ]; then
             #
             ## Source the configuration
             #
-            . $SYSCONFIGEXPERTD
-            if [ "${RUN_EXPERTD}" != "yes" ]; then
-                echo $ECHOOPT "$SYSCONFIGEXPERTD says NO: "
-                [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGEXPERTD says NO: "
+            . $SYSCONFIGRHSERVER
+            if [ "${RUN_RHSERVER}" != "yes" ]; then
+                echo $ECHOOPT "$SYSCONFIGRHSERVER says NO: "
+                [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGRHSERVER says NO: "
                 RETVAL=1
             fi
             if [ -n "${ULIMIT_N}" ]; then
@@ -92,18 +92,18 @@ case "$1" in
         fi
         if [ $RETVAL -eq 0 ]; then
             cd /
-            mkdir -p /usr/spool/expert
+            mkdir -p /usr/spool/rhserver
             #
             ## Because we might generate a core file (c.f. ULIMIT_C)
             ## We explicitely chdir in the yet created directory
-            ## /usr/spool/expert
+            ## /usr/spool/rhserver
             #
-            cd /usr/spool/expert
-            $DAEMON $EXPERTD $OPTIONS
+            cd /usr/spool/rhserver
+            $DAEMON $RHSERVER $OPTIONS
             if [ $? -eq 0 ]; then
                 [ -d $SUBSYSDIR ] && touch $SUBSYS
                 if [ -d $PIDDIR ]; then
-                    pid=`ps -eo pid,ppid,$format4comm | grep " 1 expertd" | awk '{print $1}'`
+                    pid=`ps -eo pid,ppid,$format4comm | grep " 1 rhserver" | awk '{print $1}'`
                     # The point of $PIDFILE is that it kills only
                     # the master daemon.
                     rm -f $PIDFILE
@@ -111,8 +111,8 @@ case "$1" in
                 fi
                 RETVAL=0
             else
-                echo $ECHOOPT "expertd not started: "
-                [ -n "$FAILURE" ] && $FAILURE "expertd not started: "
+                echo $ECHOOPT "rhserver not started: "
+                [ -n "$FAILURE" ] && $FAILURE "rhserver not started: "
                 RETVAL=1
             fi
         fi
@@ -132,8 +132,8 @@ case "$1" in
             rm -f $PIDFILE
         fi
 	else
-		# expertd might have been started by hand
-		pid=`ps -eo pid,ppid,$format4comm | grep " 1 expertd" | awk '{print $1}'`
+		# rhserver might have been started by hand
+		pid=`ps -eo pid,ppid,$format4comm | grep " 1 rhserver" | awk '{print $1}'`
 		if [ -n "$pid" ]; then
 			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
             if [ $SILENTSTOP -eq 0 ]; then
@@ -143,8 +143,8 @@ case "$1" in
             fi
             RETVAL=$?
 		else
-			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "expertd already stopped: "
-			[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "expertd already stopped: "
+			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "rhserver already stopped: "
+			[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "rhserver already stopped: "
  			RETVAL=1
 		fi
 	fi
@@ -192,24 +192,24 @@ case "$1" in
     RETVAL=$?
 	;;
   status)
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 expertd" | awk '{print $1}'`
+	pid=`ps -eo pid,ppid,$format4comm | grep " 1 rhserver" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
-		echo $ECHOOPT "expertd (pid $pid) is running..."
+		echo $ECHOOPT "rhserver (pid $pid) is running..."
 		$ECHO_SUCCESS
 		$ECHO_END
 	else
 		if [ -f $PIDFILE ]; then
 			pid=`head -1 $PIDFILE`
 			if [ "$pid" != "" ] ; then
-				echo $ECHOOPT "expertd dead but pid file exists"
+				echo $ECHOOPT "rhserver dead but pid file exists"
 				$ECHO_FAILURE
 				$ECHO_END
 			fi
 		else
 			if [ -f $SUBSYS ]; then
-				echo $ECHOOPT "expertd dead but subsys ($SUBSYS) locked"
+				echo $ECHOOPT "rhserver dead but subsys ($SUBSYS) locked"
 			else
-				echo $ECHOOPT "expertd is stopped"
+				echo $ECHOOPT "rhserver is stopped"
 			fi
 			$ECHO_FAILURE
 			$ECHO_END
