@@ -19,6 +19,7 @@
 #define RTCPCLD_VDQMPOLL_TIMEOUT (600) /* Timeout between two polls on a VDQM request */
 #define RTCPCLD_RECALLER_CMD "recaller"
 #define RTCPCLD_MIGRATOR_CMD "migrator"
+#define TAPEERRORHANDLER_CMD "TapeErrorHandler"
 
 #ifndef RTCPCLD_NOTIFY_PORT
 #define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd notification (UDP) port */
