@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.11 2002/08/15 10:17:52 baud Exp $
+ * $Id: fclose.c,v 1.12 2002/09/19 12:58:08 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.11 $ $Date: 2002/08/15 10:17:52 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.12 $ $Date: 2002/09/19 12:58:08 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -28,6 +28,7 @@ RFILE *fp;                      /* Remote file pointer                  */
    static char     buf[256];       /* General input/output buffer          */
    char    *p = buf;
    int     HsmType;
+   int     save_errno;
    int     status;
    int     status1;
 
@@ -61,9 +62,11 @@ RFILE *fp;                      /* Remote file pointer                  */
           status1 = rfio_HsmIf_getipath(fd,upath);
       }
       status= fclose((FILE *)fp) ;
+      save_errno = errno;
       if ( HsmType == RFIO_HSM_CNS ) {
           if ( status1 == 1 ) {
               status1 = rfio_HsmIf_reqtoput(upath);
+              if ( status1 == 0 ) errno = save_errno;
           }
       } else {
           status1 = 0;
