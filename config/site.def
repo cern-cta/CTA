@@ -120,6 +120,7 @@
 #define RmcSpool	/usr/spool/rmc
 #define RtcopySpool	/usr/spool/rtcopy
 #define RtcopyWorkDir	/usr/tmp/RTCOPY
+#define	RtcpclientdHost	"lxshare003d"
 #define SacctDir	/usr/spool/sacct
 #define SconfigDir	/etc/shift
 #if defined(_WIN32)
