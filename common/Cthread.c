@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.20 1999/10/26 11:44:37 jdurand Exp $
+ * $Id: Cthread.c,v 1.21 1999/11/05 12:11:37 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.20 $ $Date: 1999/10/26 11:44:37 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.21 $ $Date: 1999/11/05 12:11:37 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -2984,6 +2984,10 @@ int DLL_DECL Cthread_Mutex_Destroy(file, line, addr)
 /* ============================================ */
 /* Notes:                                       */
 /* ============================================ */
+/* ==================================================================================== */
+/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
+/* ==================================================================================== */
+
 int _Cthread_release_mtx(file, line, mtx)
      char *file;
      int line;
@@ -3015,7 +3019,9 @@ int _Cthread_release_mtx(file, line, mtx)
   /* This is a thread environment */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   if ((n = pthread_mutex_unlock(mtx))) {
-    serrno = SECTHREADERR;
+    if (file != NULL) {
+      serrno = SECTHREADERR;
+    }
     errno = n;
     return(-1);
   } else {
@@ -3023,7 +3029,9 @@ int _Cthread_release_mtx(file, line, mtx)
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   if (pthread_mutex_unlock(mtx)) {
-    serrno = SECTHREADERR;
+    if (file != NULL) {
+      serrno = SECTHREADERR;
+    }
     return(-1);
   } else {
     return(0);
@@ -3031,7 +3039,9 @@ int _Cthread_release_mtx(file, line, mtx)
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_mutex_unlock(mtx))) {
     errno = n;
-    serrno = SECTHREADERR;
+    if (file != NULL) {
+      serrno = SECTHREADERR;
+    }
     return(-1);
   } else {
     return(0);
@@ -3041,7 +3051,9 @@ int _Cthread_release_mtx(file, line, mtx)
   if ( ( n = ReleaseMutex((HANDLE)*mtx) ) ) {
     return(0);
   } else {
-    serrno = SECTHREADERR;
+    if (file != NULL) {
+      serrno = SECTHREADERR;
+    }
     return(-1);
   }
 #  else /* _CTHREAD_WIN32MTX */
@@ -3059,13 +3071,17 @@ int _Cthread_release_mtx(file, line, mtx)
       mtx->nb_locks = 0;
       while ( n-- > 0 ) LeaveCriticalSection(&(mtx->mtx));
   } else {
-    serrno = SECTHREADERR;
+    if (file != NULL) {
+      serrno = SECTHREADERR;
+    }
     n = -1;
   }
   return(n);
 #  endif /* _CTHREAD_WIN32MTX */
 #else
-  serrno = SEOPNOTSUP;
+  if (file != NULL) {
+    serrno = SEOPNOTSUP;
+  }
   return(-1);
 #endif /* _CTHREAD_PROTO */
 #endif
@@ -3095,6 +3111,10 @@ int _Cthread_release_mtx(file, line, mtx)
 /* The use of cond_timedwait is caution to the  */
 /* non-NULL value to the second argument.       */
 /* ============================================ */
+/* ==================================================================================== */
+/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
+/* ==================================================================================== */
+
 int _Cthread_obtain_mtx(file, line, mtx, timeout)
      char *file;
      int line;
@@ -3129,17 +3149,23 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
    */
   if ( timeout < 0 ) {
 	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
 	} else {
       return(0);
     }
   } else {
     if ( (n=WaitForSingleObject((HANDLE)*mtx,timeout * 1000)) == WAIT_FAILED ) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
 	} else if ( n == WAIT_TIMEOUT ) {
-      serrno = SETIMEDOUT;
+      if (file != NULL) {
+        serrno = SETIMEDOUT;
+      }
       return(-1);
 	} else {
       return(0);
@@ -3159,26 +3185,34 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     /* Try to get the lock */
 #    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_lock(mtx))) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       errno = n;
       return(-1);
     }
     return(0);
 #    elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_lock(mtx)) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     }
     return(0);
 #    elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_mutex_lock(mtx))) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       errno = n;
       return(-1);
     }
     return(0);
 #    else
-    serrno = SEOPNOTSUP;
+    if (file != NULL) {
+      serrno = SEOPNOTSUP;
+    }
     return(-1);
 #    endif /* _CTHREAD_PROTO */
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
@@ -3187,14 +3221,18 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_trylock(mtx) != 1) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
@@ -3203,7 +3241,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
@@ -3213,11 +3253,15 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         mtx->nb_locks++;
         return(0);
     } else {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     }
 #  else
-    serrno = SEOPNOTSUP;
+    if (file != NULL) {
+      serrno = SEOPNOTSUP;
+    }
     return(-1);
 #  endif /* _CTHREAD_PROTO */
   } else {
@@ -3248,7 +3292,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         errno = EBUSY;
       }
 #  else
-      serrno = SEOPNOTSUP;
+      if (file != NULL) {
+        serrno = SEOPNOTSUP;
+      }
       return(-1);
 #  endif /* _CTHREAD_PROTO */
       if (errno == EDEADLK || n == 0) {
@@ -3266,7 +3312,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
-    serrno = ETIMEDOUT;
+    if (file != NULL) {
+      serrno = ETIMEDOUT;
+    }
     return(-1);
   }
 #endif /* ifndef _CTHREAD */
@@ -3297,6 +3345,10 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 /* The use of cond_timedwait is caution to the  */
 /* non-NULL value to the second argument.       */
 /* ============================================ */
+/* ==================================================================================== */
+/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
+/* ==================================================================================== */
+
 int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeout)
      char *Cthread_file;
      int Cthread_line;
@@ -3336,17 +3388,23 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
    */
   if ( timeout < 0 ) {
 	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
 	} else {
       return(0);
     }
   } else {
     if ( (n=WaitForSingleObject((HANDLE)*mtx,timeout * 1000)) == WAIT_FAILED ) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
 	} else if ( n == WAIT_TIMEOUT ) {
-      serrno = SETIMEDOUT;
+      if (file != NULL) {
+        serrno = SETIMEDOUT;
+      }
       return(-1);
 	} else {
       return(0);
@@ -3366,26 +3424,34 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     /* Try to get the lock */
 #    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_lock(mtx))) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       errno = n;
       return(-1);
     }
     return(0);
 #    elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_lock(mtx)) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     }
     return(0);
 #    elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_mutex_lock(mtx))) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       errno = n;
       return(-1);
     }
     return(0);
 #    else
-    serrno = SEOPNOTSUP;
+    if (file != NULL) {
+      serrno = SEOPNOTSUP;
+    }
     return(-1);
 #    endif /* _CTHREAD_PROTO */
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
@@ -3394,14 +3460,18 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_trylock(mtx) != 1) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
@@ -3410,7 +3480,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     } else {
       return(0);
@@ -3420,11 +3492,15 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
         mtx->nb_locks++;
         return(0);
     } else {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
     }
 #  else
-    serrno = SEOPNOTSUP;
+    if (file != NULL) {
+      serrno = SEOPNOTSUP;
+    }
     return(-1);
 #  endif /* _CTHREAD_PROTO */
   } else {
@@ -3455,7 +3531,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
         errno = EBUSY;
       }
 #  else
-      serrno = SEOPNOTSUP;
+      if (file != NULL) {
+        serrno = SEOPNOTSUP;
+      }
       return(-1);
 #  endif /* _CTHREAD_PROTO */
       if (errno == EDEADLK || n == 0) {
@@ -3473,7 +3551,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
-    serrno = SETIMEDOUT;
+    if (file != NULL) {
+      serrno = SETIMEDOUT;
+    }
     return(-1);
   }
 #endif /* ifndef _CTHREAD */
@@ -4012,6 +4092,10 @@ void _Cthread_keydestructor(addr)
 /* 29-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
+/* ==================================================================================== */
+/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
+/* ==================================================================================== */
+
 struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
      char *file;
      int line;
@@ -4022,7 +4106,9 @@ struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
 
   /* Verify the arguments */
   if (global_key == NULL) {
-    serrno = EINVAL;
+    if (file != NULL) {
+      serrno = EINVAL;
+    }
     return(NULL);
   }
 
@@ -4040,11 +4126,13 @@ struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
 
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
   if (n) {
-    if (file != NULL) {
-      /* If it is initialization, then we will have */
-      /* recursive call because of serrno.          */
-      serrno = EINVAL;
-    }
+    /* It is not formally an error if the key is not yet known to Cthread, so */
+    /* we do not overwrite serrno                                             */
+    /*
+      if (file != NULL) {
+        serrno = EINVAL;
+      }
+    */
     return(NULL);
   } else {
     return(current);
@@ -4201,6 +4289,10 @@ int DLL_DECL Cthread_Getspecific_init(global_key, addr)
   return(Cthread_Getspecific(NULL,__LINE__,global_key,addr));
 }
 
+/* ==================================================================================== */
+/* If file == NULL then it it called from Cglobals.c, and we do not to overwrite serrno */
+/* ==================================================================================== */
+
 int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
      char *file;
      int line;
@@ -4229,7 +4321,9 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
 
   /* Verify the arguments */
   if (global_key == NULL || addr == NULL) {
-    serrno = EINVAL;
+    if (file != NULL) {
+      serrno = EINVAL;
+    }
     return(-1);
   }
 
@@ -4241,7 +4335,9 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
     
     if ((Cspec_new = (struct Cspec_element_t *) malloc(sizeof(struct Cspec_element_t)))
         == NULL) {
-      serrno = SEINTERNAL;
+      if (file != NULL) {
+        serrno = SEINTERNAL;
+      }
       return(-1);
     }
     
@@ -4275,7 +4371,9 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
 
     if ((Cspec_new = (struct Cspec_element_t *) malloc(sizeof(struct Cspec_element_t)))
         == NULL) {
-      serrno = SEINTERNAL;
+      if (file != NULL) {
+        serrno = SEINTERNAL;
+      }
       return(-1);
     }
 
@@ -4283,14 +4381,18 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
     /* Create the specific variable a-la POSIX */
     if ((n = pthread_key_create(&(Cspec_new->key),&_Cthread_keydestructor))) {
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       free(Cspec_new);
       return(-1);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     /* Create the specific variable a-la DCE */
     if (pthread_keycreate(&(Cspec_new->key),&_Cthread_keydestructor)) {
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       free(Cspec_new);
       return(-1);
     }
@@ -4298,18 +4400,24 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
     /* Create the specific variable a-la LinuxThreads */
     if ((n = pthread_key_create(&(Cspec_new->key),&_Cthread_keydestructor))) {
       errno = n;
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       free(Cspec_new);
       return(-1);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( (n = TlsAlloc()) == 0xFFFFFFFF ) {
       free(Cspec_new);
-      serrno = SECTHREADERR;
+      if (file != NULL) {
+        serrno = SECTHREADERR;
+      }
       return(-1);
 	} else Cspec_new->key = n;
 #else
-    serrno = SEOPNOTSUP;
+    if (file != NULL) {
+      serrno = SEOPNOTSUP;
+    }
     return(-1);
 #endif /* _CTHREAD_PROTO */
     /* Initialize global_key */
