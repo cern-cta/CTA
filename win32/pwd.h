@@ -1,9 +1,13 @@
 /*
- * @(#)pwd.h	1.1 08/14/97 CERN CN-SW/DC Frederic Hemmer
+ * $Id: pwd.h,v 1.6 2000/11/03 13:32:49 baud Exp $
+ */
+
+/*
+ * @(#)$RCSfile: pwd.h,v $ $Revision: 1.6 $ $Date: 2000/11/03 13:32:49 $ CERN IT-PDP/DC Frederic Hemmer
  */
  
 /*
- * Copyright (C) 1993 by CERN/CN/SW/DC
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
