@@ -1,5 +1,5 @@
 /*
- * $Id: Csec_plugin_ID.c,v 1.8 2004/08/27 14:40:46 motiakov Exp $
+ * $Id: Csec_plugin_ID.c,v 1.9 2005/03/15 22:52:37 bcouturi Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -36,14 +36,13 @@ static char sccsid[] = "@(#)Csec_plugin_ID.c,v 1.1 2004/01/12 10:31:40 CERN IT/A
 #include "serrno.h"
 #include "Cnetdb.h"
 #include <sys/stat.h>
-#include <Cmutex.h>
-#include <Cglobals.h>
-#include <Cthread_api.h>
+#include "Cglobals.h"
+#include "Cthread_api.h"
 #include <net.h>
 #include <pwd.h>
 #include <sys/types.h>
 
-#include <Csec_plugin.h>
+#include "Csec_plugin.h"
 
 #define TMPBUFSIZE 100
 
@@ -53,68 +52,36 @@ typedef struct {
   char username[CA_MAXUSRNAMELEN+1];
 } id_creds;
 
+typedef struct {
+  id_creds local_id;
+} id_context;
+
 
 /******************************************************************************/
-/* EXPORTED FUNCTIONS */
+/* EXPORTED FUNCTIONS */ 
 /******************************************************************************/
 
-/**
- * Initializes the Csec the context.
- * Just sets the area to 0 for the moment.
- */
-int Csec_init_context_ID(ctx)
-    Csec_context_t *ctx;
-{
-
-    memset(ctx, 0, sizeof(Csec_context_t));
-    ctx->flags = CSEC_CTX_INITIALIZED;
-    return 0;
-}
-
-
-/**
- * Reinitializes the security context
- */
-int Csec_reinit_context_ID(ctx)
-    Csec_context_t *ctx;
-{
-
-    if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-        Csec_delete_connection_context_ID(ctx);
-    }
-
-    if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-        Csec_delete_creds_ID(ctx);
-    }
-
-    memset(ctx, 0, sizeof(Csec_context_t));
-    return 0;
-}
-
-/**
- * Deletes the security context inside the Csec_context_t
- */
-int Csec_delete_connection_context_ID(ctx)
-    Csec_context_t *ctx;
-{
-    return 0;
-}
-
-
-/**
- * Deletes the credentials inside the Csec_context_t
- */
-int Csec_delete_creds_ID(ctx)
-    Csec_context_t *ctx;
-{
-
-  if (ctx->credentials != NULL) {
-    free(ctx->credentials);
-  }
+int Csec_plugin_activate_ID(Csec_plugin_t *plugin) {
   return 0;
 }
 
+int Csec_plugin_deactivate_ID(Csec_plugin_t *plugin) {
+  return 0;
+}
 
+int Csec_plugin_initContext_ID(void **ctx,
+			       enum Csec_service_type  svc_type,
+			       enum Csec_context_type cxt_type,
+			       int options) {
+  id_context *tmp = calloc(1, sizeof(id_context));
+  *ctx = tmp;
+  return 0;
+}
+
+int Csec_plugin_clearContext_ID(void *ctx) {
+  if (ctx != NULL) free (ctx);
+  return 0;
+}
 
 /**
  * API function to load the server credentials.
@@ -123,11 +90,9 @@ int Csec_delete_creds_ID(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_acquire_creds_ID(ctx, service_name, is_client)
-    Csec_context_t *ctx;
-    char *service_name;
-    int is_client;
-{
+int Csec_plugin_acquireCreds_ID(void *credentials,
+				char *service_name,
+				enum Csec_context_type cxt_type) {
   serrno = ENOTSUP;
   return -1;
 }
@@ -136,48 +101,54 @@ int Csec_acquire_creds_ID(ctx, service_name, is_client)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_ID(ctx, s, buf, len)
-    Csec_context_t *ctx;
+int Csec_plugin_serverEstablishContextExt_ID(ctx, s, buf, len, client_id)
+    void  *ctx;
     int s;
     char *buf;
     int len;
+    Csec_id_t **client_id;
 {
-    gss_buffer_desc recv_tok;
-    char *func = "server_establish_context";
+    csec_buffer_desc recv_tok;
+    char *func = "Csec_plugin_serverEstablishContextExt_ID";
     int rc;
     uid_t uid;
     gid_t gid;
     id_creds  *creds;
     char username[CA_MAXUSRNAMELEN+1];
  
-    recv_tok.length = 0;
-    if (_Csec_recv_token(s, &recv_tok, CSEC_NET_TIMEOUT, NULL) < 0) {
-      Csec_errmsg(func, "Could not receive token");
-      return -1;
-    }
-  
-    Csec_trace(func, "%s\n", recv_tok.value);
-    rc = sscanf(recv_tok.value, "%d %d %14s", &uid, &gid, username);
-    if (rc != 3) {
-      Csec_errmsg(func, "Could not read uid and gid");
+
+    if (ctx == NULL) {
+      _Csec_errmsg(func, "ctx was null");
       return -1;
     }
 
-    creds = malloc(sizeof(id_creds));
-    if (creds == NULL) {
-      Csec_errmsg(func, "Could not allocate memory for credentials");
+    recv_tok.length = 0;
+    if (_Csec_recv_token(s, &recv_tok, CSEC_NET_TIMEOUT, NULL) < 0) {
+      _Csec_errmsg(func, "Could not receive token");
       return -1;
     }
+  
+    _Csec_trace(func, "%s\n", recv_tok.value);
+    rc = sscanf(recv_tok.value, "%d %d %14s", &uid, &gid, username);
+    if (rc != 3) {
+      free(recv_tok.value);
+      _Csec_errmsg(func, "Could not read uid and gid");
+      return -1;
+    }
+
+    free(recv_tok.value);
+
+    creds = (id_creds *) (&((id_context *)ctx)->local_id);
 
     creds->uid = uid;
     creds->gid = gid;
     strncpy(creds->username, username, CA_MAXUSRNAMELEN);
-    strncpy(ctx->peer_name, username, CA_MAXCSECNAMELEN);
 
-    ctx->credentials = creds;
-
-    /* Setting the flag in the context object ! */
-    ctx->flags |= CSEC_CTX_CONTEXT_ESTABLISHED;
+    if (client_id != NULL) {
+      char buf[256];
+      sprintf(buf, "%s:%d:%d", creds->username, uid, gid);
+      *client_id = _Csec_create_id("ID", buf);
+    }
     return 0;
 }
 
@@ -187,35 +158,35 @@ int Csec_server_establish_context_ext_ID(ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_ID(ctx, s)
-    Csec_context_t *ctx;
+    int Csec_plugin_clientEstablishContext_ID(ctx, s)
+    void *ctx;
     int s;
 {
 
   uid_t uid;
   gid_t gid;
-  gss_buffer_desc send_tok;
+  csec_buffer_desc send_tok;
   char *func = "client_extablish_context";
   char buf[MSGBUFCSEC];
   struct passwd *p;
 
-  Csec_trace(func, "Entering\n");
+  _Csec_trace(func, "Entering\n");
 
   uid = geteuid();
   gid = getegid();
 
   p = getpwuid(uid);
   if (p == NULL) {
-    Csec_errmsg(func, "Could not look up user");
+    _Csec_errmsg(func, "Could not look up user");
     return -1;
   }
 
   snprintf(buf, MSGBUFCSEC, "%d %d %s", uid, gid, p->pw_name);
-  Csec_trace(func, "%s\n", buf);
+  _Csec_trace(func, "%s\n", buf);
   
   send_tok.value = malloc(strlen(buf));
   if (send_tok.value == NULL) {
-    Csec_errmsg(func, "malloc: Could not allocate memory");
+    _Csec_errmsg(func, "malloc: Could not allocate memory");
     return -1;
   }
 
@@ -223,31 +194,98 @@ int Csec_client_establish_context_ID(ctx, s)
   send_tok.length = strlen(buf);
 
   if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT, CSEC_TOKEN_TYPE_HANDSHAKE) < 0) {
-    Csec_errmsg(func, "Could not send token");
+    _Csec_errmsg(func, "Could not send token");
     return -1;
   }
     
   free(send_tok.value);
 
-  /* Setting the flag in the context object ! */
-  ctx->flags |= CSEC_CTX_CONTEXT_ESTABLISHED;
+  return 0;
+ }
+
+
+int Csec_plugin_map2name_ID(Csec_id_t *user_id,
+			    Csec_id_t **mapped_id) {
   
+  /* XXX protection in case the protocol is wrong ??? */
+  char *p = NULL;
+  char *username = NULL;
+  char *func = "Csec_plugin_map2name_ID";
+  
+  if (user_id == NULL || mapped_id == NULL) {
+    serrno = EINVAL;
+    _Csec_errmsg(func, "NULL parameter\n");
+    return -1;
+  }
+
+  username = strdup(_Csec_id_name(user_id));
+  p = strchr(username, ':');
+  if (p == NULL) {
+    free(username);
+    serrno = ESEC_NO_PRINC;
+    _Csec_errmsg(func, "Could not map: %s", _Csec_id_name(user_id));
+    return -1;
+  }
+
+  *p = '\0';
+  *mapped_id = _Csec_create_id(USERNAME_MECH, username);
+  free(username);
+
   return 0;
 }
 
 
-int Csec_get_service_name_ID(Csec_context_t *ctx, 
-			       int service_type, char *host, char *domain,
-			       char *service_name, int service_namelen) {
+int Csec_plugin_servicetype2name_ID(enum  Csec_service_type  svc_type,		
+			     char *host,				
+			     char *domain,				
+			     char *service_name,			
+			     int service_namelen ) {
   strncpy(service_name, "ID", service_namelen);
   return 0;
-
 }
 
 
-int Csec_map2name_ID(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
+int Csec_plugin_getErrorMessage_ID(int *error, char **message) {
 
-  strncpy(name, principal, maxnamelen);
+  if (error)
+    *error = serrno;
+  if (message) 
+    *message = Csec_getErrorMessage();
   return 0;
+}
+
+
+
+int Csec_plugin_wrap_ID(void *plugin_context,		
+			csec_buffer_t message,		
+			csec_buffer_t crypt) {
+
+  char *func = "Csec_plugin_wrap_ID";
+  serrno = SEOPNOTSUP;
+  _Csec_errmsg(func, "Operation not supported");
+  return -1;
+}
+
+int Csec_plugin_unwrap_ID(void *plugin_context,		
+			  csec_buffer_t crypt,		
+			  csec_buffer_t message) {
+  char *func = "Csec_plugin_unwrap_ID";
+  serrno = SEOPNOTSUP;
+  _Csec_errmsg(func, "Operation not supported");
+  return -1;
+	       
+}
+ 
+
+int Csec_plugin_isIdService_ID (Csec_id_t *id) {
+  return -1;
+}
+
+int Csec_plugin_exportDelegatedCredentials_ID(void *plugin_context,
+					   csec_buffer_t buffer) {
+  char *func = "Csec_plugin_exportDelegatedCredentials_ID";
+  serrno = SEOPNOTSUP;
+  _Csec_errmsg(func, "Operation not supported");
+  return -1;
 
 }

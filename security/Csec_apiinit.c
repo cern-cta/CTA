@@ -17,13 +17,13 @@ static char sccsid[] = "@(#)Csec_apiinit.c,v 1.1 2004/01/12 10:31:40 CERN IT-ADC
 
 #include "Csec.h"
 
-static int Csec_api_key = -1;
+static int _Csec_api_key = -1;
 
 int DLL_DECL
-Csec_apiinit(thip)
+_Csec_apiinit(thip)
      struct Csec_api_thread_info **thip;
 {
-  Cglobals_get (&Csec_api_key,
+  Cglobals_get (&_Csec_api_key,
 		(void **) thip, sizeof(struct Csec_api_thread_info));
 
   if (*thip == NULL) {
@@ -33,10 +33,13 @@ Csec_apiinit(thip)
   }
 
   if ((*thip)->init_done == 0) {
+    
     (*thip)->init_done = 1;
     /* BEWARE the init_done must be done BEFORE the call to
        setup_trace(), because setup_trace calls apiinit itself ! */
-    Csec_setup_trace();
+    (*thip)->errbuf == NULL;
+    _Csec_setup_trace();
+    
   }
     
   return (0);
