@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.3 $ $Date: 2000/02/03 16:14:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.4 $ $Date: 2000/02/16 10:04:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2000/02/03 16:14:06 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2000/02/16 10:04:43 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -26,7 +26,7 @@ modifies an existing tape in the CASTOR Volume Manager.
 .TP
 .I vid
 is the volume visual identifier.
-It must be at most six characters long.
+It must be at most CA_MAXVIDLEN characters long.
 .TP
 .I vsn
 specifies the magnetically recorded volume serial number of the tape.
@@ -66,10 +66,10 @@ Default is
 .BR al .
 .TP
 .I manufacturer
-is an alphanumeric field 12 bytes long.
+is an alphanumeric field CA_MAXMANUFLEN bytes long.
 .TP
 .I sn
-The cartridge serial number is an alphanumeric field 24 bytes long.
+The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
 .LP
 Only
 .I vid
