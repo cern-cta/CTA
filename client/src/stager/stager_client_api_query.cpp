@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.7 2005/01/27 16:35:05 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.8 2005/02/01 10:48:30 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.7 $ $Date: 2005/01/27 16:35:05 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.8 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -67,7 +67,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
     
     // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
+    castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageFileQueryRequest req;
 
     
@@ -179,7 +179,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
     
     // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
+    castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageRequestQueryRequest req;
 
     

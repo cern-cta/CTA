@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.10 2005/01/27 16:36:15 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.11 2005/02/01 10:48:30 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.10 $ $Date: 2005/01/27 16:36:15 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.11 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -26,6 +26,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include "castor/stager/DiskCopy.hpp"
 #include <serrno.h>
 
+EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
 /* ================= */
 /* Internal routines */
@@ -212,4 +213,19 @@ EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
   }
   
   return strdup(sst.str().c_str());
+}
+
+
+EXTERN_C int DLL_DECL stage_getClientTimeout() {
+  char *p;
+  int stager_timeout = STAGER_TIMEOUT_DEFAULT;
+  if ((p = getenv ("STAGER_TIMEOUT")) != NULL ||
+      (p = getconfent("STAGER", "TIMEOUT",0)) != NULL) {
+    char* dp = p;
+    int itimeout = strtol(p, &dp, 0);
+    if (*dp == 0) {
+      stager_timeout = itimeout;
+    }
+  }
+  return stager_timeout;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.14 2005/01/19 10:49:56 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.15 2005/02/01 10:48:30 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.14 $ $Date: 2005/01/19 10:49:56 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.15 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -77,7 +77,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     
 	
     // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
+    castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToGetRequest req;
 
     castor::stager::RequestHelper reqh(&req);
@@ -200,7 +200,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
 
     // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
+    castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageGetRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
