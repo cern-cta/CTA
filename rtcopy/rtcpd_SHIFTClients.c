@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.29 $ $Date: 2000/07/28 15:23:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.30 $ $Date: 2000/08/03 12:25:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -42,7 +42,6 @@ extern char *geterr();
 #include <net.h>
 #include <marshall.h>
 #include <Cthread_api.h>
-#include <vdqm_api.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
@@ -274,9 +273,6 @@ static int rtcp_GetOldCMsg(SOCKET *s,
 
 
 static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
-    vdqmVolReq_t VolReq;
-    vdqmDrvReq_t DrvReq;
-    vdqmnw_t *nw = NULL;
     char server[CA_MAXHOSTNAMELEN+1];
     int namelen = CA_MAXHOSTNAMELEN;
     int nb_queued, nb_used, nb_units, rc;
@@ -302,27 +298,9 @@ static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
     }
     gethostname(server,namelen);
 
-    memset(&VolReq,'\0',sizeof(vdqmVolReq_t));
-    memset(&DrvReq,'\0',sizeof(vdqmDrvReq_t));
+    rc = rtcpc_GetDeviceQueues(req->dgn,server,&nb_queued,&nb_units,&nb_used);
 
-    strcpy(VolReq.server,server);
-    strcpy(DrvReq.server,server);
-    strcpy(VolReq.dgn,req->dgn);
-    strcpy(DrvReq.dgn,req->dgn);
-
-    while ( (rc = vdqm_NextVol(&nw,&VolReq)) != -1 ) {
-        if ( *VolReq.volid == '\0' ) continue;
-        nb_queued++;
-    }
-
-    nw = NULL;
-    while ( (rc = vdqm_NextDrive(&nw,&DrvReq)) != -1 ) {
-        if ( *DrvReq.drive == '\0' ) continue;
-        if ( DrvReq.VolReqID > 0 ) nb_used++;
-        if ( (DrvReq.status & VDQM_UNIT_UP) != 0 &&
-             *DrvReq.dedicate == '\0' ) nb_units++;
-    }
-    if ( nb_units == 0 ) req->info.status = ALLDOWN;
+    if ( rc == -1 || nb_units == 0 ) req->info.status = ALLDOWN;
     else {
         req->info.status = AVAILABLE;
         req->info.nb_queued = nb_queued;
@@ -446,7 +424,7 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_InitLog(): %s\n",
                  sstrerror(errno));
-        return(rtcpd_CleanUpSHIFT(&req,client_msg_buf,-1));
+        return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
     }
     /*
      * Check access
