@@ -62,9 +62,9 @@ int Cstager_IStagerSvc_delete(struct Cstager_IStagerSvc_t* svcs);
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_segmentsForTape (Cstager_IStagerSvc_t* stgSvc,
-                                        Cstager_Tape_t* searchItem,
-                                        Cstager_Segment_t*** segmentArray,
+int Cstager_IStagerSvc_segmentsForTape (struct Cstager_IStagerSvc_t* stgSvc,
+                                        struct Cstager_Tape_t* searchItem,
+                                        struct Cstager_Segment_t*** segmentArray,
                                         int* nbItems);
 
 /**
@@ -87,7 +87,7 @@ int Cstager_IStagerSvc_segmentsForTape (Cstager_IStagerSvc_t* stgSvc,
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
+int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
                                           Cstager_Tape_t* searchItem);
 
 /**
@@ -107,8 +107,8 @@ int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_tapesToDo(Cstager_IStagerSvc_t* stgSvc,
-                                 Cstager_Tape_t*** tapeArray,
+int Cstager_IStagerSvc_tapesToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                 struct Cstager_Tape_t*** tapeArray,
                                  int *nbItems);
 
 /**
@@ -118,6 +118,6 @@ int Cstager_IStagerSvc_tapesToDo(Cstager_IStagerSvc_t* stgSvc,
  * @param stgSvc the IStagerSvc used
  * @return the error message
  */
-const char* Cstager_IStagerSvc_errorMsg(Cstager_IStagerSvc_t* stgSvc);
+const char* Cstager_IStagerSvc_errorMsg(struct Cstager_IStagerSvc_t* stgSvc);
 
 #endif // CASTOR_ISTAGERSVC_H
