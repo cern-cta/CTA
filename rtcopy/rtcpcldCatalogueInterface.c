@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.90 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.91 $ $Release$ $Date: 2004/11/30 15:48:40 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.90 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.91 $ $Release$ $Date: 2004/11/30 15:48:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,7 +86,6 @@ WSADATA wsadata;
 #include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
-#include <castor/db/DbAddress.h>
 #include <castor/IAddress.h>
 #include <castor/IObject.h>
 #include <castor/IClient.h>
@@ -231,7 +230,7 @@ static int updateTapeFromDB(
                             )
      tape_list_t *tape;
 {
-  struct Cdb_DbAddress_t *dbAddr;
+  struct C_BaseAddress_t *dbAddr;
   struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -263,30 +262,14 @@ static int updateTapeFromDB(
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   key = tape->dbRef->key;
 
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+  
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   if ( (tp == NULL) && (key != 0) ) {
-    rc = Cdb_DbAddress_create(key,"OraCnvSvc",SVC_ORACNV,&dbAddr);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cdb_DbAddress_create()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                        sstrerror(save_serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      serrno = save_serrno;
-      return(-1);
-    }
-    baseAddr = Cdb_DbAddress_getBaseAddress(dbAddr);
+    C_BaseAddress_setId(baseAddr,key);
   } else {
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) return(-1);
     if ( tp != NULL ) Cstager_Tape_id(tp,&key);
   }
 
@@ -371,7 +354,7 @@ static int updateSegmentFromDB(
                                )
      file_list_t *file;
 {
-  struct Cdb_DbAddress_t *dbAddr;
+  struct C_BaseAddress_t *dbAddr;
   struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -396,30 +379,14 @@ static int updateSegmentFromDB(
   key = file->dbRef->key;
   segm = (struct Cstager_Segment_t *)file->dbRef->row;
 
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+  
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   if ( (segm == NULL) && (key != 0) ) {
-    rc = Cdb_DbAddress_create(key,"OraCnvSvc",SVC_ORACNV,&dbAddr);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cdb_DbAddress_create()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      serrno = save_serrno;
-      return(-1);
-    }
-    baseAddr = Cdb_DbAddress_getBaseAddress(dbAddr);
+    C_BaseAddress_setId(baseAddr,key);
   } else {
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) return(-1);
     if ( segm != NULL ) Cstager_Segment_id(segm,&key);
   }
 
@@ -634,8 +601,12 @@ int rtcpcld_getTapesToDo(
     iAddr = NULL;
     rc = getDbSvc(&dbSvc);
     if ( rc != -1 ) {
-      rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
-      if ( rc != -1 ) iAddr = C_BaseAddress_getIAddress(baseAddr);
+      rc = C_BaseAddress_create(&baseAddr);
+      if ( rc == -1 ) return(-1);
+
+      C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+      C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+      iAddr = C_BaseAddress_getIAddress(baseAddr);
     }
     for (i=0; i<nbStreamItems; i++) {
       Cstager_Stream_tapePool(streamArray[i],&tapePool);
@@ -1011,10 +982,11 @@ static int procSegmentsForTape(
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ||
        svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -1388,10 +1360,11 @@ int nextSegmentToMigrate(
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ||
        svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -1787,10 +1760,11 @@ int deleteSegmentFromDB(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   if ( segment == NULL ) {
@@ -1920,11 +1894,11 @@ int deleteTapeCopyFromDB(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);  
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   if ( tapeCopy == NULL ) {
@@ -2069,10 +2043,11 @@ int rtcpcld_updcMigrFailed(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -2239,10 +2214,11 @@ int rtcpcld_updcRecallFailed(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -2346,10 +2322,11 @@ int rtcpcld_updcFileRecalled(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -2568,10 +2545,11 @@ int rtcpcld_updcFileMigrated(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
@@ -2798,11 +2776,11 @@ int rtcpcld_updateTapeStatus(
   Cstager_Tape_status(tapeItem,&cmpStatus);
   if ( fromStatus == cmpStatus ) {
     ID_TYPE _key = 0;
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) {
-      return(-1);
-    }
+    rc = C_BaseAddress_create(&baseAddr);
+    if ( rc == -1 ) return(-1);
 
+    C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+    C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
     Cstager_Tape_id(tapeItem,&_key);
@@ -2909,10 +2887,11 @@ int rtcpcld_returnStream(
 
   Cstager_Tape_stream(tp,&stream);
   if ( stream != NULL ) {
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) {
-      return(-1);
-    }
+    rc = C_BaseAddress_create(&baseAddr);
+    if ( rc == -1 ) return(-1);
+
+    C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+    C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
 
     /*
      * We detach the stream from the tape. Delete the stream
@@ -3087,11 +3066,11 @@ int rtcpcld_restoreSelectedTapeCopies(
     return(-1);
   }
   
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
 
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   CLIST_ITERATE_BEGIN(tape->file,file) 
@@ -3208,11 +3187,11 @@ int rtcpcld_setVidWorkerAddress(
     return(-1);
   }
   
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+  
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_Tape_getIObject(tp);
   Cstager_Tape_id(tp,&_key);
