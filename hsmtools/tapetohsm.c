@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.3 $ $Date: 2002/03/08 06:42:57 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.4 $ $Date: 2002/03/10 06:55:29 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tapetohsm - catalog in the CASTOR Name Server files from a non HSM tape */
@@ -231,12 +231,6 @@ int cmdline;
 			break;
 		}
 	}
-	if (segattrs.segsize == 0) {
-		fprintf (stderr, "size is mandatory\n");
-		errflg++;
-	}
-	if (segattrs.fseq == 0)
-		segattrs.fseq = 1;
 	return (errflg ? USERR : 0);
 }
 
@@ -293,6 +287,13 @@ procfile()
 		fprintf (stderr, "hsm_path is mandatory\n");
 		return (USERR);
 	}
+
+	if (segattrs.segsize == 0) {
+		fprintf (stderr, "size is mandatory\n");
+		errflg++;
+	}
+	if (segattrs.fseq == 0)
+		segattrs.fseq = 1;
 
 	/* create the HSM file entry in the Name Server */
 
