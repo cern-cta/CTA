@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.114 2001/03/21 11:29:56 jdurand Exp $
+ * $Id: procio.c,v 1.115 2001/03/21 12:03:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.114 $ $Date: 2001/03/21 11:29:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.115 $ $Date: 2001/03/21 12:03:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3682,7 +3682,7 @@ int stageput_check_hsm(stcp,uid,gid)
 	seteuid(uid);
 	if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) == 0) {
 		have_okmode_before = 1;
-		this_okmode_before = Cnsfilestat.filemode;
+		this_okmode_before = (07777 & Cnsfilestat.filemode);
 		hsmmtime = Cnsfilestat.mtime;
 		/* We compare the size of the disk file with the size in Name Server */
 		if (rfio_stat(stcp->ipath, &filemig_stat) < 0) {
