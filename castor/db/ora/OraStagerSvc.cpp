@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.100 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.101 $ $Release$ $Date: 2005/01/06 18:06:21 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -335,6 +335,10 @@ castor::db::ora::OraStagerSvc::segmentsForTape
     ad.setCnvSvcType(castor::SVC_ORACNV);
     cnvSvc()->updateRep(&ad, searchItem, true);
   }
+  /* Take care that fillObj is taking a lock on Segment
+     and that we have to release it even if result's size
+     is 0 */
+  cnvSvc()->commit();
   return result;
 }
 
