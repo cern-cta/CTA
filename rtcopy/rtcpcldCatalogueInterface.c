@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/13 14:11:05 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/13 15:05:50 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/13 14:11:05 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/13 15:05:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1791,7 +1791,6 @@ int rtcpcld_updateVIDStatus(
       serrno = save_serrno;
       return(-1);
     }
-    Cstager_Tape_delete(dummyTp);
     /*
      * END Hack until client can use a createRepNoRec() to add segments
      */
@@ -1816,6 +1815,7 @@ int rtcpcld_updateVIDStatus(
     if ( dummyTp != NULL ) {
       C_Services_rollback(*svcs,iAddr);
       Cstager_Tape_delete(dummyTp);
+      dummyTp = NULL;
     }
     serrno = save_serrno;
     /*
