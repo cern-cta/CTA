@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/03 10:58:52 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:57:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/03 10:58:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:57:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,6 +96,10 @@ static int requestAborted = 0;
 static int segmentFailed = 0;
 
 int inChild = 1;
+
+static int diskFseq = 0;
+static int filesCopied = 0;
+static u_signed64 bytesCopied = 0;
 
 static int initLocks() 
 {
@@ -268,6 +272,18 @@ int recallerCallbackFileCopied(
   (void)rtcpcld_getFileId(file,&castorFileId);
 
   if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
+    rc = rtcpcld_checkNsSegment(
+                                tape,
+                                file
+                                );
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      LOG_SYSCALL_ERR("rtcpcld_checkNsSegment()");
+      (void)rtcpcld_unlockTape();
+      (void)updateSegmCount(0,0,1);
+      serrno = save_serrno;
+    }
+
     rc = rtcpcld_updcFileRecalled(
                                   tape,
                                   file
@@ -281,11 +297,13 @@ int recallerCallbackFileCopied(
       return(-1);
     }
     (void)rtcpcld_setatime(file);
+    filesCopied++;
+    bytesCopied += filereq->bytes_out;
     (void)dlf_write(
                     childUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                     castorFileId,
-                    3,
+                    6,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tapereq->vid,
@@ -294,7 +312,16 @@ int recallerCallbackFileCopied(
                     filereq->tape_fseq,
                     "DISKPATH",
                     DLF_MSG_PARAM_STR,
-                    filereq->file_path
+                    filereq->file_path,
+                    "FILESIZE",
+                    DLF_MSG_PARAM_INT64,
+                    filereq->bytes_in,
+                    "TOTFILES",
+                    DLF_MSG_PARAM_INT,
+                    filesCopied,
+                    "TOTBYTES",
+                    DLF_MSG_PARAM_INT64,
+                    bytesCopied
                     );
     finished = 1;
   } else {

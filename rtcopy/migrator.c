@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/01 18:02:24 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/12/08 13:57:57 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/01 18:02:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/12/08 13:57:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -88,7 +88,9 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            ));
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
-int diskFseq = 0;
+static int diskFseq = 0;
+static int filesCopied = 0;
+static u_signed64 bytesCopied = 0;
 
 static tape_list_t *tape = NULL;
 
@@ -235,11 +237,17 @@ int migratorCallbackFileCopied(
         LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
         return(-1);
       }
+      /*
+       * No lock needed since Migration file copy callbacks are
+       * always serialized
+       */
+      filesCopied++;
+      bytesCopied += filereq->bytes_in;
       (void)dlf_write(
                       childUuid,
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                       castorFileId,
-                      3,
+                      6,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -248,7 +256,16 @@ int migratorCallbackFileCopied(
                       filereq->tape_fseq,
                       "DISKPATH",
                       DLF_MSG_PARAM_STR,
-                      filereq->file_path
+                      filereq->file_path,
+                      "FILESIZE",
+                      DLF_MSG_PARAM_INT64,
+                      filereq->bytes_in,
+                      "TOTFILES",
+                      DLF_MSG_PARAM_INT,
+                      filesCopied,
+                      "TOTBYTES",
+                      DLF_MSG_PARAM_INT64,
+                      bytesCopied
                       );
     }
     if ( rtcpcld_lockTape() == -1 ) {
