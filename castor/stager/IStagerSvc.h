@@ -27,6 +27,9 @@
 #ifndef CASTOR_ISTAGERSVC_H 
 #define CASTOR_ISTAGERSVC_H 1
 
+#include "castor/Constants.h"
+
+
 /// Forward declarations for the C world
 struct C_IService_t;
 struct Cstager_IStagerSvc_t;
