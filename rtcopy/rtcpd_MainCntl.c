@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.93 $ $Date: 2004/07/28 09:30:43 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.94 $ $Date: 2004/08/02 14:03:04 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1698,6 +1698,17 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
             nextfile = NULL;
         }
     } /* End while ( reqtype != RTCP_NOMORE_REQ ) */
+
+    /*
+     * Get default blocksize if not already set by client
+     * Error is not fatal
+     */
+    rc = rtcpd_drvinfo(tape);
+    if ( rc == -1 ) {
+      rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_drvinfo(): %s\n",
+               sstrerror(serrno));
+    }
+
     *rootTape = tape;
     if ( allFilesOK == 0 ) return(-1);
     if ( rc == -1 ) serrno = save_serrno;
@@ -1948,16 +1959,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         return(-1);
     }
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDD);
-
-    /*
-     * Get default blocksize if not already set by client
-     * Error is not fatal
-     */
-    rc = rtcpd_drvinfo(tape);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
-            sstrerror(serrno));
-    }
 
     /*
      * Start a thread to listen to client socket (to receive ABORT).
