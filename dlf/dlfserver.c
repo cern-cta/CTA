@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.5 $ $Date: 2003/11/03 09:22:05 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.6 $ $Date: 2004/01/28 15:05:04 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -145,6 +145,7 @@ dlf_main(main_args)
   FD_ZERO (&readfd);
 #if ! defined(_WIN32)
   signal (SIGPIPE,SIG_IGN);
+  signal (SIGXFSZ,SIG_IGN);
 #endif
 
   /* open request socket */

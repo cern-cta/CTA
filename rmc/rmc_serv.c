@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.3 $ $Date: 2002/12/03 10:42:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.4 $ $Date: 2004/01/28 15:09:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -141,6 +141,7 @@ struct main_args *main_args;
 	FD_ZERO (&readfd);
 #if ! defined(_WIN32)
 	signal (SIGPIPE, SIG_IGN);
+	signal (SIGXFSZ, SIG_IGN);
 #endif
 
 	/* open request socket */
