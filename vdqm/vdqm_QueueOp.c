@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.46 $ $Date: 2001/09/21 10:37:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.47 $ $Date: 2001/09/26 13:33:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2275,7 +2275,8 @@ int vdqm_GetQueuePos(vdqmVolReq_t *VolReq) {
     volrec = NULL;
     rc = GetVolRecord(dgn_context,VolReq,&volrec);
     if ( volrec == NULL ) {
-        log(LOG_ERR,"vdqm_GetQueuePos() request not found\n");
+        log(LOG_ERR,"vdqm_GetQueuePos() request VolReqID=%d, dgn=%s not found\n",
+            VolReq->VolReqID,VolReq->dgn);
         FreeDgnContext(&dgn_context);
         vdqm_SetError(EVQNOSVOL);
         return(-1);
