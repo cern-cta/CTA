@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2004/06/21 15:03:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2004/06/21 17:04:48 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -18,7 +18,7 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHORALIB) $(RHPROTOLIB) $(RHCLIENTLIB) $(SECURITYLIB)
+LIBRARIES = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHPROTOLIB) $(RHCLIENTLIB) $(SECURITYLIB)
 
 all:    SharedLibraryTargetName(shift)
 
@@ -83,7 +83,6 @@ MakeDepLibrary(vmgr,vmgr)
 
 MakeDepLibrary(castor,castorClient)
 MakeDepLibrary(castor/proto,castorProto)
-MakeDepLibrary(castor/db/ora,castorCommonOra)
 
 FORCE:
 
