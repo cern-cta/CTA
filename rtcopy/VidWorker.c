@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/03 11:04:45 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/08/03 14:43:49 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/03 11:04:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/08/03 14:43:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,10 +72,96 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            ));
 
 static int callbackThreadPool = -1;
+static void *segmCountLock = NULL;
+static int segmSubmitted = 0, segmCompleted = 0, segmFailed = 0;
+
 Cuuid_t childUuid, mainUuid;
 tape_list_t *vidChildTape = NULL;
 
 int inChild = 1;
+
+#define LOG_SYSCALL_ERR(func) { \
+    int _save_serrno = serrno; \
+    (void)dlf_write( \
+                    childUuid, \
+                    DLF_LVL_ERROR, \
+                    RTCPCLD_MSG_SYSCALL, \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+2, \
+                    "SYSCALL", \
+                    DLF_MSG_PARAM_STR, \
+                    func, \
+                    "ERROR_STRING", \
+                    DLF_MSG_PARAM_STR, \
+                    sstrerror(serrno), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    serrno = _save_serrno;}
+
+static int initSegmCountLock() 
+{
+  int rc;
+  rc = Cthread_mutex_lock(&segmSubmitted);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock()");
+    return(-1);
+  }
+  rc = Cthread_mutex_unlock(&segmSubmitted);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock()");
+    return(-1);
+  }
+  
+  segmCountLock = Cthread_mutex_lock_addr(&segmSubmitted);
+  if ( segmCountLock == NULL ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_addr()");
+    return(-1);
+  }
+  
+  return(0);
+}
+
+static int updateSegmCount(
+                           submitted,
+                           completed,
+                           failed
+                           )
+     int submitted,completed, failed;
+{
+  int rc;
+  rc = Cthread_mutex_lock_ext(segmCountLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
+    return(-1);
+  }
+  segmSubmitted += submitted;
+  segmCompleted += completed;
+  segmFailed += failed;
+  rc = Cthread_mutex_unlock_ext(segmCountLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
+    return(-1);
+  }
+  return(0);
+}
+
+static int nbRunningSegms() 
+{
+  int rc, nbRunning;
+  rc = Cthread_mutex_lock_ext(segmCountLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
+    return(-1);
+  }
+  if ( segmFailed > 0 ) nbRunning = 0;
+  else nbRunning = segmSubmitted - segmCompleted;
+  rc = Cthread_mutex_unlock_ext(segmCountLock);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
+    return(-1);
+  }
+  return(nbRunning);
+}
 
 static int processTapePositionCallback(
                                        tapereq,
@@ -84,7 +170,13 @@ static int processTapePositionCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  return(0);
+  int rc = 0;
+
+  if ( (filereq != NULL) && 
+       (filereq->cprc == -1) ) {
+    rc = updateSegmCount(0,0,1);
+  }
+  return(rc);
 }
 
 static int processFileCopyCallback(
@@ -94,7 +186,16 @@ static int processFileCopyCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  return(0);
+  int rc = 0;
+  if ( (filereq != NULL) && 
+       (filereq->cprc == 0) && 
+       (filereq->proc_status == RTCP_FINISHED) ) {
+    rc = updateSegmCount(1,0,0);
+  } else if ( filereq->cprc == -1 ) {
+    rc = updateSegmCount(0,0,1);
+  }
+  
+  return(rc);
 }
 
 
@@ -113,7 +214,8 @@ static int processGetMoreWorkCallback(
    * always serialize the RQST_REQUEST_MORE_WORK callbacks.
    */
   static int nbInProgress = 0;
-  int rc, found;
+  int rc, found, allFinished = 0, totalWaittime = 0;
+  char *p;
   file_list_t *fl = NULL;
 
   if ( tapereq == NULL || filereq == NULL ) {
@@ -121,49 +223,106 @@ static int processGetMoreWorkCallback(
     return(-1);
   }  
 
-  found = FALSE;
-  CLIST_ITERATE_BEGIN(vidChildTape->file,fl) {
-    if ( fl->filereq.proc_status == RTCP_WAITING ) {
-      found = TRUE;
-      break;
-    }
-  } CLIST_ITERATE_END(vidChildTape->file,fl);
+  while ( allFinished == 0 ) {
+    rc = nbRunningSegms();
+    if ( rc <= 0 ) allFinished = 1;
 
-  if ( found == FALSE ) {
-    /*
-     * Internal list empty or has no waiting requests (however that
-     * happened?). Get more file requests from Catalogue.
-     */
-    for (;;) {
-      rc = rtcpcld_getReqsForVID(
-                                 vidChildTape
-                                 );
-      if ( rc == 0 ) break;
-      if ( rc == -1 ) {
-        if ( serrno == EAGAIN ) {
-          if ( nbInProgress > 0 ) break; /* There was already something todo */
+    found = FALSE;
+    CLIST_ITERATE_BEGIN(vidChildTape->file,fl) {
+      if ( fl->filereq.proc_status == RTCP_WAITING ) {
+        found = TRUE;
+        break;
+      }
+    } CLIST_ITERATE_END(vidChildTape->file,fl);
+
+    if ( found == FALSE ) {
+      /*
+       * Internal list empty or has no waiting requests (however that
+       * happened?). Get more file requests from Catalogue.
+       */
+      for (;;) {
+        rc = rtcpcld_getReqsForVID(
+                                   vidChildTape
+                                   );
+        if ( rc == 0 ) break;
+        if ( rc == -1 ) {
+          if ( serrno == EAGAIN ) {
+            if ( nbInProgress > 0 ) break; /* There was already something todo */
+            (void)dlf_write(
+                            childUuid,
+                            DLF_LVL_SYSTEM,
+                            RTCPCLD_MSG_WAITSEGMS,
+                            (struct Cns_fileid *)NULL,
+                            0
+                            );
+            totalWaittime += 2;
+            if ( totalWaittime > (RTCP_NETTIMEOUT*3)/4 ) {
+              (void)dlf_write(
+                              childUuid,
+                              DLF_LVL_SYSTEM,
+                              RTCPCLD_MSG_WAITTIMEOUT,
+                              (struct Cns_fileid *)NULL,
+                              1,
+                              "WTIME",
+                              DLF_MSG_PARAM_STR,
+                              totalWaittime
+                              );
+              filereq->proc_status = RTCP_FINISHED;
+              return(0);
+            }
+            sleep(2);
+            continue;
+          }
+          
+          if ( serrno == ENOENT ) {
+            (void)dlf_write(
+                            childUuid,
+                            DLF_LVL_SYSTEM,
+                            RTCPCLD_MSG_NOMORESEGMS,
+                            (struct Cns_fileid *)NULL,
+                            0
+                            );
+            break;
+          }
+          
           (void)dlf_write(
                           childUuid,
-                          DLF_LVL_SYSTEM,
-                          RTCPCLD_MSG_WAITSEGMS,
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_SYSCALL,
                           (struct Cns_fileid *)NULL,
-                          0
+                          RTCPCLD_NB_PARAMS+2,
+                          "SYSCALL",
+                          DLF_MSG_PARAM_STR,
+                          "rtcpcld_getReqsForVID()",
+                          "ERROR_STRING",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          RTCPCLD_LOG_WHERE
                           );
-          sleep(2);
-          continue;
+          return(-1);
         }
-        
-        if ( serrno == ENOENT ) {
-          (void)dlf_write(
-                          childUuid,
-                          DLF_LVL_SYSTEM,
-                          RTCPCLD_MSG_NOMORESEGMS,
-                          (struct Cns_fileid *)NULL,
-                          0
-                          );
+      }
+      /*
+       * Check if any new requests were found in Catalogue
+       */
+      CLIST_ITERATE_BEGIN(vidChildTape->file,fl) {
+        if ( fl->filereq.proc_status == RTCP_WAITING ) {
+          found = TRUE;
           break;
         }
-
+      } CLIST_ITERATE_END(vidChildTape->file,fl);
+    }
+    
+    if ( (found == TRUE) && (fl != NULL) ) {
+      /*
+       * Request is OK. Go on with the copying
+       */
+      rc = rtcpcld_setFileStatus(
+                                 &fl->filereq,
+                                 SEGMENT_COPYRUNNING,
+                                 0 /* Not urgent to notify the client */
+                                 );
+      if ( rc == -1 ) {
         (void)dlf_write(
                         childUuid,
                         DLF_LVL_ERROR,
@@ -172,7 +331,7 @@ static int processGetMoreWorkCallback(
                         RTCPCLD_NB_PARAMS+2,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
-                        "rtcpcld_getReqsForVID()",
+                        "rtcpcld_setFileStatus()",
                         "ERROR_STRING",
                         DLF_MSG_PARAM_STR,
                         sstrerror(serrno),
@@ -180,79 +339,74 @@ static int processGetMoreWorkCallback(
                         );
         return(-1);
       }
-    }
-    /*
-     * Check if any new requests were found in Catalogue
-     */
-    CLIST_ITERATE_BEGIN(vidChildTape->file,fl) {
+
+      /*
+       * Pop off request by request until all has been passed back 
+       * through callback. Make sure to retain the original tape
+       * path, given by server 
+       */
+      strncpy(
+              fl->filereq.tape_path,
+              filereq->tape_path,
+              sizeof(fl->filereq.tape_path)-1
+              );
       if ( fl->filereq.proc_status == RTCP_WAITING ) {
-        found = TRUE;
-        break;
+        *filereq = fl->filereq;
+        nbInProgress++;
       }
-    } CLIST_ITERATE_END(vidChildTape->file,fl);
-  }
-
-  if ( (found == TRUE) && (fl != NULL) ) {
-    /*
-     * Request is OK. Go on with the copying
-     */
-    rc = rtcpcld_setFileStatus(
-                               &fl->filereq,
-                               SEGMENT_COPYRUNNING,
-                               0 /* Not urgent to notify the client */
-                               );
-    if ( rc == -1 ) {
-      (void)dlf_write(
-                      childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_setFileStatus()",
-                      "ERROR_STRING",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      return(-1);
-    }
-
-    /*
-     * Pop off request by request until all has been passed back 
-     * through callback. Make sure to retain the original tape
-     * path, given by server 
-     */
-    strncpy(
-            fl->filereq.tape_path,
-            filereq->tape_path,
-            sizeof(fl->filereq.tape_path)-1
-            );
-    if ( fl->filereq.proc_status == RTCP_WAITING ) {
-      *filereq = fl->filereq;
-      nbInProgress++;
-    }
     
-    CLIST_DELETE(vidChildTape->file,fl);
-    free(fl);
-  } else {
-    if ( nbInProgress > 0 ) {
-      /*
-       * There is already something to do. Go ahead with the processing
-       * and we will be called again once it has finished. Reset the
-       * counter for next callback.
-       */
-      nbInProgress = 0;
+      CLIST_DELETE(vidChildTape->file,fl);
+      free(fl);
+      (void)updateSegmCount(0,1,0);
+      break;
     } else {
-      /*
-       * No more files to copy. Flag the file request as finished
-       * in order to stop the processing (any value different
-       * from RTCP_REQUEST_MORE_WORK or RTCP_WAITING would do).
-       */
-      filereq->proc_status = RTCP_FINISHED;
+      if ( nbInProgress > 0 ) {
+        /*
+         * There is already something to do. Go ahead with the processing
+         * and we will be called again once it has finished. Reset the
+         * counter for next callback.
+         */
+        nbInProgress = 0;
+        break;
+      } else {
+        /*
+         * If there are still segments running we can wait a while and
+         * see if client wants to add more files to the request. Make
+         * sure that we don't expire the server timeout (wait up to 3/4
+         * of server timeout).
+         * Otherwise flag the file request as finished in order to stop the
+         * processing (any value different from RTCP_REQUEST_MORE_WORK or
+         * RTCP_WAITING would do the job).
+         */
+        if ( (allFinished == 1) || (totalWaittime > (RTCP_NETTIMEOUT*3)/4) ) {
+          if ( allFinished != 1 ) (void)dlf_write(
+                                                  childUuid,
+                                                  DLF_LVL_SYSTEM,
+                                                  RTCPCLD_MSG_WAITTIMEOUT,
+                                                  (struct Cns_fileid *)NULL,
+                                                  1,
+                                                  "WTIME",
+                                                  DLF_MSG_PARAM_STR,
+                                                  totalWaittime
+                                                  );
+          filereq->proc_status = RTCP_FINISHED;
+          break;
+        } else {
+          (void)dlf_write(
+                          childUuid,
+                          DLF_LVL_SYSTEM,
+                          RTCPCLD_MSG_WAITNEWSEGMS,
+                          (struct Cns_fileid *)NULL,
+                          0
+                          );
+          totalWaittime += 2;
+          sleep(2);
+          continue;
+        }
+      }
     }
   }
+  
   return(0);
 }
   
