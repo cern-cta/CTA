@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/29 09:59:17 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/05 16:48:59 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.4 $
- * @date $Date: 2004/10/29 09:59:17 $
+ * @version $Revision: 1.5 $
+ * @date $Date: 2004/11/05 16:48:59 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.4 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.5 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -225,30 +225,6 @@ EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
 						 char **requestId));
 
 
-/**
- * stage_prepareToUpdate
- * Stages in the files from CASTOR, on disk servers where they will; be editable,  but does not 
- * schedule the file access
- * \ingroup Functions
- * @param userTag    A string chosen by user to group requests
- * @param requests   Pointer to the flist of file requests
- * @param nbreqs     Number of file requests in the list
- * @param responses  List of file responses, created by the call itself
- * @param nbresps    Number of file responses in the list
- * @param requestId  Reference number to be used by the client to look
- *                   up his request in the castor stager.
- *
- * @returns 0 in case of success, -1 otherwise
- * @note requestId and responses are allocated by the call, and therefore
- *       should be freed by the client.
- */
-EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
-						    struct stage_prepareToGet_filereq **requests,
-						    int nbreqs,
-						    struct stage_prepareToGet_fileresp ***responses,
-						    int *nbresps,
-						    char **requestId));
-
 
 ////////////////////////////////////////////////////////////
 //    stage_get                                           //
@@ -323,6 +299,63 @@ EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
 					 char **requestId));
 
 
+////////////////////////////////////////////////////////////
+//    stage_getNext                                       //
+////////////////////////////////////////////////////////////
+		       
+
+
+/**
+ * stage_getNext
+ * Schedules access to the next file in the prepateToGet
+ * request that is ready to be accessed.
+ * \ingroup Functions
+ * 
+ * @param reqId      ID of the stage_prepareToGetRequest
+ * @param response   The location of the file
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int stage_getNext _PROTO((const char *reqId,
+				   struct stage_get_fileresp ** response));
+
+
+
+////////////////////////////////////////////////////////////
+//    stage_prepareToUpdate                               //
+////////////////////////////////////////////////////////////
+
+
+/**
+ * stage_prepareToUpdate
+ * Stages in the files from CASTOR, on disk servers where they will; be editable,  but does not 
+ * schedule the file access
+ * \ingroup Functions
+ * @param userTag    A string chosen by user to group requests
+ * @param requests   Pointer to the flist of file requests
+ * @param nbreqs     Number of file requests in the list
+ * @param responses  List of file responses, created by the call itself
+ * @param nbresps    Number of file responses in the list
+ * @param requestId  Reference number to be used by the client to look
+ *                   up his request in the castor stager.
+ *
+ * @returns 0 in case of success, -1 otherwise
+ * @note requestId and responses are allocated by the call, and therefore
+ *       should be freed by the client.
+ */
+EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
+						    struct stage_prepareToGet_filereq **requests,
+						    int nbreqs,
+						    struct stage_prepareToGet_fileresp ***responses,
+						    int *nbresps,
+						    char **requestId));
+
+
+////////////////////////////////////////////////////////////
+//    stage_update                                        //
+////////////////////////////////////////////////////////////
+
+
 /**
  * stage_update
  * Stages one file from CASTOR, and schedules the data access.
@@ -347,27 +380,27 @@ EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
 					 char **requestId));
 
 
-
-
 ////////////////////////////////////////////////////////////
-//    stage_getNext                                           //
+//    stage_updateNext                                    //
 ////////////////////////////////////////////////////////////
 		       
 
 
 /**
- * stage_getNext
- * Schedules access to the next file in the prepateToGet
+ * stage_updateNext
+ * Schedules access to the next file in the prepateToUpdate
  * request that is ready to be accessed.
  * \ingroup Functions
  * 
- * @param reqId      ID of the stage_prepareToGetRequest
+ * @param reqId      ID of the stage_prepareToUpdateRequest
  * @param response   The location of the file
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int stage_getNext _PROTO((const char *reqId,
+EXTERN_C int stage_updateNext _PROTO((const char *reqId,
 				   struct stage_get_fileresp ** response));
+
+
 
 
 
@@ -462,6 +495,27 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
 					struct stage_put_fileresp ** response,
 					char **requestId));
 
+
+
+////////////////////////////////////////////////////////////
+//    stage_putNext                                    //
+////////////////////////////////////////////////////////////
+		       
+
+
+/**
+ * stage_putNext
+ * Schedules access to the next file in the prepateToPut
+ * request that is ready to be accessed.
+ * \ingroup Functions
+ * 
+ * @param reqId      ID of the stage_prepareToPutRequest
+ * @param response   The location of the file
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int stage_putNext _PROTO((const char *reqId,
+				   struct stage_put_fileresp ** response));
 
 
 
@@ -859,11 +913,34 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req **request
 						int *nbresps));
 
 
+////////////////////////////////////////////////////////////
+//    stage_seterrbuf                                     //
+////////////////////////////////////////////////////////////
+
+/**
+ * stage_seterrbuf
+ * Sets the error buffer in which the detail of the error messages
+ * is copied.
+ * \ingroup Functions
+ * 
+ * @param buffer     Pointer buffer where the error strings should be copied
+ * @param buflen     Actual length of the buffer
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
+
+
+////////////////////////////////////////////////////////////
+//    MACROS                                              //
+////////////////////////////////////////////////////////////
+
+
 /**
  * Macro to create a function that allocates a list of STRCNAME structures
  */
 #define ALLOC_STRUCT_LIST(STRCNAME)                    \
-  int create_##STRCNAME(struct stage_##STRCNAME ***ptr, int nb) {       \
+  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME ***ptr, int nb) {       \
   struct stage_##STRCNAME **ptrlist;                                    \
   int i; \
   if (ptr == NULL || nb <=0) return -1; \
@@ -881,7 +958,7 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req **request
  * Macro to create a function that frees a list of STRCNAME structures
  */
 #define FREE_STRUCT_LIST(STRCNAME)                      \
-  int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb) {	\
+  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb) {	\
   int i;                                                \
   if (ptr == NULL || nb <=0) return -1;                 \
   for (i=0; i<nb; i++) {                                \
@@ -890,6 +967,49 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req **request
    free(ptr);                                           \
    return 0; \
 }
+
+/**
+ * Macro to declare a function that allocates a list of STRCNAME structures
+ */
+#define ALLOC_STRUCT_LIST_DECL(STRCNAME)                    \
+  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME ***ptr, int nb);
+
+/**
+ * Macro to declare a function that frees a list of STRCNAME structures
+ */
+#define FREE_STRUCT_LIST_DECL(STRCNAME)                      \
+  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb);
+
+ALLOC_STRUCT_LIST_DECL(prepareToGet_filereq)
+ALLOC_STRUCT_LIST_DECL(prepareToGet_fileresp)
+ALLOC_STRUCT_LIST_DECL(get_fileresp)
+ALLOC_STRUCT_LIST_DECL(prepareToPut_filereq)
+ALLOC_STRUCT_LIST_DECL(prepareToPut_fileresp)
+ALLOC_STRUCT_LIST_DECL(put_fileresp)
+ALLOC_STRUCT_LIST_DECL(filereq)
+ALLOC_STRUCT_LIST_DECL(fileresp)
+ALLOC_STRUCT_LIST_DECL(updateFileStatus_filereq)
+ALLOC_STRUCT_LIST_DECL(query_req)
+ALLOC_STRUCT_LIST_DECL(filequery_resp)
+ALLOC_STRUCT_LIST_DECL(requestquery_resp)
+ALLOC_STRUCT_LIST_DECL(subrequestquery_resp)
+ALLOC_STRUCT_LIST_DECL(findrequest_resp)
+
+
+FREE_STRUCT_LIST_DECL(prepareToGet_filereq)
+FREE_STRUCT_LIST_DECL(prepareToGet_fileresp)
+FREE_STRUCT_LIST_DECL(get_fileresp)
+FREE_STRUCT_LIST_DECL(prepareToPut_filereq)
+FREE_STRUCT_LIST_DECL(prepareToPut_fileresp)
+FREE_STRUCT_LIST_DECL(put_fileresp)
+FREE_STRUCT_LIST_DECL(filereq)
+FREE_STRUCT_LIST_DECL(fileresp)
+FREE_STRUCT_LIST_DECL(updateFileStatus_filereq)
+FREE_STRUCT_LIST_DECL(query_req)
+FREE_STRUCT_LIST_DECL(filequery_resp)
+FREE_STRUCT_LIST_DECL(requestquery_resp)
+FREE_STRUCT_LIST_DECL(subrequestquery_resp)
+FREE_STRUCT_LIST_DECL(findrequest_resp)
 
 
 // XXX Add FindRequest
