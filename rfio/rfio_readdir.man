@@ -1,0 +1,59 @@
+.\"
+.\" $Id: rfio_readdir.man,v 1.1 2000/07/07 14:12:50 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfio_readdir.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:12:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_READDIR 3 "$Date: 2000/07/07 14:12:50 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_readdir \- read directory opened by
+.B rfio_opendir
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+.B #include <dirent.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "struct dirent *rfio_readdir (RDIR *" dirp ")"
+.SH DESCRIPTION
+.B rfio_readdir
+reads the directory opened by
+.B rfio_opendir
+. This routine returns a pointer to a structure containing the current directory
+entry.
+.TP
+.I dirp
+specifies the pointer value returned by
+.BR rfio_opendir .
+.SH NOTE
+Only the fields d_name, d_reclen and on some platforms d_namlen are filled.
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current directory
+entry if the operation was successful or NULL if the end of the directory was
+reached or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+File descriptor in DIR structure is invalid.
+.TP
+.B EFAULT
+.I dirp
+is a NULL pointer.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.SH SEE ALSO
+.BR rfio_closedir(3) ,
+.BR rfio_opendir(3) ,
+.BR rfio_rewinddir(3) ,
+.B dirent
