@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.7 $ $Date: 1999/11/17 10:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 10:28:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rls - unload tape and release reservations */
@@ -51,7 +51,7 @@ int flags;
 		return (-1);
 	}
 #endif
-	jid = findpgrp();
+	jid = getpid();
 
 	/* path */
 
