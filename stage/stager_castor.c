@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.26 2002/09/04 10:09:08 jdurand Exp $
+ * $Id: stager_castor.c,v 1.27 2002/09/30 15:45:38 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.26 $ $Date: 2002/09/04 10:09:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.27 $ $Date: 2002/09/30 15:45:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -65,10 +65,8 @@ static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.26 $ $Dat
 
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
-EXTERN_C void DLL_DECL stager_migmsg _PROTO(());
 #else
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
-EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -674,7 +672,7 @@ int main(argc,argv,envp)
 	if (nretry) sleep (RETRYI);
 
 	/* Redirect RTCOPY log message directly to user's console */
-	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (silent != 0 ? &stager_migmsg : &stager_usrmsg);
+	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) &stager_usrmsg;
 
 	/* -------- CASTOR MIGRATION ----------- */
 

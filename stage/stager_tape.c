@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.11 2002/08/27 08:38:04 jdurand Exp $
+ * $Id: stager_tape.c,v 1.12 2002/09/30 15:45:38 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.11 $ $Date: 2002/08/27 08:38:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.12 $ $Date: 2002/09/30 15:45:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -53,10 +53,8 @@ static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.11 $ $Date:
 
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
-EXTERN_C void DLL_DECL stager_migmsg _PROTO(());
 #else
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
-EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
@@ -489,7 +487,7 @@ int main(argc,argv)
 	if (nretry) sleep (RETRYI);
 
 	/* Redirect RTCOPY log message directly to user's console */
-	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (silent != 0 ? &stager_migmsg : &stager_usrmsg);
+	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) &stager_usrmsg;
 
 	/* -------- TAPE TO TAPE ----------- */
 
