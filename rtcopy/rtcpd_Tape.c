@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.22 $ $Date: 2000/02/02 16:35:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.23 $ $Date: 2000/02/07 15:52:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -532,10 +532,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
     int lrecl, end_of_tpfile, break_and_return, severity, proc_err;
     int nb_skipped_blks = 0;
+    char u64buf[22];
+    int u64bufsz = 22;
     register int Uformat;
     register int debug = Debug;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
+    extern char *u64tostr _PROTO((u_signed64, char *, int));
 
     if ( tape_fd < 0 || indxp == NULL || firstblk == NULL ||
          tape == NULL || file == NULL ) {
@@ -661,7 +664,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                      */
                     filereq->bytes_out = 0;
                     end_of_tpfile = TRUE;
-                    continue;
+                    break;
                 }
 
                 /*
@@ -804,6 +807,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
               * Note down the actual file size to 
               * allow for start up of next disk IO thread.
               */
+             DEBUG_PRINT((LOG_DEBUG,
+                 "TapeToMemory() tapebytes_sofar=%d, max=%d, start=%d\n",
+                 (int)file->tapebytes_sofar,(int)filereq->maxsize,
+                 (int)filereq->startsize));
              if ((filereq->maxsize > 0) &&
                  (filereq->maxsize <= file->tapebytes_sofar) ) {
                  /*
@@ -817,10 +824,12 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              } else
                  filereq->bytes_out = file->tapebytes_sofar - 
                      filereq->startsize;
+             DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() bytes_out=%d\n",
+                          (int)filereq->bytes_out));
 
              /*
               * Tell main control thread that we finished by
-              * incrementing the number of reserved buffers.
+              * resetting the number of reserved buffers.
               */
              TP_STATUS(RTCP_PS_WAITMTX);
              rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
@@ -1281,8 +1290,9 @@ void *tapeIOthread(void *arg) {
                  * logged and the maxsize is corrected to the first
                  * specified value.
                  */
-                if ((nexttape->tapereq.mode == WRITE_DISABLE) &&
-                    (nextfile->filereq.concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) { 
+                if ( (nexttape->tapereq.mode == WRITE_DISABLE) &&
+                     ((nextfile->next->filereq.concat & CONCAT) != 0 ||
+                      (nextfile->filereq.concat &  CONCAT_TO_EOD) != 0) ) {
                     if ( nextfile->filereq.maxsize > 0 ) {
                         if ( nextfile->filereq.maxsize !=
                             nextfile->next->filereq.maxsize ) {

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.12 $ $Date: 2000/02/01 13:17:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.13 $ $Date: 2000/02/07 15:52:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -73,6 +73,16 @@ char *rtcpd_CtapeErrMsg() {
     Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
     if ( errbuf == NULL ) return(Unkn_errorstr);
     return(errbuf);
+}
+
+void rtcpd_ResetCtapeError() {
+    char *errbuf;
+    int errbufsiz = CA_MAXLINELEN+1;
+
+    Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
+    if ( errbuf == NULL ) *errbuf = '\0';
+    serrno = 0;
+    return;
 }
 
 int rtcpd_Assign(tape_list_t *tape) {
@@ -180,6 +190,7 @@ int rtcpd_Reserve(tape_list_t *tape) {
     strcpy(rsv.name,tapereq->dgn);
     rsv.num = 1;
 
+    rtcpd_ResetCtapeError();
     rc = Ctape_reserve(count,&rsv);
 
     tapereq->tprc = rc;
@@ -236,6 +247,7 @@ int rtcpd_Mount(tape_list_t *tape) {
      * and the tape_path information gone lost.
      */
     strcpy(tape_path,filereq->tape_path);
+    rtcpd_ResetCtapeError();
     tapereq->TStartMount = (int)time(NULL);
     rc = Ctape_mount(filereq->tape_path,
                      tapereq->vid,
@@ -412,6 +424,7 @@ int rtcpd_Position(tape_list_t *tape,
     while (do_retry) {
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%u,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,filereq->blockid,tapereq->start_file,tapereq->end_file,filstat,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
         serrno = errno = 0;
+        rtcpd_ResetCtapeError();
         rc = Ctape_position(filereq->tape_path,
                             filereq->position_method,
                             filereq->tape_fseq,
@@ -592,6 +605,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
         file->tape_fsec);
 
+    rtcpd_ResetCtapeError();
     rc = Ctape_info( filereq->tape_path,
                     &filereq->blocksize,
                     (unsigned int *)&filereq->blockid,
@@ -665,6 +679,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     rtcp_log(LOG_DEBUG,"rtcpd_Release() called with path=%s\n",
         (path == NULL ? "(nil)" : path));
 
+    rtcpd_ResetCtapeError();
     if ( tapereq != NULL ) tapereq->TStartUnmount = (int)time(NULL);
     rc = Ctape_rls(path,flags);
 
@@ -684,6 +699,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
             path = NULL;
             flags = TPRLS_ALL;
             log(LOG_ERR,"rtcpd_Release() retry with TPRLS_ALL\n");
+            rtcpd_ResetCtapeError();
             (void)Ctape_rls(path,flags);
             break;
         case ETFSQ:      /* Bad file sequence number */
