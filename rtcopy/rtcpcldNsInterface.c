@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/01/06 16:21:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/01/07 07:44:06 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/01/06 16:21:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/01/07 07:44:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -465,6 +465,7 @@ int rtcpcld_checkNsSegment(
                  filereq->blockid,
                  sizeof(filereq->blockid)) != 0) ) continue;
     found = 1;
+    break;
   }
 
   /* 
