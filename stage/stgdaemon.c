@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.210 2002/07/03 12:09:23 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.211 2002/07/18 11:14:41 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.210 $ $Date: 2002/07/03 12:09:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.211 $ $Date: 2002/07/18 11:14:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -304,7 +304,7 @@ extern void checkpoolspace _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern int get_create_file_option _PROTO((char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern void check_delaymig _PROTO(());
@@ -1001,7 +1001,7 @@ int main(argc,argv)
 			}
 		}
 		if (stcp->t_or_d == 'h') {
-			upd_fileclass(NULL,stcp,0,0);
+			upd_fileclass(NULL,stcp,0,0,0);
 		}
 		if ((((stcp->status & 0xF) == STAGEIN) &&
 				 ((stcp->status & 0xF0) != STAGED)) ||
@@ -2375,6 +2375,9 @@ void checkpoolstatus()
 							wqp->status = c;
 						} else {
 							int hsm_ns_error = 0;
+							stcp->c_time = time(NULL);
+							stcp->a_time = stcp->c_time;
+							stcp->nbaccesses = 1;
 							stcp->status &= 0xF;
 							if (ISSTAGEOUT(stcp)) {
 								if (stcp->t_or_d == 'h') {
@@ -2498,6 +2501,9 @@ void checkwaitingspc()
 		}
 		if (c == 0) {
 			hsm_ns_error = 0;
+			stcp->c_time = time(NULL);
+			stcp->a_time = stcp->c_time;
+			stcp->nbaccesses = 1;
 
 			/* We succeeded to allocate space for this WAITING_SPC request */
 			/* regardless of an existing gc or not */

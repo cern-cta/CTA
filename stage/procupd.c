@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.111 2002/06/19 06:55:01 jdurand Exp $
+ * $Id: procupd.c,v 1.112 2002/07/18 11:13:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.111 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.112 $ $Date: 2002/07/18 11:13:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,7 +86,7 @@ extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
@@ -327,7 +327,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					errflg++;
 				} else {
 					size = strutou64(Coptarg); /* Default unit is byte there */
-					if (size <= 0) {
+					if (size < 0) {
 						sendrep (rpfd, MSG_ERR, STG06, "-s");
 						errflg++;
 					}
@@ -864,6 +864,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 				return;
 			}
 			has_been_modified = 1;
+			stcp->c_time = time(NULL);
+			stcp->a_time = stcp->c_time;
+			stcp->nbaccesses = 1;
 		}
 		if (fseq && stcp->t_or_d == 't') {
 			if (*stcp->poolname &&
@@ -1239,7 +1242,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				int ifileclass;
 
 				if (stcp->t_or_d == 'h')
-					ifileclass = upd_fileclass(NULL,stcp,0,0);
+					ifileclass = upd_fileclass(NULL,stcp,0,0,0);
 				else
 					ifileclass = -1;
 				/*
