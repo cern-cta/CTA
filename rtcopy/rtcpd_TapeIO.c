@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.21 $ $Date: 2000/05/29 16:46:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.22 $ $Date: 2000/06/08 07:38:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -97,6 +97,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
         case EIO:    /* I/O error */
             errcat = gettperror (fd, filereq->tape_path, &msgaddr);
             rtcpd_AppendClientMsg(NULL, file,RT126,"CPDSKTP", msgaddr, trec+1);
+            if ( filereq != NULL ) status = errcat;
             switch (errcat) {
                 case ETHWERR:       /* Device malfunctioning.    */
                     /*
