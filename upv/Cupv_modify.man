@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_modify.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_modify.man,v $ $Revision: 1.3 $ $Date: 2002/10/16 08:04:34 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_modify" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_modify" "3" "$Date: 2002/10/16 08:04:34 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_modify \- Modifies an entry in the user privilege validation system.
 .SH "SYNOPSIS"
@@ -42,7 +42,7 @@ is the privilege requested. It must be one of the following:
 .IP 
 .BR P_OPERATOR, 
 .BR P_TAPE_OPERATOR, 
-.BR P_EXPT_ADMIN, 
+.BR P_GRP_ADMIN, 
 .BR P_ADMIN, 
 .BR P_UPV_ADMIN, 
 .BR P_TAPE_SYSTEM 

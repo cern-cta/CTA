@@ -122,7 +122,7 @@ char **argv;
   if (errflg) {
     fprintf (stderr, "usage: %s %s%s", argv[0],
 	     "[--uid uid | --user username] [--gid gid | --group groupname] \n\t--src SourceHost --tgt TargetHost --priv privilege\n",
-	     "Where priv is one of: OPER, TP_OPER, ADMIN, EXPT_ADMIN, UPV_ADMIN or TP_SYSTEM\n");
+	     "Where priv is one of: OPER, TP_OPER, ADMIN, GRP_ADMIN, UPV_ADMIN or TP_SYSTEM\n");
     exit (USERR);
   }
 

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_add.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_add.man,v $ $Revision: 1.3 $ $Date: 2002/10/16 08:04:12 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_add" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_add" "3" "$Date: 2002/10/16 08:04:12 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_add \- Adds an entry in the user privilege validation system.
 .SH "SYNOPSIS"
@@ -39,7 +39,7 @@ is the privilege requested. It must be one of the following:
 .BR P_TAPE_OPERATOR, 
 (tape operator), 
 .TP
-.BR P_EXPT_ADMIN, 
+.BR P_GRP_ADMIN, 
 (experiment administrator),
 .TP
 .BR P_ADMIN,

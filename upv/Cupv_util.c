@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_util.c,v 1.5 2002/09/10 12:54:56 bcouturi Exp $
+ * $Id: Cupv_util.c,v 1.6 2002/10/16 08:04:42 bcouturi Exp $
  */
 
 #include <sys/types.h>
@@ -205,8 +205,8 @@ int DLL_DECL Cupv_parse_privstring(char *privstr) {
       priv |= P_OPERATOR;
     else if (strcmp (p, STR_TAPE_OPERATOR) == 0)
       priv |= P_TAPE_OPERATOR;
-    else if (strcmp (p, STR_EXPT_ADMIN) == 0)
-      priv |= P_EXPT_ADMIN;
+    else if (strcmp (p, STR_GRP_ADMIN) == 0)
+      priv |= P_GRP_ADMIN;
     else if (strcmp (p, STR_ADMIN) == 0)
       priv |= P_ADMIN;
     else if (strcmp (p, STR_UPV_ADMIN) == 0)
@@ -249,8 +249,8 @@ void DLL_DECL Cupv_build_privstring(int priv, char *privstring) {
     if (priv & P_STAGE_SYSTEM) {
       WRITE_STR(p, STR_STAGE_SYSTEM, firstentry);
     } 
-    if (priv & P_EXPT_ADMIN) {
-      WRITE_STR(p, STR_EXPT_ADMIN, firstentry);
+    if (priv & P_GRP_ADMIN) {
+      WRITE_STR(p, STR_GRP_ADMIN, firstentry);
     }
     if (priv & P_UPV_ADMIN) {
       WRITE_STR(p, STR_UPV_ADMIN, firstentry);
