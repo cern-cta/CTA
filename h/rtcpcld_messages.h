@@ -94,7 +94,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_UNEXPECTED_NEWSEGM, DLF_LVL_ERROR, "Unexpected new segment not updated"},
     { RTCPCLD_MSG_WAITNEWSEGMS, DLF_LVL_SYSTEM, "Wait for new segments"},
     { RTCPCLD_MSG_WAITTIMEOUT, DLF_LVL_SYSTEM, "Waiting for new/incomplete segments timeout"},
-    { RTCPCLD_MSG_SEGMCNT, DLF_LVL_DEBUG,"Segment counts"},
+    { RTCPCLD_MSG_SEGMCNTS, DLF_LVL_DEBUG,"Segment counts"},
     { RTCPCLD_MSG_RESERVED32, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED33, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED34, DLF_LVL_DEBUG,""},
