@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.55 $ $Date: 2000/12/20 16:26:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.56 $ $Date: 2001/01/30 17:26:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -449,6 +449,14 @@ int rtcpd_Mount(tape_list_t *tape) {
                 break;
             case EINVAL: /* Wrong parameter...*/
             case EACCES: /* TMS denied access */
+            case ETWLBL: /* Wrong label taype */
+            case ETWVSN: /* Wrong vsn */
+            case ETHELD: /* Volume held in TMS */
+            case ETABSENT: /* Volume absent in */
+            case ETWPROT: /* Cartridge write protected (physical or TMS) */
+            case ETARCH: /* Volume archived */
+            case ETVUNKN: /* Volume unknown */
+            case ETOPAB: /* Operator cancel (should this be a SYERR rather?) */
             case ETINTR:
             case ETBLANK:
             case ETCOMPA:
@@ -625,7 +633,7 @@ int rtcpd_Position(tape_list_t *tape,
                 severity = RTCP_RESELECT_SERV | RTCP_NORLS;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
-            case EACCES:     /* File not expired */
+            case ETNXPD:     /* File not expired */
             case ENOENT:     /* File not found */
             case EINVAL:     /* Invalid parameter */
             case ETLBL:      /* Bad label structure */

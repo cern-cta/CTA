@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.29 $ $Date: 2001/01/19 08:46:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.30 $ $Date: 2001/01/30 17:26:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -445,6 +445,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
     int rc = 0;
     int comp_rc = 0;
     int save_serrno = 0;
+    int save_errno = 0;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
     char *errstr = NULL;
@@ -466,27 +467,29 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
         if ( tapereq->mode == WRITE_ENABLE && file->trec>0 ) {
             rtcp_log(LOG_DEBUG,"tclose(%d): write trailer label, tape path %s, flag %s, nb recs %d\n",
                 fd,filereq->tape_path,labelid[file->eovflag],file->trec);
+            errno = serrno = 0;
             if ( (rc = wrttrllbl(fd,filereq->tape_path,labelid[file->eovflag],
                   file->trec)) < 0 ) {
-                save_serrno = -rc;
+                save_errno = errno;
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): errno=%d, serrno=%d\n",
+                         fd,filereq->tape_path,save_errno,save_serrno);
                 rc = -1;
-#if defined(_IBMR2)
-                if ( (errno == ENOSPC) || (errno == ENXIO) ) 
-                    save_serrno = ENOSPC;
-#else /* _IBMR2 */
-                if ( errno == ENOSPC ) 
-                    save_serrno = ENOSPC;
-#endif /* _IBMR2 */
-                else {
-                    errstr = rtcpd_CtapeErrMsg();
+                errstr = rtcpd_CtapeErrMsg();
+                rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): errmsg=%s\n",
+                         fd,filereq->tape_path,
+                         (errstr != NULL ? errstr : "(no message)"));
+                if ( save_serrno == ENOSPC ) {
+                    rtcpd_AppendClientMsg(NULL,file,RT124,"CPDSKTP");
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,
+                                       RTCP_FAILED | RTCP_ENDVOL);
+                } else {
                     if ( errstr != NULL && *errstr != '\0' ) {
                         (void)rtcpd_AppendClientMsg(NULL, file, RT126, 
                             "CPDSKTP",errstr,file->trec+1);
                         if ( save_serrno > 0 )
                             rtcpd_SetReqStatus(NULL,file,save_serrno,
                                              RTCP_FAILED | RTCP_SYERR);
-                        rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): %s\n",
-                                 fd,filereq->tape_path,errstr);
                     }
                 } 
                 rtcp_log(LOG_ERR,"tclose(%d) wrttrllbl(%s): %s\n",fd,
@@ -537,6 +540,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
  */
 int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
     int rc = 0;
+    int save_errno, save_serrno;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -553,12 +557,15 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
     if ( tapereq->mode == WRITE_ENABLE ) {
         if ( file->trec > 0 ) rtcp_log(LOG_INFO,"tcloserr(%d) delete tape file, tape path %s\n",
             fd,filereq->tape_path);
+        errno = serrno = 0;
         if ( file->trec>0 && (rc = deltpfil(fd,filereq->tape_path)) < 0 ) {
+            save_errno = errno;
+            save_serrno = serrno;
             if ( AbortFlag == 0 ) 
-                rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_SYERR);
+                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_SYERR);
             rtcpd_AppendClientMsg(NULL,file, RT141, "CPDSKTP");
-            rtcp_log(LOG_ERR,"deltpfil(%d,%s) failed with error %d\n",
-                     fd,filereq->tape_path,-rc);
+            rtcp_log(LOG_ERR,"deltpfil(%d,%s) failed with errno=%d, serrno=%d\n",
+                     fd,filereq->tape_path,save_errno,save_serrno);
         }
     }
     (void) close(fd) ;
@@ -571,7 +578,7 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
  */
 int twrite(int fd,char *ptr,int len, 
            tape_list_t *tape, file_list_t *file) {
-    int     rc, save_serrno ;
+    int     rc, save_serrno, save_errno;
     char *errstr;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
@@ -594,14 +601,13 @@ int twrite(int fd,char *ptr,int len,
                 fd,filereq->tape_path);
             errno = serrno = 0;
             if ( (rc = wrthdrlbl(fd,filereq->tape_path)) < 0 ) {
-                save_serrno = -rc;
-#if defined(_IBMR2)
-                if ( errno == ENOSPC || errno == ENXIO)
-#else
-                if ( errno == ENOSPC )
-#endif
-                    serrno = ENOSPC;
-                else {
+                save_errno = errno;
+                save_serrno = serrno;
+                if ( save_serrno == ENOSPC ) {
+                    rtcpd_AppendClientMsg(NULL,file,RT124,"CPDSKTP");
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,
+                                       RTCP_FAILED | RTCP_ENDVOL);
+                } else {
                     errstr = rtcpd_CtapeErrMsg();
                     if ( errstr != NULL && *errstr != '\0' ) {
                         (void)rtcpd_AppendClientMsg(NULL, file, RT126,
@@ -618,7 +624,7 @@ int twrite(int fd,char *ptr,int len,
 
                 rtcp_log(LOG_DEBUG,
                "twrite(%d): wrthdrlbl(%d,%s) returns %d, errno=%d, serrno=%d\n",
-                         fd,fd,filereq->tape_path,rc,errno,serrno);
+                         fd,fd,filereq->tape_path,rc,save_errno,save_serrno);
 
                 serrno = save_serrno;
                 return(-1);
@@ -697,7 +703,7 @@ int twrite(int fd,char *ptr,int len,
  */
 int tread(int fd,char *ptr,int len,
            tape_list_t *tape, file_list_t *file) {
-    int     rc, status;
+    int     rc, status, save_serrno;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -762,14 +768,15 @@ int tread(int fd,char *ptr,int len,
         if ( rc == 0 ) {
             rtcp_log(LOG_DEBUG,"tread(%d,%s) check EOF/EOV\n",fd,filereq->tape_path);
             if ((rc = checkeofeov(fd, filereq->tape_path)) < 0) {
+                save_serrno = serrno;
                 rtcp_log(LOG_DEBUG,"tread(%d,%s) checkeofeov() returns %d, serrno=%d\n",
-                         fd,filereq->tape_path,rc,serrno);
-                if (rc == -ETLBL) {
+                         fd,filereq->tape_path,rc,save_serrno);
+                if (save_serrno == ETLBL) {
                     rtcpd_AppendClientMsg(NULL, file, RT128,"CPTPDSK");
-                    rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_USERR);
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_USERR);
                     rtcp_log(LOG_ERR,RT128,"CPTPDSK");
                 } else
-                    rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_UNERR);
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_UNERR);
                 return(-1);
             }
             rtcp_log(LOG_DEBUG,"tread(%d,%s) checkeofeov() returns %d, serrno=%d\n",
