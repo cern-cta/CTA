@@ -37,13 +37,6 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
 
-  namespace stager {
-
-    // Forward declarations
-    class Request;
-
-  }; // end of namespace stager
-
   /**
    * class IClient
    * A generic abstract base class for castor clients
@@ -78,25 +71,7 @@ namespace castor {
      */
     virtual void print() const;
 
-    /**
-     * Get the value of m_request
-     * @return the value of m_request
-     */
-    castor::stager::Request* request() const {
-      return m_request;
-    }
-
-    /**
-     * Set the value of m_request
-     * @param new_var the new value of m_request
-     */
-    void setRequest(castor::stager::Request* new_var) {
-      m_request = new_var;
-    }
-
   private:
-
-    castor::stager::Request* m_request;
 
   }; // end of class IClient
 

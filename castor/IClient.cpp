@@ -27,24 +27,19 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Request.hpp"
 #include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::IClient::IClient() throw() :
-  m_request(0) {
+castor::IClient::IClient() throw() {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::IClient::~IClient() throw() {
-  if (0 != m_request) {
-    m_request->setClient(0);
-  }
 };
 
 //------------------------------------------------------------------------------
@@ -60,12 +55,6 @@ void castor::IClient::print(std::ostream& stream,
     return;
   }
   alreadyPrinted.insert(this);
-  stream << indent << "Request : " << std::endl;
-  if (0 != m_request) {
-    m_request->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------

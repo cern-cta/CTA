@@ -39,14 +39,6 @@ namespace castor {
   class IObject;
   class ICnvSvc;
 
-  // Forward declarations
-  namespace rh {
-
-    // Forward declarations
-    class Client;
-
-  }; // end of namespace rh
-
   namespace db {
 
     namespace ora {
@@ -169,14 +161,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepRequest(castor::rh::Client* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -185,14 +169,6 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjRequest(castor::rh::Client* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -232,12 +208,6 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
-
-        /// SQL update statement for member request
-        static const std::string s_updateRequestStatementString;
-
-        /// SQL update statement object for member request
-        oracle::occi::Statement *m_updateRequestStatement;
 
       }; // end of class OraClientCnv
 

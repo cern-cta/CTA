@@ -38,7 +38,7 @@ END;
 
 /* SQL statements for type Client */
 DROP TABLE Client;
-CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
+CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type UpdateRepRequest */
 DROP TABLE UpdateRepRequest;

@@ -28,7 +28,6 @@
 #include "OraClientCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -39,7 +38,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/stager/Request.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -53,7 +51,7 @@ const castor::ICnvFactory& OraClientCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraClientCnv::s_insertStatementString =
-"INSERT INTO Client (ipAddress, port, id, request) VALUES (:1,:2,:3,:4)";
+"INSERT INTO Client (ipAddress, port, id) VALUES (:1,:2,:3)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraClientCnv::s_deleteStatementString =
@@ -61,7 +59,7 @@ const std::string castor::db::ora::OraClientCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraClientCnv::s_selectStatementString =
-"SELECT ipAddress, port, id, request FROM Client WHERE id = :1";
+"SELECT ipAddress, port, id FROM Client WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraClientCnv::s_updateStatementString =
@@ -75,10 +73,6 @@ const std::string castor::db::ora::OraClientCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraClientCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL update statement for member request
-const std::string castor::db::ora::OraClientCnv::s_updateRequestStatementString =
-"UPDATE Client SET request = : 1 WHERE id = :2";
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -89,8 +83,7 @@ castor::db::ora::OraClientCnv::OraClientCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0),
-  m_updateRequestStatement(0) {}
+  m_deleteTypeStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -112,7 +105,6 @@ void castor::db::ora::OraClientCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -121,7 +113,6 @@ void castor::db::ora::OraClientCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_updateRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -150,9 +141,6 @@ void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::rh::Client*>(object);
   try {
     switch (type) {
-    case castor::OBJ_Request :
-      fillRepRequest(obj);
-      break;
     default :
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "fillRep called for type " << type 
@@ -172,21 +160,6 @@ void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// fillRepRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check update statement
-  if (0 == m_updateRequestStatement) {
-    m_updateRequestStatement = createStatement(s_updateRequestStatementString);
-  }
-  // Update local object
-  m_updateRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
-  m_updateRequestStatement->setDouble(2, obj->id());
-  m_updateRequestStatement->executeUpdate();
-}
-
-//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraClientCnv::fillObj(castor::IAddress* address,
@@ -196,55 +169,12 @@ void castor::db::ora::OraClientCnv::fillObj(castor::IAddress* address,
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);
   switch (type) {
-  case castor::OBJ_Request :
-    fillObjRequest(obj);
-    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 requestId = (u_signed64)rset->getDouble(4);
-  // Close ResultSet
-  m_selectStatement->closeResultSet(rset);
-  // Check whether something should be deleted
-  if (0 != obj->request() &&
-      (0 == requestId ||
-       obj->request()->id() != requestId)) {
-    obj->request()->setClient(0);
-    obj->setRequest(0);
-  }
-  // Update object or create new one
-  if (0 != requestId) {
-    if (0 == obj->request()) {
-      obj->setRequest
-        (dynamic_cast<castor::stager::Request*>
-         (cnvSvc()->getObjFromId(requestId)));
-    } else {
-      cnvSvc()->updateObj(obj->request());
-    }
-    obj->request()->setClient(obj);
   }
 }
 
@@ -278,7 +208,6 @@ void castor::db::ora::OraClientCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->ipAddress());
     m_insertStatement->setInt(2, obj->port());
     m_insertStatement->setDouble(3, obj->id());
-    m_insertStatement->setDouble(4, (type == OBJ_Request && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -303,8 +232,7 @@ void castor::db::ora::OraClientCnv::createRep(castor::IAddress* address,
                     << "and parameters' values were :" << std::endl
                     << "  ipAddress : " << obj->ipAddress() << std::endl
                     << "  port : " << obj->port() << std::endl
-                    << "  id : " << obj->id() << std::endl
-                    << "  request : " << obj->request() << std::endl;
+                    << "  id : " << obj->id() << std::endl;
     throw ex;
   }
 }

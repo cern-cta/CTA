@@ -467,7 +467,6 @@ void castor::db::ora::OraStageUpdateRequestCnv::fillObjIClient(castor::stager::S
   if (0 != obj->client() &&
       (0 == clientId ||
        obj->client()->id() != clientId)) {
-    obj->client()->setRequest(0);
     obj->setClient(0);
   }
   // Update object or create new one
@@ -479,7 +478,6 @@ void castor::db::ora::OraStageUpdateRequestCnv::fillObjIClient(castor::stager::S
     } else {
       cnvSvc()->updateObj(obj->client());
     }
-    obj->client()->setRequest(obj);
   }
 }
 

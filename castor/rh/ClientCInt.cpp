@@ -28,7 +28,6 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/stager/Request.hpp"
 #include "osdep.h"
 
 extern "C" {
@@ -89,22 +88,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_Client_TYPE(int* ret) {
     *ret = castor::rh::Client::TYPE();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_Client_request
-  //----------------------------------------------------------------------------
-  int Crh_Client_request(castor::rh::Client* instance, castor::stager::Request** var) {
-    *var = instance->request();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_Client_setRequest
-  //----------------------------------------------------------------------------
-  int Crh_Client_setRequest(castor::rh::Client* instance, castor::stager::Request* new_var) {
-    instance->setRequest(new_var);
     return 0;
   }
 

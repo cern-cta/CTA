@@ -27,7 +27,6 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
-#include "castor/stager/Request.hpp"
 
 extern "C" {
 
@@ -58,22 +57,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int C_IClient_print(castor::IClient* instance) {
     instance->print();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // C_IClient_request
-  //----------------------------------------------------------------------------
-  int C_IClient_request(castor::IClient* instance, castor::stager::Request** var) {
-    *var = instance->request();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // C_IClient_setRequest
-  //----------------------------------------------------------------------------
-  int C_IClient_setRequest(castor::IClient* instance, castor::stager::Request* new_var) {
-    instance->setRequest(new_var);
     return 0;
   }
 

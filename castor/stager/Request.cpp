@@ -56,7 +56,6 @@ castor::stager::Request::Request() throw() :
 //------------------------------------------------------------------------------
 castor::stager::Request::~Request() throw() {
   if (0 != m_client) {
-    m_client->setRequest(0);
     delete m_client;
     m_client = 0;
   }

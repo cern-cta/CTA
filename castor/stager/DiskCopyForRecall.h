@@ -112,6 +112,18 @@ int Cstager_DiskCopyForRecall_diskcopyId(struct Cstager_DiskCopyForRecall_t* ins
 int Cstager_DiskCopyForRecall_setDiskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
 
 /**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_DiskCopyForRecall_id(struct Cstager_DiskCopyForRecall_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_DiskCopyForRecall_setId(struct Cstager_DiskCopyForRecall_t* instance, u_signed64 new_var);
+
+/**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list
  */
 int Cstager_DiskCopyForRecall_addSubRequests(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_SubRequest_t* obj);

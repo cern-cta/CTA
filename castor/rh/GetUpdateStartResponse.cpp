@@ -47,6 +47,7 @@ castor::rh::GetUpdateStartResponse::GetUpdateStartResponse() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::rh::GetUpdateStartResponse::~GetUpdateStartResponse() throw() {
+  m_sourcesVector.clear();
 };
 
 //------------------------------------------------------------------------------

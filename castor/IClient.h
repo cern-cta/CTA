@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 struct C_IClient_t;
 struct C_IObject_t;
-struct Cstager_Request_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -66,15 +65,5 @@ int C_IClient_print(struct C_IClient_t* instance);
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/
-
-/**
- * Get the value of request
- */
-int C_IClient_request(struct C_IClient_t* instance, struct Cstager_Request_t** var);
-
-/**
- * Set the value of request
- */
-int C_IClient_setRequest(struct C_IClient_t* instance, struct Cstager_Request_t* new_var);
 
 #endif // CASTOR_ICLIENT_H

@@ -38,7 +38,6 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/stager/Request.hpp"
 #include "osdep.h"
 
 //------------------------------------------------------------------------------
@@ -131,7 +130,6 @@ void castor::io::StreamClientCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -148,12 +146,6 @@ castor::IObject* castor::io::StreamClientCnv::unmarshalObject(castor::io::binios
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::rh::Client* obj = 
-    dynamic_cast<castor::rh::Client*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
   return object;
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/30 11:24:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 16:32:44 $ $Author: sponcec3 $
  *
  * 
  *
@@ -467,7 +467,6 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillObjIClient(castor:
   if (0 != obj->client() &&
       (0 == clientId ||
        obj->client()->id() != clientId)) {
-    obj->client()->setRequest(0);
     obj->setClient(0);
   }
   // Update object or create new one
@@ -479,7 +478,6 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillObjIClient(castor:
     } else {
       cnvSvc()->updateObj(obj->client());
     }
-    obj->client()->setRequest(obj);
   }
 }
 

@@ -179,7 +179,6 @@ std::string castor::client::BaseClient::sendRequest
   m_rhPort = port;
   // set the Client
   castor::IClient *cl = createClient();
-  cl->setRequest(req);
   req->setClient(cl);
   // sends the request
   std::string requestId = internalSendRequest(*req);
