@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.106 2001/03/13 08:05:29 jdurand Exp $
+ * $Id: procio.c,v 1.107 2001/03/13 14:35:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.106 $ $Date: 2001/03/13 08:05:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.107 $ $Date: 2001/03/13 14:35:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,6 +52,68 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.106 $ $Date: 200
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
+
+#define SET_CORRECT_OKMODE { \
+	if (have_save_stcp_for_Cns_creatx) { \
+		if ((save_stcp_for_Cns_creatx.uid != stage_passwd.pw_uid) || \
+			(save_stcp_for_Cns_creatx.gid != stage_passwd.pw_gid)) { \
+			if ((stgreq.uid == stage_passwd.pw_uid) && (stgreq.gid == stage_passwd.pw_gid)) { \
+				if (api_out == 0) { \
+					okmode = ( 0777 & ~ save_stcp_for_Cns_creatx.mask); \
+				} else { \
+					okmode = (07777 & (openmode & ~ save_stcp_for_Cns_creatx.mask)); \
+				} \
+			} else { \
+				if (api_out == 0) { \
+					okmode = ( 0777 & ~ stgreq.mask); \
+				} else { \
+					okmode = (07777 & (openmode & ~ stgreq.mask)); \
+				} \
+			} \
+		} else { \
+			if (api_out == 0) { \
+				okmode = ( 0777 & ~ stgreq.mask); \
+			} else { \
+				okmode = (07777 & (openmode & ~ stgreq.mask)); \
+			} \
+		} \
+	} else { \
+		if (api_out == 0) { \
+			okmode = ( 0777 & ~ stgreq.mask); \
+		} else { \
+			okmode = (07777 & (openmode & ~ stgreq.mask)); \
+		} \
+	} \
+}
+
+#define SET_CORRECT_EUID_EGID { \
+	if (have_save_stcp_for_Cns_creatx) { \
+		if ((save_stcp_for_Cns_creatx.uid != stage_passwd.pw_uid) || \
+			(save_stcp_for_Cns_creatx.gid != stage_passwd.pw_gid)) { \
+			if ((stgreq.uid == stage_passwd.pw_uid) && (stgreq.gid == stage_passwd.pw_gid)) { \
+				setegid(start_passwd.pw_gid); \
+				seteuid(start_passwd.pw_uid); \
+				setegid(save_stcp_for_Cns_creatx.gid); \
+				seteuid(save_stcp_for_Cns_creatx.uid); \
+			} else { \
+				setegid(start_passwd.pw_gid); \
+				seteuid(start_passwd.pw_uid); \
+				setegid(stgreq.gid); \
+				seteuid(stgreq.uid); \
+			} \
+		} else { \
+			setegid(start_passwd.pw_gid); \
+			seteuid(start_passwd.pw_uid); \
+			setegid(stgreq.gid); \
+			seteuid(stgreq.uid); \
+		} \
+	} else { \
+		setegid(start_passwd.pw_gid); \
+		seteuid(start_passwd.pw_uid); \
+		setegid(stgreq.gid); \
+		seteuid(stgreq.uid); \
+	} \
+}
 
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
@@ -226,6 +288,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	char save_group[CA_MAXGRPNAMELEN+1];
 	char save_user[CA_MAXUSRNAMELEN+1];
 	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 	int have_tppool = 0;
 	char *tppool = NULL;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -1766,8 +1829,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto stagewrt_continue_loop;
 			}
-			setegid(have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.gid : stgreq.gid);
-			seteuid(have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.uid : stgreq.uid);
+			SET_CORRECT_EUID_EGID;
 			switch (stgreq.t_or_d) {
 			case 'h':
 				/* If it is a stagewrt on CASTOR file and if this file have the same size we assume */
@@ -1873,18 +1935,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 							break;
 						}
 					}
-					if (api_out == 0) {
-						okmode = ( 0777 & ~ (have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.mask : stgreq.mask));
-					} else {
-						okmode = (07777 & (openmode & ~ (have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.mask : stgreq.mask)));
-					}
-					if (have_save_stcp_for_Cns_creatx) {
-						/* Makes sure we are under correct uid,gid */
-						setegid(start_passwd.pw_gid);
-						seteuid(start_passwd.pw_uid);
-						setegid(save_stcp_for_Cns_creatx.gid);
-						seteuid(save_stcp_for_Cns_creatx.uid);
-					}
+					SET_CORRECT_OKMODE;
+					SET_CORRECT_EUID_EGID;
 					if (Cns_creatx(hsmfiles[ihsmfiles], okmode, &Cnsfileid) != 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
@@ -1935,15 +1987,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				/* We set the size in the name server */
-				setegid(stgreq.gid);
-				seteuid(stgreq.uid);
-				if (have_save_stcp_for_Cns_creatx) {
-					/* Makes sure we are under correct uid,gid */
-					setegid(start_passwd.pw_gid);
-					seteuid(start_passwd.pw_uid);
-					setegid(save_stcp_for_Cns_creatx.gid);
-					seteuid(save_stcp_for_Cns_creatx.uid);
-				}
+				SET_CORRECT_EUID_EGID;
 				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
