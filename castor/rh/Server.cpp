@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/12/08 17:41:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/12/13 15:30:52 $ $Author: jdurand $
  *
  *
  *
@@ -245,10 +245,19 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
     }
     castor::stager::Request* req =
       dynamic_cast<castor::stager::Request*>(fr);
-    if (0 != fr) {
+    if (0 != req) {
       svcs()->createRep(&ad, req->client(), false);
-      svcs()->fillRep(&ad, fr, OBJ_IClient, true);
+      svcs()->fillRep(&ad, fr, OBJ_IClient, false);
     }
+    castor::stager::updateRepRequest* urReq =
+      dynamic_cast<castor::stager::UpdateRepRequest*>(fr);
+    if (0 != urReq) {
+      svcs()->createRep(&ad, urReq->object(), false);
+      svcs()->fillRep(&ad, urReq, OBJ_IObject, false);
+      svcs()->createRep(&ad, urReq->address(), false);
+      svcs()->fillRep(&ad, urReq, OBJ_IAddress, false);
+    }
+    svcs()->commit();
     clog() << "request stored in Oracle, id "
            << fr->id() << std::endl;
   } catch (castor::exception::Exception e) {
