@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.37 2000/04/07 07:04:54 jdurand Exp $
+ * stager.c,v 1.37 2000/04/07 07:04:54 jdurand Exp
  */
 
 /*
@@ -13,7 +13,7 @@
 /* For ALICE data challenge : compile the stager with -DALICETEST */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.37 $ $Date: 2000/04/07 07:04:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "stager.c,v 1.37 2000/04/07 07:04:54 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1482,7 +1482,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					} else {
 						strcpy (fl[j].filereq.recfm, stcp->recfm);
 					}
-					strcpy (fl[j].filereq.fid, stcp->u1.t.fid);
+					strncpy (fl[j].filereq.fid, stcp->u1.t.fid, CA_MAXFIDLEN);
 					sprintf (fl[j].filereq.stageID, "%d.%d@%s", reqid, key,
 									 hostname);
 					switch (stcp->u1.t.fseq[0]) {
@@ -1649,7 +1649,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				return(-1);
 			}
 			fid++;
-			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
+			strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid, CA_MAXFIDLEN);
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 #ifndef SKIP_FILEREQ_MAXSIZE
