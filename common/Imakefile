@@ -99,7 +99,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 readc.Osuf remote.Osuf segment.Osuf sendscsicmd.Osuf \
 		 serror.Osuf setnetio.Osuf socket.Osuf solveln.Osuf trace.Osuf \
 		 $(WSACCTO) ypgetacct.Osuf ypgetacctent.Osuf \
-		 Cthread.Osuf Csched.Osuf Cglobals.Osuf Cgrp.Osuf Cmutex.Osuf Cuuid.Osuf \
+		 Cthread.Osuf Csched.Osuf Cglobals.Osuf Cgrp.Osuf Cmutex.Osuf CastorUuid.Osuf \
 		 Cdomainname.Osuf Cnetdb.Osuf Cpool.Osuf Cpwd.Osuf \
 		 socket_timeout.Osuf u64subr.Osuf Cinitdaemon.Osuf Cgetopt.Osuf \
 		 Cregexp.Osuf Csetprocname.Osuf Cexportconf.Osuf Csnprintf.Osuf
@@ -142,6 +142,10 @@ EXPORTMANPAGES = $(EXPORTMAN)/man4/account.$(FILMANSUFFIX) \
 		$(EXPORTMAN)/man3/Csched.$(LIBMANSUFFIX)
 
 all:	LibraryTargetName(common)
+
+CastorUuid.c: DepSourceName(common,Cuuid.c)
+	RemoveFile(CastorUuid.c)
+	$(CP) Cuuid.c CastorUuid.c
 
 #if linux
 sendscsicmd.o: sendscsicmd.c
@@ -254,7 +258,7 @@ EMANPAGE(Cthread,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean CastorUuid.c)
 
 clobber: clean
 
