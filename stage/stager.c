@@ -1,7 +1,10 @@
 /*
- * $Id: stager.c,v 1.2 1999/07/20 17:29:25 jdurand Exp $
+ * $Id: stager.c,v 1.3 1999/07/21 20:09:10 jdurand Exp $
  *
  * $Log: stager.c,v $
+ * Revision 1.3  1999/07/21 20:09:10  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:25  jdurand
  * Added Id and Log CVS's directives
  *
@@ -48,8 +51,8 @@ int rpfd;
 #if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 struct sigaction sa;
 #endif
-struct stgcat_entry *stce;      /* end of stage catalog */
-struct stgcat_entry *stcs;      /* start of stage catalog */
+struct stgcat_entry *stce = NULL;      /* end of stage catalog */
+struct stgcat_entry *stcs = NULL;      /* start of stage catalog */
 main(argc, argv)
 int argc;
 char **argv;
@@ -65,7 +68,7 @@ char **argv;
 	char buf[REPBUFSZ-12];
 	int i, l;
 	int cmdargc;
-	char **cmdargv;
+	char **cmdargv = NULL;
 	char cmdname[9];
 	fseq_elem *fseq_list;
 	char hostname[MAXHOSTNAMELEN];
@@ -73,13 +76,14 @@ char **argv;
 	int n1, n2;
 	int nbtpf;
 	int nretry;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 	int pfd[2];
 	char progfullpath[MAXPATH];
 	int samefid;
 	int samesize;
 	void stagekilled();
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	struct stgcat_entry stgreq;
 	struct timeval timeval;
 	char trailing;
@@ -444,10 +448,11 @@ char *hostname;
 	char buf[256];
 	int c;
 	char command[2*(MAXHOSTNAMELEN+MAXPATH)+MAXHOSTNAMELEN+196];
-	char *filename;
-	char *host;
-	char *p, *q;
-	RFILE *rf;
+	char *filename = NULL;
+	char *host = NULL;
+	char *p = NULL;
+    char *q = NULL;
+	RFILE *rf = NULL;
 	char savebuf[256];
 	int saveflag = 0;
 

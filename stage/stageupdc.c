@@ -1,7 +1,10 @@
 /*
- * $Id: stageupdc.c,v 1.2 1999/07/20 17:29:26 jdurand Exp $
+ * $Id: stageupdc.c,v 1.3 1999/07/21 20:09:12 jdurand Exp $
  *
  * $Log: stageupdc.c,v $
+ * Revision 1.3  1999/07/21 20:09:12  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:26  jdurand
  * Added Id and Log CVS's directives
  *
@@ -42,7 +45,7 @@ char	**argv;
 {
 	int c, i;
 	void cleanup();
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
 	int fun = 0;
 	gid_t gid;
@@ -50,12 +53,12 @@ char	**argv;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p;
+	char *p = NULL;
 	char path[MAXHOSTNAMELEN + MAXPATH];
-	struct passwd *pw;
-	char *q;
+	struct passwd *pw = NULL;
+	char *q = NULL;
 	int reqid = 0;
-	char *sbp;
+	char *sbp = NULL;
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;

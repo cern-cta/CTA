@@ -1,7 +1,10 @@
 /*
- * $Id: stagestat.c,v 1.2 1999/07/20 17:29:26 jdurand Exp $
+ * $Id: stagestat.c,v 1.3 1999/07/21 20:09:11 jdurand Exp $
  *
  * $Log: stagestat.c,v $
+ * Revision 1.3  1999/07/21 20:09:11  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:26  jdurand
  * Added Id and Log CVS's directives
  *
@@ -117,8 +120,8 @@ char **argv;
    char poolname[MAXPOOLNAMELEN];	/* pool name */
  
    struct accthdr accthdr;		/* accthdr record */
-   struct acctstage *rp;		/* pointer to accstage record */
-   struct stg_inf *srecord;		/* pointer to stg_inf record */
+   struct acctstage *rp = NULL;	/* pointer to accstage record */
+   struct stg_inf *srecord = NULL;		/* pointer to stg_inf record */
 
    time_t cvt_datime();			/* date function */
    time_t endtime = 0;			/* time up to which to obtain information */
@@ -253,7 +256,7 @@ char **argv;
 create_filelist (rp)
 struct acctstage *rp;
 {
-   struct file_inf *frec;			/* pointer to file_inf record */ 
+   struct file_inf *frec = NULL;			/* pointer to file_inf record */ 
 
    frec = (struct file_inf*) calloc (1, sizeof (struct file_inf));
    frec->next = NULL;
@@ -287,7 +290,7 @@ struct acctstage *rp;
 create_pool_list (rp)
 struct acctstage *rp;
 {
-   struct pool_inf *pf;				/* pointer to pool_inf record */
+   struct pool_inf *pf = NULL;				/* pointer to pool_inf record */
 
    pf = (struct pool_inf*) calloc (1, sizeof (struct pool_inf));
    pf->next = NULL;
@@ -309,7 +312,7 @@ struct acctstage *rp;
 create_stglist (rp)
 struct acctstage *rp;
 {
-   struct stg_inf *sp;				/* pointer to stg_inf record */
+   struct stg_inf *sp = NULL;				/* pointer to stg_inf record */
 	
    sp = (struct stg_inf*) calloc (1, sizeof (struct stg_inf));
    sp->next = NULL;
@@ -335,7 +338,7 @@ char *arg;
    static int lastd[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
    int n;
    struct tm t;
-   struct tm *tm;
+   struct tm *tm = NULL;
 
    memset ((char *) &t, 0, sizeof(struct tm));
    time (&current_time);		/* Get current time */
@@ -364,7 +367,7 @@ struct acctstage *rp;
 struct accthdr accthdr;
 {
    int found = 0;			/* record found flag */
-   struct file_inf *frecord;		/* pointer to file_inf record */
+   struct file_inf *frecord = NULL;		/* pointer to file_inf record */
 
 /* search through file list for record relating to same file */ 
 
@@ -417,7 +420,7 @@ struct accthdr accthdr;
 {
    int found = 0;			/* record found flag */
    int match = 0;			/* stg_inf record match flag */
-   struct file_inf *frecord;		/* pointer to file_inf record */
+   struct file_inf *frecord = NULL;		/* pointer to file_inf record */
 
 /* search file list for matching file and pool */
 
@@ -470,7 +473,7 @@ struct accthdr accthdr;
 enter_pool_details (rp)
 struct acctstage *rp;
 {
-   struct pool_inf *pf;			/* pointer to pool_inf record */
+   struct pool_inf *pf = NULL;			/* pointer to pool_inf record */
    int found = 0;
 
    pf = pool_list;
@@ -531,7 +534,7 @@ match_2_stgin (rp)
 struct acctstage *rp;
 {
    int matched =0;				/* record matched flag */
-   struct stg_inf *srec;			/* pointer to stg_inf record */
+   struct stg_inf *srec = NULL;			/* pointer to stg_inf record */
 	
    srec = stage_list;
    while (srec != NULL) {
@@ -551,8 +554,8 @@ struct acctstage *rp;
 print_fdetails (frecord)
 struct file_inf *frecord;
 {
-   struct passwd *pwd;				/* password structure */
-   struct group *grp;				/* group structure */
+   struct passwd *pwd = NULL;				/* password structure */
+   struct group *grp = NULL;				/* group structure */
    float avg = 0.0;				/* average life */
 
 /* get the password and group name for each record */
@@ -641,7 +644,7 @@ print_time_interval (starttime, endtime)
 time_t starttime;
 time_t endtime;
 {
-   struct tm *tm;
+   struct tm *tm = NULL;
 
    tm = localtime (&starttime);
    printf (" (%02d/%02d/%02d %02d:%02d:%02d",
@@ -659,8 +662,8 @@ time_t endtime;
 print_xdetails (frecord)
 struct file_inf * frecord;
 {
-   struct passwd *pwd;				/* password structure */
-   struct group *grp;				/* group structure */
+   struct passwd *pwd = NULL;				/* password structure */
+   struct group *grp = NULL;				/* group structure */
    float avg = 0.0;				/* average life */
 
 /* get the password and group name for each record */
@@ -698,8 +701,8 @@ struct file_inf * frecord;
 
 sort_poolinf ()
 {
-   struct pool_inf *pf;				/* pointer to pool_inf record */
-   struct file_inf *frecord;			/* pointer to file_inf record */
+   struct pool_inf *pf = NULL;				/* pointer to pool_inf record */
+   struct file_inf *frecord = NULL;			/* pointer to file_inf record */
 
 /* for each record, match to its pool and set the relevant variables in the pool */
 /* structure  */
@@ -745,12 +748,13 @@ char poolname[MAXPOOLNAMELEN];
 int i; 						/* counter */ 
 int fi = 0; 					/* counter for tape files */
 int xi = 0;					/* counter for disk files */
-struct frec_nbaccs *faccs;		/* arrays to store address of each record */
-struct frec_nbaccs *xaccs;		/* along with either the average life or the */ struct frec_avg *favg;			/* number of accesses and poolname.  These */
-struct frec_avg *xavg;			/* arrays are used to sort the data */
+struct frec_nbaccs *faccs = NULL;		/* arrays to store address of each record */
+struct frec_nbaccs *xaccs = NULL;		/* along with either the average life or the */
+struct frec_avg *favg = NULL;			/* number of accesses and poolname.  These */
+struct frec_avg *xavg = NULL;			/* arrays are used to sort the data */
 char current_pool[MAXPOOLNAMELEN];		/* current pool name */
-struct pool_inf *pf;				/* pointer to pool_inf record */
-struct file_inf *frecord;			/* pointer to file_inf record */
+struct pool_inf *pf = NULL;				/* pointer to pool_inf record */
+struct file_inf *frecord = NULL;			/* pointer to file_inf record */
 int comp ();
 int comp2 ();
 

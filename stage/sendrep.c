@@ -1,7 +1,10 @@
 /*
- * $Id: sendrep.c,v 1.3 1999/07/20 17:29:19 jdurand Exp $
+ * $Id: sendrep.c,v 1.4 1999/07/21 20:09:05 jdurand Exp $
  *
  * $Log: sendrep.c,v $
+ * Revision 1.4  1999/07/21 20:09:05  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:19  jdurand
  * Added Id and Log CVS's directives
  *
@@ -28,13 +31,14 @@ extern char *sys_errlist[];
 sendrep(va_alist) va_dcl
 {
 	va_list args;
-	char *file1, *file2;
+	char *file1 = NULL;
+    char *file2 = NULL;
 	char func[16];
-	char *msg;
-	char *p;
+	char *msg = NULL;
+	char *p = NULL;
 	char prtbuf[PRTBUFSZ];
-	char *q;
-	char *rbp;
+	char *q = NULL;
+	char *rbp = NULL;
 	int rc;
 	int rep_type;
 	int req_type;
@@ -137,7 +141,7 @@ sndmsg:
 iserrmsg(p)
 char *p;
 {
-	char *q;
+	char *q = NULL;
 
 	if (*p == '\0') return (0);
 	if (strncmp (p, " CP", 3) == 0)

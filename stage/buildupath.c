@@ -1,7 +1,10 @@
 /*
- * $Id: buildupath.c,v 1.2 1999/07/20 17:29:15 jdurand Exp $
+ * $Id: buildupath.c,v 1.3 1999/07/21 20:09:00 jdurand Exp $
  *
  * $Log: buildupath.c,v $
+ * Revision 1.3  1999/07/21 20:09:00  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:15  jdurand
  * Added Id and Log CVS's directives
  *
@@ -39,7 +42,7 @@ init_cwd_hostname()
 	char *getconfent();
 	char *getcwd();
 	int n = 0;
-	char *p;
+	char *p = NULL;
 
 	initialized = 1;
 	if (p = getconfent ("RFIO", "NFS_ROOT", 0))
@@ -69,11 +72,12 @@ char *buf;
 int buflen;
 int req_type;
 {
-	char *dir;
+	char *dir = NULL;
 	char dsksrvr[MAXHOSTNAMELEN];
 	char *getcwd();
 	char linkbuf[MAXHOSTNAMELEN+MAXPATH];
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 
 	if (p = strstr (argvi, ":/")) {
 		strncpy (dsksrvr, argvi, p - argvi);
@@ -151,7 +155,7 @@ int req_type;
 #if !defined(vms)
 	char buf[256];
 	int c;
-	char *p;
+	char *p = NULL;
 
 	if (! initialized && (c = init_cwd_hostname())) return (c);
 	if (*argvi != '/' && strstr (argvi, ":/") == NULL) {

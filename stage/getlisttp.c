@@ -1,7 +1,10 @@
 /*
- * $Id: getlisttp.c,v 1.2 1999/07/20 17:29:16 jdurand Exp $
+ * $Id: getlisttp.c,v 1.3 1999/07/21 20:09:01 jdurand Exp $
  *
  * $Log: getlisttp.c,v $
+ * Revision 1.3  1999/07/21 20:09:01  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:16  jdurand
  * Added Id and Log CVS's directives
  *
@@ -28,7 +31,7 @@ char v[MAXVSN][7];
 int *num;
 {
 	int errflg = 0;
-	char *p;
+	char *p = NULL;
 
 	if (*num == 0) {
 		p = strtok (optarg, ":");

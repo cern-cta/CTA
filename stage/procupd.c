@@ -1,7 +1,10 @@
 /*
- * $Id: procupd.c,v 1.3 1999/07/20 17:29:18 jdurand Exp $
+ * $Id: procupd.c,v 1.4 1999/07/21 20:09:04 jdurand Exp $
  *
  * $Log: procupd.c,v $
+ * Revision 1.4  1999/07/21 20:09:04  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:18  jdurand
  * Added Id and Log CVS's directives
  *
@@ -56,47 +59,48 @@ procupdreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int blksize = -1;
 	int c, i, n;
-	struct stgcat_entry *cur;
-	char *dp;
+	struct stgcat_entry *cur = NULL;
+	char *dp = NULL;
 	char dsksrvr[MAXHOSTNAMELEN];
-	char *dvn;
+	char *dvn = NULL;
 	int errflg = 0;
 	char *fid = NULL;
 	int found;
 	char *fseq = NULL;
 	gid_t gid;
-	char *ifce;
+	char *ifce = NULL;
 	int j;
 	int key;
 	int lrecl = -1;
 	int nargs;
-	char *p_cmd;
-	char *p_stat;
-	char *p, *q;
+	char *p_cmd = NULL;
+	char *p_stat = NULL;
+	char *p = NULL;
+    char *q = NULL;
 	char prevfseq[MAXFSEQ];
-	char *rbp;
+	char *rbp = NULL;
 	int rc = -1;
 	char *recfm = NULL;
 	static char s_cmd[5][9] = {"", "stagein", "stageout", "stagewrt", "stageput"};
 	int size = 0;
 	struct stat st;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	int subreqid;
 	int transfer_time = 0;
 	uid_t uid;
 	static char unknown[2] = {"*"};
 	int upd_reqid;
 	int upd_rpfd;
-	char *user;
+	char *user = NULL;
 	int waiting_time = 0;
-	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 	int Zflag = 0;
 #ifdef DB
-  int changed;
+    int changed;
 #endif /* DB */
 
 	rbp = req_data;

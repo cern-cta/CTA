@@ -1,7 +1,10 @@
 /*
- * $Id: procclr.c,v 1.4 1999/07/20 20:07:31 jdurand Exp $
+ * $Id: procclr.c,v 1.5 1999/07/21 20:09:02 jdurand Exp $
  *
  * $Log: procclr.c,v $
+ * Revision 1.5  1999/07/21 20:09:02  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.4  1999/07/20 20:07:31  jdurand
  * Added -lnsl for Linux
  *
@@ -63,16 +66,16 @@ procclrreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c, i, j;
 	int cflag = 0;
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
 	int found;
 	char *fseq = NULL;
 	gid_t gid;
 	char group[MAXGRPNAMELEN];
-	struct group *gr;
+	struct group *gr = NULL;
 	char *lbl = NULL;
 	char *linkname = NULL;
 	char *mfile = NULL;
@@ -82,13 +85,13 @@ char *clienthost;
 	char *path = NULL;
 	int poolflag = 0;
 	char poolname[MAXPOOLNAMELEN];
-	char *q;
-	char *rbp;
+	char *q = NULL;
+	char *rbp = NULL;
 	int rflag = 0;
-	struct stgcat_entry *stcp;
-	struct stgpath_entry *stpp;
+	struct stgcat_entry *stcp = NULL;
+	struct stgpath_entry *stpp = NULL;
 	uid_t uid;
-	char *user;
+	char *user = NULL;
 	char vid[MAXVSN][7];
 	char *xfile = NULL;
 #ifdef DB
@@ -335,7 +338,8 @@ char *clienthost;
     
 		Cdb_altkey_rewind(db_stgcat, "poolname");
 		while (Cdb_altkey_nextrec(db_stgcat, "poolname", &db_key, (void **) &db_data, &db_size) == 0) {
-			char *ptr, *ptrmax;
+			char *ptr = NULL;
+            char *ptrmax = NULL;
 
 			if (poolflag < 0) {	/* -p NOPOOL */
 				if (db_key[0]) continue;
@@ -469,8 +473,8 @@ int rflag; /* True if HSM source file has to be removed */
 	int found;
 	int i;
 	int savereqid;
-	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 
 /*	return	<0	request deleted
  *		 0	running request (status set to CLEARED and req signalled)

@@ -1,7 +1,10 @@
 /*
- * $Id: send2stgd.c,v 1.4 1999/07/20 20:07:32 jdurand Exp $
+ * $Id: send2stgd.c,v 1.5 1999/07/21 20:09:05 jdurand Exp $
  *
  * $Log: send2stgd.c,v $
+ * Revision 1.5  1999/07/21 20:09:05  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.4  1999/07/20 20:07:32  jdurand
  * Added -lnsl for Linux
  *
@@ -59,16 +62,16 @@ int want_reply;
 	char file2[MAXHOSTNAMELEN+MAXPATH];
 	char *getconfent();
 	char *getenv();
-	struct hostent *hp;
+	struct hostent *hp = NULL;
 	int link_rc;
 	int magic;
 	int n;
-	char *p;
+	char *p = NULL;
 	char prtbuf[PRTBUFSZ];
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp;
+	struct servent *sp = NULL;
 	int stg_s;
 	char stghost[64];
 #if !defined(vms) && !defined(_WIN32)
@@ -226,8 +229,8 @@ dosymlink (file1, file2)
 char *file1;
 char *file2;
 {
-	char *filename;
-	char *host;
+	char *filename = NULL;
+	char *host = NULL;
 	int remote;
 
 	remote = rfio_parseln (file2, &host, &filename, NORDLINKS);
@@ -249,8 +252,8 @@ char *file2;
 dounlink (path)
 char *path;
 {
-	char *filename;
-	char *host;
+	char *filename = NULL;
+	char *host = NULL;
 #if !defined(vms) && !defined(_WIN32)
 	int pid;
 	struct stat st;

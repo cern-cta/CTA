@@ -1,7 +1,10 @@
 /*
- * $Id: poolmgr.c,v 1.2 1999/07/20 17:29:16 jdurand Exp $
+ * $Id: poolmgr.c,v 1.3 1999/07/21 20:09:02 jdurand Exp $
  *
  * $Log: poolmgr.c,v $
+ * Revision 1.3  1999/07/21 20:09:02  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:16  jdurand
  * Added Id and Log CVS's directives
  *
@@ -33,26 +36,27 @@ extern int sendrep (int, int, ...);
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
-static char *nfsroot;
+static char *nfsroot = NULL;
 static int nbpool;
-static char **poolc;
-static struct pool *pools;
+static char **poolc = NULL;
+static struct pool *pools = NULL;
 
 getpoolconf(defpoolname)
 char *defpoolname;
 {
 	char buf[128];
 	int defsize;
-	char *dp;
+	char *dp = NULL;
 	struct pool_element *elemp;
 	int errflg = 0;
-	FILE *fopen(), *s;
+	FILE *fopen();
+    FILE *s = NULL;
 	char func[16];
 	int i, j;
 	int nbpool_ent;
-	char *p;
+	char *p = NULL;
 	char path[MAXPATH];
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 	struct rfstatfs st;
 
 	strcpy (func, "getpoolconf");
@@ -280,7 +284,7 @@ char *poolname;
 time_t atime;
 {
 	int i;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 /*	return -1 if the file has been accessed after garbage collector startup,
  *		  the file should not be removed
@@ -300,7 +304,7 @@ checkpoolcleaned(pool_list)
 char ***pool_list;
 {
 	int i, n;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	n = 0;
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
@@ -319,7 +323,7 @@ char *poolname;
 	char func[16];
 	int i;
 	int pid;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 	char progfullpath[MAXPATH];
 	char hostname[MAXHOSTNAMELEN];
 
@@ -350,7 +354,7 @@ int minf;
 {
 	int i;
 	int minfree;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
@@ -366,10 +370,10 @@ char *
 findpoolname(path)
 char *path;
 {
-	struct pool_element *elemp;
+	struct pool_element *elemp = NULL;
 	int i, j;
-	char *p;
-	struct pool *pool_p;
+	char *p = NULL;
+	struct pool *pool_p = NULL;
 	char server[MAXHOSTNAMELEN];
 
         if (p = strchr (path, ':')) {
@@ -397,7 +401,7 @@ int status;
 {
 	int found;
 	int i;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	if (nbpool == 0) return (0);
 	found = 0;
@@ -418,7 +422,7 @@ isvalidpool(poolname)
 char *poolname;
 {
 	int i;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	if (nbpool == 0) return (0);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
@@ -481,10 +485,10 @@ int rpfd;
 char *poolname, *defpoolname;
 {
 	char capacity_s[9];
-	struct pool_element *elemp;
+	struct pool_element *elemp = NULL;
 	char free_s[9];
 	int i, j;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
@@ -514,10 +518,10 @@ char *poolname;
 int *size;
 char *path;
 {
-	struct pool_element *elemp;
+	struct pool_element *elemp = NULL;
 	int found = 0;
 	int i;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 	long reqsize;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
@@ -556,11 +560,11 @@ char *poolname;
 char *ipath;
 int incr;
 {
-	struct pool_element *elemp;
+	struct pool_element *elemp = NULL;
 	int i, j;
-	char *p;
+	char *p = NULL;
 	char path[MAXPATH];
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 	char server[MAXHOSTNAMELEN];
 
 	if (*poolname == '\0')
@@ -598,12 +602,13 @@ updpoolconf(defpoolname)
 char *defpoolname;
 {
 	int c, i, j;
-	struct pool_element *elemp;
-	struct pool *pool_n, *pool_p;
+	struct pool_element *elemp = NULL;
+	struct pool *pool_n = NULL;
+    struct pool *pool_p = NULL;
 	char sav_defpoolname[MAXPOOLNAMELEN];
 	int sav_nbpool;
-	char **sav_poolc;
-	struct pool *sav_pools;
+	char **sav_poolc = NULL;
+	struct pool *sav_pools = NULL;
 
 	/* save the current configuration */
 	strcpy (sav_defpoolname, defpoolname);
@@ -639,7 +644,7 @@ int get_create_file_option(poolname)
 char *poolname;
 {
 	int i;
-	struct pool *pool_p;
+	struct pool *pool_p = NULL;
 
 	if (nbpool == 0) return (0);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)

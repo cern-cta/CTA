@@ -1,7 +1,10 @@
 /*
- * $Id: procalloc.c,v 1.3 1999/07/20 17:29:17 jdurand Exp $
+ * $Id: procalloc.c,v 1.4 1999/07/21 20:09:02 jdurand Exp $
  *
  * $Log: procalloc.c,v $
+ * Revision 1.4  1999/07/21 20:09:02  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:17  jdurand
  * Added Id and Log CVS's directives
  *
@@ -57,27 +60,27 @@ procallocreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c, i;
 	int clientpid;
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
-	struct group *gr;
-	char *name;
+	struct group *gr = NULL;
+	char *name = NULL;
 	int nargs;
 	int nbdskf;
 	struct stgcat_entry *newreq();
 	int Pflag = 0;
 	char *pool_user = NULL;
-	char *rbp;
-	struct stgcat_entry *stcp;
+	char *rbp = NULL;
+	struct stgcat_entry *stcp = NULL;
 	struct stgcat_entry stgreq;
 	int Uflag = 0;
 	int Upluspath = 0;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user;
-	struct waitf *wfp;
-	struct waitq *wqp;
+	char *user = NULL;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -261,26 +264,27 @@ procgetreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
-	char *basename;
+	char **argv = NULL;
+	char *basename = NULL;
 	int c;
 	int errflg = 0;
 	int found;
 	gid_t gid;
-	struct group *gr;
+	struct group *gr = NULL;
 	int nargs;
 	int nbdskf;
 	int Pflag = 0;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 	char *pool_user = NULL;
 	char poolname[MAXPOOLNAMELEN];
-	char *rbp;
-	struct stgcat_entry *stcp;
+	char *rbp = NULL;
+	struct stgcat_entry *stcp = NULL;
 	int Uflag = 0;
 	int Upluspath = 0;
 	uid_t uid;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user;
+	char *user = NULL;
 
 	poolname[0] = '\0';
 	rbp = req_data;
@@ -350,7 +354,9 @@ char *clienthost;
 		char *db_key = NULL;
 		char *db_data = NULL;
 		while (Cdb_altkey_nextrec(db_stgcat, "u1.d.xfile", &db_key, (void **) &db_data, &db_size) != 0) {
-			char *ptr, *ptrmax;
+			char *ptr = NULL;
+            char *ptrmax = NULL;
+
 			ptrmax = ptr = db_data;
 			ptrmax += db_size;
 			do {

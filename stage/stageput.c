@@ -1,7 +1,10 @@
 /*
- * $Id: stageput.c,v 1.2 1999/07/20 17:29:24 jdurand Exp $
+ * $Id: stageput.c,v 1.3 1999/07/21 20:09:09 jdurand Exp $
  *
  * $Log: stageput.c,v $
+ * Revision 1.3  1999/07/21 20:09:09  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:24  jdurand
  * Added Id and Log CVS's directives
  *
@@ -39,8 +42,8 @@ extern	char	*sys_errlist[];
 #endif
 static gid_t gid;
 static int pid;
-static struct passwd *pw;
-char *stghost;
+static struct passwd *pw = NULL;
+char *stghost = NULL;
 
 main(argc, argv)
 int	argc;
@@ -48,22 +51,23 @@ char	**argv;
 {
 	int c, i;
 	void cleanup();
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
 	int fun = 0;
 	int Gflag = 0;
 	char Gname[15];
 	uid_t Guid;
-	struct group *gr;
+	struct group *gr = NULL;
 	int Iflag = 0;
 	int Mflag = 0;
 	int msglen;
 	int nargs;
 	int ntries = 0;
 	int numvid;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 	char path[MAXHOSTNAMELEN + MAXPATH];
-	char *sbp;
+	char *sbp = NULL;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
 #if defined(_WIN32)

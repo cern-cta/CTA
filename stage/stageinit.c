@@ -1,7 +1,10 @@
 /*
- * $Id: stageinit.c,v 1.2 1999/07/20 17:29:23 jdurand Exp $
+ * $Id: stageinit.c,v 1.3 1999/07/21 20:09:08 jdurand Exp $
  *
  * $Log: stageinit.c,v $
+ * Revision 1.3  1999/07/21 20:09:08  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:23  jdurand
  * Added Id and Log CVS's directives
  *
@@ -36,9 +39,9 @@ char	**argv;
 	gid_t gid;
 	int msglen;
 	int ntries = 0;
-	struct passwd *pw;
-	char *q;
-	char *sbp;
+	struct passwd *pw = NULL;
+	char *q = NULL;
+	char *sbp = NULL;
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;

@@ -1,7 +1,10 @@
 /*
- * $Id: stageget.c,v 1.2 1999/07/20 17:29:21 jdurand Exp $
+ * $Id: stageget.c,v 1.3 1999/07/21 20:09:07 jdurand Exp $
  *
  * $Log: stageget.c,v $
+ * Revision 1.3  1999/07/21 20:09:07  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:21  jdurand
  * Added Id and Log CVS's directives
  *
@@ -45,17 +48,18 @@ char	**argv;
 {
 	int c, i;
 	void cleanup();
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
 	int fun = 0;
-	struct group *gr;
+	struct group *gr = NULL;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 	char path[MAXHOSTNAMELEN + MAXPATH];
 	char *pool_user = NULL;
-	char *sbp;
+	char *sbp = NULL;
 	char sendbuf[REQBUFSZ];
 	int uflag = 0;
 	uid_t uid;

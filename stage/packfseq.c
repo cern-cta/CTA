@@ -1,7 +1,10 @@
 /*
- * $Id: packfseq.c,v 1.2 1999/07/20 17:29:16 jdurand Exp $
+ * $Id: packfseq.c,v 1.3 1999/07/21 20:09:01 jdurand Exp $
  *
  * $Log: packfseq.c,v $
+ * Revision 1.3  1999/07/21 20:09:01  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:16  jdurand
  * Added Id and Log CVS's directives
  *
@@ -29,7 +32,7 @@ char trailing;
 char *fseq;
 int fseqsz;
 {
-	char *dp;
+	char *dp = NULL;
 	char fseq_tmp[MAXFSEQ];
 	int j;
 	int n1, n2;

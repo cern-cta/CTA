@@ -1,7 +1,10 @@
 /*
- * $Id: wrapdb.c,v 1.2 1999/07/20 17:29:29 jdurand Exp $
+ * $Id: wrapdb.c,v 1.3 1999/07/21 20:09:15 jdurand Exp $
  *
  * $Log: wrapdb.c,v $
+ * Revision 1.3  1999/07/21 20:09:15  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:29  jdurand
  * Added Id and Log CVS's directives
  *
@@ -35,13 +38,13 @@ int fullwrapCdb_fetch(file, line, fd, reqid, data, size, fatal)
      size_t *size;
      int fatal;
 {
-  char *key;
+  char *key = NULL;
   int  status;
 
 #ifdef TEST
   stglogit("fullwrapCdb_fetch",
-           "Fetch of reqid=%d on socket %d called at %s:%d\n",
-           reqid,fd->sockfd,file,line);
+           "Fetch of reqid=%d called at %s:%d\n",
+           reqid,file,line);
 #endif
 
   if ((key = malloc(1 + count_digits(reqid, 10))) == NULL) {
@@ -102,8 +105,8 @@ int fullwrapCdb_nextrec(file, line, fd, key, data, size, fatal)
 
 #ifdef TEST
   stglogit("fullwrapCdb_nextrec",
-           "Nextrec on socket %d called at %s:%d\n",
-           fd->sockfd,file,line);
+           "Nextrec called at %s:%d\n",
+           file,line);
 #endif
 
   status = Cdb_nextrec(fd, key, data, size);
@@ -137,13 +140,13 @@ int fullwrapCdb_delete(file, line, fd, reqid, fatal)
      int reqid;
      int fatal;
 {
-  char *key;
+  char *key = NULL;
   int  status;
 
 #ifdef TEST
   stglogit("fullwrapCdb_delete",
-           "Deletion of reqid=%d on socket %d called at %s:%d\n",
-           reqid,fd->sockfd,file,line);
+           "Deletion of reqid=%d called at %s:%d\n",
+           reqid,file,line);
 #endif
 
   if ((key = malloc(1 + count_digits(reqid, 10))) == NULL) {
@@ -280,7 +283,7 @@ int fullwrapCdb_altkey_flag(file, line, stcp, fatal)
 
     /* Change the vid[] flags */
     for (i = 0; i < MAXVSN; i++) {
-      char *newkey;
+      char *newkey = NULL;
       int   thisstatus;
       if ((newkey = (char *) malloc(strlen("u1.t.vid") + count_digits(i,10) + 1)) == NULL) {
 #ifdef TEST
@@ -309,7 +312,7 @@ int fullwrapCdb_altkey_flag(file, line, stcp, fatal)
     }
     /* Disable the non-needed vsn[] flags */
     for (i = 0; i < MAXVSN; i++) {
-      char *newkey;
+      char *newkey = NULL;
       int   thisstatus;
       if ((newkey = (char *) malloc(strlen("u1.t.vsn") + count_digits(i,10) + 1)) == NULL) {
 #ifdef TEST
@@ -408,7 +411,7 @@ int fullwrapCdb_altkey_flag(file, line, stcp, fatal)
     /* not a 't' entry : disable all the vid[] and vsn[] flags */
     /* ------------------------------------------------------- */
     for (i = 0; i < MAXVSN; i++) {
-      char *newkey;
+      char *newkey = NULL;
       int   thisstatus;
       if ((newkey = (char *) malloc(strlen("u1.t.vid") + count_digits(i,10) + 1)) == NULL) {
 #ifdef TEST
@@ -434,7 +437,7 @@ int fullwrapCdb_altkey_flag(file, line, stcp, fatal)
     }
     /* Disable all the vsn[] flags */
     for (i = 0; i < MAXVSN; i++) {
-      char *newkey;
+      char *newkey = NULL;
       int   thisstatus;
       if ((newkey = (char *) malloc(strlen("u1.t.vsn") + count_digits(i,10) + 1)) == NULL) {
 #ifdef TEST
@@ -483,7 +486,7 @@ int fullwrapCdb_store(file, line, fd, reqid, data, size, flag, fatal)
      int flag;
      int fatal;
 {
-  char *key;
+  char *key = NULL;
   int  status;
 
 #ifdef TEST

@@ -1,7 +1,10 @@
 /*
- * $Id: stglogit.c,v 1.2 1999/07/20 17:29:28 jdurand Exp $
+ * $Id: stglogit.c,v 1.3 1999/07/21 20:09:14 jdurand Exp $
  *
  * $Log: stglogit.c,v $
+ * Revision 1.3  1999/07/21 20:09:14  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:28  jdurand
  * Added Id and Log CVS's directives
  *
@@ -26,10 +29,10 @@ extern int reqid;
 stglogit(va_alist) va_dcl
 {
 	va_list args;
-	char *func;
-	char *msg;
+	char *func = NULL;
+	char *msg = NULL;
 	char prtbuf[PRTBUFSZ];
-	struct tm *tm;
+	struct tm *tm = NULL;
 	time_t current_time;
 	int fd_log;
 

@@ -1,7 +1,10 @@
 /*
- * $Id: stgdaemon.c,v 1.3 1999/07/20 17:29:27 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.4 1999/07/21 20:09:13 jdurand Exp $
  *
  * $Log: stgdaemon.c,v $
+ * Revision 1.4  1999/07/21 20:09:13  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:27  jdurand
  * Added Id and Log CVS's directives
  *
@@ -112,17 +115,17 @@ int rpfd;
 struct sigaction sa;
 #endif
 int stgcat_bufsz;
-struct stgcat_entry *stce;	/* end of stage catalog */
-struct stgcat_entry *stcs;	/* start of stage catalog */
+struct stgcat_entry *stce = NULL;	/* end of stage catalog */
+struct stgcat_entry *stcs = NULL;	/* start of stage catalog */
 int stgpath_bufsz;
-struct stgpath_entry *stpe;	/* end of stage path catalog */
-struct stgpath_entry *stps;	/* start of stage path catalog */
-struct waitq *waitqp;
+struct stgpath_entry *stpe = NULL;	/* end of stage path catalog */
+struct stgpath_entry *stps = NULL;	/* start of stage path catalog */
+struct waitq *waitqp = NULL;
 
 
 #ifdef DB
-db_fd **db_stgcat;
-db_fd **db_stgpath;
+db_fd **db_stgcat = NULL;
+db_fd **db_stgpath = NULL;
 size_t      db_size;
 #define NB_ELEMENTS(a)     (sizeof(a)/sizeof((a)[0]))
 int         stage_states[] = { NOTSTAGED , WAITING_SPC, WAITING_REQ , STAGED , KILLED , FAILED , 
@@ -137,14 +140,14 @@ int         db_priority = 1;
 main()
 {
 	int c, i, l;
-	char *clienthost;
+	char *clienthost = NULL;
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
-	struct hostent *hp;
+	struct hostent *hp = NULL;
 	int magic;
 	int msglen;
 	int on = 1;	/* for REUSEADDR */
-	char *rbp;
+	char *rbp =  NULL;
 	char req_data[REQBUFSZ-3*LONGSIZE];
 	char req_hdr[3*LONGSIZE];
 	int req_type;
@@ -152,11 +155,11 @@ main()
 	int scfd;
 	struct sockaddr_in sin;		/* internet address */
 	int spfd;
-	struct servent *sp;
+	struct servent *sp = NULL;
 	struct stat st;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	int stg_s;
-	struct stgpath_entry *stpp;
+	struct stgpath_entry *stpp = NULL;
 	struct timeval timeval;
 	void wait4child();
 
@@ -582,9 +585,9 @@ char *clienthost;
 {
 	int clientpid;
 	gid_t gid;
-	char *rbp;
-	char *user;
-	struct waitq *wqp;
+	char *rbp = NULL;
+	char *user = NULL;
+	struct waitq *wqp = NULL;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -615,12 +618,12 @@ procinireq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c, i;
 	gid_t gid;
 	int nargs;
-	char *rbp;
-	char *user;
+	char *rbp = NULL;
+	char *user = NULL;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -662,7 +665,8 @@ int nbwf;
 struct waitf **wfp;
 {
 	/* add request to the wait queue */
-	struct waitq *prev, *wqp;
+	struct waitq *prev = NULL;
+    struct waitq *wqp = NULL;
 
 	wqp = waitqp;
 	while (wqp) {
@@ -698,9 +702,10 @@ char *pool_user;
 {
 	int c;
 	int fd;
-	char *p;
-	char *p_f, *p_u;
-	struct passwd *pw;
+	char *p = NULL;
+	char *p_f = NULL;
+    char *p_u = NULL;
+	struct passwd *pw = NULL;
 
 	if (*stcp->poolname == '\0') {
 		strcpy (stcp->ipath, upath);
@@ -818,7 +823,7 @@ int status;
 {
 	int found;
 	int savereqid;
-	struct waitq *wqp;
+	struct waitq *wqp = NULL;
 
 	savereqid = reqid;
 
@@ -858,10 +863,10 @@ int status;
 checkpoolstatus()
 {
 	int c, i, j, n;
-	char **poolc;
-	struct stgcat_entry *stcp;
-	struct waitf *wfp;
-	struct waitq *wqp;
+	char **poolc = NULL;
+	struct stgcat_entry *stcp = NULL;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 
 	n = checkpoolcleaned (&poolc);
 	for (j = 0; j < n; j++) {
@@ -935,9 +940,9 @@ int state;
 	int i;
 	int savereqid;
 	int saverpfd;
-	struct stgcat_entry *stcp;
-	struct waitf *wfp;
-	struct waitq *wqp;
+	struct stgcat_entry *stcp = NULL;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 
 	found = 0;
 	firstreqid = 0;
@@ -1053,9 +1058,10 @@ int state;
 checkwaitq()
 {
 	int i;
-	struct stgcat_entry *stcp;
-	struct waitf *wfp;
-	struct waitq *wqp, *wqp1;
+	struct stgcat_entry *stcp = NULL;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
+    struct waitq *wqp1 = NULL;
 
 	wqp = waitqp;
 	while (wqp) {
@@ -1203,7 +1209,7 @@ char *upath;
 	int found;
 	char lpath[MAXHOSTNAMELEN+MAXPATH];
 	struct stgpath_entry *newpath();
-	struct stgpath_entry *stpp;
+	struct stgpath_entry *stpp = NULL;
 
 	found = 0;
 #ifdef DB
@@ -1250,7 +1256,7 @@ int remove_hsm;
 {
 	int actual_size = 0;
 	struct stat st;
-	struct stgpath_entry *stpp;
+	struct stgpath_entry *stpp = NULL;
 
 	if (stcp->ipath[0]) {
 		/* Is there any other entry pointing at the same disk file?
@@ -1330,7 +1336,8 @@ dellink(stpp)
 struct stgpath_entry *stpp;
 {
 	int n;
-	char *p1, *p2;
+	char *p1 = NULL;
+    char *p2 = NULL;
 
 	stglogit (func, STG93, stpp->upath);
 	sendrep (rpfd, RMSYMLINK, stpp->upath);
@@ -1354,7 +1361,8 @@ delreq(stcp)
 struct stgcat_entry *stcp;
 {
 	int n;
-	char *p1, *p2;
+	char *p1 = NULL;
+    char *p2 = NULL;
 
 #ifdef DB
   if (wrapCdb_delete(db_stgcat, stcp->reqid, 0) != 0) {
@@ -1382,8 +1390,8 @@ struct waitq *wqp;
 	static int pfd[2];
 	int pid;
 	char progfullpath[MAXPATH];
-	struct stgcat_entry *stcp;
-	struct waitf *wfp;
+	struct stgcat_entry *stcp = NULL;
+	struct waitf *wfp = NULL;
 
 	if (pipe (pfd) < 0) {
 		sendrep (wqp->rpfd, MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
@@ -1447,7 +1455,7 @@ struct waitq *wqp;
 struct stgpath_entry *
 newpath()
 {
-        struct stgpath_entry *stpp;
+        struct stgpath_entry *stpp = NULL;
 
 #ifdef DB
         if ((stpp = calloc(1,sizeof(struct stgpath_entry))) == NULL) {
@@ -1470,7 +1478,7 @@ newpath()
 struct stgcat_entry *
 newreq()
 {
-        struct stgcat_entry *stcp;
+        struct stgcat_entry *stcp = NULL;
 
 #ifdef DB
   if ((stcp = calloc((size_t) 1,sizeof(struct stgcat_entry))) == NULL) {
@@ -1493,7 +1501,7 @@ newreq()
 nextreqid()
 {
 	int found;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 
 	while (1) {
 		found = 0;
@@ -1518,10 +1526,10 @@ req2argv(rbp, argvp)
 char *rbp;
 char ***argvp;
 {
-	char **argv;
+	char **argv = NULL;
 	int i, n;
 	int nargs;
-	char *p;
+	char *p = NULL;
 
 	unmarshall_WORD (rbp, nargs);
 	argv = (char **) malloc ((nargs + 1) * sizeof(char *));
@@ -1645,8 +1653,8 @@ int *subreqid;
 {
 	int found;
 	struct stat st;
-	struct stgcat_entry *stcp;
-	struct stgpath_entry *stpp;
+	struct stgcat_entry *stcp = NULL;
+	struct stgpath_entry *stpp = NULL;
 #ifdef DB
   char  *stgupath_entry = NULL;
   char  *stgipath_entry = NULL;
@@ -1794,7 +1802,7 @@ int fullwrapCdb_altkey_fetch_status(file, line, fd, altkey, status, data, size, 
      size_t *size;
      int fatal;
 {
-  char *string;
+  char *string = NULL;
   int   value;
 
   if ((string = (char *) malloc(count_digits(status,10) + 1)) == NULL)
@@ -1892,7 +1900,9 @@ int fullwrapCdb_altkey_fetch_status_rfiostat(file, line, fd, status, fatal)
   }
   if (db_data != NULL && db_size != (size_t) NULL) {
     /* We fetch successfully an entry with stage_states[i] | STAGEIN as input */
-    char *ptr, *ptrmax;
+    char *ptr = NULL;
+    char *ptrmax = NULL;
+
     ptrmax = ptr = db_data;
     ptrmax += db_size;
     do {
@@ -1944,7 +1954,9 @@ int fullwrapCdb_altkey_fetch_status_delreq(file, line, fd, status, fatal)
   }
   if (db_data != NULL && db_size != (size_t) NULL) {
     /* We fetch successfully an entry with stage_states[i] | STAGEIN as input */
-    char *ptr, *ptrmax;
+    char *ptr = NULL;
+    char *ptrmax = NULL;
+
     ptrmax = ptr = db_data;
     ptrmax += db_size;
     do {
@@ -1993,7 +2005,9 @@ int fullwrapCdb_altkey_fetch_status_newstatus(file, line, fd, status, fatal)
   }
   if (db_data != NULL && db_size != (size_t) NULL) {
     /* We fetch successfully an entry with stage_states[i] | STAGEIN as input */
-    char *ptr, *ptrmax;
+    char *ptr = NULL;
+    char *ptrmax = NULL;
+
     ptrmax = ptr = db_data;
     ptrmax += db_size;
     do {
@@ -2033,7 +2047,7 @@ int fullwrapdb_Path_exist_other(file, line, fd, altkey, key, reqid, fatal)
 {
   void  *data = NULL;
   size_t size;
-  char  *dummy;
+  char  *dummy = NULL;
   
   if (Cdb_altkey_fetch(fd, altkey, key, &data, &size) == 0) {
     /* The entry "key" do not exist     */

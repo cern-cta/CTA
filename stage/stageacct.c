@@ -1,7 +1,10 @@
 /*
- * $Id: stageacct.c,v 1.2 1999/07/20 17:29:20 jdurand Exp $
+ * $Id: stageacct.c,v 1.3 1999/07/21 20:09:06 jdurand Exp $
  *
  * $Log: stageacct.c,v $
+ * Revision 1.3  1999/07/21 20:09:06  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.2  1999/07/20 17:29:20  jdurand
  * Added Id and Log CVS's directives
  *
@@ -36,7 +39,7 @@ char *tapesrvr;
 	int acctreclen;
 	struct acctstage acctstage;
 	char *getconfent();
-	char *p;
+	char *p = NULL;
 
 	if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
 	    (strcmp (p, "YES") && strcmp (p, "yes"))) return;

@@ -1,7 +1,10 @@
 /*
- * $Id: procqry.c,v 1.3 1999/07/20 17:29:18 jdurand Exp $
+ * $Id: procqry.c,v 1.4 1999/07/21 20:09:03 jdurand Exp $
  *
  * $Log: procqry.c,v $
+ * Revision 1.4  1999/07/21 20:09:03  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:18  jdurand
  * Added Id and Log CVS's directives
  *
@@ -88,7 +91,7 @@ char *req_data;
 char *clienthost;
 {
 	char *afile = NULL;
-	char **argv;
+	char **argv = NULL;
 	int aflag = 0;
 	int c, j;
 	int errflg = 0;
@@ -96,7 +99,7 @@ char *clienthost;
 	char *fseq = NULL;
 	gid_t gid;
 	char group[MAXGRPNAMELEN];
-	struct group *gr;
+	struct group *gr = NULL;
 	int hdrprinted = 0;
 	int Lflag = 0;
 	static char l_stat[3][11] = {"", "STAGED_LSZ", "STAGED_TPE"};
@@ -104,7 +107,7 @@ char *clienthost;
 	char *mfile = NULL;
 	int nargs;
 	int numvid = 0;
-	char *p;
+	char *p = NULL;
 	char p_lrecl[7];
 	char p_recfm[6];
 	char p_size[6];
@@ -113,13 +116,13 @@ char *clienthost;
 	int pid = -1;
 	int poolflag = 0;
 	char poolname[MAXPOOLNAMELEN];
-	char *q;
+	char *q = NULL;
 	static char s_stat[5][9] = {"", "STAGEIN", "STAGEOUT", "STAGEWRT", "STAGEWRT"};
-	char *rbp;
+	char *rbp = NULL;
 	int Sflag = 0;
 	int sflag = 0;
 	struct stat st;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	int Tflag = 0;
 	static char title[] = 
 		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool\n";
@@ -127,15 +130,15 @@ char *clienthost;
 		"File name                            State      Nbacc.     Size    Pool\n";
 	static char title_I[] = 
 		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool\n";
-	struct tm *tm;
+	struct tm *tm = NULL;
 	int uflag = 0;
-	char *user;
+	char *user = NULL;
 	char vid[MAXVSN][7];
 	static char x_stat[7][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED"};
 	char *xfile = NULL;
 	int xflag = 0;
 #ifdef DB
-  char   *entries;
+  char   *entries = NULL;
   size_t  entries_size;
 #endif
 
@@ -336,9 +339,12 @@ char *clienthost;
       	size_t db_size;
         char *db_key = NULL;
         char *db_data = NULL;
+
         Cdb_altkey_rewind(db_stgcat, "status");
         while (Cdb_altkey_nextrec(db_stgcat, "status", &db_key, (void **) &db_data, &db_size) == 0) {
-          	char *ptr, *ptrmax;
+          	char *ptr = NULL;
+            char *ptrmax = NULL;
+
             int thisstatus = atoi(db_key);
             
             if ((thisstatus & 0xF0) == WAITING_REQ) {
@@ -839,10 +845,10 @@ char *afile;
 char *mfile;
 {
 	int j;
-	char *p;
+	char *p = NULL;
 	int poolflag = 0;
-	struct stgcat_entry *stcp;
-	struct stgpath_entry *stpp;
+	struct stgcat_entry *stcp = NULL;
+	struct stgpath_entry *stpp = NULL;
 #ifdef DB
 	char  *stgpath_key = NULL;
 #endif
@@ -873,9 +879,11 @@ char *mfile;
       size_t db_size;
       char *db_key = NULL;
       char *db_data = NULL;
+
       Cdb_altkey_rewind(db_stgcat, "status");
       while (Cdb_altkey_nextrec(db_stgcat, "status", &db_key, (void **) &db_data, &db_size) == 0) {
-        char *ptr, *ptrmax;
+        char *ptr = NULL;
+        char *ptrmax = NULL;
         int thisstatus = atoi(db_key);
         
         if ((thisstatus & 0xF0) != STAGED) {
@@ -1022,9 +1030,13 @@ char *mfile;
 
 	int found;
 	int j;
-	char *p;
+	char *p = NULL;
 	int poolflag = 0;
-	struct sorted_ent *prev, *scc, *sci, *scf, *scs;
+	struct sorted_ent *prev = NULL;
+    struct sorted_ent *scc = NULL;
+    struct sorted_ent *sci = NULL;
+    struct sorted_ent *scf = NULL;
+    struct sorted_ent *scs = NULL;
 #ifdef DB
     /* The catalog do not reside anymore in memory */
     /* Instead of allocating an enormous amount of */
@@ -1038,9 +1050,9 @@ char *mfile;
     int    sorted_ent_cursize  = 0;
 #endif
 	struct stat st;
-	struct stgcat_entry *stcp;
-	struct stgpath_entry *stpp;
-	struct tm *tm;
+	struct stgcat_entry *stcp = NULL;
+	struct stgpath_entry *stpp = NULL;
+	struct tm *tm = NULL;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
@@ -1064,9 +1076,12 @@ char *mfile;
       
       Cdb_altkey_rewind(db_stgcat, "status");
       while (Cdb_altkey_nextrec(db_stgcat, "status", &db_key, (void **) &db_data, &db_size) == 0) {
-        char *ptr, *ptrmax;
-        int thisstatus = atoi(db_key);
+        char *ptr = NULL;
+        char *ptrmax = NULL;
+        int thisstatus;
         
+        thisstatus = atoi(db_key);
+
         if ((thisstatus & 0xF0) != STAGED) {
           continue;
         }
@@ -1316,6 +1331,7 @@ char *mfile;
     for (scc = scf; scc; scc = scc->next) {
       struct stgcat_entry *stcp = NULL;
       struct stgpath_entry *stpp = NULL;
+
       if (wrapCdb_fetch(db_stgcat, scc->stcp_reqid, (void **) &stcp, NULL, 0) == 0) {
         if (scc->stpp_reqid != 0) {
           wrapCdb_fetch(db_stgpath, scc->stpp_reqid, (void **) &stpp, NULL, 0);
@@ -1373,7 +1389,7 @@ char *fseq;
 {
 	int j;
 	int poolflag = 0;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
@@ -1383,11 +1399,15 @@ char *fseq;
       size_t db_size;
       char *db_key = NULL;
       char *db_data = NULL;
+
       Cdb_altkey_rewind(db_stgcat, "status");
       while (Cdb_altkey_nextrec(db_stgcat, "status", &db_key, (void **) &db_data, &db_size) == 0) {
-        char *ptr, *ptrmax;
-        int thisstatus = atoi(db_key);
+        char *ptr = NULL;
+        char *ptrmax = NULL;
+        int thisstatus;
         
+        thisstatus = atoi(db_key);
+
         if ((thisstatus & 0xF0) != STAGED) {
           continue;
         }

@@ -1,7 +1,10 @@
 /*
- * $Id: procio.c,v 1.3 1999/07/20 17:29:17 jdurand Exp $
+ * $Id: procio.c,v 1.4 1999/07/21 20:09:03 jdurand Exp $
  *
  * $Log: procio.c,v $
+ * Revision 1.4  1999/07/21 20:09:03  jdurand
+ * Initialize all variable pointers to NULL
+ *
  * Revision 1.3  1999/07/20 17:29:17  jdurand
  * Added Id and Log CVS's directives
  *
@@ -71,21 +74,21 @@ char *clienthost;
 	int Aflag = 0;
 	int actual_poolflag;
 	char actual_poolname[MAXPOOLNAMELEN];
-	char **argv;
+	char **argv = NULL;
 	int c, i, j;
 	int concat_off = 0;
 	int clientpid;
 	static char cmdnames[4][9] = {"", "stagein", "stageout", "stagewrt"};
 	int copytape = 0;
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
 	char *fid = NULL;
 	struct stat filemig_stat;
 	char filemig_size[5];
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
-	struct group *gr;
-	char *name;
+	struct group *gr = NULL;
+	char *name = NULL;
 	int nargs;
 	int nbdskf;
 	int nbtpf;
@@ -93,21 +96,22 @@ char *clienthost;
 	int no_upath = 0;
 	char *nread = NULL;
 	int numvid, numvsn;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 	char *pool_user = NULL;
 	int poolflag;
-	char *rbp;
+	char *rbp = NULL;
 	int savereqid;
 	char *size = NULL;
 	struct stat st;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	struct stgcat_entry stgreq;
 	char trailing;
 	int Uflag = 0;
 	int Upluspath = 0;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user;
-	struct waitf *wfp;
+	char *user = NULL;
+	struct waitf *wfp = NULL;
 	struct waitq *wqp = NULL;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
@@ -939,37 +943,37 @@ procputreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c, i;
 	int clientpid;
-	char *dp;
+	char *dp = NULL;
 	int errflg = 0;
-	char *externfile;
+	char *externfile = NULL;
 	int found;
 	char fseq[MAXFSEQ];
 	gid_t gid;
-	struct group *gr;
-	char *hsmfile;
+	struct group *gr = NULL;
+	char *hsmfile = NULL;
 	int Iflag = 0;
 	int Mflag = 0;
-	char *name;
+	char *name = NULL;
 	int nargs;
 	int nbdskf;
 	int numvid = 0;
 	int n1 = 0;
 	int n2 = 0;
-	char *q;
-	char *rbp;
+	char *q = NULL;
+	char *rbp = NULL;
 	struct stat st;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 	int subreqid;
 	int Upluspath = 0;
 	uid_t uid;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user;
+	char *user = NULL;
 	char vid[7];
-	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitf *wfp = NULL;
+	struct waitq *wqp = NULL;
 #ifdef DB
 	char *db_data = NULL;
 	size_t db_size;
@@ -1063,7 +1067,9 @@ char *clienthost;
 			found = 0;
 #ifdef DB
 			if (Cdb_altkey_fetch(db_stgcat, "u1.t.vid0", vid, (void **) &db_data, &db_size) == 0) {
-				char *ptr, *ptrmax;
+				char *ptr = NULL;
+                char *ptrmax = NULL;
+
 				ptrmax = ptr = db_data;
 				ptrmax += db_size;
 				do {
@@ -1258,7 +1264,7 @@ char *poolname;
 {
 	int found = 0;
 	int i;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp = NULL;
 #ifdef DB
 	char *db_data = NULL;
 	char *db_vid[MAXVSN];
@@ -1286,9 +1292,9 @@ char *poolname;
 		for (i = 0; i < MAXVSN; i++) {
 
 			if (strlen(cur->u1.t.vid[i]) > 0) {
-				char *newkey;
+				char *newkey = NULL;
                 int   status;
-                char *data;
+                char *data = NULL;
                 
                 ++entered;
                 if ((newkey = (char *) malloc(strlen("u1.t.vid") + count_digits(i,10) + 1)) == NULL) {
@@ -1312,7 +1318,8 @@ char *poolname;
                 /* we got the entry */
                 /* Let's evaluate the number of entries in it */
                 {
-                	char *ptr, *ptrmax;
+                	char *ptr = NULL;
+                    char *ptrmax = NULL;
                     ptrmax = ptr = db_vid[i];
                     ptrmax += db_size[i];
                     do {
@@ -1349,7 +1356,9 @@ char *poolname;
             /* Fetch the (reduced) matched reqid corresponding to found alternate key */
             /* ---------------------------------------------------------------------- */
             {
-            	char *ptr, *ptrmax;
+            	char *ptr = NULL;
+                char *ptrmax = NULL;
+
                 ptrmax = ptr = db_vid[min_index];
                 ptrmax += db_size[min_index];
                 do {
@@ -1437,7 +1446,8 @@ char *poolname;
     if (found != 0) {
     	/* We have found an alternate entry */
     	/* Is there any "reqid" that match the "poolname" condition ? */
-    	char *ptr, *ptrmax;
+    	char *ptr = NULL;
+        char *ptrmax = NULL;
 
         found = 0;
         ptrmax = ptr = db_vid[min_index];
@@ -1562,11 +1572,12 @@ int req_type;
 char *trailing;
 fseq_elem **fseq_list;
 {
-	char *dp;
+	char *dp = NULL;
 	int i;
 	int n1, n2;
 	int nbtpf;
-	char *p, *q;
+	char *p = NULL;
+    char *q = NULL;
 
 	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
