@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.9 2001/11/30 11:22:43 jdurand Exp $
+ * $Id: stage_constants.h,v 1.10 2001/12/05 09:59:13 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -129,15 +129,10 @@
 #endif
 #define STAGESHUTDOWN 15
 
-#ifdef STAGESETRETENP
-#undef STAGESETRETENP
+#ifdef STAGEPING
+#undef STAGEPING
 #endif
-#define STAGESETRETENP 16
-
-#ifdef STAGESETMINTIME
-#undef STAGESETMINTIME
-#endif
-#define STAGESETMINTIME 17
+#define STAGEPING 16
 
 /* ================= */
 /* stage reply types */
@@ -467,6 +462,7 @@
 #define STAGE_REMOVEHSM   0x020000000    /* -remove_from_hsm [stage_clr]        */
 #define STAGE_RETENP      0x040000000    /* --retenp     [stage_qry]            */
 #define STAGE_MINTIME     0x100000000LL  /* --mintime    [stage_qry]            */
+#define STAGE_VERBOSE     0x200000000LL  /* --verbose    [stage_ping]           */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
@@ -486,5 +482,6 @@
 #define	STAGE_GET        112           /* Not yet supported */
 #define STAGE_FILCHG     114           /* Not yet supported */
 #define	STAGE_SHUTDOWN   115           /* Not yet supported */
+#define	STAGE_PING       116
 
 #endif /* __stage_constants_h */
