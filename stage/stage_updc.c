@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.24 2002/04/30 13:03:10 jdurand Exp $
+ * $Id: stage_updc.c,v 1.25 2002/05/06 17:18:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.24 $ $Date: 2002/04/30 13:03:10 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.25 $ $Date: 2002/05/06 17:18:09 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -299,7 +299,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -534,7 +534,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -652,7 +652,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -780,7 +780,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -897,7 +897,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.19 2002/04/30 13:03:10 jdurand Exp $
+ * $Id: stage_put.c,v 1.20 2002/05/06 17:18:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.19 $ $Date: 2002/04/30 13:03:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.20 $ $Date: 2002/05/06 17:18:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -154,7 +154,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	repbuf[0] = '\0';
 
 	while (1) {
-		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
 		if ((c == 0) || (serrno == EINVAL) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) || (serrno == ENOSPC) || (serrno == ESTKILLED) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
 		if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
