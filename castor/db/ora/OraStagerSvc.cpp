@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.87 $ $Release$ $Date: 2004/12/13 11:15:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.88 $ $Release$ $Date: 2004/12/13 11:20:23 $ $Author: jdurand $
  *
  *
  *
@@ -1173,6 +1173,8 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
           item->setDiskcopyId(rs->getString(4));
           item->setFsWeight(rs->getFloat(5));
+          item->setMountPoint(rs->getString(6));
+          item->setDiskServer(rs->getString(7));
           sources.push_back(item);
           status = rs->next();
         }
