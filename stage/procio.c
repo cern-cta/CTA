@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.37 2000/09/02 06:26:55 jdurand Exp $
+ * $Id: procio.c,v 1.38 2000/09/20 11:25:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.37 $ $Date: 2000/09/02 06:26:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.38 $ $Date: 2000/09/20 11:25:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,7 +59,7 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-struct waitq *add2wq();
+extern struct stgcat_entry *newreq _PROTO(());
 char *findpoolname();
 int last_tape_file;
 #ifdef USECDB
@@ -70,6 +70,21 @@ static char one[2] = "1";
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
 extern int isuserlevel _PROTO((char *));
+int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
+extern int upd_stageout _PROTO((int, char *, int *, int));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+extern int nextreqid _PROTO(());
+int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
+int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
+
+#ifdef MIN
+#undef MIN
+#endif
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#ifdef MAX
+#undef MAX
+#endif
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 void procioreq(req_type, req_data, clienthost)
 		 int req_type;
@@ -82,18 +97,21 @@ void procioreq(req_type, req_data, clienthost)
 	char **argv;
 	int c, i, j;
 	int concat_off = 0;
+	int concat_off_fseq = 0;
 	int clientpid;
 	static char cmdnames[4][9] = {"", "stagein", "stageout", "stagewrt"};
 	int copytape = 0;
 	char *dp;
 	int errflg = 0;
 	char *fid = NULL;
-	struct stat filemig_stat;
+	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
+	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	char filemig_size[5];
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
 	struct Cns_fileid *hsmfileids = NULL;
+	u_signed64 *hsmsizes = NULL;
 	char **hsmfiles = NULL;
 	time_t *hsmmtimes = NULL;
 	int ihsmfiles;
@@ -102,7 +120,6 @@ void procioreq(req_type, req_data, clienthost)
 	int nargs;
 	int nbdskf;
 	int nbtpf;
-	struct stgcat_entry *newreq();
 	int nhsmfiles = 0;
 	int nuserlevel = 0;
 	int nexplevel = 0;
@@ -127,7 +144,6 @@ void procioreq(req_type, req_data, clienthost)
 	struct waitq *wqp = NULL;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
-
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -281,6 +297,7 @@ void procioreq(req_type, req_data, clienthost)
 			if (nhsmfiles == 0) {
 				if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL ||
 				    (hsmfileids = (struct Cns_fileid *) malloc(sizeof(struct Cns_fileid))) == NULL ||
+				    (hsmsizes   = (u_signed64 *)        malloc(sizeof(u_signed64))) == NULL ||
 				    (hsmmtimes  = (time_t *)            malloc(sizeof(time_t))) == NULL) {
 					c = SYERR;
 					goto reply;
@@ -288,17 +305,20 @@ void procioreq(req_type, req_data, clienthost)
 			} else {
 				char **dummy = hsmfiles;
 				struct Cns_fileid *dummy2 = hsmfileids;
-				time_t *dummy3 = hsmmtimes;
+				u_signed64 *dummy3 = hsmsizes;
+				time_t *dummy4 = hsmmtimes;
 
 				if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL ||
 				    (dummy2 = (struct Cns_fileid *) realloc(hsmfileids,(nhsmfiles+1) * sizeof(struct Cns_fileid))) == NULL ||
-				    (dummy3 = (time_t *)            realloc(hsmmtimes,(nhsmfiles+1) * sizeof(time_t))) == NULL) {
+				    (dummy3 = (u_signed64 *)        realloc(hsmsizes,(nhsmfiles+1) * sizeof(u_signed64))) == NULL ||
+				    (dummy4 = (time_t *)            realloc(hsmmtimes,(nhsmfiles+1) * sizeof(time_t))) == NULL) {
 					c = SYERR;
 					goto reply;
 				}
 				hsmfiles = dummy;
 				hsmfileids = dummy2;
-				hsmmtimes = dummy3;
+				hsmsizes = dummy3;
+				hsmmtimes = dummy4;
 			}
 			hsmfiles[nhsmfiles++] = optarg;
 			break;
@@ -403,10 +423,25 @@ void procioreq(req_type, req_data, clienthost)
 		sendrep (rpfd, MSG_ERR, STG17, "-A deferred", "-p NOPOOL");
 		errflg++;
 	}
+#ifndef CONCAT_OFF
+	if (concat_off) {
+		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is not supported by this server\n");
+		errflg++;
+	}
+#else
 	if (concat_off && strcmp (stgreq.poolname, "NOPOOL") == 0) {
 		sendrep (rpfd, MSG_ERR, STG17, "-c off", "-p NOPOOL");
 		errflg++;
 	}
+	if (concat_off && stgreq.t_or_d != 't') {
+		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is only valid with -V option\n");
+		errflg++;
+	}
+	if (concat_off && (nargs - optind != 0)) {
+		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is only valid without explicit disk files\n");
+		errflg++;
+	}
+#endif
 	if (*stgreq.recfm == 'F' && req_type != STAGEIN && stgreq.lrecl == 0) {
 		sendrep (rpfd, MSG_ERR, STG20);
 		errflg++;
@@ -443,11 +478,53 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy (stgreq.u1.t.vid[i], stgreq.u1.t.vsn[i]);
 			numvid = numvsn;
 		}
+		if (concat_off && numvid != 1) {
+			sendrep (rpfd, MSG_ERR, "STG02 - option -c off is not compatible with volume spanning\n");
+			errflg++;
+			c = USERR;
+			goto reply;
+		}
 		if (fseq == NULL) fseq = one;
 
 		/* compute number of tape files */
-		if ((nbtpf = unpackfseq (fseq, req_type, &trailing, &fseq_list)) == 0)
+		if ((nbtpf = unpackfseq (fseq, req_type, &trailing, &fseq_list, concat_off, &concat_off_fseq)) == 0) {
 			errflg++;
+		} else {
+			if (concat_off) {
+				int maxfseq;
+				char concat_off_flag;
+
+				if (trailing != '-') {
+					sendrep (rpfd, MSG_ERR, "STG02 - option -c off requires the last tapefile to end with '-'\n");
+					errflg++;
+				} else if (nbtpf != 1) {
+					sendrep (rpfd, MSG_ERR, "STG02 - option -c off requires exactly one tapefile, ending with '-'\n");
+					errflg++;
+				}
+				/* We want to determine which highest fseq is already staged for this vid */
+				if ((maxfseq = maxfseq_per_vid(&stgreq,poolflag,stgreq.poolname,&concat_off_flag)) > 0) {
+					fseq_elem *newfseq_list = NULL;
+
+					if (maxfseq >= concat_off_fseq) {
+						int new_nbtpf = maxfseq - concat_off_fseq + (concat_off_flag == 'c' ? 1 : 2);
+						/* There is overlap from concat_off_fseq to maxfseq */
+
+						if ((newfseq_list = realloc(fseq_list,new_nbtpf * sizeof(fseq_elem))) == NULL) {
+							sendrep (rpfd, MSG_ERR, "STG02 - realloc() error (%s)\n", strerror(errno));
+							free(fseq_list);
+							errflg++;
+						}
+						fseq_list = newfseq_list;
+						for (i = 0; i <= (maxfseq - concat_off_fseq - (concat_off_flag == 'c' ? 1 : 0)); i++) {
+							sprintf ((char *)(fseq_list + i), "%d", concat_off_fseq + i);
+						}
+						sprintf((char *)(fseq_list + new_nbtpf - 1), "%d", maxfseq + (concat_off_flag == 'c' ? 0 : 1));
+						/* Nota : packfseq will take care of adding the leading "-" ... */
+						nbtpf = new_nbtpf;
+					}
+				}
+			}
+		}
 	} else nbtpf = 1;
 
 	if (errflg) {
@@ -471,7 +548,7 @@ void procioreq(req_type, req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-		if (nbdskf != nhsmfiles) {
+		if ((nargs - optind) > 0 && nbdskf != nhsmfiles) {
 			sendrep (rpfd, MSG_ERR, STG19);
 			c = USERR;
 			goto reply;
@@ -531,51 +608,79 @@ void procioreq(req_type, req_data, clienthost)
 		} else if (ncastorfiles > 0) {
 			/* It is a CASTOR request, so stgreq.t_or_d, previously equal to 'm', is set to 'h' */
 			stgreq.t_or_d = 'h';
-		} else if (nhpssfiles > 1) {
-			/* More than one HPSS not supported for the moment */
-			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
-			c = USERR;
-			goto reply;
 		}
-		if (ncastorfiles > 0) {
-			/* Depending in req_type we contact NameServer accordingly */
-			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-				struct Cns_filestat Cnsfilestat;
-
-				switch (req_type) {
-				case STAGEIN:
-					setegid(stgreq.gid);
-					seteuid(stgreq.uid);
+		/* Depending in req_type we contact NameServer accordingly */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			switch (req_type) {
+			case STAGEIN:
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
+				switch (stgreq.t_or_d) {
+				case 'h':
+					/* Suppose the file is of zero size ? We can catch it right now */
 					memset(&(hsmfileids[ihsmfiles]),0,sizeof(struct Cns_fileid));
 					if (Cns_statx(hsmfiles[ihsmfiles], &(hsmfileids[ihsmfiles]), &Cnsfilestat) != 0) {
-						sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", hsmfiles[ihsmfiles], sstrerror(serrno));
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
 						c = USERR;
 						setegid(0);
 						seteuid(0);
 						goto reply;
 					}
-					setegid(0);
-					seteuid(0);
 					hsmmtimes[ihsmfiles] = Cnsfilestat.mtime;
+					hsmsizes[ihsmfiles] = Cnsfilestat.filesize;
 					break;
-				case STAGEWRT:
-				case STAGEOUT:
-					setegid(stgreq.gid);
-					seteuid(stgreq.uid);
-					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &(hsmfileids[ihsmfiles])) != 0) {
-						sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", hsmfiles[ihsmfiles], sstrerror(serrno));
+				case 'm':
+					/* Suppose the file is of zero size ? We can catch it right now */
+					if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
 						c = USERR;
 						setegid(0);
 						seteuid(0);
 						goto reply;
 					}
-					setegid(0);
-					seteuid(0);
-					hsmmtimes[ihsmfiles] = time(0);
+					hsmmtimes[ihsmfiles] = filemig_stat.st_mtime;
+					hsmsizes[ihsmfiles] = (u_signed64) filemig_stat.st_size;
 					break;
 				default:
 					break;
 				}
+				setegid(0);
+				seteuid(0);
+				break;
+			case STAGEWRT:
+			case STAGEOUT:
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
+				switch (stgreq.t_or_d) {
+				case 'h':
+					/* Overwriting an existing CASTOR HSM file is allowed (read/write mode) */
+					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &(hsmfileids[ihsmfiles])) != 0) {
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					hsmmtimes[ihsmfiles] = time(0);
+					break;
+				case 'm':
+					/* Overwriting an existing non-CASTOR HSM file is not allowed */
+					if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					break;
+				default:
+					break;
+				}
+				setegid(0);
+				seteuid(0);
+				break;
+			default:
+				break;
 			}
 		}
 	} else {
@@ -601,6 +706,11 @@ void procioreq(req_type, req_data, clienthost)
 	/* building catalog entries */
 
 	ihsmfiles = -1;
+	if (nhsmfiles > 0) {
+		/* User either gave either no link name, either exactly nhsmfiles : we construct */
+		/* anyway nhsmfiles entries...                                                   */
+		nbdskf = nhsmfiles;
+	}
 	for (i = 0; i < nbdskf; i++) {
 		ihsmfiles++;
 		if (Uflag && i > 0) break;
@@ -621,6 +731,15 @@ void procioreq(req_type, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
+#ifdef STAGER_DEBUG
+			sendrep (rpfd, MSG_ERR, "[DEBUG] Packed fseq \"%s\"\n", stgreq.u1.t.fseq);
+#endif
+			if (concat_off_fseq > 0) {
+				stgreq.filler[0] = 'c';
+#ifdef STAGER_DEBUG
+				sendrep (rpfd, MSG_ERR, "[DEBUG] Put 'c' in filler[0]\n");
+#endif
+			}
 		} else if (stgreq.t_or_d == 'm') {
 			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles]);
 		} else if (stgreq.t_or_d == 'h') {
@@ -636,7 +755,12 @@ void procioreq(req_type, req_data, clienthost)
 				nread = p + 1;
 			}
 		}
-		if (size) {
+		/* We have in hsmsizes[ihsmfiles] the actual_size in the NameServer    */
+		/* If the user did not specified -s option (max bytes to transfer) we  */
+		/* use this information.                                               */
+		if (req_type == STAGEIN && nhsmfiles > 0 && ! size) {
+			stgreq.size = (int) ((hsmsizes[ihsmfiles] > ONE_MB) ? (hsmsizes[ihsmfiles] / ONE_MB + 1) : 1);
+		} else if (size) {
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stgreq.size = strtol (size, &dp, 10);
 			if (p != NULL) {
@@ -677,10 +801,13 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
-												stcp->uid, stcp->gid, clientpid,
-												Upluspath, reqid, req_type, nbdskf, &wfp);
+									stcp->uid, stcp->gid, clientpid,
+									Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
+#ifdef CONCAT_OFF
+					wqp->concat_off_fseq = concat_off_fseq;
+#endif
 				}
 				wfp->subreqid = stcp->reqid;
 				wfp->waiting_on_req = savereqid;
@@ -705,9 +832,9 @@ void procioreq(req_type, req_data, clienthost)
 						goto reply;
 					}
 					goto notstaged;
-				} else if (stgreq.t_or_d == 'h' && hsmmtimes[ihsmfiles] > stcp->a_time) {
+				} else if (nhsmfiles > 0 && hsmmtimes[ihsmfiles] > stcp->a_time) {
 					/*
-					 * CASTOR HSM File exists but has a modified time higher than what
+					 * HSM File exists but has a modified time higher than what
 					 * is known to the stager.
 					 */
 					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0) < 0) {
@@ -769,6 +896,7 @@ void procioreq(req_type, req_data, clienthost)
 					create_link (stcp, argv[optind+1]);
 				break;
 			case STAGEOUT:
+			case STAGEOUT|CAN_BE_MIGR:
 			case STAGEOUT|WAITING_SPC:
 				sendrep (rpfd, MSG_ERR, STG37);
 				c = USERR;
@@ -796,9 +924,12 @@ void procioreq(req_type, req_data, clienthost)
 					wqp = add2wq (clienthost, user,
 									stcp->uid,
 									stcp->gid,
-									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp);
+									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
+#ifdef CONCAT_OFF
+					wqp->concat_off_fseq = concat_off_fseq;
+#endif
 				}
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
@@ -809,7 +940,7 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
 						updfreespace (stcp->poolname, stcp->ipath,
-													stcp->size*1024*1024);
+													stcp->size * ONE_MB);
 						delreq (stcp,1);
 						goto reply;
 					}
@@ -841,6 +972,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				break;
 			case STAGEOUT:
+			case STAGEOUT|CAN_BE_MIGR:
 			case STAGEOUT|WAITING_SPC:
 				if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
 				if (strcmp (user, stcp->user)) {
@@ -867,14 +999,14 @@ void procioreq(req_type, req_data, clienthost)
 			else
 				stcp->reqid = reqid;
 			stcp->status = STAGEOUT;
-			stcp->c_time = time (0);
+			stcp->c_time = time ( 0);
 			stcp->a_time = stcp->c_time;
 			stcp->nbaccesses++;
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 				stcp->status |= WAITING_SPC;
 				if (!wqp) wqp = add2wq (clienthost, user,
 						stcp->uid, stcp->gid, clientpid,
-						Upluspath, reqid, req_type, nbdskf, &wfp);
+						Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
 				wqp->nbdskf++;
@@ -887,7 +1019,7 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
 				updfreespace (stcp->poolname, stcp->ipath,
-							stcp->size*1024*1024);
+							stcp->size * ONE_MB);
 				delreq (stcp,1);
 				goto reply;
 			} else {
@@ -904,27 +1036,18 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 			break;
 		case STAGEWRT:
-          /*
-			if (ncastorfiles > 0 && poolflag == 1) {
+			if (p = findpoolname (upath)) {
+				if (poolflag < 0 ||
+						(poolflag > 0 && strcmp (stgreq.poolname, p)))
+					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
-				strcpy (actual_poolname, stgreq.poolname);
+				strcpy (actual_poolname, p);
 			} else {
-          */
-				if (p = findpoolname (upath)) {
-					if (poolflag < 0 ||
-							(poolflag > 0 && strcmp (stgreq.poolname, p)))
-						sendrep (rpfd, MSG_ERR, STG49, upath, p);
-					actual_poolflag = 1;
-					strcpy (actual_poolname, p);
-				} else {
-					if (poolflag > 0)
-						sendrep (rpfd, MSG_ERR, STG50, upath);
-					actual_poolflag = -1;
-					actual_poolname[0] = '\0';
-				}
-                /*
+				if (poolflag > 0)
+					sendrep (rpfd, MSG_ERR, STG50, upath);
+				actual_poolflag = -1;
+				actual_poolname[0] = '\0';
 			}
-                */
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case NOTSTAGED:
 				break;
@@ -940,6 +1063,7 @@ void procioreq(req_type, req_data, clienthost)
 					delreq (stcp,0);
 				break;
 			case STAGEOUT|PUT_FAILED:
+			case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
 				delreq (stcp,0);
 				break;
 			case STAGEWRT:
@@ -954,12 +1078,14 @@ void procioreq(req_type, req_data, clienthost)
 					u_signed64 correct_size;
 
 					correct_size = (u_signed64) st.st_size;
+#ifdef U1H_WRT_WITH_MAXSIZE
 					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
 						/* If use specified a maxsize of bytes to transfer and if this */
 						/* maxsize is lower than physical file size, then the size of */
 						/* of the migrated file will be the minimum of the twos */
 						correct_size = (u_signed64) (stgreq.size * ONE_MB);
 					}
+#endif
 					/* We set the size in the name server */
 					setegid(stgreq.gid);
 					seteuid(stgreq.uid);
@@ -1007,7 +1133,7 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
 									stcp->gid, clientpid, Upluspath, reqid, req_type,
-									nbdskf, &wfp);
+									nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 			wqp->copytape = copytape;
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
@@ -1019,27 +1145,18 @@ void procioreq(req_type, req_data, clienthost)
 			wfp++;
 			break;
 		case STAGECAT:
-          /*
-			if (ncastorfiles > 0 && poolflag == 1) {
+			if (p = findpoolname (upath)) {
+				if (poolflag < 0 ||
+						(poolflag > 0 && strcmp (stgreq.poolname, p)))
+					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
-				strcpy (actual_poolname, stgreq.poolname);
+				strcpy (actual_poolname, p);
 			} else {
-          */
-				if (p = findpoolname (upath)) {
-					if (poolflag < 0 ||
-							(poolflag > 0 && strcmp (stgreq.poolname, p)))
-						sendrep (rpfd, MSG_ERR, STG49, upath, p);
-					actual_poolflag = 1;
-					strcpy (actual_poolname, p);
-				} else {
-					if (poolflag > 0)
-						sendrep (rpfd, MSG_ERR, STG50, upath);
-					actual_poolflag = -1;
-					actual_poolname[0] = '\0';
-				}
-                /*
+				if (poolflag > 0)
+					sendrep (rpfd, MSG_ERR, STG50, upath);
+				actual_poolflag = -1;
+				actual_poolname[0] = '\0';
 			}
-                */
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case NOTSTAGED:
 				break;
@@ -1087,13 +1204,17 @@ void procioreq(req_type, req_data, clienthost)
 	} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req)
 		fork_exec_stager (wqp);
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmsizes != NULL) free(hsmsizes);
 	if (hsmfileids != NULL) free(hsmfileids);
+	if (hsmmtimes != NULL) free(hsmmtimes);
 	return;
  reply:
 	if (fseq_list) free (fseq_list);
 	free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmsizes != NULL) free(hsmsizes);
 	if (hsmfileids != NULL) free(hsmfileids);
+	if (hsmmtimes != NULL) free(hsmmtimes);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, req_type, 0, c, NULL, "");
@@ -1107,7 +1228,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024);
+					stcp->size * ONE_MB);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
@@ -1157,6 +1278,7 @@ void procputreq(req_data, clienthost)
 	int ncastorfiles = 0;
 	int nuserlevel = 0;
 	int nexplevel = 0;
+	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1265,7 +1387,6 @@ void procputreq(req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-
 		/* We also check that there is NO redundant hsm files (multiple equivalent ones) */
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
@@ -1308,11 +1429,10 @@ void procputreq(req_data, clienthost)
 			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
-		} else if (nhpssfiles > 1) {
-			/* More than one HPSS not supported for the moment */
-			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
-			c = USERR;
-			goto reply;
+		}
+		/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
+		if (ncastorfiles > 0 && nuserlevel > 0) {
+			stglogit(func, "STG33 - %s\n", "stageput on CASTOR user-level files : uid:gid forced to stage:st in waitq");
 		}
 	}
 
@@ -1342,7 +1462,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024 - (int)stcp->actual_size);
+					stcp->size * ONE_MB - (int)stcp->actual_size);
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
@@ -1352,7 +1472,7 @@ void procputreq(req_data, clienthost)
 			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1392,7 +1512,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024 - (int)stcp->actual_size);
+					stcp->size * ONE_MB - (int)stcp->actual_size);
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
@@ -1402,35 +1522,54 @@ void procputreq(req_data, clienthost)
 			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
 			wfp++;
 		} else {
+			uid_t uid_waitq;
+			gid_t gid_waitq;
+			char *user_waitq;
+			char *user_stage = "stage";
+
 			if (found != nhsmfiles) {
-				sendrep (rpfd, MSG_ERR, "You requested %d hsm files while I found %d of them\n",nhsmfiles,found);
+				sendrep (rpfd, MSG_ERR, "STG02 - You requested %d hsm files while I know %d of them\n",nhsmfiles,found);
 				c = USERR;
 				goto reply;
 			}
+
+			/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
+			if (ncastorfiles > 0 && nuserlevel > 0) {
+				uid_waitq = stpasswd->pw_uid;
+				gid_waitq = stpasswd->pw_gid;
+ 				user_waitq = user_stage;
+			} else {
+				uid_waitq = uid;
+				gid_waitq = gid;
+				user_waitq = user;
+			}
+
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 				if ((hsmfilesstcp[ihsmfiles]->status & 0xF) != STAGEOUT &&
-						 (hsmfilesstcp[ihsmfiles]->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)) {
-					sendrep (rpfd, MSG_ERR, STG22);
-					stglogit (func, "hsmfilesstcp[ihsmfiles=%d]->status [0x%lx] & 0xF) gives 0x%lx != STAGEOUT [0x%lx]\n", ihsmfiles, hsmfilesstcp[ihsmfiles]->status, hsmfilesstcp[ihsmfiles]->status & 0xF, STAGEOUT);
+					(hsmfilesstcp[ihsmfiles]->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)) {
+					sendrep (rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles], "must match STAGEOUT and/or PUT_FAILED status");
+					stglogit (func, "hsmfilesstcp[ihsmfiles=%d]->status [0x%lx] & 0xF) gives 0x%lx != STAGEOUT [0x%lx] or STAGEOUT|PUT_FAILED [0x%lx]\n", ihsmfiles, hsmfilesstcp[ihsmfiles]->status, hsmfilesstcp[ihsmfiles]->status & 0xF, (unsigned long) STAGEOUT, (unsigned long) STAGEOUT|PUT_FAILED);
 					c = USERR;
 					goto reply;
-				}
-				if ((hsmfilesstcp[ihsmfiles]->status & 0xF)  == STAGEOUT) {
-					if (rfio_stat (hsmfilesstcp[ihsmfiles]->ipath, &st) == 0)
-						stcp->actual_size = st.st_size;
-					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR)
-						updfreespace (hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath,
-													hsmfilesstcp[ihsmfiles]->size*1024*1024 - (int) hsmfilesstcp[ihsmfiles]->actual_size);
 				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT | CAN_BE_MIGR;
 				} else {
+					int save_status;
+
+					/* We make upd_stageout that is a normal stageput following a stageout */
+					save_status = hsmfilesstcp[ihsmfiles]->status;
+					hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
+					if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0)) {
+						hsmfilesstcp[ihsmfiles]->status = save_status;
+						goto reply;
+					}
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT;
 				}
 				hsmfilesstcp[ihsmfiles]->a_time = time (0);
@@ -1439,8 +1578,8 @@ void procputreq(req_data, clienthost)
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
-				if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-																clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+				if (!wqp) wqp = add2wq (clienthost, user_waitq, uid_waitq, gid_waitq,
+										clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
@@ -1456,10 +1595,10 @@ void procputreq(req_data, clienthost)
 
 		for (i = 0; i < nbdskf; i++) {
 			strcpy (upath, argv[optind+i]);
-			if (c = upd_stageout (STAGEPUT, upath, &subreqid))
+			if (c = upd_stageout (STAGEPUT, upath, &subreqid, 0))
 				goto reply;
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1491,7 +1630,7 @@ void procputreq(req_data, clienthost)
 			}
 			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-				update_migpool(stcp,-1);
+				update_migpool(stcp,-1,0);
 			} else {
 				stcp->status = STAGEOUT|PUT_FAILED;
 			}
@@ -1505,6 +1644,7 @@ void procputreq(req_data, clienthost)
 	}
 }
 
+int
 isstaged(cur, p, poolflag, poolname)
 		 struct stgcat_entry *cur;
 		 struct stgcat_entry **p;
@@ -1512,6 +1652,7 @@ isstaged(cur, p, poolflag, poolname)
 		 char *poolname;
 {
 	int found = 0;
+	int thisfseq;
 	int i;
 	struct stgcat_entry *stcp;
 
@@ -1542,7 +1683,16 @@ isstaged(cur, p, poolflag, poolname)
 			if (cur->u1.t.fseq[0] != 'u') {
 				if ((stcp->status & 0xF000) == LAST_TPFILE)
 					last_tape_file = atoi (stcp->u1.t.fseq);
-				if (strcmp (cur->u1.t.fseq, stcp->u1.t.fseq)) continue;
+				if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-' &&
+					stcp->filler[0] == 'c' &&
+					atoi(stcp->u1.t.fseq) <= atoi(cur->u1.t.fseq)) {
+					/* If it has a trailing '-' && it is a concat_off && fseq <= cur one */
+					/* then we found it. */
+					found = 1;
+					break;
+				} else if (strcmp (cur->u1.t.fseq, stcp->u1.t.fseq)) {
+					continue;
+				}
 			} else {
 				if (strcmp (cur->u1.t.fid, stcp->u1.t.fid)) continue;
 			}
@@ -1550,7 +1700,7 @@ isstaged(cur, p, poolflag, poolname)
 			if (strcmp (cur->u1.m.xfile, stcp->u1.m.xfile)) continue;
 		} else if (cur->t_or_d == 'h') {
 			if (strcmp (cur->u1.h.server, stcp->u1.h.server) != 0 || cur->u1.h.fileid != stcp->u1.h.fileid) continue;
-			/* Invariants alreaydy exist and the same - was this file renamed ? */
+			/* Invariants already exist and the same - was this file renamed ? */
 			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile)) {
 				sendrep(rpfd, MSG_ERR, STG101, cur->u1.h.xfile, stcp->u1.h.xfile);
 				strcpy(stcp->u1.h.xfile,cur->u1.h.xfile);
@@ -1579,17 +1729,61 @@ isstaged(cur, p, poolflag, poolname)
 	}
 }
 
-unpackfseq(fseq, req_type, trailing, fseq_list)
+int
+maxfseq_per_vid(cur, poolflag, poolname, concat_off_flag)
+		 struct stgcat_entry *cur;
+		 int poolflag;
+		 char *poolname;
+		 char *concat_off_flag;
+{
+	int found = 0;
+	int i;
+	struct stgcat_entry *stcp;
+	int result = 0;
+
+	for (stcp = stcs; stcp < stce; stcp++) {
+		if (stcp->reqid == 0) break;
+		if (stcp->t_or_d != 't') continue;
+		/* if no pool specified, the file may reside in any pool */
+		if (poolflag == 0) {
+			if (stcp->poolname[0] == '\0') continue;
+		} else
+			/* if a specific pool was requested, the file must be there */
+			if (poolflag > 0) {
+				if (strcmp (poolname, stcp->poolname)) continue;
+			} else
+				/* if -p NOPOOL, the file should not reside in a pool */
+				if (poolflag < 0) {
+					if (stcp->poolname[0]) continue;
+				}
+		for (i = 0; i < MAXVSN; i++)
+			if (strcmp (cur->u1.t.vid[i], stcp->u1.t.vid[i])) break;
+		if (i < MAXVSN) continue;
+		for (i = 0; i < MAXVSN; i++)
+			if (strcmp (cur->u1.t.vsn[i], stcp->u1.t.vsn[i])) break;
+		if (i < MAXVSN) continue;
+		if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) continue;
+		if ((found = atoi(stcp->u1.t.fseq)) < result) continue;
+		*concat_off_flag = stcp->filler[0];
+		result = found;
+	}
+	return(result);
+}
+
+unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 		 char *fseq;
 		 int req_type;
 		 char *trailing;
 		 fseq_elem **fseq_list;
+		 int concat_off;
+		 int *concat_off_fseq;
 {
 	char *dp;
 	int i;
 	int n1, n2;
 	int nbtpf;
 	char *p, *q;
+	int lasttpf = 0;
 
 	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
@@ -1616,8 +1810,10 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 			}
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
-		for (i = 0; i < nbtpf; i++)
+		for (i = 0; i < nbtpf; i++) {
 			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
+			lasttpf = atoi((char *)(*fseq_list + i));
+		}
 		break;
 	default:
 		nbtpf = 0;
@@ -1664,9 +1860,50 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 				n1 = strtol (p, &dp, 10);
 				n2 = n1;
 			}
-			for (i = n1; i <= n2; i++, nbtpf++)
+			for (i = n1; i <= n2; i++, nbtpf++) {
 				sprintf ((char *)(*fseq_list + nbtpf), "%d", i);
+				lasttpf = i;
+			}
 			p = strtok (NULL, ",");
+		}
+	}
+	/* If the last entry is a '-' and concat_off flag is set and there is at least one fseq identified */
+	if (nbtpf > 0 && *trailing == '-' && concat_off) {
+		if (concat_off_fseq == NULL) {
+			sendrep (rpfd, MSG_ERR, "unpackfseq : Internal error : concat_off is ON and concat_off_fseq == NULL\n");
+			return (0);
+		}
+		/* The fseq just before the '-' is the last element of the fseq_elem list */
+		if ((*concat_off_fseq = lasttpf) <= 0) {
+			sendrep (rpfd, MSG_ERR, "unpackfseq : Internal error : concat_off is ON and nbtpf > 0 and *trailing == '-' and atoi(fseq_list[nbtpf-1]) <= 0\n");
+			free(*fseq_list);
+			*fseq_list = NULL;
+			return (0);
+		}
+	}
+	/* We verify the fseq list (if more than one element) */
+	i = 1;
+ retry_verif:
+	for (; i < nbtpf; i++) {
+		if (strcmp((char *)(*fseq_list + i),(char *)(*fseq_list + i - 1)) == 0) {
+			int j, new_nbtpf;
+			fseq_elem *new_fseq_list;
+
+			if ((new_fseq_list = (fseq_elem *) calloc (nbtpf - 1, sizeof(fseq_elem))) == NULL) {
+				sendrep (rpfd, MSG_ERR, "STG02 - calloc error (%s)\n", strerror(errno));
+				free(*fseq_list);
+				return(-1);
+			}
+			sendrep (rpfd, MSG_ERR, "STG02 - Duplicated file sequence %s reduced by one\n", (char *)(*fseq_list + i));
+			new_nbtpf = 0;
+			for (j = 0; j < nbtpf; j++) {
+				if (j == i) continue;
+				strcpy((char *)(new_fseq_list + new_nbtpf++),(char *)(*fseq_list + j));
+			}
+			free(*fseq_list);
+			*fseq_list = new_fseq_list;
+			nbtpf = new_nbtpf;
+			goto retry_verif;
 		}
 	}
 	return (nbtpf);
