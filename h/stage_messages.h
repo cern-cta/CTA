@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.6 2001/12/20 13:23:34 jdurand Exp $
+ * $Id: stage_messages.h,v 1.7 2002/01/15 08:28:03 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -147,5 +147,6 @@
 #define STG165  "STG165 - %s : bad copy number %s (should be > 0)\n"
 #define STG166  "STG166 - %s : not found within current pool definition\n"
 #define STG167  "STG167 - %s : loop detected in filesystem selection\n"
+#define STG168  "STG168 - %s : fileclass %s@%s (classid %d) specifies a %s filesize of %dM, yours is %s bytes (%s) - this file will not be migrated\n"
 
 #endif /* __stage_messages_h */
