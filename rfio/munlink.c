@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.11 2002/09/20 06:59:35 baud Exp $
+ * $Id: munlink.c,v 1.12 2004/01/23 10:27:45 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.12 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -39,7 +39,7 @@ extern int rfio_newhost _PROTO((char *));
 int DLL_DECL rfio_munlink(file)
      char *file ;
 {
-  int rt ,rc ,fd, rfindex, Tid;
+  int rt ,rc ,fd, rfindex, Tid, parserc;
   char *host , *filename ;
 
   INIT_TRACE("RFIO_TRACE");
@@ -47,7 +47,7 @@ int DLL_DECL rfio_munlink(file)
   Cglobals_getTid(&Tid);
   
   TRACE(1, "rfio", "rfio_munlink(\"%s\"), Tid=%d", file, Tid);
-  if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
+  if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
     /* if not a remote file, must be local or HSM  */
     if ( host != NULL ) {
       /*
@@ -65,6 +65,10 @@ int DLL_DECL rfio_munlink(file)
     END_TRACE();
     return (rc) ;
   } else {
+	  if (parserc < 0) {
+		  END_TRACE();
+		  return(-1);
+	  }
     /* Look if already in */
     serrno = 0;
     rfindex = rfio_munlink_findentry(host,Tid);

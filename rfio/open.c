@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.23 2003/10/31 12:58:38 jdurand Exp $
+ * $Id: open.c,v 1.24 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.23 $ $Date: 2003/10/31 12:58:38 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.24 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -254,7 +254,7 @@ char  	*vmstr ;
    extern char * getconfent() ;
    extern char * getifnam() ;
    int old,n;
-   int n_index;
+   int n_index, parserc;
    char     rfio_buf[BUFSIZ];
 
    INIT_TRACE("RFIO_TRACE");
@@ -297,7 +297,7 @@ char  	*vmstr ;
    /*
 	 * The file is local.
 	 */
-   if ( ! rfio_parse(filepath,&host,&filename) ) {
+   if ( ! (parserc = rfio_parse(filepath,&host,&filename)) ) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -318,6 +318,10 @@ char  	*vmstr ;
       rfio_logop(status,filename,host,flags);
 #endif /* CLIENTLOG */
       return status ;
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    /*

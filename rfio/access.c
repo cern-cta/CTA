@@ -1,5 +1,5 @@
 /*
- * $Id: access.c,v 1.8 2002/09/20 06:59:33 baud Exp $
+ * $Id: access.c,v 1.9 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.8 $ $Date: 2002/09/20 06:59:33 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.9 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
@@ -29,28 +29,32 @@ int 	mode ;			/* Access mode 				*/
 	int 		rt;
 	int		uid ;
 	int		gid ;
-
+	int     parserc;
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_access(%s, %d)", filepath, mode);
 
-	if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
-                /* if not a remote file, must be local or HSM  */
-                if ( host != NULL ) {
-                    /*
-                     * HSM file
-                     */
-                    TRACE(1,"rfio","rfio_access: %s is an HSM path",filename);
-                    END_TRACE();
-                    rfio_errno = 0;
-                    return(rfio_HsmIf_access(filename,mode));
-                }
+	if (!(parserc = rfio_parseln(filepath,&host,&filename,NORDLINKS))) {
+		/* if not a remote file, must be local or HSM  */
+		if ( host != NULL ) {
+			/*
+			 * HSM file
+			 */
+			TRACE(1,"rfio","rfio_access: %s is an HSM path",filename);
+			END_TRACE();
+			rfio_errno = 0;
+			return(rfio_HsmIf_access(filename,mode));
+		}
 		TRACE(1, "rfio", "rfio_access: using local access(%s, %d)",
-			filename, mode);
+			  filename, mode);
 		END_TRACE();
 		rfio_errno = 0;
 		status = access(filename,mode);
 		if ( status < 0 ) serrno = 0;
 		return(status);
+	}
+	if (parserc < 0) {
+		END_TRACE();
+		return(-1);
 	}
 
 	s = rfio_connect(host,&rt);

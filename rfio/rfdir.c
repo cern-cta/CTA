@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.11 2002/11/19 15:36:48 baud Exp $
+ * $Id: rfdir.c,v 1.12 2004/01/23 10:27:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.11 $ $Date: 2002/11/19 15:36:48 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.12 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -219,8 +219,14 @@ int recursively,multiple;
   int localdir = 0;
   int rootpathlen=0;
   char tmpbuf[21];
+  int parserc;
 
-  if (rfio_parseln(dir,&host,&filename,RDLINKS)) {
+  if ((parserc = rfio_parseln(dir,&host,&filename,RDLINKS))) {
+	  if (parserc < 0) {
+		  fprintf(stderr,"%s\n",sstrerror(serrno));
+		  exit_rc = 2;
+		  return(1);
+	  }
     fd=rfio_connect(host,&i) ;
     reqtype = RQST_MSTAT64;
     if ( fd >= 0 ) rc = rfio_smstat64(fd,filename,&st,reqtype);
@@ -255,10 +261,15 @@ int recursively,multiple;
     rc = 0;
     path[rootpathlen+1] = '\0';
     strcat(path,de->d_name);
-    if (!rfio_parseln(path,&host,&filename,RDLINKS) && host == NULL ) {
+    if (!(parserc = rfio_parseln(path,&host,&filename,RDLINKS) && host == NULL )) {
       /* The file is local */
       rc = stat64(filename,&st) ;
     } else {
+	  if (parserc < 0) {
+		  fprintf(stderr,"%s\n",sstrerror(serrno));
+		  exit_rc = 2;
+		  return(1);
+	  }
       if ( localdir )
         rc = rfio_stat64(path,&st);
       else 

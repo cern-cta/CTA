@@ -1,5 +1,5 @@
 /*
- * $Id: statfs.c,v 1.6 2000/05/29 16:42:05 obarring Exp $
+ * $Id: statfs.c,v 1.7 2004/01/23 10:27:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:05 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.7 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
@@ -27,12 +27,12 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
    char     *host, *filename;
    char     *p=buf;
    int 	 rt ;
-   int	 rcode ;
+   int	 rcode, parserc ;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_statfs(%s, %x)", path, statfsbuf);
 
-   if (!rfio_parse(path,&host,&filename)) {
+   if (!(parserc = rfio_parse(path,&host,&filename))) {
       /* if not a remote file, must be local  */
       TRACE(1, "rfio", "rfio_statfs:  using local statfs(%s, %x)",
 	    filename, statfsbuf);
@@ -40,6 +40,10 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
       END_TRACE();
       rfio_errno = 0;
       return(rfstatfs(filename , statfsbuf));
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    s = rfio_connect(host,&rt);

@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.32 2003/10/31 07:20:03 jdurand Exp $
+ * $Id: mstat.c,v 1.33 2004/01/23 10:27:45 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.32 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.33 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -49,7 +49,7 @@ struct stat *statb;
 #if (defined(__alpha) && defined(__osf__))
    return (rfio_mstat64(file,statb));
 #else
-   int       rc ;
+   int       rc, parserc ;
 #if defined(IRIX64) || defined(__ia64__) || defined(__x86_64)
    struct stat64 statb64;
 
@@ -65,7 +65,7 @@ struct stat *statb;
    Cglobals_getTid(&Tid);
 
    TRACE(1, "rfio", "rfio_mstat(%s, %x), Tid=%d", file, statb, Tid);
-   if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
+   if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -84,6 +84,10 @@ struct stat *statb;
       END_TRACE();
       return (rc) ;
    }  else  {
+	   if (parserc < 0) {
+		   END_TRACE();
+		   return(-1);
+	   }
       /* Look if already in */
       serrno = 0;
       rfindex = rfio_mstat_findentry(host,Tid);
@@ -507,14 +511,14 @@ struct stat64 *statb;
    int rt ,rc ,i ,fd, rfindex, Tid;
    char *host , *filename ;
    int         fitreqst;                     /*Fitted request           */
-   int savsec;
+   int savsec, parserc;
 
    INIT_TRACE("RFIO_TRACE");
 
    Cglobals_getTid(&Tid);
 
    TRACE(1, "rfio", "rfio_mstat64(%s, %x), Tid=%d", file, statb, Tid);
-   if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
+   if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -532,8 +536,11 @@ struct stat64 *statb;
       rfio_errno = 0;
       END_TRACE();
       return (rc) ;
-   }
-   else  {
+   } else  {
+	   if (parserc < 0) {
+		   END_TRACE();
+		   return(-1);
+	   }
       /* Look if already in */
       serrno = 0;
       rfindex = rfio_mstat_findentry(host,Tid);

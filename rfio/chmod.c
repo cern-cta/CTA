@@ -1,5 +1,5 @@
 /*
- * $Id: chmod.c,v 1.8 2002/09/20 06:59:34 baud Exp $
+ * $Id: chmod.c,v 1.9 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.8 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.9 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */
@@ -30,30 +30,35 @@ int		mode;              /* remote directory mode             */
 	char    	*p=buf;
 	int 		rt ;
 	int 		rcode ;
+	int         parserc;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_chmod(%s, %o)", dirpath, mode);
 
-	if (!rfio_parseln(dirpath,&host,&filename,NORDLINKS)) {
-                /* if not a remote file, must be local or HSM  */
-                if ( host != NULL ) {
-                    /*
-                     * HSM file
-                     */
-                    TRACE(1,"rfio","rfio_chmod: %s is an HSM path",
-                          filename);
-                    END_TRACE();
-                    rfio_errno = 0;
-                    return(rfio_HsmIf_chmod(filename,mode));
-                }
+	if (!(parserc = rfio_parseln(dirpath,&host,&filename,NORDLINKS))) {
+		/* if not a remote file, must be local or HSM  */
+		if ( host != NULL ) {
+			/*
+			 * HSM file
+			 */
+			TRACE(1,"rfio","rfio_chmod: %s is an HSM path",
+				  filename);
+			END_TRACE();
+			rfio_errno = 0;
+			return(rfio_HsmIf_chmod(filename,mode));
+		}
 		TRACE(1, "rfio", "rfio_chmod: using local chmod(%s, %o)",
-			filename, mode);
+			  filename, mode);
 
 		END_TRACE();
 		rfio_errno = 0;
 		status = chmod(filename,mode);
 		if ( status < 0 ) serrno = 0;
 		return(status);
+	}
+	if (parserc < 0) {
+		END_TRACE();
+		return(-1);
 	}
 
 	s = rfio_connect(host,&rt);

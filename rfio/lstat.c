@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.13 2003/10/31 07:20:03 jdurand Exp $
+ * $Id: lstat.c,v 1.14 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.13 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.14 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -49,7 +49,7 @@ struct stat *statbuf;           	/* status buffer 		*/
    struct  passwd *pw_tmp;
    struct  passwd *pw = NULL;
    int	*old_uid = NULL;
-   int 		rt,rc,reqst,magic ;
+   int 		rt,rc,reqst,magic, parserc ;
 
 
    INIT_TRACE("RFIO_TRACE");
@@ -58,7 +58,7 @@ struct stat *statbuf;           	/* status buffer 		*/
    if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
       *old_uid = -1;
    Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
-   if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
+   if (!(parserc = rfio_parseln(filepath,&host,&filename,NORDLINKS))) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -82,6 +82,10 @@ struct stat *statbuf;           	/* status buffer 		*/
 #endif /* _WIN32 */
       if ( lstatus < 0 ) serrno = 0;
       return(lstatus);
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    serrno = 0;
@@ -178,12 +182,12 @@ struct stat64 *statbuf;                         /* status buffer        */
    register int    s;                           /* socket descriptor    */
    int       status ;
    char     *host, *filename;
-   int      rt ;
+   int      rt, parserc ;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_lstat64(%s, %x)", filepath, statbuf);
 
-   if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
+   if (!(parserc = rfio_parseln(filepath,&host,&filename,NORDLINKS))) {
       /* if not a remote file, must be local or HSM                     */
       if ( host != NULL ) {
           /*
@@ -207,9 +211,14 @@ struct stat64 *statbuf;                         /* status buffer        */
       if ( status < 0 ) serrno = 0;
       return(status);
    }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
+   }
 
    s = rfio_connect(host,&rt);
    if (s < 0)      {
+	   END_TRACE();
       return(-1);
    }
    END_TRACE();

@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.3 2003/09/14 06:38:58 jdurand Exp $
+ * $Id: stream64.c,v 1.4 2004/01/23 10:27:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.3 $ $Date: 2003/09/14 06:38:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.4 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
@@ -171,7 +171,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    int         yes;     /* Int for socket option        */
    off64_t offset ;     /* Offset at open               */
    char  rfio_buf[BUFSIZ];
-   int   rfp_index;
+   int   rfp_index, parserc;
    char  tmpbuf[21];
 
    INIT_TRACE("RFIO_TRACE");
@@ -186,7 +186,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /*
 	 * The file is local.
 	 */
-   if ( ! rfio_parse(filepath,&host,&filename) ) {
+   if ( ! (parserc = rfio_parse(filepath,&host,&filename)) ) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -206,6 +206,10 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       rfio_logop(status,filename,host,flags);
 #endif /* CLIENTLOG */
       return status ;
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
 	

@@ -1,5 +1,5 @@
 /*
- * $Id: mkdir.c,v 1.9 2002/09/20 06:59:35 baud Exp $
+ * $Id: mkdir.c,v 1.10 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.9 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* mkdir.c       Remote File I/O - make a directory file                */
@@ -29,13 +29,13 @@ int		mode;              /* remote directory mode             */
    char    	*filename;
    char    	*p=buf;
    int 		rt ;
-   int 		rcode ;
+   int 		rcode, parserc ;
    mode_t	curmask;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_mkdir(%s, %o)", dirpath, mode);
 
-   if (!rfio_parseln(dirpath,&host,&filename,NORDLINKS)) {
+   if (!(parserc = rfio_parseln(dirpath,&host,&filename,NORDLINKS))) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -55,6 +55,10 @@ int		mode;              /* remote directory mode             */
       status = mkdir(filename,mode);
       if ( status < 0 ) serrno = 0;
       return(status);
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    /* Applies the umask to the mode                     */

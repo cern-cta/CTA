@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.17 2003/10/31 12:59:34 jdurand Exp $
+ * $Id: opendir.c,v 1.18 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.17 $ $Date: 2003/10/31 12:59:34 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.18 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -116,7 +116,7 @@ char  	*vmstr ;
    RDIR      * dp ;      /* Local directory pointer      */
    WORD	   req ;
    struct passwd *pw;
-   int 	    rt ; 	/* daemon in site(0) or not (1) */	
+   int 	    rt, parserc ; 	/* daemon in site(0) or not (1) */	
    struct sockaddr_in      to;
    int                     tolen;
    struct  hostent *hp;
@@ -129,7 +129,7 @@ char  	*vmstr ;
     * The directory is local.
     */
    host = NULL;
-   if ( ! rfio_parse(dirpath,&host,&dirname) ) {
+   if ( ! (parserc = rfio_parse(dirpath,&host,&dirname)) ) {
        /* if not a remote file, must be local or HSM  */
        TRACE(2,"rfio","rfio_opendir(%s) rfio_parse returns host=%s",
              dirpath,(host != NULL ? host : "(nil)"));
@@ -150,6 +150,10 @@ char  	*vmstr ;
       }
       END_TRACE() ; 
       return(dp);
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(NULL);
    }
    /*
     * Allocate and initialize a remote directory descriptor.

@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.8 2002/09/20 06:59:34 baud Exp $
+ * $Id: chown.c,v 1.9 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.8 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.9 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -30,22 +30,22 @@ int 		group ;		   /* Owner's gid */
 			*filename;
 	char    	*p=buf;
 	int 		rt ;
-	int 		rcode ;
+	int 		rcode, parserc ;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_chown(%s, %d, %d)", file,owner,group);
 
-	if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
-                if ( host != NULL ) {
-                    /*
-                     * HSM file
-                     */
-                    TRACE(1,"rfio","rfio_chown: %s is an HSM path",
-                          filename);
-                    END_TRACE();
-                    rfio_errno = 0;
-                    return(rfio_HsmIf_chown(filename,owner,group));
-                }
+	if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
+		if ( host != NULL ) {
+			/*
+			 * HSM file
+			 */
+			TRACE(1,"rfio","rfio_chown: %s is an HSM path",
+				  filename);
+			END_TRACE();
+			rfio_errno = 0;
+			return(rfio_HsmIf_chown(filename,owner,group));
+		}
 		TRACE(1, "rfio", "rfio_chown: using local chown(%s, %d, %d)",
 			filename, owner, group);
 
@@ -54,6 +54,10 @@ int 		group ;		   /* Owner's gid */
 		status = chown(filename,owner, group);
 		if ( status < 0 ) serrno = 0;
 		return(status);
+	}
+	if (parserc < 0) {
+		END_TRACE();
+		return(-1);
 	}
 
 	s = rfio_connect(host,&rt);

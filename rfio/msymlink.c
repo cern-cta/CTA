@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.12 2002/09/20 06:59:35 baud Exp $
+ * $Id: msymlink.c,v 1.13 2004/01/23 10:27:45 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.12 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.13 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -41,7 +41,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
      char *n1 ;
      char *file2 ;
 {
-  int rt ,rc ,fd, rfindex, Tid;
+  int rt ,rc ,fd, rfindex, Tid, parserc;
   char *host , *filename ;
 
   INIT_TRACE("RFIO_TRACE");
@@ -49,7 +49,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
   Cglobals_getTid(&Tid);
   
   TRACE(1, "rfio", "rfio_msymlink(\"%s\",\"%s\"), Tid=%d", n1, file2, Tid);
-  if (!rfio_parseln(file2,&host,&filename,NORDLINKS)) {
+  if (!(parserc = rfio_parseln(file2,&host,&filename,NORDLINKS))) {
     /* if not a remote file, must be local or HSM  */
     if ( host != NULL ) {
       /*
@@ -72,6 +72,10 @@ int DLL_DECL rfio_msymlink(n1,file2)
     END_TRACE();
     return (rc) ;
   } else {
+	  if (parserc < 0) {
+		  END_TRACE();
+		  return(-1);
+	  }
     /* Look if already in */
     serrno = 0;
     rfindex = rfio_msymlink_findentry(host,Tid);

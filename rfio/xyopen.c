@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.10 2003/09/25 16:28:17 jdurand Exp $
+ * $Id: xyopen.c,v 1.11 2004/01/23 10:27:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.10 $ $Date: 2003/09/25 16:28:17 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.11 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -91,7 +91,7 @@ char *reqhost;
    char    *filepath;              /* actual file path to be used  */
    char    *account;               /* account string               */
    char    localhost[MAXHOSTNAMELEN];
-   int 	acc;
+   int 	acc, parserc;
    WORD 	uid_ext;
    WORD	gid_ext;
    struct 	passwd *pw;
@@ -190,19 +190,24 @@ char *reqhost;
       /*
        * The file is local 
        */
-      if (!rfio_parse(name,&host,&filepath)) {
-	 strcpy( fd->host , "localhost" );
-	 ftnlun[lun]=fd;
-	 filen= strlen(filepath) ;
-	 append = openopt & FFOOPT_A;
-	 trunc = openopt & FFOOPT_T ;
-	 acc=(int)access;
-	 *irc=switch_open(&acc,&lun,filepath, &filen, &lrecl, &append,&trunc,LLM);
-	 TRACE(2, "rfio", "rxyopen (local) : %d", *irc);
-	 END_TRACE();
-	 rfio_errno = 0;
-	 return(*irc);
-      }
+      if (!(parserc = rfio_parse(name,&host,&filepath))) {
+		  strcpy( fd->host , "localhost" );
+		  ftnlun[lun]=fd;
+		  filen= strlen(filepath) ;
+		  append = openopt & FFOOPT_A;
+		  trunc = openopt & FFOOPT_T ;
+		  acc=(int)access;
+		  *irc=switch_open(&acc,&lun,filepath, &filen, &lrecl, &append,&trunc,LLM);
+		  TRACE(2, "rfio", "rxyopen (local) : %d", *irc);
+		  END_TRACE();
+		  rfio_errno = 0;
+		  return(*irc);
+      } else {
+		  if (parserc < 0) {
+			  END_TRACE();
+			  return(-1);
+		  }
+	  }
       TRACE(3, "rfio", "rfio_xyopen: name %s host %s filepath %s", name, host, filepath);
    }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: chdir.c,v 1.2 2002/09/20 06:59:34 baud Exp $
+ * $Id: chdir.c,v 1.3 2004/01/23 10:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chdir.c,v $ $Revision: 1.2 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: chdir.c,v $ $Revision: 1.3 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* chdir.c       Remote File I/O - change working directory             */
@@ -23,11 +23,12 @@ char		*dirpath;       /* directory path               */
    char    	*filename;
    char    	*host;
    int    	rc;
-
+   int      parserc;
+   
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_chdir(%s)", dirpath);
 
-   if (!rfio_parseln(dirpath, &host, &filename, NORDLINKS)) {
+   if (!(parserc = rfio_parseln(dirpath, &host, &filename, NORDLINKS))) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
           /*
@@ -49,6 +50,10 @@ char		*dirpath;       /* directory path               */
       else
           serrno = 0;
       return(rc);
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    END_TRACE();

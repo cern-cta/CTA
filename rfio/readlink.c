@@ -1,5 +1,5 @@
 /*
- * $Id: readlink.c,v 1.9 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: readlink.c,v 1.10 2004/01/23 10:27:45 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.9 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -28,7 +28,7 @@ int length ;
    char * filename;
    char *p ;
    int rt ;
-   int rcode , len;
+   int rcode , len, parserc;
    int uid ;
    int gid ;
    char buffer[MAXFILENAMSIZE];
@@ -39,7 +39,7 @@ int length ;
     */
    INIT_TRACE("RFIO_TRACE");
    TRACE( 1, "rfio", " rfio_readlink (%s,%x,%d)",path,buf,length);
-   if ( ! rfio_parseln(path,&host,&filename,NORDLINKS) ) {
+   if ( ! (parserc = rfio_parseln(path,&host,&filename,NORDLINKS)) ) {
 #if !defined(_WIN32)
       status = readlink(filename,buf,length) ;
       if ( status < 0 ) serrno = 0;
@@ -49,6 +49,10 @@ int length ;
       END_TRACE() ;
       rfio_errno = 0;
       return status ;
+   }
+   if (parserc < 0) {
+	   END_TRACE();
+	   return(-1);
    }
 
    s = rfio_connect(host,&rt);

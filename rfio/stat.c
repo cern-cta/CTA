@@ -1,5 +1,5 @@
 /*
- * $Id: stat.c,v 1.9 2003/10/31 07:20:03 jdurand Exp $
+ * $Id: stat.c,v 1.10 2004/01/23 10:27:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.9 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */
@@ -36,12 +36,12 @@ struct stat *statbuf;           /* status buffer (subset of local used) */
 #else
 	register int    s;              /* socket descriptor            */
 	char    *host, *filename;
-	int 	rt ;
+	int 	rt, parserc ;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_stat(%s, %x)", filepath, statbuf);
 
-	if (!rfio_parseln(filepath,&host,&filename,RDLINKS)) {
+	if (!(parserc = rfio_parseln(filepath,&host,&filename,RDLINKS))) {
                 /* if not a remote file, must be local or HSM  */
                 if ( host != NULL ) {
                     /*
@@ -62,9 +62,14 @@ struct stat *statbuf;           /* status buffer (subset of local used) */
 		if ( status < 0 ) serrno = 0;
 		return(status);
 	}
+	if (parserc < 0) {
+		END_TRACE();
+		return(-1);
+	}
 
 	s = rfio_connect(host,&rt);
 	if (s < 0)      {
+		END_TRACE();
 		return(-1);
 	}
 	END_TRACE();
@@ -89,12 +94,12 @@ struct stat64 *statbuf;         /* status buffer (subset of local used) */
 	register int    s;              /* socket descriptor            */
 	int       status ;
 	char    *host, *filename;
-	int 	rt ;
+	int 	rt,parserc ;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_stat64(%s, %x)", filepath, statbuf);
 
-	if (!rfio_parseln(filepath,&host,&filename,RDLINKS)) {
+	if (!(parserc = rfio_parseln(filepath,&host,&filename,RDLINKS))) {
                 /* if not a remote file, must be local or HSM  */
                 if ( host != NULL ) {
                     /*
@@ -114,9 +119,14 @@ struct stat64 *statbuf;         /* status buffer (subset of local used) */
 		if ( status < 0 ) serrno = 0;
 		return(status);
 	}
+	if (parserc < 0) {
+		END_TRACE();
+		return(-1);
+	}
 
 	s = rfio_connect(host,&rt);
 	if (s < 0)      {
+		END_TRACE();
 		return(-1);
 	}
 	END_TRACE();
