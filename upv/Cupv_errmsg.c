@@ -4,13 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_errmsg.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:57 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_errmsg.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:05:19 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include "Cupv.h"
 #include "Cupv_api.h"
@@ -30,11 +30,8 @@ Cupv_seterrbuf(char *buffer, int buflen)
 
 /* Cupv_errmsg - send error message to user defined client buffer or to stderr */
 
-Cupv_errmsg(va_alist) va_dcl
-{
+Cupv_errmsg(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;
 	struct Cupv_api_thread_info *thip;
@@ -42,9 +39,7 @@ Cupv_errmsg(va_alist) va_dcl
 	save_errno = errno;
 	if (Cupv_apiinit (&thip))
 		return (-1);
-        va_start (args);
-        func = va_arg (args, char *);
-        msg = va_arg (args, char *);
+	va_start (args, msg);
 	if (func)
 		sprintf (prtbuf, "%s: ", func);
 	else
@@ -61,6 +56,7 @@ Cupv_errmsg(va_alist) va_dcl
 	} else {
 		fprintf (stderr, "%s", prtbuf);
 	}
+	va_end (args);
 	errno = save_errno;
 	return (0);
 }
