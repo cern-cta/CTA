@@ -9,11 +9,11 @@ my $replicaNb = 1;
 END {print "$replicaNb\n";}
 
 if ($#ARGV != 1) {
-    print STDERR "Usage: $0 <svcClassName> <fileName>\n";
+    print STDERR "Usage: $0 <policyName> <fileName>\n";
     exit(EXIT_FAILURE);
 }
 
-my ($svcClassName,$fileName) = (shift,shift);
+my ($policyName,$fileName) = (shift,shift);
 
 if (index($fileName,"/castor/cern.ch/cms/") == 0) {
     #
