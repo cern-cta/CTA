@@ -4,26 +4,26 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.2 $ $Date: 2000/08/08 12:05:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.3 $ $Date: 2000/10/26 15:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
 #include <sys/types.h>
 #include "Ctape.h"
-static char adens[19][6] = {"0", "800", "1600", "6250", "38000",
+static char adens[21][6] = {"0", "800", "1600", "6250", "38000",
 	"8200", "8500", "38KD", "2G", "6G", "10G", "FMT", "RAW", "DDS",
-	"20G", "25G", "35G", "50G", "40G"};
-static char adensc[19][6] = {"", "", "", "", "38KC",
+	"20G", "25G", "35G", "50G", "40G", "60G", "100G"};
+static char adensc[21][6] = {"", "", "", "", "38KC",
 	"8200C", "8500C", "38KDC", "", "", "10GC", "", "", "DDSC",
-	"20GC", "25GC", "35GC", "50GC", "40GC"};
+	"20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC"};
 cvtden(aden)
 char	*aden;
 {
 	int i;
 
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < 21; i++)
 		if (strcmp (aden, adens[i]) == 0) return (i);
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < 21; i++)
 		if (strcmp (aden, adensc[i]) == 0) return (i | IDRC);
 	if (!strcmp (aden, "38K")) return (D38000);
 	if (!strcmp (aden, "43200")) return (D8200);
