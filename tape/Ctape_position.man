@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.11 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.12 $ $Date: 2001/07/25 06:07:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION 3 "$Date: 2001/01/29 07:35:34 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_POSITION 3 "$Date: 2001/07/25 06:07:45 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -220,6 +220,9 @@ Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
+.TP
+.B ETNRS
+Reserve not done.
 .TP
 .B ETLBL
 Bad label structure.
