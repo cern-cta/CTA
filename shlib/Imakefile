@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2004/07/19 13:05:32 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2004/07/27 15:35:08 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -34,20 +34,20 @@ ALL2=SharedLibraryTargetName(castorProto)
 
 #if BuildSecurity
 
-ALLSEC=DepSharedLibraryTargetName(security,Csec_plugin_ID)
+ALLSEC=SharedLibraryTargetName(Csec_plugin_ID)
 
 #if UseGSI
-ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_GSI)
+ALLSEC+= SharedLibraryTargetName(Csec_plugin_GSI)
 
 #endif
 
 #if UseKRB5
-ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_KRB5)
+ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB5)
 
 #endif
 
 #if UseKRB4
-ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_KRB4)
+ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB4)
 
 #endif
 
@@ -184,15 +184,32 @@ MakeDepLibrary(monitor,monitor)
 
 #if BuildSecurity
 MakeDepLibrary(security,security)
+
 MakeDepSharedLibrary(security,Csec_plugin_ID)
+
+SharedLibraryTargetName(Csec_plugin_ID): DepSharedLibraryTargetName(security,Csec_plugin_ID)
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_ID) ../shlib	
+
 #if UseGSI
 MakeDepSharedLibrary(security,Csec_plugin_GSI)
+
+SharedLibraryTargetName(Csec_plugin_GSI): DepSharedLibraryTargetName(security,Csec_plugin_GSI)
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_GSI) ../shlib	
 #endif
 #if UseKRB5
 MakeDepSharedLibrary(security,Csec_plugin_KRB5)
+
+SharedLibraryTargetName(Csec_plugin_KRB5): DepSharedLibraryTargetName(security,Csec_plugin_KRB5)
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB5) ../shlib	
+
 #endif
 #if UseKRB4
+
 MakeDepSharedLibrary(security,Csec_plugin_KRB4)
+
+SharedLibraryTargetName(Csec_plugin_KRB4): DepSharedLibraryTargetName(security,Csec_plugin_KRB4)
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB4) ../shlib	
+
 #endif
 #endif
 
