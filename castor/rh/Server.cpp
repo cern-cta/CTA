@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/30 11:24:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/12/08 17:41:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -248,7 +248,6 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
     if (0 != fr) {
       svcs()->createRep(&ad, req->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_IClient, true);
-      svcs()->fillRep(&ad, req->client(), OBJ_Request, true);
     }
     clog() << "request stored in Oracle, id "
            << fr->id() << std::endl;
