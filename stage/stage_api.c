@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.56 2002/10/08 13:45:51 jdurand Exp $
+ * $Id: stage_api.c,v 1.57 2002/10/16 22:58:54 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.56 $ $Date: 2002/10/08 13:45:51 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.57 $ $Date: 2002/10/16 22:58:54 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -885,7 +885,7 @@ static int stage_api_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
     gid = getegid();
 
 #if defined(_WIN32)
-    if (uid < 0 || gid < 0) {
+	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
 		return(SEUSERUNKN);
     }
 #endif

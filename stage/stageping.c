@@ -1,5 +1,5 @@
 /*
- * $Id: stageping.c,v 1.4 2002/04/30 13:08:10 jdurand Exp $
+ * $Id: stageping.c,v 1.5 2002/10/16 22:58:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.4 $ $Date: 2002/04/30 13:08:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.5 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,7 +64,7 @@ int main(argc, argv)
 	uid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
+	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
 		fprintf (stderr, STG52);
 		exit (USERR);
 	}

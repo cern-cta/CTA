@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.50 2002/08/27 08:02:39 jdurand Exp $
+ * $Id: stagein.c,v 1.51 2002/10/16 22:58:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.50 $ $Date: 2002/08/27 08:02:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.51 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -230,7 +230,7 @@ int main(argc, argv)
 	uid = Guid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
+	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
 		fprintf (stderr, STG52);
 		exit (USERR);
 	}
@@ -1035,7 +1035,7 @@ int stage_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
     gid = getgid();
 
 #if defined(_WIN32)
-    if (uid < 0 || gid < 0) {
+	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
 		return(SEUSERUNKN);
     }
 #endif

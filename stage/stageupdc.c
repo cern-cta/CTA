@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.24 2002/04/11 10:40:13 jdurand Exp $
+ * $Id: stageupdc.c,v 1.25 2002/10/16 22:58:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.24 $ $Date: 2002/04/11 10:40:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.25 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,7 +81,7 @@ int main(argc, argv)
 	uid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
+	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
 		fprintf (stderr, STG52);
 		exit (USERR);
 	}
