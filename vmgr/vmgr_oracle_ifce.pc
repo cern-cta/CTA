@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2000/02/18 09:57:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.7 $ $Date: 2000/03/02 07:57:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -173,14 +173,15 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[20];
 	char rowid_value[19];
+	char tot_free_space_str[21];
 	EXEC SQL DECLARE pool_cursor CURSOR FOR
 		SELECT
-		 NAME, OWNER_UID, GID
+		 NAME, OWNER_UID, GID, TO_CHAR(TOT_FREE_SPACE)
 		FROM vmgr_tape_pool
 		WHERE name = :pool_name;
 	EXEC SQL DECLARE pool_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 NAME, OWNER_UID, GID
+		 NAME, OWNER_UID, GID, TO_CHAR(TOT_FREE_SPACE)
 		FROM vmgr_tape_pool
 		WHERE name = :pool_name
 		FOR UPDATE;
@@ -190,16 +191,19 @@ vmgr_dbrec_addr *rec_addr;
 		EXEC SQL OPEN pool_cursor4upd;
 		EXEC SQL FETCH pool_cursor4upd INTO
 		 :rowid_value,
-		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid;
+		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
+		 :tot_free_space_str;
 	} else {
 		EXEC SQL OPEN pool_cursor;
 		EXEC SQL FETCH pool_cursor INTO
-		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid;
+		 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
+		 :tot_free_space_str;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		pool_entry->tot_free_space = strtou64 (tot_free_space_str);
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -368,12 +372,15 @@ struct vmgr_dbfd *dbfd;
 struct vmgr_tape_pool *pool_entry;
 {
 	char func[23];
+	char tot_free_space_str[21];
 
 	strcpy (func, "vmgr_insert_pool_entry");
+	(void) u64tostr (pool_entry->tot_free_space, tot_free_space_str, -1);
 	EXEC SQL INSERT INTO vmgr_tape_pool
-		(NAME, OWNER_UID, GID)
+		(NAME, OWNER_UID, GID, TOT_FREE_SPACE)
 		VALUES
-		(:pool_entry->name, :pool_entry->uid, :pool_entry->gid);
+		(:pool_entry->name, :pool_entry->uid, :pool_entry->gid,
+		 TO_NUMBER(:tot_free_space_str));
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -493,12 +500,15 @@ struct vmgr_tape_pool *pool_entry;
 {
 	char func[23];
 	char rowid_value[19];
+	char tot_free_space_str[21];
 
 	strcpy (func, "vmgr_update_pool_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	(void) u64tostr (pool_entry->tot_free_space, tot_free_space_str, -1);
 	EXEC SQL UPDATE vmgr_tape_pool SET
 		OWNER_UID = :pool_entry->uid,
-		GID = :pool_entry->gid
+		GID = :pool_entry->gid,
+		TOT_FREE_SPACE = TO_NUMBER(:tot_free_space_str)
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
