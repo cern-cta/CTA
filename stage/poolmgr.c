@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.89 2001/02/13 08:55:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.90 2001/02/13 12:27:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.89 $ $Date: 2001/02/13 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.90 $ $Date: 2001/02/13 12:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1992,8 +1992,10 @@ int migpoolfiles(pool_p)
         /* We makes sure that the -K option is disabled... This means that when this copy will be migrated */
         /* The corresponding STAGEWRT entry in the catalog will disappear magically !... */
         (stcp+j)->keep = 0;
-        strcpy((stpp+j)->upath, (stcp+j)->ipath);
+        /* We also makes sure that the -s parameter is disabled as well */
+        (stcp+j)->size = 0;
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
+        strcpy((stpp+j)->upath, (stcp+j)->ipath);
         scc->scanned = 1;
         tppool_vs_stcp[ntppool_vs_stcp - 1].size += scc->stcp->actual_size;
       }
