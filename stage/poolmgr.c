@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.121 2001/03/24 04:20:20 jdurand Exp $
+ * $Id: poolmgr.c,v 1.122 2001/03/27 08:34:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.121 $ $Date: 2001/03/24 04:20:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.122 $ $Date: 2001/03/27 08:34:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -160,7 +160,7 @@ extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
-void check_retenp_on_disk _PROTO(());
+void check_lifetime_on_disk _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
 void bestnextpool_out _PROTO((char *, int));
@@ -3663,16 +3663,42 @@ int retenp_on_disk(ifileclass)
   return(fileclasses[ifileclass].Cnsfileclass.retenp_on_disk);
 }
 
-void check_retenp_on_disk() {
+void check_lifetime_on_disk() {
 	time_t this_time = time(NULL);
 	struct stgcat_entry *stcp;
-	char *func = "check_retenp_on_disk";
+	char *func = "check_lifetime_on_disk";
 	extern struct fileclass *fileclasses;
 	extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
+    char *stageout_lifetime_p = NULL;
+    int stageout_lifetime = -1;
+
+    /* We check if there is a maximum stageout lifetime on disk */
+    if ((stageout_lifetime_p = getconfent("STG","STAGEOUT_LIFETIME", 0)) != NULL) {
+      stageout_lifetime = atoi(stageout_lifetime_p);
+    }
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
 		int thisretenp;
+
+		if (stcp->reqid == 0) break;
+
+        /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
+        if (ISSTAGEOUT(stcp) && ((stcp->status & STAGED) != STAGED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
+          stglogit (func, STG143, stcp->ipath, stageout_lifetime);
+          rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+          stcp->status |= PUT_FAILED;
+          if (stcp->t_or_d == 'h') {
+            stcp->status |= CAN_BE_MIGR;
+          }
+#ifdef USECDB
+          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+          }
+#endif
+          savereqs();
+          continue;
+        }
 
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 		if (stcp->keep) continue;               /* Has -K option */
@@ -3684,7 +3710,7 @@ void check_retenp_on_disk() {
 		if (((int) (this_time - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
 			/* Candidate for garbage */
 			stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (this_time - stcp->a_time));
-			if (delfile (stcp, 0, 1, 1, "check_retenp_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
+			if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk (retention period)", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
 				stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
 			}
 		}
@@ -3727,6 +3753,7 @@ void bestnextpool_out(nextout,mode)
 {
   char firstpool_out[CA_MAXPOOLNAMELEN+1];
   char thispool_out[CA_MAXPOOLNAMELEN+1];
+  char sav_thispool_out[CA_MAXPOOLNAMELEN+1];
   struct pool_element *this_element;
   struct pool_element_ext *best_elements = NULL;
   struct pool_element_ext *this_best_element;
@@ -3735,21 +3762,8 @@ void bestnextpool_out(nextout,mode)
   int i, j;
   struct pool *pool_p;
   struct pool_element *elemp;
-  int qsort_all_poolout = 0;
   char *func = "bestnextpool_out";
   char tmpbuf[21];
-
-  /* Do we support qsort v.s. multiples poolout ? */
-  if (getconfent ("STG", "QSORT_ALL_POOLOUT", 0) != NULL) {
-    /* Yes */
-    qsort_all_poolout = 1;
-  } else {
-    /* We FORCE qsort on multiples poolouts only in one case : the very beginning */
-    if (currentpool_out[0] == '\0') {
-      stglogit(func, "First stageout round - forcing qsort on all outpools candidates\n");
-      qsort_all_poolout = 1;
-    }
-  }
 
   /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
   /* contention possible */
@@ -3759,6 +3773,7 @@ void bestnextpool_out(nextout,mode)
   strcpy(thispool_out, firstpool_out);
 
   while (1) {
+    strcpy(sav_thispool_out,thispool_out);
     if ((this_element = betterfs_vs_pool(thispool_out,mode,0,NULL)) == NULL) {
       /* Oups... Tant-pis, return current pool */
       if (best_elements != NULL) free(best_elements);
@@ -3797,16 +3812,10 @@ void bestnextpool_out(nextout,mode)
     this_best_element->dirpath[0] = '\0';
     strcpy(this_best_element->dirpath,this_element->dirpath);
     nbest_elements++;
-    /* Do we support qsort v.s. multiples poolout ? */
-    if (qsort_all_poolout == 0) {
-      /* No */
-      goto bestnextpool_out_getit;
-    }
 
-    /* Go to the next pool unless round about */
-
+    /* Go to the next pool unless round about or same pool returned */
     nextpool_out(thispool_out);
-    if (strcmp(thispool_out, firstpool_out) == 0) {
+    if ((strcmp(thispool_out, firstpool_out) == 0) || (strcmp(thispool_out, sav_thispool_out) == 0)) {
       stglogit(func, "Turnaround reached at outpool %s\n", thispool_out);
       break;
     }
@@ -3924,12 +3933,10 @@ void nextpool_out(nextout)
   } else {
     char *p2;
 
-    /* If current pool is not migrating, we still return it unless it is also the input */
+    /* If current pool is not migrating, we still return it */
     if (ispoolmigrating(currentpool_out) == 0) {
-      if (strcmp(nextout, currentpool_out) != 0) {
-        strcpy(nextout, currentpool_out);
-        return;
-      }
+      strcpy(nextout, currentpool_out);
+      return;
     }
     /* We return the next one in the list */
     if ((p = strstr(defpoolname_out, currentpool_out)) == NULL) {
