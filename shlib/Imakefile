@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2004/06/22 15:26:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2004/06/22 17:49:29 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -74,8 +74,12 @@ libcastorProto.dll:	$(LIBRARIES2)
 MakeDir($(LIB),root,bin,0755)
 
 InstallSharedLibrary(shift,__CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorCommonOra,__CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorProto,__CASTOR_VERSION__,$(LIB))
 
 InstallSharedLibrary(shift,__CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonOra,__CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorProto,__CASTOR_VERSION__,$(EXPORTLIB))
 
 install.man:
 
