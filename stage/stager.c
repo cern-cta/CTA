@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.81 2000/07/04 10:08:22 jdurand Exp $
+ * $Id: stager.c,v 1.82 2000/07/26 11:08:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /* Do we want to maintain maxsize for the transfert... ? */
-#define SKIP_FILEREQ_MAXSIZE
+/* #define SKIP_FILEREQ_MAXSIZE */
 
 /* If you don't want a turnaround on tape pools, via stage_migpool() call    */
 /* remove the define below - If it is defined, the stager will wait one hour */
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.81 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.82 $ $Date: 2000/07/26 11:08:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
