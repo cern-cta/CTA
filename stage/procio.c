@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.103 2001/03/08 08:51:52 jdurand Exp $
+ * $Id: procio.c,v 1.104 2001/03/09 02:34:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.103 $ $Date: 2001/03/08 08:51:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.104 $ $Date: 2001/03/09 02:34:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1575,10 +1575,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 					c = USERR;
 					goto reply;
 				}
-				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
-					/* This is a file to delete from automatic migration */
-					update_migpool(stcp,-1, 0);
-				}
 				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
@@ -2006,11 +2002,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
 						c = USERR;
-#ifdef USECDB
-						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-						}
-#endif
+						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
 					strcpy(stcp->u1.h.tppool,next_tppool(&(fileclasses[ifileclass])));
@@ -2026,22 +2018,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(i == 0) ? &stcx : NULL,NULL,0) != 0) {
 							global_c_stagewrt++;
 							c = USERR;
-#ifdef USECDB
-							if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-								stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-							}
-#endif
+							delreq(stcp,0);
 							goto stagewrt_continue_loop;
 						}
 					}
 					if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
 						global_c_stagewrt++;
 						c = USERR;
-#ifdef USECDB
-						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-						}
-#endif
+						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
 				}
@@ -2050,11 +2034,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (update_migpool(stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
 						c = USERR;
-#ifdef USECDB
-						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-						}
-#endif
+						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
 #ifdef USECDB
@@ -2077,13 +2057,17 @@ void procioreq(req_type, magic, req_data, clienthost)
 							/* We use it at the first round to check that requestor's uid/gid is compatible */
 							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
 							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(i == 0) ? &stcx : NULL,&tppool,0) != 0) {
-								goto reply;
+								global_c_stagewrt++;
+								c = USERR;
+								delreq(stcp,0);
+								goto stagewrt_exit_loop;
 							}
 						}
 						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
 								global_c_stagewrt++;
 								c = USERR;
-								goto reply;
+								delreq(stcp,0);
+								goto stagewrt_exit_loop;
 						}
 					} else {
 						euid = stgreq.uid;
@@ -2134,6 +2118,26 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 			}
 			break;
+		stagewrt_exit_loop:
+			/* Some cleaning in case... */
+			if ((stage_wrt_migration != 0) && (have_save_stcp_for_Cns_creatx != 0)) {
+				struct stgcat_entry *stclp;
+
+				have_save_stcp_for_Cns_creatx = 0;
+				for (stclp = stcs; stclp < stce; stclp++) {
+					if (stclp->reqid == 0) break;
+					if (stclp->reqid != save_stcp_for_Cns_creatx.reqid) continue;
+					update_migpool(stclp,-1,0);
+					stclp->status |= PUT_FAILED;
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stclp) != 0) {
+						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					break;
+				}
+			}
+			goto reply;
 		case STAGECAT:
 			if ((p = findpoolname (upath)) != NULL) {
 				if (poolflag < 0 ||
