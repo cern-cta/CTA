@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.4 2005/01/20 18:38:47 jdurand Exp $
+# $Id: makedeb.sh,v 1.5 2005/01/23 15:23:36 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -41,15 +41,6 @@ PATH=${PATH}:/usr/X11R6/bin
 export PATH
 
 #
-## First create the tarball
-#
-dir=`pwd`
-cd /tmp
-rm -rf castor-${a}.${b}.${c} castor-${a}.${b}.${c}.tar.gz
-mkdir castor-${a}.${b}.${c}
-cd castor-${a}.${b}.${c}
-/bin/cp -Lfr ${dir}/* .
-#
 ## Force build rules to YES for a lot of things
 #
 for this in BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildGcDaemon BuildHsmTools BuildMonitorClient BuildMonitorServer BuildMonitorLibrary BuildMsgClient BuildMsgServer BuildMsgLibrary BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRfioClient BuildRfioServer BuildRfioLibrary BuildRmcServer BuildRmcLibrary BuildJob BuildRtcopyClient BuildRtcopyServer BuildRtcopyLibrary BuildRtstat BuildStageClient BuildStageDaemon BuildStageLibrary BuildRmMaster BuildRmNode BuildRmClient BuildRmLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmServer BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildDlfClient BuildDlfDaemon BuildDlfLibrary BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildRHCpp BuildOraCpp BuildCastorClientCPPLibrary Accounting HasNroff HasCDK UseCupv UseOracle UseVmgr UseScheduler UseExpert UseMaui; do
@@ -66,9 +57,6 @@ done
 #
 perl -pi -e s/__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install
 perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install
-cd ..
-tar -cvhzf castor-${a}.${b}.${c}.tar.gz castor-${a}.${b}.${c}
-cd castor-${a}.${b}.${c}
 fakeroot dch --newversion ${a}.${b}.${c}-${d}
 fakeroot dpkg-buildpackage
 status=$?
