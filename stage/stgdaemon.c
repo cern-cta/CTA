@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.239 $ $Date: 2003/06/30 11:35:21 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.240 $ $Date: 2003/06/30 12:54:13 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3436,15 +3436,25 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			if (rfio_unlink (stcp->u1.m.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.m.xfile, by);
 			} else {
-				sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
-								 "rfio_unlink", rfio_serror());
+				if (rfio_serrno() == ENOENT) {
+					/* ENOENT is acceptable, nothing else */
+					stglogit (func, STG02, stcp->u1.m.xfile, "rfio_unlink", rfio_serror());
+				} else {
+					sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
+							 "rfio_unlink", rfio_serror());
+				}
 			}
 		} else if (stcp->t_or_d == 'h') {
 			if (Cns_unlink (stcp->u1.h.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.h.xfile, by);
 			} else {
-				sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
-								 "Cns_unlink", sstrerror(serrno));
+				if (serrno == ENOENT) {
+					/* ENOENT is acceptable, nothing else */
+					stglogit (func, STG02, stcp->u1.h.xfile, "Cns_unlink", sstrerror(serrno));
+				} else {
+					sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
+							 "Cns_unlink", sstrerror(serrno));
+				}
 			}
 		}
 		setegid(start_passwd.pw_gid);
