@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.58 2000/09/02 08:14:17 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.59 2000/09/20 11:36:51 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.58 $ $Date: 2000/09/02 08:14:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.59 $ $Date: 2000/09/20 11:36:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -152,11 +152,17 @@ void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
 void stgdaemon_wait4child _PROTO(());
 int req2argv _PROTO((char *, char ***));
+int upd_stageout _PROTO((int, char *, int *, int));
+int check_waiting_on_req _PROTO((int, int));
+int nextreqid _PROTO(());
+struct stgcat_entry *newreq _PROTO(());
+struct waitf *add2wf _PROTO((struct waitq *));
+int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern void procmigpoolreq _PROTO((char *, char *));
-extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern void update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
-extern int selectfs _PROTO((char *, int *, char *, char));
+extern int selectfs _PROTO((char *, int *, char *));
 
 main(argc,argv)
 		 int argc;
@@ -464,7 +470,7 @@ main(argc,argv)
 #endif
 			}
 			updfreespace (stcp->poolname, stcp->ipath,
-										(int)stcp->actual_size - stcp->size*1024*1024);
+										(int)stcp->actual_size - stcp->size * ONE_MB);
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
@@ -478,8 +484,8 @@ main(argc,argv)
 			stcp++;
 		} else if (stcp->status == (STAGEPUT | CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
-			/* This was a file for automatic migration */
-			update_migpool(stcp,1);
+			/* This is a file for automatic migration */
+			update_migpool(stcp,1,1);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -488,13 +494,13 @@ main(argc,argv)
 			stcp++;
 		} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
-			/* This was a file for automatic migration */
+			/* This is a file for automatic migration */
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			update_migpool(stcp,1);
+			update_migpool(stcp,1,1);
 			stcp++;
 		} else stcp++;
 	}
@@ -524,11 +530,11 @@ main(argc,argv)
 #endif
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
-							(int)stcp->actual_size - stcp->size*1024*1024);
+							(int)stcp->actual_size - stcp->size * ONE_MB);
 				} else if (! c) {
-					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					if ((stcp->status & (STAGEOUT | CAN_BE_MIGR)) == (STAGEOUT | CAN_BE_MIGR)) {
 						/* This is a file for automatic migration */
-						update_migpool(stcp,1);
+						update_migpool(stcp,1,1);
 					}
 				}
 			}
@@ -545,7 +551,7 @@ main(argc,argv)
 				stglogit (func, STG02, "", "getpeername",
 										sys_errlist[errno]);
 			}
-			hp = gethostbyaddr ((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
+			hp = Cgethostbyaddr((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
 			if (hp == NULL)
 				clienthost = inet_ntoa (from.sin_addr);
 			else
@@ -719,7 +725,7 @@ void procinireq(req_data, clienthost)
 }
 
 struct waitq *
-add2wq (clienthost, user, uid, gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp)
+add2wq (clienthost, user, uid, gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp, vid, fseq)
 		 char *clienthost;
 		 char *user;
 		 uid_t uid;
@@ -730,6 +736,8 @@ add2wq (clienthost, user, uid, gid, clientpid, Upluspath, reqid, req_type, nbwf,
 		 int req_type;
 		 int nbwf;
 		 struct waitf **wfp;
+		 char *vid;
+		 char *fseq;
 {
 	/* add request to the wait queue */
 	struct waitq *prev, *wqp;
@@ -761,6 +769,96 @@ add2wq (clienthost, user, uid, gid, clientpid, Upluspath, reqid, req_type, nbwf,
 	return (wqp);
 }
 
+int
+add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
+	struct waitq *wqp_orig;
+	char *fseq_orig;
+	struct waitf *wfp_orig;
+	struct waitf *wfp_new;
+{
+	struct waitq *wqp;
+	int i;
+	struct waitf *newwaitf, *wfp;
+	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp_ok;
+	struct waitf *wfp_ok;
+	int found;
+	int save_reqid, save_nextreqid;
+
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		if (wqp == wqp_orig) continue;
+		wfp = &(wqp->wf[wqp->nbdskf - 1]);
+		if (wfp->waiting_on_req != wfp_orig->subreqid) continue;
+		found = 0;
+		/* Note : by construction, consecutive entries are always in the same order in the catalog */
+		for (stcp = stcs; stcp < stce; stcp++) {
+			if (stcp->reqid == 0) break;
+			if (stcp->reqid == wfp->subreqid) {
+				found = 1;
+				break;
+			}
+		}
+		if (! found) {
+			sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
+			return(-1);
+		}
+		if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
+ 			sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+			return(-1);
+		}
+		wqp->wf = wfp = newwaitf;
+		wqp->nbdskf++;
+		wqp->nb_subreqs++;
+		stcp_ok = newreq();
+		save_nextreqid = nextreqid();
+		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
+		stcp_ok->reqid = save_nextreqid;
+		/* Current stcp is "<X>-", new one is "<X+1>-" */
+		sprintf(stcp_ok->u1.t.fseq,"%d",atoi(stcp->u1.t.fseq) + 1);
+		strcat(stcp_ok->u1.t.fseq,"-");
+		/* And it is a deffered allocation */
+		stcp_ok->ipath[0] = '\0';
+		wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
+		memset((char *) wfp_ok,0,sizeof(struct waitf));
+		wfp_ok->subreqid = stcp_ok->reqid;
+		wfp_ok->waiting_on_req = wfp_new->subreqid;
+		/* Current stcp become "<X>" */
+		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq_orig));
+#ifdef USECDB
+		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
+		if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
+			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		}
+#endif
+		savereqs ();
+		save_reqid = reqid;
+		reqid = wqp->reqid;
+		stglogit(func, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+		reqid = wqp->reqid;
+		break;
+	}
+	return(0);
+}
+
+struct waitf *
+add2wf (wqp)
+	struct waitq *wqp;
+{
+	/* add a file to the wait queue */
+	struct waitf *newwaitf;
+
+	if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
+		sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+		return(NULL);
+	}
+	wqp->wf = newwaitf;
+	wqp->nbdskf++;
+	wqp->nb_subreqs++;
+	return(newwaitf);
+}
+
 build_ipath(upath, stcp, pool_user)
 		 char *upath;
 		 struct stgcat_entry *stcp;
@@ -772,14 +870,14 @@ build_ipath(upath, stcp, pool_user)
 	char *p_f, *p_u;
 	struct passwd *pw;
 
-	if (*stcp->poolname == '\0') {
+	if (*stcp->poolname == '\0' && upath != NULL) {
 		strcpy (stcp->ipath, upath);
 		return (0);
 	}
 
 	/* allocate space */
 
-	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath, stcp->t_or_d) < 0)
+	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath) < 0)
 		return (-1);	/* not enough space */
 
 	/* build full internal path name */
@@ -900,6 +998,23 @@ checkovlstatus(pid, status)
 			stglogit (func, "stager process %d exiting with status %x\n",
 				pid, status & 0xFFFF);
 			wqp->ovl_pid = 0;
+			if (wqp->concat_off_fseq > 0) {
+				struct stgcat_entry *stcp;
+
+				/* Case of -c off option : the remaining element is always to be removed */
+				for (stcp = stcs; stcp < stce; stcp++) {
+					if (stcp->reqid == 0) break;
+					if (wqp->wf[0].subreqid == stcp->reqid) {
+#ifdef STAGER_DEBUG
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] Deleting wf (FSEQ \"%s\") [-c off OK]\n", stcp->u1.t.fseq);
+#endif
+						/* We check if they were requests waiting on this "-c off" request */
+						check_waiting_on_req(stcp->reqid, COFFOK);
+						delreq(stcp,0);
+					}
+				}
+				wqp->nb_subreqs=0;
+			}
 			if (wqp->status == 0)
 				wqp->status = (status & 0xFF) ?
 					SYERR : ((status >> 8) & 0xFF);
@@ -1075,6 +1190,19 @@ check_waiting_on_req(subreqid, state)
 	}
 	reqid = savereqid;
 	rpfd = saverpfd;
+#ifdef STAGER_DEBUG
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
+      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+        for (stcp = stcs; stcp < stce; stcp++) {
+          if (wfp->subreqid == stcp->reqid) {
+            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+            break;
+          }
+        }
+      }
+    }
+#endif
 	return (found);
 }
 
@@ -1088,7 +1216,11 @@ void checkwaitq()
 	wqp = waitqp;
 	while (wqp) {
 		reqid = wqp->reqid;
-		if (wqp->nb_subreqs == 0 && wqp->nb_waiting_on_req == 0 &&
+#ifdef STAGER_DEBUG
+		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] nb_subreqs=%d, concat_off_fseq=%d, nb_waiting_on_req=%d, waiting_pool=%s, ovl_pid=%d\n", wqp->nb_subreqs, wqp->concat_off_fseq, wqp->nb_waiting_on_req, wqp->waiting_pool, wqp->ovl_pid);
+#endif
+		if ((wqp->nb_subreqs == 0 || (wqp->nb_subreqs > 1 && wqp->concat_off_fseq > 0))
+				&& wqp->nb_waiting_on_req == 0 &&
 				! *(wqp->waiting_pool) && ! wqp->ovl_pid) {
 			/* stage request completed successfully */
 #if SACCT
@@ -1162,10 +1294,10 @@ void checkwaitq()
 					delreq (stcp,0);
 					break;
 				case STAGEPUT:
-					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
-						/* This was a file coming from automatic migration */
-						update_migpool(stcp,-1);
+						/* This was a file coming from (automatic or not) migration */
+						update_migpool(stcp,-1,0);
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
 					}
@@ -1182,6 +1314,19 @@ void checkwaitq()
 		} else
 			wqp = wqp->next;
 	}
+#ifdef STAGER_DEBUG
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : Waitq->wf : \n");
+      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+        for (stcp = stcs; stcp < stce; stcp++) {
+          if (wfp->subreqid == stcp->reqid) {
+            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+            break;
+          }
+        }
+      }
+    }
+#endif
 }
 
 create_dir(dirname, uid, gid, mask)
@@ -1309,13 +1454,13 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					stglogit (func, STG02, stcp->ipath, "rfio_unlink",
 										rfio_serror());
 			}
-			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR &&
+			if ((stcp->status & (STAGEOUT | CAN_BE_MIGR)) == (STAGEOUT | CAN_BE_MIGR) &&
 			    (stcp->status & PUT_FAILED) != PUT_FAILED) {
-				/* This was a file coming from automatic migration */
-				update_migpool(stcp,-1);
+				/* This was a file coming from (automatic or not) migration */
+				update_migpool(stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (freersv) ?
-										(stcp->size*1024*1024) : actual_size);
+										(stcp->size * ONE_MB) : actual_size);
 		}
 	}
 	if (remove_hsm) {
@@ -1404,7 +1549,7 @@ fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
 	char arg_Aflag[2], arg_Migrationflag[2];
-	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3];
+	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	int c, i;
 	static int pfd[2];
 	int pid;
@@ -1463,19 +1608,20 @@ fork_exec_stager(wqp)
 		sprintf (arg_nretry, "%d", wqp->nretry);
 		sprintf (arg_Aflag, "%d", wqp->Aflag);
 		sprintf (arg_Migrationflag, "%d", wqp->Migrationflag);
+		sprintf (arg_concat_off_fseq, "%d", wqp->concat_off_fseq);
 
 #ifdef __INSURE__
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s tmpfile=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s concat_off_fseq=%s tmpfile=%s, pid=%d\n",
 							arg_reqid, arg_key, arg_rpfd,
-							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, tmpfile, getpid());
+							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, arg_concat_off_fseq, tmpfile, getpid());
 		execl (progfullpath, "stager", arg_reqid, arg_key, arg_rpfd,
-					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, tmpfile, NULL);
+					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, arg_concat_off_fseq, tmpfile, NULL);
 #else
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s Migrationflag=%s concat_off_fseq=%s, pid=%d\n",
 							arg_reqid, arg_key, arg_rpfd,
-							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, getpid());
+							arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, arg_concat_off_fseq, getpid());
 		execl (progfullpath, "stager", arg_reqid, arg_key, arg_rpfd,
-					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, NULL);
+					 arg_nbsubreqs, arg_nretry, arg_Aflag, arg_Migrationflag, arg_concat_off_fseq, NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
 		exit (SYERR);
@@ -1531,7 +1677,7 @@ newreq()
 	return (stcp);
 }
 
-nextreqid()
+int nextreqid()
 {
 	int found;
 	struct stgcat_entry *stcp;
@@ -1668,10 +1814,11 @@ void sendinfo2cptape(rpfd, stcp)
 	sendrep (rpfd, MSG_ERR, STG47, buf);
 }
 
-upd_stageout(req_type, upath, subreqid)
+int upd_stageout(req_type, upath, subreqid, can_be_migr_flag)
 		 int req_type;
 		 char *upath;
 		 int *subreqid;
+		 int can_be_migr_flag;
 {
 	int found;
 	struct stat st;
@@ -1716,7 +1863,7 @@ upd_stageout(req_type, upath, subreqid)
 		if (rfio_stat (stcp->ipath, &st) == 0)
 			stcp->actual_size = st.st_size;
 		updfreespace (stcp->poolname, stcp->ipath,
-									stcp->size*1024*1024 - (int)stcp->actual_size);
+									stcp->size * ONE_MB - (int)stcp->actual_size);
 	}
 	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;
@@ -1724,28 +1871,32 @@ upd_stageout(req_type, upath, subreqid)
 		if (stcp->status == STAGEOUT && (stcp->t_or_d == 'm' || stcp->t_or_d == 'h')) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR is its size is zero */
-				if (delfile (stcp, 0, 1, 1, "stageupdc on zero-length to-be-migrated file ok", stcp->uid, stcp->gid, 0) < 0) {
+				if (delfile(stcp, 0, 1, 1,
+							"stageout update on zero-length to-be-migrated file ok",
+							stcp->uid, stcp->gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
 					goto upd_stageout_return;
 				}
-            } else {
+			} else {
 				if (stcp->t_or_d == 'h') {
 					struct Cns_fileid Cnsfileid;
 					u_signed64 correct_size;
-                
+
 					/* This is a CASTOR HSM file */
 					strcpy(Cnsfileid.server,stcp->u1.h.server);
 					Cnsfileid.fileid = stcp->u1.h.fileid;
 					setegid(stcp->gid);
 					seteuid(stcp->uid);
 					correct_size = (u_signed64) stcp->actual_size;
+#ifdef U1H_WRT_WITH_MAXSIZE
 					if (stcp->size && ((u_signed64) (stcp->size * ONE_MB) < correct_size)) {
 						/* If use specified a maxsize of bytes to transfer and if this */
 						/* maxsize is lower than physical file size, then the size of */
 						/* of the migrated file will be the minimum of the twos */
 						correct_size = (u_signed64) (stcp->size * ONE_MB);
 					}
+#endif
 					if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
 								"Cns_setfsize", sstrerror(serrno));
@@ -1755,9 +1906,11 @@ upd_stageout(req_type, upath, subreqid)
 					}
 					setegid(0);
 					seteuid(0);
-					stcp->status |= CAN_BE_MIGR;
-					/* We update the corresponding poolname structure */
-					update_migpool(stcp,1);
+					if (can_be_migr_flag) {
+						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
+						/* We update the corresponding poolname structure */
+						update_migpool(stcp,1,1);
+					}
 				}
 			}
 		} else {
