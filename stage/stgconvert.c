@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.25 2000/06/05 11:57:03 jdurand Exp $
+ * $Id: stgconvert.c,v 1.26 2000/07/24 10:49:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.25 $ $Date: 2000/06/05 11:57:03 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.26 $ $Date: 2000/07/24 10:49:18 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -201,7 +201,7 @@ int main(argc,argv)
 	struct stat stgcat_statbuff, stgpath_statbuff;
 	char *Cdb_username = NULL;
 	char *Cdb_password = NULL;
-	int rc;
+	int rc = EXIT_SUCCESS;
 	Cdb_sess_t Cdb_session;
 	Cdb_hash_session_t *Cdb_hash_session;
 	int Cdb_session_opened = 0;
