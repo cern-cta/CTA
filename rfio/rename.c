@@ -1,5 +1,5 @@
 /*
- * $Id: rename.c,v 1.6 2000/05/03 13:42:37 obarring Exp $
+ * $Id: rename.c,v 1.7 2000/05/24 14:58:38 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:37 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.7 $ $Date: 2000/05/24 14:58:38 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* rename.c       Remote File I/O - change the name of a file           */
@@ -48,6 +48,7 @@ char		*fileo,		/* remote old path  			*/
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_rename(%s, %s)", fileo, filen);
 
+   *hostnameo = *hostnamen = '\0';
    rpo = rfio_parseln(fileo,&host,&path,NORDLINKS);
 
    if (host != NULL)
@@ -82,7 +83,7 @@ char		*fileo,		/* remote old path  			*/
 
    if ((!rpo) && (!rpn)) {
       /* if not a remote file, must be local or HSM  */
-      if ( hostnameo != NULL && hostnamen != NULL ) {
+      if ( *hostnameo != '\0' && *hostnamen != '\0' ) {
           /*
            * HSM file
            */
