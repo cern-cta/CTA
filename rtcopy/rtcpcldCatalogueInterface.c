@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.69 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.70 $ $Release$ $Date: 2004/11/03 13:54:25 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.69 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.70 $ $Release$ $Date: 2004/11/03 13:54:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2238,6 +2238,18 @@ int rtcpcld_returnStream(
     Cstager_Stream_id(stream,&key);
     Cstager_Stream_setStatus(stream,STREAM_PENDING);
     Cstager_Stream_setTape(stream,NULL);
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_RESETSTREAM),
+                    (struct Cns_fileid *)NULL,
+                    2,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tape->tapereq.vid,
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT64,
+                    key
+                    );
     doCommit = 0;
     rc = C_Services_updateRep(
                               *svcs,
@@ -2293,6 +2305,7 @@ int rtcpcld_restoreSelectedTapeCopies(
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   file_list_t *file;
   int rc, save_serrno, doCommit = 0;
+  struct Cns_fileid *fileId = NULL;
 
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
@@ -2356,6 +2369,13 @@ int rtcpcld_restoreSelectedTapeCopies(
                                C_Services_errorMsg(*svcs)
                                );
               } else {
+                (void)rtcpcld_getFileId(file,&fileId);
+                (void)dlf_write(
+                                (inChild == 0 ? mainUuid : childUuid),
+                                RTCPCLD_LOG_MSG(RTCPCLD_MSG_RESTORETPCP),
+                                (struct Cns_fileid *)fileId,
+                                0
+                                );
                 doCommit = 1;
               }
             }
