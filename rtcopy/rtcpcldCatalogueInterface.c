@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/13 08:09:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/13 11:52:54 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/13 08:09:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/13 11:52:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1245,48 +1245,6 @@ static int procReqsForVID(
     return(-1);
   }
   
-  /*
-   * BEGIN Hack until client can use a createRepNoRec() to add segments
-   */
-  rc = Cstager_IStagerSvc_selectTape(
-                                     stgsvc,
-                                     &dummyTp,
-                                     tape->tapereq.vid,
-                                     tape->tapereq.side,
-                                     tape->tapereq.mode
-                                     );
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_selectTape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);      
-    }
-    C_IAddress_delete(iAddr);
-    UNLOCKTP;
-    serrno = save_serrno;
-    return(-1);
-  }
-  /*
-   * END Hack until client can use a createRepNoRec() to add segments
-   */
-
   rc = Cstager_IStagerSvc_segmentsForTape(
                                           stgsvc,
                                           currentTape,
@@ -1368,6 +1326,7 @@ static int procReqsForVID(
     serrno = save_serrno;
     return(-1);
   }
+  Cstager_Tape_delete(dummpTp);
   /*
    * END Hack until client can use a createRepNoRec() to add segments
    */
@@ -2435,6 +2394,7 @@ int rtcpcld_setFileStatus(
      * BEGIN Hack: always rollback since we haven't modified the Tape.
      */
     if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
+    Cstager_Tape_delete(dummpTp);
     /*
      * END Hack: always rollback since we haven't modified the Tape.
      */
