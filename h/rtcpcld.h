@@ -29,6 +29,11 @@ typedef struct RtcpcldVIDChild {
 
 #define ID_TYPE unsigned long
 #if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
+enum NotificationState {
+  NOT_NOTIFIED,
+  NOTIFIED,
+  DONT_NOTIFY
+};
 
 typedef struct RtcpcldTapeList 
 {
@@ -45,6 +50,7 @@ typedef struct RtcpcldSegmentList
 {
   file_list_t *file;
   enum Cstager_SegmentStatusCodes_t oldStatus;
+  enum NotificationState notified;
   struct Cstager_Segment_t *segment;
   struct RtcpcldTapeList *tp;
   struct RtcpcldSegmentList *next;
@@ -103,7 +109,14 @@ int rtcpcld_getNotify _PROTO((
 int rtcpcld_sendNotify _PROTO((
                                char *
                                ));
-int rtcpcld_getNotify _PROTO((SOCKET));
+int rtcpcld_sendNotifyByAddr _PROTO((
+                                     char *,
+                                     int
+                                     ));
+int rtcpcld_notifyRtcpclientd _PROTO((
+                                      void
+                                      ));
+
 int rtcpcld_getVIDsToDo _PROTO((
                                 tape_list_t ***,
                                 int *
@@ -114,23 +127,45 @@ int rtcpcld_getReqsForVID _PROTO((
 int rtcpcld_anyReqsForVID _PROTO((
                                   tape_list_t *
                                   ));
+int rtcpcld_delTape _PROTO((
+                            tape_list_t **
+                            ));
 
-#if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
+int rtcpcld_delSegment _PROTO((
+                               file_list_t **
+                               ));
+int rtcpcld_findTapeKey _PROTO((
+                                tape_list_t *,
+                                ID_TYPE *
+                                ));
+void rtcpcld_setTapeKey _PROTO((
+                                ID_TYPE
+                                ));
+
+#if defined(CASTOR_STAGER_TAPESTATUSCODES_H) && defined(CASTOR_STAGER_SEGMENTSTATUSCODES_H)
 int rtcpcld_updateVIDStatus _PROTO((
                                     tape_list_t *, 
                                     enum Cstager_TapeStatusCodes_t,
                                     enum Cstager_TapeStatusCodes_t
                                     ));
+int rtcpcld_updateVIDFileStatus _PROTO((
+                                        tape_list_t *,
+                                        enum Cstager_SegmentStatusCodes_t,
+                                        enum Cstager_SegmentStatusCodes_t
+                                        ));
+
 int rtcpcld_setFileStatus _PROTO((
                                   rtcpFileRequest_t *,
                                   enum Cstager_SegmentStatusCodes_t
                                   ));
-#endif /* CASTOR_STAGER_TAPE_H) && CASTOR_STAGER_SEGMENT_H */
+#endif /* CASTOR_STAGER_TAPESTATUSCODES_H && CASTOR_STAGER_SEGMENTSTATUSCODES_H */
 
 int rtcpcld_getPhysicalPath _PROTO((
                                     rtcpTapeRequest_t *,
                                     rtcpFileRequest_t *
                                     ));
-
+int rtcpcld_setVIDFailedStatus _PROTO((
+                                      tape_list_t *
+                                      ));
 
 #endif /* RTCPCLD_H */
