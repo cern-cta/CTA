@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2004/03/16 15:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/03/17 19:12:35 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -22,12 +22,12 @@ COMM --------------------------
 CFLAGS         = $(MTCCFLAGS) -I$(INCLUDES) $(INCLUDESWIN32I) $(DEBUG)
 LDFLAGS        = $(MTLDFLAGS)
 
-OBJS = Csched_test.Osuf Cglobals_test.Osuf tuxid.Osuf Csetprocname_test.Osuf Cthread_kill.Osuf Cregexp_test.Osuf Cuuid_test.Osuf Cpool_test.Osuf Cpool_test2.Osuf Cpool_test_next_index.Osuf Cpool_multiple_pools.Osuf Cpool_ext_multiple_pools.Osuf
+OBJS = Csched_test.Osuf Cglobals_test.Osuf tuxid.Osuf Csetprocname_test.Osuf Cthread_kill.Osuf Cregexp_test.Osuf Cuuid_test.Osuf Cpool_test.Osuf Cpool_test2.Osuf Cpool_test_next_index.Osuf Cpool_multiple_pools.Osuf Cpool_ext_multiple_pools.Osuf Cpool_forevertest.Osuf 
 
 #ifdef _WIN32
 PROGS = ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid) ProgramTargetName(Cregexp_test)
 #else
-PROGS = ProgramTargetName(Csched_test) ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid) ProgramTargetName(Csetprocname_test) ProgramTargetName(Cthread_kill) ProgramTargetName(Cregexp_test) ProgramTargetName(Cuuid_test) ProgramTargetName(Cpool_test) ProgramTargetName(Cpool_test2) ProgramTargetName(Cpool_test_next_index) ProgramTargetName(Cpool_multiple_pools) ProgramTargetName(Cpool_ext_multiple_pools)
+PROGS = ProgramTargetName(Csched_test) ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid) ProgramTargetName(Csetprocname_test) ProgramTargetName(Cthread_kill) ProgramTargetName(Cregexp_test) ProgramTargetName(Cuuid_test) ProgramTargetName(Cpool_test) ProgramTargetName(Cpool_test2) ProgramTargetName(Cpool_test_next_index) ProgramTargetName(Cpool_multiple_pools) ProgramTargetName(Cpool_ext_multiple_pools) ProgramTargetName(Cpool_forevertest)
 #endif
 
 DEPLIBS = DepLibraryTargetName(FileName(..,common),common)
@@ -55,6 +55,7 @@ NormalProgramTarget(Cpool_test2,Cpool_test2.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $
 NormalProgramTarget(Cpool_test_next_index,Cpool_test_next_index.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(Cpool_multiple_pools,Cpool_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(Cpool_ext_multiple_pools,Cpool_ext_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
+NormalProgramTarget(Cpool_forevertest,Cpool_forevertest.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(Cglobals_test,Cglobals_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(tuxid,tuxid.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(Csetprocname_test,Csetprocname_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
