@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.51 2000/06/17 07:47:34 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.52 2000/06/17 08:23:39 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.51 $ $Date: 2000/06/17 07:47:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.52 $ $Date: 2000/06/17 08:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1777,11 +1777,13 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 			break;
 		}
 	}
-	if (found == 0 || (stcp->status & 0xF0) != STAGED) {
+	if (found == 0 || (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') || (stcp->status & 0xF0) != STAGED) {
 		if (found == 0) {
 			sendrep (rpfd, MSG_ERR, STG22);
+		} else if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') {
+			sendrep (rpfd, MSG_ERR, "STG02 - Request should be a HSM file\n");
 		} else if ((stcp->status & 0xF0) != STAGED) {
-			sendrep (rpfd, MSG_ERR, "%s : Request should be in STAGED status\n", stcp->u1.h.xfile);
+			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be in STAGED status\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
 		}
 		return (USERR);
 	}
