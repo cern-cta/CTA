@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.242 2003/04/28 17:02:56 jdurand Exp $
+ * $Id: poolmgr.c,v 1.243 2003/05/12 12:34:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.242 $ $Date: 2003/04/28 17:02:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.243 $ $Date: 2003/05/12 12:34:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -121,7 +121,9 @@ extern struct stgdb_fd dbfd;
 #endif
 extern int savereqs _PROTO(());
 extern char *localhost; /* Fully qualified hostname */
-extern char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
+extern char localdomain[];  /* Local domain */
+extern int selectfs_ro_with_nb_stream;
+extern int selectfs_rw_with_nb_stream;
 static int redomigpool_in_action = 0;
 static struct pool *sav_pools = NULL;
 static int sav_nbpool = 0;
@@ -150,6 +152,8 @@ struct pool_element_ext {
 	char server[CA_MAXHOSTNAMELEN+1];
 	char dirpath[MAXPATH];
 	time_t last_allocation;
+	time_t server_last_allocation;
+	u_signed64 defsize;
 };
 
 void print_pool_utilization _PROTO((int *, char *, char *, char *, char *, int, int, int, int));
@@ -164,6 +168,8 @@ void killcleanovl _PROTO((int));
 int ismigovl _PROTO((int, int));
 void killmigovl _PROTO((int));
 int isvalidpool _PROTO((char *));
+int ismetapool _PROTO((char *));
+int havemetapool _PROTO((char *, char *));
 int max_setretenp _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 char migpoolfiles_migrname[CA_MAXMIGRNAMELEN+1024+1];
@@ -203,9 +209,14 @@ void check_expired _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
 void bestnextpool_out _PROTO((char *, int));
+void bestnextpool_from_metapool _PROTO((char *, char *, int));
 int ispoolmigrating _PROTO((char *));
+time_t server_last_allocation _PROTO((char *));
+time_t pool_last_allocation _PROTO((char *));
+time_t elemp_last_allocation _PROTO((char *, char *));
 struct pool_element *betterfs_vs_pool _PROTO((char *, int, u_signed64, int *));
 int pool_elements_cmp _PROTO((CONST void *, CONST void *));
+int pool_elements_cmp_simple _PROTO((CONST void *, CONST void *));
 void get_global_stream_count _PROTO((char *, int *, int *));
 char *findpoolname _PROTO((char *));
 int findfs _PROTO((char *, char **, char **));
@@ -231,6 +242,8 @@ signed64 get_put_failed_retenp_raw _PROTO((struct stgcat_entry *));
 int have_at_least_one_stageout_retenp_raw _PROTO(());
 int have_at_least_one_stagealloc_retenp_raw _PROTO(());
 int have_at_least_one_put_failed_retenp_raw _PROTO(());
+void update_last_allocation _PROTO((char *));
+void update_last_pool_allocation _PROTO((char *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -746,6 +759,24 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						nbmigrator_real++;
 						break;
 					}
+				} else if (strcmp (p, "METAPOOL") == 0) {
+					if ((p = strtok (NULL, " \t\n")) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG25, "metapool");	/* name missing */
+						errflg++;
+						goto reply;
+					}
+					if ((int) strlen (p) > CA_MAXPOOLNAMELEN) {
+						sendrep (&rpfd, MSG_ERR, STG27, "metapool", p);
+						errflg++;
+						goto reply;
+					}
+					if (pool_p->metapool[0] != '\0') {
+						/* Yet defined !? */
+						sendrep (&rpfd, MSG_ERR, STG26, "METAPOOL in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					strcpy (pool_p->metapool, p);
 				} else if (strcmp (p, "MIG_START_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						sendrep (&rpfd, MSG_ERR, STG26, "MIG_START_THRESH in pool", pool_p->name);
@@ -906,6 +937,19 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		errflg++;
 		goto reply;
 	}
+
+	/* Verify metapool names - it is not allowed a metapool name matches a pool name */
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (pool_p->metapool[0] != '\0') {
+			if (isvalidpool(pool_p->metapool)) {
+				sendrep (&rpfd, MSG_ERR, STG178, pool_p->name, pool_p->metapool);
+				errflg++;
+				goto reply;
+			}
+		}
+	}
+
+	/* Verify DEFPOOL */
 	if (*defpoolname == '\0') {
 		if (nbpool == 1) {
 			strcpy (defpoolname, pools->name);
@@ -916,38 +960,52 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		}
 	} else {
 		if (! isvalidpool (defpoolname)) {
-			sendrep (&rpfd, MSG_ERR, STG32, defpoolname);
-			errflg++;
-			goto reply;
+			/* We neverthless support a defpoolname that would be a metapool */
+			if (! ismetapool (defpoolname)) {
+				sendrep (&rpfd, MSG_ERR, STG32, defpoolname);
+				errflg++;
+				goto reply;
+			}
 		}
 	}
+
+	/* Verify DEFPOOL_IN */
 	if (*defpoolname_in == '\0') {
 		strcpy (defpoolname_in, defpoolname);
 	} else {
 		if (! isvalidpool (defpoolname_in)) {
-			sendrep (&rpfd, MSG_ERR, STG32, defpoolname_in);
-			errflg++;
-			goto reply;
+			/* We neverthless support a defpoolname_in that would be a metapool */
+			if (! ismetapool (defpoolname_in)) {
+				sendrep (&rpfd, MSG_ERR, STG32, defpoolname_in);
+				errflg++;
+				goto reply;
+			}
 		}
 	}
+
+	/* Verify DEFPOOL_OUT */
 	if (*defpoolname_out == '\0') {
 		strcpy (defpoolname_out, defpoolname);
 	} else {
+		/* Either DEFPOOL_OUT is totally equal to a metapool, either it contains */
+		/* only a list of valid pools */
 		/* We loop all entried separated by the ':' to verify poolnames validity */
-		char savdefpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
-		strcpy(savdefpoolname_out, defpoolname_out);
-		if ((p = strtok(defpoolname_out, ":")) != NULL) {
-			while (1) {
-				if (! isvalidpool (p)) {
-					sendrep (&rpfd, MSG_ERR, STG32, p);
-					errflg++;
-					strcpy(defpoolname_out, savdefpoolname_out);
-					goto reply;
+		if (! ismetapool(defpoolname_out)) {
+			char savdefpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
+			strcpy(savdefpoolname_out, defpoolname_out);
+			if ((p = strtok(defpoolname_out, ":")) != NULL) {
+				while (1) {
+					if (! isvalidpool (p)) {
+						sendrep (&rpfd, MSG_ERR, STG32, p);
+						errflg++;
+						strcpy(defpoolname_out, savdefpoolname_out);
+						goto reply;
+					}
+					if ((p = strtok(NULL, ":")) == NULL) break;
 				}
-				if ((p = strtok(NULL, ":")) == NULL) break;
 			}
+			strcpy(defpoolname_out, savdefpoolname_out);
 		}
-		strcpy(defpoolname_out, savdefpoolname_out);
 	}
 
 	/* Reduce number of migrator in case of pools sharing the same one */
@@ -1079,6 +1137,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			if ((int) strlen (p) >= MAXPATH) {
 				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with pathname too long]", p);
+				errflg++;
+				goto reply;
+			}
+			if ((int) strlen (p) < 0) {
+				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with pathname empty !?]", p);
 				errflg++;
 				goto reply;
 			}
@@ -1392,6 +1455,58 @@ findpoolname(path)
 	return (NULL);
 }
 
+void update_last_allocation(path)
+	char *path;
+{
+	struct pool_element *elemp;
+	int i, j;
+	char *p;
+	struct pool *pool_p;
+	char server[CA_MAXHOSTNAMELEN + 1];
+
+	server[0] = '\0';
+	/* If we find a ":/" set - it is a hostname specification if there is no '/' before */
+	if (((p = strstr (path, ":/")) != NULL) && (strchr(path, '/') > p)) {
+		/* Note that per construction strchr() returns != NULL, because we know there is a '/' */
+		strncpy (server, path, (size_t) (p - path));
+		server[p - path] = '\0';
+	} else {
+		p = NULL;
+	}
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+			if (p) {
+				if (strcmp (server, elemp->server) == 0 &&
+					strncmp (p + 1, elemp->dirpath, strlen (elemp->dirpath)) == 0 &&
+					*(p + 1 + strlen (elemp->dirpath)) == '/') {
+					pool_p->last_allocation = elemp->last_allocation = time(NULL);
+					return;
+				}
+			} else {
+				if (strncmp (path, elemp->dirpath, strlen (elemp->dirpath)) == 0 &&
+					*(path + strlen (elemp->dirpath)) == '/') {
+					pool_p->last_allocation = elemp->last_allocation = time(NULL);
+					return;
+				}
+			}
+		}
+	}
+}
+
+void update_last_pool_allocation(poolname)
+	char *poolname;
+{
+	int i;
+	struct pool *pool_p;
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp(pool_p->name,poolname) == 0) {
+			pool_p->last_allocation = time(NULL);
+			return;
+		}
+	}
+}
+
 int
 findfs(path,found_server,found_dirpath)
 	char *path;
@@ -1625,6 +1740,39 @@ int isvalidpool(poolname)
 	return (i == nbpool ? 0 : 1);
 }
 
+int havemetapool(poolname,metapool)
+	char *poolname;
+	char *metapool;
+{
+	int i;
+	int found = 0;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (0);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp (poolname, pool_p->name) == 0) {
+			if (strcmp (metapool, pool_p->metapool) == 0) {
+				found = 1;
+			}
+			break;
+		}
+	}
+	return (found);
+}
+
+int ismetapool(metapool)
+	char *metapool;
+{
+	int i;
+	struct pool *pool_p;
+	
+	if (nbpool == 0) return (0);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp (metapool, pool_p->metapool) == 0) break;
+	}
+	return (i == nbpool ? 0 : 1);
+}
+
 int max_setretenp(poolname)
 	char *poolname;
 {
@@ -1694,8 +1842,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		stage_util_retenp(pool_p->stageout_retenp,stageout_retenp_timestr);
 		stage_util_retenp(pool_p->stagealloc_retenp,stagealloc_retenp_timestr);
 		stage_util_retenp(pool_p->put_failed_retenp,put_failed_retenp_timestr);
-		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s MINDEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
+		sendrep (rpfd, MSG_OUT, "POOL %s%s%s%s%s DEFSIZE %s MINDEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
 				 pool_p->name,
+				 pool_p->metapool[0] != '\0' ? " METAPOOL " : "",
+				 pool_p->metapool[0] != '\0' ? pool_p->metapool : "",
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
 				 u64tostru(pool_p->defsize,tmpbuf0,0),
@@ -1971,6 +2121,9 @@ selectfs(poolname, size, path, status, noallocation)
 	/* If this is an OUT pool we do qsort() anyway */
 	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
+			/* If pool was automatically selected using bestnextpool_from_metapool() or bestnextpool_out() */
+			/* We signal that this pool was anyway subject to allocation */
+			update_last_pool_allocation(poolname);
 			/* Oups... Tant-pis, return what will provocate the ENOENT */
 			return(-1);
 		} else {
@@ -1994,8 +2147,12 @@ selectfs(poolname, size, path, status, noallocation)
 	}
 
 	/* We can already reply now if we have found NO candidate ! */
-	if (!found)
+	if (!found) {
+		/* If pool was automatically selected using bestnextpool_from_metapool() or bestnextpool_out() */
+		/* We signal that this pool was anyway subject to allocation */
+		update_last_pool_allocation(poolname);
 		return (-1);
+	}
 
 	pool_p->next_pool_elem = i + 1;
 	if (pool_p->next_pool_elem >= pool_p->nbelem) pool_p->next_pool_elem = 0;
@@ -2026,7 +2183,7 @@ selectfs(poolname, size, path, status, noallocation)
 	stglogit ("selectfs", "%s reqsize=%s, elemp->free=%s, pool_p->free=%s\n",
 			  path, u64tostr(reqsize_orig, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
 	/* We udpate known allocation timestamp */
-	elemp->last_allocation = time(NULL);
+	pool_p->last_allocation = elemp->last_allocation = time(NULL);
 	return (1);
 }
 
@@ -2183,10 +2340,19 @@ getdefsize(poolname, size)
 {
 	int i;
 	struct pool *pool_p;
+	int found = 0;
 
-	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-		if (strcmp (poolname, pool_p->name) == 0) break;
-	*size = pool_p->defsize;
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp (poolname, pool_p->name) == 0) {
+			found = 1;
+			break;
+		}
+	}
+	if (found != 0) {
+		*size = pool_p->defsize;
+	} else {
+		*size = 0;
+	}
 }
 
 void
@@ -5474,31 +5640,31 @@ void bestnextpool_out(nextout,mode)
 
 	firstpool_out[0] = '\0';
 	nextpool_out(firstpool_out);
+#ifdef STAGER_DEBUG
+	stglogit(func, "first poolout is %s\n", firstpool_out);
+#endif
 	strcpy(thispool_out, firstpool_out);
 
 	while (1) {
 		strcpy(sav_thispool_out,thispool_out);
 		if ((this_element = betterfs_vs_pool(thispool_out,mode,0,NULL)) == NULL) {
-			/* Oups... Tant-pis, return current pool */
-			if (best_elements != NULL) free(best_elements);
-			strcpy(nextout, thispool_out);
-			return;
+			/* Oups... Tant-pis for that pool */
+			goto nextpool;
 		}
 
 		if (nbest_elements == 0) {
 			if ((this_best_element = best_elements = (struct pool_element_ext *) malloc(sizeof(struct pool_element_ext))) == NULL) {
-				/* Oups... Tant-pis, return current pool */
-				strcpy(nextout, thispool_out);
-				return;
+				/* Oups... Tant-pis for that pool */
+				stglogit(func, STG33, "malloc", strerror(errno));
+				goto nextpool;
 			}
 		} else {
 			struct pool_element_ext *dummy;
 
 			if ((dummy = (struct pool_element_ext *) realloc(best_elements, (nbest_elements + 1) * sizeof(struct pool_element_ext))) == NULL) {
-				/* Oups... Tant-pis, return current pool */
-				free(best_elements);
-				strcpy(nextout, thispool_out);
-				return;
+				/* Oups... Tant-pis for that pool */
+				stglogit(func, STG33, "realloc", strerror(errno));
+				goto nextpool;
 			}
 			best_elements = dummy;
 			this_best_element = best_elements;
@@ -5506,8 +5672,14 @@ void bestnextpool_out(nextout,mode)
 		}
 		this_best_element->free = this_element->free;
 		this_best_element->capacity = this_element->capacity;
-		this_best_element->nbreadaccess = this_element->nbreadaccess;
-		this_best_element->nbwriteaccess = this_element->nbwriteaccess;
+		if (((mode == WRITE_MODE) && (selectfs_rw_with_nb_stream != 0)) ||
+			((mode == READ_MODE ) && (selectfs_ro_with_nb_stream != 0))) {
+			this_best_element->nbreadaccess = this_element->nbreadaccess;
+			this_best_element->nbwriteaccess = this_element->nbwriteaccess;
+		} else {
+			this_best_element->nbreadaccess = 0;
+			this_best_element->nbwriteaccess = 0;
+		}
 		this_best_element->mode = mode;
 		this_best_element->nbreadserver = 0;
 		this_best_element->nbwriteserver = 0;
@@ -5516,28 +5688,368 @@ void bestnextpool_out(nextout,mode)
 		strcpy(this_best_element->server,this_element->server);
 		this_best_element->dirpath[0] = '\0';
 		strcpy(this_best_element->dirpath,this_element->dirpath);
-		this_best_element->last_allocation = this_element->last_allocation;
+		/* To select the best pool we use the global pool last_allocation timestamp */
+		this_best_element->last_allocation = pool_last_allocation(currentpool_out);
+		/* We will use POOL's DEFSIZE to try to get rid of those the ones that are */
+		/* definitely too low on space */
+		getdefsize(currentpool_out,&(this_best_element->defsize));
+#ifdef STAGER_DEBUG
+		if (this_best_element->last_allocation > 0) {
+			stage_util_time(this_best_element->last_allocation,timestr);
+		} else {
+			strcpy(timestr,"<none>");
+		}
+		stglogit(func, "Last allocation of pool %s is %s\n", currentpool_out, timestr);
+#endif
 		nbest_elements++;
 
+	  nextpool:
 		/* Go to the next pool unless round about or same pool returned */
 		nextpool_out(thispool_out);
+#ifdef STAGER_DEBUG
+		stglogit(func, "next poolout is %s\n", thispool_out);
+#endif
 		if ((strcmp(thispool_out, firstpool_out) == 0) || (strcmp(thispool_out, sav_thispool_out) == 0)) {
 			/* stglogit(func, "Turnaround reached at outpool %s\n", thispool_out); */
 			break;
 		}
 	}
 
+	if (nbest_elements <= 0) {
+		/* Nothing !? - So return the first defpool out (there is always one) */
+		firstpool_out[0] = '\0';
+		nextpool_out(firstpool_out);
+#ifdef STAGER_DEBUG
+		stglogit(func, "Nothing... Return first poolout: %s\n", firstpool_out);
+#endif
+		strcpy(nextout, firstpool_out);
+		if (best_elements != NULL) free(best_elements);
+		return;
+	}
+
 	if (nbest_elements > 1) {
 		/* We are doing again the qsort using the best fs v.s. all poolouts */
 
 		/* We fill the global number of streams per server, used in the qsort to optimize server location */
+		/* This time we overwrite last_allocation with the real last allocation per filesystem */
 		for (i = 0, this_best_element = best_elements; i < nbest_elements; i++, this_best_element++) {
-			get_global_stream_count(this_best_element->server, &(this_best_element->nbreadserver), &(this_best_element->nbwriteserver));
+			time_t sav_last_allocation;
+			if (((mode == WRITE_MODE) && (selectfs_rw_with_nb_stream != 0)) ||
+				((mode == READ_MODE ) && (selectfs_ro_with_nb_stream != 0))) {
+				get_global_stream_count(this_best_element->server, &(this_best_element->nbreadserver), &(this_best_element->nbwriteserver));
+			}
+			sav_last_allocation = this_best_element->last_allocation;
+#ifdef STAGER_DEBUG
+			if (this_best_element->last_allocation > 0) {
+				stage_util_time(this_best_element->last_allocation,timestr);
+			} else {
+				strcpy(timestr,"<none>");
+			}
+			stglogit(func, "Last allocation of %s:%s's pool is %s\n", this_best_element->server, this_best_element->dirpath, timestr);
+#endif
+			this_best_element->last_allocation = elemp_last_allocation(this_best_element->server,this_best_element->dirpath);
+#ifdef STAGER_DEBUG
+			if (this_best_element->last_allocation > 0) {
+				stage_util_time(this_best_element->last_allocation,timestr);
+			} else {
+				strcpy(timestr,"<none>");
+			}
+			stglogit(func, "Last allocation of %s:%s itself is %s\n", this_best_element->server, this_best_element->dirpath, timestr);
+#endif
+			if (this_best_element->last_allocation <= 0) {
+				/* That file system was not yet allocated but perhaps its pool was (if yes, it was used in the sort upper) */
+				this_best_element->last_allocation = sav_last_allocation;
+			}
+#ifdef STAGER_DEBUG
+			if (this_best_element->last_allocation > 0) {
+				stage_util_time(this_best_element->last_allocation,timestr);
+			} else {
+				strcpy(timestr,"<none>");
+			}
+			stglogit(func, "Last allocation for qsort of %s:%s setted to %s\n", this_best_element->server, this_best_element->dirpath, timestr);
+#endif
 		}
     
 		/* Sort them */
-		qsort((void *) best_elements, nbest_elements, sizeof(struct pool_element_ext), &pool_elements_cmp);
+		qsort((void *) best_elements, nbest_elements, sizeof(struct pool_element_ext), &pool_elements_cmp_simple);
 
+#ifdef STAGER_DEBUG
+		for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
+			if (this_best_element->last_allocation > 0) {
+				stage_util_time(this_best_element->last_allocation,timestr);
+			} else {
+				strcpy(timestr,"<none>");
+			}
+			stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s (pool)last_allocation=%s\n",
+					 j,
+					 this_best_element->server,
+					 this_best_element->dirpath,
+					 this_best_element->nbreadaccess,
+					 this_best_element->nbwriteaccess,
+					 this_best_element->nbreadserver,
+					 this_best_element->nbwriteserver,
+					 this_best_element->poolmigrating,
+					 u64tostru(this_best_element->free, tmpbuf, 0),
+					 u64tostru(this_best_element->capacity, tmpbuf2, 0),
+					 timestr
+				);
+		}
+#endif
+	} else {
+#ifdef STAGER_DEBUG
+		if (this_best_element->last_allocation > 0) {
+			stage_util_time(this_best_element->last_allocation,timestr);
+		} else {
+			strcpy(timestr,"<none>");
+		}
+		stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s (pool)last_allocation=%s\n",
+				 this_best_element->server,
+				 this_best_element->dirpath,
+				 this_best_element->nbreadaccess,
+				 this_best_element->nbwriteaccess,
+				 this_best_element->nbreadserver,
+				 this_best_element->nbwriteserver,
+				 this_best_element->poolmigrating,
+				 u64tostru(this_best_element->free, tmpbuf, 0),
+				 u64tostru(this_best_element->capacity, tmpbuf2, 0),
+				 timestr
+			);
+#endif
+	}
+
+	/* So we have found here the best next pool */
+	/* We anticipate the coming call to selectfs() with the following trick: */
+	/* - we know that selectfs() takes poolname as first argument and pool_p->next_pool_elem */
+	/* as the fs to start the scanning with */
+	/* We thus ly to pool_p->next_pool_elem, simply */
+
+	/* Grab the result - this is the one on the top of the list */
+	this_best_element = best_elements;
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+			if ((strcmp(this_best_element->server ,elemp->server) == 0) &&
+				(strcmp(this_best_element->dirpath,elemp->dirpath) == 0)) {
+				found_element = elemp;
+				/* Here is the trick */
+				strcpy(nextout, pool_p->name);
+				pool_p->next_pool_elem = j;
+				break;
+			}
+		}
+	}
+
+	if (found_element == NULL) {
+		/* Something fishy has happened ? */
+		stglogit(func, "something fishy happened - using %s\n", thispool_out);
+		strcpy(nextout, thispool_out);
+	} else {
+		if (this_best_element->last_allocation > 0) {
+			stage_util_time(this_best_element->last_allocation,timestr);
+		} else {
+			strcpy(timestr,"<none>");
+		}
+		/*
+		  stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
+		  this_best_element->server,
+		  this_best_element->dirpath,
+		  this_best_element->nbreadaccess,
+		  this_best_element->nbwriteaccess,
+		  this_best_element->nbreadserver,
+		  this_best_element->nbwriteserver,
+		  this_best_element->poolmigrating,
+		  u64tostru(this_best_element->free, tmpbuf, 0),
+		  u64tostru(this_best_element->capacity, tmpbuf2, 0),
+		  timestr
+		  );
+		*/
+	}
+
+	if (best_elements != NULL) free(best_elements);
+}
+
+void nextpool_out(nextout)
+	char *nextout;
+{
+	char *p;
+	int first_time = 0;
+#ifdef STAGER_DEBUG
+	char *func = "nextpool_out";
+#endif
+
+#ifdef STAGER_DEBUG
+	stglogit(func, "Called with argument %s\n", nextout);
+	stglogit(func, "Current pool out is %s\n", currentpool_out);
+#endif
+
+	/* We check if current pool out belongs to the poolout list */
+	if (ispool_out(currentpool_out) != 0) {
+		/* Either very first call, either list of poolout has changed and current poolout from */
+		/* last call does not anymore belong to this list */
+		currentpool_out[0] = '\0';
+#ifdef STAGER_DEBUG
+		stglogit(func, "Changed current pool out to %s\n", currentpool_out);
+#endif
+	}
+
+	if (currentpool_out[0] == '\0') {
+		first_time = 1;
+	  first_nextpool:
+		/* We return the first one in the list up to first possible ':' delimiter */
+		if ((p = strchr(defpoolname_out, ':')) != NULL) {
+			*p = '\0';
+			strcpy(nextout, defpoolname_out);
+			*p = ':';
+		} else {
+			strcpy(nextout, defpoolname_out);
+		}
+		strcpy (currentpool_out, nextout);
+#ifdef STAGER_DEBUG
+		stglogit(func, "[1] Return pool %s\n", nextout);
+#endif
+		return;
+	} else {
+		char *p2;
+
+		/* If current pool is not migrating, we still return it */
+		/*
+		if (ispoolmigrating(currentpool_out) == 0) {
+			strcpy(nextout, currentpool_out);
+#ifdef STAGER_DEBUG
+			stglogit(func, "[2] Return pool %s\n", nextout);
+#endif
+			return;
+		}
+		*/
+#ifdef STAGER_DEBUG
+		stglogit(func, "[3] Searching pool after %s\n", currentpool_out);
+#endif
+		/* We return the next one in the list */
+		if ((p = strstr(defpoolname_out, currentpool_out)) == NULL) {
+			/* Current pool not in the list ? This should not happen because of ispool_out() call before */
+			stglogit("nextpool_out", STG32, currentpool_out);
+			goto first_nextpool;
+		}
+		/* We check if there is another one after */
+		p += strlen(currentpool_out);
+		if (p[0] == '\0') {
+			/* We are the end - we go back to the first one */
+			goto first_nextpool;
+		}
+		if ((p2 = strchr(++p, ':')) != NULL) {
+			/* We are not at the end */
+			*p2 = '\0';
+			strcpy(nextout, p);
+			strcpy (currentpool_out, nextout);
+			*p2 = ':';
+		} else {
+			/* We are at the end... */
+			strcpy(nextout, p);
+			strcpy (currentpool_out, nextout);
+		}
+	}
+#ifdef STAGER_DEBUG
+	stglogit(func, "[2] Return pool %s\n", nextout);
+#endif
+	return;
+}
+
+/* We return with this routine the best stagein pool we could select v.s. migration activity or not */
+/* and v.s. estimated contention */
+/* It is called only when accessing a file in API mode with O_RDONLY and giving a metapool name */
+
+void bestnextpool_from_metapool(metapool,bestpool,mode)
+	char *metapool;
+	char *bestpool;
+	int mode;
+{
+	struct pool_element *this_element;
+	struct pool_element_ext *best_elements = NULL;
+	struct pool_element_ext *this_best_element;
+	struct pool_element *found_element = NULL;
+	int nbest_elements = 0;
+	int i, j;
+	struct pool *pool_p;
+	struct pool_element *elemp;
+	char *func = "bestnextpool_from_metapool";
+#ifdef STAGER_DEBUG
+	char tmpbuf[21];
+	char tmpbuf2[21];
+#endif
+	char timestr[64] ;   /* Time in its ASCII format             */
+
+	/* We fill best_elements[] with the list of filesystems in pools that have metapool in their definition */
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp(pool_p->metapool,metapool) == 0) {
+			struct pool_element *elemp;
+			for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+				if (nbest_elements == 0) {
+					if ((this_best_element = best_elements = (struct pool_element_ext *) malloc(sizeof(struct pool_element_ext))) == NULL) {
+						/* Oups... Tant-pis for that element */
+						stglogit(func, STG33, "malloc", strerror(errno));
+						continue;
+					}
+				} else {
+					struct pool_element_ext *dummy;
+					
+					if ((dummy = (struct pool_element_ext *) realloc(best_elements, (nbest_elements + 1) * sizeof(struct pool_element_ext))) == NULL) {
+						/* Oups... Tant-pis for that element */
+						stglogit(func, STG33, "realloc", strerror(errno));
+						continue;
+					}
+					best_elements = dummy;
+					this_best_element = best_elements;
+					this_best_element += nbest_elements;
+				}
+				this_best_element->free = elemp->free;
+				this_best_element->capacity = elemp->capacity;
+				if (selectfs_ro_with_nb_stream != 0) {
+					this_best_element->nbreadaccess = elemp->nbreadaccess;
+					this_best_element->nbwriteaccess = elemp->nbwriteaccess;
+				} else {
+					this_best_element->nbreadaccess = 0;
+					this_best_element->nbwriteaccess = 0;
+				}
+				this_best_element->mode = mode;
+				this_best_element->nbreadserver = 0;
+				this_best_element->nbwriteserver = 0;
+				this_best_element->poolmigrating = ispoolmigrating(pool_p->name);
+				this_best_element->server[0] = '\0';
+				strcpy(this_best_element->server,elemp->server);
+				this_best_element->dirpath[0] = '\0';
+				strcpy(this_best_element->dirpath,elemp->dirpath);
+				/* To select the best pool we use the global pool last_allocation timestamp */
+				this_best_element->last_allocation = pool_last_allocation(pool_p->name);
+				/* We will use POOL's DEFSIZE to try to get rid of those the ones that are */
+				/* definitely too low on space */
+				getdefsize(currentpool_out,&(this_best_element->defsize));
+				nbest_elements++;
+			}
+		}
+	}
+
+	if (nbest_elements <= 0) {
+		/* Nothing !? - So return the first defpool in (there is always one) */
+		strcpy(bestpool,defpoolname_in);
+#ifdef STAGER_DEBUG
+		stglogit(func, "Nothing... Return first defpoolname_in: %s\n", defpoolname_in);
+#endif
+		if (best_elements != NULL) free(best_elements);
+		return;
+	}
+
+	if (nbest_elements > 1) {
+		/* We are doing a qsort using the best fs v.s. all poolins */
+		
+		/* We fill the global number of streams per server, used in the qsort to optimize server location */
+		for (i = 0, this_best_element = best_elements; i < nbest_elements; i++, this_best_element++) {
+			if (selectfs_ro_with_nb_stream != 0) {
+				get_global_stream_count(this_best_element->server, &(this_best_element->nbreadserver), &(this_best_element->nbwriteserver));
+			}
+		}
+    
+		/* Sort them */
+		qsort((void *) best_elements, nbest_elements, sizeof(struct pool_element_ext), &pool_elements_cmp_simple);
+		
 #ifdef STAGER_DEBUG
 		for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
 			if (this_best_element->last_allocation > 0) {
@@ -5596,7 +6108,7 @@ void bestnextpool_out(nextout,mode)
 				(strcmp(this_best_element->dirpath,elemp->dirpath) == 0)) {
 				found_element = elemp;
 				/* Here is the trick */
-				strcpy(nextout, pool_p->name);
+				strcpy(bestpool, pool_p->name);
 				pool_p->next_pool_elem = j;
 				break;
 			}
@@ -5605,15 +6117,14 @@ void bestnextpool_out(nextout,mode)
 
 	if (found_element == NULL) {
 		/* Something fishy has happened ? */
-		stglogit(func, "something fishy happened - using %s\n", thispool_out);
-		strcpy(nextout, thispool_out);
+		stglogit(func, "something fishy happened - using %s\n", metapool);
 	} else {
 		if (this_best_element->last_allocation > 0) {
 			stage_util_time(this_best_element->last_allocation,timestr);
 		} else {
 			strcpy(timestr,"<none>");
 		}
-		/*
+#ifdef STAGER_DEBUG
 		  stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
 		  this_best_element->server,
 		  this_best_element->dirpath,
@@ -5626,71 +6137,10 @@ void bestnextpool_out(nextout,mode)
 		  u64tostru(this_best_element->capacity, tmpbuf2, 0),
 		  timestr
 		  );
-		*/
+#endif
 	}
 
 	if (best_elements != NULL) free(best_elements);
-}
-
-void nextpool_out(nextout)
-	char *nextout;
-{
-	char *p;
-	int first_time = 0;
-
-	/* We check if current pool out belongs to the poolout list */
-	if (ispool_out(currentpool_out) != 0) {
-		/* Either very first call, either list of poolout has changed and current poolout from */
-		/* last call does not anymore belong to this list */
-		currentpool_out[0] = '\0';
-	}
-
-	if (currentpool_out[0] == '\0') {
-		first_time = 1;
-	  first_nextpool:
-		/* We return the first one in the list up to first possible ':' delimiter */
-		if ((p = strchr(defpoolname_out, ':')) != NULL) {
-			*p = '\0';
-			strcpy(nextout, defpoolname_out);
-			*p = ':';
-		} else {
-			strcpy(nextout, defpoolname_out);
-		}
-		strcpy (currentpool_out, nextout);
-		return;
-	} else {
-		char *p2;
-
-		/* If current pool is not migrating, we still return it */
-		if (ispoolmigrating(currentpool_out) == 0) {
-			strcpy(nextout, currentpool_out);
-			return;
-		}
-		/* We return the next one in the list */
-		if ((p = strstr(defpoolname_out, currentpool_out)) == NULL) {
-			/* Current pool not in the list ? This should not happen because of ispool_out() call before */
-			stglogit("nextpool_out", STG32, currentpool_out);
-			goto first_nextpool;
-		}
-		/* We check if there is another one after */
-		p += strlen(currentpool_out);
-		if (p[0] == '\0') {
-			/* We are the end - we go back to the first one */
-			goto first_nextpool;
-		}
-		if ((p2 = strchr(++p, ':')) != NULL) {
-			/* We are not at the end */
-			*p2 = '\0';
-			strcpy(nextout, p);
-			strcpy (currentpool_out, nextout);
-			*p2 = ':';
-		} else {
-			/* We are at the end... */
-			strcpy(nextout, p);
-			strcpy (currentpool_out, nextout);
-		}
-	}
-	return;
 }
 
 int ispoolmigrating(poolname)
@@ -5712,6 +6162,61 @@ int ispoolmigrating(poolname)
 	} else {
 		return(0);
 	}
+}
+
+time_t pool_last_allocation(poolname)
+	char *poolname;
+{
+	int i;
+	struct pool *pool_p;
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (strcmp (poolname, pool_p->name) == 0) {
+			return(pool_p->last_allocation);
+		}
+	}
+  
+	return((time_t) 0);
+}
+
+time_t server_last_allocation(server)
+	char *server;
+{
+	int i, j;
+	struct pool *pool_p;
+	struct pool_element *elemp;
+	time_t result = 0;
+	
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+			if (strcmp(elemp->server, server) == 0 &&
+				elemp->last_allocation > result) {
+				result = elemp->last_allocation;
+			}
+		}
+	}
+  
+	return(result);
+}
+
+time_t elemp_last_allocation(server,dirpath)
+	char *server;
+	char *dirpath;
+{
+	int i, j;
+	struct pool *pool_p;
+	struct pool_element *elemp;
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+			if (strcmp(elemp->server, server) == 0 &&
+				strcmp(elemp->dirpath,dirpath)) {
+				return(elemp->last_allocation);
+			}
+		}
+	}
+  
+	return((time_t) 0);
 }
 
 /* mode is READ_MODE for reading, WRITE_MODE for writing, if req_size is specified (like in a selectfs() retry) */
@@ -5759,8 +6264,14 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
 
 	for (i = 0; i < pool_p->nbelem; i++) {
 		elements[i].free = pool_p->elemp[i].free;
-		elements[i].nbreadaccess = pool_p->elemp[i].nbreadaccess;
-		elements[i].nbwriteaccess = pool_p->elemp[i].nbwriteaccess;
+		if (((mode == WRITE_MODE) && (selectfs_rw_with_nb_stream != 0)) ||
+			((mode == READ_MODE ) && (selectfs_ro_with_nb_stream != 0))) {
+			elements[i].nbreadaccess = pool_p->elemp[i].nbreadaccess;
+			elements[i].nbwriteaccess = pool_p->elemp[i].nbwriteaccess;
+		} else {
+			elements[i].nbreadaccess = 0;
+			elements[i].nbwriteaccess = 0;
+		}
 		elements[i].mode = mode;
 		elements[i].nbreadserver = 0;
 		elements[i].nbwriteserver = 0;
@@ -5768,11 +6279,15 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
 		strcpy(elements[i].server,pool_p->elemp[i].server);
 		strcpy(elements[i].dirpath,pool_p->elemp[i].dirpath);
 		elements[i].last_allocation = pool_p->elemp[i].last_allocation;
+		elements[i].server_last_allocation = server_last_allocation(pool_p->elemp[i].server);
 	}
 
 	/* We fill the global number of streams per server, used in the qsort to optimize server location */
 	for (i = 0; i < pool_p->nbelem; i++) {
-		get_global_stream_count(elements[i].server, &(elements[i].nbreadserver), &(elements[i].nbwriteserver));
+		if (((mode == WRITE_MODE) && (selectfs_rw_with_nb_stream != 0)) ||
+			((mode == READ_MODE ) && (selectfs_ro_with_nb_stream != 0))) {
+			get_global_stream_count(elements[i].server, &(elements[i].nbreadserver), &(elements[i].nbwriteserver));
+		}
 	}
     
 	/* Sort them */
@@ -5880,6 +6395,9 @@ int pool_elements_cmp(p1,p2)
 {
 	struct pool_element_ext *fp1 = (struct pool_element_ext *) p1;
 	struct pool_element_ext *fp2 = (struct pool_element_ext *) p2;
+#ifdef STAGER_DEBUG
+	char *func = "pool_elements_cmp";
+#endif
 
 	/* Versus mode, we first compare nbreadaccess and nbwriteaccess */
 	/* We sort with reverse order v.s. size */
@@ -5895,31 +6413,54 @@ int pool_elements_cmp(p1,p2)
 		}
 	}
 
+	/* Note: fp1->mode is always equal to fp2->mode per construction */
+
 	if ((strcmp(fp1->server,fp2->server) == 0) ||
-		((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver))) {
+		((fp1->mode == WRITE_MODE) && (selectfs_rw_with_nb_stream != 0) && (fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver)) ||
+		((fp1->mode == READ_MODE)  && (selectfs_ro_with_nb_stream != 0) && (fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver))
+		) {
 
 		if (fp1->mode == WRITE_MODE) {
 
 			/* Write mode */
 
+			/* If selectfs_rw_with_nb_stream is disabled we go here only if machine is the same */
+			/* And per def fp1->nbreadaccess = fp2->nbreadaccess = fp1->nbwriteaccess = fp2->nbwriteaccess = 0 */
+			/* So will will always do comparison v.s. last_alloc and then v.s. free space */
+			
 			if (fp1->nbreadaccess == fp2->nbreadaccess) {
 
 				if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
 
-				  pool_elements_cmp_vs_free:
+				  pool_elements_cmp_vs_alloc:
 					
-					/* We compare v.s. free space */
-					if (fp1->free > fp2->free) {
+					/* We compare last known allocation timestamp */
+					if (fp1->last_allocation < fp2->last_allocation) {
+						/* filesystem (or its pool) fp1 had a successful space allocation that is older */
+						/* than filesystem (or its pool) fp2 */
 						return(-1);
-					} else if (fp1->free < fp2->free) {
+					} else if (fp1->last_allocation > fp2->last_allocation) {
 						return(1);
 					} else {
 						/* Low probability ... */
-						/* We compare last known allocation timestamp */
-						if (fp1->last_allocation < fp2->last_allocation) {
-							/* filesystem fp1 had a successful space allocation that is older than filesystem fp2 */
+#ifdef STAGER_DEBUG
+						{
+							char tmpbuf1[21];
+							char tmpbuf2[21];
+							stglogit(func,"cmp free space of (%s:%s v.s. %s:%s) : (%s v.s. %s)\n",
+									 fp1->server,
+									 fp1->dirpath,
+									 fp2->server,
+									 fp2->dirpath,
+									 u64tostr(fp1->free, tmpbuf1, 0),
+									 u64tostr(fp2->free, tmpbuf2, 0)
+								);
+						}
+#endif
+						/* We compare v.s. free space */
+						if (fp1->free > fp2->free) {
 							return(-1);
-						} else if (fp1->last_allocation > fp2->last_allocation) {
+						} else if (fp1->free < fp2->free) {
 							return(1);
 						} else {
 							return(0);
@@ -5940,7 +6481,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbwriteaccess + fp1->nbreadaccess) == (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
-					goto pool_elements_cmp_vs_free;
+					goto pool_elements_cmp_vs_alloc;
 
 				} else if ((fp1->nbwriteaccess + fp1->nbreadaccess) < (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
@@ -5957,11 +6498,15 @@ int pool_elements_cmp(p1,p2)
 
 			/* Read mode */
 
+			/* If selectfs_ro_with_nb_stream is disabled we go here only if machine is the same */
+			/* And per def fp1->nbreadaccess = fp2->nbreadaccess = fp1->nbwriteaccess = fp2->nbwriteaccess = 0 */
+			/* Se will will always do comparison v.s. last_alloc and then v.s. free space */
+			
 			if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
 
 				if (fp1->nbreadaccess == fp2->nbreadaccess) {
 
-					goto pool_elements_cmp_vs_free;
+					goto pool_elements_cmp_vs_alloc;
 
 				} else {
 
@@ -5977,7 +6522,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbreadaccess + fp1->nbwriteaccess) == (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
-					goto pool_elements_cmp_vs_free;
+					goto pool_elements_cmp_vs_alloc;
 
 				} else if ((fp1->nbreadaccess + fp1->nbwriteaccess) < (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
@@ -5998,7 +6543,38 @@ int pool_elements_cmp(p1,p2)
 
 		if ((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver)) {
       
-			goto pool_elements_cmp_vs_free;
+			/* We compare last known server allocation timestamp */
+			if (fp1->server_last_allocation < fp2->server_last_allocation) {
+				/* filesystem (or its pool) fp1 had a successful space allocation that is older */
+				/* than filesystem (or its pool) fp2 */
+				return(-1);
+			} else if (fp1->server_last_allocation > fp2->server_last_allocation) {
+				return(1);
+			} else {
+				/* Low probability ... */
+#ifdef STAGER_DEBUG
+				{
+					char tmpbuf1[21];
+					char tmpbuf2[21];
+					stglogit(func,"cmp free space of (%s:%s v.s. %s:%s) : (%s v.s. %s)\n",
+							 fp1->server,
+							 fp1->dirpath,
+							 fp2->server,
+							 fp2->dirpath,
+							 u64tostr(fp1->free, tmpbuf1, 0),
+							 u64tostr(fp2->free, tmpbuf2, 0)
+						);
+				}
+#endif
+				/* We compare v.s. free space */
+				if (fp1->free > fp2->free) {
+					return(-1);
+				} else if (fp1->free < fp2->free) {
+					return(1);
+				} else {
+					return(0);
+				}
+			}
       
 		} else if ((fp1->nbreadserver + fp1->nbwriteserver) < (fp2->nbreadserver + fp2->nbwriteserver)) {
       
@@ -6011,6 +6587,46 @@ int pool_elements_cmp(p1,p2)
 
 	}
 
+}
+
+/* Version of pool_elements_cmp based only on last allocation to promote load-balancing between pools */
+int pool_elements_cmp_simple(p1,p2)
+	CONST void *p1;
+	CONST void *p2;
+{
+	struct pool_element_ext *fp1 = (struct pool_element_ext *) p1;
+	struct pool_element_ext *fp2 = (struct pool_element_ext *) p2;
+
+	/* Versus mode, we first compare nbreadaccess and nbwriteaccess */
+	/* We sort with reverse order v.s. size */
+	/* mode is READ_MODE for reading, WRITE_MODE for writing */
+	/* Note that by construction all the elements shares the same mode in the qsort() */
+
+	if ((fp1->free > fp1->defsize) && (fp2->free > fp2->defsize)) {
+		/* Both have more space than their defsize */
+		/* We compare last known allocation timestamp */
+	  pool_elements_cmp_simple_vs_alloc:
+		if (fp1->last_allocation < fp2->last_allocation) {
+			/* filesystem (or its pool) fp1 had a successful space allocation that is older */
+			/* than filesystem (or its pool) fp2 */
+			return(-1);
+		} else if (fp1->last_allocation > fp2->last_allocation) {
+			return(1);
+		} else {
+			return(0);
+		}
+	} else {
+		/* One at least have a problem of space: we select the one that have the more space */
+		if (fp1->free > fp2->free) {
+			return(-1);
+		} else if (fp1->free < fp2->free) {
+			return(1);
+		} else {
+			/* Low probability ... */
+			/* We go back comparing last known allocation timestamp... */
+			goto pool_elements_cmp_simple_vs_alloc;
+		}
+	}
 }
 
 void get_global_stream_count(server,nbreadserver,nbwriteserver)
