@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 17:06:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 16:33:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -748,17 +748,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     else
         rtcp_log(LOG_INFO,"cptpdsk request by %s (%d,%d) from %s\n",
                  pwd->pw_name,client->uid,client->gid,client->clienthost);
-    /*
-     * Check the request and set defaults
-     */
-    rc = rtcp_CheckReq(client_socket,tape);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_CheckReq(): %s\n",
-            sstrerror(serrno));
-        (void)rtcpd_Deassign(client->VolReqID,&tapereq);
-        rtcpd_FreeResources(&client_socket,&client,&tape);
-        return(-1);
-    }
+
     cmd = rtcp_cmds[tapereq.mode];
             
     /*
@@ -781,7 +771,18 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         return(-1);
     }
 #endif /* _WIN32 */
-        
+    /*
+     * Check the request and set defaults
+     */
+    rc = rtcp_CheckReq(client_socket,tape);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_CheckReq(): %s\n",
+            sstrerror(serrno));
+        (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        rtcpd_FreeResources(&client_socket,&client,&tape);
+        return(-1);
+    }
+
     /*
      * Allocate the buffers
      */
