@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.175 2002/02/20 15:56:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.176 2002/02/27 16:02:00 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.175 $ $Date: 2002/02/20 15:56:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.176 $ $Date: 2002/02/27 16:02:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3676,7 +3676,7 @@ void stgdaemon_usage() {
 				 "  where options can be\n"
 				 "  -f      Foreground\n"
 				 "  -h      This help\n"
-				 "  -L <%d> Listen backlog\n"
+				 "  -L <%%d> Listen backlog\n"
 				 "\n"
 				 );
 }
