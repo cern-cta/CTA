@@ -1,4 +1,4 @@
-.\" $Id: Cgetopt.man,v 1.1 2000/02/28 12:51:52 jdurand Exp $
+.\" $Id: Cgetopt.man,v 1.2 2000/10/05 06:59:41 jdurand Exp $
 .\"
 .\"	$NetBSD: getopt_long.3,v 1.1 1999/07/23 03:55:27 mcr Exp $
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.TH CGETOPT_LONG "3" "$Date: 2000/02/28 12:51:52 $" "CASTOR" "Common Library"
+.TH CGETOPT_LONG "3" "$Date: 2000/10/05 06:59:41 $" "CASTOR" "Common Library"
 .SH NAME
 Cgetopt_long - get long options from command line argument list
 .SH SYNOPSIS
@@ -50,8 +50,7 @@ The
 .B Cgetopt
 function incrementally parses a command line argument list
 .BI argv
-and returns the next known option character.
-An option character is known if it has been specified in the string of accepted option characters,
+and returns the next known option character. An option character is known if it has been specified in the string of accepted option characters,
 .BI optstring .
 .P
 The 
@@ -60,16 +59,13 @@ function is similar to
 .B Cgetopt
 but it accepts options in two forms: words and characters. The
 .B Cgetopt_long
-function provides a superset of of the functionality of 
+function provides a superset of the functionality of 
 .B Cgetopt
 The additional functionality is described in the section CGETOPT_LONG.
 .P
 The option string
 .BI optstring
-may contain the following elements: individual characters, and
-characters followed by a colon to indicate an option argument
-is to follow.
-For example, an option string
+may contain the following elements: individual characters, and characters followed by a colon to indicate an option argument is to follow. For example, an option string
 .B x
 recognizes an option
 .B x ,
@@ -84,13 +80,11 @@ if a following argument has leading white space.
 On return from
 .BI Cgetopt ,
 .BI Coptarg
-points to an option argument, if it is anticipated,
-and the variable
+points to an option argument, if it is anticipated, and the variable
 .BI Coptind
 contains the index to the next
 .BI argv
-argument for a subsequent call
-to
+argument for a subsequent call to
 .B Cgetopt .
 The variable
 .BI Coptopt
@@ -110,9 +104,7 @@ in order to skip over more or less argv entries.
 .P
 In order to use
 .B Cgetopt
-to evaluate multiple sets of arguments, or to evaluate a single set of
-arguments multiple times,
-the variable
+to evaluate multiple sets of arguments, or to evaluate a single set of arguments multiple times, the variable
 .BI Coptreset
 must be set to 1 before the second and each additional set of calls to
 .B Cgetopt ,
@@ -123,13 +115,11 @@ must be reinitialized.
 The
 .B Cgetopt
 function returns -1 when the argument list is exhausted, or a non-recognized option is encountered.
-The interpretation of options in the argument list may be cancelled
-by the option
+The interpretation of options in the argument list may be cancelled by the option
 .B --
 (double dash) which causes
 .B Cgetopt
-to signal the end of argument processing and returns -1.
-When all options have been processed (i.e., up to the first non-option argument),
+to signal the end of argument processing and returns -1. When all options have been processed (i.e., up to the first non-option argument),
 .B Cgetopt
 returns -1.
 .S CGETOPT_LONG
@@ -394,7 +384,6 @@ while ((c = Cgetopt(argc, argv, "0123456789")) != -1)
 .P
 The 
 .BI OPTIONAL_ARGUMENT
-always eats the following argument unless the argument is included via
-the 
+always eats the following argument unless the argument is included via the 
 .B --option=argument 
 notation.
