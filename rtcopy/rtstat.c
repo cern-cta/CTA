@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.8 $ $Date: 2001/02/28 13:40:18 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.9 $ $Date: 2001/06/22 05:15:52 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -31,7 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.8 $ $Date: 2001/
 #if defined(VDQM)
 #include <vdqm_api.h>
 #endif /* VDQM */
-#include <rfio.h>
+#include <rfio_api.h>
 #include <sys/times.h>
 
 #define SACCT_BUFLEN 4096
