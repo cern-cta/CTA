@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.22 2000/05/23 09:13:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.23 2000/05/23 10:40:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.22 $ $Date: 2000/05/23 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.23 $ $Date: 2000/05/23 10:40:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1437,7 +1437,6 @@ int migpoolfiles(migr_p)
         break;
       }
       if (child_pid > 0) {
-        stglogit("migpoolfile","Migration child pid %d stopped or exited\n", child_pid); 
         if (WIFEXITED(term_status)) {
           stglogit("migpoolfiles","Migration child pid %d exited or returned from main with a status of %d\n",
                    child_pid, WEXITSTATUS(term_status));
