@@ -1,0 +1,60 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_INFO l "%G%"
+.SH NAME
+Ctape_info \- get tape file information from header labels and mount requests;
+get also information about the tape drive used.
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_info (char *" path ,
+.BI "int *" blksize ,
+.BI "unsigned int *" blockid ,
+.BI "char *" density ,
+.BI "char *" devtype ,
+.BI "char *" drive ,
+.BI "char *" fid ,
+.BI "int *" fseq ,
+.BI "int *" lrecl ,
+.BI "char *" recfm );
+.SH DESCRIPTION
+.B Ctape_info
+gets the main characteristics of a tape file.
+If a labelled tape is read and options are not set on the
+.B Ctape_position
+call, values are taken from the header labels.
+The file id is of course only available for labelled tapes.
+This command retieves also the name and the type of the drive where the tape is
+currently mounted and the density used (if known).
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which be used by the application program in the
+.B open
+statement. This path should have been created by Ctape_mount and used by
+Ctape_position.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B ETDNP
+Tape daemon is not running.

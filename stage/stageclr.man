@@ -1,0 +1,159 @@
+.\" @(#)stageclr.man	1.7 09/07/98 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1997 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGECLR l "09/07/98"
+.SH NAME
+stageclr \- remove staged files
+.SH SYNOPSIS
+.B stageclr
+[
+.BI -c
+] [
+.BI -h " host"
+] [
+.BI -l " label_type"
+] [
+.BI -m " minfree"
+] [
+.BI -p " pool"
+] [
+.BI -q " file_sequence_number"
+]
+.BI -V " visual_identifier(s)"
+.br
+.B stageclr
+[
+.BI -c
+] [
+.BI -h " host"
+] [
+.BI -m " minfree"
+] [
+.BI -p " pool"
+]
+.BI -I " external_filename"
+.br
+.B stageclr
+[
+.BI -c
+] [
+.BI -h " host"
+] [
+.BI -m " minfree"
+] [
+.BI -p " pool"
+] [
+.BI -remove_from_hsm
+]
+.BI -M " hsmfile"
+.br
+.B stageclr
+[
+.BI -c
+] [
+.BI -h " host"
+] [
+.BI -m " minfree"
+]
+.BI -P " pathname"
+.br
+.B stageclr
+[
+.BI -c
+] [
+.BI -h " host"
+] [
+.BI -m " minfree"
+]
+.BI -i
+.br
+.B stageclr
+[
+.BI -h " host"
+]
+.BI -L " link_name"
+.SH DESCRIPTION
+.B stageclr
+removes staged files from disk if the requestor is in the same group as the
+user who created the disk file.
+.SH OPTIONS
+.TP
+.BI \-c
+conditional clear. If this option is specified the remove operation is done
+only if the free space in the pool is lower than a minimum.
+This minimum may be specified thru the option
+.BR \-m .
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " external_filename"
+clears in the catalog the entry corresponding to this external disk file and
+remove the staged file from the pool.
+.TP
+.BI \-i
+the list of pathnames to be removed is read from
+.IR stdin .
+If the operation fails on a path,
+.B stageclr
+continues with the next path in the list and the global exit code corresponds
+to the first failure.
+.TP
+.BI \-L " link_name"
+gives the pathname of the user link to be removed. The data file is not
+removed.
+.TP
+.BI \-l " label_type"
+Label type:
+.BR al ,
+.BR nl ,
+.B sl
+or
+.BR blp .
+.TP
+.BI \-M " hsmfile"
+clears in the stager catalog the entry corresponding to this HSM file and
+remove the staged file from the pool, but it does not remove the file from
+the Hierarchical Storage Management System.
+This operation should be explicitely requested with the option
+.BR -remove_from_hsm .
+.TP
+.BI \-m " minfree"
+specifies the minimum free space to be available in the pool.
+This is a percentage.
+For example,
+.B -m 10
+corresponds to 10% of free space.
+The default minfree value is taken from the configuration file
+.B /etc/STGCONFIG.
+.TP
+.BI \-P " pathname"
+gives the path name of the file to be purged,
+either full internal name or user link name.
+.TP
+.BI \-p " poolname"
+restricts the action to a given pool.
+.TP
+.BI \-q " file_sequence_number(s)"
+Multiple file numbers may be separated by commas or specified as a range
+using the dash as separator.
+.TP
+.BI \-remove_from_hsm
+to remove the file from the Hierarchical Storage Management System as well.
+.TP
+.BI \-V " vid(s)"
+restricts the search to files corresponding to given vids.
+Multiple vids will be separated by colons.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.

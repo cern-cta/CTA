@@ -1,0 +1,67 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_STATUS l "%G%"
+.SH NAME
+Ctape_status \- get the status of all tape drives
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_status (char *" host ,
+.BI "struct drv_status *" drv_status ,
+.BI "int " nbentries );
+.SH DESCRIPTION
+.B Ctape_status
+gets the status of all tape drives on a given server.
+.TP
+.I nbentries
+gives the number of elements in the array of structures
+.I drv_status
+allocated by the calling program to receive the reply.
+.PP
+.nf
+.cs R 18
+struct drv_status {             /* tape status reply entry */
+        uid_t   uid;
+        int     jid;            /* process-group-id */
+        char    dgn[CA_MAXDGNLEN+1];    /* device group name */
+        int     status;         /* drive status: down = 0, up = 1 */
+        int     asn;            /* assign flag: assigned = 1 */
+        time_t  asn_time;       /* timestamp of drive assignment */
+        char    drive[CA_MAXUNMLEN+1];  /* drive name */
+        int     mode;           /* WRITE_DISABLE or WRITE_ENABLE */
+        char    lbltype[4];     /* label type: al, nl, sl or blp */
+        int     tobemounted;    /* 1 means tape to be mounted */
+        char    vid[CA_MAXVIDLEN+1];
+        char    vsn[CA_MAXVIDLEN+1];
+        int     cfseq;          /* current file sequence number */
+};
+.cs R
+.fi
+.SH RETURN VALUE
+This routine returns the number of entries if the operation was successful
+or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SEUBUF2SMALL
+User buffer too small.
+.TP
+.B ETDNP
+Tape daemon is not running.

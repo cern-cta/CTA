@@ -1,0 +1,198 @@
+
+
+
+STAGESTAT(l)      Misc. Reference Manual Pages       STAGESTAT(l)
+
+
+
+NNNNAAAAMMMMEEEE
+     stagestat - gives global  statistics  on  stager  usage  and
+     detailed statistics on each file staged in
+
+SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+     ssssttttaaaaggggeeeessssttttaaaatttt [ ----eeee _e_n_d__t_i_m_e  ]  [  ----ffff  _a_c_c_o_u_n_t_i_n_g__f_i_l_e  ]  [  ----pppp
+     _p_o_o_l__n_a_m_e ] [ ----SSSS _s_o_r_t_i_n_g__c_r_i_t_e_r_i_a ] [ ----ssss _s_t_a_r_t__t_i_m_e ]
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     ssssttttaaaaggggeeeessssttttaaaatttt obtains information on the usage of  a  stager  by
+     reading the ssssaaaacccccccctttt accounting file.  The information is given
+     in tabular form in two sections.
+
+     The first section gives global statistics  for  the  stager,
+     which  consists of details on each stage command such as the
+     number of requests, number of successful requests,  warnings
+     and  errors.  Also the number of mounts, remounts, multifile
+     requests and mounts avoided by the stager.
+
+     The second section gives file details by pool name,  includ-
+     ing  average lifetime per file and per group if garbage col-
+     lected, and average number of  accesses  per  file  and  per
+     group.
+
+OOOOPPPPTTTTIIIIOOOONNNNSSSS
+     ----eeee _e_n_d__t_i_m_e
+          The date and time up to  which  information  should  be
+          collated.   If not specified the default is the time of
+          the last record in the accounting file.  The format for
+          date input is mmmmmmmmddddddddhhhhhhhhmmmmmmmmyyyyyyyy
+
+     ----ffff _a_c_c_o_u_n_t_i_n_g__f_i_l_e
+          The file from which information is to be read.  If  not
+          specified the default is the current ssssaaaacccccccctttt file
+
+     ----pppp _p_o_o_l__n_a_m_e
+          The name of the particular pool on which information is
+          required.  If not specified information is given on all
+          pools in the accounting file, but no file  details  are
+          displayed
+
+     ----SSSS _s_o_r_t__c_r_i_t_e_r_i_a
+          To obtain file details this option must be used
+          aaaa - will give the file  details  sorted  by  number  of
+          accesses
+          tttt - will give the file details sorted by average  life-
+          time.   If  tttt  is  specified  only  files staged in and
+          cleared within the time period will be displayed
+
+     ----ssss _s_t_a_r_t__t_i_m_e
+          The date and time from which to begin collating  infor-
+          mation.   If  not  specified the default is the time of
+
+
+
+SunOS 5.5.1           Last change: 04/01/96                     1
+
+
+
+
+
+
+STAGESTAT(l)      Misc. Reference Manual Pages       STAGESTAT(l)
+
+
+
+          the first record in the accounting  file.   Format  for
+          date input is mmmmmmmmddddddddhhhhhhhhmmmmmmmmyyyyyyyy
+
+EEEEXXXXAAAAMMMMPPPPLLLLEEEESSSS
+     To get information on pool atlas_stage  sorted  by  lifetime
+     type the following command :
+
+     ssssttttaaaaggggeeeessssttttaaaatttt ----pppp aaaattttllllaaaassss____ssssttttaaaaggggeeee ----SSSS tttt
+
+     Your results will be displayed in the following format :
+
+             shd20 Stager statistics (26/02/96 16:30:47  -  03/03/96 23:43:14)
+
+     Command      No Reqs Success Warning Userr Syserr Unerr Conferr ENOSPC Cleared Kill Other
+
+     stagein       787     767       3     3      0     0       0      1       0   14     0
+     stageout       18      18       0     0      0     0       0      0       0    0     0
+     stagewrt        5       5       0     0      0     0       0      0       0    0     0
+     stageput        9       8       0     1      0     0       0      0       0    0     0
+     stagealloc    118     103       0     0      1     0       0     13       0    1     0
+     stageqry     1170
+
+     stageclr     1497
+     stageupdc     247
+     stageinit       1
+     stagecat        0
+     restart(s       1
+
+     Stagein Statistics :
+             Number of mounts                        223
+             Number of remounts                      30
+             Number of mounts avoided by stager      544
+             Number of multifile requests             0
+
+
+     File Request Details for Pool : atlas_stage
+
+     Number of requests started before time period began                     40
+     Out of these:   Number accessed before being cleared                    23
+                     Number accessed but not cleared during time period      17
+
+     Number of requests started after beginning of time period               177
+     Out of these:   Number accessed but not cleared                         108
+                     Number accessed and then cleared                        69
+
+     Average number of file accesses         :            3.47
+     Average lifetime of a staged file       :          101.76
+
+
+     Lifetime and accesses per file sorted by Average Lifetime
+
+     Tape VID     Fseq    Avg Life   Number    Login Name    Group
+
+
+
+SunOS 5.5.1           Last change: 04/01/96                     2
+
+
+
+
+
+
+STAGESTAT(l)      Misc. Reference Manual Pages       STAGESTAT(l)
+
+
+
+                             (hrs)  Accesses
+       I06486        1      141.16         5       fredbg       zp
+       I06484        1      140.68         5       fredbg       zp
+       I06482        1      140.35         5       fredbg       zp
+       LW1032        2      120.24         1        tdhar       zp
+       LE9398        1      116.25         2      sprman2       zp
+       LE9398        3      115.02         2      sprman2       zp
+       LH2072        1      114.54         8      donaldu       zp
+       I09289       10      105.47         1        tdhar       zp
+       LH2075        1       97.19         8      donaldu       zp
+       I06471        1       94.67         2       fredbg       zp
+       I09295       12       85.57         2     selwynnf       zp
+
+
+RRRREEEETTTTUUUURRRRNNNN CCCCOOOODDDDEEEESSSS
+     0    Ok.
+     1    User error.
+     2    System error.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SunOS 5.5.1           Last change: 04/01/96                     3
+
+
+

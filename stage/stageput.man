@@ -1,0 +1,123 @@
+.\" @(#)stageput.man	1.7 09/08/98 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1998 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEPUT l "09/08/98"
+.SH NAME
+stageput \- copy disk files to tape, to an external disk file or to a
+Hierarchical Storage Management System.
+.SH SYNOPSIS
+.B stageput
+[
+.BI -G
+] [
+.BI -h " host"
+] [
+.BI -U " fun"
+] [
+.I files
+]
+.LP
+.B stageput
+[
+.BI -G
+] [
+.BI -h " host"
+] [
+.BI -q " file_sequence_number(s)"
+]
+.BI -V " visual_identifier"
+.LP
+.B stageput
+[
+.BI -G
+] [
+.BI -h " host"
+] [
+.BI -I " external_filename"
+]
+.LP
+.B stageput
+[
+.BI -G
+] [
+.BI -h " host"
+] [
+.BI -M " hsmfile"
+]
+.SH DESCRIPTION
+.B stageput
+copies disk files to tape, to an external disk file or to a
+Hierarchical Storage Management System. It can only be used after a
+.B stageout
+command. The
+.I file
+parameter must match the one used on
+.BR stageout .
+The file must be in state STAGEOUT or PUT_FAILED.
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.SH OPTIONS
+.TP
+.BI \-G
+Specifies that the tape copy operations should be issued on the tape server by
+the 'group user'. A 'group user' may be defined for each group in
+.B /etc/shift.conf.
+.br
+For example:
+.br
+	GRPUSER ws     opalprod
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " external_filename"
+Gives the name of an external disk file. In this case,
+.B rfcp
+is used to copy the file from the staging pool to that external file.
+.TP
+.BI \-M " hsmfile"
+Gives the name of a Hierarchical Storage Manager (HSM) file. In this case,
+.B rfcp
+is used to copy the file from the staging pool to that HSM file.
+.TP
+.BI \-q " file_sequence_number(s)"
+restricts the copy to files having the given sequence numbers.
+Multiple file numbers may be specified as a range using the dash as separator.
+.TP
+.BI \-U " fun"
+Fortran unit number.
+This is internally converted to a local path
+.BI ftn fun
+(HP-UX) or
+.BI fort. fun
+(all other platforms).
+The
+.B \-U
+option and the
+.I file
+parameter are mutually exclusive but one of them must be present
+if the first command format is used.
+.TP
+.BI \-V " vid"
+copy the files corresponding to the given vid.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.
+.br
+28	ENOSPC: tape volume overflow.
+.br
+192	Request cancelled by stageclr.
+.br
+197	Stageing limited by size.

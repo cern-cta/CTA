@@ -1,0 +1,325 @@
+.\" @(#)stageqry.man	1.14 09/07/98 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1998 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEQRY l "09/07/98"
+.SH NAME
+stageqry \- give the status of all staged tapes
+.SH SYNOPSIS
+.B stageqry
+[
+.BI -a
+] [
+.BI -h " host"
+] [
+.BI -L
+] [
+.BI -l
+] [
+.BI -P
+] [
+.BI -p " pool"
+] [
+.BI -q " file_sequence_number(s)"
+] [
+.BI -S
+] [
+.BI -T
+] [
+.BI -u
+] [
+.BI -V " visual_identifier(s)"
+] [
+.BI -x
+]
+.LP
+.B stageqry
+[
+.BI -a
+] [
+.BI -f
+] [
+.BI -h " host"
+] [
+.BI -I " external_filename"
+] [
+.BI -L
+] [
+.BI -l
+] [
+.BI -P
+] [
+.BI -p " pool"
+] [
+.BI -S
+] [
+.BI -u
+] [
+.BI -x
+]
+.LP
+.B stageqry
+[
+.BI -a
+] [
+.BI -f
+] [
+.BI -h " host"
+] [
+.BI -L
+] [
+.BI -l
+] [
+.BI -M " hsmfile | pattern"
+] [
+.BI -P
+] [
+.BI -p " pool"
+] [
+.BI -S
+] [
+.BI -u
+] [
+.BI -x
+]
+.LP
+.B stageqry
+[
+.BI -A " pattern"
+] [
+.BI -a
+] [
+.BI -f
+] [
+.BI -h " host"
+] [
+.BI -L
+] [
+.BI -l
+] [
+.BI -P
+] [
+.BI -p " pool"
+] [
+.BI -S
+] [
+.BI -u
+] [
+.BI -x
+]
+.LP
+.B stageqry
+[
+.BI -h " host"
+] [
+.BI -p " pool"
+] [
+.BI -s
+]
+.SH DESCRIPTION
+.B stageqry
+gives the status of all tapes which are staged or currently requested
+in tabular form:
+.HP
+Vid	visual identifier.
+.HP
+Fseq	file sequence number.
+.HP
+Lbl	label type:
+.BR al ,
+.BR nl ,
+.B sl
+or
+.BR blp .
+.HP
+Recfm	record format:
+.BR F ,
+.B FB
+or
+.BR U .
+.TP
+Lrecl	logical record length.
+.HP
+Blksiz	maximum block size.
+.HP
+State	current status:
+.RS
+STAGEALLOC	space has been reserved with stagealloc
+.TP
+STAGEIN	currently reading from tape to disk
+.TP
+STAGEOUT	space has been reserved for stageout file
+.TP
+STAGEWRT	currently copying from disk to tape
+.TP
+WAITING_SPC	waiting for space
+.TP
+WAITING_REQ	waiting for the same request by another job to complete
+.TP
+STAGED	successfully staged to EOF
+.TP
+STAGED_LSZ	successfully staged to specified size
+.TP
+STAGED_TPE	successfully staged but blocks were skipped
+.TP
+PUT_FAILED	stageput failed
+.RE
+.HP
+Nbaccess number of requests for this disk file.
+.HP
+Size	actual size / requested size (in Mbytes).
+.SH OPTIONS
+.TP
+.BI \-A " pattern"
+searches for files allocated with
+.B stagealloc
+and whose name matches the specified pattern.
+.B stageqry
+treats a pattern as a basic regular expression which should be surrounded
+by single quotes to avoid unwanted shell substitutions.
+.TP
+.BI \-a
+gives the status for all files. If this option is absent, only the files
+that belong to the requestor's group are displayed.
+.TP
+.BI \-f
+gives on an extra line the full external_filename or the full HSM filename.
+.TP
+.BI \-h " host"
+sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " external_filename"
+prints the catalog entry corresponding to this external disk file.
+.TP
+.BI \-L
+gives the link name(s) for the selected files.
+.TP
+.BI \-l
+gives more details for each file: the login name and the group name of the
+user who requested the initial stage operation, the creation date and the
+date of last access.
+.TP
+.BI \-M " pattern"
+searches in the stager catalog for HSM files whose name matches the specified
+pattern.
+.B stageqry
+treats a pattern as a basic regular expression which should be surrounded
+by single quotes to avoid unwanted shell substitutions.
+.TP
+.BI \-P
+gives the internal path name(s) for the selected files.
+.TP
+.BI \-p " poolname"
+restricts the query to a given pool.
+.TP
+.BI \-q " file_sequence_number(s)"
+restricts the search to files having the given sequence numbers.
+Multiple file numbers may be separated by commas or specified as a range
+using the dash as separator.
+.TP
+.BI \-S
+gives on stdout a list of staged files sorted in ascending order of last access
+time weighted by file size.
+.br
+        W = max (atime, mtime) - (86400 * log (size / 1024))
+.br
+There are six fields per file: date of last access, time of last access, size
+in Mbytes, number of accesses, internal path and user path.
+.TP
+.BI \-s
+gives statistics on pool utilization.
+.TP
+.BI \-T
+gives on standard output, as an option string, the main characteristics of a
+tape file. The information is taken from the header labels. This includes
+block size (-b), record format (-F), file identifier (-f) and record length (-L).
+.TP
+.BI \-u
+restricts the query to files that belong to the requestor.
+.TP
+.BI \-V " vid(s)"
+restricts the search to files corresponding to given vids.
+Multiple vids will be separated by colons.
+.TP
+.BI \-x
+adds two columns to the output: they give the request id and the internal
+pathname.
+.SH EXAMPLES
+.TP
+stageqry
+.br
+Vid    Fseq Lbl Recfm Lrecl Blksiz State      Nbaccess     Size    Pool
+.br
+CZ0134    1 al  U         *  32760 STAGED            3    0.3/200  stagetest
+.br
+CZ0134    2 al  U         *  32760 STAGEIN           1    0.0/200  stagetest
+.TP
+stageqry -A '^MyDice' 
+.br
+File name                          State      Nbaccess     Size    Pool
+.br
+MyDice.sav                         STAGED            2    0.2/1    stagetest
+.TP
+stageqry -l
+.br
+Vid    Fseq Lbl Recfm Lrecl Blksiz State      Nbaccess     Size    Pool
+.br
+CZ0134    1 al  U         *  32760 STAGED            3    0.3/200  stagetest
+.br
+			created by  baud      c3  94/01/12 17:54:45
+.br
+			last access               94/01/13 07:18:28
+.br
+CZ0134    2 al  U         *  32760 STAGED            1    0.6/200
+.br
+			created by  baud      c3  94/01/13 07:18:28
+.br
+			last access               94/01/13 07:30:04
+.TP
+stageqry -L
+.br
+shd02:/u4/c3/baud/SHIFT/stage/fort.41
+.br
+shd02:/u4/c3/baud/SHIFT/stage/xxx
+.TP
+stageqry -M run1193.raw -f
+.br
+File name                            State      Nbacc.     Size    Pool
+.br
+run1193.raw                       STAGED         1  191.7/250  wa97_stage
+.br
+ hpss1d01:/hpss/cern.ch/user/c/cdrna57/raw/1997/run1193.raw
+.TP
+stageqry -P
+.br
+shd02:/stage/c3/stage/CZ0134.1.al
+.br
+shd02:/stage/c3/stage/CZ0134.2.al
+.TP
+stageqry -S
+.br
+94/01/13 07:18:28    0.3    3 shd02:/stage/c3/stage/CZ0134.1.al shd02:/tmp/fort.41
+.TP
+stageqry -s
+.br
+POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
+.br
+                              CAPACITY 492.00M FREE 476.39M ( 96.8%)
+.br
+  shd02 /stage CAPACITY 492.00M FREE 476.39M ( 96.8%)
+.TP
+stageqry -T
+.br
+-b 32760 -F U -f SOMEDATA -L 32760
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.

@@ -1,0 +1,506 @@
+.\" @(#)stagein.man	1.31 09/07/98 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1998 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEIN l "09/07/98"
+.SH NAME
+stagein \- allocate space in a disk pool and copy files from tape to disk or
+from disk to disk
+.SH SYNOPSIS
+.B stagein  
+[
+.BI -A " allocation_policy"
+] [
+.BI -b " max_block_size"
+] [
+.BI -C " charconv"
+] [
+.BI -d " density"
+] [ 
+.BI -E " error_action"
+] [
+.BI -F " record_format" 
+] [
+.BI -f " file_id"
+] [
+.BI -G 
+] [ 
+.BI -g " device_group_name"
+] [
+.BI -h " host"
+] [
+.BI -I " external_filename"
+] [ 
+.BI -L " record_length"
+] [ 
+.BI -l " label_type"
+] [
+.BI -M " hsmfile"
+] [ 
+.BI -N " nread"
+] [
+.BI -o
+] [
+.BI -p " pool"
+] [
+.BI -q " file_sequence_number"
+] [
+.BI -S " tape_server"
+] [
+.BI -s " size"
+] [
+.BI -T
+] [
+.BI -U " fun"
+] [
+.BI -u " user"
+] [
+.BI -V " visual_identifier(s)"
+] [ 
+.BI -v " volume_serial_number(s)"
+] [
+.BI -X " xparm"
+] [ 
+.BI -z
+] [ 
+.I files
+] 
+.SH DESCRIPTION
+This command sends a request to a stage daemon which checks its catalog.
+If the file has already been staged, the catalog is updated
+(number of accesses, last access time) and if
+.I file
+is different from previous job, a symbolic link is created and the control
+given back to the user.
+If the file is not staged yet, pools have been configured and
+.B -p NOPOOL
+is not specified, the file is allocated in a pool of which the space is managed
+by the stage daemon.
+If the request gives tape parameters, the internal file name is in the form
+.B vid.fseq.label
+while if an external file name is specified with the option -I (disk stageing),
+the internal file name is in the form
+.BR xfile_basename.reqid .
+If no pool has been configured or
+.B -p NOPOOL
+is specified, the tape is staged directly in the location given by
+.I file
+and no space management is done.
+To do the actual copy, a
+.B tpread
+is issued.
+When complete, if
+.I file
+is specified, a symbolic link pointing at the actual file is created with that
+name.
+.LP
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax), a full path starting with the NFS_ROOT, i.e. /shift,
+or absent.
+.SH OPTIONS
+.TP
+.BI \-A " allocation_policy"
+Disk space allocation policy may be:
+.RS
+.TP
+.B immediate
+The disk space is allocated when receiving the stage request.
+This is the default.
+.TP
+.B deferred
+The disk space is allocated only when needed, i.e. one file at a time.
+In case of multifile stageing, space is allocated for the first file, the copy
+from tape to disk is done, the unused space is released; the process is 
+then repeated for every tape file requested and found on the tape.
+This mode increases the lifetime of files in the pool and is very useful when
+files are of unknown size or vary a lot in size.
+.RE
+.TP
+.BI \-b " blocksize"
+Specifies the maximum block size.
+If not given and the tape is labelled, the block size is taken from the
+header label when the field is not zero; otherwise:
+for all drive types except Redwoods the default is 32760 if
+.I lrecl
+is not specified,
+.I lrecl
+otherwise. On Redwoods, the default is 262144 if
+.I lrecl
+is not specified or the largest multiple of
+.I lrecl
+below 262144.
+.TP
+.BI \-C " charconv"
+The data is converted from this character set when doing the copy.
+.I charconv
+may be
+.B ascii
+(no conversion is done) or
+.BR ebcdic .
+The option value may also be
+.BR block .
+In this case, the trailing blanks are stripped off and a newline is appended
+to each record.
+Option values may be combined; they are separated by comma in this case.
+.br
+For example:
+.br
+	-C ebcdic,block
+.TP
+.BI \-d " density"
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges.
+It must match the device group specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS.
+.TP
+.BI \-E " error_action"
+Specifies the action to be taken in case of tape read error. This action may be:
+.RS
+.TP
+.B skip
+unreadable blocks are skipped. For each, an error message indicates the error
+type and the block number.
+A maximum of 10 blocks may be skipped.
+.TP
+.B keep
+the file up to the block where the error occurred is kept on disk. By default,
+the disk file is removed.
+.TP
+.B ignoreeoi
+Do not take two consecutive tapemarks as End Of Information.
+This option is only valid for label type
+.B nl
+or
+.B blp
+and should be avoided on IBM 3420 drives (the reel could wind off).
+.RE
+.TP
+.BI \-F " recfm"
+Specifies the record format of the data on the tape. It may be one of the 
+following:
+.RS
+.TP
+.B U,\|f77
+Blocks may be of unknown length. A single logical record on disk corresponds
+to one tape block. The disk copy of the file is formatted according to the 
+convention for sequential 
+.SM FORTRAN 
+unformatted I/O.
+.TP
+.B U
+is an alias for
+.BR U,\|f77 .
+.TP
+.B U,\|bin
+Blocks may be of unknown length. The data is transferred as a byte stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B F
+Each tape block is exactly
+.IR blocksize
+bytes long (See the \-b option) with the exception of the last block
+which may be shorter.
+If both
+.I blocksize
+and
+.I lrecl
+are provided, they should be equal.
+.br
+Data is copied from tape to disk as a continuous data stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B FB
+This allows to group several records of
+.I lrecl
+bytes into tape blocks of
+.I blksize
+bytes.
+.I blksize
+must be a multiple of
+.IR lrecl .
+.TP
+.B F,\|-f77
+The tape file is known to be formatted according to the convention 
+for sequential 
+.SM FORTRAN 
+unformatted I/O. The control words are stripped off so that the disk file
+is suitable for use with direct access 
+.SM FORTRAN
+unformatted I/O or C I/O.
+The logical record length on the tape file must correspond to the record 
+length specified either with the -L option or, if the -L option is not 
+specified, the record length given in the label.
+.LP
+If the tape is labelled, the record format is taken from the header label;
+otherwise the default is
+.BR U .
+.RE
+.TP
+.BI \-f " fid"
+Specifies the fileid in HDR1. If more than 17 characters long,
+only the last 17 are taken. It is then converted to upper case.
+.I fid
+is checked against the fid in HDR1.
+In the case of multiple files, a series of file identifiers may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than identifiers, the last one will be used for all
+remaining files. Thus,
+a single file identifier may be given which applies to all files on the tape.
+.TP
+.B \-G
+Specifies that the tape copy operations should be issued on the tape server by
+the 'group user'. A 'group user' may be defined for each group in 
+.B /etc/shift.conf.
+.br
+For example: 
+.br
+	GRPUSER ws	opalprod
+.TP 
+.BI \-g " dgn"
+Requests a device from an installation defined set of "device groups".
+It must match the device group specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS or
+defaults to CART.
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " external_filename"
+Gives the name of an external disk file. In this case,
+.B rfcp
+is used to copy this file to the staging pool.
+.TP
+.BI \-L " lrecl"
+Specifies the logical record length for fixed length record format files.
+.TP
+.BI \-l " lab_type"
+Specifies the type of label which should be checked or generated. The following
+label types are supported:
+.RS
+.TP
+.B al
+.SM ANSI 
+label
+.TP
+.B blp
+bypass label processing
+.TP
+.B nl
+no label
+.TP
+.B sl
+standard 
+.SM IBM
+label
+.LP
+It must match the label type specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS or
+defaults to
+.BR sl .
+.RE
+.TP
+.BI \-M " hsmfile"
+Gives the name of a file stored in an Hierarchical Storage Manager (HSM).
+.B rfcp
+is used to copy the file to the staging pool. The option
+.B -s
+is not needed for a complete file stageing: the stager queries the HSM system
+about the file size and allocates correctly the disk space in the pool.
+Partial stageing is supported.
+.TP
+.BI \-N " nread"
+If specified, only 
+.I nread 
+records will be copied.
+In the case of multiple files, a series of nread values may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than nread values, the last one will be used for all
+remaining files. Thus,
+a single nread value may be given which applies to all files on the tape.
+.TP
+.BI \-o
+Implies old fileid. The existing fileid is checked if the option
+.B -f
+is also specified.
+.TP
+.BI \-p " poolname"
+Allocates the file in the pool
+.IR poolname .
+This may also be specified thru the environment variable STAGE_POOL.
+.TP
+.BI \-q " fseq"
+Specifies the file sequence number(s) of the tape file(s) to be copied or
+created. Default is 1.
+Multiple files may be specified using the following syntax:
+.RS 
+.TP 1.5i 
+.I f1\-f2 
+Files 
+.I f1
+to 
+.I f2 
+inclusive.
+.TP
+.I f1\- 
+Files 
+.I f1
+to the last file on the tape.
+.TP
+.I f1\-f2,\|f4,\|f6- 
+A series of non\-consecutive ranges of files.
+.TP
+.B u
+Position the tape by fid.
+.TP
+.BI u x
+Position the tape by fid on
+.I x
+different files.  A series of
+.I x
+fileids must be given as
+.B -f
+option value.
+.RE
+.TP
+.BI \-S " server"
+Specifies that the tape copy operation has to be issued on the tape server 
+.IR server. 
+.TP
+.BI \-s " size"
+If specified, only 
+.I size 
+Mbytes will be copied.
+The value must be smaller than 2048 (2 Gbytes).
+In the case of multiple files, a series of size values may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than size values, the last one will be used for all
+remaining files. Thus,
+a single size value may be given which applies to all files on the tape.
+.TP
+.BI \-T
+Does not check trailer labels.
+.TP
+.BI \-U " fun"
+Fortran unit number.
+This is internally converted to a local path
+.BI ftn fun
+(HP-UX) or
+.BI fort. fun
+(all other platforms).
+The
+.B \-U
+option and the
+.I file
+parameter may be both specified for single file stageing only.
+.TP
+.BI \-u " user"
+A file allocated in a pool will be stored in a subdirectory
+.IR user .
+This may also be specified thru the environment variable STAGE_USER.
+The default subdirectory name is
+.BR stage .
+.I user
+must be a valid user name and belong to the same group as the requestor.
+.TP
+.BI \-V " vid"
+Specifies the tape 
+.SM VID
+if different from the 
+.SM VSN .
+In the case of multi\-volume files a series of 
+.IR vid s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+.TP
+.BI \-v " vsn"
+Specifies the volume serial number of the tape. In the case of a multi-volume
+file a series of 
+.IR vsn s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+When \-v and \-V are both used, each
+.IR vsn
+must be matched by a
+.IR vid
+in the same order.
+.TP
+.B \-z
+Gives on standard error, as an option string, the main characteristics of the 
+tape file just staged. This includes block size (-b), record format (-F), file
+identifier (-f), record length (-L), full pathname of diskfile in the pool (-P)
+and file sequence number (-q).
+The line is prefixed by the string "STG47 - ". This flag is set by
+.BR copytape .
+.SH EXAMPLES
+.LP
+To get the data from a tape into the default stage pool:
+.RS
+stagein -v CIN111 inp
+.RE
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.
+.br
+28	ENOSPC: unable to find enough disk space.
+.br
+192	Request cancelled by stageclr.
+.br
+193	Blocks were skipped.
+.br
+194	Blocks were skipped and stageing limited by size.
+.br
+195	Stagein stopped: too many tape errors, but -E keep.
+.br
+197	Stageing limited by size.

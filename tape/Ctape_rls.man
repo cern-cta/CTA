@@ -1,0 +1,74 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_RLS l "%G%"
+.SH NAME
+Ctape_rls \- release tape resources
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_rls (char *" path ,
+.BI "int " flags );
+.SH DESCRIPTION
+.B Ctape_rls
+unloads the tape(s) used by the job, tells TMS that the tape
+is free for use by other jobs, frees the corresponding tape drive(s)
+and decrements the corresponding device group(s) reservation.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which be used by the application program in the
+.B open
+statement.
+.I path
+should be either identical to the one specified on Ctape_mount or NULL.
+The value of
+.I path
+is ignored if
+.I flags
+is set to
+.BR TPRLS_ALL .
+.TP
+.I flags
+may be one of the following:
+.RS
+.TP
+.B TPRLS_PATH
+releases an explicit path
+.TP
+.B TPRLS_KEEP_RSV
+releases an explicit path but keep reservation
+.TP
+.B TPRLS_ALL
+releases all tape resources reserved by the job.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B ETDNP
+Tape daemon is not running.
+.TP
+.B ETPRM
+Bad parameter.
+.TP
+.B ETRLSP
+Release pending.

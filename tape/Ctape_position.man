@@ -1,0 +1,233 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_POSITION l "%G%"
+.SH NAME
+Ctape_position \- send a request to the tape daemon to get the tape
+positionned to a given file and the HDR labels checked
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_position (char *" path ,
+.BI "int " method,
+.BI "int " fseq,
+.BI "int " fsec,
+.BI "unsigned int " blockid,
+.BI "int " Qfirst,
+.BI "int " Qlast,
+.BI "int " filstat,
+.BI "char *" fid,
+.BI "char *" recfm,
+.BI "int " blksize,
+.BI "int " lrecl,
+.BI "int " retentd,
+.BI "int " flags );
+.SH DESCRIPTION
+.B Ctape_position
+checks if a tape is mounted on the device identified by
+.IR path ,
+positions it, checks if necessary the HDR1 label and eventually takes the
+information from the HDR2 label.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which be used by the application program in the
+.B open
+statement. This path should have been created by Ctape_mount.
+.TP
+.I method
+may be one of the following:
+.RS
+.TP
+.B TPPOSIT_FSEQ
+position by file sequence number
+.TP
+.B TPPOSIT_FID
+position by fid (dataset name)
+.TP
+.B TPPOSIT_EOI
+position at end of information to add a file
+.TP
+.B TPPOSIT_BLKID
+position by block id (locate).
+.RE
+.TP
+.I fseq
+file sequence number
+.TP
+.I fsec
+file section number
+.TP
+.I blockid
+value returned by a previous Read Block Id
+.TP
+.I Qfirst
+file sequence number corresponding to the first file of the vid mapped volume
+.TP
+.I Qlast
+file sequence number corresponding to the last file of the vid mapped volume
+.TP
+.I filstat
+may be one of the following:
+.RS
+.TP
+.B CHECK_FILE
+check file existence and fid in HDR1
+.TP
+.B NEW_FILE
+write a new file without checking file existence or fid
+.TP
+.B APPEND
+append data to an existing tape file.
+.RE
+.TP
+.I fid
+specifies the fileid in HDR1. If more than 17 characters long,
+only the last 17 are taken. It is then converted to upper case.
+If
+.I filstat
+is not
+.BR NEW_FILE ,
+the fileid parameter is checked against the fid in HDR1.
+If
+.I filstat
+is equal to
+.BR NEW_FILE ,
+but
+.I fid
+is NULL,
+.I path
+is used instead.
+.TP
+.I recfm
+.BR F ,
+.BR FB ,
+.BR FBS ,
+.B FS
+or
+.BR U .
+The value is only used to build HDR2.
+The default value is taken from the existing tape label if
+.I filstat
+is
+.B APPEND
+or
+.B CHECK_FILE
+or is set to U if
+.I filstat
+is set to
+.BR NEW_FILE .
+.TP
+.I blksize
+specifies the maximum block size. The value is only used to build HDR2.
+The default value is taken from the existing tape label if
+.I filstat
+is
+.B APPEND
+or
+.BR CHECK_FILE .
+If
+.I filstat
+is set to
+.BR NEW_FILE ,
+for all drive types except Redwoods the default is
+32760 if
+.I lrecl
+is not specified (<= 0),
+.I lrecl
+otherwise. On Redwoods, the default is 262144 if
+.I lrecl
+is not specified (<= 0) or the largest multiple of
+.I lrecl
+below 262144.
+.TP
+.I lrecl
+specifies the logical record length. The value is only used to build HDR2.
+The default value is taken from the existing tape label if
+.I filstat
+is
+.B APPEND
+or
+.BR CHECK_FILE ,
+or from the blocksize if
+.I filstat
+is set to
+.BR NEW_FILE .
+.TP
+.I retentd
+retention period in days. A file may be overwritten only if it is expired.
+Default is 0, which means that the file may be overwritten immediately.
+.TP
+.I flags
+may be a combination of the following values:
+.RS
+.TP
+.B NOPOS
+do not reposition tapes when accessing two consecutive files.
+This flag should only be set when the requestor knows that the tape is already
+positionned correctly.
+.TP
+.B NOTRLCHK
+do not check trailer labels
+.TP
+.B IGNOREEOI
+do not take two consecutive tapemarks as End Of Information.
+This option is only valid for label type
+.B nl
+or
+.B blp
+and should be avoided on IBM 3420 drives (the reel could wind off).
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B ETDNP
+Tape daemon is not running.
+.TP
+.B ETPRM
+Bad parameter.
+.TP
+.B ETBLANK
+Blank tape.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.br
+5	I/O error.
+.br
+6	Unit not operational.
+.br
+13	Operator cancel, access denied by TMS, wrong label type or file not expired.
+.br
+212	Interrupted by user.

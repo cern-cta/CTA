@@ -1,0 +1,71 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1991-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_RSTATUS l "%G%"
+.SH NAME
+Ctape_rstatus \- get resource reservation status
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_rstatus (char *" host ,
+.BI "struct rsv_status *" rsv_status ,
+.BI "int " nbentries ,
+.BI "int " nbdgp );
+.SH DESCRIPTION
+.B Ctape_rstatus
+gets resource reservation status for all tape users on a given server.
+.TP
+.I nbentries
+gives the number of elements in the array of structures
+.I rsv_status
+allocated by the calling program to receive the reply.
+.TP
+.I nbdgp
+gives the number of elements in the array of sub-structures
+.I dgn_rsv_status
+allocated by the calling program.
+.PP
+.nf
+.cs R 18
+struct dgn_rsv_status {         /* device group reservation status entry */
+        char    name[CA_MAXDGNLEN+1];   /* device group name */
+        int     rsvd;           /* number reserved */
+        int     used;           /* number used */
+};
+struct rsv_status {             /* resource reservation status reply entry */
+        uid_t   uid;
+        int     jid;            /* process-group-id */
+        int     count;          /* # of different device groups */
+        struct dgn_rsv_status *dg;
+};
+.cs R
+.fi
+.sp
+The first entry is a summary of all reservations on that server.
+.SH RETURN VALUE
+This routine returns the number of entries if the operation was successful
+or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SEUBUF2SMALL
+User buffer too small.
+.TP
+.B ETDNP
+Tape daemon is not running.

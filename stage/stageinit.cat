@@ -1,0 +1,66 @@
+
+
+
+STAGEINIT(l)      Misc. Reference Manual Pages       STAGEINIT(l)
+
+
+
+NNNNAAAAMMMMEEEE
+     stageinit - tells stgdaemon to reread the pool configuration
+     file
+
+SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+     ssssttttaaaaggggeeeeiiiinnnniiiitttt [ ----FFFF ] [ ----hhhh _h_o_s_t ]
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     ssssttttaaaaggggeeeeiiiinnnniiiitttt tells stgdaemon to drain the service, i.e. rejects
+     new  stage  requests but let the current ones complete; then
+     reread the pool configuration file:   some  pools  may  have
+     been  added  or  suppressed or filesystems in pools may have
+     been added or removed; then adjust space information accord-
+     ing  to  the  new  configuration  and  restart  the service.
+     ssssttttaaaaggggeeeeiiiinnnniiiitttt is a privileged command restricted for use  by  an
+     administrator.
+
+OOOOPPPPTTTTIIIIOOOONNNNSSSS
+      ---- FFFF    The  command  is  executed  immediately:  new  stage
+          requests  are rejected but the daemon does not wait for
+          existing stage requests to complete, they just continue
+          to run in parallel.
+
+     ----hhhh _h_o_s_t
+          Sends the request to the stager on _h_o_s_t.  This may also
+          be specified thru the environment variable STAGE_HOST.
+
+FFFFIIIILLLLEEEESSSS
+     ////eeeettttcccc////SSSSTTTTGGGGCCCCOOOONNNNFFFFIIIIGGGG configuration file
+
+RRRREEEETTTTUUUURRRRNNNN CCCCOOOODDDDEEEESSSS
+     0    Ok.
+     1    Command aborted or another stageinit is pending.
+     2    System error.
+     4    Configuration error.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SunOS 5.5.1           Last change: 08/31/95                     1
+
+
+

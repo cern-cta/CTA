@@ -1,0 +1,36 @@
+.\" @(#)rfrename.man	1.1 09/07/98     CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" All rights reserved
+.\"
+.TH RFDIR l "09/07/98"
+.SH NAME
+rfrename \- rename remote file
+.SH SYNOPSIS
+.B rfrename
+.IR filename1
+.IR filename2
+.SH DESCRIPTION
+.IX "\fLrfrename\fR"
+.B rfrename 
+provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for renaming a remote file.
+The
+.IR filename
+argument is either a remote file name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local file name (not containing the :/ character combination).
+.SH "SEE ALSO"
+.BR rename(2),
+.BR rfiod(l)
+.SH "NOTES"
+.B rfrename
+can only be used to rename files on the same remote system. It cannot
+be used to move files from one host to another. Use the
+.BR (rfcp(l))
+program for copying files between different remote hosts.
+.SH "AUTHOR"
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

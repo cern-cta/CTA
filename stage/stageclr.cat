@@ -1,0 +1,132 @@
+
+
+
+STAGECLR(l)       Misc. Reference Manual Pages        STAGECLR(l)
+
+
+
+NNNNAAAAMMMMEEEE
+     stageclr - remove staged files
+
+SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----cccc ] [ ----hhhh _h_o_s_t ] [ ----llll _l_a_b_e_l__t_y_p_e ] [ ----mmmm _m_i_n_f_r_e_e ]
+     [    ----pppp    _p_o_o_l   ]   [   ----qqqq   _f_i_l_e__s_e_q_u_e_n_c_e__n_u_m_b_e_r   ]   ----VVVV
+     _v_i_s_u_a_l__i_d_e_n_t_i_f_i_e_r(_s)
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----cccc ] [ ----hhhh _h_o_s_t ] [ ----mmmm _m_i_n_f_r_e_e ] [ ----pppp  _p_o_o_l  ]  ----IIII
+     _e_x_t_e_r_n_a_l__f_i_l_e_n_a_m_e
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----cccc ] [ ----hhhh _h_o_s_t ] [ ----mmmm _m_i_n_f_r_e_e ] [ ----pppp _p_o_o_l ]  [  ----
+     rrrreeeemmmmoooovvvveeee____ffffrrrroooommmm____hhhhssssmmmm ] ----MMMM _h_s_m_f_i_l_e
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----cccc ] [ ----hhhh _h_o_s_t ] [ ----mmmm _m_i_n_f_r_e_e ] ----PPPP _p_a_t_h_n_a_m_e
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----cccc ] [ ----hhhh _h_o_s_t ] [ ----mmmm _m_i_n_f_r_e_e ] ----iiii
+     ssssttttaaaaggggeeeeccccllllrrrr [ ----hhhh _h_o_s_t ] ----LLLL _l_i_n_k__n_a_m_e
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     ssssttttaaaaggggeeeeccccllllrrrr removes staged files from disk if the requestor  is
+     in the same group as the user who created the disk file.
+
+OOOOPPPPTTTTIIIIOOOONNNNSSSS
+     ----cccc    conditional clear. If this  option  is  specified  the
+          remove  operation is done only if the free space in the
+          pool is lower than a  minimum.   This  minimum  may  be
+          specified thru the option ----mmmm.
+
+     ----hhhh _h_o_s_t
+          Sends the request to the stager on _h_o_s_t.  This may also
+          be specified thru the environment variable STAGE_HOST.
+
+     ----IIII _e_x_t_e_r_n_a_l__f_i_l_e_n_a_m_e
+          clears in the catalog the entry corresponding  to  this
+          external  disk file and remove the staged file from the
+          pool.
+
+     ----iiii    the list of pathnames  to  be  removed  is  read  from
+          _s_t_d_i_n.  If the operation fails on a path, ssssttttaaaaggggeeeeccccllllrrrr con-
+          tinues with the next path in the list  and  the  global
+          exit code corresponds to the first failure.
+
+     ----LLLL _l_i_n_k__n_a_m_e
+          gives the pathname of the user link to be removed.  The
+          data file is not removed.
+
+     ----llll _l_a_b_e_l__t_y_p_e
+          Label type:  aaaallll, nnnnllll, ssssllll or bbbbllllpppp.
+
+     ----MMMM _h_s_m_f_i_l_e
+          clears in the stager catalog the entry corresponding to
+          this HSM file and remove the staged file from the pool,
+          but it does not remove the file from  the  Hierarchical
+          Storage  Management  System.   This operation should be
+          explicitely requested with the option ----rrrreeeemmmmoooovvvveeee____ffffrrrroooommmm____hhhhssssmmmm.
+
+
+
+SunOS 5.5.1           Last change: 09/07/98                     1
+
+
+
+
+
+
+STAGECLR(l)       Misc. Reference Manual Pages        STAGECLR(l)
+
+
+
+     ----mmmm _m_i_n_f_r_e_e
+          specifies the minimum free space to be available in the
+          pool.   This  is  a  percentage.   For  example,  ----mmmm 11110000
+          corresponds to 10% of free space.  The default  minfree
+          value    is   taken   from   the   configuration   file
+          ////eeeettttcccc////SSSSTTTTGGGGCCCCOOOONNNNFFFFIIIIGGGG....
+
+     ----PPPP _p_a_t_h_n_a_m_e
+          gives the path name of the file to  be  purged,  either
+          full internal name or user link name.
+
+     ----pppp _p_o_o_l_n_a_m_e
+          restricts the action to a given pool.
+
+     ----qqqq _f_i_l_e__s_e_q_u_e_n_c_e__n_u_m_b_e_r(_s)
+          Multiple file numbers may be  separated  by  commas  or
+          specified as a range using the dash as separator.
+
+     ----rrrreeeemmmmoooovvvveeee____ffffrrrroooommmm____hhhhssssmmmm
+          to  remove  the  file  from  the  Hierarchical  Storage
+          Management System as well.
+
+     ----VVVV _v_i_d(_s)
+          restricts the search to files  corresponding  to  given
+          vids.  Multiple vids will be separated by colons.
+
+RRRREEEETTTTUUUURRRRNNNN CCCCOOOODDDDEEEESSSS
+     0    Ok.
+     1    Bad parameter.
+     2    System error.
+     4    Configuration error.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SunOS 5.5.1           Last change: 09/07/98                     2
+
+
+

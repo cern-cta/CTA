@@ -1,0 +1,254 @@
+.\" @(#)stgdaemon.man	1.8 05/18/95 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1995 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STGDAEMON l "05/18/95"
+.SH NAME
+stgdaemon \- starts the stage daemon
+.SH SYNOPSIS
+.B stgdaemon
+.SH DESCRIPTION
+.LP
+The
+.B stgdaemon
+command starts the stage daemon.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the pool configuration file,
+the stage catalog to remove uncompleted transactions
+and look for requests.
+Short requests like
+.B stageqry
+are processed in the main loop. The daemon forks overlays to execute
+long requests like disk/tape copy or pool cleanup.
+In case of system error, the commands are automatically retried from the
+failing subrequest.
+If a file
+.B nomorestage
+exists in the operator directory, new stage commands will be rejected by
+the daemon and will wait on the client side.
+All error messages and statistical information are kept in a log.
+On all client hosts and on the stager host there should be entries for the
+stager in
+.B /etc/services
+like:
+.RS
+.HP
+rfio             5001/tcp                        # Remote File Access System
+.HP
+stage           5007/tcp                        # SHIFT stager
+.RE
+.LP
+On all client hosts there should be an entry in
+.B /etc/shift.conf
+giving the stager hostname.
+For example:
+.RS
+.HP
+STG     HOST            shd02
+.RE
+The stager hostname may also be specified thru the environment variable
+STAGE_HOST.
+.LP
+If TMS is used, there should also be an entry in
+.B /etc/services
+like:
+.RS
+.HP
+sysreq          4001/tcp                        # SYSREQ/TCP
+.RE
+.LP
+On all disk servers having filesystems in the pool(s), there should be three
+entries in
+.B /etc/shift.conf
+giving permission to the stager to execute programs, unlink files or create
+directories as root. The server where
+.B stgdaemon
+runs does not need these entries.
+For example:
+.RS
+.LP
+RFIOD   POPENTRUST      shd02
+.br
+RFIOD   LINKTRUST       shd02
+.br
+RFIOD   MKDIRTRUST      shd02
+.br
+RFIOD   CHOWNTRUST      shd02
+.RE
+.HP
+There must be one entry in the configuration file per pool giving:
+.RS
+.HP
+POOL name	this will be used as
+.B \-p
+parameter in user commands
+.HP
+DEFSIZE	maximum filesize if the
+.B \-s
+option is not specified on user commands
+.HP
+MINFREE	minimum free space to be available in the pool.
+This is a percentage.
+For example,
+.B MINFREE 10
+corresponds to 10% of free space.
+.HP
+GC	full path name of the garbage collector program (NFS syntax).
+.RE
+.TP
+There must be also one entry per pool element giving:
+.RS
+.HP
+server		full path of the stage directory
+.RE
+.TP
+If several pools are configured, a default pool must be defined by an entry
+.RS
+.HP
+DEFPOOL        default pool name
+.RE
+.HP
+The stage catalog contains the following information:
+.br
+maximum block size
+.br
+density
+.br
+device group
+.br
+file id
+.br
+file status: new = 'n', old = 'o'
+.br
+file sequence number requested by user
+.br
+keep flag; if non zero, keep data on disk after successful stagewrt
+.br
+label type: al, nl, sl or blp
+.br
+record length
+.br
+number of blocks/records to be copied
+.br
+pool name
+.br
+record format
+.br
+retention period in days
+.br
+size in Mbytes of data to be staged
+.br
+tape server specified by user
+.br
+Tflag; if non zero,  do not check trailer labels
+.br
+visual_identifier(s)
+.br
+volume_serial_number(s)
+.br
+internal path
+.br
+user group
+.br
+login name
+.br
+uid
+.br
+gid
+.br
+umask
+.br
+request id
+.br
+status
+.br
+actual_size
+.br
+creation time
+.br
+last access time
+.br
+nb of accesses
+.LP
+A secondary catalog contains the list of symbolic links to the staged files.
+.LP
+In the log each entry has a timestamp.
+All entries corresponding to one request have the same request id.
+For each user command there is one message STG98 giving the command,
+one message STG97 per try to stage a file or one message STG96 if the file
+was already staged and a final message STG99 giving the return code.
+The message STG97 gives the following information:
+internal file path, tape server, tape unit, network interface, actual file size,
+waiting time and transfer time.
+The message STG96 gives the internal file path and the current number of
+accesses to the file.
+A message STG95 giving the internal file path appears in the log every time
+a file is deleted.
+.SH FILES
+.TP 1.5i
+.B /etc/STGCONFIG
+configuration file
+.TP
+.B /usr/spool/stage/stgcat
+main catalog
+.TP
+.B /usr/spool/stage/stgpath
+secondary catalog (symbolic links)
+.TP
+.B /usr/spool/stage/log
+.TP
+.B /etc/operator/nomorestage
+.SH EXAMPLES
+.TP
+Here is an example of a configuration file:
+
+#
+.br
+#               shd02 stager configuration
+.br
+#
+.br
+POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
+.br
+  shd02 /stage
+.br
+
+.TP
+Here is a simple example of a stage_clean script:
+
+stageqry -a -p $1 -S  |  cut -c31-  |  cut -d" " -f1  |  stageclr -c -i -p $1
+.br
+
+.TP
+Here is a small log:
+
+01/12 17:52:18     1 stgdaemon: STG98 - stageqry
+.br
+01/12 17:52:27     2 stgdaemon: STG98 - stageqry -s
+.br
+01/12 17:54:45     3 stgdaemon: STG98 - stagein -vCZ0134 -g CART -d 38000 -l al fort.41
+.br
+01/12 18:11:42     3 stgdaemon: STG97 - shd02:CZ0134.1.al staged by (baud,c3), server shd03.cern.ch  unit cartST0  ifce le0  size 324000  wtim 1006  ttim 4 rc 0
+.br
+01/12 18:11:52     3 sendrep: STG99 - stage returns 0
+.br
+01/13 07:13:50     8 stgdaemon: STG98 - stageqry -P
+.br
+01/13 07:15:39     9 stgdaemon: STG98 - stagein -vCZ0134 -g CART -d 38000 -l al fort.42
+.br
+01/13 07:15:39     9 stgdaemon: STG96 - CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 2
+.br
+01/13 07:15:39     9 sendrep: STG99 - stage returns 0
+.br
+01/13 07:15:46    10 stgdaemon: STG98 - stageqry
+.br
+01/13 07:18:28    12 stgdaemon: STG98 - stagein -vCZ0134 -q1,2 -g CART -d 38000 -l al fort.43 fort.44
+.br
+01/13 07:18:28    12 stgdaemon: STG96 - CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 3
+.br
+01/13 07:18:41    14 stgdaemon: STG98 - stageqry
+.br
+01/13 07:30:07    12 stgdaemon: STG97 - shd02:CZ0134.2.al staged by (baud,c3), server shd03.cern.ch  unit cartST1  ifce le0  size 648000  wtim 687  ttim 6 rc 0
+.br
+01/13 07:30:17    12 sendrep: STG99 - stage returns 0

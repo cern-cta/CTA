@@ -1,0 +1,79 @@
+.\" @(#)newacct.man	1.2		CERN-SW/DC	Antoine Trannoy		03/05/99
+.\" Copyright (C) 1990-1999 by CERN/CN/SW/DC
+.\" All rights reserved
+.\"
+.TH NEWACCT l "03/05/99"
+.SH NAME
+newacct \- log in to a new account 
+.SH SYNOPSIS
+.B  /usr/local/bin/newacct
+[
+.BI -s " shellname"
+] [
+.I account
+]
+.SH DESCRIPTION
+.B newacct
+changes a user's account identification. Only the account-ID and possibly the
+group id are changed. The user remains 
+logged in and the current directory is unchanged. If 
+.B newacct
+terminates successfully, the user is given a new shell, replacing the current shell.
+The new shell is selected in the following way:
+a shellname can be specified with the option -s, if not and the environment
+variable
+.B SHELL
+is set, its value is used; if not set, the shell field in the password file is
+used; if empty, the Bourne shell is used.
+Exported variables retain their values after invoking  
+.BR newacct ;
+however, all unexported variables are either reset to their default value or set to null. 
+.LP 
+With no argument,
+.B newacct
+changes the account identification back to the default account for the user. If an account-ID
+is specified, 
+.B newacct
+checks that it is a valid one.
+.LP
+.B newacct 
+sets the environment variable 
+.SM ACCOUNT
+with the new account identifier.
+.SH EXAMPLES
+.LP
+1) Bourne Shell
+
+.nf
+newacct -s /bin/sh 'uuu$gg' <<EOC
+	echo "\\n  secondary account [\\${ACCOUNT}]"
+	id
+EOC
+.fi
+.LP
+2) C Shell
+
+.nf
+newacct -s /bin/csh 'uuu$gg' <<EOC
+	echo ""
+	echo "  secondary account [\\${ACCOUNT}]"
+	id
+EOC
+.fi
+.LP
+3) Perl
+
+.nf
+open (NEWACCT, "| newacct -s /usr/local/bin/perl 'uuu$gg'") || exit (1);
+print NEWACCT <<EOC;
+	print "\\n  secondary account [\\$ENV{ACCOUNT}]\\n", `id`;
+EOC
+close (NEWACCT);
+.fi
+.SH FILES
+.B /etc/account
+.SH SEE ALSO
+.BR account (l), 
+.BR getacct (l)
+.SH AUTHOR
+Antoine Trannoy, CERN-CN Division CH-1211 Geneva 23, Switzerland

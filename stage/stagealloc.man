@@ -1,0 +1,115 @@
+.\" @(#)stagealloc.man	1.6 11/21/96 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1995 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEALLOC l "11/21/96"
+.SH NAME
+stagealloc \- allocate space in a disk pool
+.SH SYNOPSIS
+.B stagealloc  
+[
+.BI -G 
+] [
+.BI -h " host"
+] [
+.BI -P 
+] [
+.BI -p " pool"
+] [
+.BI -s " size"
+] [
+.BI -U " fun"
+] [
+.BI -u " user"
+]
+.I file
+.SH DESCRIPTION
+This command sends a request to a stager daemon which allocates space,
+creates an empty file with the correct privileges, establishes a symbolic link
+.I file
+to it and updates its catalog.
+.LP
+Then the internal path name or the link can be used by the application program
+to write the data to disk. When the file is complete,
+.B stageupdc
+should be called to update the actual file size in the stager catalog. See the
+example below.
+.LP
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax), a full path starting with the NFS_ROOT, i.e. /shift,
+or absent if a Fortran unit number is specified.
+.LP
+.SH OPTIONS
+.TP
+.B \-G
+Specifies that the disk file allocation should be issued by
+the 'group user'. A 'group user' may be defined for each group in 
+.B /etc/shift.conf.
+.br
+For example: 
+.br
+	GRPUSER ws	opalprod
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.B \-P
+prints on stdout the internal path name.
+.TP
+.BI \-p " poolname"
+Allocates the file in the pool
+.IR poolname .
+This may also be specified thru the environment variable STAGE_POOL.
+.TP
+.BI \-s " size"
+If specified, only 
+.I size 
+Mbytes will be allocated.
+The value must be smaller than 2048 (2 Gbytes).
+.TP
+.BI \-U " fun"
+Fortran unit number.
+This is internally converted to a local path
+.BR "fort.fun" .
+The
+.B \-U
+option and the
+.I file
+parameter may be both specified but at least one of them must be present.
+.TP
+.BI \-u " user"
+A file allocated in a pool will be stored in a subdirectory
+.IR user .
+This may also be specified thru the environment variable STAGE_USER.
+The default subdirectory name is
+.BR stage .
+.I user
+must be a valid user name and belong to the same group as the requestor.
+.SH EXAMPLES
+To allocate space for a 10 Mbytes file, write data and update the stager
+catalog, the following set of commands could be used:
+.RS
+stagealloc -s 10 out
+.br
+a.out out
+.br
+stageupdc out
+.RE
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.
+.br
+28	ENOSPC: unable to find enough disk space.
+.br
+192	Request cancelled by stageclr.

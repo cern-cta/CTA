@@ -1,0 +1,185 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_LABEL l "%G%"
+.SH NAME
+Ctape_label \- send a request to the tape daemon to have a tape mounted,
+the existing label checked and a new label written
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_label (char *" vid ,
+.BI "int " partition ,
+.BI "char *" dgn ,
+.BI "char *" density ,
+.BI "char *" drive ,
+.BI "char *" vsn ,
+.BI "char *" lbltype ,
+.BI "int " nbhdr );
+.SH DESCRIPTION
+.B Ctape_label
+checks with TMS if the tape identified by
+.I vid
+is available, asks the operator or the robot to mount it on the drive selected
+by the tape daemon or specified by
+.IR drive ,
+checks the vsn
+in VOL1 if the tape is labelled and writes the new label.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long and is converted to upper case.
+.TP
+.I partition
+is currently ignored.
+.TP
+.I dgn
+The device group name must be a member of an installation defined set of
+"device groups". It must match the device group specified in TMS (if installed).
+If this pointer is NULL, the value is taken from TMS or defaults to CART.
+.TP
+.I den
+The supported alphanumeric densities are:
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+.TP
+.I vsn
+specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long and is converted to upper case.
+The vsn must match the one specified in TMS.
+.TP
+.I lbltype
+may be
+.BR al ,
+.BR nl ,
+.B sl
+or
+.BR blp .
+It must match the label type specified in TMS.
+.B blp
+is allowed only for read.
+Default is
+.BR sl .
+.TP
+.I nbhdr
+defines the number of headers included in the prelabel: if
+.BR 0 ,
+only a VOL1 record is written; if
+.BR 1 ,
+VOL1 and HDR1 are written (this is the default); if
+.BR 2 ,
+VOL1, HDR1 and HDR2 are written to tape.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B ETDNP
+Tape daemon is not running.
+.TP
+.B ETPRM
+Bad parameter.
+.TP
+.B ETNDV
+Too many drives requested.
+.TP
+.B ETIDG
+Invalid device group name.
+.TP
+.B ETNRS
+Reserv not done.
+.TP
+.B ETIDN
+No unit with requested characteristics.
+.TP
+.B ETBLANK
+Blank tape.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.TP
+.B ETRSLT
+Reselect server requested by operator.
+.br
+5	I/O error.
+.br
+6	Unit not operational.
+.br
+13	Operator cancel, access denied by TMS, wrong label type or file not expired.
+.br
+212	Interrupted by user.

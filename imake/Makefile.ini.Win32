@@ -1,0 +1,51 @@
+#
+#   WARNING    WARNING    WARNING    WARNING    WARNING    WARNING    WARNING
+#
+# This is NOT an automatically generated Makefile!  It is hand-crafted as a 
+# bootstrap, may need editing for your system.  The BOOTSTRAPCFLAGS variable
+# may be given at the top of the build tree for systems that do not define
+# any machine-specific preprocessor symbols.
+#
+
+BOOTSTRAPCFLAGS = 
+CDEBUGFLAGS = -O
+INCLUDES = -I../include
+CFLAGS = $(BOOTSTRAPCFLAGS) $(CDEBUGFLAGS) $(INCLUDES)
+SHELL = cmd
+RM = del
+MAKE = nmake /nologo
+NPROC = 1
+
+imake.exe::
+	@echo making imake with BOOTSTRAPCFLAGS=$(BOOTSTRAPCFLAGS)
+
+imake.exe:: imake.obj
+	cl /nologo imake.obj
+
+imake.obj: imake.c
+	cl /nologo -c $(CFLAGS) imake.c
+
+relink:
+	if exist imake.exe $(RM) imake.exe
+	$(MAKE) $(MFLAGS) imake.exe
+
+clean:
+	if exist imake.obj $(RM) imake.obj
+	if exist imake.exe $(RM) imake.exe
+
+depend:
+
+
+# for manual use
+
+Makefile: imake
+	imake -DNEWTOP=../
+
+tags:
+
+install:
+
+install.man:
+
+Makefiles:
+

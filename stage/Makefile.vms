@@ -1,0 +1,124 @@
+#	Copyright (C) 1997 by CERN IT-PDP/SC
+#	All rights reserved
+#
+#	@(#)Makefile.vms	1.2 01/31/97 CERN IT-PDP/SC Frederic Hemmer
+#
+# Makefile.vms	Makefile for bulding on VMS for Multinet
+#
+
+INCFLAGS=/include=(multinet_root:[multinet.include],[-.h],[-.vms])
+CFLAGS=/PREF=ALL/STAND=VAXC/LIS/DEF=(MULTINET=1,TMS=1) $(INCFLAGS) /NOOPT/DEBUG
+
+LIB=[-.lib]shift
+
+all: stagein.exe stagewrt.exe stageout.exe stagecat.exe \
+     stageqry.exe stageclr.exe stageput.exe
+
+clobber:
+	@-delete *.map;*,*.obj;*,*.exe;*,*.lis;*
+
+send2stgd.obj:	send2stgd.c
+	@DEFINE/JOB NETINET    multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET        multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS        multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA       multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+
+buildupath.obj:	buildupath.c
+	@DEFINE/JOB NETINET    multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET        multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS        multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA       multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+
+getlisttp.obj:	getlisttp.c
+	@DEFINE/JOB NETINET     multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET         multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS         multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA        multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+
+stagein.obj:	stagein.c
+	@DEFINE/JOB NETINET 	multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET		multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS 	multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA 	multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+	
+stageqry.obj:	stageqry.c
+	@DEFINE/JOB NETINET    multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET        multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS        multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA       multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+
+stageclr.obj:	stageclr.c
+	@DEFINE/JOB NETINET    multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET        multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS        multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA       multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+
+stageput.obj:	stageput.c
+	@DEFINE/JOB NETINET    multinet_root:[multinet.include.netinet]
+	@DEFINE/JOB NET        multinet_root:[multinet.include.net]
+	@DEFINE/JOB SYS        multinet_root:[multinet.include.sys]
+	@DEFINE/JOB ARPA       multinet_root:[multinet.include.arpa]
+	$(CC) $(CFLAGS) $?
+	@DEASSIGN/JOB NETINET
+	@DEASSIGN/JOB NET
+	@DEASSIGN/JOB SYS
+	@DEASSIGN/JOB ARPA
+      
+stagein.exe: stagein.obj buildupath.obj getlisttp.obj send2stgd.obj
+	write sys$$output "Linking $@"
+	Link/map/full/cross /exe=$@ stagein.obj,buildupath.obj,getlisttp.obj,send2stgd.obj,\
+	$(LIB)/lib,[-.stage]multinet/opt
+
+stageput.exe: stageput.obj buildupath.obj send2stgd.obj
+	write sys$$output "Linking $@"
+	Link/map/full/cross /exe=$@ stageput.obj,buildupath.obj,send2stgd.obj,\
+	$(LIB)/lib,[-.stage]multinet/opt
+
+stageqry.exe: stageqry.obj getlisttp.obj send2stgd.obj
+	write sys$$output "Linking $@"
+	Link/map/full/cross /exe=$@ stageqry.obj,getlisttp.obj,\
+		send2stgd.obj,$(LIB)/lib,[-.stage]multinet/opt
+
+stageclr.exe: stageclr.obj getlisttp.obj send2stgd.obj
+	write sys$$output "Linking $@"
+	Link/map/full/cross /exe=$@ stageclr.obj,getlisttp.obj,send2stgd.obj,\
+	$(LIB)/lib,[-.stage]multinet/opt
+
+stagewrt.exe: stagein.exe
+	copy $? $@
+
+stageout.exe:	stagein.exe
+	copy $? $@
+
+stagecat.exe:	stagein.exe
+	copy $? $@

@@ -1,0 +1,83 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH USRLBL l "%G%"
+.SH NAME
+.B checkeofeov, wrthdrlbl, wrttrllbl, deltpfil
+\- user callable routines to check/write tape labels
+.SH SYNOPSIS
+.BI "int checkeofeov (int " tapefd ,
+.BI "char *" path )
+.LP
+.BI "int wrthdrlbl (int " tapefd ,
+.BI "char *" path )
+.LP
+.BI "int wrttrllbl (int " tapefd ,
+.BI "char *" path ,
+.BI "char *" labelid ,
+.BI "int " nblocks )
+.LP
+.BI "int deltpfil (int " tapefd ,
+.BI "char *" path )
+.SH DESCRIPTION
+These routines check for EOF and EOV labels, get information from header labels
+and write the labels on a tape, using the information stored by
+.B tpmnt
+in the file indicated by the TAPENV variable (.tplabel by default).
+To check for EOF/EOV or write labels,
+the tape file must have been previously open in the user program,
+.I tapefd
+being the file descriptor returned by the
+.I open
+statement.
+.I path
+must point to a string identical to the -P parameter on the corresponding
+.BR tpmnt .
+.LP
+.B checkeofeov()
+checks for EOF and EOV labels.
+The function should be called when a tapemark is read.
+It returns 0 for EOF, 213 for EOV or a negative number in case of error.
+.LP
+.B wrthdrlbl()
+writes the header labels on a tape.
+Header labels consist of a VOL1 record for the first file and an HDR1 and HDR2
+for all files on a labelled tape.
+The tapemark which precedes the label group for all files, except the first,
+is rewritten for Exabytes in 8200 mode.
+The label group is ended by one tapemark.
+For nl tapes, the tapemark is rewritten (Exabytes in 8200 mode only) if not
+at beginning of tape.
+The routine should be called after the open and before the first write
+operation on the tape file.
+.LP
+.B wrttrllbl()
+writes the trailer labels on a tape.
+Trailer labels consist of a pair of records EOF1/EOF2 or EOV1/EOV2 for all files
+on a labelled tape.
+.I labelid
+indicates EOF or EOV while
+.I nblocks
+should be set to the number of physical blocks written in the current file section.
+The label group is preceded by one tapemark. It is followed by one tapemark on
+tapes with directory such as DLT, NTP and Redwood, two tapemarks otherwise.
+For nl tapes, one or two tapemarks are written depending on device type.
+The tape is then positioned after the tapemark on DLT/NTP/Redwood, in front
+of the two tapemarks on Exabytes in 8200 mode, between the two tapemarks
+otherwise.
+The routine should be called after the last write operation on the tape file
+and before the close.
+.LP
+.B deltpfil()
+may be called after
+.B wrthdrlbl
+and eventually some writes to delete the current file on the tape.
+The tape is positionned back in front of the file label.
+If the file is the first one on the tape, the header label is rewritten
+with a retention period of 0, otherwise two tape marks are written over.
+.SH RETURN VALUE
+These routines return 0 if the operation was successful or a negative number
+if the operation failed.
+This number corresponds to the negated value of
+.IR errno .

@@ -1,0 +1,137 @@
+.\" @(#)stageupdc.man	1.1 09/13/95 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1995 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEUPDC l "09/13/95"
+.SH NAME
+stageupdc \- update the stager catalog
+.SH SYNOPSIS
+.B stageupdc
+[
+.BI -h " host"
+] [
+.BI -U " fun"
+] [
+.I files
+]
+.LP
+.B stageupdc
+[
+.BI -b " max_block_size"
+] [
+.BI -D " tape_drive"
+] [
+.BI -F " record_format"
+] [
+.BI -f " file_id"
+] [
+.BI -h " host"
+] [
+.BI -I " network_ifce"
+] [
+.BI -L " record_length"
+] [
+.BI -q " file_sequence_number"
+] [
+.BI -R " exit_code"
+] [
+.BI -s " size"
+] [
+.BI -T " transfer_time"
+] [
+.BI -W " wait_time"
+]
+.BI -Z " stage_reqid"
+.SH DESCRIPTION
+.B stageupdc
+updates the stager catalog.
+.LP
+The first format may only be used after a
+.B stagealloc
+or
+.B stageout
+command. The
+.I file
+parameter must match the one used on
+.B stagealloc
+or
+.BR stageout .
+The file must be in state STAGEALLOC or STAGEOUT.
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.LP
+The second format is used by rtcopy to send back information to the stager.
+.SH OPTIONS
+.TP
+.BI \-b " blocksize"
+Specifies the maximum block size.
+.TP
+.BI \-D " tape_drive"
+Identifies the drive where the tape is mounted.
+.TP
+.BI \-F " recfm"
+Specifies the record format of the data on the tape. It may be
+.BR U ,
+.B F
+or
+.BR FB .
+.TP
+.BI \-f " fid"
+Specifies the fileid in HDR1.
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " network_ifce"
+Identifies the network interface used for the transfer between the tape server
+and the disk server.
+.TP
+.BI \-L " lrecl"
+Specifies the logical record length for fixed length record format files.
+.TP
+.BI \-q " fseq"
+Specifies the file sequence number of the tape file.
+.TP
+.BI \-R " exit_code"
+Exit code for the file stage subrequest.
+.TP
+.BI \-s " size"
+Gives the actual filesize in bytes.
+.TP
+.BI \-T " transfer_time"
+Time spent transferring data between tape and disk server.
+.TP
+.BI \-U " fun"
+Fortran unit number.
+This is internally converted to a local path
+.BI ftn fun
+(HP-UX) or
+.BI fort. fun
+(all other platforms).
+The
+.B \-U
+option and the
+.I file
+parameter may not be both specified at the same time.
+.TP
+.BI \-W " wait_time"
+Time spent waiting for a drive to become available and for the volume to get
+mounted.
+.TP
+.BI \-Z " stage_reqid"
+The value is in the form
+.BR "reqid.key@stagehost" .
+.SH RETURN CODES
+\
+.br
+0       Ok.
+.br
+1       Bad parameter.
+.br
+2       System error.
+.br
+4       Configuration error.

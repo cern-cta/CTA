@@ -1,0 +1,56 @@
+.\" @(#)rfmkdir.man	1.1 09/07/98     CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" All rights reserved
+.\"
+.TH RFMKDIR l "09/07/98"
+.SH NAME
+rfmkdir \- make remote directories
+.SH SYNOPSIS
+.B rfmkdir
+[
+.BI -m
+.IR mode
+]
+[
+.IB -p
+]
+.IR directory...
+.SH DESCRIPTION
+.IX "\fLrfmkdir\fR"
+.B rfmkdir
+provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for creating remote directories in mode 777
+(possibly altered by
+.BR umask(1) ).
+The
+.IR directory
+argument is either a remote directory name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local directory name (not containing the :/ character combination). Creation of a directory
+requires write permission in the parent directory.
+.SH "OPTIONS"
+The following options apply to
+.B rfmkdir:
+.TP
+.BI \-m " mode"
+This option allows users to specify the mode to be used for the new directories.
+Choices for modes can be found in
+.BI chmod(1) .
+.TP
+.BI \-p
+With this option,
+.B rfmkdir
+creates
+.B dirname
+by creating all the non-existing parent directories first.
+.SH "SEE ALSO"
+.BR mkdir(1),
+.BR umask(1),
+.BR mkdir(2),
+.BR rfiod(l)
+.SH "AUTHOR"
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

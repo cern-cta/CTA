@@ -1,0 +1,52 @@
+.\" @(#)rfdir.man	1.2 09/21/98     CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" All rights reserved
+.\"
+.TH RFDIR l "09/21/98"
+.SH NAME
+rfdir \- Remote directory list
+.SH SYNOPSIS
+.B rfdir
+.IR directory
+.br
+.B rfdir
+.IR filename
+.SH DESCRIPTION
+.IX "\fLrfdir\fR"
+The remote directory list program provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for listing a remote directory or file.
+The
+.IR filename
+or
+.IR directory
+argument is either a remote file name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local file name (not containing the :/ character combination).
+The output from the 
+.BR rfdir 
+command is a full directory listing 
+similar to that of the
+.BR "ls -al"
+command for listing local files or directories.
+.SH "SEE ALSO"
+.BR rcp(1), 
+.BR rfiod(l)
+.SH "NOTES"
+.B rfdir
+does not support regular expressions
+.BR (regexp(5)) 
+in the
+.IR diretory
+or
+.IR filename
+argument.
+.LP
+The date and time displayed by
+.B rfdir
+are for the last modification to the file.
+.SH "AUTHOR"
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

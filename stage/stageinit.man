@@ -1,0 +1,48 @@
+.\" @(#)stageinit.man	1.3 08/31/95 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1995 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGEINIT l "08/31/95"
+.SH NAME
+stageinit \- tells stgdaemon to reread the pool configuration file
+.SH SYNOPSIS
+.B stageinit
+[
+.B -F
+] [
+.BI -h " host"
+]
+.SH DESCRIPTION
+.B stageinit
+tells stgdaemon to drain the service, i.e. rejects new stage requests but
+let the current ones complete; then reread the pool configuration file:
+some pools may have been added or suppressed or filesystems in pools may
+have been added or removed; then adjust space information according to the
+new configuration and restart the service.
+.B stageinit
+is a privileged command restricted for use by an administrator.
+.SH OPTIONS
+.TP
+.B \-F
+The command is executed immediately: new stage requests are rejected but
+the daemon does not wait for existing stage requests to complete,
+they just continue to run in parallel.
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.SH FILES
+.TP 1.5i
+.B /etc/STGCONFIG
+configuration file
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Command aborted or another stageinit is pending.
+.br
+2	System error.
+.br
+4	Configuration error.

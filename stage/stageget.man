@@ -1,0 +1,102 @@
+.\" @(#)stageget.man	1.1 04/18/96 CERN CN-PDP/DS Jean-Philippe Baud
+.\" Copyright (C) 1996 by CERN/CN/PDP/DS
+.\" All rights reserved
+.\"
+.TH STAGEGET l "04/18/96"
+.SH NAME
+stageget \- find file allocated in a disk pool with stagealloc
+.SH SYNOPSIS
+.B stageget  
+[
+.BI -h " host"
+] [
+.BI -P 
+] [
+.BI -p " pool"
+] [
+.BI -U " fun"
+] [
+.BI -u " user"
+]
+.I file
+.SH DESCRIPTION
+This command sends a request to a stager daemon which finds the file previously
+allocated with
+.BR stagealloc ,
+establishes a symbolic link
+.I file
+to it and updates its catalog (number of accesses and last access date).
+.LP
+Then the internal path name or the link can be used by the application program
+to read the data from disk.
+The file must be in state STAGED, i.e.
+.B stagealloc
+and
+.B stageupdc
+must have been both used for that file. See the
+example below.
+.LP
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax), a full path starting with the NFS_ROOT, i.e. /shift,
+or absent if a Fortran unit number is specified.
+.LP
+.SH OPTIONS
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.B \-P
+prints on stdout the internal path name.
+.TP
+.BI \-p " poolname"
+Restricts the search to the pool
+.IR poolname .
+.TP
+.BI \-U " fun"
+Fortran unit number.
+This is internally converted to a local path
+.BR "fort.fun" .
+The
+.B \-U
+option and the
+.I file
+parameter may be both specified but at least one of them must be present.
+.TP
+.BI \-u " user"
+restricts the search to the subdirectories
+.I user
+of the pool.
+This may also be specified thru the environment variable STAGE_USER.
+The default subdirectory name is
+.BR stage .
+.SH EXAMPLES
+.TP
+A first session could save a large program in the pool:
+.sp
+stagealloc -s 20 -u baud MyDice_XXX.sav
+.br
+rfcp MyDice_XXX MyDice_XXX.sav
+.br
+stageupdc MyDice_XXX.sav
+.TP
+A new job could retrieve it and use it by saying:
+.sp
+stageget -u baud MyDice_XXX.sav
+.br
+rfcp MyDice_XXX.sav MyDice_XXX
+.br
+MyDice_XXX
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.

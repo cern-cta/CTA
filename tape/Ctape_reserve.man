@@ -1,0 +1,81 @@
+.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_RESERVE l "%G%"
+.SH NAME
+Ctape_reserve \- reserve tape resources
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_reserve (int " count ,
+.BI "struct dgn_rsv *" dgn_rsv );
+.SH DESCRIPTION
+.B Ctape_reserve
+gives permission to access tape drives.
+It is mandatory to specify all resources which will be used
+simultaneously by the job in one Ctape_reserve call (to avoid deadlocks).
+The tape daemon will check that enough drives are configured up.
+.I count
+gives the number of elements in the array of structures
+.IR dgn_rsv .
+.PP
+.nf
+.cs R 18
+/* structure for device group reservation */
+struct dgn_rsv {
+        char    name[CA_MAXDGNLEN+1];
+        int     num;
+};
+.cs R
+.fi
+For each device group to be used, specify the device group name (CART, 8MM...)
+in the
+.B name
+member of the structure and the number of drives in
+.BR num .
+
+     For example:
+
+.nf
+	int c;
+	int count = 2;
+	static struct dgn_rsv dgn_rsv[2] = {"CART", 1, "8MM", 1};
+	c = Ctape_reserve (count, dgn_rsv);
+.fi
+
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP
+.B SYERR
+System error.
+.TP
+.B COMERR
+Communication error.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B ETDNP
+Tape daemon is not running.
+.TP
+.B ETPRM
+Bad parameter.
+.TP
+.B ETRSV
+Reserve already issued.
+.TP
+.B ETNDV
+Too many drives requested.
+.TP
+.B ETIDG
+Invalid device group name.

@@ -1,0 +1,281 @@
+.\"   $Id: Cthread.man,v 1.1.1.1 1999/07/20 08:03:06 jdurand Exp $
+.\"
+.\"   Man page for the CASTOR's Thread Interface (Cthread)
+.\"
+.\"   $Log: Cthread.man,v $
+.\"   Revision 1.1.1.1  1999/07/20 08:03:06  jdurand
+.\"   Imported Sources
+.\"
+.\"
+.TH \fBCthread\fP "1" "29 Apr 1999" "Cthread V.1.0" "Jean-Damien Durand & Olof Barring"
+.SH NAME
+\fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
+.SH SYNOPSIS
+.B #include <Cthread_api.h>
+.P
+.BI "int Cthread_create(void *(*"startroutine ")(void *), void * "arg ");"
+.P
+.BI "int Cthread_create_detached(void *(*" startroutine ")(void *),void *" arg ");"
+.P
+.BI "int Cthread_join(int " cid ", int **" status ");"
+.P
+.BI "int Cthread_mutex_lock(void *" addr ");"
+.P
+.BI "int Cthread_mutex_trylock(void *" addr ");"
+.P
+.BI "int Cthread_mutex_timedlock(void *" addr ", int " timeout ");"
+.P
+.BI "int Cthread_mutex_unlock(void *" addr ");"
+.P
+.BI "int Cthread_mutex_destroy(void *" addr ");"
+.P
+.BI "int Cthread_cond_wait(void *" addr ");"
+.P
+.BI "int Cthread_cond_timedwait(void *" addr ", int " timeout ");"
+.P
+.BI "int Cthread_cond_signal(void *" addr ");"
+.P
+.BI "int Cthread_cond_broadcast(void *" addr ");"
+.P
+.BI "int Cthread_detach(int " cid ");"
+.P
+.BI "int Cthread_self(void);"
+.P
+.BI "int Cthread_getspecific(int *" global_key ", void **" addr ");"
+.P
+.BI "int Cthread_setspecific(int *" global_key ", void * " addr ");"
+
+.SH DESCRIPTION
+
+\fBCthread\fP is a common API interface for multithreaded programs, although there is also support for nonthreaded application, where some of the \fBCthread\fP functions then becomes useless.
+.P
+For non-thread applications see the section
+.B NON-THREAD ENVIRONMENT
+.P
+Any created thread is identified uniquely with a \fBcid\fP, standing for \fBc\fPthif \fBid\fPentifier.
+.P
+In multithread environment, \fBCthread\fP is an interface to \fBpthread\fP functions on \fBUNIX\fP, and an interface to \fBWin32\fP C-runtime library on \fBWindows/NT\fP.
+.P
+\fBCthread_create\fP is creating a thread given its starting point
+.I "startroutine"
+and its arguments
+.I "arg"
+address. The thread is created with the default parameters, e.g. it is a joinable thread.
+.P
+Return value is the \fBCthread\fP identifier
+.I "cid"
+, greater or equal to zero, or -1 on error.
+.P
+\fBCthread_create_detached\fP takes the same arguments as \fBCthread_create\fP and (tries) to create a detachable thread, which will then make it act as a daemon. This means that ressources used by this thread will be freed immediately when it terminates. On the other hand, such thread cannot be synchronized with other threads using the \fBCthread_join\fP method.
+.P
+You have to remind that creating a detachable thread do not work immediately at the creation step on every thread implementation, in particular in the \fBDCE\fP threads. If the implementation do not allow this at creation time, then \fBCthread_create_detached\fP calls \fBCthread_create\fP. Please have a look at \fBCthread_detach\fP section.
+.P
+Return value is the \fBCthread\fP identifier
+.I "cid"
+, greater or equal to zero, or -1 on error.
+.P
+\fBCthread_join\fP suspends the calling thread until the one identified with the \fBCthread\fP identifier
+.I "cid"
+terminates. If the
+.I "status"
+parameter is not \fBNULL\fP, the status of the terminating thread
+.I "cid"
+is stored there. This status is the pointer returned by thread
+.I "cid"
+at its end.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_mutex_lock\fP is an alias for \fBCthread_mutex_timelock\fP with a
+.I timeout
+of -1.
+.P
+.P
+\fBCthread_mutex_trylock\fP is an alias for \fBCthread_mutex_timelock\fP with a
+.I timeout
+of 0.
+.P
+\fBCthread_mutex_timedlock\fP is acquiring a mutex, creating it if necessary, on the
+.I "addr"
+address. The second parameter is the eventual
+.I "timeout"
+in seconds. If this parameter is < 0, the calling thread is suspended until it is granted access to
+.I "addr"
+, if it is zero, the calling thread will try to gain the lock, and if it is greater than zero the calling thread will wait up to 
+.I timeout
+seconds.
+.P
+Please note that, in \fBCthread\fP, a creation of a mutex is always associated with a creation of a conditionnal variable. See \fBCthread_cond_timedwait\fP and \fBCthread_cond_broadcast_\fP.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_mutex_unlock\fP is unlocking the mutex that the calling thread is assumed to have acquired previously, calling \fBCthread_mutex_timedlock\fP on the
+.I "addr"
+address.
+.P
+\fBCthread_cond_wait\fP is an alias for \fBCthread_cond_timedwait\fP with a
+.I timeout
+of -1.
+.P
+\fBCthread_cond_timedwait\fP is waiting for a condition variable, which is, by default in \fBCthread\fP, broadcasted, associated with a mutex previously created on the
+.I "addr"
+address. Calling this function before the creation \fBand\fP the lock of a mutex, with \fBCthread_mutex_timedlock\fP is a programming error.
+.P
+While the thread is waiting on a condition to arise on the
+.I "addr"
+address, the corresponding lock is released. It will be acquired as soon as the condition happens. Please note that the use of condition is subject to normal thread programming rules, e.g. the lock, a loop on a predicate, a wait inside the loop, and the unlock.
+.P
+If the
+.I "timeout"
+parameter, in seconds, is greater than zero, then the function will not suspend the calling thread more than this limit.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_cond_signal\fP is an alias for \fBCthread_cond_broadcast\fP.
+.P
+\fBCthread_cond_broadcast\fP restarts threads that are waiting on a condition variable vs.
+.I "addr"
+address.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_detach\fP is detaching the calling thread, identified with
+.I "cid"
+\fBCthread\fP identifier. Whereas the normal thread packages that allow a thread to be detached at the creation step, see \fBCthread_create_detached\fP, returns an error if such a detached thread tries to detach himself again, \fBCthread_detach\fP will not, because of this different behaviour vs. different thread implementations: it is not possible everywhere to create a detached thread immediately, like in DCE threads.
+.P
+This means that if a user is creating a thread with \fBCthread_create\fP or \fBCthread_create_detached\fP, the created thread will, in any case, be allowed to call \fBCthread_detach\fP: if the calling thread is not yet detached, it will be changed so forth, and if the calling thread is already detached, the return value will be 0.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_mutex_destroy\fP is removing its corresponding entry in \fBCthread\fP internal linked list, freeing all thread associated stuff, like the mutex itself, and the conditionnal variable (see \fBCthread_mutex_timedlock\fP).
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_self\fP is returning the \fBCthread\fP identifier
+.I "cid"
+of the calling thread.
+.P
+Return value is the
+.I "cid"
+(greater or equal to zero) on success, or -1 on error.
+.P
+\fBCthread_getspecific\fP is creating and/or getting a thread-specific storage address for every instance of the
+.I "global_key"
+address, storing its result in
+.I "addr"
+location. The first time it is called, the stored result is \fBNULL\fP, next time it will be the address of the memory the user would have previously allocated and associated with the key using \fBCthread_setspecific\fP.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_setspecific\fP is associating a memory, starting at
+.I addr
+that he have previously allocated, with the
+.I global_key
+address. If he tries to do so without calling previously \fBCthread_getspecific\fP, then such a call will be done internally.
+.P
+Return value is 0 on success, or -1 on error.
+.SH EXAMPLES
+.B Here is an example with thread-specific data
+.P
+.nf
+#include <Cthread_api.h> /* \fBCthread\fP include file */
+#include <errno.h>       /* For error propagation in our code */
+#include <stdio.h>       /* For I/O functions and definitions */
+#define NTHREADS 5 /* Number of threads */
+#define NLOOP    5 /* Number of loops in threads */
+
+static int global_key;
+
+/* Internal Prototypes */
+void *mythread(void *);
+void  testit();
+
+int main() {
+  int i, n;
+
+  for (i=1; i <= NTHREADS; i++) {
+    if ((n = \fBCthread_create\fP(&mythread,NULL)) < 0) {
+      exit(EXIT_FAILURE);
+    } else {
+      fprintf(stderr,"[main] --> Created Cthread ID %d\\n",n);
+    }
+  }
+
+  sleep(NTHREADS);
+  exit(EXIT_SUCCESS);
+}
+
+void *mythread(void *arg) {
+  int i;
+
+  /* Call the same routine NLOOP times */
+  for (i=1; i <= NLOOP; i++) {
+    testit();
+  }
+
+  return(NULL);
+}
+
+void testit() {
+  char *addr = NULL;
+  int   n;
+
+  if ((n = \fBCthread_detach\fP(Cthread_self())))
+    exit(EXIT_FAILURE);
+
+  if ((n = \fBCthread_getspecific\fP(&global_key,(void **) &addr)))
+    exit(EXIT_FAILURE);
+
+  if (addr == NULL) {
+    addr = malloc(100);
+    fprintf(stderr,"[%d] --> new 0x%x\\n",
+            Cthread_self(),addr);
+    if (\fBCthread_setspecific\fP(&global_key,addr))
+      exit(EXIT_FAILURE);
+  } else {
+    fprintf(stderr,"[%d] --> old 0x%x\\n",
+            Cthread_self(),addr);
+  }
+  
+  sprintf(addr,"[%d] Print with TSD buffer : Cthread ID=%d\\n",
+               Cthread_self(),Cthread_self());
+
+  fprintf(stderr,addr);
+
+  return;
+}
+.fi
+.SH NON-THREAD ENVIRONMENT
+
+In such an environment, almost all methods becomes no-op, except:
+.P
+.RS
+Creation of process(es):
+.RS
+.B Cthread_create
+.br
+.B Cthread_create_detached
+(equivalent to \fBCthread_create\fP)
+.br
+.B Cthread_join
+.P
+.RE
+Use of "Process"-specific variables:
+.RS
+.B Cthread_getspecific
+.br
+.B Cthread_setspecific
+.br
+.RE
+.P
+For these two last functions, \fBCthread\fP will garbage itself its eventual list of "Process"-specific variables. This means that, \fBas in a thread environment\fP, the user will \fBnot\fP have to free memory allocated \fBand\fP registered with a call to \fBCthread_setspecific\fP.
+.RE
+.SH SEE ALSO
+\fBpthread\fP, \fBDCE\fP, \fBLinuxThreads\fP, \fBWin32\fP
+
+.SH AUTHOR
+\fBJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
+.br
+\fBOlof Barring\fP (Olof.Barring@cern.ch)
+
+

@@ -1,0 +1,67 @@
+.\" @(#)rfcp.man	1.2 09/07/98     CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" All rights reserved
+.\"
+.TH RFCP l "09/07/98"
+.SH NAME
+rfcp \- Remote file copy
+.SH SYNOPSIS
+.B rfcp
+[
+.BI -s " size"
+]
+.IR filename1
+.IR filename2
+.br
+.B rfcp
+[
+.BI -s " size"
+]
+.IR filename
+.IR directory
+.br
+.B rfcp
+[
+.BI -a
+] [
+.BI -b
+] [
+.BI -s " size"
+]
+.BI @ command_file
+.SH DESCRIPTION
+.IX "\fLrfcp\fR"
+The remote file I/O copy program provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for transferring files between remote and/or
+local hosts. Each
+.IR filename
+or
+.IR directory
+argument is either a remote file name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local file name (not containing the :/ character combination).
+.SH OPTIONS
+.TP
+.BI \-a
+tells
+.B rfcp
+that the source file is ASCII text (Windows/NT only)
+.TP
+.BI \-b
+tells
+.B rfcp
+that the source is a binary file (Windows/NT only)
+.TP
+.BI \-s " size"
+If specified, only
+.I size
+bytes will be copied
+.SH "SEE ALSO"
+.BR rcp(1), 
+.BR rfiod(l)
+.SH "AUTHOR"
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

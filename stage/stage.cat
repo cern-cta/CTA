@@ -1,0 +1,66 @@
+
+
+
+STAGE(l)          Misc. Reference Manual Pages           STAGE(l)
+
+
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     The staging facilities offer fast access to  tape  data  via
+     copies  in  a  disk  pool.   A stage daemon manages the pool
+     space and keeps a catalog of staged files.  A disk pool con-
+     sists in a number of file systems distributed over different
+     machines.  It can be private to  an  experiment  or  public.
+     Use  mmmmaaaannnn  _c_o_m_m_a_n_d  for details of the commands recognized by
+     the stager:
+
+     stagealloc     allocate space in a disk pool
+
+     stagecat       put an entry in the stage daemon catalog  for
+                    an existing file (admin only)
+
+     stageclr       remove staged files
+
+     stageget       find file  allocated  in  a  disk  pool  with
+                    ssssttttaaaaggggeeeeaaaalllllllloooocccc.
+
+     stagein        allocate space in a disk pool and copy  files
+                    from tape to disk or from disk to disk
+
+     stageinit      tell stgdaemon to reread the pool  configura-
+                    tion file (admin only)
+
+     stageout       allocate space and store the option values in
+                    the  stgdaemon  catalog  for  use by stageput
+                    later
+
+     stageput       copy disk files to tape. It can only be  used
+                    for a file allocated with stageout
+
+     stageqry       give the status of all staged tapes
+
+     stageupdc      update the stager catalog
+
+     stagewrt       copy existing files from disk to tape or from
+                    disk to disk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SunOS 5.5.1           Last change: 04/22/96                     1
+
+
+

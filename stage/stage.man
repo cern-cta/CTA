@@ -1,0 +1,53 @@
+.\" @(#)stage.man	1.2 04/22/96 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1996 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGE l "04/22/96"
+.SH DESCRIPTION
+The staging facilities offer fast access to tape data via copies in a disk pool.
+A stage daemon manages the pool space and keeps a catalog of staged files.
+A disk pool consists in a number of file systems distributed over different
+machines.
+It can be private to an experiment or public.
+Use 
+.B man
+.I command
+for details of the commands recognized by the stager:
+.TP 15
+stagealloc
+allocate space in a disk pool
+.TP
+stagecat
+put an entry in the stage daemon catalog for an existing file (admin only)
+.TP
+stageclr
+remove staged files
+.TP
+stageget
+find file allocated in a disk pool with
+.BR stagealloc .
+.TP
+stagein
+allocate space in a disk pool and copy files from
+tape to disk or from disk to disk
+.TP
+stageinit
+tell stgdaemon to reread the pool configuration file (admin only)
+.TP
+stageout
+allocate space and store the option values in the
+stgdaemon catalog for use by stageput later
+.TP
+stageput
+copy disk files to tape. It can only be used for a file allocated with stageout
+.TP
+stageqry
+give the status of all staged tapes
+.TP
+stageupdc
+update the stager catalog
+.TP
+stagewrt
+copy existing files from disk to tape or from disk
+to disk
+ 

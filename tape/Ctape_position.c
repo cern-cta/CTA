@@ -1,0 +1,150 @@
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+
+/*	Ctape_position - send a request to the tape daemon to get the tape
+ *	positionned to a given file and the HDR labels checked
+ */
+#include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+#include "Ctape.h"
+#include "marshall.h"
+#include "serrno.h"
+extern char *sys_errlist[];
+
+Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, recfm, blksize, lrecl, retentd, flags)
+char *path;
+int method;
+int fseq;
+int fsec;
+unsigned int blockid;
+int Qfirst;
+int Qlast;
+int filstat;
+char *fid;
+char *recfm;
+int blksize;
+int lrecl;
+int retentd;
+int flags;
+{
+	int actual_fseq;
+	int c, i, n;
+	int errflg = 0;
+	char func[16];
+	char fullpath[CA_MAXPATHLEN+1];
+	char *getcwd();
+	gid_t gid;
+	char hdr1[81], hdr2[81];
+	int jid;
+	int msglen;
+	char *q;
+	char *rbp;
+	char repbuf[251];
+	char *sbp;
+	char sendbuf[REQBUFSZ];
+	uid_t uid;
+	char vol1[81];
+
+	strcpy (func, "Ctape_position");
+	uid = getuid();
+	gid = getgid();
+#if defined(_WIN32)
+	if (uid < 0 || gid < 0) {
+		Ctape_errmsg (func, TP053);
+		return (USERR);
+	}
+#endif
+	jid = findpgrp();
+
+	/* path */
+
+	if (path == NULL || *path == '\0') {
+		Ctape_errmsg (func, TP029);
+		errflg++;
+	} else {
+		*fullpath = '\0';
+		if (*path != '/') {
+			if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
+				Ctape_errmsg (func, TP002, "getcwd", sys_errlist[errno]);
+				errflg++;
+			} else {
+				strcat (fullpath, "/");
+			}
+		}
+		if (strlen(fullpath) + strlen(path) < sizeof(fullpath)) {
+			strcat (fullpath, path);
+		} else {
+			Ctape_errmsg (func, TP038);
+			errflg++;
+		}
+	}
+
+	if (errflg) {
+		serrno = ETPRM;
+		return (-1);
+	}
+
+        /* Build request header */
+ 
+        sbp = sendbuf;
+        marshall_LONG (sbp, TPMAGIC);
+        marshall_LONG (sbp, TPPOS);
+        q = sbp;        /* save pointer. The next field will be updated */
+        msglen = 3 * LONGSIZE;
+        marshall_LONG (sbp, msglen);
+ 
+        /* Build request body */
+ 
+	marshall_WORD (sbp, uid);
+	marshall_WORD (sbp, gid);
+	marshall_WORD (sbp, jid);
+	marshall_STRING (sbp, path);
+	marshall_WORD (sbp, method);
+	if (method == TPPOSIT_FSEQ) {
+		marshall_LONG (sbp, fseq);
+		marshall_WORD (sbp, fsec);
+	}
+	if (method == TPPOSIT_BLKID)
+		marshall_LONG (sbp, blockid);
+	marshall_LONG (sbp, Qfirst);
+	marshall_LONG (sbp, Qlast);
+	marshall_WORD (sbp, filstat);
+	if (fid) {
+		marshall_STRING (sbp, fid);
+	} else {
+		marshall_STRING (sbp, "");
+	}
+	if (recfm) {
+		marshall_STRING (sbp, recfm);
+	} else {
+		marshall_STRING (sbp, "");
+	}
+	marshall_LONG (sbp, blksize);
+	marshall_LONG (sbp, lrecl);
+	marshall_WORD (sbp, retentd);
+	marshall_WORD (sbp, flags);
+
+	msglen = sbp - sendbuf;
+	marshall_LONG (q, msglen);	/* update length field */
+
+	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	if (c == 0) {
+		rbp = repbuf;
+		unmarshall_LONG (rbp, actual_fseq);
+		unmarshall_STRING (rbp, vol1);
+		unmarshall_STRING (rbp, hdr1);
+		unmarshall_STRING (rbp, hdr2);
+		setlabelinfo (fullpath, flags, actual_fseq, vol1, hdr1, hdr2);
+	}
+	return (c);
+}

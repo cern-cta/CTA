@@ -1,0 +1,311 @@
+.\" @(#)stagecat.man	1.7 09/14/97 CERN CN-PDP/DH Jean-Philippe Baud
+.\" Copyright (C) 1994-1997 by CERN/CN/PDP/DH
+.\" All rights reserved
+.\"
+.TH STAGECAT l "09/14/97"
+.SH NAME
+stagecat \- put an entry in the stage daemon catalog for an existing file
+.SH SYNOPSIS
+.B stagecat 
+[
+.BI -b " max_block_size"
+] [
+.BI -C " charconv"
+] [
+.BI -d " density"
+] [
+.BI -F " record_format" 
+] [
+.BI -f " file_id"
+] [
+.BI -G 
+] [ 
+.BI -g " device_group_name"
+] [
+.BI -h " host"
+] [
+.BI -I " external_filename"
+] [ 
+.BI -L " record_length"
+] [ 
+.BI -l " label_type"
+] [
+.BI -N " nread"
+] [
+.BI -p " pool"
+] [
+.BI -q " file_sequence_number"
+] [
+.BI -S " tape_server"
+] [
+.BI -s " size"
+] [
+.BI -V " visual_identifier(s)"
+] [ 
+.BI -v " volume_serial_number(s)"
+] [
+.BI -X " xparm"
+] 
+.I file
+.SH DESCRIPTION
+This command sends a request to a stage daemon
+to create an entry in the catalog for an already existing data
+.IR file .
+.LP
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.LP
+.B stagecat
+is a privileged command restricted for use by an administrator.
+.SH OPTIONS
+.TP
+.BI \-b " blocksize"
+Specifies the maximum block size.
+.TP
+.BI \-C " charconv"
+The data was converted from this character set when it was staged to disk.
+.I charconv
+may be
+.B ascii
+(no conversion done) or
+.BR ebcdic .
+The option value may also be
+.BR block .
+In this case, the trailing blanks were stripped off and a newline was appended
+to each record.
+Option values may be combined; they are separated by comma in this case.
+.br
+For example:
+.br
+	-C ebcdic,block
+.TP
+.BI \-d " density"
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges.
+It must match the device group specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS.
+.TP
+.BI \-F " recfm"
+Specifies the record format of the data on the tape. It may be one of the 
+following:
+.RS
+.TP
+.B U,\|f77
+Blocks may be of unknown length. A single logical record on disk corresponds
+to one tape block. The disk copy of the file is formatted according to the 
+convention for sequential 
+.SM FORTRAN 
+unformatted I/O.
+.TP
+.B U
+is an alias for
+.BR U,\|f77 .
+.TP
+.B U,\|bin
+Blocks may be of unknown length.
+This format is suitable for use with files created by direct access Fortran
+unformatted I/O or C I/O.
+.TP
+.B F
+Each tape block is exactly
+.IR blocksize
+bytes long (See the \-b option) with the exception of the last block
+which may be shorter.
+.I lrecl
+must be specified (-L option) and if both
+.I blocksize
+and
+.I lrecl
+are provided, they should be equal.
+.br
+Data was copied from tape to disk as a continuous data stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B FB
+This allows to group several records of
+.I lrecl
+bytes into tape blocks of
+.I blksize
+bytes.
+.I blksize
+must be a multiple of
+.IR lrecl .
+.LP
+The default record format is
+.BR U .
+.RE
+.TP
+.BI \-f " fid"
+Specifies the fileid in HDR1. If more than 17 characters long,
+only the last 17 are taken. It is then converted to upper case.
+.TP
+.B \-G
+Specifies that the tape copy operations was issued on the tape server by
+the 'group user'. A 'group user' may be defined for each group in 
+.B /etc/shift.conf.
+.br
+For example: 
+.br
+	GRPUSER ws	opalprod
+.TP 
+.BI \-g " dgn"
+The tape volume belongs to device group
+.IR dgn .
+It must match the device group specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS or
+defaults to CART.
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-I " external_filename"
+Gives the name of the external file that was copied onto
+.IR file .
+.TP
+.BI \-L " lrecl"
+Specifies the logical record length for fixed length record format files.
+.TP
+.BI \-l " lab_type"
+Specifies the type of labelwhich was used when copying the data from tape.
+The following label types are supported:
+.RS
+.TP
+.B al
+.SM ANSI 
+label
+.TP
+.B blp
+bypass label processing
+.TP
+.B nl
+no label
+.TP
+.B sl
+standard 
+.SM IBM
+label
+.LP
+It must match the label type specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS or
+defaults to
+.BR sl .
+.RE
+.TP
+.BI \-N " nread"
+If specified, the number of records was limited to
+.I nread 
+when the data was copied from tape to disk.
+.TP
+.BI \-p " poolname"
+The file resides in the pool
+.IR poolname .
+This may also be specified thru the environment variable STAGE_POOL.
+.TP
+.BI \-q " fseq"
+Specifies the file sequence number(s) of the tape file(s) which were copied
+onto that disk file.
+Default is 1.
+Multiple files may be specified using the following syntax:
+.RS 
+.TP 1.5i 
+.I f1\-f2 
+Files 
+.I f1
+to 
+.I f2 
+inclusive.
+.TP
+.I f1\- 
+Files 
+.I f1
+to the last file on the tape.
+.TP
+.I f1\-f2,\|f4,\|f6- 
+A series of non\-consecutive ranges of files.
+.RE
+.TP
+.BI \-S " server"
+Specifies that the tape copy operation was executed on the tape server 
+.IR server. 
+.TP
+.BI \-s " size"
+If specified, the number of Mbytes was limited to
+.I size 
+when the data was copied from tape to disk.
+The value must be smaller than 2048 (2 Gbytes).
+.TP
+.BI \-V " vid"
+Specifies the tape 
+.SM VID
+if different from the 
+.SM VSN .
+In the case of multi\-volume files a series of 
+.IR vid s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+.TP
+.BI \-v " vsn"
+Specifies the volume serial number of the tape. In the case of a multi-volume
+file a series of 
+.IR vsn s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+When \-v and \-V are both used, each
+.IR vsn
+must be matched by a
+.IR vid
+in the same order.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+4	Configuration error.

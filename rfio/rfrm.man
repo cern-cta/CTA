@@ -1,0 +1,62 @@
+.\" @(#)rfrm.man	1.1 09/07/98     CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" All rights reserved
+.\"
+.TH RFRM l "09/07/98"
+.SH NAME
+rfrm \- remove remote files and directories
+.SH SYNOPSIS
+.B rfrm
+.IR filename...
+.br
+.B rfrm
+[
+.BI -r
+]
+.IR directory...
+.SH DESCRIPTION
+.IX "\fLrfrm\fR"
+.B rfrm
+provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for removing entries for one or more files 
+from a directory.
+.LP
+If
+.IR filename
+is a symbolic link, the link will be removed, but the file or directory
+to which it refers will not be deleted.
+.LP
+The
+.IR filename
+or
+.IR directory
+argument is either a remote path name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local path name (not containing the :/ character combination).
+.SH "OPTIONS"
+The following options apply to
+.B rfrm:
+.TP
+.BI \-r
+Recursively remove directories and subdirectories in the argument list. The
+directory will be emptied of files and removed. 
+.SH "SEE ALSO"
+.BR rm(1),
+.BR rfiod(l)
+.SH "NOTES"
+Although
+.B rfrm
+supports a list of file names or directories it does not support regular
+expressions
+.BR (regexp(5)). 
+For instance,
+.IP
+.BR "rfrm host:/a/b/c\e\(**"
+.LP
+will not work.
+.SH "AUTHOR"
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

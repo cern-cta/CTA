@@ -1,0 +1,48 @@
+.\" @(#)account.man	1.1		CERN-SW/DC	Antoine Trannoy		08/13/91
+.\" Copyright (C) 1990,1991 by CERN/CN/SW/DC
+.\" All rights reserved
+.\"
+.TH ACCOUNT l "08/13/91"
+.SH NAME
+account \- account file
+.SH SYNOPSIS
+.B  /etc/account
+.SH DESCRIPTION
+The account file contains a one-line entry for each valid pair (user,account), of the form:
+.IP
+.IB username : accountid : seq :\c
+.BI : comments
+.LP
+where:
+.TP 15
+.I username 
+is the login name of the user.
+.TP
+.I accountid 
+is the account identifier. It is a string of a maximum of eight characters.
+.TP
+.I seq
+is the index of 
+.I accountid 
+in the group of valid accounts for 
+.IR username .
+A value of 0 means that it is the default account for user 
+.IR username .
+.LP
+The account file is an 
+.SM ASCII 
+file and does have general read permission.
+.LP
+An account entry beginning with a 
+.B ` + '
+(plus sign), means to incorporate the entire contents of the 
+Yellow Pages account file. All following entries in the account file are ignored.
+.SH FILES
+.B /etc/account
+.SH SEE ALSO
+.BR account (l), 
+.BR newacct (l)
+.SH AUTHOR
+Antoine Trannoy, CERN-CN Division CH-1211 Geneva 23, Switzerland
+(trannoy@cernvm.cern.ch)
+
