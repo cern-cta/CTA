@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.7 2000/07/04 10:08:23 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.8 2000/07/04 14:32:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.7 $ $Date: 2000/07/04 10:08:23 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.8 $ $Date: 2000/07/04 14:32:13 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -62,7 +62,7 @@ void stager_usrmsg(int level, ...)
     /* In debug mode - we always want to have all messages in stager log-file */
 	sendrep(rpfd,MSG_ERR,line,strlen(line)) ;
 #else
-	if (level != LOG_DEBUG) sendrep(rpfd,(level == LOG_INFO) ? MSG_OUT : MSG_ERR,line,strlen(line)) ;
+	if (level != LOG_DEBUG) sendrep(rpfd,RTCOPY_OUT,line,strlen(line)) ;
 #endif
 	va_end(args);
 }
