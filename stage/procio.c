@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.87 2001/02/08 23:54:17 jdurand Exp $
+ * $Id: procio.c,v 1.88 2001/02/10 19:49:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.87 $ $Date: 2001/02/08 23:54:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.88 $ $Date: 2001/02/10 19:49:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1931,7 +1931,7 @@ void procioreq(req_type, req_data, clienthost)
 						goto reply;
 					}
 					strcpy(stcp->u1.h.tppool,next_tppool(&(fileclasses[ifileclass])));
-				} else if (Aflag) {        /* If Aflag is not set - check it done a little bit after */
+				} else if (Aflag) {        /* If Aflag is not set - check is done a little bit after */
 					/* User specified a tape pool - We check the permission to access it */
 					{
 						struct stgcat_entry stcx = *stcp;
