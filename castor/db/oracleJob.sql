@@ -6,10 +6,12 @@ DROP INDEX I_rh_DiskCopy_Castorfile;
 DROP INDEX I_rh_TapeCopy_Castorfile;
 DROP INDEX I_rh_SubRequest_Castorfile;
 DROP INDEX I_rh_FileSystem_DiskPool;
+DROP INDEX I_rh_SubRequest_DiskCopy;
 CREATE INDEX I_rh_DiskCopy_Castorfile on rh_DiskCopy (castorFile);
 CREATE INDEX I_rh_TapeCopy_Castorfile on rh_TapeCopy (castorFile);
 CREATE INDEX I_rh_SubRequest_Castorfile on rh_SubRequest (castorFile);
 CREATE INDEX I_rh_FileSystem_DiskPool on rh_FileSystem (diskPool);
+CREATE INDEX I_rh_SubRequest_DiskCopy on rh_SubRequest (diskCopy);
 
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyStatus IN NUMBER,
@@ -60,4 +62,21 @@ SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCo
     AND ROWNUM < 2
   ORDER by rh_FileSystem.weight DESC;
 UPDATE rh_DiskCopy SET fileSystem = fileSystemId WHERE id = diskCopyId;
+END;
+
+/* PL/SQL method implementing fileRecalled */
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER, SubRequestStatus IN NUMBER,
+                                         DiskCopyStatus IN NUMBER) AS
+ SubRequestId NUMBER;
+ DiskCopyId NUMBER;
+BEGIN
+SELECT rh_SubRequest.id, rh_DiskCopy.id
+ INTO SubRequestId, DiskCopyId
+ FROM rh_TapeCopy, rh_SubRequest, rh_DiskCopy
+ WHERE rh_TapeCopy.id = 6002
+  AND rh_DiskCopy.castorFile = rh_TapeCopy.castorFile
+  AND rh_SubRequest.diskcopy = rh_DiskCopy.id;
+UPDATE rh_DiskCopy SET status = diskCopyStatus WHERE id = DiskCopyId;
+UPDATE rh_SubRequest SET status = SubRequestStatus WHERE id = SubRequestId;
+UPDATE rh_SubRequest SET status = SubRequestStatus WHERE parent = SubRequestId;
 END;

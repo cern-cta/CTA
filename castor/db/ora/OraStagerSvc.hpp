@@ -171,6 +171,20 @@ namespace castor {
         virtual castor::stager::TapeCopyForMigration*
         bestTapeCopyForStream(castor::stager::Stream* searchItem)
           throw (castor::exception::Exception);
+
+        /**
+         * Updates the database when a file recalled is over.
+         * This includes updating the DiskCopy status to DISKCOPY_STAGED
+         * (note that it is garanted that there is a single diskcopy in
+         * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+         * It also includes updating the status of the corresponding
+         * SubRequest to SUBREQUEST_RESTART and updating the status of
+         * the SubRequests waiting on this recall to SUBREQUEST_RESTART
+         * @param tapeCopy the TapeCopy that was just recalled
+         * @exception in case of error
+         */
+        virtual void fileRecalled(castor::stager::TapeCopy* tapeCopy)
+          throw (castor::exception::Exception);
         
         /**
          * Get an array of the tapes to be processed.
@@ -250,11 +264,17 @@ namespace castor {
         /// SQL statement object for function bestTapeCopyForStream
         oracle::occi::Statement *m_bestTapeCopyForStreamStatement;
 
-        /// SQL statement for function bestFileSystemForDiskCopy
-        static const std::string s_bestFileSystemForDiskCopyStatementString;
+        /// SQL statement for function bestFileSystemForSegment
+        static const std::string s_bestFileSystemForSegmentStatementString;
         
-        /// SQL statement object for function bestFileSystemForDiskCopy
-        oracle::occi::Statement *m_bestFileSystemForDiskCopyStatement;
+        /// SQL statement object for function bestFileSystemForSegment
+        oracle::occi::Statement *m_bestFileSystemForSegmentStatement;
+
+        /// SQL statement for function fileRecalled
+        static const std::string s_fileRecalledStatementString;
+        
+        /// SQL statement object for function fileRecalled
+        oracle::occi::Statement *m_fileRecalledStatement;
 
       }; // end of class OraStagerSvc
 

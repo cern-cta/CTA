@@ -157,6 +157,25 @@ int Cstager_IStagerSvc_bestTapeCopyForStream
  struct Cstager_TapeCopyForMigration_t** tapeCopy);
 
 /**
+ * Updates the database when a file recalled is over.
+ * This includes updating the DiskCopy status to DISKCOPY_STAGED
+ * (note that it is garanted that there is a single diskcopy in
+ * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+ * It also includes updating the status of the corresponding
+ * SubRequest to SUBREQUEST_RESTART and updating the status of
+ * the SubRequests waiting on this recall to SUBREQUEST_RESTART
+ * @param stgSvc the IStagerSvc used
+ * @param tapeCopy the TapeCopy that was just recalled
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_fileRecalled
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_TapeCopy_t* tapeCopy);
+
+/**
  * Get an array of the tapes to be processed.
  * This method searches the request catalog for all tapes that are
  * in TAPE_PENDING status. It atomically updates the status to

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/21 14:06:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 12:13:44 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -41,6 +41,7 @@ namespace castor {
     class Tape;
     class Stream;
     class Segment;
+    class TapeCopy;
     class TapeCopyForMigration;
     class DiskCopyForRecall;
 
@@ -135,6 +136,20 @@ namespace castor {
        */
       virtual castor::stager::TapeCopyForMigration*
       bestTapeCopyForStream(castor::stager::Stream* searchItem)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Updates the database when a file recalled is over.
+       * This includes updating the DiskCopy status to DISKCOPY_STAGED
+       * (note that it is garanted that there is a single diskcopy in
+       * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+       * It also includes updating the status of the corresponding
+       * SubRequest to SUBREQUEST_RESTART and updating the status of
+       * the SubRequests waiting on this recall to SUBREQUEST_RESTART
+       * @param tapeCopy the TapeCopy that was just recalled
+       * @exception in case of error
+       */
+      virtual void fileRecalled(castor::stager::TapeCopy* tapeCopy)
         throw (castor::exception::Exception) = 0;
 
       /**

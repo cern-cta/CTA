@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/10/25 09:00:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2004/10/25 12:13:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -45,6 +45,8 @@
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "occi.h"
@@ -80,9 +82,13 @@ const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatement
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
   "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
 
-/// SQL statement for bestFileSystemForDiskCopy
-const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForDiskCopyStatementString =
-  "BEGIN bestFileSystemForDiskCopy(:1, :2, :3, :4, :5); END;";
+/// SQL statement for bestFileSystemForSegment
+const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentStatementString =
+  "BEGIN bestFileSystemForSegment(:1, :2, :3, :4, :5); END;";
+
+/// SQL statement for fileRecalled
+const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
+  "BEGIN fileRecalled(:1, :2, :3); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -92,7 +98,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_tapesToDoStatement(0), m_streamsToDoStatement(0),
   m_selectTapeStatement(0), m_anyTapeCopyForStreamStatement(0),
   m_bestTapeCopyForStreamStatement(0),
-  m_bestFileSystemForDiskCopyStatement(0) {
+  m_bestFileSystemForSegmentStatement(0),
+  m_fileRecalledStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -128,7 +135,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectTapeStatement);
     deleteStatement(m_anyTapeCopyForStreamStatement);
     deleteStatement(m_bestTapeCopyForStreamStatement);
-    deleteStatement(m_bestFileSystemForDiskCopyStatement);
+    deleteStatement(m_bestFileSystemForSegmentStatement);
+    deleteStatement(m_fileRecalledStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -136,7 +144,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectTapeStatement = 0;
   m_anyTapeCopyForStreamStatement = 0;
   m_bestTapeCopyForStreamStatement = 0;
-  m_bestFileSystemForDiskCopyStatement = 0;
+  m_bestFileSystemForSegmentStatement = 0;
+  m_fileRecalledStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -195,32 +204,32 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
-    if (0 == m_bestFileSystemForDiskCopyStatement) {
-      m_bestTapeCopyForStreamStatement =
-        createStatement(s_bestFileSystemForDiskCopyStatementString);
-      m_bestFileSystemForDiskCopyStatement->registerOutParam
+    if (0 == m_bestFileSystemForSegmentStatement) {
+      m_bestFileSystemForSegmentStatement =
+        createStatement(s_bestFileSystemForSegmentStatementString);
+      m_bestFileSystemForSegmentStatement->registerOutParam
         (2, oracle::occi::OCCISTRING, 255);
-      m_bestFileSystemForDiskCopyStatement->registerOutParam
+      m_bestFileSystemForSegmentStatement->registerOutParam
         (3, oracle::occi::OCCISTRING, 255);
-      m_bestFileSystemForDiskCopyStatement->registerOutParam
+      m_bestFileSystemForSegmentStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 255);
-      m_bestFileSystemForDiskCopyStatement->registerOutParam
+      m_bestFileSystemForSegmentStatement->registerOutParam
         (5, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
-    m_bestFileSystemForDiskCopyStatement->setDouble(1, segment->id());
+    m_bestFileSystemForSegmentStatement->setDouble(1, segment->id());
     unsigned int nb =
-      m_bestFileSystemForDiskCopyStatement->executeUpdate();
+      m_bestFileSystemForSegmentStatement->executeUpdate();
     if (nb == 0) {
       return 0;
     }
     // Create result
     castor::stager::DiskCopyForRecall* result =
       new castor::stager::DiskCopyForRecall();
-    result->setDiskServer(m_bestFileSystemForDiskCopyStatement->getString(2));
-    result->setMountPoint(m_bestFileSystemForDiskCopyStatement->getString(3));
-    result->setPath(m_bestFileSystemForDiskCopyStatement->getString(4));
-    result->setId((u_signed64)m_bestFileSystemForDiskCopyStatement->getDouble(5));
+    result->setDiskServer(m_bestFileSystemForSegmentStatement->getString(2));
+    result->setMountPoint(m_bestFileSystemForSegmentStatement->getString(3));
+    result->setPath(m_bestFileSystemForSegmentStatement->getString(4));
+    result->setId((u_signed64)m_bestFileSystemForSegmentStatement->getDouble(5));
     // Fill result for CastorFile
     castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
     cnvSvc()->fillObj(&ad, result, OBJ_CastorFile);
@@ -246,7 +255,7 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
     }
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in bestFileSystemForDiskCopy."
+      << "Error caught in bestFileSystemForSegment."
       << std::endl << e.what();
     throw ex;
   }
@@ -387,6 +396,54 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
         << std::endl << e.what();
       throw ex;
     }
+  }
+}
+
+// -----------------------------------------------------------------------
+// fileRecalled
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::fileRecalled
+(castor::stager::TapeCopy* tapeCopy)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_fileRecalledStatement) {
+      m_fileRecalledStatement =
+        createStatement(s_fileRecalledStatementString);
+      m_fileRecalledStatement->setInt
+        (2, castor::stager::SUBREQUEST_RESTART);
+      m_fileRecalledStatement->setInt
+        (3, castor::stager::DISKCOPY_STAGED);
+    }
+    // execute the statement and see whether we found something
+    m_fileRecalledStatement->setDouble(1, tapeCopy->id());
+    unsigned int nb =
+      m_fileRecalledStatement->executeUpdate();
+    if (nb == 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "fileRecalled : unable to update SubRequest and DiskCopy status.";
+      throw ex;
+    }
+    // commit
+    cnvSvc()->commit();
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in bestTapeCopyForStream."
+      << std::endl << e.what();
+    throw ex;
   }
 }
 
