@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.63 2000/05/08 11:02:54 jdurand Exp $
+ * $Id: stager.c,v 1.64 2000/05/16 15:38:27 jdurand Exp $
  */
 
 /*
@@ -12,7 +12,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.63 $ $Date: 2000/05/08 11:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.64 $ $Date: 2000/05/16 15:38:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <grp.h>
@@ -86,7 +86,6 @@ char *fid = NULL;                   /* File ID */
 int nrtcpcreqs;                     /* Number of rtcpcreq structures in circular list */
 tape_list_t **rtcpcreqs = NULL;     /* rtcp request itself (circular list) */
 
-char castor_hsm_tokill[CA_MAXPATHLEN+1]; /* For cleanup (see RETURN macro) */
 u_signed64 *hsm_totalsize = NULL;        /* Total size per hsm file */
 u_signed64 *hsm_transferedsize = NULL;   /* Yet transfered size per hsm file */
 int *hsm_fseg = NULL;                    /* Current segment */
@@ -239,7 +238,6 @@ int main(argc, argv)
 
 	/* Init if of crucial variables for the signal handler */
 	vid[0] = '\0';
-	castor_hsm_tokill[0] = '\0';
 
 	if ((stcs = (struct stgcat_entry *) malloc (nbcat_ent * sizeof(struct stgcat_entry))) == NULL) {
 		exit (SYERR);
@@ -940,8 +938,6 @@ int stagewrt_castor_hsm_file() {
           if (statbuf_check.filesize > 0) {
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_stat",
                      "file already exists and is non-zero size");
-            /* Makes absolutely sure this already existing file will not be unlinked */
-            castor_hsm_tokill[0] = '\0';
             RETURN (USERR);
           }
         } else {
@@ -1412,15 +1408,6 @@ void cleanup() {
 							 sstrerror (serrno));
 		}
 	}
-	if (castor_hsm_tokill[0] != '\0' && ((stcs->status & STAGEWRT) == STAGEWRT)) {
-#ifdef STAGER_DEBUG
-		sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling Cns_unlink(%s)\n",castor_hsm_tokill);
-#endif
-		if (Cns_unlink(castor_hsm_tokill) != 0) {
-          sendrep (rpfd, MSG_ERR, STG02, castor_hsm_tokill, "Cns_unlink",
-                   sstrerror (serrno));
-		}
-    }
 }
 
 void stagekilled() {
@@ -2157,8 +2144,6 @@ int stager_client_callback(tapereq,filereq)
     return(-1);
   }
       
-  strcpy(castor_hsm_tokill,castor_hsm); 
-
   /* Successful or end of tape */
   if ((filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ||
       (filereq->cprc <  0 && (filereq->err.severity & (RTCP_FAILED | RTCP_USERR)) == (RTCP_FAILED | RTCP_USERR) && filereq->err.errorcode == ETEOV)) {
@@ -2242,7 +2227,6 @@ int stager_client_callback(tapereq,filereq)
                  sstrerror (serrno));
         return(-1);
       }
-      castor_hsm_tokill[0] = '\0';  
     } else {
       hsm_fseg[stager_client_callback_i]++;
       hsm_fsegsize[stager_client_callback_i] = 0;
