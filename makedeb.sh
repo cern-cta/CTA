@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.3 2005/01/20 18:29:18 jdurand Exp $
+# $Id: makedeb.sh,v 1.4 2005/01/20 18:38:47 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -61,6 +61,11 @@ done
 for this in BuildExamples BuildSchedPlugin BuildCppTest ClientLogging HasNis RFIODaemonRealTime UseAdns UseDMSCapi UseHpss UseMtx UseMySQL UseLsf FollowRtLinks BuildSecurity; do
     perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
 done
+#
+## Change __MAJOR_CASTOR_VERSION and __MINOR_CASTOR_VERSION everywhere it has to be changed
+#
+perl -pi -e s/__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install
+perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install
 cd ..
 tar -cvhzf castor-${a}.${b}.${c}.tar.gz castor-${a}.${b}.${c}
 cd castor-${a}.${b}.${c}
