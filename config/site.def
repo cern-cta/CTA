@@ -207,6 +207,7 @@
 #define BuildStageLibrary	YES
 #define BuildRmMaster		YES
 #define BuildRmNode		YES
+#define BuildRmClient		YES
 #define BuildSysreq		YES
 #define BuildTapeClient		YES
 #define BuildTapeDaemon		YES
