@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/02/11 11:10:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2005/02/16 15:38:21 $ $Author: sponcec3 $
  *
  *
  *
@@ -691,6 +691,57 @@ extern "C" {
     try {
       stgSvc->stgSvc->updateFileSystemForJob
         (fileSystem, diskServer, fileSize);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_getUpdateDone
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_getUpdateDone
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 subReqId) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->getUpdateDone(subReqId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_getUpdateFailed
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_getUpdateFailed
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 subReqId) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->getUpdateFailed(subReqId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+  
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_putFailed
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_putFailed
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 subReqId) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->putFailed(subReqId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -750,4 +750,50 @@ int Cstager_IStagerSvc_updateFileSystemForJob
  char* fileSystem,
  char* diskServer,
  u_signed64 fileSize);
+
+/**
+ * Informs the stager the a Get or Update SubRequest
+ * (without write) was finished successfully.
+ * The SubRequest and potentially the corresponding
+ * Request will thus be removed from the DataBase
+ * @param stgSvc the IStagerSvc used
+ * @param subReqId the id of the finished SubRequest
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_getUpdateDone
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 subReqId);
+
+/**
+ * Informs the stager the a Get or Update SubRequest
+ * (without write) failed.
+ * The SubRequest's status will thus be set to FAILED
+ * @param stgSvc the IStagerSvc used
+ * @param subReqId the id of the failing SubRequest
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_getUpdateFailed
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 subReqId);
+
+/**
+ * Informs the stager the a Put SubRequest failed.
+ * The SubRequest's status will thus be set to FAILED
+ * @param stgSvc the IStagerSvc used
+ * @param subReqId the id of the failing SubRequest
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_putFailed
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 subReqId);
+
 #endif // CASTOR_ISTAGERSVC_H
