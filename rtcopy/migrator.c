@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/01 12:01:38 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/01 12:01:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -235,6 +235,21 @@ int migratorCallbackFileCopied(
         LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
         return(-1);
       }
+      (void)dlf_write(
+                      childUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
+                      castorFileId,
+                      3,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "DISKPATH",
+                      DLF_MSG_PARAM_STR,
+                      filereq->file_path
+                      );
     }
     if ( rtcpcld_lockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_lockTape()");
@@ -358,7 +373,7 @@ int migratorCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  int rc = 0, msgNo, level = DLF_LVL_SYSTEM;
+  int rc = 0, msgNo;
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
   char *blkid = NULL, *func = NULL;
@@ -434,7 +449,6 @@ int migratorCallback(
     break;
   default:
     msgNo = RTCPCLD_MSG_INTERNAL;
-    level = DLF_LVL_ERROR;
     func = "unprocessedCallback";
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
@@ -452,8 +466,7 @@ int migratorCallback(
     if ( (tapereq->tprc == 0) && (filereq->cprc == 0) ) {
       (void)dlf_write(
                       childUuid,
-                      level,
-                      msgNo,
+                      RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
                       9,
                       "",
