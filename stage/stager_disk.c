@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.10 2002/09/17 11:48:58 jdurand Exp $
+ * $Id: stager_disk.c,v 1.11 2002/09/30 16:55:25 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.10 $ $Date: 2002/09/17 11:48:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.11 $ $Date: 2002/09/30 16:55:25 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -168,7 +168,7 @@ int main(argc,argv)
 #endif
 	int exit_code = 0;
 
-	strcpy (func, "stager");
+	strcpy (func, "stager_disk");
 	stglogit (func, "function entered\n");
 
 #ifdef STAGE_CSETPROCNAME

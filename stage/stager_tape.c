@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.12 2002/09/30 15:45:38 jdurand Exp $
+ * $Id: stager_tape.c,v 1.13 2002/09/30 16:55:25 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.12 $ $Date: 2002/09/30 15:45:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.13 $ $Date: 2002/09/30 16:55:25 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -273,7 +273,7 @@ int main(argc,argv)
 	FILE *f;
 #endif
 
-	strcpy (func, "stager");
+	strcpy (func, "stager_tape");
 	stglogit (func, "function entered\n");
 
 #ifdef STAGE_CSETPROCNAME
