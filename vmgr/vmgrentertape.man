@@ -1,16 +1,13 @@
-.\" @(#)$RCSfile: vmgrentertape.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrentertape.man,v $ $Revision: 1.5 $ $Date: 2002/02/07 06:44:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERTAPE 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERTAPE 1 "$Date: 2002/02/07 06:44:44 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B vmgrentertape
-[
 .BI -d " density"
-]
-.BI -g " dgn"
 [
 .BI -l " lbltype"
 ] [
@@ -19,13 +16,17 @@ vmgrentertape \- enter a new tape in the CASTOR Volume Manager
 .BI -V " vid"
 [
 .BI -v " vsn"
-] [
+]
+.BI --li " library"
+[
 .BI --ma " manufacturer"
 ] [
 .BI --ml " media_letter"
 ]
 .BI --mo " model"
 [
+.BI --nb " nbsides"
+] [
 .BI --po " poolname"
 ] [
 .BI --sn " sn"
@@ -37,32 +38,40 @@ vmgrentertape \- enter a new tape in the CASTOR Volume Manager
 enters a new tape in the CASTOR Volume Manager.
 .TP
 .I density
-The supported alphanumeric densities are:
-.br
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
-.BR 10G ,
-.BR 10GC ,
-.BR 25G ,
-.BR 25GC ,
-.B 50G
+.B 40G
 or
-.B 50GC
-for Redwood cartridges,
+.B 40GC
+for IBM 3590K cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
-.TP
-.I dgn
-The device group name must be a member of an installation defined set of
-"device groups".
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
 .TP
 .I lbltype
 may be
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
@@ -77,6 +86,12 @@ It must be at most CA_MAXVIDLEN characters long.
 specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long.
 .TP
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
+.TP
 .I manufacturer
 is an alphanumeric field CA_MAXMANUFLEN bytes long.
 .TP
@@ -87,9 +102,17 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
+The list of models can be obtained with
+.BR vmgrlistmodel .
+.TP
+.I nbsides
+specifies the number of sides offered by the piece of media (for example a DVD).
+Default is 1.
 .TP
 .I poolname
 is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
 .TP
 .I sn
 The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
@@ -102,17 +125,19 @@ can be set to a combination of
 .BR EXPORTED
 and
 .BR TAPE_RDONLY .
+This can be either alphanumeric or the corresponding numeric value.
 .LP
 Only
 .IR vid ,
-.I dgn
+.IR density ,
+.I library
 and
 .I model
 are mandatory. The other fields can be set later.
 .SH EXAMPLE
 .nf
 .ft CW
-vmgrentertape -V R02101 -g 9840R3 -d 20GC -l al --mo 9840 --ml R
+vmgrentertape -V R02101 -d 20GC -l al --li STK_ACS5 --mo 9840 --ml R
 .ft
 .fi
 .SH EXIT STATUS
