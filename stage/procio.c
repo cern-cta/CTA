@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.130 2001/06/21 10:06:36 jdurand Exp $
+ * $Id: procio.c,v 1.131 2001/06/21 12:23:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.130 $ $Date: 2001/06/21 10:06:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.131 $ $Date: 2001/06/21 12:23:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2940,7 +2940,6 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
-					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
 					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
@@ -3153,7 +3152,6 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
-					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
 					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
