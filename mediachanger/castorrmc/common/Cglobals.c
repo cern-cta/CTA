@@ -1,6 +1,9 @@
 /*
- * $Id: Cglobals.c,v 1.7 1999/07/30 15:57:21 obarring Exp $
+ * $Id: Cglobals.c,v 1.8 1999/08/18 13:56:30 obarring Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.8  1999/08/18 13:56:30  obarring
+ * Externalize the local_getspec() and local_setspec() functions
+ *
  * Revision 1.7  1999/07/30 15:57:21  obarring
  * Add __h_errno() for systems which don't provide any themselves.
  *
@@ -19,7 +22,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.7 1999/07/30 15:57:21 obarring Exp $";
+static char cvsId[] = "$Id: Cglobals.c,v 1.8 1999/08/18 13:56:30 obarring Exp $";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -55,8 +58,10 @@ typedef struct Cglobals {
  * Cglobals_init() is called from Cthread_init() or at process
  * startup before any threads (except main) have been created.
  */
-static int (*local_getspec)(int *, void **) = NULL;
-static int (*local_setspec)(int *, void *) = NULL;
+extern int (*local_getspec)(int *, void **);
+extern int (*local_setspec)(int *, void *);
+int (*local_getspec)(int *, void **) = NULL;
+int (*local_setspec)(int *, void *) = NULL;
 static int (*local_getTid)(void) = NULL;
 static Cglobals_t **single_thread_globals = NULL;
 static int nb_globals = 0;
