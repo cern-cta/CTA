@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.2 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.3 $ $Date: 2001/02/03 00:11:37 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -169,7 +169,7 @@ Cgetopt(nargc, nargv, ostr)
  * getopt_long --
  *	Parse argc/argv argument vector.
  */
-int
+int DLL_DECL
 Cgetopt_long(nargc, nargv, options, long_options, index)
      int nargc;
      char **nargv;
