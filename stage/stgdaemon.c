@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.116 2001/03/09 02:44:00 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.117 2001/03/13 08:05:31 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.116 $ $Date: 2001/03/09 02:44:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.117 $ $Date: 2001/03/13 08:05:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -216,7 +216,7 @@ int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 struct stgcat_entry *newreq _PROTO(());
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
-extern int update_migpool _PROTO((struct stgcat_entry *, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *, int));
@@ -658,23 +658,12 @@ int main(argc,argv)
 		} else if (stcp->status == (STAGEPUT|CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpool(stcp,1,0);
-#ifdef USECDB
-			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-			}
-#endif
+			update_migpool(&stcp,1,0);
 			stcp++;
 		} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-#ifdef USECDB
-			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-			}
-#endif
-			/* This is a file for automatic migration */
-			update_migpool(stcp,1,0);
+			update_migpool(&stcp,1,0);
 			stcp++;
 		} else stcp++;
 	}
@@ -2069,13 +2058,23 @@ void checkwaitq()
 								}
 							}
 							if (stcp_found != NULL) {
-								update_migpool(stcp_found,-1,0);
-								stcp_found->status &= ~CAN_BE_MIGR;
-								stcp_found->status &= ~WAITING_MIGR;
+								update_migpool(&stcp_found,-1,0);
 								stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
+#ifdef USECDB
+								if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								}
+#endif
+								savereqs();
 							} else {
-								update_migpool(stcp,-1,0);
+								update_migpool(&stcp,-1,0);
 								stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
+#ifdef USECDB
+								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								}
+#endif
+								savereqs();
 							}
 						}
 					}
@@ -2087,7 +2086,7 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (automatic or not) migration */
-						update_migpool(stcp,-1,0);
+						update_migpool(&stcp,-1,0);
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
@@ -2298,7 +2297,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				(((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED))
 				) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(stcp,-1,0);
+				update_migpool(&stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
 										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
@@ -2309,7 +2308,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				(((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED))
 				) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(stcp,-1,0);
+				update_migpool(&stcp,-1,0);
 			}
 		}
 	}
@@ -2903,10 +2902,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
-						if (update_migpool(stcp,1,0) != 0) {
-							stcp->status &= ~CAN_BE_MIGR;
-							return(USERR);
-						}
+						update_migpool(&stcp,1,0);
 					}
 				}
 			}

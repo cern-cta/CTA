@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.110 2001/03/11 08:28:21 jdurand Exp $
+ * $Id: poolmgr.c,v 1.111 2001/03/13 08:05:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.110 $ $Date: 2001/03/11 08:28:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.111 $ $Date: 2001/03/13 08:05:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -124,7 +124,7 @@ struct pool_element_ext {
 };
 
 void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
-int update_migpool _PROTO((struct stgcat_entry *, int, int));
+int update_migpool _PROTO((struct stgcat_entry **, int, int));
 int insert_in_migpool _PROTO((struct stgcat_entry *));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct pool *));
@@ -840,7 +840,7 @@ int ismigovl(pid, status)
       stcp->status &= ~WAITING_MIGR;
       /* The following will force update_migpool() to correctly update the being_migr counters */
       stcp->status |= BEING_MIGR;
-      update_migpool(stcp,-1,0);
+      update_migpool(&stcp,-1,0);
       stcp->status |= PUT_FAILED;
 #ifdef USECDB
       if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -1668,17 +1668,18 @@ int get_create_file_option(poolname)
 /* If 2           set only being migr stack               */
 /* Returns: 0 (OK) or -1 (NOT OK)                         */
 int update_migpool(stcp,flag,immediate)
-     struct stgcat_entry *stcp;
+     struct stgcat_entry **stcp;
      int flag;
      int immediate;
 {
   int i, ipool;
   struct pool *pool_p;
   int ifileclass;
-  struct stgcat_entry savestcp = *stcp;
+  struct stgcat_entry savestcp = **stcp;
   char *func = "update_migpool";
   int savereqid = reqid;
   int rc = 0;
+  int ngen = 0;
 
   if (((flag != 1) && (flag != -1)) || ((immediate != 0) && (immediate != 1) && (immediate != 2))) {
     stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 1, 2 or 3");
@@ -1690,13 +1691,13 @@ int update_migpool(stcp,flag,immediate)
   /* We check that this poolname exist */
   ipool = -1;
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-    if (strcmp(pool_p->name,stcp->poolname) == 0) {
+    if (strcmp(pool_p->name,(*stcp)->poolname) == 0) {
       ipool = i;
       break;
     }
   }
   if (ipool < 0) {
-    stglogit (func, STG32, stcp->poolname);
+    stglogit (func, STG32, (*stcp)->poolname);
     serrno = EINVAL;
     rc = -1;
     goto update_migpool_return;
@@ -1706,7 +1707,7 @@ int update_migpool(stcp,flag,immediate)
     return(0);
   }
   /* We check that this stcp have a known fileclass v.s. its pool migrator */
-  if ((ifileclass = upd_fileclass(pool_p,stcp)) < 0) {
+  if ((ifileclass = upd_fileclass(pool_p,*stcp)) < 0) {
     rc = -1;
     goto update_migpool_return;
   }
@@ -1718,25 +1719,31 @@ int update_migpool(stcp,flag,immediate)
   if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies == 0) || 
       (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools == 0)) {
     sendrep(rpfd, MSG_ERR, STG139,
-            stcp->u1.h.xfile, 
+            (*stcp)->u1.h.xfile, 
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
             pool_p->migr->fileclass[ifileclass]->server,
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies,
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools);
     /* We mark it as staged */
-    stcp->status |= STAGED;
-    if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+    (*stcp)->status |= STAGED;
+    if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
       /* And not as a migration candidate */
-      stcp->status &= ~CAN_BE_MIGR;
+      (*stcp)->status &= ~CAN_BE_MIGR;
     }
+#ifdef USECDB
+    if (stgdb_upd_stgcat(&dbfd,*stcp) != 0) {
+      stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+    }
+#endif
+    savereqs();
     /* But we still returns ok... */
     return(0);
   }
 
   switch (flag) {
   case -1:
-    if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
+    if (((*stcp)->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
       /* This is a not a return from automatic migration */
       return(0);
     }
@@ -1744,154 +1751,210 @@ int update_migpool(stcp,flag,immediate)
     /* We update global migrator variables */
     if (--pool_p->migr->global_predicates.nbfiles_canbemig < 0) {
       stglogit (func, STG106, func,
-              stcp->poolname,
+              (*stcp)->poolname,
               "nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)");
       pool_p->migr->global_predicates.nbfiles_canbemig = 0;
     }
-    if (pool_p->migr->global_predicates.space_canbemig < stcp->actual_size) {
+    if (pool_p->migr->global_predicates.space_canbemig < (*stcp)->actual_size) {
       stglogit (func, STG106,
               func,
-              stcp->poolname,
-              "space_canbemig < stcp->actual_size after automatic migration OK (resetted to 0)");
+              (*stcp)->poolname,
+              "space_canbemig < (*stcp)->actual_size after automatic migration OK (resetted to 0)");
       pool_p->migr->global_predicates.space_canbemig = 0;
     } else {
-      pool_p->migr->global_predicates.space_canbemig -= stcp->actual_size;
+      pool_p->migr->global_predicates.space_canbemig -= (*stcp)->actual_size;
     }
-    if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+    if (((*stcp)->status == (STAGEPUT|CAN_BE_MIGR)) || (((*stcp)->status & BEING_MIGR) == BEING_MIGR)) {
       if (--pool_p->migr->global_predicates.nbfiles_beingmig < 0) {
         stglogit (func, STG106,
                 func,
-                stcp->poolname,
+                (*stcp)->poolname,
                 "nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)");
         pool_p->migr->global_predicates.nbfiles_beingmig = 0;
       }
-      if (pool_p->migr->global_predicates.space_beingmig < stcp->actual_size) {
+      if (pool_p->migr->global_predicates.space_beingmig < (*stcp)->actual_size) {
         stglogit (func, STG106,
                 func,
-                stcp->poolname,
-                "space_beingmig < stcp->actual_size after automatic migration OK (resetted to 0)");
+                (*stcp)->poolname,
+                "space_beingmig < (*stcp)->actual_size after automatic migration OK (resetted to 0)");
         pool_p->migr->global_predicates.space_beingmig = 0;
       } else {
-        pool_p->migr->global_predicates.space_beingmig -= stcp->actual_size;
+        pool_p->migr->global_predicates.space_beingmig -= (*stcp)->actual_size;
       }
     }
     /* We update fileclass_vs_migrator variables */
     if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig < 0) {
       stglogit (func, STG110,
               func,
-              stcp->poolname,
+              (*stcp)->poolname,
               pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
               pool_p->migr->fileclass[ifileclass]->server,
               "nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)");
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig = 0;
     }
-    if (pool_p->migr->fileclass_predicates[ifileclass].space_canbemig < stcp->actual_size) {
+    if (pool_p->migr->fileclass_predicates[ifileclass].space_canbemig < (*stcp)->actual_size) {
       stglogit (func, STG110,
               func,
-              stcp->poolname,
+              (*stcp)->poolname,
               pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
               pool_p->migr->fileclass[ifileclass]->server,
-              "space_canbemig < stcp->actual_size after automatic migration OK (resetted to 0)");
+              "space_canbemig < (*stcp)->actual_size after automatic migration OK (resetted to 0)");
       pool_p->migr->fileclass_predicates[ifileclass].space_canbemig = 0;
     } else {
-      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig -= stcp->actual_size;
+      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig -= (*stcp)->actual_size;
     }
-    if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+    if (((*stcp)->status == (STAGEPUT|CAN_BE_MIGR)) || (((*stcp)->status & BEING_MIGR) == BEING_MIGR)) {
       if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig < 0) {
         stglogit (func, STG110,
                 func,
-                stcp->poolname,
+                (*stcp)->poolname,
                 pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
                 pool_p->migr->fileclass[ifileclass]->server,
                 "nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)");
         pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig = 0;
       }
-      if (pool_p->migr->fileclass_predicates[ifileclass].space_beingmig < stcp->actual_size) {
+      if (pool_p->migr->fileclass_predicates[ifileclass].space_beingmig < (*stcp)->actual_size) {
         stglogit (func, STG110,
                 func,
-                stcp->poolname,
+                (*stcp)->poolname,
                 pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
                 pool_p->migr->fileclass[ifileclass]->server,
-                "space_beingmig < stcp->actual_size after automatic migration OK (resetted to 0)");
+                "space_beingmig < (*stcp)->actual_size after automatic migration OK (resetted to 0)");
         pool_p->migr->fileclass_predicates[ifileclass].space_beingmig = 0;
       } else {
-        pool_p->migr->fileclass_predicates[ifileclass].space_beingmig -= stcp->actual_size;
+        pool_p->migr->fileclass_predicates[ifileclass].space_beingmig -= (*stcp)->actual_size;
       }
     }
-    if ((stcp->status & BEING_MIGR) == BEING_MIGR) stcp->status &= ~BEING_MIGR;
+    if (((*stcp)->status & BEING_MIGR) == BEING_MIGR) {
+      (*stcp)->status &= ~BEING_MIGR;
+#ifdef USECDB
+      if (stgdb_upd_stgcat(&dbfd,*stcp) != 0) {
+        stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+      }
+#endif
+      savereqs();
+    }
     break;
   case 1:
     /* This is to add an entry for the next automatic migration */
 
-    if (stcp->actual_size <= 0) {
-      sendrep(rpfd, MSG_ERR, STG105, "update_migpool", "stcp->actual_size <= 0");
+    if ((*stcp)->actual_size <= 0) {
+      sendrep(rpfd, MSG_ERR, STG105, "update_migpool", "(*stcp)->actual_size <= 0");
       /* No point */
       serrno = EINVAL;
       rc = -1;
       break;
     }
 
-    /* If this entry has an empty member stcp->u1.h.tppool this means that this */
+    /* If this entry has an empty member (*stcp)->u1.h.tppool this means that this */
     /* is a new entry that we will have to migrate in conformity with its fileclass */
     /* Otherwise this means that this is an entry that is a survivor of a previous */
     /* migration that failed - this can happen in particular at a start of the stgdaemon */
     /* when it loads and check the full catalog before starting processing requests... */
 
-    if (stcp->u1.h.tppool[0] == '\0') {
+    if ((*stcp)->u1.h.tppool[0] == '\0') {
+      struct stgcat_entry *stcp_ok;
+      int index_found;
+
       for (i = 0; i < pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies; i++) {
-        /* We decide right now to which tape pool this stcp will go */
+        /* We decide right now to which tape pool this (*stcp) will go */
         /* We have the list of available tape pools in */
         if (i > 0) {
           /* We need to create a new entry in the catalog for this file */
-          stcp = newreq();
-          memcpy(stcp, &savestcp, sizeof(struct stgcat_entry));
-          stcp->reqid = nextreqid();
+          /* Because this may generate a realloc we need to restore afterwhile */
+          /* the correct original *stcp */
+          index_found = (*stcp) - stcs;
+          stcp_ok = newreq();
+          memcpy(stcp_ok, &savestcp, sizeof(struct stgcat_entry));
+          stcp_ok->reqid = nextreqid();
           reqid = savereqid;
+          /* We flag this stcp_ok as a candidate for migration */
+          stcp_ok->status |= CAN_BE_MIGR;
+          strcpy(stcp_ok->u1.h.tppool,next_tppool(pool_p->migr->fileclass[ifileclass]));
+          stglogit(func, "STG98 - %s %s (copy No %d) with tape pool %s\n",
+                   i > 0 ? "Extended" : "Modified",
+                   stcp_ok->u1.h.xfile,
+                   i,
+                   stcp_ok->u1.h.tppool);
+          /* We prepare the 'immediate' switch below because we can do this now and only now */
+          if (immediate == 2) {
+            if (stcp_ok->status != (STAGEPUT|CAN_BE_MIGR)) stcp_ok->status |= BEING_MIGR;
+          }
+#ifdef USECDB
+          if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
+            stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+          }
+#endif
+          /* We restore original stcp */
+          *stcp = stcs + index_found;
+          savereqs();
+        } else {
+          /* We flag this (*stcp) as a candidate for migration */
+          (*stcp)->status |= CAN_BE_MIGR;
+          strcpy((*stcp)->u1.h.tppool,next_tppool(pool_p->migr->fileclass[ifileclass]));
+          stglogit(func, "STG98 - %s %s (copy No %d) with tape pool %s\n",
+                   i > 0 ? "Extended" : "Modified",
+                   (*stcp)->u1.h.xfile,
+                   i,
+                   (*stcp)->u1.h.tppool);
+          /* We prepare the 'immediate' switch below because we can do this now and only now */
+          if (immediate == 2) {
+            if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
+          }
+#ifdef USECDB
+          if (stgdb_upd_stgcat(&dbfd,(*stcp)) != 0) {
+            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+          }
+#endif
+          savereqs();
         }
-        /* We flag this stcp as a candidate for migration */
-        stcp->status |= CAN_BE_MIGR;
-        strcpy(stcp->u1.h.tppool,next_tppool(pool_p->migr->fileclass[ifileclass]));
-        stglogit(func, "STG98 - %s %s (copy No %d) with tape pool %s\n",
-                 i > 0 ? "Extended" : "Modified",
-                 stcp->u1.h.xfile,
-                 i,
-                 stcp->u1.h.tppool);
       }
+      ngen = pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies;
     } else {
       stglogit(func, STG120,
-               stcp->u1.h.xfile,
-               stcp->u1.h.tppool,
+               (*stcp)->u1.h.xfile,
+               (*stcp)->u1.h.tppool,
                pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
                pool_p->migr->fileclass[ifileclass]->server,
                pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid);
-      /* We flag this stcp as a candidate for migration */
-      stcp->status |= CAN_BE_MIGR;
+      /* We flag this (*stcp) as a candidate for migration */
+      (*stcp)->status |= CAN_BE_MIGR;
+      /* We prepare the 'immediate' switch below because we can do this now and only now */
+      if (immediate == 2) {
+        if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
+      }
+#ifdef USECDB
+      if (stgdb_upd_stgcat(&dbfd,(*stcp)) != 0) {
+        stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+      }
+#endif
+      savereqs();
+      ngen = 1;
     }
     switch (immediate) {
     case 0:
       /* We udpate global migrator variables */
-      pool_p->migr->global_predicates.nbfiles_canbemig++;
-      pool_p->migr->global_predicates.space_canbemig += stcp->actual_size;
+      pool_p->migr->global_predicates.nbfiles_canbemig += ngen;
+      pool_p->migr->global_predicates.space_canbemig += ((*stcp)->actual_size * ngen);
       /* We udpate global fileclass variables */
-      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
-      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
+      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
       break;
     case 1:
       /* We udpate global migrator variables */
-      pool_p->migr->global_predicates.nbfiles_canbemig++;
-      pool_p->migr->global_predicates.space_canbemig += stcp->actual_size;
+      pool_p->migr->global_predicates.nbfiles_canbemig += ngen;
+      pool_p->migr->global_predicates.space_canbemig += ((*stcp)->actual_size * ngen);
       /* We udpate global fileclass variables */
-      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
-      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
+      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
       /* No break here - intentionnally */
     case 2:
       /* We udpate global migrator variables */
-      pool_p->migr->global_predicates.nbfiles_beingmig++;
-      pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
+      pool_p->migr->global_predicates.nbfiles_beingmig += ngen;
+      pool_p->migr->global_predicates.space_beingmig += ((*stcp)->actual_size * ngen);
       /* We udpate global fileclass variables */
-      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
-      pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
-      if (stcp->status != (STAGEPUT|CAN_BE_MIGR)) stcp->status |= BEING_MIGR;
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig += ngen;
+      pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += ((*stcp)->actual_size * ngen);
       break;
     default:
       break;
@@ -1906,10 +1969,10 @@ int update_migpool(stcp,flag,immediate)
  update_migpool_return:
   if (rc != 0) {
     /* Oups... Error... We add PUT_FAILED to the the eventual CAN_BE_MIGR state */
-    if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-      stcp->status |= PUT_FAILED;
+    if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+      (*stcp)->status |= PUT_FAILED;
 #ifdef USECDB
-      if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+      if (stgdb_upd_stgcat(&dbfd,*stcp) != 0) {
         stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
       }
 #endif
@@ -2967,7 +3030,7 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* @@@@ EXCEPTIONNAL @@@@ */
-    /* Cnsfileclass.migr_time_interval = 1; */
+    Cnsfileclass.migr_time_interval = 1;
     /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
@@ -3920,8 +3983,10 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
   struct pool_element *rc = NULL;
   struct pool_element_ext *elements;
   char *func = "betterfs_vs_pool";
+#ifdef STAGER_DEBUG
   char tmpbuf[21];
   char tmpbufreqsize[21];
+#endif
 
   found = 0;
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)

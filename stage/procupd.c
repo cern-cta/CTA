@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.61 2001/03/08 17:52:41 jdurand Exp $
+ * $Id: procupd.c,v 1.62 2001/03/13 08:05:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.61 $ $Date: 2001/03/08 17:52:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.62 $ $Date: 2001/03/13 08:05:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -64,7 +64,7 @@ extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
-extern int update_migpool _PROTO((struct stgcat_entry *, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -729,7 +729,7 @@ procupdreq(req_data, clienthost)
 					if (ISSTAGEWRT(stcp) &&
 						(stcp->poolname[0] == '\0')) {
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpool(stcp,-1,0);
+							update_migpool(&stcp,-1,0);
 						}
 						delreq (stcp,0);
 					} else {
@@ -759,7 +759,7 @@ procupdreq(req_data, clienthost)
 								}
 							}
 							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-								update_migpool(stcp_found,-1,0);
+								update_migpool(&stcp_found,-1,0);
 								stcp_found->status &= ~CAN_BE_MIGR;
 							}
 							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
@@ -796,7 +796,10 @@ procupdreq(req_data, clienthost)
 									}
 								}
 								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-									update_migpool(save_stcp,-1,0);
+									/* save_stcp is not a real valid pointer but we don't care because */
+									/* this can change only if update_migpool() calls newreq(), e.g. when */
+									/* the second argument is 1 */
+									update_migpool(&save_stcp,-1,0);
 								}
 								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) delreq(save_stcp,0);
 								if (continue_flag != 0) {
@@ -816,7 +819,7 @@ procupdreq(req_data, clienthost)
 					}
 				} else {
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						update_migpool(stcp,-1,0);
+						update_migpool(&stcp,-1,0);
 						stcp->status &= ~CAN_BE_MIGR;
 					}
 					stcp->status |= STAGED;
