@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.88 $ $Release$ $Date: 2004/11/29 08:12:27 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.89 $ $Release$ $Date: 2004/11/30 10:14:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.88 $ $Release$ $Date: 2004/11/29 08:12:27 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.89 $ $Release$ $Date: 2004/11/30 10:14:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -988,6 +988,10 @@ static int procSegmentsForTape(
                                )
      tape_list_t *tape;
 {
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
   struct Cstager_Segment_t **segmArray = NULL;
@@ -996,7 +1000,7 @@ static int procSegmentsForTape(
   tape_list_t *tl = NULL;
   unsigned char *blockid;
   ID_TYPE key;
-  int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0;
+  int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0, doCommit = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
     serrno = EINVAL;
@@ -1004,7 +1008,15 @@ static int procSegmentsForTape(
   }
 
   rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);
+  if ( rc != -1 ) getDbSvc(&svcs);
+  if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ||
+       svcs == NULL || *svcs == NULL ) return(-1);
+
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    return(-1);
+  }
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
 
@@ -1129,10 +1141,42 @@ static int procSegmentsForTape(
                              segmArray[i],
                              &(fl->filereq.offset)
                              );
+      /*
+       * Update the Segment status in DB to avoid that
+       * this segment is returned twice
+       */
+      Cstager_Segment_setStatus(
+                                segmArray[i],
+                                SEGMENT_SELECTED
+                                );
+      iObj = Cstager_Segment_getIObject(segmArray[i]);
+      rc = C_Services_updateRep(
+                                *svcs,
+                                iAddr,
+                                iObj,
+                                0
+                                );
+      if ( rc == -1 ) {
+        LOG_DBCALL_ERR("C_Services_updateRep()",
+                       C_Services_errorMsg(*svcs));
+      }
+      doCommit = 1;
     }
   }
 
   if ( segmArray != NULL ) free(segmArray);
+
+  if ( doCommit != 0 ) {
+    rc = C_Services_commit(
+                           *svcs,
+                           iAddr
+                           );
+    if ( rc == -1 ) {
+      LOG_DBCALL_ERR("C_Services_commit()",
+                     C_Services_errorMsg(*svcs));
+    }
+  }
+
   if ( newFileReqs == 0 ) {
     serrno = EAGAIN;
     return(-1);
@@ -1150,7 +1194,6 @@ static int nextSegmentToRecall(
      file_list_t **file;
 {
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
-  struct C_IObject_t *iObj;
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_DiskCopyForRecall_t *recallCandidate = NULL;
   struct Cstager_DiskCopy_t *diskCopy = NULL;
@@ -2187,7 +2230,7 @@ int rtcpcld_updcRecallFailed(
   ID_TYPE key;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE ) ||
-       (file == NULL) ) {
+       (file == NULL) || (file->dbRef == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
