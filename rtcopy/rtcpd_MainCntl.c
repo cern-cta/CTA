@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 12:07:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 17:26:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -81,6 +81,16 @@ static void rtcpd_SetDebug() {
     if ( getenv("RTCOPY_DEBUG") != NULL ||
          getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
     return;
+}
+
+int rtcpd_CheckNoMoreTapes() {
+    struct stat st;
+
+    if ( stat(NOMORETAPES,&st) == 0 ) {
+        rtcp_log(LOG_INFO," tape service momentarily interrupted.\n");
+        return(-1);
+    }
+    return(0);
 }
 
 /*
@@ -613,10 +623,21 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         return(rc);
     }
 
+    /*
+     * If local nomoretapes is set, we don't acknowledge VDQM message.
+     * VDQM will then requeue the request and put assigned drive in
+     * UNKNOWN status
+     */
+    if ( rtcpd_CheckNoMoreTapes() != 0 ) {
+        (void)rtcp_CloseConnection(accept_socket);
+        return(-1);
+    }
+
     rc = vdqm_AcknClientAddr(*accept_socket,reqtype,0,NULL);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() vdqm_AcknClientAddr(): %s\n",
             sstrerror(serrno));
+        (void)rtcp_CloseConnection(accept_socket);
         return(-1);
     }
 
