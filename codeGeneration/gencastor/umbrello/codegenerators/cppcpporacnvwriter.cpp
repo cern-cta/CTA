@@ -177,18 +177,16 @@ void CppCppOraCnvWriter::writeConstants() {
             << getIndent()
             << "\"INSERT INTO " << m_classInfo->className
             << " (";
-  int n = 0;
-  int nid = 0;
+  bool first = true;
   // create a list of members
   MemberList members = createMembersList();
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (n > 0) *m_stream << ", ";
+    if (!first) *m_stream << ", ";
     *m_stream << mem->name;
-    n++;
-    if (mem->name == "id") nid = n;
+    first = false;
   }
   // create a list of associations
   AssocList assocs = createAssocsList();
@@ -199,21 +197,38 @@ void CppCppOraCnvWriter::writeConstants() {
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       // One to One associations
-      if (n > 0) *m_stream << ", ";
+      if (!first) *m_stream << ", ";
+      first = false;
       *m_stream << as->remotePart.name;
-      n++;
     }
   }
   *m_stream << ") VALUES (";
-  for (int i = 1; i <= n; i++) {
-    if (nid == i) {
+  int n = 1;
+  first = true;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (!first) *m_stream << ",";
+    first = false;
+    if (mem->name == "id") {
       *m_stream << "ids_seq.nextval";
     } else {
-      *m_stream << ":" << i;
+      *m_stream << ":" << n;
+      n++;
     }
-    if (i < n) *m_stream << ",";
   }
-  *m_stream << ") RETURNING id INTO :" << nid
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
+      if (!first) *m_stream << ",";
+      first = false;
+      *m_stream << ":" << n;
+      n++;
+    }
+  }
+  *m_stream << ") RETURNING id INTO :" << n
             << "\";" << endl << endl << getIndent()
             << "/// SQL statement for request deletion"
             << endl << getIndent()
@@ -1903,19 +1918,15 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl << getIndent()
             << "if (0 == m_insertStatement) {" << endl;
   m_indent++;
-  // create a list of members
+  // Go through the members and assoc to find the number for id
   MemberList members = createMembersList();
-  // Go through the members to find the number for id
-  unsigned int nid = 0;
-  {
-    unsigned int n = 1;
-    for (Member* mem = members.first();
-         0 != mem;
-         mem = members.next()) {
-      if (mem->name == "id") {
-        nid = n;
-        break;
-      }
+  AssocList assocs = createAssocsList();
+  int n = members.count(); // start from 0 but count id
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       n++;
     }
   }
@@ -1923,7 +1934,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << "m_insertStatement = createStatement(s_insertStatementString);"
             << endl << getIndent()
             << "m_insertStatement->registerOutParam("
-            << nid
+            << n
             << ", oracle::occi::OCCIINT);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -1950,18 +1961,16 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << "// Now Save the current object"
             << endl;
   // create a list of members to be saved
-  unsigned int n = 1;
+  n = 1;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
     if (mem->name != "id") {
       writeSingleSetIntoStatement("insert", *mem, n);
+      n++;
     }
-    n++;
   }
-  // create a list of associations
-  AssocList assocs = createAssocsList();
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
@@ -1989,8 +1998,8 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "m_insertStatement->executeUpdate();"
             << endl << getIndent()
-            << "obj->setId(m_insertStatement->getInt("
-            << nid << "));" << endl << getIndent()
+            << "obj->setId((u_signed64)m_insertStatement->getDouble("
+            << n << "));" << endl << getIndent()
             << "m_storeTypeStatement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "m_storeTypeStatement->setInt(2, obj->type());"

@@ -54,7 +54,7 @@ const castor::ICnvFactory& OraMoverCloseRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_insertStatementString =
-"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, fileSize, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:14,:15) RETURNING id INTO :13";
+"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, fileSize, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:13,:14) RETURNING id INTO :15";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteStatementString =
@@ -368,7 +368,7 @@ void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* addre
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(13, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(15, oracle::occi::OCCIINT);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -389,10 +389,10 @@ void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* addre
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setDouble(11, obj->subReqId());
     m_insertStatement->setDouble(12, obj->fileSize());
-    m_insertStatement->setDouble(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(13));
+    obj->setId((u_signed64)m_insertStatement->getDouble(15));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

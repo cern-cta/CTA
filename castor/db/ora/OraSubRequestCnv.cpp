@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraSubRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSubRequestCnv::s_insertStatementString =
-"INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, id, diskcopy, castorFile, parent, status, request) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:10,:11,:12,:13,:14) RETURNING id INTO :9";
+"INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, id, diskcopy, castorFile, parent, status, request) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9,:10,:11,:12,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteStatementString =
@@ -542,7 +542,7 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(9, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(14, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -556,13 +556,13 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(6, obj->subreqId());
     m_insertStatement->setInt(7, obj->flags());
     m_insertStatement->setInt(8, obj->modeBits());
-    m_insertStatement->setDouble(10, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
-    m_insertStatement->setDouble(11, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setInt(13, (int)obj->status());
-    m_insertStatement->setDouble(14, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
+    m_insertStatement->setDouble(9, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
+    m_insertStatement->setDouble(10, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setDouble(11, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setInt(12, (int)obj->status());
+    m_insertStatement->setDouble(13, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(9));
+    obj->setId((u_signed64)m_insertStatement->getDouble(14));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

@@ -461,7 +461,7 @@ void castor::db::ora::OraTapePoolCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(2));
+    obj->setId((u_signed64)m_insertStatement->getDouble(2));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

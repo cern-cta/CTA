@@ -205,7 +205,7 @@ void castor::db::ora::OraBaseAddressCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(3, obj->cnvSvcType());
     m_insertStatement->setDouble(4, obj->target());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(5));
+    obj->setId((u_signed64)m_insertStatement->getDouble(5));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

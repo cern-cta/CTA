@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraCastorFileCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraCastorFileCnv::s_insertStatementString =
-"INSERT INTO CastorFile (fileId, nsHost, fileSize, id, svcClass, fileClass) VALUES (:1,:2,:3,ids_seq.nextval,:5,:6) RETURNING id INTO :4";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, id, svcClass, fileClass) VALUES (:1,:2,:3,ids_seq.nextval,:4,:5) RETURNING id INTO :6";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
@@ -636,7 +636,7 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(6, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -645,10 +645,10 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(1, obj->fileId());
     m_insertStatement->setString(2, obj->nsHost());
     m_insertStatement->setDouble(3, obj->fileSize());
-    m_insertStatement->setDouble(5, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(6, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(5, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(4));
+    obj->setId((u_signed64)m_insertStatement->getDouble(6));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

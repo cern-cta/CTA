@@ -463,7 +463,7 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(3, obj->name());
     m_insertStatement->setDouble(4, obj->defaultFileSize());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(5));
+    obj->setId((u_signed64)m_insertStatement->getDouble(5));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

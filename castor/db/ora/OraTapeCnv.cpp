@@ -57,7 +57,7 @@ const castor::ICnvFactory& OraTapeCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCnv::s_insertStatementString =
-"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:9,:10) RETURNING id INTO :8";
+"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8,:9) RETURNING id INTO :10";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
@@ -471,7 +471,7 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(10, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -484,10 +484,10 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->errorCode());
     m_insertStatement->setInt(6, obj->severity());
     m_insertStatement->setString(7, obj->vwAddress());
-    m_insertStatement->setDouble(9, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
-    m_insertStatement->setInt(10, (int)obj->status());
+    m_insertStatement->setDouble(8, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setInt(9, (int)obj->status());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(8));
+    obj->setId((u_signed64)m_insertStatement->getDouble(10));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

@@ -206,7 +206,7 @@ void castor::db::ora::OraFileClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(3, obj->maxFileSize());
     m_insertStatement->setInt(4, obj->nbCopies());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(5));
+    obj->setId((u_signed64)m_insertStatement->getDouble(5));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();

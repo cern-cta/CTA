@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraDiskCopyCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskCopyCnv::s_insertStatementString =
-"INSERT INTO DiskCopy (path, diskcopyId, id, fileSystem, castorFile, status) VALUES (:1,:2,ids_seq.nextval,:4,:5,:6) RETURNING id INTO :3";
+"INSERT INTO DiskCopy (path, diskcopyId, id, fileSystem, castorFile, status) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5) RETURNING id INTO :6";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteStatementString =
@@ -513,7 +513,7 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(6, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -521,11 +521,11 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setString(1, obj->path());
     m_insertStatement->setString(2, obj->diskcopyId());
-    m_insertStatement->setDouble(4, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
-    m_insertStatement->setDouble(5, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setInt(6, (int)obj->status());
+    m_insertStatement->setDouble(3, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setInt(5, (int)obj->status());
     m_insertStatement->executeUpdate();
-    obj->setId(m_insertStatement->getInt(3));
+    obj->setId((u_signed64)m_insertStatement->getDouble(6));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
