@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.6 2000/09/01 08:01:27 obarring Exp $
+ * $Id: rfrm.c,v 1.7 2000/11/28 06:04:40 baud Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.6 $ $Date: 2000/09/01 08:01:27 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.7 $ $Date: 2000/11/28 06:04:40 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -116,7 +116,6 @@ char *path;
 static int rm_recursive(path) 
 char *path;
 {
-#if !defined(_WIN32)
    DIR *dirp;
   struct dirent *de;
   struct stat st;
@@ -157,7 +156,6 @@ char *path;
     rfio_perror(path);
     exit(2);
   }
-#endif  
   return(0);
 }
 
