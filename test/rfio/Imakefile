@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2001/09/18 21:31:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2001/11/07 11:55:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,7 +21,7 @@ LIBS = -L../../lib -lshift
 #endif
 #endif
 
-PROGS = ProgramTargetName(tpreseek) ProgramTargetName(mstat_test) ProgramTargetName(mstat_test_nothread)
+PROGS = ProgramTargetName(tpreseek) ProgramTargetName(mstat_test_thread) ProgramTargetName(mstat_test_fork) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test)
 
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS)
 LDFLAGS = $(MTLDFLAGS)
@@ -31,8 +31,14 @@ GLOBLIB = DepLibraryTargetName(FileName(..,lib),shift)
 all: $(PROGS)
 
 NormalProgramTarget(tpreseek,tpreseek.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(mstat_test,mstat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(mstat_test_nothread,mstat_test_nothread.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(mstat_test_thread,mstat_test_thread.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(mstat_test_fork,mstat_test_fork.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(munlink_test,munlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(mstat_test_sequential,mstat_test_sequential.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(msymlink_test,msymlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(stat_test,stat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(unlink_test,unlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(symlink_test,symlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 
 MakeDepLibrary(FileName(..,lib),shift)
 
