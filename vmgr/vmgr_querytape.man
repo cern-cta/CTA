@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.3 $ $Date: 2000/02/15 16:31:16 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2000/02/03 16:14:07 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE 3 "$Date: 2000/02/15 16:31:16 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -34,7 +34,7 @@ It must be at most six characters long.
 .I vsn
 points at a buffer to receive the magnetically recorded volume serial number of
 the tape.
-The buffer must be at least CA_MAXVIDLEN+1 characters long.
+The buffer must be at least CA_MAXVSNLEN+1 characters long.
 .TP
 .I dgn
 points at a buffer to receive the device group name corresponding to

@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.3 $ $Date: 2000/02/10 11:15:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.4 $ $Date: 2000/02/15 16:31:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2000/02/10 11:15:45 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE 3 "$Date: 2000/02/15 16:31:15 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ The buffer must be at least CA_MAXVIDLEN+1 characters long.
 .I vsn
 points at a buffer to receive the magnetically recorded volume serial number of
 the tape.
-The buffer must be at least CA_MAXVIDLEN+1 characters long.
+The buffer must be at least CA_MAXVSNLEN+1 characters long.
 .TP
 .I dgn
 points at a buffer to receive the device group name corresponding to
