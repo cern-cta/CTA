@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.106 2002/11/01 14:54:09 jdurand Exp $
+ * procqry.c,v 1.105 2002/10/30 16:21:09 jdurand Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.106 $ $Date: 2002/11/01 14:54:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)procqry.c,v 1.105 2002/10/30 16:21:09 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -178,7 +178,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char *rbp;
 	int Sflag = 0;
 	int sflag = 0;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	int Tflag = 0;
 	static char title[] = 
@@ -996,7 +996,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			(! (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp))) &&
 			(stcp->ipath[0] != '\0')) {
 			PRE_RFIO;
-			if (RFIO_STAT(stcp->ipath, &st) == 0) {
+			if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
 
 				if (st.st_size > stcp->actual_size) {
@@ -1019,7 +1019,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 				}
 			} else {
-				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
 		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
@@ -1796,7 +1796,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	char *p;
 	int poolflag = 0;
 	struct sorted_ent *prev, *scc, *sci, *scf, *scs;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	struct tm *tm;
@@ -1937,7 +1937,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		}
 		if (stcp->ipath[0] != '\0') {
 			PRE_RFIO;
-			if (RFIO_STAT(stcp->ipath, &st) == 0) {
+			if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
 
 				if (st.st_size > stcp->actual_size) {
@@ -1960,7 +1960,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 #endif
 				}
 			} else {
-				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
 		sci->weight = (double)stcp->a_time;

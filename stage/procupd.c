@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.121 2002/10/30 16:26:10 jdurand Exp $
+ * procupd.c,v 1.121 2002/10/30 16:26:10 jdurand Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.121 $ $Date: 2002/10/30 16:26:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)procupd.c,v 1.121 2002/10/30 16:26:10 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -151,7 +151,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	char *recfm = NULL;
 	static char s_cmd[5][9] = {"", "stagein", "stageout", "stagewrt", "stageput"};
 	u_signed64 size = 0;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	int subreqid;
 	int transfer_time = 0;
@@ -944,7 +944,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			char tmpbuf2[21];
 
 			PRE_RFIO;
-			if (RFIO_STAT(stcp->ipath, &st) == 0) {
+			if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 			  rfio_stat_retry_ok:
 				stcp->actual_size = (u_signed64) st.st_size;
 				wfp->size_yet_recalled = (u_signed64) st.st_size;
@@ -989,7 +989,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 #endif
 			} else {
-				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 				if (rfio_serrno() == EACCES) {
 					extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 
@@ -998,7 +998,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					setegid(gid);
 					seteuid(uid);
 					PRE_RFIO;
-					if (RFIO_STAT(stcp->ipath, &st) == 0) {
+					if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 						/* Worked! */
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
@@ -1006,7 +1006,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					}
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 				}
 				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
@@ -1791,7 +1791,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 int update_hsm_a_time(stcp)
 	struct stgcat_entry *stcp;
 {
-	struct stat statbuf;
+	struct stat64 statbuf;
 	struct Cns_fileid Cnsfileid;
 	struct Cns_filestat Cstatbuf;
 	int rc = 0;
@@ -1803,14 +1803,14 @@ int update_hsm_a_time(stcp)
 		setegid(stcp->gid);
 		seteuid(stcp->uid);
 		PRE_RFIO;
-		rc = rfio_stat(stcp->u1.m.xfile, &statbuf);
+		rc = rfio_stat64(stcp->u1.m.xfile, &statbuf);
 		setegid(start_passwd.pw_gid);
 		seteuid(start_passwd.pw_uid);
 		if (rc == 0) {
 			stcp->a_time = statbuf.st_mtime;
 		} else {
 			rc = rfio_serrno();
-			stglogit (func, STG02, stcp->u1.m.xfile, "rfio_stat", rfio_serror());
+			stglogit (func, STG02, stcp->u1.m.xfile, "rfio_stat64", rfio_serror());
 		}
 		break;
 	case 'h':

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.228 2002/10/30 16:23:14 jdurand Exp $
+ * stgdaemon.c,v 1.228 2002/10/30 16:23:14 jdurand Exp
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.228 $ $Date: 2002/10/30 16:23:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)stgdaemon.c,v 1.228 2002/10/30 16:23:14 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -394,7 +394,8 @@ int main(argc,argv)
 	int spfd;
 #endif
 	struct servent *sp;
-	struct stat st;
+	struct stat64 st;
+	struct stat localst;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	struct timeval timeval;
@@ -500,7 +501,7 @@ int main(argc,argv)
 	}
 
 	/* Check existence of config file right now */
-	if (stat (stgconfigfile, &st) != 0) {
+	if (stat (stgconfigfile, &localst) != 0) {
 		fprintf(stderr, STG02, stgconfigfile, "stat", strerror(errno));
 		fprintf(stderr, "Exit.\n");
 		exit(1);
@@ -929,8 +930,8 @@ int main(argc,argv)
 	/* read stage catalog */
 
 	scfd = open (STGCAT, O_RDWR | O_CREAT, 0664);
-	fstat (scfd, &st);
-	if (st.st_size == 0) {
+	fstat (scfd, &localst);
+	if (localst.st_size == 0) {
 		stgcat_bufsz = STG_BUFSIZ;
 		stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
@@ -938,13 +939,13 @@ int main(argc,argv)
 		close (scfd);
 		last_reqid = 0;
 	} else {
-		stgcat_bufsz = (st.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
+		stgcat_bufsz = (localst.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
 		stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
-		nbcat_ent = st.st_size / sizeof(struct stgcat_entry);
-		read (scfd, (char *) stcs, st.st_size);
+		nbcat_ent = localst.st_size / sizeof(struct stgcat_entry);
+		read (scfd, (char *) stcs, localst.st_size);
 		close (scfd);
-		if (st.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
+		if (localst.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
 			stglogit (func, STG48, STGCAT);
 			stglogit (func, "Exit.\n");
 			exit (SYERR);
@@ -958,21 +959,21 @@ int main(argc,argv)
 		last_reqid = (stcs + nbcat_ent - 1)->reqid;
 	}
 	spfd = open (STGPATH, O_RDWR | O_CREAT, 0664);
-	fstat (spfd, &st);
-	if (st.st_size == 0) {
+	fstat (spfd, &localst);
+	if (localst.st_size == 0) {
 		stgpath_bufsz = STG_BUFSIZ;
 		stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
 		stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
 		nbpath_ent = 0;
 		close (spfd);
 	} else {
-		stgpath_bufsz = (st.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
+		stgpath_bufsz = (localst.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
 		stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
 		stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
-		nbpath_ent = st.st_size / sizeof(struct stgpath_entry);
-		read (spfd, (char *) stps, st.st_size);
+		nbpath_ent = localst.st_size / sizeof(struct stgpath_entry);
+		read (spfd, (char *) stps, localst.st_size);
 		close (spfd);
-		if (st.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
+		if (localst.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
 			stglogit (func, STG48, STGPATH);
 			stglogit (func, "Exit.\n");
 			exit (SYERR);
@@ -1075,7 +1076,7 @@ int main(argc,argv)
 			off_t previous_actual_size = stcp->actual_size;
 			
 			PRE_RFIO;
-			if (RFIO_STAT(stcp->ipath, &st) == 0) {
+			if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
@@ -1088,7 +1089,7 @@ int main(argc,argv)
 				}
 #endif
 			} else {
-				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				actual_size_block = stcp->actual_size;
 			}
@@ -1192,7 +1193,7 @@ int main(argc,argv)
 		checkwaitingspc ();	/* check requests that are waiting for space */
 		checkpoolspace ();	/* launch gc if necessary */
 		checkwaitq ();	/* scan the wait queue */
-		if ((stat (NOMORESTAGE, &st) != 0) && (stat (NOMOREMIGR, &st) != 0)) checkfile2mig ();	/* scan the pools vs. their migration policies */
+		if ((stat (NOMORESTAGE, &localst) != 0) && (stat (NOMOREMIGR, &localst) != 0)) checkfile2mig ();	/* scan the pools vs. their migration policies */
 		if ((shutdownreq_reqid != 0) && (waitqp == NULL || force_shutdown)) {
 			/* We send a kill to all processes we are aware about */
 			killallovl(SIGINT);
@@ -1210,7 +1211,7 @@ int main(argc,argv)
 					u_signed64 actual_size_block;
 
 					PRE_RFIO;
-					if (RFIO_STAT(stcp->ipath, &st) == 0) {
+					if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 						stcp->actual_size = st.st_size;
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 							actual_size_block = stcp->actual_size;
@@ -1221,7 +1222,7 @@ int main(argc,argv)
 						}
 #endif
 					} else {
-						stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+						stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = stcp->actual_size;
 					}
@@ -1332,7 +1333,7 @@ int main(argc,argv)
 
 						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
 						req_type == STAGE_WRT || req_type == STAGE_PUT) {
-						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
+						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &localst) == 0)) {
 							sendrep (&rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
 							goto endreq;
 						}
@@ -3272,7 +3273,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		 int nodisk_flag;
 {
 	u_signed64 actual_size = 0;
-	struct stat st;
+	struct stat64 st;
 	struct stgpath_entry *stpp;
 	int found = 0;
 	struct stgcat_entry *stcp_perhaps_stagein = NULL;
@@ -3327,13 +3328,13 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			if (! nodisk_flag) {
 				if (! freersv) {
 					PRE_RFIO;
-					if (RFIO_STAT(stcp->ipath, &st) == 0) {
+					if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 						actual_size = (u_signed64) st.st_size;
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
 							actual_size_block = actual_size;
 						}
 					} else {
-						stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+						stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = actual_size;
 					}
@@ -4156,7 +4157,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 		 int nohsmcreat_flag;
 {
 	int found;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	int done_a_time = 0;
@@ -4201,13 +4202,13 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 		u_signed64 actual_size_block;
 
 		PRE_RFIO;
-		if (RFIO_STAT(stcp->ipath, &st) == 0) {
+		if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 			stcp->actual_size = st.st_size;
 			if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 				actual_size_block = stcp->actual_size;
 			}
 		} else {
-			stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+			stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 			/* No block information - assume mismatch with actual_size will be acceptable */
 			actual_size_block = stcp->actual_size;
 		}
@@ -4281,7 +4282,7 @@ int upd_staged(upath)
 	struct stgpath_entry *stpp;
 	u_signed64 actual_size_block;
 	u_signed64 elemp_free;
-	struct stat st;
+	struct stat64 st;
 
 	found = 0;
 	/* first lets assume that internal and user path are different */
@@ -4329,13 +4330,13 @@ int upd_staged(upath)
 
 	savereqs();
 	PRE_RFIO;
-	if (RFIO_STAT(stcp->ipath, &st) == 0) {
+	if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 		stcp->actual_size = st.st_size;
 		if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 			actual_size_block = stcp->actual_size;
 		}
 	} else {
-		stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+		stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 		/* No block information - assume mismatch with actual_size will be acceptable */
 		actual_size_block = stcp->actual_size;
     }

@@ -1,14 +1,14 @@
 /*
- * $Id: procio.c,v 1.200 2002/10/30 16:20:36 jdurand Exp $
+ * $Id: procio.c,v 1.201 2002/11/19 09:15:11 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.200 $ $Date: 2002/10/30 16:20:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.201 $ $Date: 2002/11/19 09:15:11 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -284,11 +284,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 	char *dp;
 	int errflg = 0;
 	char *fid = NULL;
-	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
+	struct stat64 filemig_stat;          /* For non-CASTOR HSM stat() */
 	int have_Cnsfilestat;
 	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
-	struct stat *yetdone_rfio_stat;
+	struct stat64 *yetdone_rfio_stat;
 	char *yetdone_rfio_stat_path;
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
@@ -315,7 +315,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	char *rbp;
 	int savereqid;
 	char *size = NULL;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
 	char trailing;
@@ -1663,11 +1663,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'm':
 				PRE_RFIO;
-				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
+				if (rfio_stat64(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
 					int save_serrno = rfio_serrno();
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
-					sendrep (&rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat64", rfio_serror());
 					c = (api_out != 0) ? save_serrno : EINVAL;
 					goto reply;
 				}
@@ -1825,8 +1825,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  break;
 		  case STAGED:		/* staged */
 			  PRE_RFIO;
-			  if (RFIO_STAT(stcp->ipath, &st) < 0) {
-				  stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+			  if (RFIO_STAT64(stcp->ipath, &st) < 0) {
+				  stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 				  if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1, 0) < 0) {
 					  int save_serrno = rfio_serrno();
 					  sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath,
@@ -2449,7 +2449,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			{
 				int save_stcp_status;
 				u_signed64 actual_size_block;
-				struct stat st;
+				struct stat64 st;
 				int ifileclass;
 				struct pool *pool_p;
 				int okpoolname = 0;
@@ -2499,13 +2499,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 				/* We check stcp->ipath */
 				PRE_RFIO;
-				if (RFIO_STAT(stcp->ipath, &st) == 0) {
+				if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = stcp->actual_size;
 				}
@@ -2664,9 +2664,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 					seteuid(start_passwd.pw_uid);
 					PRE_RFIO;
 					yetdone_rfio_stat_path = (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath;
-					if (RFIO_STAT(yetdone_rfio_stat_path, &filemig_stat) < 0) {
+					if (RFIO_STAT64(yetdone_rfio_stat_path, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
-						sendrep (&rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
+						sendrep (&rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT64_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : EINVAL;
 						goto stagewrt_continue_loop;
@@ -2722,9 +2722,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 					seteuid(start_passwd.pw_uid);
 					PRE_RFIO;
 					yetdone_rfio_stat_path = (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath;
-					if (RFIO_STAT(yetdone_rfio_stat_path, &filemig_stat) < 0) {
+					if (RFIO_STAT64(yetdone_rfio_stat_path, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
-						sendrep (&rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
+						sendrep (&rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT64_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : EINVAL;
 						goto stagewrt_continue_loop;
@@ -2768,11 +2768,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case 'm':
 				/* Overwriting an existing non-CASTOR HSM file is not allowed */
 				PRE_RFIO;
-				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
+				if (rfio_stat64(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
 					int save_serrno = rfio_serrno();
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
-					sendrep (&rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
+					sendrep (&rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat64", "file already exists");
 					global_c_stagewrt++;
 					c = (api_out != 0) ? save_serrno : EINVAL;
 					goto stagewrt_continue_loop;
@@ -2788,11 +2788,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					int rfio_stat_rc;
 					
 					if ((yetdone_rfio_stat_path != NULL) && (strcmp(yetdone_rfio_stat_path,upath) == 0)) {
-						memcpy(&st,yetdone_rfio_stat, sizeof(struct stat));
+						memcpy(&st,yetdone_rfio_stat, sizeof(struct stat64));
 						rfio_stat_rc = 0;
 					} else {
 						PRE_RFIO;
-						rfio_stat_rc = RFIO_STAT(upath, &st);
+						rfio_stat_rc = RFIO_STAT64(upath, &st);
 					}
 					if (rfio_stat_rc == 0) {
 						correct_size = (u_signed64) st.st_size;
@@ -2806,7 +2806,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* This must have fail because of RFIO */
 						int save_serrno = rfio_serrno();
 						sendrep (&rpfd, MSG_ERR, STG02, upath,
-								 RFIO_STAT_FUNC(upath), rfio_serror());
+								 RFIO_STAT64_FUNC(upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : EINVAL;
 						goto stagewrt_continue_loop;
@@ -2866,18 +2866,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 				int rfio_stat_rc;
 					
 				if ((yetdone_rfio_stat_path != NULL) && (strcmp(yetdone_rfio_stat_path,upath) == 0)) {
-					memcpy(&st,yetdone_rfio_stat, sizeof(struct stat));
+					memcpy(&st,yetdone_rfio_stat, sizeof(struct stat64));
 					rfio_stat_rc = 0;
 				} else {
 					PRE_RFIO;
-					rfio_stat_rc = RFIO_STAT(upath, &st);
+					rfio_stat_rc = RFIO_STAT64(upath, &st);
 				}
 				if (rfio_stat_rc == 0) {
 					if (stgreq.t_or_d != 'h') stcp->actual_size = st.st_size;
 					stcp->c_time = st.st_mtime;
 				} else {
 					/* This must have fail because of RFIO */
-					stglogit(func, STG02, upath, RFIO_STAT_FUNC(upath), rfio_serror());
+					stglogit(func, STG02, upath, RFIO_STAT64_FUNC(upath), rfio_serror());
 				}
 			}
 			stcp->a_time = time(NULL);
@@ -3104,8 +3104,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stcp->status = STAGEIN | STAGED;
 			strcpy (stcp->poolname, actual_poolname);
 			PRE_RFIO;
-			if (RFIO_STAT(upath, &st) < 0) {
-				sendrep (&rpfd, MSG_ERR, STG02, upath, RFIO_STAT_FUNC(upath),
+			if (RFIO_STAT64(upath, &st) < 0) {
+				sendrep (&rpfd, MSG_ERR, STG02, upath, RFIO_STAT64_FUNC(upath),
 						 rfio_serror());
 				delreq(stcp,1);
 				goto reply;
@@ -3299,7 +3299,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 	int n2 = 0;
 	char *q;
 	char *rbp;
-	struct stat st;
+	struct stat64 st;
 	struct stgcat_entry *stcp;
 	int subreqid;
 	int Upluspath = 0;
@@ -3521,13 +3521,13 @@ void procputreq(req_type, magic, req_data, clienthost)
 			if (stcp->status == STAGEOUT) {
 				u_signed64 actual_size_block;
 				PRE_RFIO;
-				if (RFIO_STAT(stcp->ipath, &st) == 0) {
+				if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = stcp->actual_size;
 				}
@@ -3661,13 +3661,13 @@ void procputreq(req_type, magic, req_data, clienthost)
 			if (stcp->status == STAGEOUT) {
 				u_signed64 actual_size_block;
 				PRE_RFIO;
-				if (RFIO_STAT(stcp->ipath, &st) == 0) {
+				if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = stcp->actual_size;
 				}
@@ -5017,7 +5017,7 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed,yetdone_Cns_statx_flag,yetdon
 	struct Cns_filestat *yetdone_Cns_statx;
 	int nohsmcreat_flag;
 {
-	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
+	struct stat64 filemig_stat;          /* For non-CASTOR HSM stat() */
 	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
 	u_signed64 correct_size;
@@ -5076,8 +5076,8 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed,yetdone_Cns_statx_flag,yetdon
 		hsmsize = Cnsfilestat.filesize;
 		/* We compare the size of the disk file with the size in Name Server */
 		PRE_RFIO;
-		if (RFIO_STAT(stcp->ipath, &filemig_stat) < 0) {
-			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+		if (RFIO_STAT64(stcp->ipath, &filemig_stat) < 0) {
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 			return(EINVAL);
 		}
 		correct_size = (u_signed64) filemig_stat.st_size;
@@ -5142,8 +5142,8 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed,yetdone_Cns_statx_flag,yetdon
 		int save_serrno = serrno;
 		/* It is not point to try to migrated something of zero size */
 		PRE_RFIO;
-		if (RFIO_STAT(stcp->ipath, &filemig_stat) < 0) {
-			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+		if (RFIO_STAT64(stcp->ipath, &filemig_stat) < 0) {
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 			return(EINVAL);
 		}
 		if (filemig_stat.st_size <= 0) {
