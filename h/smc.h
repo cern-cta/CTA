@@ -1,19 +1,10 @@
 /*
- * $Id: smc.h,v 1.1 1999/07/20 20:53:12 jdurand Exp $
- *
- * $Log: smc.h,v $
- * Revision 1.1  1999/07/20 20:53:12  jdurand
- * Needed for the minimal first version of Ctape to compile
- *
- */
-
-/*
- * Copyright (C) 1998 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)smc.h	1.3 05/26/98 CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.2 $ $Date: 1999/10/08 06:52:33 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 struct robot_info {
