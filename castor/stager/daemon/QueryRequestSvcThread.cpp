@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.1 2004/12/17 15:58:25 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.2 2005/01/21 08:17:57 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.1 $ $Date: 2004/12/17 15:58:25 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/01/21 08:17:57 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -140,19 +140,19 @@ namespace castor {
        * @param res the response to send
        */
       void replyToClient(castor::IClient* client,
-			 castor::rh::Response* res) {
-	char *func =  "castor::stager::replyToClient";
-	try {
-	  STAGER_LOG_DEBUG(NULL, "Sending Response");
-	  castor::replier::RequestReplier *rr =
-	    castor::replier::RequestReplier::getInstance();
-	  rr->sendResponse(client, res);
-	  rr->sendEndResponse(client);
-	} catch (castor::exception::Exception e) {
-	  serrno = e.code();
-	  STAGER_LOG_DB_ERROR(NULL, func,
-			      e.getMessage().str().c_str());
-	}
+                         castor::rh::Response* res) {
+        char *func =  "castor::stager::replyToClient";
+        try {
+          STAGER_LOG_DEBUG(NULL, "Sending Response");
+          castor::replier::RequestReplier *rr =
+            castor::replier::RequestReplier::getInstance();
+          rr->sendResponse(client, res);
+          rr->sendEndResponse(client);
+        } catch (castor::exception::Exception e) {
+          serrno = e.code();
+          STAGER_LOG_DB_ERROR(NULL, func,
+                              e.getMessage().str().c_str());
+        }
       }
 
       /**
@@ -164,14 +164,51 @@ namespace castor {
        * @param ad the address where to load/store objects in the DB
        */
       void handle_fileQueryRequest(castor::stager::Request* req,
-				   castor::IClient *client,
-				   castor::Services* svcs,
-				   castor::stager::IStagerSvc* stgSvc,
-				   castor::BaseAddress &ad) {
-	char *func = "handle_fileQueryRequest";
-	STAGER_LOG_DEBUG(NULL,"Handling fileQueryRequest");
+                                   castor::IClient *client,
+                                   castor::Services* svcs,
+                                   castor::stager::IStagerSvc* stgSvc,
+                                   castor::BaseAddress &ad) {
+
+        // Usefull Variables
+        char *func =  "castor::stager::queryService::handle_fileQueryRequest";
+        std::string error;
+        castor::stager::StageFileQueryRequest *uReq;
+
+        try {
+
+          /* get the StageFileQueryRequest */
+          /* ----------------------------- */
+          // cannot return 0 since we check the type before calling this method
+          uReq = dynamic_cast<castor::stager::StageFileQueryRequest*> (req);
+
+          /* Invoking the method                */
+          /* ---------------------------------- */
+          STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+          //std::list<castor::stager::DiskCopyForRecall*> result =
+          // stgSvc->diskCopies4File(uReq->fileId(), uReq->nsHost());
+
+        } catch (castor::exception::Exception e) {
+          serrno = e.code();
+          error = e.getMessage().str();
+          STAGER_LOG_DB_ERROR(NULL, func,
+                              e.getMessage().str().c_str());
+        }
+
+        /* Build the response             */
+        /* ------------------------------ */
+        STAGER_LOG_DEBUG(NULL, "Building Response");
+        castor::rh::BasicResponse res;
+        if (0 != serrno) {
+          res.setErrorCode(serrno);
+          res.setErrorMessage(error);
+        }
+
+        /* Reply To Client                */
+        /* ------------------------------ */
+        replyToClient(client, &res);
+
       }
-    
+
       /**
        * Handles a findRequestRequest and replies to client.
        * @param req the request to handle
@@ -181,14 +218,14 @@ namespace castor {
        * @param ad the address where to load/store objects in the DB
        */
       void handle_findRequestRequest(castor::stager::Request* req,
-				     castor::IClient *client,
-				     castor::Services* svcs,
-				     castor::stager::IStagerSvc* stgSvc,
-				     castor::BaseAddress &ad) {
-	char *func = "handle_findRequestRequest";
-	STAGER_LOG_DEBUG(NULL,"Handling findRequestRequest");
+                                     castor::IClient *client,
+                                     castor::Services* svcs,
+                                     castor::stager::IStagerSvc* stgSvc,
+                                     castor::BaseAddress &ad) {
+        char *func = "handle_findRequestRequest";
+        STAGER_LOG_DEBUG(NULL,"Handling findRequestRequest");
       }
-    
+
       /**
        * Handles a requestQueryRequest and replies to client.
        * @param req the request to handle
@@ -198,12 +235,12 @@ namespace castor {
        * @param ad the address where to load/store objects in the DB
        */
       void handle_requestQueryRequest(castor::stager::Request* req,
-				      castor::IClient *client,
-				      castor::Services* svcs,
-				      castor::stager::IStagerSvc* stgSvc,
-				      castor::BaseAddress &ad) {
-	char *func = "handle_requestQueryRequest";
-	STAGER_LOG_DEBUG(NULL,"Handling requestQueryRequest");
+                                      castor::IClient *client,
+                                      castor::Services* svcs,
+                                      castor::stager::IStagerSvc* stgSvc,
+                                      castor::BaseAddress &ad) {
+        char *func = "handle_requestQueryRequest";
+        STAGER_LOG_DEBUG(NULL,"Handling requestQueryRequest");
       }
 
     } // End of namespace query service
@@ -316,7 +353,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     castor::stager::queryService::handle_requestQueryRequest
       (req, client, svcs, stgSvc, ad);
     break;
- 
+
   default:
     castor::exception::Internal e;
     e.getMessage() << "Unknown Request type : "
