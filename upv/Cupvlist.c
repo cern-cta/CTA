@@ -1,0 +1,230 @@
+/*
+ * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+ 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:58 $ CERN IT-DS/HSM Ben Couturier";
+#endif /* not lint */
+
+/*      Cupvlist - list privilege entries */
+
+#include <errno.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+#include "Cgetopt.h"
+#include "serrno.h"
+#include "u64subr.h"
+#include "Cupv.h"
+#include "Cupv_api.h"
+
+int displayLine(struct Cupv_userpriv *lp, int verbose);
+
+main(argc, argv)
+     int argc;
+     char **argv;
+{
+  int c;
+  int flags;
+  int errflg = 0;
+  int verbose = 0;
+  Cupv_entry_list list;
+  struct Cupv_userpriv *lp;
+  struct Cupv_userpriv filter;
+  int nbentry = 0;
+  char *dp;
+
+  static struct Coptions longopts[] = {
+    {"uid", REQUIRED_ARGUMENT, 0, OPT_UID},
+    {"gid", REQUIRED_ARGUMENT, 0, OPT_GID},
+    {"src", REQUIRED_ARGUMENT, 0, OPT_SRC},
+    {"tgt", REQUIRED_ARGUMENT, 0, OPT_TGT},
+    {"priv", REQUIRED_ARGUMENT, 0, OPT_PRV},
+    {"user", REQUIRED_ARGUMENT, 0, OPT_USR},
+    {"group", REQUIRED_ARGUMENT, 0, OPT_GRP},
+    {0, 0, 0, 0}
+  };
+  
+  uid_t uid = -1;
+  gid_t gid = -1;
+  char src[CA_MAXHOSTNAMELEN + 1];
+  char tgt[CA_MAXHOSTNAMELEN + 1];
+  int priv = -1;  
+  char usr[CA_MAXUSRNAMELEN + 1];
+  char grp[CA_MAXGRPNAMELEN + 1];
+
+
+  usr[0] = 0;
+  grp[0] = 0;
+  src[0]=0;
+  tgt[0]=0;
+
+
+/*    char tmpbuf[8]; */
+
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
+
+  Copterr = 1;
+  Coptind = 1;
+  while ((c = Cgetopt_long (argc, argv, "v", longopts, NULL)) != EOF) {
+    switch (c) {
+    case OPT_UID:
+      if (Cupv_strtoi(&uid, Coptarg, &dp, 10) == -1) {
+	errflg++;
+      }
+      break;
+    case OPT_GID:
+      if (Cupv_strtoi(&gid, Coptarg, &dp, 10) == -1) {
+	errflg++;
+      }
+      break;
+    case OPT_SRC:
+      strcpy(src, Coptarg);
+      break;
+    case OPT_TGT:
+      strcpy(tgt, Coptarg);
+      break;
+    case OPT_PRV:
+      priv = Cupv_parse_privstring(Coptarg);
+      break;
+    case 'v':
+      verbose = 1;
+      break;
+    case OPT_USR:
+      strcpy(usr, Coptarg);
+      break;
+    case OPT_GRP:
+      strcpy(grp, Coptarg);
+      break;
+    case '?':
+      errflg++;
+      break;
+    default:
+      break;
+    }
+  }
+
+  if (Coptind < argc) { 
+    priv = strtol(argv[Coptind], (char **)NULL, 10);
+  }
+
+  if (errflg) {
+    fprintf (stderr, "usage: %s %s", argv[0],
+	     "--uid uid --gid gid --src SourceHost --tgt TargetHost privilege\n");
+    exit (USERR);
+  }
+ 
+
+  if (gid == -1 && grp[0] != 0) {
+    if ( (gid = Cupv_getgid(grp) ) == -1 ) {
+      fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
+      exit(USERR);
+    }
+  }
+
+  if (uid == -1 && usr[0] != 0) {
+    if ( (uid = Cupv_getuid(usr) ) == -1 ) {
+      fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
+      exit(USERR);
+    }
+  }
+
+
+  filter.uid = uid;
+  filter.gid = gid;
+  strcpy(filter.srchost, src);
+  strcpy(filter.tgthost, tgt); 
+  filter.privcat = priv;
+
+
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, CUP52);
+    exit (SYERR);
+  }
+#endif
+
+  flags = CUPV_LIST_BEGIN;
+  while ((lp = Cupv_list (flags, &list, &filter)) != NULL) {
+    
+    /* Prining header if necessary */
+    if (nbentry == 0 && verbose != 1) {
+      printf ("       uid        gid               source               target    privilege\n");
+      nbentry = 1;
+    }
+    
+    displayLine(lp, verbose);
+
+    flags = CUPV_LIST_CONTINUE;
+  }
+  (void) Cupv_list(CUPV_LIST_END, &list, &filter);
+
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (0);
+}
+
+int displayLine(struct Cupv_userpriv *lp, int verbose) {
+
+  char usr[CA_MAXUSRNAMELEN + 50];
+  char grp[CA_MAXGRPNAMELEN + 50];
+  char buf[MAXPRIVSTRLEN + 1];
+  char *c, *p;
+
+
+  Cupv_build_privstring(lp->privcat, buf);
+
+  if ( (c = Cupv_getuname(lp->uid)) == NULL) {
+    if (verbose) {
+      sprintf(usr, "--uid %d", lp->uid);
+    } else {
+      sprintf(usr, "%d", lp->uid);
+    }
+  } else {
+    if (verbose) {
+      sprintf(usr, "--user '%s'", c);
+    } else {
+      strcpy(usr, c);
+    }
+  }
+
+  if ( (c = Cupv_getgname(lp->gid)) == NULL) {
+    if (verbose) {
+      sprintf(grp, "--gid %d", lp->gid);
+    } else {
+      sprintf(grp, "%d", lp->gid);
+    }
+  } else {
+    if (verbose) {
+      p = grp;
+      sprintf(p, "--group '%s'", c); 
+    } else {
+      strcpy(grp, c);
+    }
+  }
+
+  if (verbose) {
+    printf("%s %s --src '%s' --tgt '%s' --priv '%s'\n", usr, grp, 
+	   lp->srchost, lp->tgthost, buf); 
+  } else {
+    printf ("%10s %10s %20s %20s    %s\n", usr, grp, 
+	    lp->srchost, lp->tgthost, buf); 
+  }
+
+  return(0);
+}
+
+
+
+
+
