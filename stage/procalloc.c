@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.49 2002/09/17 11:14:07 jdurand Exp $
+ * $Id: procalloc.c,v 1.50 2002/09/17 11:29:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.49 $ $Date: 2002/09/17 11:14:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.50 $ $Date: 2002/09/17 11:29:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -286,6 +286,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
 		if (noretry_flag) {
 			c = ENOSPC;
+			sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(c));
 			goto noretry;
 		}
 		stcp->status |= WAITING_SPC;
