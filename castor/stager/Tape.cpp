@@ -71,6 +71,7 @@ castor::stager::Tape::~Tape() throw() {
 void castor::stager::Tape::print(std::ostream& stream,
                                  std::string indent,
                                  castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# Tape #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

@@ -53,6 +53,7 @@ castor::stager::StagePutNextRequest::~StagePutNextRequest() throw() {
 void castor::stager::StagePutNextRequest::print(std::ostream& stream,
                                                 std::string indent,
                                                 castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# StagePutNextRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

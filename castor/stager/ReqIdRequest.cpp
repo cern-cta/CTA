@@ -52,6 +52,7 @@ castor::stager::ReqIdRequest::~ReqIdRequest() throw() {
 void castor::stager::ReqIdRequest::print(std::ostream& stream,
                                          std::string indent,
                                          castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# ReqIdRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

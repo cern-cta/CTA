@@ -57,6 +57,7 @@ castor::rh::RequestQueryResponse::~RequestQueryResponse() throw() {
 void castor::rh::RequestQueryResponse::print(std::ostream& stream,
                                              std::string indent,
                                              castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# RequestQueryResponse #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

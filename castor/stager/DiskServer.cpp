@@ -59,6 +59,7 @@ castor::stager::DiskServer::~DiskServer() throw() {
 void castor::stager::DiskServer::print(std::ostream& stream,
                                        std::string indent,
                                        castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# DiskServer #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

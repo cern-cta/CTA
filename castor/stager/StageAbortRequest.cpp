@@ -53,6 +53,7 @@ castor::stager::StageAbortRequest::~StageAbortRequest() throw() {
 void castor::stager::StageAbortRequest::print(std::ostream& stream,
                                               std::string indent,
                                               castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# StageAbortRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

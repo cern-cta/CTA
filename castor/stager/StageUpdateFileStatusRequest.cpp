@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/11 07:55:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -53,6 +53,7 @@ castor::stager::StageUpdateFileStatusRequest::~StageUpdateFileStatusRequest() th
 void castor::stager::StageUpdateFileStatusRequest::print(std::ostream& stream,
                                                          std::string indent,
                                                          castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# StageUpdateFileStatusRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;

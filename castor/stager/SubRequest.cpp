@@ -71,6 +71,7 @@ castor::stager::SubRequest::~SubRequest() throw() {
 void castor::stager::SubRequest::print(std::ostream& stream,
                                        std::string indent,
                                        castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# SubRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
