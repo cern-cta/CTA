@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.13 $ $Date: 2002/09/20 10:04:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.14 $ $Date: 2002/10/16 12:02:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2002/09/20 10:04:37 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2002/10/16 12:02:25 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -118,6 +118,9 @@ The requestor is not super-user.
 .B EFAULT
 .I vid
 is a NULL pointer.
+.TP
+.B EEXIST
+The named volume contains files.
 .TP
 .B EINVAL
 The length of
