@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 16:17:23 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:00 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 16:17:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,134 +96,16 @@ WSADATA wsadata;
 
 char *getconfent _PROTO((char *, char *, int));
 
-/** Global for switching off logging when called from rtcpcldapi.c
- */
-int dontLog = 0;
 /** Global needed for determine which uuid to log
  */
 int inChild;
 /** uuid's set by calling process (rtcpclientd:mainUuid, VidWorker:childUuid)
  */
 Cuuid_t childUuid, mainUuid;
-/** Current tape fseq
- */
-static int currentTapeFseq = 0;
-static void *currentTapeFseqLock = NULL;
-
-/** Lock on list of running file requests (and segments)
- */
-static void *runningSegmentLock = NULL;
 
 static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
 
 static int use_checksum = 1, change_checksum_name = 0;
-
-static int initLocks(
-                     tape
-                     )
-     tape_list_t *tape;
-{
-  int rc;
-  /*
-   * Current tape fseq lock
-   */
-  rc = Cthread_mutex_lock(&currentTapeFseq);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock(currentTapeFseq)");
-    return(-1);
-  }
-  
-  rc = Cthread_mutex_unlock(&currentTapeFseq);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_unlock(currentTapeFseq)");
-    return(-1);
-  }
-  currentTapeFseqLock = Cthread_mutex_lock_addr(&currentTapeFseq);
-  if ( currentTapeFseqLock == NULL ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock_addr(currentTapeFseq)");
-    return(-1);
-  }
-
-  /*
-   * Lock on list of running file requests (and segments)
-   */
-  rc = Cthread_mutex_lock(tape);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock(tape)");
-    return(-1);
-  }
-  
-  rc = Cthread_mutex_unlock(tape);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_unlock(tape)");
-    return(-1);
-  }
-  runningSegmentLock = Cthread_mutex_lock_addr(tape);
-  if ( runningSegmentLock == NULL ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock_addr(tape)");
-    return(-1);
-  }
-
-  return(0);
-}
-
-static int tapeFseq(
-                    newValue
-                    )
-     int newValue;
-{
-  int rc = 0, save_serrno;
-
-  save_serrno = serrno;
-  rc = Cthread_mutex_lock_ext(currentTapeFseqLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
-    return(-1);
-  }
-  
-  if ( currentTapeFseq > 0 ) {
-    if ( newValue > 0 ) {
-      save_serrno = EINVAL;
-      rc = -1;
-    } else {
-      if ( newValue == 0 ) currentTapeFseq++;
-      rc = currentTapeFseq;
-    }
-  } else {
-    currentTapeFseq = newValue;
-  }
-
-  rc = Cthread_mutex_unlock_ext(currentTapeFseqLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
-    return(-1);
-  }
-
-  if ( rc == -1 ) serrno = save_serrno;
-  return(rc);
-}
-
-int rtcpcld_setTapeFseq(
-                        newValue
-                        )
-     int newValue;
-{
-  if ( newValue <= 0 ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  return(tapeFseq(newValue));
-}
-
-int rtcpcld_getTapeFseq() 
-{
-  return(tapeFseq(-1));
-}
-
-int rtcpcld_incrementTapeFseq() 
-{
-  return(tapeFseq(0));
-}
 
 int rtcpcld_findRunningTpCopy(
                               tape,
@@ -240,11 +122,6 @@ int rtcpcld_findRunningTpCopy(
 
   if ( tpCopy == NULL ) {
     serrno = EINVAL;
-    return(-1);
-  }
-  rc = Cthread_mutex_lock_ext(runningSegmentLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
     return(-1);
   }
 
@@ -265,11 +142,6 @@ int rtcpcld_findRunningTpCopy(
     }
   }
 
-  rc = Cthread_mutex_unlock_ext(runningSegmentLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
-    return(-1);
-  }
   if ( found == -1 ) serrno = save_serrno;
   return(found);
 }
@@ -443,19 +315,17 @@ int updateSegmentsForTpCopy(
   Cstager_TapeCopy_segments(tpCopy,&segmArray,&nbSegms);
   if ( (segmArray == NULL) || (nbSegms <= 0) ) {
     Cstager_TapeCopy_id(tpCopy,&key);
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_TPCPNOSEGM,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
-                      "KEY",
-                      DLF_MSG_PARAM_INT64,
-                      key,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_TPCPNOSEGM,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "KEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = ENOENT;
     return(-1);
   }
@@ -472,16 +342,14 @@ int updateSegmentsForTpCopy(
   castorFileId.fileid = fileId;
   
   if ( castorFileSize <= 0 ){
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_ZEROSIZE,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_ZEROSIZE,
+                    (struct Cns_fileid *)&castorFileId,
+                    RTCPCLD_NB_PARAMS,
+                    RTCPCLD_LOG_WHERE
+                    );
     free(segmArray);
     serrno = EINVAL;
     return(-1);
@@ -494,19 +362,17 @@ int updateSegmentsForTpCopy(
                      &errorStr
                      );
   if ( rc == -1 ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SEGMCHKERROR,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+1,
-                      "ERRORSTR",
-                      DLF_MSG_PARAM_STR,
-                      errorStr,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SEGMCHKERROR,
+                    (struct Cns_fileid *)&castorFileId,
+                    RTCPCLD_NB_PARAMS+1,
+                    "ERRORSTR",
+                    DLF_MSG_PARAM_STR,
+                    errorStr,
+                    RTCPCLD_LOG_WHERE
+                    );
     free(segmArray);
     free(errorStr);
     serrno = EINVAL;
@@ -523,22 +389,20 @@ int updateSegmentsForTpCopy(
                                              );
   if ( nsSegAttrs == NULL ) {
     save_serrno = errno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "calloc()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)&castorFileId,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "calloc()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
     free(segmArray);
     serrno = save_serrno;
     return(-1);
@@ -558,16 +422,14 @@ int updateSegmentsForTpCopy(
     nsSegAttrs[i].compression = compressionFactor;
     Cstager_Segment_tape(segmArray[i],&tp);
     if ( tp == NULL ) {
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_NOTAPE,
-                        (struct Cns_fileid *)&castorFileId,
-                        RTCPCLD_NB_PARAMS,
-                        RTCPCLD_LOG_WHERE
-                        );
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_NOTAPE,
+                      (struct Cns_fileid *)&castorFileId,
+                      RTCPCLD_NB_PARAMS,
+                      RTCPCLD_LOG_WHERE
+                      );
       serrno = EINVAL;
       free(segmArray);
       return(-1);
@@ -579,25 +441,23 @@ int updateSegmentsForTpCopy(
     Cstager_Tape_side(tp,&side);
     Cstager_Tape_tpmode(tp,&mode);
     if ( mode != WRITE_ENABLE ) {
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_WRONGMODE,
-                        (struct Cns_fileid *)&castorFileId,
-                        RTCPCLD_NB_PARAMS+3,
-                        "",
-                        DLF_MSG_PARAM_TPVID,
-                        vid,
-                        "SIDE",
-                        DLF_MSG_PARAM_INT,
-                        side,
-                        "MODE",
-                        DLF_MSG_PARAM_INT,
-                        mode,
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_WRONGMODE,
+                      (struct Cns_fileid *)&castorFileId,
+                      RTCPCLD_NB_PARAMS+3,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      vid,
+                      "SIDE",
+                      DLF_MSG_PARAM_INT,
+                      side,
+                      "MODE",
+                      DLF_MSG_PARAM_INT,
+                      mode,
                         RTCPCLD_LOG_WHERE
-                        );
-      }
+                      );
       serrno = EINVAL;
       free(segmArray);
       return(-1);
@@ -633,43 +493,41 @@ int updateSegmentsForTpCopy(
                               );
     if ( blkid == NULL ) blkid = strdup("unknown");
 
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_DEBUG,
-                      RTCPCLD_MSG_ADDSEGM,
-                      (struct Cns_fileid *)&castorFileId,
-                      9,
-                      "",
-                      DLF_MSG_PARAM_TPVID,
-                      nsSegAttrs[i].vid,
-                      "SIDE",
-                      DLF_MSG_PARAM_INT,
-                      nsSegAttrs[i].side,
-                      "FSEC",
-                      DLF_MSG_PARAM_INT,
-                      nsSegAttrs[i].fsec,
-                      "SEGSIZE",
-                      DLF_MSG_PARAM_INT64,
-                      nsSegAttrs[i].segsize,
-                      "COMPRFAC",
-                      DLF_MSG_PARAM_INT,
-                      nsSegAttrs[i].compression,
-                      "FSEQ",
-                      DLF_MSG_PARAM_INT,
-                      nsSegAttrs[i].fseq,
-                      "BLOCKID",
-                      DLF_MSG_PARAM_STR,
-                      blkid,
-                      "CKSUMALG",
-                      DLF_MSG_PARAM_STR,
-                      nsSegAttrs[i].checksum_name,
-                      "CKSUM",
-                      DLF_MSG_PARAM_INT,
-                      nsSegAttrs[i].checksum
-                      );
-      free(blkid);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_DEBUG,
+                    RTCPCLD_MSG_ADDSEGM,
+                    (struct Cns_fileid *)&castorFileId,
+                    9,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    nsSegAttrs[i].vid,
+                    "SIDE",
+                    DLF_MSG_PARAM_INT,
+                    nsSegAttrs[i].side,
+                    "FSEC",
+                    DLF_MSG_PARAM_INT,
+                    nsSegAttrs[i].fsec,
+                    "SEGSIZE",
+                    DLF_MSG_PARAM_INT64,
+                    nsSegAttrs[i].segsize,
+                    "COMPRFAC",
+                    DLF_MSG_PARAM_INT,
+                    nsSegAttrs[i].compression,
+                    "FSEQ",
+                    DLF_MSG_PARAM_INT,
+                    nsSegAttrs[i].fseq,
+                    "BLOCKID",
+                    DLF_MSG_PARAM_STR,
+                    blkid,
+                    "CKSUMALG",
+                    DLF_MSG_PARAM_STR,
+                    nsSegAttrs[i].checksum_name,
+                    "CKSUM",
+                    DLF_MSG_PARAM_INT,
+                    nsSegAttrs[i].checksum
+                    );
+    free(blkid);
   }
   rc = Cns_setsegattrs(
                        (char *)NULL, /* CASTOR file name */
@@ -679,23 +537,20 @@ int updateSegmentsForTpCopy(
                        );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cns_setsegattrs()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
-
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)&castorFileId,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cns_setsegattrs()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
   }
   free(segmArray);
@@ -859,37 +714,35 @@ int rtcpcld_checkSegment(
   }
 
   if ( found == 0 ) {
-    if ( dontLog == 0 ) {
-      blkid = rtcp_voidToString(
-                                (void *)filereq->blockid,
-                                sizeof(filereq->blockid)
-                                );
-      if ( blkid == NULL ) blkid = strdup("unknown");
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_NSSEGNOTFOUND,
-                      (struct Cns_fileid *)castorFileId,
-                      RTCPCLD_NB_PARAMS+5,
-                      "",
-                      DLF_MSG_PARAM_TPVID,
-                      tapereq->vid,
-                      "SIDE",
-                      DLF_MSG_PARAM_INT,
-                      tapereq->side,
-                      "MODE",
-                      DLF_MSG_PARAM_INT,
-                      tapereq->mode,
-                      "FSEQ",
-                      DLF_MSG_PARAM_INT,
-                      filereq->tape_fseq,
-                      "BLOCKID",
-                      DLF_MSG_PARAM_STR,
-                      blkid,
-                      RTCPCLD_LOG_WHERE
-                      );
-      free(blkid);
-    }
+    blkid = rtcp_voidToString(
+                              (void *)filereq->blockid,
+                              sizeof(filereq->blockid)
+                              );
+    if ( blkid == NULL ) blkid = strdup("unknown");
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_NSSEGNOTFOUND,
+                    (struct Cns_fileid *)castorFileId,
+                    RTCPCLD_NB_PARAMS+5,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tapereq->vid,
+                    "SIDE",
+                    DLF_MSG_PARAM_INT,
+                    tapereq->side,
+                    "MODE",
+                    DLF_MSG_PARAM_INT,
+                    tapereq->mode,
+                    "FSEQ",
+                    DLF_MSG_PARAM_INT,
+                    filereq->tape_fseq,
+                    "BLOCKID",
+                    DLF_MSG_PARAM_STR,
+                    blkid,
+                    RTCPCLD_LOG_WHERE
+                    );
+    free(blkid);
     if ( castorFileId != NULL ) free(castorFileId);  
     serrno = ENOENT;
     return(-1);
@@ -924,11 +777,121 @@ int rtcpcld_checkSegment(
       newSegattrs = currentSegattrs[i];
       newSegattrs.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
       newSegattrs.checksum = filereq->castorSegAttr.segmCksum;
-      if ( dontLog == 0 ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_SYSTEM,
+                      RTCPCLD_MSG_UPDCKSUM,
+                      (struct Cns_fileid *)castorFileId,
+                      9,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "SIDE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->side,
+                      "MODE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->mode,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "BLOCKID",
+                      DLF_MSG_PARAM_STR,
+                      blkid,
+                      "OLDALG",
+                      DLF_MSG_PARAM_STR,
+                      currentSegattrs[i].checksum_name,
+                      "OLDCKSUM",
+                      DLF_MSG_PARAM_INT,
+                      currentSegattrs[i].checksum,
+                      "NEWALG",
+                      DLF_MSG_PARAM_STR,
+                      newSegattrs.checksum_name,
+                      "NEWCKSUM",
+                      DLF_MSG_PARAM_INT,
+                      newSegattrs.checksum
+                      );
+      rc = Cns_updateseg_checksum(
+                                  castorFileId->server,
+                                  castorFileId->fileid,
+                                  &currentSegattrs[i],
+                                  &newSegattrs
+                                  );
+      if ( rc < 0 ) {
+        LOG_SYSCALL_ERR("Cns_updateseg_checksum()");
+        if ( castorFileId != NULL ) free(castorFileId);  
+        return(-1);
+      }
+    } else {
+      if ( strcmp(currentSegattrs[i].checksum_name,
+                  filereq->castorSegAttr.segmCksumAlgorithm) == 0 ) {
+        if ( currentSegattrs[i].checksum != filereq->castorSegAttr.segmCksum ) {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_WRONGCKSUM,
+                          (struct Cns_fileid *)castorFileId,
+                          RTCPCLD_NB_PARAMS+7,
+                          "",
+                          DLF_MSG_PARAM_TPVID,
+                          tapereq->vid,
+                          "SIDE",
+                          DLF_MSG_PARAM_INT,
+                          tapereq->side,
+                          "MODE",
+                          DLF_MSG_PARAM_INT,
+                          tapereq->mode,
+                          "FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          filereq->tape_fseq,
+                          "BLOCKID",
+                          DLF_MSG_PARAM_STR,
+                          blkid,
+                          "NSCKSUM",
+                          DLF_MSG_PARAM_INT,
+                          currentSegattrs[i].checksum,
+                          "SEGCKSUM",
+                          DLF_MSG_PARAM_INT,
+                          filereq->castorSegAttr.segmCksum,
+                          RTCPCLD_LOG_WHERE
+                          );
+          save_serrno = SECHECKSUM;
+          rc = -1;
+        } else {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_SYSTEM,
+                          RTCPCLD_MSG_CKSUMOK,
+                          (struct Cns_fileid *)castorFileId,
+                          6,
+                          "",
+                          DLF_MSG_PARAM_TPVID,
+                          tapereq->vid,
+                          "SIDE",
+                          DLF_MSG_PARAM_INT,
+                          tapereq->side,
+                          "MODE",
+                          DLF_MSG_PARAM_INT,
+                          tapereq->mode,
+                          "FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          filereq->tape_fseq,
+                          "BLOCKID",
+                          DLF_MSG_PARAM_STR,
+                          blkid,
+                          "SEGCKSUM",
+                          DLF_MSG_PARAM_INT,
+                          filereq->castorSegAttr.segmCksum
+                          );
+        }
+      } else {
+        /*
+         * Not same checksum algorithm and we are not allowed to change it
+         */
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         DLF_LVL_SYSTEM,
-                        RTCPCLD_MSG_UPDCKSUM,
+                        RTCPCLD_MSG_WRONGALG,
                         (struct Cns_fileid *)castorFileId,
                         9,
                         "",
@@ -954,129 +917,11 @@ int rtcpcld_checkSegment(
                         currentSegattrs[i].checksum,
                         "NEWALG",
                         DLF_MSG_PARAM_STR,
-                        newSegattrs.checksum_name,
+                        filereq->castorSegAttr.segmCksumAlgorithm,
                         "NEWCKSUM",
                         DLF_MSG_PARAM_INT,
-                        newSegattrs.checksum
+                        filereq->castorSegAttr.segmCksum
                         );
-      }
-      rc = Cns_updateseg_checksum(
-                                  castorFileId->server,
-                                  castorFileId->fileid,
-                                  &currentSegattrs[i],
-                                  &newSegattrs
-                                  );
-      if ( rc < 0 ) {
-        LOG_SYSCALL_ERR("Cns_updateseg_checksum()");
-        if ( castorFileId != NULL ) free(castorFileId);  
-        return(-1);
-      }
-    } else {
-      if ( strcmp(currentSegattrs[i].checksum_name,
-                  filereq->castorSegAttr.segmCksumAlgorithm) == 0 ) {
-        if ( currentSegattrs[i].checksum != filereq->castorSegAttr.segmCksum ) {
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_WRONGCKSUM,
-                            (struct Cns_fileid *)castorFileId,
-                            RTCPCLD_NB_PARAMS+7,
-                            "",
-                            DLF_MSG_PARAM_TPVID,
-                            tapereq->vid,
-                            "SIDE",
-                            DLF_MSG_PARAM_INT,
-                            tapereq->side,
-                            "MODE",
-                            DLF_MSG_PARAM_INT,
-                            tapereq->mode,
-                            "FSEQ",
-                            DLF_MSG_PARAM_INT,
-                            filereq->tape_fseq,
-                            "BLOCKID",
-                            DLF_MSG_PARAM_STR,
-                            blkid,
-                            "NSCKSUM",
-                            DLF_MSG_PARAM_INT,
-                            currentSegattrs[i].checksum,
-                            "SEGCKSUM",
-                            DLF_MSG_PARAM_INT,
-                            filereq->castorSegAttr.segmCksum,
-                            RTCPCLD_LOG_WHERE
-                            );
-          }
-          save_serrno = SECHECKSUM;
-          rc = -1;
-        } else {
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_SYSTEM,
-                            RTCPCLD_MSG_CKSUMOK,
-                            (struct Cns_fileid *)castorFileId,
-                            6,
-                            "",
-                            DLF_MSG_PARAM_TPVID,
-                            tapereq->vid,
-                            "SIDE",
-                            DLF_MSG_PARAM_INT,
-                            tapereq->side,
-                            "MODE",
-                            DLF_MSG_PARAM_INT,
-                            tapereq->mode,
-                            "FSEQ",
-                            DLF_MSG_PARAM_INT,
-                            filereq->tape_fseq,
-                            "BLOCKID",
-                            DLF_MSG_PARAM_STR,
-                            blkid,
-                            "SEGCKSUM",
-                            DLF_MSG_PARAM_INT,
-                            filereq->castorSegAttr.segmCksum
-                            );
-          }
-        }
-      } else {
-        /*
-         * Not same checksum algorithm and we are not allowed to change it
-         */
-        if ( dontLog == 0 ) {
-          (void)dlf_write(
-                          (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_SYSTEM,
-                          RTCPCLD_MSG_WRONGALG,
-                          (struct Cns_fileid *)castorFileId,
-                          9,
-                          "",
-                          DLF_MSG_PARAM_TPVID,
-                          tapereq->vid,
-                          "SIDE",
-                          DLF_MSG_PARAM_INT,
-                          tapereq->side,
-                          "MODE",
-                          DLF_MSG_PARAM_INT,
-                          tapereq->mode,
-                          "FSEQ",
-                          DLF_MSG_PARAM_INT,
-                          filereq->tape_fseq,
-                          "BLOCKID",
-                          DLF_MSG_PARAM_STR,
-                          blkid,
-                          "OLDALG",
-                          DLF_MSG_PARAM_STR,
-                          currentSegattrs[i].checksum_name,
-                          "OLDCKSUM",
-                          DLF_MSG_PARAM_INT,
-                          currentSegattrs[i].checksum,
-                          "NEWALG",
-                          DLF_MSG_PARAM_STR,
-                          filereq->castorSegAttr.segmCksumAlgorithm,
-                          "NEWCKSUM",
-                          DLF_MSG_PARAM_INT,
-                          filereq->castorSegAttr.segmCksum
-                          );
-        }
       }
     }
   }

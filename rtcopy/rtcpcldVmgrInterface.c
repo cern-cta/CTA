@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 15:53:12 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:01 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 15:53:12 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -89,9 +89,6 @@ WSADATA wsadata;
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
 
-/** Global for switching off logging when called from rtcpcldapi.c
- */
-int dontLog = 0;
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -234,22 +231,20 @@ int rtcpcld_gettape(
   rc = rtcp_NewTapeList(tape,NULL,WRITE_ENABLE);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcp_NewTapeList()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcp_NewTapeList()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
     return(-1);
   }
@@ -260,22 +255,20 @@ int rtcpcld_gettape(
   rc = rtcp_NewFileList(tape,&fl,WRITE_ENABLE);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcp_NewFileList()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcp_NewFileList()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
     return(-1);
   }
@@ -331,34 +324,32 @@ int rtcpcld_gettape(
         retryTime = retryTimeENOSPC;
       }
       
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+6,
-                        "SYSCALL",
-                        DLF_MSG_PARAM_STR,
-                        "vmgr_gettape()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(save_serrno),
-                        "VMGRERR",
-                        DLF_MSG_PARAM_STR,
-                        (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                        "NBRETRIES",
-                        DLF_MSG_PARAM_INT,
-                        nbRetries,
-                        "MAXRETRIES",
-                        DLF_MSG_PARAM_INT,
-                        maxNbRetries,
-                        "RETRYTIME",
-                        DLF_MSG_PARAM_INT,
-                        retryTime,
-                        RTCPCLD_LOG_WHERE
-                        );
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+6,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "vmgr_gettape()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(save_serrno),
+                      "VMGRERR",
+                      DLF_MSG_PARAM_STR,
+                      (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
+                      "NBRETRIES",
+                      DLF_MSG_PARAM_INT,
+                      nbRetries,
+                      "MAXRETRIES",
+                      DLF_MSG_PARAM_INT,
+                      maxNbRetries,
+                      "RETRYTIME",
+                      DLF_MSG_PARAM_INT,
+                      retryTime,
+                      RTCPCLD_LOG_WHERE
+                      );
       sleep(retryTime);
     } else {
       /*
@@ -366,33 +357,31 @@ int rtcpcld_gettape(
        */
       maxFseq = maxTapeFseq(tapereq->label);
       if ( (maxFseq > 0) && (startFseq > maxFseq) ) {
-        if ( dontLog == 0 ) {
-          (void)dlf_write(
-                          (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_MAXFSEQ,
-                          (struct Cns_fileid *)NULL,
-                          6,
-                          "TPPOOL",
-                          DLF_MSG_PARAM_STR,
-                          tapePool,
-                          "",
-                          DLF_MSG_PARAM_TPVID,
-                          tapereq->vid,
-                          "SIDE",
-                          DLF_MSG_PARAM_INT,
-                          tapereq->side,
-                          "LBLTYPE",
-                          DLF_MSG_PARAM_STR,
-                          tapereq->label,
-                          "",
-                          DLF_MSG_PARAM_INT,
-                          startFseq,
-                          "",
-                          DLF_MSG_PARAM_INT,
-                          maxFseq
-                          );
-        }
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_MAXFSEQ,
+                        (struct Cns_fileid *)NULL,
+                        6,
+                        "TPPOOL",
+                        DLF_MSG_PARAM_STR,
+                        tapePool,
+                        "",
+                        DLF_MSG_PARAM_TPVID,
+                        tapereq->vid,
+                        "SIDE",
+                        DLF_MSG_PARAM_INT,
+                        tapereq->side,
+                        "LBLTYPE",
+                        DLF_MSG_PARAM_STR,
+                        tapereq->label,
+                        "",
+                        DLF_MSG_PARAM_INT,
+                        startFseq,
+                        "",
+                        DLF_MSG_PARAM_INT,
+                        maxFseq
+                        );
         rc = vmgr_updatetape(
                              tapereq->vid,
                              tapereq->side,
@@ -402,25 +391,23 @@ int rtcpcld_gettape(
                              TAPE_RDONLY
                              );
         if ( rc == -1 ) {
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_SYSCALL,
-                            (struct Cns_fileid *)NULL,
-                            RTCPCLD_NB_PARAMS+3,
-                            "SYSCALL",
-                            DLF_MSG_PARAM_STR,
-                            "vmgr_updatetape()",
-                            "ERROR_STR",
-                            DLF_MSG_PARAM_STR,
-                            sstrerror(serrno),
-                            "VMGRERR",
-                            DLF_MSG_PARAM_STR,
-                            (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                            RTCPCLD_LOG_WHERE
-                            );
-          }
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_SYSCALL,
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+3,
+                          "SYSCALL",
+                          DLF_MSG_PARAM_STR,
+                          "vmgr_updatetape()",
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "VMGRERR",
+                          DLF_MSG_PARAM_STR,
+                          (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
+                          RTCPCLD_LOG_WHERE
+                          );
         }
         sleep(2);
       } else {
@@ -432,49 +419,45 @@ int rtcpcld_gettape(
     }
   }
   if ( rcGetTape == -1 ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_MAXRETRY,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "vmgr_getape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "VMGRERR",
-                      DLF_MSG_PARAM_STR,
-                      (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_MAXRETRY,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "vmgr_getape()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "VMGRERR",
+                    DLF_MSG_PARAM_STR,
+                    (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
     return(-1);
   }
-  if ( dontLog == 0 ) {
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_SYSTEM,
-                    RTCPCLD_MSG_GOTTAPE,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "",
-                    DLF_MSG_PARAM_TPVID,
-                    tapereq->vid,
-                    "DGN",
-                    DLF_MSG_PARAM_STR,
-                    tapereq->dgn,
-                    "SIDE",
-                    DLF_MSG_PARAM_INT,
-                    tapereq->side,
-                    "STARTFSEQ",
-                    DLF_MSG_PARAM_INT,
-                    startFseq
-                    );
-  }
+  (void)dlf_write(
+                  (inChild == 0 ? mainUuid : childUuid),
+                  DLF_LVL_SYSTEM,
+                  RTCPCLD_MSG_GOTTAPE,
+                  (struct Cns_fileid *)NULL,
+                  RTCPCLD_NB_PARAMS+4,
+                  "",
+                  DLF_MSG_PARAM_TPVID,
+                  tapereq->vid,
+                  "DGN",
+                  DLF_MSG_PARAM_STR,
+                  tapereq->dgn,
+                  "SIDE",
+                  DLF_MSG_PARAM_INT,
+                  tapereq->side,
+                  "STARTFSEQ",
+                  DLF_MSG_PARAM_INT,
+                  startFseq
+                  );
 
   fl->filereq.tape_fseq = startFseq;
   return(0);
@@ -539,31 +522,29 @@ int rtcpcld_tapeOK(
       strcpy(tapereq->density,vmgrTapeInfo.density);
       break;
     }
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_MAXRETRY,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+5,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "vmgr_querytape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "VMGRERR",
-                      DLF_MSG_PARAM_STR,
-                      (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                      "NBRETRIES",
-                      DLF_MSG_PARAM_INT,
-                      nbRetries++,
-                      "RETRYTIME",
-                      DLF_MSG_PARAM_INT,
-                      retryTime,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_MAXRETRY,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+5,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "vmgr_querytape()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "VMGRERR",
+                    DLF_MSG_PARAM_STR,
+                    (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
+                    "NBRETRIES",
+                    DLF_MSG_PARAM_INT,
+                    nbRetries++,
+                    "RETRYTIME",
+                    DLF_MSG_PARAM_INT,
+                    retryTime,
+                    RTCPCLD_LOG_WHERE
+                    );
     sleep(retryTime);
   }
   return(0);
@@ -714,55 +695,51 @@ int rtcpcld_updateTape(
                        );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)fileId,
-                      RTCPCLD_NB_PARAMS+4,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "vmgr_updatetape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "VMGRERR",
-                      DLF_MSG_PARAM_STR,
-                      (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                      "STATUS",
-                      DLF_MSG_PARAM_STR,
-                      statusStr,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)fileId,
+                    RTCPCLD_NB_PARAMS+4,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "vmgr_updatetape()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "VMGRERR",
+                    DLF_MSG_PARAM_STR,
+                    (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
+                    "STATUS",
+                    DLF_MSG_PARAM_STR,
+                    statusStr,
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
     return(-1);
   } else {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_UPDATETAPE,
-                      (struct Cns_fileid *)fileId,
-                      4,
-                      "",
-                      DLF_MSG_PARAM_TPVID,
-                      tapereq->vid,
-                      "BYTESWRT",
-                      DLF_MSG_PARAM_INT64,
-                      bytesWritten,
-                      "COMPRFAC",
-                      DLF_MSG_PARAM_INT,
-                      compressionFactor,
-                      "NBFILES",
-                      DLF_MSG_PARAM_INT,
-                      filesWritten,
-                      "STATUS",
-                      DLF_MSG_PARAM_STR,
-                      statusStr
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_SYSTEM,
+                    RTCPCLD_MSG_UPDATETAPE,
+                    (struct Cns_fileid *)fileId,
+                    4,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tapereq->vid,
+                    "BYTESWRT",
+                    DLF_MSG_PARAM_INT64,
+                    bytesWritten,
+                    "COMPRFAC",
+                    DLF_MSG_PARAM_INT,
+                    compressionFactor,
+                    "NBFILES",
+                    DLF_MSG_PARAM_INT,
+                    filesWritten,
+                    "STATUS",
+                    DLF_MSG_PARAM_STR,
+                    statusStr
+                    );
   }
   
   return(0);

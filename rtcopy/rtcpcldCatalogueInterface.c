@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.50 $ $Release$ $Date: 2004/10/11 15:55:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.51 $ $Release$ $Date: 2004/10/12 08:36:01 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.50 $ $Release$ $Date: 2004/10/11 15:55:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.51 $ $Release$ $Date: 2004/10/12 08:36:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -93,9 +93,6 @@ WSADATA wsadata;
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
 
-/** Global for switching off logging when called from rtcpcldapi.c
- */
-int dontLog = 0;
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -147,22 +144,20 @@ static int getDbSvc(
   rc = Cglobals_get(&svcsKey,(void **)&svc,sizeof(struct C_Services_t **));
   if ( rc == -1 || svc == NULL ) {
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cglobals_get()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cglobals_get()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
     serrno = save_serrno;
     return(-1);
   }
@@ -171,22 +166,20 @@ static int getDbSvc(
     rc = C_Services_create(svc);
     if ( rc == -1 ) {
       save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+2,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "C_Services_create()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        RTCPCLD_LOG_WHERE
-                        );
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "C_Services_create()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
       serrno = save_serrno;
       return(-1);
     }
@@ -221,28 +214,26 @@ static int getStgSvc(
 
   rc = C_Services_service(*svcs,"OraStagerSvc",SVC_ORASTAGERSVC, &iSvc);
   if ( rc == -1 || iSvc == NULL ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_IServices_service()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_IServices_service()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -297,22 +288,20 @@ static int updateTapeFromDB(
     rc = Cdb_DbAddress_create(key,"OraCnvSvc",SVC_ORACNV,&dbAddr);
     if ( rc == -1 ) {
       save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+2,
-                        "SYSCALL",
-                        DLF_MSG_PARAM_STR,
-                        "Cdb_DbAddress_create()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cdb_DbAddress_create()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
                         sstrerror(save_serrno),
-                        RTCPCLD_LOG_WHERE
-                        );
-      }
+                      RTCPCLD_LOG_WHERE
+                      );
       serrno = save_serrno;
       return(-1);
     }
@@ -367,32 +356,30 @@ static int updateTapeFromDB(
   }
 
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      (tp == NULL ? "C_Services_createObj()" : "C_Services_updateObj()"),
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+4,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    (tp == NULL ? "C_Services_createObj()" : "C_Services_updateObj()"),
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT,
+                    (int)key,
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -449,22 +436,20 @@ static int updateSegmentFromDB(
     rc = Cdb_DbAddress_create(key,"OraCnvSvc",SVC_ORACNV,&dbAddr);
     if ( rc == -1 ) {
       save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+2,
-                        "SYSCALL",
-                        DLF_MSG_PARAM_STR,
-                        "Cdb_DbAddress_create()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(save_serrno),
-                        RTCPCLD_LOG_WHERE
-                        );
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cdb_DbAddress_create()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(save_serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
       serrno = save_serrno;
       return(-1);
     }
@@ -480,32 +465,30 @@ static int updateSegmentFromDB(
 
   rc = C_Services_updateObj(*svcs,iAddr,iObj);  
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_updateObj()",
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+4,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_updateObj()",
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT,
+                    (int)key,
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -569,25 +552,23 @@ static int notifyTape(
           rc = rtcpcld_sendNotify(notifyAddr);
           if ( rc == -1 ) {
             /* Notification failed: not fatal but must be logged */
-            if ( dontLog == 0 ) {
-              (void)dlf_write(
-                              (inChild == 0 ? mainUuid : childUuid),
-                              DLF_LVL_ERROR,
-                              RTCPCLD_MSG_SYSCALL,
-                              (struct Cns_fileid *)NULL,
-                              RTCPCLD_NB_PARAMS+3,
-                              "SYSCALL",
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            DLF_LVL_ERROR,
+                            RTCPCLD_MSG_SYSCALL,
+                            (struct Cns_fileid *)NULL,
+                            RTCPCLD_NB_PARAMS+3,
+                            "SYSCALL",
+                            DLF_MSG_PARAM_STR,
+                            "rtcpcld_sendNotify()",
+                            "TOADDR",
+                            DLF_MSG_PARAM_STR,
+                            (notifyAddr != NULL ? notifyAddr : "(null)"),
+                            "ERROR_STR",
                               DLF_MSG_PARAM_STR,
-                              "rtcpcld_sendNotify()",
-                              "TOADDR",
-                              DLF_MSG_PARAM_STR,
-                              (notifyAddr != NULL ? notifyAddr : "(null)"),
-                              "ERROR_STR",
-                              DLF_MSG_PARAM_STR,
-                              sstrerror(serrno),
-                              RTCPCLD_LOG_WHERE
-                              );
-            }
+                            sstrerror(serrno),
+                            RTCPCLD_LOG_WHERE
+                            );
           }
           serrno = save_serrno;
           notified[i] = 1;
@@ -630,25 +611,23 @@ static int notifySegment(
   rc = rtcpcld_sendNotify(notifyAddr);
   if ( rc == -1 ) {
     /* Notification failed: not fatal but must be logged */
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_sendNotify()",
-                      "TOADDR",
-                      DLF_MSG_PARAM_STR,
-                      (notifyAddr != NULL ? notifyAddr : "(null)"),
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcpcld_sendNotify()",
+                    "TOADDR",
+                    DLF_MSG_PARAM_STR,
+                    (notifyAddr != NULL ? notifyAddr : "(null)"),
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
   }
   serrno = save_serrno;
 
@@ -697,21 +676,19 @@ static int verifyTape(
     /*
      * This is really quite serious...
      */
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ALERT,
-                      RTCPCLD_MSG_WRONG_TAPE,
-                      (struct Cns_fileid *)NULL,
-                      2,
-                      "VID",
-                      DLF_MSG_PARAM_TPVID,
-                      tape->tapereq.vid,
-                      "DBENTRY",
-                      DLF_MSG_PARAM_INT64,
-                      tape->dbRef->key
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ALERT,
+                    RTCPCLD_MSG_WRONG_TAPE,
+                    (struct Cns_fileid *)NULL,
+                    2,
+                    "VID",
+                    DLF_MSG_PARAM_TPVID,
+                    tape->tapereq.vid,
+                    "DBENTRY",
+                    DLF_MSG_PARAM_INT64,
+                    tape->dbRef->key
+                    );
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -781,28 +758,26 @@ int rtcpcld_getVIDsToDo(
                                     &nbTpItems
                                     );
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_tapesTodo()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cstager_IStagerSvc_tapesTodo()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -846,28 +821,26 @@ int rtcpcld_getVIDsToDo(
                                         &nbStreamItems
                                         );
     if ( rc == -1 ) {
+      char *_dbErr = NULL;
       save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+3,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "Cstager_IStagerSvc_streamsTodo()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cstager_IStagerSvc_streamsTodo()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);
     }
   }
 
@@ -1116,28 +1089,26 @@ static int procReqsForVID(
                                           &nbItems
                                           );
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_segmentsForTape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);      
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cstager_IStagerSvc_segmentsForTape()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);      
     C_IAddress_delete(iAddr);
     UNLOCKTP;
     serrno = save_serrno;
@@ -1175,21 +1146,19 @@ static int procReqsForVID(
         if ( (tape->tapereq.mode == WRITE_ENABLE) &&
              (prevFseq > 0) &&
              (fseq != prevFseq+1) ) {
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_SYSTEM,
-                            RTCPCLD_MSG_OUTOFSEQ,
-                            (struct Cns_fileid *)NULL,
-                            2,
-                            "FSEQ",
-                            DLF_MSG_PARAM_INT,
-                            fseq,
-                            "PREV_FSEQ",
-                            DLF_MSG_PARAM_INT,
-                            prevFseq
-                            );
-          }
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_SYSTEM,
+                          RTCPCLD_MSG_OUTOFSEQ,
+                          (struct Cns_fileid *)NULL,
+                          2,
+                          "FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          fseq,
+                          "PREV_FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          prevFseq
+                          );
           break;
         }
         prevFseq = fseq;
@@ -1205,43 +1174,39 @@ static int procReqsForVID(
           if ( rc == -1 ) {
             save_serrno = serrno;
             free(segmArray);
-            if ( dontLog == 0 ) {
-              (void)dlf_write(
-                              (inChild == 0 ? mainUuid : childUuid),
-                              DLF_LVL_ERROR,
-                              RTCPCLD_MSG_SYSCALL,
-                              (struct Cns_fileid *)&fileid,
-                              RTCPCLD_NB_PARAMS+2,
-                              "SYSCALL",
-                              DLF_MSG_PARAM_STR,
-                              "rtcp_NewFileList()",
-                              "ERROR_STR",
-                              DLF_MSG_PARAM_STR,
-                              sstrerror(save_serrno),
-                              RTCPCLD_LOG_WHERE
-                              );
-            }
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            DLF_LVL_ERROR,
+                            RTCPCLD_MSG_SYSCALL,
+                            (struct Cns_fileid *)&fileid,
+                            RTCPCLD_NB_PARAMS+2,
+                            "SYSCALL",
+                            DLF_MSG_PARAM_STR,
+                            "rtcp_NewFileList()",
+                            "ERROR_STR",
+                            DLF_MSG_PARAM_STR,
+                            sstrerror(save_serrno),
+                            RTCPCLD_LOG_WHERE
+                            );
             rc = C_Services_rollback(*svcs,iAddr);
             C_IAddress_delete(iAddr);
             UNLOCKTP;
             serrno = save_serrno;
             return(-1);
           }
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            childUuid,
-                            DLF_LVL_SYSTEM,
-                            RTCPCLD_MSG_FILEREQ,
-                            (struct Cns_fileid *)&fileid,
-                            2,
-                            "FSEQ",
-                            DLF_MSG_PARAM_INT,
-                            fseq,
-                            "PATH",
-                            DLF_MSG_PARAM_STR,
-                            diskPath
-                            );
-          }
+          (void)dlf_write(
+                          childUuid,
+                          DLF_LVL_SYSTEM,
+                          RTCPCLD_MSG_FILEREQ,
+                          (struct Cns_fileid *)&fileid,
+                          2,
+                          "FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          fseq,
+                          "PATH",
+                          DLF_MSG_PARAM_STR,
+                          diskPath
+                          );
           newFileReqs = 1;
           fl->filereq.concat = NOCONCAT;
           fl->filereq.convert = ASCCONV;
@@ -1305,28 +1270,26 @@ static int procReqsForVID(
         rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,0);
         if ( rc == -1 ) {
           save_serrno = serrno;
-          if ( dontLog == 0 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_DBSVC,
-                            (struct Cns_fileid *)NULL,
-                            RTCPCLD_NB_PARAMS+4,
-                            "DBSVCCALL",
-                            DLF_MSG_PARAM_STR,
-                            "C_Services_updateRepNoRec()",
-                            "DBKEY",
-                            DLF_MSG_PARAM_INT,
-                            (int)_key,
-                            "ERROR_STR",
-                            DLF_MSG_PARAM_STR,
-                            sstrerror(serrno),
-                            "DB_ERROR",
-                            DLF_MSG_PARAM_STR,
-                            C_Services_errorMsg(*svcs),
-                            RTCPCLD_LOG_WHERE
-                            );
-          }
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_DBSVC,
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+4,
+                          "DBSVCCALL",
+                          DLF_MSG_PARAM_STR,
+                          "C_Services_updateRepNoRec()",
+                          "DBKEY",
+                          DLF_MSG_PARAM_INT,
+                          (int)_key,
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "DB_ERROR",
+                          DLF_MSG_PARAM_STR,
+                          C_Services_errorMsg(*svcs),
+                          RTCPCLD_LOG_WHERE
+                          );
           rc = C_Services_rollback(*svcs,iAddr);
           C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
@@ -1399,28 +1362,26 @@ int rtcpcld_anyReqsForVID(
   rc = Cstager_IStagerSvc_anySegmentsForTape(stgsvc,currentTape);
   UNLOCKTP;
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_anySegmentsForTape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cstager_anySegmentsForTape()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -1471,19 +1432,17 @@ int rtcpcld_updateVIDStatus(
   tapeItem = (struct Cstager_Tape_t *)tape->dbRef->row;
 
   if ( rc != 1 || tapeItem == NULL ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_INTERNAL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
-                      "REASON",
-                      DLF_MSG_PARAM_STR,
-                      "Tape request could not be found in internal list",
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Tape request could not be found in internal list",
+                    RTCPCLD_LOG_WHERE
+                    );
     UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
@@ -1528,32 +1487,30 @@ int rtcpcld_updateVIDStatus(
     rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
     save_serrno = serrno;
     if ( rc == -1 ) {
+      char *_dbErr = NULL;
       save_serrno = serrno;
       C_IAddress_delete(iAddr);
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+4,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "DBKEY",
-                        DLF_MSG_PARAM_INT,
-                        (int)_key,
-                        "C_Services_updateRepNoRec()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+4,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "DBKEY",
+                      DLF_MSG_PARAM_INT,
+                      (int)_key,
+                      "C_Services_updateRepNoRec()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);
       UNLOCKTP;
       serrno = save_serrno;
       return(-1);
@@ -1605,19 +1562,17 @@ int rtcpcld_setVidWorkerAddress(
   }
 
   if ( rc != 1 || tapeItem == NULL ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_INTERNAL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
-                      "REASON",
-                      DLF_MSG_PARAM_STR,
-                      "Tape request could not be found in internal list",
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Tape request could not be found in internal list",
+                    RTCPCLD_LOG_WHERE
+                    );
     UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
@@ -1634,32 +1589,30 @@ int rtcpcld_setVidWorkerAddress(
   Cstager_Tape_id(tapeItem,&_key);
   rc = C_Services_updateObj(*svcs,iAddr,iObj);
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_updateObj()",
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)_key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+4,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_updateObj()",
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT,
+                    (int)_key,
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     UNLOCKTP;
     serrno = save_serrno;
     return(-1);
@@ -1668,32 +1621,30 @@ int rtcpcld_setVidWorkerAddress(
   Cstager_Tape_id(tapeItem,&_key);
   rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
+    char *_dbErr = NULL;
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_updateRepNoRec()",
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)_key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+4,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_updateRepNoRec()",
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT,
+                    (int)_key,
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
     UNLOCKTP;
     serrno = save_serrno;
     return(-1);
@@ -1750,19 +1701,17 @@ int rtcpcld_updateVIDFileStatus(
     }
   }
   if ( rc != 1 || tapeItem == NULL ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_INTERNAL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
-                      "REASON",
-                      DLF_MSG_PARAM_STR,
-                      "Tape request could not be found in internal list",
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Tape request could not be found in internal list",
+                    RTCPCLD_LOG_WHERE
+                    );
     UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
@@ -1803,38 +1752,36 @@ int rtcpcld_updateVIDFileStatus(
       Cstager_Segment_setStatus(segmItem,toStatus);
       rc = findFileFromSegment(segmItem,tape,&fl);
       if ( (rc != 1) || (fl == NULL) ) {
-        if ( dontLog == 0 ) {
-          if ( rc == -1 ) {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_SYSCALL,
-                            (struct Cns_fileid *)&fileid,
-                            RTCPCLD_NB_PARAMS+3,
-                            "SYSCALL",
-                            DLF_MSG_PARAM_STR,
-                            "findFileFromSegment",
-                            "ERROR_STR",
-                            DLF_MSG_PARAM_STR,
-                            sstrerror(serrno),
-                            "",
-                            DLF_MSG_PARAM_UUID,
-                            stgUuid,
-                            RTCPCLD_LOG_WHERE
-                            );
-          } else {
-            (void)dlf_write(
-                            (inChild == 0 ? mainUuid : childUuid),
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_UNEXPECTED_NEWSEGM,
-                            (struct Cns_fileid *)&fileid,
-                            RTCPCLD_NB_PARAMS+1,
-                            "",
-                            DLF_MSG_PARAM_UUID,
-                            stgUuid,
-                            RTCPCLD_LOG_WHERE
-                            );
-          }
+        if ( rc == -1 ) {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_SYSCALL,
+                          (struct Cns_fileid *)&fileid,
+                          RTCPCLD_NB_PARAMS+3,
+                          "SYSCALL",
+                          DLF_MSG_PARAM_STR,
+                          "findFileFromSegment",
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "",
+                          DLF_MSG_PARAM_UUID,
+                          stgUuid,
+                          RTCPCLD_LOG_WHERE
+                          );
+        } else {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_UNEXPECTED_NEWSEGM,
+                          (struct Cns_fileid *)&fileid,
+                          RTCPCLD_NB_PARAMS+1,
+                          "",
+                          DLF_MSG_PARAM_UUID,
+                          stgUuid,
+                          RTCPCLD_LOG_WHERE
+                          );
         }
       } else {
         filereq = &(fl->filereq);
@@ -1877,32 +1824,30 @@ int rtcpcld_updateVIDFileStatus(
       Cstager_Segment_id(segmItem,&_key);
       rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
       if ( rc == -1 ) {
+        char *_dbErr = NULL;
         save_serrno = serrno;
         C_IAddress_delete(iAddr);
-        if ( dontLog == 0 ) {
-          char *_dbErr = NULL;
-          (void)dlf_write(
-                          (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_DBSVC,
-                          (struct Cns_fileid *)NULL,
-                          RTCPCLD_NB_PARAMS+4,
-                          "DBSVCCALL",
-                          DLF_MSG_PARAM_STR,
-                          "C_Services_updateRepNoRec()",
-                          "DBKEY",
-                          DLF_MSG_PARAM_INT,
-                          (int)_key,
-                          "ERROR_STR",
-                          DLF_MSG_PARAM_STR,
-                          sstrerror(serrno),
-                          "DB_ERROR",
-                          DLF_MSG_PARAM_STR,
-                          (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                          RTCPCLD_LOG_WHERE
-                          );
-          if ( _dbErr != NULL ) free(_dbErr);
-        }
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_DBSVC,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+4,
+                        "DBSVCCALL",
+                        DLF_MSG_PARAM_STR,
+                        "C_Services_updateRepNoRec()",
+                        "DBKEY",
+                        DLF_MSG_PARAM_INT,
+                        (int)_key,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        "DB_ERROR",
+                        DLF_MSG_PARAM_STR,
+                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                        RTCPCLD_LOG_WHERE
+                        );
+        if ( _dbErr != NULL ) free(_dbErr);
       } else updated = 1;
     }
   }
@@ -1982,19 +1927,17 @@ int rtcpcld_setFileStatus(
 
   if ( (currentStatus == SEGMENT_FAILED) &&
        (newStatus != SEGMENT_FAILED) ) {
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SEGMFAILED,
-                      (struct Cns_fileid *)&fileid,
-                      RTCPCLD_NB_PARAMS+1,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      stgUuid,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SEGMFAILED,
+                    (struct Cns_fileid *)&fileid,
+                    RTCPCLD_NB_PARAMS+1,
+                    "",
+                    DLF_MSG_PARAM_UUID,
+                    stgUuid,
+                    RTCPCLD_LOG_WHERE
+                    );
     UNLOCKTP;
     serrno = EPERM;
     return(-1);
@@ -2102,35 +2045,33 @@ int rtcpcld_setFileStatus(
     }
     
     if ( rc == -1 ) {
+      char *_dbErr = NULL;
       save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)&fileid,
-                        RTCPCLD_NB_PARAMS+5,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        (*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRepNoRec()"),
-                        "DBKEY",
-                        DLF_MSG_PARAM_INT,
-                        (int)_key,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (*svcs == NULL ? "(null)" : 
-                         (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs)))),
-                        "",
-                        DLF_MSG_PARAM_UUID,
-                        stgUuid,
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
-      }
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)&fileid,
+                      RTCPCLD_NB_PARAMS+5,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      (*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRepNoRec()"),
+                      "DBKEY",
+                      DLF_MSG_PARAM_INT,
+                      (int)_key,
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      (*svcs == NULL ? "(null)" : 
+                       (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs)))),
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      stgUuid,
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);
       C_IAddress_delete(iAddr);
       UNLOCKTP;
       serrno = save_serrno;
