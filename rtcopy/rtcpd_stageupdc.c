@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.21 $ $Date: 2000/03/13 14:11:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.22 $ $Date: 2000/03/14 11:23:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,10 +41,11 @@ extern char *geterr();
 #include <osdep.h>
 #include <net.h>
 #include <rtcp_constants.h>
-#include <rtcp.h>
-#include <rtcp_server.h>
 #include <vdqm_api.h>
 #include <Ctape_api.h>
+#include <stage.h>
+#include <rtcp.h>
+#include <rtcp_server.h>
 #include <serrno.h>
 
 #if defined(USE_STAGECMD)
@@ -63,50 +64,29 @@ extern char *geterr();
 #endif /* STGCMD */
 #endif /* USE_STAGECMD */
 
-#define STG_ERRTXT (rtcpd_stgupdcErrMsg()!='\0' ? rtcpd_stgupdcErrMsg() : sstrerror(serrno))
-
 static int stgupdc_key = -1;
 static char Unkn_errorstr[] = "unknown error";
 
-int rtcpd_init_stgupdc() {
-    char *errbuf;
-    int errbufsiz = CA_MAXLINELEN + 1;
-
-#if !defined(USE_STAGECMD)
-    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
-    if ( errbuf == NULL ) return(-1);
-    stage_seterrbuf(errbuf,errbufsiz);
-#endif /* !USE_STAGECMD */
-    return(0); 
-}
-
-char *rtcpd_stgupdcErrMsg() {
-    char *errbuf;
-    int errbufsiz = CA_MAXLINELEN + 1;
-
-#if !defined(USE_STAGECMD)
-    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
-    if ( errbuf == NULL ) return(Unkn_errorstr);
-    return(errbuf);
-#else /* !USE_STAGECMD */
-    return(Unkn_errorstr);
-#endif /* !USE_STAGECMD */
-}
-
-void rtcpd_ResetstgupdcError() {
-    char *errbuf;
-    int errbufsiz = CA_MAXLINELEN+1;
-
-#if !defined(USE_STAGECMD)
-    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
-    if ( errbuf != NULL ) *errbuf = '\0';
-#endif /* !USE_STAGECMD */
+void rtcp_stglog(int type, char *msg) {
+    if ( type == MSG_ERR ) rtcp_log(LOG_ERR,msg);
     return;
+}
+
+int rtcpd_init_stgupdc(tape_list_t *tape) {
+    int rc = 0;
+
+    if ( tape == NULL || tape->file == NULL ||
+         *tape->file->filereq.stageID == '\0' ) return(0);
+
+#if !defined(USE_STAGECMD)
+    rc = stage_setlog(rtcp_stglog);
+#endif /* !USE_STAGECMD */
+    return(rc); 
 }
 
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
-    int rc, status, retval, want_reply, save_serrno, WaitTime, TransferTime;
+    int rc, status, retval, save_serrno, WaitTime, TransferTime;
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
@@ -138,13 +118,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
 
 #if !defined(USE_STAGECMD)
-    rtcpd_ResetstgupdcError(); 
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
-        want_reply = 0 ;
         if ( filereq->proc_status == RTCP_POSITIONED ) {
             if ( status != ETFSQ && status != ETEOV ) status = 0;
-            if ( strcmp(filereq->file_path,".") == 0 ) want_reply = 1;
             rc = stage_updc_tppos(filereq->stageID,
                                   status,
                                   filereq->blocksize,
@@ -153,12 +130,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
                                   filereq->recfm,
-                                  newpath,
-                                  want_reply);
+                                  newpath);
             save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
-                         STG_ERRTXT);
+                         sstrerror(serrno));
                 serrno = save_serrno;
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
                     return(-1);
@@ -172,7 +148,6 @@ int rtcpd_stageupdc(tape_list_t *tape,
             rc = rtcp_RetvalSHIFT(tape,file,&retval);
             if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
             else nb_bytes = filereq->bytes_out;
-            if ( status == ENOSPC ) want_reply = 1;
             strcpy(newpath,filereq->file_path);
 
             rc = stage_updc_filcp(filereq->stageID,
@@ -187,11 +162,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
                                   filereq->recfm,
-                                  newpath,
-                                  want_reply);
+                                  newpath);
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
-                         STG_ERRTXT);
+                         sstrerror(serrno));
                 serrno = save_serrno;
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
                     return(-1);
@@ -292,6 +266,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
              strcmp(filereq->file_path,".") == 0 ) {
             rtcp_log(LOG_ERR,
                     "rtcpd_stageupdc() deferred allocation and no new path received\n");
+            return(-1);
+        }
+        if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
+             filereq->err.errorcode == ENOSPC ) {
+            rtcp_log(LOG_ERR,
+                    "rtcpd_stageupdc() no new path received after ENOSPC\n");
             return(-1);
         }
     }
