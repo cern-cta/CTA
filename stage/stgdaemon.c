@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)stgdaemon.c,v 1.228 2002/10/30 16:23:14 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.239 $ $Date: 2003/06/30 11:35:21 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
