@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.16 $ $Date: 2002/02/07 06:12:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.17 $ $Date: 2003/01/28 12:51:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -91,7 +91,7 @@ char **argv;
 		listentry (lp, xflag);
 		flags = VMGR_LIST_CONTINUE;
 	}
-	if (serrno)
+	if (serrno && serrno != SENOCONFIG)
 		fprintf (stderr, "vmgrlisttape: %s\n",
 		    (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
 	else
