@@ -298,7 +298,7 @@ BEGIN
  END;
  BEGIN
    SELECT id INTO dcId FROM DiskCopy
-     WHERE status IN (1, 2, 5) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
+     WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
      AND castorFile = cfId;
    -- We found something, thus we cannot recreate
    dcId := 0;
