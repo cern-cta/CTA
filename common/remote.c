@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.13 $ $Date: 2001/02/07 07:29:49 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.14 $ $Date: 2003/09/24 08:07:38 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -60,9 +60,6 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.13 $ $Date: 2001/
 #endif  /* WIN32 */
 #endif
 
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 extern char *getconfent();
 
 /*
@@ -231,7 +228,7 @@ char *host_name ;
 #if defined(_WIN32)
         log(LOG_ERR, "socket: %s", geterr());
 #else      
-        log(LOG_ERR, "socket: %s\n",sys_errlist[errno]);
+        log(LOG_ERR, "socket: %s\n",strerror(errno));
 #endif  /* WIN32 */
         return -1;
     }
@@ -259,7 +256,7 @@ char *host_name ;
     ifr = ifc.ifc_req;
 
     if ((n = ioctl(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
-        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",sys_errlist[errno]);
+        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
         close(s_s);
         return -1;
     } 
