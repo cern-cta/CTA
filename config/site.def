@@ -199,7 +199,7 @@
 #define BuildRmcClient		YES
 #define BuildRmcServer		NO
 #define BuildRtcopyClient	YES
-#define BuildRtcopyServer	YES
+#define BuildRtcopyServer	NO
 #define BuildRtstat		NO
 #define BuildStageClient	YES
 #define BuildStageDaemon	YES
