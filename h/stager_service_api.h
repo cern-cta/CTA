@@ -6,14 +6,34 @@
 #define __stager_service_h
 
 #include "osdep.h"
+#include <sys/types.h>
+#ifndef _WIN32
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+
+/* Define one type of service per stager pool */
+enum {
+  STAGER_SERVICE_DB  = 0,
+  STAGER_SERVICE_QUERY   = 1,
+  STAGER_SERVICE_UPDATE  = 2,
+  STAGER_SERVICE_GETNEXT = 3,
+
+  STAGER_SERVICE_MAX     = 3        /* Do not forget to update this variable */
+};
 
 struct stagerService {
   int serviceType;
   int serviceTimeout;
-  int (*serviceSelect) _PROTO((void **));
-  int (*serviceProcess) _PROTO((void *));
+  int (*selectFunc) _PROTO((void **));
+  int (*processFunc) _PROTO((void *));
   int serviceSelectTimer;
   int serviceProcessTimer;
+  int nbActiveThreads;
+  int notifyThreadId;
+  int signal;
+  int notTheFirstTime;
 };
 
 
