@@ -2186,6 +2186,7 @@ int vdqm_GetVolQueue(char *dgn, vdqmVolReq_t *VolReq,
              * reached. Context was freed in previous loop so
              * it does not need to be done again.
              */
+            rc = 0;
             if ( dgn_context != NULL ) dgn_context = NULL;
             else {
                log(LOG_DEBUG,"vdqm_GetVolQueue(%s)\n",dgn);
@@ -2247,6 +2248,7 @@ int vdqm_GetDrvQueue(char *dgn, vdqmDrvReq_t *DrvReq,
              * reached. Context was freed in previous loop so
              * it does not need to be done again.
              */
+            rc = 0;
             if ( dgn_context != NULL ) dgn_context = NULL;
             else {
                 log(LOG_DEBUG,"vdqm_GetDrvQueue(%s)\n",dgn);
