@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/12 13:57:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/13 08:09:02 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/12 13:57:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/13 08:09:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -579,15 +579,11 @@ static int notifyTape(
                       )
      struct Cstager_Tape_t *tp;
 {
-  struct Cstager_IStagerSvc_t *stgsvc = NULL;
   char *currentNotifyAddr = NULL;
   char *notifyAddr = NULL;
   struct Cstager_Segment_t **segments = NULL, *segm;
   int moreToDo = 1, rc, i, nbItems;
   int *notified, save_serrno;
-
-  rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL ) return(-1);
 
   Cstager_Tape_segments(tp,&segments,&nbItems);
 
@@ -719,7 +715,6 @@ static int findSegment(
      rtcpFileRequest_t *filereq;
      struct Cstager_Segment_t **segment;
 {
-  struct Cstager_IStagerSvc_t *stgsvc = NULL;
   int found = 0, i, nbItems, fseq, rc;
   unsigned char *blockid;
   char *diskPath;
@@ -745,9 +740,6 @@ static int findSegment(
     if ( rc == -1 ) return(-1);
   }
   
-  rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL ) return(-1);
-
   Cstager_Tape_segments(currentTape,&segments,&nbItems);
 
   for (i=0; i<nbItems; i++) {
@@ -1248,6 +1240,7 @@ static int procReqsForVID(
   LOCKTP;
   rc = verifyTape(tape);
   if ( rc == -1 ) {
+    C_IAddress_delete(iAddr);
     UNLOCKTP;
     return(-1);
   }
@@ -1323,7 +1316,6 @@ static int procReqsForVID(
                       );
       if ( _dbErr != NULL ) free(_dbErr);      
     }
-    C_Services_rollback(*svcs,iAddr);
     C_IAddress_delete(iAddr);
     UNLOCKTP;
     serrno = save_serrno;
@@ -1332,12 +1324,53 @@ static int procReqsForVID(
   rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   if ( nbItems == 0 ) {
-    C_Services_rollback(*svcs,iAddr);
     C_IAddress_delete(iAddr);
     UNLOCKTP;
     serrno = ENOENT;
     return(-1);
   }
+
+  /*
+   * BEGIN Hack until client can use a createRepNoRec() to add segments
+   */
+  rc = Cstager_IStagerSvc_selectTape(
+                                     stgsvc,
+                                     &dummyTp,
+                                     tape->tapereq.vid,
+                                     tape->tapereq.side,
+                                     tape->tapereq.mode
+                                     );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    if ( dontLog == 0 ) {
+      char *_dbErr = NULL;
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cstager_IStagerSvc_selectTape()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);      
+    }
+    C_IAddress_delete(iAddr);
+    UNLOCKTP;
+    serrno = save_serrno;
+    return(-1);
+  }
+  /*
+   * END Hack until client can use a createRepNoRec() to add segments
+   */
 
   qsort(
         (void *)segmArray,
