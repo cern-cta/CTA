@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.45 2000/10/23 13:48:50 jdurand Exp $
+ * $Id: procio.c,v 1.46 2000/10/24 07:50:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.45 $ $Date: 2000/10/23 13:48:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.46 $ $Date: 2000/10/24 07:50:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1919,6 +1919,8 @@ unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 	int nbtpf;
 	char *p, *q;
 	int lasttpf = 0;
+	int have_qn = 0;
+	int have_qu = 0;
 
 	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
@@ -1934,6 +1936,7 @@ unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			return (0);
 		}
+		++have_qn;
 	case 'u':
 		if (strlen (fseq) == 1) {
 			nbtpf = 1;
@@ -1949,6 +1952,7 @@ unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
 			lasttpf = atoi((char *)(*fseq_list + i));
 		}
+		++have_qu;
 		break;
 	default:
 		nbtpf = 0;
@@ -2016,29 +2020,31 @@ unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 			return (0);
 		}
 	}
-	/* We verify the fseq list (if more than one element) */
-	i = 1;
+	if (have_qu == 0 && have_qn == 0) {
+		/* We verify the fseq list (if more than one element) */
+		i = 1;
  retry_verif:
-	for (; i < nbtpf; i++) {
-		if (strcmp((char *)(*fseq_list + i),(char *)(*fseq_list + i - 1)) == 0) {
-			int j, new_nbtpf;
-			fseq_elem *new_fseq_list;
+		for (; i < nbtpf; i++) {
+			if (strcmp((char *)(*fseq_list + i),(char *)(*fseq_list + i - 1)) == 0) {
+				int j, new_nbtpf;
+				fseq_elem *new_fseq_list;
 
-			if ((new_fseq_list = (fseq_elem *) calloc (nbtpf - 1, sizeof(fseq_elem))) == NULL) {
-				sendrep (rpfd, MSG_ERR, "STG02 - calloc error (%s)\n", strerror(errno));
+				if ((new_fseq_list = (fseq_elem *) calloc (nbtpf - 1, sizeof(fseq_elem))) == NULL) {
+					sendrep (rpfd, MSG_ERR, "STG02 - calloc error (%s)\n", strerror(errno));
+					free(*fseq_list);
+					return(-1);
+				}
+				sendrep (rpfd, MSG_ERR, "STG02 - Duplicated file sequence %s reduced by one\n", (char *)(*fseq_list + i));
+				new_nbtpf = 0;
+				for (j = 0; j < nbtpf; j++) {
+					if (j == i) continue;
+					strcpy((char *)(new_fseq_list + new_nbtpf++),(char *)(*fseq_list + j));
+				}
 				free(*fseq_list);
-				return(-1);
+				*fseq_list = new_fseq_list;
+				nbtpf = new_nbtpf;
+				goto retry_verif;
 			}
-			sendrep (rpfd, MSG_ERR, "STG02 - Duplicated file sequence %s reduced by one\n", (char *)(*fseq_list + i));
-			new_nbtpf = 0;
-			for (j = 0; j < nbtpf; j++) {
-				if (j == i) continue;
-				strcpy((char *)(new_fseq_list + new_nbtpf++),(char *)(*fseq_list + j));
-			}
-			free(*fseq_list);
-			*fseq_list = new_fseq_list;
-			nbtpf = new_nbtpf;
-			goto retry_verif;
 		}
 	}
 	return (nbtpf);
