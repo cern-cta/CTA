@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.60 $ $Date: 2000/04/04 16:52:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.61 $ $Date: 2000/04/06 08:37:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1430,23 +1430,34 @@ void *tapeIOthread(void *arg) {
                          * a double tape mark.
                          */
                         serrno = ETEOV;
+                        tmpfile = nextfile;
                         if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
+                            /*
+                             * Give client correct number of disk bytes
+                             * copied. We have to create a temporary structure
+                             * to not confuse the disk IO thread.
+                             */
+                            tmpfile = (file_list_t *)malloc(sizeof(file_list_t));
+                            if ( tmpfile == NULL ) tmpfile = nextfile;
+                            else *tmpfile = *nextfile;
+                            tmpfile->filereq.bytes_in = tmpfile->tapebytes_sofar;
                             severity = RTCP_FAILED | RTCP_USERR;
                         } else {
                             severity = RTCP_FAILED | RTCP_ENDVOL;
                         }
                         if ( (severity & RTCP_FAILED) != 0 )
-                            rtcpd_AppendClientMsg(NULL,nextfile,RT124,
+                            rtcpd_AppendClientMsg(NULL,tmpfile,RT124,
                                 (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
-                        rtcpd_SetReqStatus(NULL,nextfile,serrno,severity);
+                        rtcpd_SetReqStatus(NULL,tmpfile,serrno,severity);
                         rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
-                            tellClient(&client_socket,NULL,nextfile,-1);
+                            tellClient(&client_socket,NULL,tmpfile,-1);
                             TP_STATUS(RTCP_PS_STAGEUPDC);
-                            rc = rtcpd_stageupdc(nexttape,nextfile);
+                            rc = rtcpd_stageupdc(nexttape,tmpfile);
                             TP_STATUS(RTCP_PS_NOBLOCKING);
                             rtcpd_SetProcError(severity);
-                            (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG);
+                            (void)rtcp_WriteAccountRecord(client,nexttape,tmpfile,RTCPEMSG);
+                            if ( tmpfile != nextfile ) free(tmpfile);
                         }
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
