@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.170 2002/03/11 15:34:21 jdurand Exp $
+ * $Id: procio.c,v 1.171 2002/03/11 15:43:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.170 $ $Date: 2002/03/11 15:34:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.171 $ $Date: 2002/03/11 15:43:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1085,7 +1085,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	}
 
 	if ((req_type == STAGEWRT) && (stgreq.t_or_d == 't')) {
-		char *thisfseq = (fseq != NULL) ? fseq : stcp_input[0].u1.t.fseq;
+		char *thisfseq = (fseq != NULL) ? fseq : (stcp_input != NULL ? stcp_input[0].u1.t.fseq : NULL);
 		if (thisfseq != NULL) {
 			/* Note: if fseq != NULL this is command-line, otherise this is API */
 			if (thisfseq[0] == 'n') {
