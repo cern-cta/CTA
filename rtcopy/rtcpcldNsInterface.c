@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:51:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 10:18:11 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:51:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 10:18:11 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -329,12 +329,28 @@ int updateSegmentsForTpCopy(
     return(-1);
   }
 
-  qsort(
-        (void *)segmArray,
-        (size_t)nbSegms,
-        sizeof(struct Cstager_Segment_t *),
-        orderSegmByOffset
-        );
+  /*
+   * File segmentation not allowed (feature request #5179)
+   */
+  if ( nbSegms != 1 ) {
+    Cstager_TapeCopy_id(tpCopy,&key);
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_TOOMANYSEGMS,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "KEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    "NBSEGMS",
+                    DLF_MSG_PARAM_INT,
+                    nbSegms,
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = ENOENT;
+    return(-1);
+  }
 
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(castorFileId.server,nsHost,sizeof(castorFileId.server)-1);
@@ -364,7 +380,7 @@ int updateSegmentsForTpCopy(
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SEGMCHKERROR,
+                    RTCPCLD_MSG_SEGMCHECK,
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+1,
                     "ERRORSTR",
@@ -378,12 +394,15 @@ int updateSegmentsForTpCopy(
     return(-1);
   }
 
-  /*
+  /**
+   * \internal
    * The file has been fully and correctly copied to tape. Go ahead
-   * and create the segments in the name server
+   * and create the segment in the name server. Note that for migration
+   * there is only one segment per castor file since file segmentation
+   * is not allowed (feature request #5179).
    */
   nsSegAttrs = (struct Cns_segattrs *)calloc(
-                                             nbSegms,
+                                             1,
                                              sizeof(struct Cns_segattrs)
                                              );
   if ( nsSegAttrs == NULL ) {
@@ -407,127 +426,125 @@ int updateSegmentsForTpCopy(
     return(-1);
   }
 
-  for ( i=0; i<nbSegms; i++ ) {
-    nsSegAttrs[i].copyno = 0;
-    nsSegAttrs[i].fsec = i+1;
-    Cstager_Segment_bytes_in(segmArray[i],&(nsSegAttrs[i].segsize));
-    Cstager_Segment_bytes_out(segmArray[i],&bytesOut);
-    if ( bytesOut > 0 ) {
-      Cstager_Segment_host_bytes(segmArray[i],&hostBytes);
-      compressionFactor = (hostBytes * 100) / bytesOut;
-    } else {
-      compressionFactor = 0;
-    }
-    nsSegAttrs[i].compression = compressionFactor;
-    Cstager_Segment_tape(segmArray[i],&tp);
-    if ( tp == NULL ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_NOTAPE,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS,
-                      RTCPCLD_LOG_WHERE
-                      );
-      serrno = EINVAL;
-      free(segmArray);
-      return(-1);
-    }
-    nsSegAttrs[i].s_status = '-';
-
-    vid = NULL;
-    Cstager_Tape_vid(tp,(CONST char **)&vid);
-    Cstager_Tape_side(tp,&side);
-    Cstager_Tape_tpmode(tp,&mode);
-    if ( mode != WRITE_ENABLE ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_WRONGMODE,
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+3,
-                      "",
-                      DLF_MSG_PARAM_TPVID,
-                      vid,
-                      "SIDE",
-                      DLF_MSG_PARAM_INT,
-                      side,
-                      "MODE",
-                      DLF_MSG_PARAM_INT,
-                      mode,
-                        RTCPCLD_LOG_WHERE
-                      );
-      serrno = EINVAL;
-      free(segmArray);
-      return(-1);
-    }
-    strncpy(nsSegAttrs[i].vid,vid,CA_MAXVIDLEN);
-    nsSegAttrs[i].side = side;
-
-    blockid = NULL;
-    Cstager_Segment_blockid(segmArray[i],(CONST unsigned char **)&blockid);
-    if ( blockid != NULL ) {
-      memcpy(nsSegAttrs[i].blockid,blockid,sizeof(nsSegAttrs[i].blockid));
-    }
-    Cstager_Segment_fseq(segmArray[i],&(nsSegAttrs[i].fseq));
-    if ( use_checksum == 1 ) {
-      Cstager_Segment_segmCksumAlgorithm(
-                                         segmArray[i],
-                                         (CONST char **)&cksumName
-                                         );
-      Cstager_Segment_segmCksum(
-                                segmArray[i],
-                                &cksumValue
-                                );
-      strncpy(
-              nsSegAttrs[i].checksum_name,
-              cksumName,
-              CA_MAXCKSUMNAMELEN
-              );
-      nsSegAttrs[i].checksum = cksumValue;
-    }
-    blkid = rtcp_voidToString(
-                              (void *)nsSegAttrs[i].blockid,
-                              sizeof(nsSegAttrs[i].blockid)
-                              );
-    if ( blkid == NULL ) blkid = strdup("unknown");
-
+  nsSegAttrs->copyno = 0;
+  nsSegAttrs->fsec = 1;
+  Cstager_Segment_bytes_in(segmArray[0],&(nsSegAttrs->segsize));
+  Cstager_Segment_bytes_out(segmArray[0],&bytesOut);
+  if ( bytesOut > 0 ) {
+    Cstager_Segment_host_bytes(segmArray[0],&hostBytes);
+    compressionFactor = (hostBytes * 100) / bytesOut;
+  } else {
+    compressionFactor = 0;
+  }
+  nsSegAttrs->compression = compressionFactor;
+  Cstager_Segment_tape(segmArray[0],&tp);
+  if ( tp == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_DEBUG,
-                    RTCPCLD_MSG_ADDSEGM,
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_NOTAPE,
                     (struct Cns_fileid *)&castorFileId,
-                    9,
+                    RTCPCLD_NB_PARAMS,
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = EINVAL;
+    free(segmArray);
+    return(-1);
+  }
+  nsSegAttrs->s_status = '-';
+  
+  vid = NULL;
+  Cstager_Tape_vid(tp,(CONST char **)&vid);
+  Cstager_Tape_side(tp,&side);
+  Cstager_Tape_tpmode(tp,&mode);
+  if ( mode != WRITE_ENABLE ) {
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_WRONGMODE,
+                    (struct Cns_fileid *)&castorFileId,
+                    RTCPCLD_NB_PARAMS+3,
                     "",
                     DLF_MSG_PARAM_TPVID,
-                    nsSegAttrs[i].vid,
+                    vid,
                     "SIDE",
                     DLF_MSG_PARAM_INT,
-                    nsSegAttrs[i].side,
-                    "FSEC",
+                    side,
+                    "MODE",
                     DLF_MSG_PARAM_INT,
-                    nsSegAttrs[i].fsec,
-                    "SEGSIZE",
-                    DLF_MSG_PARAM_INT64,
-                    nsSegAttrs[i].segsize,
-                    "COMPRFAC",
-                    DLF_MSG_PARAM_INT,
-                    nsSegAttrs[i].compression,
-                    "FSEQ",
-                    DLF_MSG_PARAM_INT,
-                    nsSegAttrs[i].fseq,
-                    "BLOCKID",
-                    DLF_MSG_PARAM_STR,
-                    blkid,
-                    "CKSUMALG",
-                    DLF_MSG_PARAM_STR,
-                    nsSegAttrs[i].checksum_name,
-                    "CKSUM",
-                    DLF_MSG_PARAM_INT,
-                    nsSegAttrs[i].checksum
+                    mode,
+                    RTCPCLD_LOG_WHERE
                     );
-    free(blkid);
+    serrno = EINVAL;
+    free(segmArray);
+    return(-1);
   }
+  strncpy(nsSegAttrs->vid,vid,CA_MAXVIDLEN);
+  nsSegAttrs->side = side;
+  
+  blockid = NULL;
+  Cstager_Segment_blockid(segmArray[0],(CONST unsigned char **)&blockid);
+  if ( blockid != NULL ) {
+    memcpy(nsSegAttrs->blockid,blockid,sizeof(nsSegAttrs->blockid));
+  }
+  Cstager_Segment_fseq(segmArray[0],&(nsSegAttrs->fseq));
+  if ( use_checksum == 1 ) {
+    Cstager_Segment_segmCksumAlgorithm(
+                                       segmArray[0],
+                                       (CONST char **)&cksumName
+                                       );
+    Cstager_Segment_segmCksum(
+                              segmArray[0],
+                              &cksumValue
+                              );
+    strncpy(
+            nsSegAttrs->checksum_name,
+            cksumName,
+            CA_MAXCKSUMNAMELEN
+            );
+    nsSegAttrs->checksum = cksumValue;
+  }
+  blkid = rtcp_voidToString(
+                            (void *)nsSegAttrs->blockid,
+                            sizeof(nsSegAttrs->blockid)
+                            );
+  if ( blkid == NULL ) blkid = strdup("unknown");
+  
+  (void)dlf_write(
+                  (inChild == 0 ? mainUuid : childUuid),
+                  DLF_LVL_DEBUG,
+                  RTCPCLD_MSG_ADDSEGM,
+                  (struct Cns_fileid *)&castorFileId,
+                  9,
+                  "",
+                  DLF_MSG_PARAM_TPVID,
+                  nsSegAttrs->vid,
+                  "SIDE",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->side,
+                  "FSEC",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->fsec,
+                  "SEGSIZE",
+                  DLF_MSG_PARAM_INT64,
+                  nsSegAttrs->segsize,
+                  "COMPRFAC",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->compression,
+                  "FSEQ",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->fseq,
+                  "BLOCKID",
+                  DLF_MSG_PARAM_STR,
+                  blkid,
+                  "CKSUMALG",
+                  DLF_MSG_PARAM_STR,
+                  nsSegAttrs->checksum_name,
+                  "CKSUM",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->checksum
+                  );
+  free(blkid);
   rc = Cns_setsegattrs(
                        (char *)NULL, /* CASTOR file name */
                        &castorFileId,
