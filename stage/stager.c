@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.77 2000/06/13 14:58:11 jdurand Exp $
+ * $Id: stager.c,v 1.78 2000/06/16 14:37:42 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.77 $ $Date: 2000/06/13 14:58:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.78 $ $Date: 2000/06/16 14:37:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1012,7 +1012,6 @@ int stagewrt_castor_hsm_file() {
         RETURN (USERR);
       }
       
-      /* We do not want to overwrite an existing file, except it its size is zero */
       if (((stcp->status & STAGEWRT) == STAGEWRT) || ((stcp->status & STAGEPUT) == STAGEPUT)) {
 		struct Cns_fileid Cnsfileid;
 
@@ -1022,19 +1021,33 @@ int stagewrt_castor_hsm_file() {
         SETEID(stcp->uid,stcp->gid);
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
+        /*
+        if (Cns_creatx(castor_hsm, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, &Cnsfileid) != 0) {
+          sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_creatx",strerror(serrno));
+          RETURN (USERR);
+        }
+        if (Cnsfileid.fileid != stcp->u1.h.fileid) {
+          sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_creatx","HSM fileid does not match catalog one");
+          RETURN (USERR);
+        }
+        */
         if (Cns_statx(castor_hsm, &Cnsfileid, &statbuf_check) != 0) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
-                     "file already exists and is non-zero size");
-            RETURN (USERR);
+          sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",strerror(serrno));
+          RETURN (USERR);
         } else {
           if (statbuf_check.filesize > 0) {
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
-                     "file already exists and is non-zero size");
-            RETURN (USERR);
+                     "file already exists and is non-zero size - truncated");
+            if (Cns_setfsize(castor_hsm,
+                             &Cnsfileid,
+                             (u_signed64) 0) != 0) {
+              sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setfsize (with invariants)",strerror(serrno));
+              RETURN (USERR);
+            }
           }
         }
       }
-      
+
       hsm_totalsize[i] = statbuf.st_size;
       hsm_transferedsize[i] = 0;
       hsm_fseg[i] = 1;
