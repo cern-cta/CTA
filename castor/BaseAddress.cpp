@@ -40,7 +40,7 @@ castor::BaseAddress::BaseAddress() throw() :
   m_objType(0),
   m_cnvSvcName(""),
   m_cnvSvcType(0),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

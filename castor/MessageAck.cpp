@@ -41,7 +41,7 @@ castor::MessageAck::MessageAck() throw() :
   m_errorCode(0),
   m_errorMessage(""),
   m_requestId(""),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------
