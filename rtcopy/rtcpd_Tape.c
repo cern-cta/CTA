@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.16 $ $Date: 2000/01/21 13:29:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.17 $ $Date: 2000/01/21 15:53:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -919,8 +919,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 && (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
                 rtcpd_SetProcError(RTCP_FAILED); \
         }\
-        if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
-        if ( rc == -1 ) (void) tellClient(&client_socket,X,Y,rc); \
+        if ( rc == -1 && tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
+        if ( rc == -1 || mode == WRITE_ENABLE ) \
+            (void) tellClient(&client_socket,X,Y,rc); \
         if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) \
             (void)rtcpd_Release((X),NULL); \
         (void) tellClient(&client_socket,NULL,NULL,-1); \
@@ -938,7 +939,7 @@ void *tapeIOthread(void *arg) {
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
-    int rc,BroadcastInfo,severity;
+    int rc,BroadcastInfo,mode,severity;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
 
     if ( arg == NULL ) {
@@ -1014,6 +1015,7 @@ void *tapeIOthread(void *arg) {
         }
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
+            mode = nexttape->tapereq.mode;
             /*
              * Handle file section number for multivolume requests. The
              * file section number is 1 for all files on first volume. Only
@@ -1208,6 +1210,10 @@ void *tapeIOthread(void *arg) {
                         (void) rtcp_CloseConnection(&client_socket);
                         return((void *)&failure);
                     }
+                    rtcp_log(LOG_DEBUG,"tapeIOthread() file %d spanning volumes %s:%s\n",
+                             nextfile->filereq.tape_fseq,
+                             nexttape->tapereq.vid,
+                             nexttape->next->tapereq.vid);
                     break;
                 }
 
