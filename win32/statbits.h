@@ -1,5 +1,5 @@
 /*
- * @(#)$RCSfile: statbits.h,v $ $Revision: 1.1 $ $Date: 2000/09/01 07:57:33 $ Olof Barring CERN IT-PDP/DM
+ * @(#)$RCSfile: statbits.h,v $ $Revision: 1.2 $ $Date: 2000/09/04 09:17:21 $ Olof Barring CERN IT-PDP/DM
  */
 
 /*
@@ -87,6 +87,10 @@
 
 #ifndef S_ISGID
 #define S_ISGID         __S_ISGID
+#endif
+
+#ifndef S_ISVTX
+#define S_ISVTX         __S_ISVTX
 #endif
 
 #ifndef S_IRUSR
