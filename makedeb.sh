@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.5 2005/01/23 15:23:36 jdurand Exp $
+# $Id: makedeb.sh,v 1.6 2005/01/24 11:35:47 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -40,6 +40,13 @@ d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
 
+# Go to castor-$a.$b.$c and do the changes in here
+curdir=`pwd`
+cd ..
+[ -d "castor-${a}.${b}.${c}" ] && rm -rf castor-${a}.${b}.${c}
+cp -Lr $curdir castor-${a}.${b}.${c}
+cd castor-${a}.${b}.${c}
+
 #
 ## Force build rules to YES for a lot of things
 #
@@ -57,6 +64,18 @@ done
 #
 perl -pi -e s/__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install
 perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install
+
+#
+## Replace __BASEVERSION__, __PATCHLEVEL__ and __TIMESTAMP__ in patchlevel.h
+#
+timestamp=`date "+%s"`
+perl -pi -e s/__BASEVERSION__/${a}.${b}.${c}/g h/patchlevel.h
+perl -pi -e s/__PATCHLEVEL__/${d}/g h/patchlevel.h
+perl -pi -e s/__TIMESTAMP__/${timestamp}/g h/patchlevel.h
+
+#
+## Build the packages
+#
 fakeroot dch --newversion ${a}.${b}.${c}-${d}
 fakeroot dpkg-buildpackage
 status=$?
