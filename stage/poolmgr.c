@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.114 2001/03/21 11:29:15 jdurand Exp $
+ * $Id: poolmgr.c,v 1.115 2001/03/21 17:33:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.114 $ $Date: 2001/03/21 11:29:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.115 $ $Date: 2001/03/21 17:33:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2854,7 +2854,6 @@ int migpoolfiles(pool_p)
     stagewrt_hsm_retry:
       if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT,    /* Flags */
                              0,                            /* open flags - disabled */
-                             (mode_t) 0,                   /* open mode - disabled */
                              localhost,                    /* Hostname */
                              NULL,                         /* Pooluser */
                              tppool_vs_stcp[j].nstcp,      /* nstcp_input */
