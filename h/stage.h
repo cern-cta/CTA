@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.60 2001/06/21 07:54:15 jdurand Exp $
+ * $Id: stage.h,v 1.61 2001/06/21 11:34:33 jdurand Exp $
  */
 
 /*
@@ -276,7 +276,11 @@
 #define STG143  "STG143 - %s : %s lifetime on disk exceeds %d second%s - %s\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
 #define STG149  "STG149 - %s : will not be migrated until pool %s have an associated migrator\n"
+#define STG153  "STG153 - %s : %s (pool %s)\n"
+#define STG154  "STG154 - HSM File %s was renamed to %s (fileid %s@%s), catalog updated for reqid=%d\n"
+#define STG155  "STG155 - HSM File %s, pool %s, fileid %s@%s moved from DELAY_MIGR to CAN_BE_MIGR\n"
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
+#define STG157  "STG157 - HSM File %s was renamed to %s (fileid %s@%s), input updated\n"
 
 			/* stage daemon stream modes */
 
