@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.207 2002/06/05 13:22:31 jdurand Exp $
+ * $Id: poolmgr.c,v 1.208 2002/06/06 17:11:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.207 $ $Date: 2002/06/05 13:22:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.208 $ $Date: 2002/06/06 17:11:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -847,8 +847,20 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						}
 					}
 					/* If (elemp->server == localhost) we do not need the permanent rfio connections ! */
-					if (strcmp(elemp->server,localhost) == 0) {
-						nblocal++;
+
+					/* Is elemp->server a fully qualified hostname ? */
+					if (strchr(elemp->server,'.') != NULL) {
+						/* Yes : compare with localhost, that is also a FQ-hostname (c.f. startup in stgdaemon.c) */
+						if (strcmp(elemp->server,localhost) == 0) {
+							nblocal++;
+						}
+					} else {
+						/* No  : this mean that hostnames are equal only if localhost is exactly equal to "elemp->server" + "." + "localdomain" */
+						if ((strncmp(elemp->server,localhost,strlen(elemp->server)) == 0) &&
+							(localhost[strlen(elemp->server)] == '.') &&                        /* Executed only if upper is true, so cannot be null */
+							(strcmp(localdomain,localhost + strlen(elemp->server) + 1) == 0)) { /* Idem */
+							nblocal++;
+						}
 					}
 				}
 			}
@@ -875,20 +887,24 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				strcpy(save_gc,pool_p->gc);
 				rfio_parseln (save_gc, &gc_host, &gc_path, NORDLINKS);
 				if (gc_host != NULL) {
-					if ((gc_host2 = (char *) malloc(strlen(gc_host) + 1 + strlen(localdomain) + 1)) == NULL) {
-						stglogit (func, "... Pool %s : malloc error building fully qualified GC %s hostname: %s\n", pool_p->name, pool_p->gc, strerror(errno));
-					} else {
-						strcpy(gc_host2,gc_host);
-						strcat(gc_host2,".");
-						strcat(gc_host2,localdomain);
-						gc_host = gc_host2;
+					if (strchr(gc_host,'.') == NULL) {
+						/* This is not yet fully qualified hostname */
+						if ((gc_host2 = (char *) malloc(strlen(gc_host) + 1 + strlen(localdomain) + 1)) == NULL) {
+							stglogit (func, "... Pool %s : malloc error building fully qualified GC %s hostname: %s\n", pool_p->name, pool_p->gc, strerror(errno));
+						} else {
+							strcpy(gc_host2,gc_host);
+							strcat(gc_host2,".");
+							strcat(gc_host2,localdomain);
+							gc_host = gc_host2;
+						}
 					}
 				} else {
+					/* Note : at startup we make sure 'localhost' is a FQ-hostname */
 					gc_host = localhost;
 				}
 				/* Note : gc_host can be NULL - this is valid in the call to Cupv_check() */
 				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, localhost, P_ADMIN) != 0) {
-					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv\n", pool_p->name, pool_p->gc, gc_host, localhost);
+					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv (%s)\n", pool_p->name, pool_p->gc, gc_host, localhost, sstrerror(serrno));
 				} else {
 					stglogit (func, "... Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] ok\n", pool_p->name, pool_p->gc, gc_host, localhost);
 				}
