@@ -56,6 +56,7 @@ void castor::client::VectorResponseHandler::handleResponse
   castor::IObject *obj = r.clone();
   castor::rh::Response *resp = dynamic_cast<castor::rh::Response *>(obj);
   if (0 == resp) {
+    delete obj;
     castor::exception::Exception e(EINVAL);
     e.getMessage() << "Could not cast down to Response*";
     throw e;
