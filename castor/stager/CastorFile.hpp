@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -106,6 +107,42 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_fileId
+       * The id of this castor file. This identifies it uniquely
+       * @return the value of m_fileId
+       */
+      u_signed64 fileId() const {
+        return m_fileId;
+      }
+
+      /**
+       * Set the value of m_fileId
+       * The id of this castor file. This identifies it uniquely
+       * @param new_var the new value of m_fileId
+       */
+      void setFileId(u_signed64 new_var) {
+        m_fileId = new_var;
+      }
+
+      /**
+       * Get the value of m_nsHost
+       * The name server hosting this castor file
+       * @return the value of m_nsHost
+       */
+      std::string nsHost() const {
+        return m_nsHost;
+      }
+
+      /**
+       * Set the value of m_nsHost
+       * The name server hosting this castor file
+       * @param new_var the new value of m_nsHost
+       */
+      void setNsHost(std::string new_var) {
+        m_nsHost = new_var;
+      }
+
+      /**
        * Add a DiskCopy* object to the m_diskFileCopiesVector list
        */
       void addDiskFileCopies(DiskCopy* add_object) {
@@ -166,6 +203,12 @@ namespace castor {
     private:
 
     private:
+
+      /// The id of this castor file. This identifies it uniquely
+      u_signed64 m_fileId;
+
+      /// The name server hosting this castor file
+      std::string m_nsHost;
 
       /// The id of this object
       unsigned long m_id;

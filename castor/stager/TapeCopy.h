@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "castor/stager/TapeCopyStatusCodes.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_CastorFile_t;
 struct Cstager_Segment_t;
 struct Cstager_TapeCopy_t;
@@ -69,7 +68,7 @@ int Cstager_TapeCopy_print(struct Cstager_TapeCopy_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_TapeCopy_TYPE(struct C_int_t* ret);
+int Cstager_TapeCopy_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -90,7 +89,7 @@ int Cstager_TapeCopy_id(struct Cstager_TapeCopy_t* instance,
  * Gets the type of the object
  */
 int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageFilChgRequest.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageFilChgRequest.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/01 15:23:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,6 @@
 #define CASTOR_STAGER_STAGEFILCHGREQUEST_H
 
 // Include Files and Forward declarations for the C world
-struct C_int_t;
 struct Cstager_Request_t;
 struct Cstager_StageFilChgRequest_t;
 
@@ -66,7 +65,7 @@ int Cstager_StageFilChgRequest_print(struct Cstager_StageFilChgRequest_t* instan
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_StageFilChgRequest_TYPE(struct C_int_t* ret);
+int Cstager_StageFilChgRequest_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -87,6 +86,6 @@ int Cstager_StageFilChgRequest_id(struct Cstager_StageFilChgRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_StageFilChgRequest_type(struct Cstager_StageFilChgRequest_t* instance,
-                                    struct C_int_t* ret);
+                                    int* ret);
 
 #endif // CASTOR_STAGER_STAGEFILCHGREQUEST_H

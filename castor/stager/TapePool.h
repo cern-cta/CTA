@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_TapePool_t;
 struct Cstager_Tape_t;
 
@@ -67,7 +66,7 @@ int Cstager_TapePool_print(struct Cstager_TapePool_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_TapePool_TYPE(struct C_int_t* ret);
+int Cstager_TapePool_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,7 +87,7 @@ int Cstager_TapePool_id(struct Cstager_TapePool_t* instance,
  * Gets the type of the object
  */
 int Cstager_TapePool_type(struct Cstager_TapePool_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * Get the value of name

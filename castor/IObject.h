@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 struct C_IObject_t;
-struct C_int_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -58,7 +57,7 @@ int C_IObject_id(struct C_IObject_t* instance,
  * Gets the type of the object
  */
 int C_IObject_type(struct C_IObject_t* instance,
-                   struct C_int_t* ret);
+                   int* ret);
 
 /**
  * Outputs this object in a human readable format

@@ -28,10 +28,8 @@
 #define CASTOR_STAGER_FILESYSTEM_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_float_t;
-struct C_int_t;
-struct C_u_signed64_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
@@ -70,7 +68,7 @@ int Cstager_FileSystem_print(struct Cstager_FileSystem_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_FileSystem_TYPE(struct C_int_t* ret);
+int Cstager_FileSystem_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -91,51 +89,51 @@ int Cstager_FileSystem_id(struct Cstager_FileSystem_t* instance,
  * Gets the type of the object
  */
 int Cstager_FileSystem_type(struct Cstager_FileSystem_t* instance,
-                            struct C_int_t* ret);
+                            int* ret);
 
 /**
  * Get the value of free
  * Free space on the filesystem
  */
-int Cstager_FileSystem_free(struct Cstager_FileSystem_t* instance, struct C_u_signed64_t* var);
+int Cstager_FileSystem_free(struct Cstager_FileSystem_t* instance, u_signed64* var);
 
 /**
  * Set the value of free
  * Free space on the filesystem
  */
-int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, struct C_u_signed64_t new_var);
+int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of weight
  * Weight of the filesystem, as computed by the expert system
  */
-int Cstager_FileSystem_weight(struct Cstager_FileSystem_t* instance, struct C_float_t* var);
+int Cstager_FileSystem_weight(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of weight
  * Weight of the filesystem, as computed by the expert system
  */
-int Cstager_FileSystem_setWeight(struct Cstager_FileSystem_t* instance, struct C_float_t new_var);
+int Cstager_FileSystem_setWeight(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of fsDeviation
  */
-int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, struct C_float_t* var);
+int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of fsDeviation
  */
-int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, struct C_float_t new_var);
+int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of randomize
  */
-int Cstager_FileSystem_randomize(struct Cstager_FileSystem_t* instance, struct C_int_t* var);
+int Cstager_FileSystem_randomize(struct Cstager_FileSystem_t* instance, int* var);
 
 /**
  * Set the value of randomize
  */
-int Cstager_FileSystem_setRandomize(struct Cstager_FileSystem_t* instance, struct C_int_t new_var);
+int Cstager_FileSystem_setRandomize(struct Cstager_FileSystem_t* instance, int new_var);
 
 /**
  * Get the value of mountPoint

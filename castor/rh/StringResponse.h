@@ -28,7 +28,6 @@
 #define CASTOR_RH_STRINGRESPONSE_H
 
 // Include Files and Forward declarations for the C world
-struct C_int_t;
 struct Crh_Response_t;
 struct Crh_StringResponse_t;
 
@@ -66,7 +65,7 @@ int Crh_StringResponse_print(struct Crh_StringResponse_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Crh_StringResponse_TYPE(struct C_int_t* ret);
+int Crh_StringResponse_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -87,7 +86,7 @@ int Crh_StringResponse_id(struct Crh_StringResponse_t* instance,
  * Gets the type of the object
  */
 int Crh_StringResponse_type(struct Crh_StringResponse_t* instance,
-                            struct C_int_t* ret);
+                            int* ret);
 
 /**
  * Get the value of content

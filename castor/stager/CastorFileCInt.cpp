@@ -29,6 +29,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
 #include <vector>
 
 extern "C" {
@@ -102,6 +103,39 @@ extern "C" {
   int Cstager_CastorFile_type(castor::stager::CastorFile* instance,
                               int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_fileId(castor::stager::CastorFile* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setFileId(castor::stager::CastorFile* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_nsHost(castor::stager::CastorFile* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setNsHost(castor::stager::CastorFile* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
     return 0;
   }
 

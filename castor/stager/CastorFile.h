@@ -28,8 +28,8 @@
 #define CASTOR_STAGER_CASTORFILE_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopy_t;
@@ -68,7 +68,7 @@ int Cstager_CastorFile_print(struct Cstager_CastorFile_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_CastorFile_TYPE(struct C_int_t* ret);
+int Cstager_CastorFile_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -89,7 +89,31 @@ int Cstager_CastorFile_id(struct Cstager_CastorFile_t* instance,
  * Gets the type of the object
  */
 int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
-                            struct C_int_t* ret);
+                            int* ret);
+
+/**
+ * Get the value of fileId
+ * The id of this castor file. This identifies it uniquely
+ */
+int Cstager_CastorFile_fileId(struct Cstager_CastorFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ * The id of this castor file. This identifies it uniquely
+ */
+int Cstager_CastorFile_setFileId(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ * The name server hosting this castor file
+ */
+int Cstager_CastorFile_nsHost(struct Cstager_CastorFile_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ * The name server hosting this castor file
+ */
+int Cstager_CastorFile_setNsHost(struct Cstager_CastorFile_t* instance, const char* new_var);
 
 /**
  * Add a struct Cstager_DiskCopy_t* object to the diskFileCopies list

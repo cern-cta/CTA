@@ -29,10 +29,8 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/SubRequestStatusCodes.h"
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_u_signed64_t;
-struct C_uns_tigned int;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 
@@ -70,7 +68,7 @@ int Cstager_SubRequest_print(struct Cstager_SubRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_SubRequest_TYPE(struct C_int_t* ret);
+int Cstager_SubRequest_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -91,17 +89,17 @@ int Cstager_SubRequest_id(struct Cstager_SubRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_SubRequest_type(struct Cstager_SubRequest_t* instance,
-                            struct C_int_t* ret);
+                            int* ret);
 
 /**
  * Get the value of retryCounter
  */
-int Cstager_SubRequest_retryCounter(struct Cstager_SubRequest_t* instance, struct C_uns_tigned int* var);
+int Cstager_SubRequest_retryCounter(struct Cstager_SubRequest_t* instance, unsigned int* var);
 
 /**
  * Set the value of retryCounter
  */
-int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, struct C_uns_tigned int new_var);
+int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, unsigned int new_var);
 
 /**
  * Get the value of fileName
@@ -148,14 +146,14 @@ int Cstager_SubRequest_setPoolName(struct Cstager_SubRequest_t* instance, const 
  * The size of the file. This gives how many bytes should be allocated rather than
  * the default.
  */
-int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, struct C_u_signed64_t* var);
+int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of xsize
  * The size of the file. This gives how many bytes should be allocated rather than
  * the default.
  */
-int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, struct C_u_signed64_t new_var);
+int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of request

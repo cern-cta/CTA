@@ -30,6 +30,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,6 +39,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::CastorFile::CastorFile() throw() :
+  m_fileId(),
+  m_nsHost(""),
   m_id(0) {
 };
 
@@ -68,6 +71,8 @@ void castor::stager::CastorFile::print(std::ostream& stream,
     return;
   }
   // Output of all members
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

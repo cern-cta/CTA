@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 struct C_IClient_t;
-struct C_int_t;
 struct Crh_Client_t;
 
 //------------------------------------------------------------------------------
@@ -67,7 +66,7 @@ int Crh_Client_print(struct Crh_Client_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Crh_Client_TYPE(struct C_int_t* ret);
+int Crh_Client_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IClient abstract class */
@@ -105,7 +104,7 @@ int Crh_Client_id(struct Crh_Client_t* instance,
  * Gets the type of the object
  */
 int Crh_Client_type(struct Crh_Client_t* instance,
-                    struct C_int_t* ret);
+                    int* ret);
 
 /**
  * Get the value of ipAddress

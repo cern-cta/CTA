@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "castor/stager/DiskCopyStatusCode.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_FileSystem_t;
@@ -69,7 +68,7 @@ int Cstager_DiskCopy_print(struct Cstager_DiskCopy_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_DiskCopy_TYPE(struct C_int_t* ret);
+int Cstager_DiskCopy_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -90,7 +89,7 @@ int Cstager_DiskCopy_id(struct Cstager_DiskCopy_t* instance,
  * Gets the type of the object
  */
 int Cstager_DiskCopy_type(struct Cstager_DiskCopy_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * Get the value of path

@@ -41,6 +41,8 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
+#include <string>
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -90,6 +92,8 @@ void castor::io::StreamCastorFileCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
   // Mark object as done
   alreadyDone.insert(obj);
@@ -147,6 +151,12 @@ castor::IObject* castor::io::StreamCastorFileCnv::createObj(castor::IAddress* ad
   // create the new Object
   castor::stager::CastorFile* object = new castor::stager::CastorFile();
   // Now retrieve and set members
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   unsigned long id;
   ad->stream() >> id;
   object->setId(id);
