@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/02/03 18:21:35 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -89,16 +89,26 @@ namespace castor {
          */
         virtual std::list<castor::stager::DiskCopyInfo*>
         diskCopies4File (std::string fileId,
-                         std::string nsHost)
+                         std::string nsHoste)
           throw (castor::exception::Exception);
+
+        /**
+         * Gets all DiskCopies stored on the stager
+         */
+        virtual std::list<castor::stager::DiskCopyInfo*>
+        listDiskCopies ()
+          throw (castor::exception::Exception);
+
 
       private:
 
         /// SQL statement for function tapesToDo
         static const std::string s_diskCopies4FileStatementString;
+        static const std::string s_listDiskCopiesStatementString;
 
         /// SQL statement object for function tapesToDo
         oracle::occi::Statement *m_diskCopies4FileStatement;
+        oracle::occi::Statement *m_listDiskCopiesStatement;
 
       }; // end of class OraQuerySvc
 

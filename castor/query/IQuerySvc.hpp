@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/02/03 18:21:48 $ $Author: bcouturi $
  *
  * 
  *
@@ -66,6 +66,15 @@ namespace castor {
       diskCopies4File (std::string fileId,
                        std::string nsHost)
         throw (castor::exception::Exception) = 0;
+
+
+      /**
+       * List all disk copies in a stager
+       */
+      virtual std::list<castor::stager::DiskCopyInfo*>
+      listDiskCopies ()
+        throw (castor::exception::Exception) = 0;
+
 
     }; // end of class IQuerySvc
 
