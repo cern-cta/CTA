@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.33 $ $Date: 2000/09/13 09:27:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.34 $ $Date: 2000/09/15 16:50:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1939,11 +1939,15 @@ static int rtcpc_diskfiles(int mode,
                      strcmp(filereq->file_path,".") != 0 &&
                      strcmp(last_filename,filereq->file_path) == 0 ) {
                     /*
-                     * Concatenate but not to EOD. Don't override
+                     * Concatenate (maybe to EOD). Don't override
                      * NOCONCAT if same file name has been repeated on the
-                     * command line (e.g. tpread ... -q 1-2 crap crap).
+                     * command line (e.g. tpread ... -q 1-2 crap crap) in
+                     * which case we actually don't concatenate but
+                     * overwrite.
                      */
                     if ( filereq->concat == -1 ) filereq->concat = CONCAT;
+                    if ( (filereq->concat & (NOCONCAT|NOCONCAT_TO_EOD)) != 0 )
+                        disk_fseq++;
                 } else {
                     /*
                      * Don't overwrite previous set NOCONCAT_TO_EOD since
