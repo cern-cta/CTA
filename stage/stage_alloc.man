@@ -1,10 +1,10 @@
-.\" $Id: stage_alloc.man,v 1.7 2002/10/08 15:39:27 jdurand Exp $
+.\" $Id: stage_alloc.man,v 1.8 2002/12/13 15:30:00 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_alloc.man,v $ $Revision: 1.7 $ $Date: 2002/10/08 15:39:27 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_alloc.man,v $ $Revision: 1.8 $ $Date: 2002/12/13 15:30:00 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_ALLOC "3" "$Date: 2002/10/08 15:39:27 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_ALLOC "3" "$Date: 2002/12/13 15:30:00 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_alloc \- Allocate space in a disk pool
 .SH SYNOPSIS
@@ -174,6 +174,9 @@ No space left on device
 .TP
 .B SESYSERR
 System error
+.TP
+.B SETIMEDOUT
+Timed out
 .TP
 .B ESTNACT
 Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
