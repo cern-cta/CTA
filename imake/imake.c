@@ -99,6 +99,7 @@
 #include	<stdio.h>
 #include	<ctype.h>
 #include	<sys/types.h>
+#include    <errno.h>
 #ifdef SYSV
 #ifndef macII			/* mac will get the stuff out of file.h */
 #include	<fcntl.h>
@@ -207,7 +208,6 @@ imake_catch _PROTO((int));
 
 boolean	verbose = FALSE;
 boolean	show = TRUE;
-extern int	errno;
 extern char	*realloc _PROTO((void *, size_t));
 extern char	*getenv _PROTO((const char *));
 extern char	*mktemp _PROTO((char *));
