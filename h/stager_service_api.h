@@ -13,7 +13,7 @@
 #include <time.h>
 #endif
 
-/* Define one type of service per stager pool */
+/* Define one type of service per stager pool - please update file stager_service2name.h accordingly */
 enum {
   STAGER_SERVICE_DB      = 0,
   STAGER_SERVICE_QUERY   = 1,
