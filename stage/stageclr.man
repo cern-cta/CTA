@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.12 $ $Date: 2002/01/31 14:02:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.13 $ $Date: 2002/05/23 10:29:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2002/01/31 14:02:45 $"
+.TH STAGECLR l "$Date: 2002/05/23 10:29:57 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -25,6 +25,8 @@ stageclr \- remove staged files
 .BI \-\-reqid " reqid"
 ] [
 .BI \-Q " file_sequence_range"
+] [
+.BI \-\-nodisk
 ]
 .BI \-V " visual_identifier(s)"
 .\" ] [
@@ -44,6 +46,8 @@ stageclr \- remove staged files
 ]
 .BI \-I " external_filename"
 ] [
+.BI \-\-nodisk
+] [
 .BI \-\-reqid " reqid"
 ]
 .br
@@ -58,6 +62,8 @@ stageclr \- remove staged files
 .BI \-m " minfree"
 ] [
 .BI \-p " pool"
+] [
+.BI \-\-nodisk
 ] [
 .BI \-remove_from_hsm
 ] [
@@ -77,6 +83,8 @@ stageclr \- remove staged files
 ]
 .BI \-P " pathname"
 ] [
+.BI \-\-nodisk
+] [
 .BI \-\-reqid " reqid"
 ]
 .br
@@ -92,6 +100,8 @@ stageclr \- remove staged files
 ]
 .BI \-i
 ] [
+.BI \-\-nodisk
+] [
 .BI \-\-reqid " reqid"
 ]
 .br
@@ -102,6 +112,8 @@ stageclr \- remove staged files
 .BI \-F
 ]
 .BI \-L " link_name"
+] [
+.BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
 ]
@@ -182,6 +194,9 @@ restricts the action to tape files having the sequence numbers within the given 
 Multiple file numbers may be separated by commas or specified as a range
 using the dash as separator.
 It is exclusive with \-q option.
+.TP
+.BI \-\-nodisk
+Prevent stager daemon to do disk access. The entry is removed from the catalog, but stager do not attempt to remove it physically. Thus space knowledge of the corresponding filesystem is unchanged.
 .TP
 .BI \-remove_from_hsm
 to remove the file from the Hierarchical Storage Management System as well.
