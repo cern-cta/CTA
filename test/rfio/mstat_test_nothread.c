@@ -19,7 +19,7 @@ int main()
 {
   int i;
 
-  setenv("RFIO_TRACE", "3", (int) 1);
+  putenv("RFIO_TRACE=3");
 
   for (i = 0; i < NFORK; i++) {
     if (fork() == 0) {
