@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.213 2002/08/06 09:13:52 jdurand Exp $
+ * $Id: poolmgr.c,v 1.214 2002/08/21 05:44:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.213 $ $Date: 2002/08/06 09:13:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.214 $ $Date: 2002/08/21 05:44:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2200,22 +2200,20 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		/* but keep pids of cleaner/migrator as well as started time if any */
 		free (sav_poolc);
 		for (i = 0, pool_p = sav_pools; i < sav_nbpool; i++, pool_p++) {
-			if ((pool_p->ovl_pid != 0) || (pool_p->migr != NULL && pool_p->migr->mig_pid)) {
-				for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
-					if (strcmp (pool_n->name, pool_p->name) == 0) {
-						pool_n->ovl_pid = pool_p->ovl_pid;
-						pool_n->cleanreqtime = pool_p->cleanreqtime;
-						pool_n->cleanreqtime_previous = pool_p->cleanreqtime_previous;
-						pool_n->cleanreqtime_previous_end = pool_p->cleanreqtime_previous_end;
-						if (pool_n->migr != NULL && pool_p->migr != NULL) {
-							pool_n->migr->mig_pid = pool_p->migr->mig_pid;
-							pool_n->migr->migreqtime = pool_p->migr->migreqtime;
-							pool_n->migr->migreqtime_last_start = pool_p->migr->migreqtime_last_start;
-							pool_n->migr->migreqtime_previous = pool_p->migr->migreqtime_previous;
-							pool_n->migr->migreqtime_previous_end = pool_p->migr->migreqtime_previous_end;
-						}
-						break;
+			for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
+				if (strcmp (pool_n->name, pool_p->name) == 0) {
+					pool_n->ovl_pid = pool_p->ovl_pid;
+					pool_n->cleanreqtime = pool_p->cleanreqtime;
+					pool_n->cleanreqtime_previous = pool_p->cleanreqtime_previous;
+					pool_n->cleanreqtime_previous_end = pool_p->cleanreqtime_previous_end;
+					if (pool_n->migr != NULL && pool_p->migr != NULL) {
+						pool_n->migr->mig_pid = pool_p->migr->mig_pid;
+						pool_n->migr->migreqtime = pool_p->migr->migreqtime;
+						pool_n->migr->migreqtime_last_start = pool_p->migr->migreqtime_last_start;
+						pool_n->migr->migreqtime_previous = pool_p->migr->migreqtime_previous;
+						pool_n->migr->migreqtime_previous_end = pool_p->migr->migreqtime_previous_end;
 					}
+					break;
 				}
 			}
 			free (pool_p->elemp);
