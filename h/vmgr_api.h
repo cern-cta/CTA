@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.20 2000/08/28 05:42:22 baud Exp $
+ * $Id: vmgr_api.h,v 1.21 2000/08/28 05:46:12 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.20 $ $Date: 2000/08/28 05:42:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.21 $ $Date: 2000/08/28 05:46:12 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -41,26 +41,26 @@ typedef struct {
 
 			/* function prototypes */
 
-EXTERN_C int DLL_DECL vmgr_deletedenmap _PROTO(const char *, char *, char *));
-EXTERN_C int DLL_DECL vmgr_deletemodel _PROTO(const char *, char *));
-EXTERN_C int DLL_DECL vmgr_deletepool _PROTO(const char *));
-EXTERN_C int DLL_DECL vmgr_deletetape _PROTO(const char *));
-EXTERN_C int DLL_DECL vmgr_enterdenmap _PROTO(const char *, char *, char *));
-EXTERN_C int DLL_DECL vmgr_entermodel _PROTO(const char *, char *, int, int));
-EXTERN_C int DLL_DECL vmgr_enterpool _PROTO(const char *, uid_t, gid_t));
-EXTERN_C int DLL_DECL vmgr_entertape _PROTO(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int));
-EXTERN_C int DLL_DECL vmgr_gettape _PROTO(const char *, u_signed64, const char *, char *, char *, char *, char *, char *, char *, int *, u_signed64 *));
-EXTERN_C struct vmgr_tape_denmap DLL_DECL *vmgr_listdenmap _PROTO(int, vmgr_list *));
-EXTERN_C struct vmgr_tape_media DLL_DECL *vmgr_listmodel _PROTO(int, vmgr_list *));
-EXTERN_C struct vmgr_tape_pool DLL_DECL *vmgr_listpool _PROTO(int, vmgr_list *));
-EXTERN_C struct vmgr_tape_info DLL_DECL *vmgr_listtape _PROTO(int, vmgr_list *));
-EXTERN_C int DLL_DECL vmgr_modifymodel _PROTO(const char *, char *, int, int));
-EXTERN_C int DLL_DECL vmgr_modifypool _PROTO(const char *, uid_t, gid_t));
-EXTERN_C int DLL_DECL vmgr_modifytape _PROTO(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int));
-EXTERN_C int DLL_DECL vmgr_querymodel _PROTO(const char *, char *, int *, int *));
-EXTERN_C int DLL_DECL vmgr_querytape _PROTO(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int *, int *, int *, int *, time_t *, time_t *, int *));
-EXTERN_C int DLL_DECL vmgr_reclaim _PROTO(const char *));
+EXTERN_C int DLL_DECL vmgr_deletedenmap _PROTO((const char *, char *, char *));
+EXTERN_C int DLL_DECL vmgr_deletemodel _PROTO((const char *, char *));
+EXTERN_C int DLL_DECL vmgr_deletepool _PROTO((const char *));
+EXTERN_C int DLL_DECL vmgr_deletetape _PROTO((const char *));
+EXTERN_C int DLL_DECL vmgr_enterdenmap _PROTO((const char *, char *, char *));
+EXTERN_C int DLL_DECL vmgr_entermodel _PROTO((const char *, char *, int, int));
+EXTERN_C int DLL_DECL vmgr_enterpool _PROTO((const char *, uid_t, gid_t));
+EXTERN_C int DLL_DECL vmgr_entertape _PROTO((const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int));
+EXTERN_C int DLL_DECL vmgr_gettape _PROTO((const char *, u_signed64, const char *, char *, char *, char *, char *, char *, char *, int *, u_signed64 *));
+EXTERN_C struct vmgr_tape_denmap DLL_DECL *vmgr_listdenmap _PROTO((int, vmgr_list *));
+EXTERN_C struct vmgr_tape_media DLL_DECL *vmgr_listmodel _PROTO((int, vmgr_list *));
+EXTERN_C struct vmgr_tape_pool DLL_DECL *vmgr_listpool _PROTO((int, vmgr_list *));
+EXTERN_C struct vmgr_tape_info DLL_DECL *vmgr_listtape _PROTO((int, vmgr_list *));
+EXTERN_C int DLL_DECL vmgr_modifymodel _PROTO((const char *, char *, int, int));
+EXTERN_C int DLL_DECL vmgr_modifypool _PROTO((const char *, uid_t, gid_t));
+EXTERN_C int DLL_DECL vmgr_modifytape _PROTO((const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int));
+EXTERN_C int DLL_DECL vmgr_querymodel _PROTO((const char *, char *, int *, int *));
+EXTERN_C int DLL_DECL vmgr_querytape _PROTO((const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int *, int *, int *, int *, time_t *, time_t *, int *));
+EXTERN_C int DLL_DECL vmgr_reclaim _PROTO((const char *));
 EXTERN_C int DLL_DECL vmgr_seterrbuf _PROTO((char *, int));
-EXTERN_C int DLL_DECL vmgr_tpmounted _PROTO(const char *, int));
-EXTERN_C int DLL_DECL vmgr_updatetape _PROTO(const char *, u_signed64, int, int, int));
+EXTERN_C int DLL_DECL vmgr_tpmounted _PROTO((const char *, int));
+EXTERN_C int DLL_DECL vmgr_updatetape _PROTO((const char *, u_signed64, int, int, int));
 #endif
