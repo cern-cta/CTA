@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/02 11:30:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/02 16:29:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/02 11:30:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/02 16:29:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -843,7 +843,7 @@ int rtcpcld_runWorker(
                     DLF_MSG_PARAM_STR,
                     (internalTapeList == NULL ? 
                      "rtcp_NewTapeList()" : 
-                     "rtcp_NewFileList()"),
+                     "addPlaceholderFile()"),
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(save_serrno),
@@ -862,6 +862,12 @@ int rtcpcld_runWorker(
    */
   if ( tape->tapereq.mode == WRITE_ENABLE ) {
     for ( i=0; i<2; i++ ) {
+      if ( internalTapeList->file->filereq.proc_status == RTCP_FINISHED ) {
+        /*
+         * Nothing more to do... ?
+         */
+        return(0);
+      }
       rc = myCallback(
                       &(internalTapeList->tapereq),
                       &(internalTapeList->file->prev->filereq)
@@ -882,7 +888,7 @@ int rtcpcld_runWorker(
         serrno = save_serrno;
         return(-1);
       } else {
-        if ( internalTapeList->file->filereq.proc_status == RTCP_WAITING ) {
+        if ( internalTapeList->file->prev->filereq.proc_status == RTCP_WAITING ) {
           rc = addPlaceholderFile(internalTapeList);
           if ( rc == -1 ) {
             LOG_SYSCALL_ERR("addPlaceholderFile");
@@ -1215,7 +1221,7 @@ int rtcpcld_parseWorkerCmd(
       rc = addPlaceholderFile(tape);
       fl = tape->file;
       if ( (rc == -1) || (fl == NULL) ) {
-        LOG_SYSCALL_ERR("rtcp_NewFileList()");
+        LOG_SYSCALL_ERR("addPlaceholderFile()");
         return(-1);
       }
       fl->filereq.tape_fseq = atoi(Coptarg);
