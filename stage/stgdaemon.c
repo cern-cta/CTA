@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.113 2001/03/05 12:17:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.114 2001/03/06 16:27:28 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.113 $ $Date: 2001/03/05 12:17:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.114 $ $Date: 2001/03/06 16:27:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -954,6 +954,7 @@ void prockilreq(req_type, req_data, clienthost)
 			if (uid != 0 || gid != 0) {
 				if (strcmp(wqp->clienthost, clienthost) != 0 ||
 					strcmp(wqp->req_user, user) != 0) {
+					wqp = wqp->next;
 					continue;
 				}
 			}
