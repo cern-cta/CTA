@@ -1,14 +1,14 @@
 /*
- * $Id: vmgr_api.h,v 1.9 2000/02/10 11:14:28 jdurand Exp $
+ * $Id: vmgr_api.h,v 1.10 2000/02/18 15:35:04 baud Exp $
  */
 
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.9 $ $Date: 2000/02/10 11:14:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.10 $ $Date: 2000/02/18 15:35:04 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -38,9 +38,9 @@ extern int vmgr_entertape(const char *, char *, char *, char *, char *, char *, 
 extern int vmgr_gettape(const char *, u_signed64, const char *, char *, char *, char *, char *, char *, int *, unsigned int *);
 extern int vmgr_modifymodel(const char *, char *, int, int);
 extern int vmgr_modifypool(const char *, uid_t, gid_t);
-extern int vmgr_modifytape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
+extern int vmgr_modifytape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int);
 extern int vmgr_querymodel(const char *, char *, int *, int *);
-extern int vmgr_querytape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int *, int *, int *);
+extern int vmgr_querytape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int *, int *, int *, int *, time_t *, time_t *, int *);
 extern int vmgr_updatetape(const char *, u_signed64, int, int, int);
 #else
 extern int vmgr_deletemodel();
