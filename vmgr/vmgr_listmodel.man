@@ -1,0 +1,61 @@
+.\" @(#)$RCSfile: vmgr_listmodel.man,v $ $Revision: 1.1 $ $Date: 2000/04/12 05:52:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_LISTMODEL 3 "$Date: 2000/04/12 05:52:54 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_listmodel \- list all existing cartridge model entries in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "struct vmgr_tape_media *vmgr_listmodel (int " flags ,
+.BI "vmgr_list *" listp )
+.SH DESCRIPTION
+.B vmgr_listmodel
+lists all existing cartridge model entries in the CASTOR Volume Manager.
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B CNS_LIST_BEGIN
+the first call for a volume must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B CNS_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B CNS_LIST_END
+final call to terminate the list and free resources.
+.RE
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current model entry
+if the operation was successful or NULL if all entries have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I listp
+is a NULL pointer.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR vmgr_entermodel(3) ,
+.B vmgrlistmodel(1)
