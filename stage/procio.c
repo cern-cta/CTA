@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.203 2002/12/16 08:56:02 jdurand Exp $
+ * $Id: procio.c,v 1.204 2003/01/13 17:26:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.203 $ $Date: 2002/12/16 08:56:02 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.204 $ $Date: 2003/01/13 17:26:53 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1866,6 +1866,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* We have to generate a copy between pools */
 				/* Note that by definition this apply only to */
 				/* a single CASTOR HSM file request */
+
+				/* This disk file will be used internally for the disk2disk copy */
+				/* We update its a_time to try to make it not a candidate for */
+				/* future garbage collection */
+				stcp->a_time = time(NULL);
+				stcp->nbaccesses++;
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+
 				strcpy(sav_ipath,stcp->ipath);
 				strcpy(sav_poolname,stcp->poolname);
 				stcp = newreq((int) stgreq.t_or_d);
