@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/07 18:36:26 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/12/08 17:11:00 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/07 18:36:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/12/08 17:11:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -136,7 +136,7 @@ static int prepareForDBAccess(
   rc = rtcpcld_getStgSvc(&stgSvc);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"getStgSvc()\n",sstrerror(serrno));
+      fprintf(stderr,"getStgSvc(): %s\n",sstrerror(serrno));
     } else {
       LOG_SYSCALL_ERR("getStgSvc()");
     }
@@ -1054,7 +1054,7 @@ int addMigrationCandidatesToStreams(
 void usage(char *cmd) 
 {
   fprintf(stdout,"Usage: %s [-d] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
-          "-d                     : run as runAsDaemon\n",
+          "-d                     : run as runAsDaemon\n"
           "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
           "For instance:\n"
           "%s default\n",cmd,cmd);
