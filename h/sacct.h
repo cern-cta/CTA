@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.11 2002/03/27 08:08:26 jdurand Exp $
+ * $Id: sacct.h,v 1.12 2002/03/27 08:34:00 jdurand Exp $
  */
 
 /*
@@ -8,12 +8,12 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.11 $ $Date: 2002/03/27 08:08:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.12 $ $Date: 2002/03/27 08:34:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
 #include "Castor_limits.h"
-#include "stage_constants.h"
+#include "stage_limits.h"
 #include "osdep.h"
 
 struct accthdr {	/* header for accounting record */

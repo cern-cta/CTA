@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.20 2002/03/27 08:07:16 jdurand Exp $
+ * $Id: stage_constants.h,v 1.21 2002/03/27 08:34:00 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -26,35 +26,7 @@
 /* =================================== */
 /* stage configuration maximum values  */
 /* =================================== */
-#ifdef  MAXPATH
-#undef  MAXPATH
-#endif
-#define MAXPATH 80	/* maximum path length */
-
-#ifdef STAGE_MAX_HSMLENGTH
-#undef STAGE_MAX_HSMLENGTH /* Limitation on hsm filename length until we get rid of catalog in memory */
-#endif
-#define STAGE_MAX_HSMLENGTH 166
-
-#ifdef  MAXVSN
-#undef  MAXVSN
-#endif
-#define	MAXVSN 3	/* maximum number of vsns/vids on a stage command */
-
-#ifdef MAX_NETDATA_SIZE
-#undef MAX_NETDATA_SIZE
-#endif
-#define MAX_NETDATA_SIZE ONE_MB
-
-#ifdef ROOTUIDLIMIT
-#undef ROOTUIDLIMIT
-#endif
-#define ROOTUIDLIMIT 100
-
-#ifdef ROOTGIDLIMIT
-#undef ROOTGIDLIMIT
-#endif
-#define ROOTGIDLIMIT 100
+#include "stage_limits.h"
 
 /* =================== */
 /* stage request types */
