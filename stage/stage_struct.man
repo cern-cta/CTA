@@ -1,10 +1,10 @@
-.\" $Id: stage_struct.man,v 1.6 2002/09/16 11:49:32 jdurand Exp $
+.\" $Id: stage_struct.man,v 1.7 2002/09/17 07:53:23 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.6 $ $Date: 2002/09/16 11:49:32 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.7 $ $Date: 2002/09/17 07:53:23 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_STRUCT "3" "$Date: 2002/09/16 11:49:32 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_STRUCT "3" "$Date: 2002/09/17 07:53:23 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage structures \- Definition of the stager structures used by daemon and clients
 .SH SYNOPSIS
@@ -28,7 +28,7 @@ describes user links, and is joined to stgcat_entry structures.
 .SH DEFINITION
 Below is the definition of
 .BI stgcat_entry
-structures. Each member of the structure is described below with a keyword that can be TAPE, DISK, CASTOR, HSM or ALL, refering to the type of data it is refering.
+structure. Each member of the structure is described with a keyword that can be TAPE, DISK, CASTOR, HSM or ALL, refering to the type of data it is refering.
 .ft CW
 .nf
 .sp
@@ -59,14 +59,14 @@ struct stgcat_entry {
   union {
     struct {                                     /* TAPE: tape specific information */
       char den[CA_MAXDENLEN+1];                  /* TAPE: density */
-      char dgn[CA_MAXDGNLEN+1];	                 /* TAPE: device group */
-      char fid[CA_MAXFIDLEN+1];	                 /* TAPE: file id */
-      char filstat;	                             /* TAPE: file status: new = 'n', old = 'o' */
-      char fseq[CA_MAXFSEQLEN+1];	             /* TAPE: file sequence number/range */
+      char dgn[CA_MAXDGNLEN+1];                  /* TAPE: device group */
+      char fid[CA_MAXFIDLEN+1];                  /* TAPE: file id */
+      char filstat;                              /* TAPE: file status: new = 'n', old = 'o' */
+      char fseq[CA_MAXFSEQLEN+1];                /* TAPE: file sequence number/range */
       char lbl[CA_MAXLBLTYPLEN+1];               /* TAPE: label type: al, nl, sl, blp or aul */
       int  retentd;                              /* TAPE: retention period in days */
-      int side;	                                 /* TAPE: size (for deviced like DVD) */
-      char tapesrvr[CA_MAXHOSTNAMELEN+1];	     /* TAPE: tape server */
+      int  side;                                 /* TAPE: side (for deviced like DVD) */
+      char tapesrvr[CA_MAXHOSTNAMELEN+1];        /* TAPE: tape server */
       char E_Tflags;                             /* TAPE: SKIPBAD, KEEPFILE, NOTRLCHK */
       char vid[MAXVSN][CA_MAXVIDLEN+1];          /* TAPE: volume Id */
       char vsn[MAXVSN][CA_MAXVSNLEN+1];          /* TAPE: volume Serial Number */
@@ -103,10 +103,12 @@ request id.
 .ft CW
 .nf
 .sp
-struct stgpath_entry {
-       int reqid;                        /* Request ID, c.f. stgcat_entry */
-       char upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];      /* User path */
+\s-2
+struct stgpath_ent
+       int reqid;                                /* Request ID, c.f. stgcat_entry */
+       char upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];/* User path */
 };
+\s+2
 .ft
 .LP
 .fi
@@ -143,31 +145,26 @@ gives the pool name to which belong the internal disk file (c.f. ipath below)
 .sp
 .BI recfm
 specifies the record format of the data on the tape. It can be:
+.RS
 .TP 2.0i
-.HP
 .BI F " or " FS
 is suitable for use with direct access Fortran unformatted I/O or C I/O, 
 .TP
-.HP
 .BI FB " or " FBS
 to group several records of lrecl bytes into tape blocks of blksize bytes, 
 .TP
-.HP
 .BI U
 that is an alias for U,f77, 
 .TP
-.HP
 .BI U,bin
 saying that blocks may be of unknown length (data is transferred as a byte stream. This format is suitable for use with direct access  Fortran unformatted I/O or C I/O), 
 .TP
-.HP
 .BI U,f77
 when blocks may be of unknown length (then a single logical record on disk corresponds to one tape block. The disk copy of the file is formatted according to the convention for sequential FORTRAN unformatted I/O),  and
 .TP
-.HP
 .BI F,\-f77
 when the tape file is known to be formatted according to the convention for sequential Fortran unformatted I/O (the control words are stripped off so that the disk file is suitable for use with direct access Fortran unformatted I/O or C I/O).
-.P
+.RE
 .BI size
 specifies how many bytes the owner wanted to limit the recall (all kind of data) or the migration (tape only, CASTOR files are always migrated up to EOF)
 .sp
@@ -176,27 +173,23 @@ gives the internal path name
 .sp
 .BI t_or_d
 gives the kind of record the structure is describing, it can be
+.RS
 .TP 2.0i
-.HP
 .BI t
 for tape files, 
 .TP
-.HP
 .BI a
 for allocated files, 
 .TP
-.HP
 .BI d
 for disk files, 
 .TP
-.HP
 .BI m
 for HSM files different than CASTOR
 .TP
-.HP
 .BI h
 for CASTOR files
-.P
+.RE
 .BI group
 gives the group name corresponding to the group id at the time the structure was created
 .sp
@@ -217,72 +210,57 @@ is a request id
 .sp
 .BI status
 gives the current status of this entry. It can be a logical or of:
+.RS
 .TP 2.0i
-.HP
 .BI STAGEIN
 original request is a recall
 .TP
-.HP
 .BI STAGEOUT
 original request is a creation
 .TP
-.HP
-.BI STAGEWRT " or " STAGEPUT
+.BI "STAGEWRT " or " STAGEPUT"
 original request is a migration
 .TP
-.HP
 .BI STAGEALLOC
 original request was an allocation on disk
 .TP
-.HP
 .BI WAITING_SPC
 request is currently waiting for space (so there should be a garbage collector running)
 .TP
-.HP
 .BI WAITING_REQ
 request is waiting on another one
 .TP
-.HP
 .BI STAGED
 request has been successfully staged (recall or migration)
 .TP
-.HP
 .BI PUT_FAILED
 migration of the file failed
 .TP
-.HP
 .BI STAGED_LSZ
 recall of this file succeeded but is declared to be a partial file
 .TP
-.HP
 .BI STAGED_TPE
 recall of this (tape) file suceeded but blocks with parity error have been skipped
 .TP
-.HP
 .BI CAN_BE_MIGR
 this (castor) file is a candidate for the next migration
 .TP
-.HP
 .BI LAST_TPFILE
 this (tape) file is the last on tape
 .TP
-.HP
 .BI BEING_MIGR
 this (castor) file is being migrated
 .TP
-.HP
 .BI WAITING_MIGR
 this (castor) file is is an intermediate state, usually changed in a very short period to
 .I BEING_MIGR
 .TP
-.HP
 .BI WAITING_NS
 this (castor) file is waiting on successful creation in the CASTOR Name Server
 .TP
-.HP
 .BI STAGE_RDONLY
 this record describes a readonly access to a CASTOR file
-.P
+.RE
 .BI actual_size
 gives known size on disk last time it was accessed, current size in case of querying about running requests (like 
 .I STAGEIN
@@ -300,20 +278,17 @@ gives the known number of accessses from stage point of view
 .sp
 .BI u1.t
 desbribes a tape oriented structure, composed of:
+.RS
 .TP 2.0i
-.HP
 .BI den
 tape density, for example 200GC for 9940B tapes
 .TP
-.HP
 .BI dgn
 tape device group.
 .TP
-.HP
 .BI fid
 fileid in HDR1
 .TP
-.HP
 .BI filstat
 can be 'n' or 'o'. Implies non-empty 
 .I fid
@@ -323,7 +298,6 @@ field. for
 .I 'o'
 , the existing fileid is checked.
 .TP
-.HP
 .BI fseq
 is the file sequence list corresponding the copy on disk. Default is 1. Multiple files may be specified using the following syntax:
 .RS
@@ -343,7 +317,6 @@ when appending to tape
 for positioning by fileid
 .RE
 .TP
-.HP
 .BI lbl
 gives the label type. This can be 
 .I al
@@ -357,19 +330,15 @@ for standard IBM label, or
 .I aul
 for ANSI user label
 .TP
-.HP
 .BI retentd
 gives the retention period on tape, in day
 .TP
-.HP
 .BI side
 gives the side in case multi-side media
 .TP
-.HP
 .BI tapesrvr
 forces use of a tape server 
 .TP
-.HP
 .BI E_Tflags
 is be a logical or of:
 .RS
@@ -386,73 +355,64 @@ to not take two consecutive TMs as EOI
 to not check trailer labels
 .RE
 .TP
-.HP
 .BI vid
 is an array specifying the tape VID if different from the VSN. In the case of multi-volume files a series of vids may be given, up to a maximum of MAXVSN
 .TP
-.HP
 .BI vsn
 is an array specifying the volume serial number of the tape. In the case of a multi-volume file a series of vsns may be given, up to MAXVSN. When 
 .I vid
 and 
 .I vsn
 are both used, each vsn must be matched by a vid at the same indice
-.P
+.RE
 .BI u1.d
 is for a disk oriented structure
+.RS
 .TP 2.0i
-.HP
 .BI xfile
 is the name of the external disk file
 .TP
-.HP
 .BI Xparm
 gives additional parameters for the copy of the disk file
-.P
+.RE
 .BI u1.m
 is for HSM files not from CASTOR.
+.RS
 .TP 2.0i
-.HP
 .BI xfile
 is the name of the HSM file
-.P
+.RE
 .BI u1.h
 is for CASTOR files
+.RS
 .TP 2.0i
-.HP
 .BI xfile
 is the name of the CASTOR file
 .TP
-.HP
 .BI server
 is the CASTOR nameserver (could be an alias). This machine will be contacted for any operation done on
 .BI xfile
 .TP
-.HP
 .BI fileid
 is the CASTOR invariant associated with
 .BI xfile
 on nameserver
 .BI server
 .TP
-.HP
 .BI fileclass
 is the file class of
 .BI xfile
 .TP
-.HP
 .BI tppool
 is the tape pool on which 
 .BI xfile
 will be migrated, in case of creating or update of it
 .TP
-.HP
 .BI retenp_on_disk
 is either \-1 or a positive number, so that retention period on disk of
 .BI xfile
 is the default taken from fileclass or a given number of seconds, respectively
 .TP
-.HP
 .BI mintime_beforemigr
 is the minimum number of seconds to wait until file is migrated, \-1 for the default from fileclass, or a positive number.
 
