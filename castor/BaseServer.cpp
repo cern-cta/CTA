@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -35,7 +35,6 @@
 #include "castor/logstream.h"
 #include <sstream>
 #include <iomanip>
-#include <Cthread_api.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -49,11 +48,6 @@ castor::BaseServer::BaseServer(const std::string serverName,
 // destructor
 //------------------------------------------------------------------------------
 castor::BaseServer::~BaseServer() throw() {
-  // First release the MsgSvc of our BaseObject
-  if (0 != m_msgSvc) {
-    m_msgSvc->release();
-    m_msgSvc = 0;
-  }
   // hack to release thread specific allocated memory
   castor::Services* svcs = services();
   if (0 != svcs) {

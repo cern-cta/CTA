@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/03 17:19:11 $ $Author: bcouturi $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
  *
  * 
  *
@@ -43,16 +43,12 @@ unsigned long castor::BaseObject::s_msgSvcId(0);
 // -----------------------------------------------------------------------
 // constructor
 // -----------------------------------------------------------------------
-castor::BaseObject::BaseObject() throw() : m_msgSvc(0) {}
+castor::BaseObject::BaseObject() throw() {}
 
 // -----------------------------------------------------------------------
 // destructor
 // -----------------------------------------------------------------------
-castor::BaseObject::~BaseObject() throw() {
-  if (0 != m_msgSvc) {
-    m_msgSvc->release();
-  }
-}
+castor::BaseObject::~BaseObject() throw() {}
 
 // -----------------------------------------------------------------------
 // msgSvc
@@ -139,9 +135,5 @@ castor::logstream& castor::BaseObject::clog()
                    << "Please call initLog first.";
     throw e;
   }
-  if (0 == m_msgSvc) {
-    m_msgSvc = msgSvc(s_msgSvcName, s_msgSvcId);
-  }
-  // This always returns a valid service if no exception is raised
-  return m_msgSvc->stream();
+  return msgSvc(s_msgSvcName, s_msgSvcId)->stream();
 }

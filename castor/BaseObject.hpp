@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -112,11 +112,6 @@ namespace castor {
      * The type of MsgSvc to use
      */
     static unsigned long s_msgSvcId;
-
-    /**
-     * The current message service
-     */
-    MsgSvc* m_msgSvc;
 
   }; // end of class BaseObject
 
