@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.9 2000/04/13 10:51:20 obarring Exp $
+ * $Id: sacct.h,v 1.10 2001/12/10 15:35:44 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,13 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.9 $ $Date: 2000/04/13 10:51:20 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.10 $ $Date: 2001/12/10 15:35:44 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
 #include "Castor_limits.h"
+#include "osdep.h"
+
 struct accthdr {	/* header for accounting record */
 	time_t	timestamp;
 	int	package;
@@ -220,23 +222,30 @@ struct acctstage {	/* accounting record for stage software */
 	int	retryn;		/* retry number */
 	int	exitcode;
 	union {
-	    char	clienthost[CA_MAXHOSTNAMELEN+1];
-	    struct {
-		char	poolname[CA_MAXPOOLNAMELEN+1];
-		char	t_or_d;
-		off_t	actual_size;
-		int	nbaccesses;
-		union {
-		    struct {		/* tape specific info */
-			char	dgn[9];
-			char	fseq[MAXFSEQ];
-			char	vid[7];
-			char	tapesrvr[CA_MAXHOSTNAMELEN+1];
-		    } t;
-		    struct {		/* info for disk file stageing */
-			char    xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
-		    } d;
-		} u1;
+		char clienthost[CA_MAXHOSTNAMELEN+1];
+		struct {
+			char poolname[CA_MAXPOOLNAMELEN+1];
+			char t_or_d;
+			off_t actual_size;
+			int nbaccesses;
+			union {
+				struct {		/* tape specific info */
+					char dgn[CA_MAXDGNLEN+1];
+					char fseq[CA_MAXFSEQLEN+1];
+					char vid[CA_MAXVIDLEN+1];
+					char tapesrvr[CA_MAXHOSTNAMELEN+1];
+				} t;
+				struct {		/* info for disk file stageing */
+					char xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
+				} d;
+				struct {		/* info for disk file stageing */
+					char xfile[167];
+				} m;
+				struct {		/* info for disk file stageing */
+					char xfile[167];
+					u_signed64 fileid;
+				} h;
+			} u1;
 	    } s;
 	} u2;
 };
@@ -249,3 +258,5 @@ struct acctstage {	/* accounting record for stage software */
 #define	STGCMDC		3	/* command completed (with success or not) */
 #define	STGCMDS		4	/* stager started */
 #define	STGFILC		5	/* file cleared */
+
+
