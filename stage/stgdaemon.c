@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.43 2000/05/30 11:07:23 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.44 2000/06/06 10:13:53 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.43 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.44 $ $Date: 2000/06/06 10:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1230,10 +1230,12 @@ void create_link(stcp, upath)
 		if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
 			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 		}
+        /*
 	} else {
 		if (stgdb_upd_stgpath(&dbfd,stpp) != 0) {
 			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 		}
+        */
 	}
 #endif
 }
