@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.194 2002/05/21 08:07:22 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.195 2002/05/22 14:48:35 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.194 $ $Date: 2002/05/21 08:07:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.195 $ $Date: 2002/05/22 14:48:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3710,10 +3710,10 @@ int ask_stageout(req_type, upath, found_stcp)
 		}
 	}
 	if (found == 0 ||
-			(req_type == STAGEUPDC &&
-			 stcp->status != STAGEOUT && stcp->status != STAGEALLOC) ||
-			(req_type == STAGEPUT &&
-			 stcp->status != STAGEOUT && stcp->status != (STAGEOUT|PUT_FAILED))) {
+			(((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) &&
+			 (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) ||
+			((req_type == STAGEPUT) &&
+			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
 		sendrep (rpfd, MSG_ERR, STG22);
 		return (ENOENT);
 	}
@@ -3752,7 +3752,9 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (strcmp (upath, stcp->ipath)) continue;
-				if (((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) && (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+				/* Warning: Here the status have to be exactly STAGEOUT or STAGEALLOC */
+				/* That's why we do not use the macros ISSTAGEOUT(stcp) nor ISSTAGEALLOC(stcp) */
+				if (((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) && (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
 				found = 1;
 				break;
 			}
@@ -3763,13 +3765,13 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 	}
 	if (found == 0 ||
 			(((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) &&
-			 (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) ||
+			 (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) ||
 			((req_type == STAGEPUT) &&
 			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
 		sendrep (rpfd, MSG_ERR, STG22);
 		return (ENOENT);
 	}
-	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
+	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
 		u_signed64 actual_size_block;
 
 		PRE_RFIO;
@@ -3790,7 +3792,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;
 	} else if ((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) {
-		if (ISSTAGEOUT(stcp) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
+		if ((stcp->status == STAGEOUT) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
 				if (delfile(stcp, 0, 1, 1,
