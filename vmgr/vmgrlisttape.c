@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.11 $ $Date: 2001/02/20 15:05:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.12 $ $Date: 2001/03/08 13:11:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -152,19 +152,11 @@ int status;
 int xflag;
 {
 	time_t ltime;
-	char p_stat[9];
+	char p_stat = '\0';
 	struct tm *tm;
 	char tmpbuf[8];
 	u_signed64 u64;
 
-	if (status == 0) p_stat[0] = '\0';
-	else if (status & TAPE_FULL) strcpy (p_stat, "FULL");
-	else if (status & TAPE_BUSY) strcpy (p_stat, "BUSY");
-	else if (status & TAPE_RDONLY) strcpy (p_stat, "RDONLY");
-	else if (status & EXPORTED) strcpy (p_stat, "EXPORTED");
-	else if (status & DISABLED) strcpy (p_stat, "DISABLED");
-	else if (status & ARCHIVED) strcpy (p_stat, "ARCHIVED");
-	else strcpy (p_stat, "?");
 	u64 = ((u_signed64) free_space) * 1024;
 	printf ("%-6s %-6s %-6s %-8s %-2s ",
 	    vid, vsn, dgn, density, lbltype);
@@ -194,5 +186,29 @@ int xflag;
 		} else
 			printf ("00000000 ");
 	}
-	printf ("%s\n", p_stat);
+	if (status & TAPE_FULL) {
+		printf ("FULL");
+		p_stat = '|';
+	}
+	if (status & TAPE_BUSY) {
+		printf ("%cBUSY", p_stat);
+		p_stat = '|';
+	}
+	if (status & TAPE_RDONLY) {
+		printf ("%cRDONLY", p_stat);
+		p_stat = '|';
+	}
+	if (status & EXPORTED) {
+		printf ("%cEXPORTED", p_stat);
+		p_stat = '|';
+	}
+	if (status & DISABLED) {
+		printf ("%cDISABLED", p_stat);
+		p_stat = '|';
+	}
+	if (status & ARCHIVED) {
+		printf ("%cARCHIVED", p_stat);
+		p_stat = '|';
+	}
+	printf ("\n");
 }
