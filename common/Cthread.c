@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.7 1999/07/20 20:05:11 jdurand Exp $
+ * $Id: Cthread.c,v 1.8 1999/07/26 07:20:27 obarring Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.8  1999/07/26 07:20:27  obarring
+ * Add Cthread_self in argument list of the new Cglobals_init()
+ *
  * Revision 1.7  1999/07/20 20:05:11  jdurand
  * Changed _Cglobals_init call to Cglobals_init
  *
@@ -24,6 +27,7 @@
  */
 
 #include <Cthread_api.h>
+#include <Cglobals.h>
 
 #ifdef DEBUG
 #ifndef CTHREAD_DEBUG
@@ -2464,7 +2468,8 @@ void _Cthread_once(void) {
   Cmtx.next  = NULL;
   Cspec.next = NULL;
   _Cthread_once_status = 0;
-  Cglobals_init(Cthread_getspecific,Cthread_setspecific); /* Initialize globals */
+  /* Initialize thread specific globals environment*/
+  Cglobals_init(Cthread_getspecific,Cthread_setspecific,Cthread_self); 
   return;
 #endif /* ifndef _CTHREAD */
 }
