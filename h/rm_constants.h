@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.8 2005/01/11 11:06:58 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.9 2005/01/25 15:25:25 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -335,5 +335,10 @@
 
 /* Number of seconds between nodes survey iteration */
 #define NODES_SURVEY_INTERVAL 30
+
+/* Number of thread in the survey pool - this will be the maximum number of concurrent calls to */
+/* remote's kill -0. Do not put that value to hight - there is a chance that rmmaster will create */
+/* as many remote connection as there is place in that pool */
+#define NODES_SURVEY_POOLSIZE 10
 
 #endif /* __rm_constants_h */
