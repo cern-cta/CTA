@@ -38,12 +38,16 @@
 #endif
 #endif
 
-/* JOB needs some ResourceMonitoring tools */
-/* --------------------------------------- */
+/* JOB needs some ResourceMonitoring tools and daemon */
+/* -------------------------------------------------- */
 #if BuildJob
 #if !BuildRmClient
 #undef BuildRmClient
 #define BuildRmClient YES
+#endif
+#if !BuildRmNode
+#undef BuildRmNode
+#define BuildRmNode YES
 #endif
 #endif
 
