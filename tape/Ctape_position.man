@@ -1,8 +1,8 @@
-.\" $Id: Ctape_position.man,v 1.2 1999/09/02 14:59:02 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Ctape_position.man,v 1.2 1999-09-02 16:59:02+02 baud Exp CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "$Date: 1999/09/02 14:59:02 $"
+.TH CTAPE_POSITION l "1999-09-02 16:59:02+02"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -166,9 +166,12 @@ may be a combination of the following values:
 .RS
 .TP
 .B NOPOS
-do not reposition tapes when accessing two consecutive files.
+do not reposition tapes when writing two consecutive files.
 This flag should only be set when the requestor knows that the tape is already
 positionned correctly.
+.I filstat
+must be set to
+.BR NEW_FILE .
 .TP
 .B NOTRLCHK
 do not check trailer labels
@@ -188,6 +191,9 @@ failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.2i
+.B ENOENT
+File not found.
+.TP
 .B EIO
 I/O error.
 .TP
@@ -196,6 +202,9 @@ Drive not operational. The drive is automatically configured down.
 .TP
 .B EACCES
 File not expired.
+.TP
+.B EINVAL
+Bad parameter value.
 .TP
 .B SENOSHOST
 Host unknown.
@@ -209,8 +218,11 @@ Communication error.
 .B ETDNP
 Tape daemon is not running.
 .TP
-.B ETPRM
-Bad parameter.
+.B ETLBL
+Bad label structure.
+.TP
+.B ETFSQ
+Bad file sequence number.
 .TP
 .B ETBLANK
 Blank tape.
