@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.5 2000/05/26 12:42:41 jdurand Exp $
+ * $Id: stage_updc.c,v 1.6 2000/05/26 12:52:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.5 $ $Date: 2000/05/26 12:42:41 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.6 $ $Date: 2000/05/26 12:52:30 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -547,7 +547,8 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   size_t sendbuf_size;
   uid_t uid;
   stage_hsm_t *hsm;
-  
+  char *command = "stage_updc_user";
+
   if (hsmstruct == NULL) {
     serrno = EFAULT;
     return (-1);
@@ -574,6 +575,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
+  sendbuf_size += strlen(command) + 1;                /* Command name */
   hsm = hsmstruct;
   while (hsm != NULL) {
     if (hsm->upath == NULL) {
@@ -611,7 +613,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, "stage_updc_user");
+  marshall_STRING (sbp, command);
 
   /* Build link files arguments */
   hsm = hsmstruct;
