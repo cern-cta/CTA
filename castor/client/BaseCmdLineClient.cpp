@@ -118,7 +118,7 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   Coptreset = 1;  /* In case we are parsing several times the same argv */
   int ch;
 
-	while ((ch = Cgetopt_long (argc, argv, "aA:h:Kp:s:", longopts, NULL)) != -1) {
+	while ((ch = Cgetopt_long (argc, argv, "aA:fh:Kp:s:", longopts, NULL)) != -1) {
     switch (ch) {
 		case 'A':
 		case 'h':
@@ -128,6 +128,7 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
       break;
     case 'K':
     case 'a':
+    case 'f':
 			m_inputFlags[std::string(1, ch)] = "";
       break;
     case 0:
