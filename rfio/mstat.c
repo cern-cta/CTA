@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.12 2001/07/12 06:19:29 jdurand Exp $
+ * $Id: mstat.c,v 1.13 2001/11/06 15:20:09 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.12 $ $Date: 2001/07/12 06:19:29 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.13 $ $Date: 2001/11/06 15:20:09 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -18,7 +18,6 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.12 $ $Date: 2001/
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
 #if defined(_WIN32)
 #define MAXHOSTNAMELEN 64
 #else
@@ -36,12 +35,13 @@ typedef struct socks {
   int s ;
   int sec;
   int Tid;
-} connects ;
-static connects tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
+} mstat_connects ;
+static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 extern int rfio_smstat() ;
 
-static int rfio_tab_allocentry _PROTO((char *, int, int, int));
-static int rfio_tab_findentry _PROTO((char *,int));
+static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
+static int rfio_mstat_findentry _PROTO((char *,int));
+static int rfio_end_this _PROTO((int));
 
 int DLL_DECL rfio_mstat(file,statb)
      char *file ;
@@ -73,13 +73,13 @@ int DLL_DECL rfio_mstat(file,statb)
   }  else  {
     /* Look if already in */
     serrno = 0;
-    rfindex = rfio_tab_findentry(host,Tid);
-    TRACE(2, "rfio", "rfio_mstat: rfio_tab_findentry(host=%s,Tid=%d) returns %d", host, Tid, rfindex);
+    rfindex = rfio_mstat_findentry(host,Tid);
+    TRACE(2, "rfio", "rfio_mstat: rfio_mstat_findentry(host=%s,Tid=%d) returns %d", host, Tid, rfindex);
     if (rfindex >= 0) {
-      if ( tab[rfindex].sec )
-        rc = rfio_smstat(tab[rfindex].s,filename,statb,RQST_MSTAT_SEC ) ;
+      if ( mstat_tab[rfindex].sec )
+        rc = rfio_smstat(mstat_tab[rfindex].s,filename,statb,RQST_MSTAT_SEC ) ;
       else
-        rc = rfio_smstat(tab[rfindex].s,filename,statb,RQST_MSTAT ) ;
+        rc = rfio_smstat(mstat_tab[rfindex].s,filename,statb,RQST_MSTAT ) ;
       return ( rc) ;
     }
     rc = 0;
@@ -92,8 +92,8 @@ int DLL_DECL rfio_mstat(file,statb)
       if ( fd < 0 ) {
         return (-1) ;
       }
-      rfindex = rfio_tab_allocentry(host,Tid,fd, (! rc) ? 1 : 0);
-      TRACE(2, "rfio", "rfio_mstat: rfio_tab_allocentry(host=%s,Tid=%d,s=%d,sec=%d) returns %d", host, Tid, fd, (! rc) ? 1 : 0, rfindex);
+      rfindex = rfio_mstat_allocentry(host,Tid,fd, (! rc) ? 1 : 0);
+      TRACE(2, "rfio", "rfio_mstat: rfio_mstat_allocentry(host=%s,Tid=%d,s=%d,sec=%d) returns %d", host, Tid, fd, (! rc) ? 1 : 0, rfindex);
       serrno = 0;
       if ( rfindex >= 0 ) {
         if ( !rc ) 
@@ -164,8 +164,8 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
 	  if( pw_tmp  == NULL ) {
         TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
         END_TRACE();
-        (void) close(s);
-        return -1 ;
+        rfio_end_this(s);
+        return(-1);
 	  }	
 	  memcpy(pw, pw_tmp, sizeof(struct passwd));
 	  *old_uid = uid;
@@ -193,8 +193,8 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   TRACE(2,"rfio","rfio_stat: sending %d bytes",RQSTSIZE+len) ;
   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
     END_TRACE();
+    rfio_end_this(s);
     return(-1);
   }
   p = buf;
@@ -203,13 +203,13 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   if ( rc == 0 && (reqst == RQST_MSTAT_SEC || reqst == RQST_STAT_SEC ) ) {
     TRACE(2, "rfio", "rfio_stat: Server doesn't support secure stat()");
     serrno = SEPROTONOTSUP;
-    (void) close(s);
+    rfio_end_this(s);
     return(-1);
   }
   if ( rc != 8*LONGSIZE+5*WORDSIZE)  {
     TRACE(2, "rfio", "rfio_stat: read(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
     END_TRACE();
+    rfio_end_this(s);
     return(-1);
   }
   unmarshall_WORD(p, statbuf->st_dev);
@@ -250,7 +250,8 @@ int DLL_DECL rfio_end()
   int i,Tid, j=0 ;
   char buf[256];
   char *p=buf ;
-   
+  int rc = 0;
+
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
@@ -258,45 +259,92 @@ int DLL_DECL rfio_end()
   TRACE(3,"rfio","rfio_end entered, Tid=%d", Tid);
 
 
-  if (Cmutex_lock((void *) tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_end : Cmutex_lock(tab,-1) error No %d (%s)", errno, strerror(errno));
+  if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_end : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    /* TRACE(3,"rfio","tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", tab[i].host, tab[i].s, tab[i].sec, tab[i].Tid); */
-    if (tab[i].Tid == Tid) {
-      if ((tab[i].s >= 0) && (tab[i].host[0] != '\0')) {
+    /* TRACE(3,"rfio","mstat_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", mstat_tab[i].host, mstat_tab[i].s, mstat_tab[i].sec, mstat_tab[i].Tid); */
+    if (mstat_tab[i].Tid == Tid) {
+      if ((mstat_tab[i].s >= 0) && (mstat_tab[i].host[0] != '\0')) {
         marshall_WORD(p, RFIO_MAGIC);
         marshall_WORD(p, RQST_END);
         marshall_LONG(p, j);
-        TRACE(3,"rfio","rfio_end: close(tab[%d].s=%d), Tid=%d",i,tab[i].s, Tid);
-        if (netwrite_timeout(tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
-          TRACE(3, "rfio", "rfio_stat: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
-          END_TRACE();
-          return(-1);
+        TRACE(3,"rfio","rfio_end: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
+        if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+          TRACE(3, "rfio", "rfio_end: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
+          rc = -1;
         }
-        (void) close(tab[i].s);
+        close(mstat_tab[i].s);
       }
-      tab[i].s = -1;
-      tab[i].host[0] = '\0';
-      tab[i].sec = -1;
-      tab[i].Tid = -1;
+      mstat_tab[i].s = -1;
+      mstat_tab[i].host[0] = '\0';
+      mstat_tab[i].sec = -1;
+      mstat_tab[i].Tid = -1;
     }
   }
    
-  if (Cmutex_unlock((void *) tab) != 0) {
-    TRACE(3,"rfio","rfio_end : Cmutex_unlock(tab) error No %d (%s)", errno, strerror(errno));
-    return(-1);
+  if (Cmutex_unlock((void *) mstat_tab) != 0) {
+    TRACE(3,"rfio","rfio_end : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    rc = -1;
   }
 
   END_TRACE();
-  return(0);
+  return(rc);
+}
+
+/* This is a simplified version of rfio_end() that just free entry in the table */
+int DLL_DECL rfio_end_this(s)
+     int s;
+{
+  int i,Tid, j=0 ;
+  char buf[256];
+  char *p=buf ;
+  int rc = 0;
+
+  INIT_TRACE("RFIO_TRACE");
+
+  Cglobals_getTid(&Tid);
+
+  TRACE(3,"rfio","rfio_end_this(s=%d) entered, Tid=%d", s, Tid);
+
+  if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_end_this : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
+    return(-1);
+  }
+  for (i = 0; i < MAXMCON; i++) {
+    /* TRACE(3,"rfio","mstat_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", mstat_tab[i].host, mstat_tab[i].s, mstat_tab[i].sec, mstat_tab[i].Tid); */
+    if (mstat_tab[i].Tid == Tid) {
+      if ((mstat_tab[i].s == s) && (mstat_tab[i].host[0] != '\0')) {
+        marshall_WORD(p, RFIO_MAGIC);
+        marshall_WORD(p, RQST_END);
+        marshall_LONG(p, j);
+        TRACE(3,"rfio","rfio_end_this: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
+        if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+          TRACE(3, "rfio", "rfio_end_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
+        }
+        (void) close(mstat_tab[i].s);
+        mstat_tab[i].s = -1;
+        mstat_tab[i].host[0] = '\0';
+        mstat_tab[i].sec = -1;
+        mstat_tab[i].Tid = -1;
+      }
+    }
+  }
+   
+  if (Cmutex_unlock((void *) mstat_tab) != 0) {
+    TRACE(3,"rfio","rfio_end_this : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    rc = -1;
+  }
+
+  END_TRACE();
+  return(rc);
 }
 
 /*
- * Seach for a free index in the tab table
+ * Seach for a free index in the mstat_tab table
  */
-static int rfio_tab_allocentry(hostname,Tid,s,sec)
+static int rfio_mstat_allocentry(hostname,Tid,s,sec)
      char *hostname;
      int Tid;
      int s;
@@ -305,64 +353,64 @@ static int rfio_tab_allocentry(hostname,Tid,s,sec)
   int i;
   int rc;
 
-  if (Cmutex_lock((void *) tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_tab_allocentry : Cmutex_lock(tab,-1) error No %d (%s)", errno, strerror(errno));
+  if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_mstat_allocentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if (tab[i].host[0] == '\0') {
+    if (mstat_tab[i].host[0] == '\0') {
       rc = i;
-      strncpy(tab[i].host,hostname,CA_MAXHOSTNAMELEN);
-      tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
-      tab[i].Tid = Tid;
-      tab[i].s = s;
-      tab[i].sec = sec;
-      goto _rfio_tab_allocentry_return;
+      strncpy(mstat_tab[i].host,hostname,CA_MAXHOSTNAMELEN);
+      mstat_tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
+      mstat_tab[i].Tid = Tid;
+      mstat_tab[i].s = s;
+      mstat_tab[i].sec = sec;
+      goto _rfio_mstat_allocentry_return;
     }
   }
   
   serrno = ENOENT;
   rc = -1;
   
- _rfio_tab_allocentry_return:
-  if (Cmutex_unlock((void *) tab) != 0) {
-    TRACE(3,"rfio","rfio_tab_allocentry : Cmutex_unlock(tab) error No %d (%s)", errno, strerror(errno));
+ _rfio_mstat_allocentry_return:
+  if (Cmutex_unlock((void *) mstat_tab) != 0) {
+    TRACE(3,"rfio","rfio_mstat_allocentry : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     return(-1);
   }
   return(rc);
 }
 
 /*
- * Seach for a given index in the tab table
+ * Seach for a given index in the mstat_tab table
  */
-static int rfio_tab_findentry(hostname,Tid)
+static int rfio_mstat_findentry(hostname,Tid)
      char *hostname;
      int Tid;
 {
   int i;
   int rc;
 
-  if (Cmutex_lock((void *) tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_tab_findentry : Cmutex_lock(tab,-1) error No %d (%s)", errno, strerror(errno));
+  if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_mstat_findentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((strcmp(tab[i].host,hostname) == 0) && (tab[i].Tid == Tid)) {
+    if ((strcmp(mstat_tab[i].host,hostname) == 0) && (mstat_tab[i].Tid == Tid)) {
       rc = i;
-      goto _rfio_tab_findentry_return;
+      goto _rfio_mstat_findentry_return;
     }
   }
 
   serrno = ENOENT;
   rc = -1;
 
- _rfio_tab_findentry_return:
-  if (Cmutex_unlock((void *) tab) != 0) {
-    TRACE(3,"rfio","rfio_tab_findentry : Cmutex_unlock(tab) error No %d (%s)", errno, strerror(errno));
+ _rfio_mstat_findentry_return:
+  if (Cmutex_unlock((void *) mstat_tab) != 0) {
+    TRACE(3,"rfio","rfio_mstat_findentry : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     return(-1);
   }
   return(rc);
