@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.23 1999/11/21 13:55:05 obarring Exp $
+ * $Id: Cthread.c,v 1.24 1999/11/22 13:17:26 obarring Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.23 $ $Date: 1999/11/21 13:55:05 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.24 $ $Date: 1999/11/22 13:17:26 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -279,6 +279,7 @@ struct Cid_element_t {
   unsigned thID;            /* WIN32 thread ID  */
   void   *(*addr) _PROTO((void *));  /* Start-up         */
   int       detached;       /* Is it detached ? */
+  int       joined;         /* Has it been joined? */
   struct Cid_element_t *next; /* Next element   */
 };
 
@@ -629,6 +630,14 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     start_params = NULL;
     arg = NULL;
     status = (unsigned)routine(routineargs);
+    /* 
+     * Destroy the entry in Cthread internal linked list. Note that
+     * if we are still non-detached (i.e. Cthread_detached has not
+     * been called) the _Cthread_destroy has no effect. The thread
+     * element in linked list will remain until somebody calls
+     * Cthread_join()
+     */
+    _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
 
     return(status);
 }
@@ -703,6 +712,7 @@ void *_Cthread_start_pthread(void *arg) {
   unsigned              thID = 0;  /* Thread ID (WIN32) */
   void               *(*routine)(void *);
   void               *routineargs;
+  int                detached;
 
 #ifdef CTHREAD_DEBUG
   if (Cthread_debug != 0)
@@ -716,7 +726,6 @@ void *_Cthread_start_pthread(void *arg) {
   }
   start_params = (Cthread_start_params_t *) arg;
 
-
   pid = pthread_self();
   if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
     free(arg);
@@ -725,11 +734,15 @@ void *_Cthread_start_pthread(void *arg) {
 
   routine = start_params->_thread_routine;
   routineargs = start_params->_thread_arg;
+  detached = start_params->detached;
   free(arg);
   /* status = start_params->_thread_routine(start_params->_thread_arg); */
   status = routine(routineargs);
   
-  /* Destroy the entry in Cthread internal linked list */
+  /* 
+   * Destroy the entry in Cthread internal linked list if it is a detached
+   * thread (otherwise it is destroyed in Cthread_join()).
+   */
   _Cthread_destroy("Cthread.c(_Cthread_start_pthread)",__LINE__,Cthread_self());
   return(status);
 }
@@ -1341,6 +1354,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
     current = current->next;
     if (current->cid == cid) {
       n = 0;
+      current->joined = 1;
       break;
     }
   }
@@ -1394,12 +1408,24 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
     serrno = SECTHREADERR;
     return(-1);
   }
+  /*
+   * We can safely destroy here since the thread has exit.
+   * If it was detached it has done the cleanup itself.
+   */
+  if ( !current->detached ) 
+     _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   if (pthread_join(current->pid,(void **) status)) {
     serrno = SECTHREADERR;
     return(-1);
   }
+  /*
+   * We can safely destroy here since the thread has exit.
+   * If it was detached it has done the cleanup itself.
+   */
+  if ( !current->detached ) 
+     _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_join(current->pid,(void **) status))) {
@@ -1407,6 +1433,12 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
     serrno = SECTHREADERR;
     return(-1);
   }
+  /*
+   * We can safely destroy here since the thread has exit.
+   * If it was detached it has done the cleanup itself.
+   */
+  if ( !current->detached ) 
+     _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
 #  else
   serrno = EOPNOTSUP;
@@ -1435,6 +1467,7 @@ int DLL_DECL Cthread_Detach(file, line, cid)
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                 n;                /* Status           */
+  int detached;                          /* Local store */
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
@@ -1458,6 +1491,8 @@ int DLL_DECL Cthread_Detach(file, line, cid)
     current = current->next;
     if (current->cid == cid) {
       n = 0;
+      detached = current->detached;
+      current->detached = 1;
       break;
     }
   }
@@ -1474,7 +1509,7 @@ int DLL_DECL Cthread_Detach(file, line, cid)
 #else /* ifdef _NOCTHREAD */
   /* This is a thread implementation */
   /* Is it already detached ? */
-  if (current->detached) {
+  if (detached) {
     /* Yes. It is OK for Cthread point of view */
     return(0);
   }
@@ -1485,7 +1520,6 @@ int DLL_DECL Cthread_Detach(file, line, cid)
     serrno = SECTHREADERR;
     return(-1);
   }
-  current->detached = 1;
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   /* Bloody DCE is changing pthread_t structure */
   {
@@ -1498,17 +1532,14 @@ int DLL_DECL Cthread_Detach(file, line, cid)
       return(-1);
     }
   }
-  current->detached = 1;
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_detach(current->pid))) {
     errno = n;
     serrno = SECTHREADERR;
     return(-1);
   }
-  current->detached = 1;
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   /* This is a noop. Windows doesn't make any real distinction */
-  current->detached = 1;
 #else /* _CTHREAD_PROTO */
   serrno = EOPNOTSUP;
   return(-1);
@@ -1693,6 +1724,10 @@ int DLL_DECL Cthread_Self(file, line)
 /* History:                                     */
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
+/* 22-NOV-1999       Make sure that non-detached*/
+/*                   threads has been joined    */
+/*                   before removing the element*/
+/*                   (Olof.Barring@cern.ch)     */
 /* ============================================ */
 int _Cthread_destroy(file, line, cid)
      char *file;
@@ -1733,18 +1768,28 @@ int _Cthread_destroy(file, line, cid)
     return(-1);
   }
 
-  /* It is a known process - We delete the entry */
+  /*
+   * We can only destroy detached threads or non-detached
+   * threads that have been joined. Non-detached threads for
+   * which there hasn't yet been any join must remain in list
+   * even if they have exit. The reason is that a potential
+   * "joiner" should still be able to access the threads exit
+   * status.
+   */
+  if ( current->detached || current->joined ) {
+    /* It is a known process - We delete the entry */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-  /* For threads created with _beginthreadex() we must do cleanup */
-  if ( !current->detached ) CloseHandle((HANDLE)current->pid);
+    /* For threads created with _beginthreadex() we must do cleanup */
+    if ( !current->detached ) CloseHandle((HANDLE)current->pid);
 #endif /* _CTHREAD_PROTO_WIN32 */
-  if (previous != NULL) {
-    previous->next = current->next;
-  } else {
-    /* No more entry... */
-    Cid.next = NULL;
+    if (previous != NULL) {
+      previous->next = current->next;
+    } else {
+      /* No more entry... */
+      Cid.next = NULL;
+    }
+    free(current);
   }
-  free(current);
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
 
   return(0);
@@ -3821,6 +3866,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 #ifndef _CTHREAD
     if (current->pid == *pid) {
       current->detached = detached;
+      current->joined = 0;
 #  ifdef CTHREAD_DEBUG
       if (Cthread_file != NULL) {
         /* To avoid recursion */
@@ -3845,6 +3891,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 #  if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
     if (current->thID == thID) {
       current->detached = detached;
+      current->joined = 0;
       if ( pid != NULL ) current->pid = *pid;
 #    ifdef CTHREAD_DEBUG
       if (Cthread_file != NULL) {
@@ -3869,6 +3916,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 #  else /* _CTHREAD_PROTO_WIN32 */
     if (pthread_equal(current->pid,*pid)) {
       current->detached = detached;
+      current->joined = 0;
 #    ifdef CTHREAD_DEBUG
       if (Cthread_file != NULL) {
         /* To avoid recursion */
@@ -3931,6 +3979,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
     ((struct Cid_element_t *) current->next)->thID     = thID;
     ((struct Cid_element_t *) current->next)->addr     = startroutine;
     ((struct Cid_element_t *) current->next)->detached = detached;
+    ((struct Cid_element_t *) current->next)->joined   = 0;
     ((struct Cid_element_t *) current->next)->next     = NULL;
     ((struct Cid_element_t *) current->next)->cid      = current_cid;
     
