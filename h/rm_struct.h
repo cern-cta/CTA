@@ -68,6 +68,8 @@ struct rmjob {
 	char partitionmask[RM_MAXPARTITIONLEN+1]; /* partition mask */
 	char requestid[CUUID_STRING_LEN+1];
 	char subrequestid[CUUID_STRING_LEN+1];
+	size_t clientStructLenWithNullByte;
+	char *clientStruct;
 	struct rmjob *next;
 	struct rmjob *prev;
 };

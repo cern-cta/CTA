@@ -1,11 +1,13 @@
 #ifndef __rm_macros_h
 #define __rm_macros_h
 
+#include <stdlib.h>                /* For malloc */
 #include "rm_struct.h"
 #include "rm_constants.h"
 #include "rm_limits.h"
 #include "Castor_limits.h"
 #include "marshall.h"
+#include "serrno.h"
 
 #define INIT_HOST(thishost) {                               \
 	(thishost)->s_addr = clientAddress.sin_addr.s_addr;     \
@@ -232,9 +234,16 @@
 	marshall_STRING(p, (rmjob)->partitionmask);         \
 	marshall_STRING(p, (rmjob)->requestid);             \
 	marshall_STRING(p, (rmjob)->subrequestid);          \
+	if ((rmjob)->clientStruct != NULL) {                \
+          (rmjob)->clientStructLenWithNullByte = strlen((rmjob)->clientStruct) + 1; \
+        } else {                                            \
+          (rmjob)->clientStructLenWithNullByte = 0;         \
+        }                                                   \
+        marshall_HYPER(p, (rmjob)->clientStructLenWithNullByte);  \
+	if ((rmjob)->clientStructLenWithNullByte > 0) marshall_STRING(p, (rmjob)->clientStruct); \
 }
 
-#define unmarshall_RMJOB(p, rmjob) {                      \
+#define unmarshall_RMJOB(p, rmjob, status) {                  \
 	unmarshall_STRING(p, (rmjob)->jobid);                 \
 	unmarshall_TIME_T(p, (rmjob)->update);                \
 	unmarshall_STRING(p, (rmjob)->state);                 \
@@ -281,9 +290,20 @@
 	unmarshall_STRING(p, (rmjob)->partitionmask);         \
 	unmarshall_STRING(p, (rmjob)->requestid);             \
 	unmarshall_STRING(p, (rmjob)->subrequestid);          \
+	unmarshall_HYPER(p, (rmjob)->clientStructLenWithNullByte); \
+        if ((rmjob)->clientStructLenWithNullByte > 0) {       \
+          if (((rmjob)->clientStruct = (char *) malloc((rmjob)->clientStructLenWithNullByte)) == NULL) { \
+            serrno = errno;                                   \
+            status = -1;                                      \
+          } else {                                            \
+            unmarshall_STRING(p, (rmjob)->clientStruct);      \
+          }                                                   \
+        } else {                                              \
+          (rmjob)->clientStruct = NULL;                       \
+        }                                                     \
 }
 
-#define overwrite_RMJOB(out,in) {                                                   \
+#define overwrite_RMJOB(out,in,status) {                                            \
     if ((in)->jobid[0] != '\0') strcpy((out)->jobid,(in)->jobid);                   \
     if ((in)->update > 0) (out)->update = (in)->update;                             \
     if ((in)->state[0] != '\0') strcpy((out)->state,(in)->state);                   \
@@ -328,8 +348,21 @@
     if ((in)->fs[0] != '\0') strcpy((out)->fs,(in)->fs);                            \
     if ((in)->processid > 0) (out)->processid = (in)->processid;                    \
     if ((in)->partitionmask[0] != '\0') strcpy((out)->partitionmask,(in)->partitionmask); \
-    if ((in)->requestid[0] != '\0') strcpy((out)->requestid,(in)->requestid); \
+    if ((in)->requestid[0] != '\0') strcpy((out)->requestid,(in)->requestid);       \
     if ((in)->subrequestid[0] != '\0') strcpy((out)->subrequestid,(in)->subrequestid); \
+    if ((out)->clientStruct != NULL) free((out)->clientStruct);                     \
+    if ((in)->clientStructLenWithNullByte > 0) (out)->clientStructLenWithNullByte = (in)->clientStructLenWithNullByte; \
+    (out)->clientStruct = NULL;                                                     \
+    if ((out)->clientStructLenWithNullByte > 0) {                                    \
+          if (((out)->clientStruct = (char *) malloc((out)->clientStructLenWithNullByte)) == NULL) { \
+            serrno = errno;                                   \
+            status = -1;                                      \
+          } else {                                            \
+            strcpy((out)->clientStruct,(in)->clientStruct);   \
+          }                                                   \
+        } else {                                              \
+          (out)->clientStruct = NULL;                         \
+    }                                                         \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -381,10 +414,12 @@
     if ((filter)->subrequestid[0] != '\0' && strcmp((ref)->subrequestid,(filter)->subrequestid) != 0) status++;  \
 }
 
-#define unmarshall_RELEVANT_RMJOB(p, out) {   \
+#define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
     struct rmjob rmjobtmp;                    \
-    unmarshall_RMJOB(p, &rmjobtmp);           \
-    overwrite_RMJOB(out,&rmjobtmp);           \
+    unmarshall_RMJOB(p, &rmjobtmp,status);    \
+    if (status == 0) {                        \
+      overwrite_RMJOB(out,&rmjobtmp,status);  \
+    }                                         \
 }
 
 #define unmarshall_RELEVANT_RMNODE(p, out) {   \
