@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/07/30 12:30:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/30 15:35:35 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/07/30 12:30:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/30 15:35:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1242,6 +1242,7 @@ static int procReqsForVID(
     serrno = ENOENT;
     return(-1);
   }
+  rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   qsort(
         (void *)segmArray,
@@ -1377,12 +1378,16 @@ static int procReqsForVID(
           Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITCOPY);
         }
       } else if ( validPosition(segmArray[i]) == 1 ) {
+        rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITPATH (%d)\n",
+                 cmpStatus,SEGMENT_WAITPATH);
         if ( cmpStatus != SEGMENT_WAITPATH ) {
           updated = 1;
           segmUpdated = 1;
           Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITPATH);
         }
       } else {
+        rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITFSEQ (%d)\n",
+                 cmpStatus,SEGMENT_WAITFSEQ);
         if ( cmpStatus != SEGMENT_WAITFSEQ ) {
           updated = 1;
           segmUpdated = 1;
