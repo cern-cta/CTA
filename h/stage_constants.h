@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.10 2001/12/05 09:59:13 jdurand Exp $
+ * $Id: stage_constants.h,v 1.11 2001/12/17 15:57:21 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -357,6 +357,11 @@
 #endif
 #define STGMAGIC3   0x13140703
 
+#ifdef STGMAGIC4
+#undef STGMAGIC4
+#endif
+#define STGMAGIC4   0x13140704
+
 #ifdef ONE_SECOND
 #undef ONE_SECOND
 #endif
@@ -463,6 +468,8 @@
 #define STAGE_RETENP      0x040000000    /* --retenp     [stage_qry]            */
 #define STAGE_MINTIME     0x100000000LL  /* --mintime    [stage_qry]            */
 #define STAGE_VERBOSE     0x200000000LL  /* --verbose    [stage_ping]           */
+#define STAGE_FORCE_SIDE_FORMAT 0x400000000LL /* --force_side_format[stage_qry] */
+#define STAGE_SIDE        0x800000000LL  /* --side       [stage_qry]            */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
