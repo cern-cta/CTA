@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.227 2002/10/03 09:46:54 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.228 2002/10/30 16:23:14 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.227 $ $Date: 2002/10/03 09:46:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.228 $ $Date: 2002/10/30 16:23:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -245,7 +245,7 @@ void stgcat_shrunk_pages _PROTO(());
 void stgpath_shrunk_pages _PROTO(());
 void delreqid _PROTO((int, int));
 void rmfromwq _PROTO((struct waitq *));
-void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
 void stgdaemon_wait4child _PROTO((int));
 int req2argv _PROTO((char *, char ***));
@@ -315,7 +315,7 @@ extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern void check_delaymig _PROTO(());
 extern void check_expired _PROTO(());
-extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
+extern int create_hsm_entry _PROTO((int *, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int, int *, struct Cns_filestat *, int));
@@ -1263,11 +1263,13 @@ int main(argc,argv)
 			/* is enough : this found element in the waitq will then work in nowait mode */
 			/* Of course we do not have to do close(rqfd) since we just received it! */
 			for (wqp = waitqp; wqp; wqp = wqp->next) {
-				if (wqp->rpfd == rqfd) {
+				if ((wqp->rpfd == rqfd) || (wqp->save_rpfd == rqfd)) {
 					int sav_reqid = reqid;
 					reqid = wqp->reqid;
-					stglogit (func, "### STG02 - Socket fd %d taken over by new request - Moving to nowait(->silent) mode\n", wqp->rpfd);
+					stglogit (func, "### STG02 - Socket fd %d taken over by new request - Moving to nowait(->silent) mode\n", (wqp->save_rpfd > 0) ? wqp->save_rpfd : wqp->rpfd);
 					wqp->rpfd = -1;
+					wqp->save_rpfd = -1;
+					wqp->silent = 1;
 					reqid = sav_reqid;
 					/* In theory this cannot happen more than once - so we break now */
 					break;
@@ -1521,8 +1523,11 @@ void prockilreq(req_type, req_data, clienthost)
 				}
 				wqp->status = ESTKILLED;
 				/* This will close cleanly the connection from the API */
+				if (wqp->save_rpfd >= 0) {
+					wqp->rpfd = wqp->save_rpfd;
+					wqp->save_rpfd = -1;
+				}
 				sendrep (&(wqp->rpfd), STAGERC, 0, wqp->magic, ESTKILLED);
-				wqp->rpfd = -1;
 				break;
 			} else {
 				wqp = wqp->next;
@@ -1856,6 +1861,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 	wqp->req_type = req_type;
 	wqp->key = time(NULL) & 0xFFFF;
 	wqp->rpfd = rpfd;
+	wqp->save_rpfd = -1;
 	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
 	wqp->last_rwcounterfs_vs_R = 0;
@@ -2330,7 +2336,6 @@ killallovl(sig)
 	/* Do safety things without launching anything - but return ESTNACT to clients */
 	checkpoolstatus ();	/* check if any pool just cleaned */
 	checkwaitingspc ();	/* check requests that are waiting for space */
-	checkpoolspace ();	/* launch gc if necessary */
 	checkwaitq ();	/* scan the wait queue */
 
 	/* kill the cleaners */
@@ -2415,11 +2420,14 @@ void checkpoolstatus()
 				have_waiting_spc = 0;
 				have_found_spc = 0;
 				reqid = wqp->reqid;
-				rpfd = wqp->rpfd;
 				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 					/* There is a coming shutdown */
-					sendrep (&rpfd, MSG_ERR, STG162);
-					sendrep (&rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
+					sendrep (&(wqp->rpfd), MSG_ERR, STG162);
+					if (wqp->save_rpfd >= 0) {
+						wqp->rpfd = wqp->save_rpfd;
+						wqp->save_rpfd = -1;
+					}
+					sendrep (&(wqp->rpfd), STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 					wqp->status = STAGESHUTDOWN;
 					continue;
 				}
@@ -2446,7 +2454,7 @@ void checkpoolstatus()
 						}
 						if (c < 0) {
 							if (wqp->nb_clnreq++ > (wqp->noretry ? 0 : MAXRETRY)) {
-								sendrep (&rpfd, MSG_ERR, STG45,
+								sendrep (&(wqp->rpfd), MSG_ERR, STG45,
 										(stcp->poolname[0] != '\0' ? stcp->poolname : "<none>"));
 								wqp->status = ENOSPC;
 							} else {
@@ -2474,7 +2482,7 @@ void checkpoolstatus()
 								if (stcp->t_or_d == 'h') {
 									int this_status;
 									/* Try now to create entry in the HSM name server */
-									if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+									if ((this_status = create_hsm_entry(&(wqp->rpfd), stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
 										/* Too bad - finally this request fails because of the name server */
 										wqp->status = this_status;
 										hsm_ns_error = 1;
@@ -2494,7 +2502,7 @@ void checkpoolstatus()
 									(stcp->status == STAGEALLOC)) {
 									if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 									if (wqp->Pflag)
-										sendrep (&rpfd, MSG_OUT,
+										sendrep (&(wqp->rpfd), MSG_OUT,
 														 "%s\n", stcp->ipath);
 									if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 										create_link (stcp, wfp->upath);
@@ -2531,7 +2539,11 @@ void checkwaitingspc()
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
 			reqid = wqp->reqid;
-			sendrep (&rpfd, MSG_ERR, STG162);
+			sendrep (&(wqp->rpfd), MSG_ERR, STG162);
+			if (wqp->save_rpfd >= 0) {
+				wqp->rpfd = wqp->save_rpfd;
+				wqp->save_rpfd = -1;
+			}
 			sendrep (&(wqp->rpfd), STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			continue;
@@ -2603,7 +2615,7 @@ void checkwaitingspc()
 				if (stcp->t_or_d == 'h') {
 					int this_status;
 					/* Try now to create entry in the HSM name server */
-					if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+					if ((this_status = create_hsm_entry(&(wqp->rpfd), stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
 						/* Too bad - finally this request fails because of the name server */
 						wqp->status = this_status;
 						hsm_ns_error = 1;
@@ -2655,7 +2667,6 @@ check_waiting_on_req(subreqid, state)
 	int found;
 	int i;
 	int savereqid;
-	int saverpfd;
 	struct stgcat_entry *stcp, *stcp_check;
 	struct waitf *wfp;
 	struct waitq *wqp;
@@ -2664,12 +2675,10 @@ check_waiting_on_req(subreqid, state)
 	found = 0;
 	firstreqid = 0;
 	savereqid = reqid;
-	saverpfd = rpfd;
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		if (! wqp->nb_waiting_on_req) continue;
 		/* It is a STAGEIN request */
 		reqid = wqp->reqid;
-		rpfd = wqp->rpfd;
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			if (wfp->waiting_on_req != subreqid) continue;
 			found++;
@@ -2687,7 +2696,7 @@ check_waiting_on_req(subreqid, state)
 						if (stcp_check->reqid == wfp->subreqid) break;
 					}
 #ifdef STAGER_DEBUG
-                    sendrep(&rpfd, MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
+                    sendrep(&(wqp->rpfd), MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
 #endif
 					if (strcmp(stcp->u1.t.fseq,stcp_check->u1.t.fseq) != 0) {
 						/* The file sequence of this "-c off" callback does not */
@@ -2699,14 +2708,14 @@ check_waiting_on_req(subreqid, state)
 				stageacct (STGFILS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 									 wqp->reqid, wqp->req_type, 0, 0, stcp, "", (char) 0);
 #endif
-				sendrep (&rpfd, RTCOPY_OUT, STG96,
+				sendrep (&(wqp->rpfd), RTCOPY_OUT, STG96,
 								 strrchr (stcp->ipath, '/')+1,
 								 u64tostr(stcp->actual_size,tmpbuf,0),
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
 				if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 				if (wqp->copytape)
-					sendinfo2cptape (rpfd, stcp);
+					sendinfo2cptape (&(wqp->rpfd), stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 					create_link (stcp, wfp->upath);
 				if (wqp->Upluspath && *((wfp+1)->upath) &&
@@ -2784,7 +2793,6 @@ check_waiting_on_req(subreqid, state)
 		}
 	}
 	reqid = savereqid;
-	rpfd = saverpfd;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
@@ -2827,7 +2835,6 @@ check_coff_waiting_on_req(subreqid, state)
 	int found;
 	int i;
 	int savereqid;
-	int saverpfd;
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;
@@ -2841,13 +2848,11 @@ check_coff_waiting_on_req(subreqid, state)
 	found = 0;
 	firstreqid = 0;
 	savereqid = reqid;
-	saverpfd = rpfd;
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		/* It HAS to be a "-c off" request */
 		if (wqp->concat_off_fseq <= 0) continue;
 		if (! wqp->nb_waiting_on_req) continue;
 		reqid = wqp->reqid;
-		rpfd = wqp->rpfd;
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			if (wfp->waiting_on_req != subreqid) continue;
 			found++;
@@ -2884,7 +2889,6 @@ check_coff_waiting_on_req(subreqid, state)
 		}
 	}
 	reqid = savereqid;
-	rpfd = saverpfd;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : Waitq->wf : \n");
@@ -2930,11 +2934,15 @@ void checkwaitq()
 	save_reqid = reqid;
 	wqp = waitqp;
 	while (wqp) {
-		if (wqp->rpfd >= 0) nwaitq_with_connection++;
+		if ((wqp->rpfd >= 0) || (wqp->save_rpfd >= 0)) nwaitq_with_connection++;
 		reqid = wqp->reqid;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
-			sendrep (&rpfd, MSG_ERR, STG162);
+			sendrep (&(wqp->rpfd), MSG_ERR, STG162);
+			if (wqp->save_rpfd >= 0) {
+				wqp->rpfd = wqp->save_rpfd;
+				wqp->save_rpfd = -1;
+			}
 			sendrep (&(wqp->rpfd), STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			wqp1 = wqp;
@@ -2953,6 +2961,10 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
+			if (wqp->save_rpfd >= 0) {
+				wqp->rpfd = wqp->save_rpfd;
+				wqp->save_rpfd = -1;
+			}
 			sendrep (&(wqp->rpfd), STAGERC, wqp->req_type, wqp->magic, wqp->status);
 			wqp1 = wqp;
 			wqp = wqp->next;
@@ -2994,9 +3006,6 @@ void checkwaitq()
 							 (! *(wqp->waiting_pool) ||	/* has been freed or */
 								wqp->status)) {		/* could not be found */
 			reqid = wqp->clnreq_reqid;
-			rpfd = wqp->clnreq_rpfd;
-			wqp->clnreq_reqid = 0;
-			wqp->clnreq_rpfd = 0;
 			/* wqp->clnreq_waitingreqid contains the reqid that is WAITING_SPC */
 			/*
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++)
@@ -3010,8 +3019,10 @@ void checkwaitq()
 				if (wqp->clnreq_waitingreqid == stcp->reqid)
 					break;
 			}
-			sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
-			sendrep (&rpfd, STAGERC, STAGEUPDC, wqp->magic, wqp->status);
+			sendrep (&(wqp->clnreq_rpfd), MSG_OUT, "%s", stcp->ipath);
+			sendrep (&(wqp->clnreq_rpfd), STAGERC, STAGEUPDC, wqp->magic, wqp->status);
+			wqp->clnreq_reqid = 0;
+			wqp->clnreq_rpfd = 0;
 			wqp->status = 0;
 			wqp->clnreq_waitingreqid = 0;
 			wqp = wqp->next;
@@ -3025,6 +3036,10 @@ void checkwaitq()
 #endif
 			sendrep (&(wqp->rpfd), MSG_ERR, STG98, sstrerror(wqp->status));
 			/* We close cleanly the connection */
+			if (wqp->save_rpfd >= 0) {
+				wqp->rpfd = wqp->save_rpfd;
+				wqp->save_rpfd = -1;
+			}
 			sendrep (&(wqp->rpfd), STAGERC, wqp->req_type, wqp->magic, wqp->status);
 
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
@@ -3688,6 +3703,9 @@ int fork_exec_stager(wqp)
 	} else if (pid == 0) {	/* we are in the child */
 		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
+		/* In case of --silent mode only: wqp->save_rpfd will be closed by the following. */
+		/* No pb, we want nothing from forked stager in client's output, and the connection */
+		/* will still be alive from parent (stgdaemon point of view) */
 #ifdef __INSURE__
 		c = 0;
 		if (c != pfd[0] && c != wqp->rpfd) close (c);
@@ -4065,7 +4083,7 @@ int savereqs()
 }
 
 void sendinfo2cptape(rpfd, stcp)
-		 int rpfd;
+		 int *rpfd;
 		 struct stgcat_entry *stcp;
 {
 	char buf[PRTBUFSZ];
@@ -4084,7 +4102,7 @@ void sendinfo2cptape(rpfd, stcp)
 		sprintf(buf, "-P %s", stcp->ipath);
 		break;
 	}
-	sendrep(&rpfd, MSG_ERR, STG47, buf);
+	sendrep(rpfd, MSG_ERR, STG47, buf);
 }
 
 int ask_stageout(req_type, upath, found_stcp)
