@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.10 2002/04/30 12:38:43 jdurand Exp $
+ * $Id: procping.c,v 1.11 2002/05/21 08:06:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.10 $ $Date: 2002/04/30 12:38:43 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.11 $ $Date: 2002/05/21 08:06:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.10 $ $Date: 20
 #include "marshall.h"
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/resource.h> /* For getrlimit()/setrlimit() */
 #endif
 #define local_unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #if SACCT
@@ -146,10 +147,26 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	/* stgdaemon.o packfseq.o poolmgr.o procalloc.o procclr.o  stgdb_Cdb_ifce.o Cstage_db.o Cstage_ifce.o  procio.o procping.o procqry.o procupd.o procfilchg.o sendrep.o stglogit.o stageacct.o */
 
 	if (verbose_flag) {
+		extern int nwaitq_with_connection;
+		extern int nbhost;
+		struct rlimit rlim;
+#define RESERVED_FD (4 + nwaitq_with_connection + 2 * nbhost)
+#define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
+
 		stage_util_time(started_time,timestr);
 		sendrep (rpfd, MSG_OUT, "Stager daemon on %s - CASTOR %s.%d%c\n", localhost, BASEVERSION, PATCHLEVEL, hpss_aware);
 		sendrep (rpfd, MSG_OUT, "Generated %s around %s\n", __DATE__, __TIME__);
 		sendrep (rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
+		sendrep (rpfd, MSG_OUT, "Maximum/reserved/available number of opened file descriptors: %d/%d/%d\n", sysconf(_SC_OPEN_MAX), RESERVED_FD, FREE_FD);
+#ifdef RLIMIT_NPROC
+		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
+			sendrep (rpfd, MSG_OUT, "Maximum number of processes: ... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+		} else {
+ 			sendrep (rpfd, MSG_OUT, "Maximum number of processes: { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+		}
+#else
+		sendrep (rpfd, MSG_OUT, "... RLIMIT_NPROC undefined on platform where runs stager daemon\n");
+#endif
 	}
 	reply:
 	sendrep (rpfd, STAGERC, STAGEPING, magic, rc);
