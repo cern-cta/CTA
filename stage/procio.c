@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.112 2001/03/20 07:30:04 jdurand Exp $
+ * $Id: procio.c,v 1.113 2001/03/20 13:10:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.112 $ $Date: 2001/03/20 07:30:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.113 $ $Date: 2001/03/20 13:10:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,6 +53,11 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.112 $ $Date: 200
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
+
+/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
+/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
+/* to determine if the remote file system is an HP-UX one or not */
+#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 #define SET_CORRECT_OKMODE { \
 	if (have_save_stcp_for_Cns_creatx) { \
@@ -2597,13 +2602,20 @@ void procputreq(req_type, req_data, clienthost)
 				goto reply;
 			}
 			if (stcp->status == STAGEOUT) {
+				u_signed64 actual_size_block;
 				if (rfio_stat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
+					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+						/* This happens unfortunately if remote fs is an HP-UX file system */
+						actual_size_block = stcp->actual_size;
+					}
 				} else {
 					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					/* No block information - assume mismatch with actual_size will be acceptable */
+					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
+					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);
@@ -2715,13 +2727,20 @@ void procputreq(req_type, req_data, clienthost)
 				goto reply;
 			}
 			if (stcp->status == STAGEOUT) {
+				u_signed64 actual_size_block;
 				if (rfio_stat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
+					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+						/* This happens unfortunately if remote fs is an HP-UX file system */
+						actual_size_block = stcp->actual_size;
+					}
 				} else {
 					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					/* No block information - assume mismatch with actual_size will be acceptable */
+					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
+					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);

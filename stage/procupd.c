@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.64 2001/03/16 09:07:39 jdurand Exp $
+ * $Id: procupd.c,v 1.65 2001/03/20 13:11:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.64 $ $Date: 2001/03/16 09:07:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.65 $ $Date: 2001/03/20 13:11:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -106,6 +106,11 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
+/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
+/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
+/* to determine if the remote file system is an HP-UX one or not */
+#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
+
 void
 procupdreq(req_data, clienthost)
 		 char *req_data;
@@ -156,6 +161,7 @@ procupdreq(req_data, clienthost)
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
+	u_signed64 actual_size_block;
 
 	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
 
@@ -426,7 +432,7 @@ procupdreq(req_data, clienthost)
 		/* deferred allocation (STAGEIN) */
 		if (stcp->ipath[0] == '\0') {
 			int has_trailing = 0;
-			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+			if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
 				/* We remove the trailing '-' */
 				/* It can happen that the tppos on the first file is for a waitf */
 				/* that does not have a trailing when the request is splitted because */
@@ -509,6 +515,10 @@ procupdreq(req_data, clienthost)
 
 			if (rfio_stat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = (u_signed64) st.st_size;
+				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+					/* This happens unfortunately if remote fs is an HP-UX file system */
+					actual_size_block = stcp->actual_size;
+				}
 				wfp->nb_segments++;
 				wfp->size_yet_recalled += (u_signed64) st.st_size;
 				if (wfp->size_yet_recalled >= wfp->size_to_recall) {
@@ -548,6 +558,8 @@ procupdreq(req_data, clienthost)
 #endif
 			} else {
 				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				/* No block information - assume mismatch with actual_size will be acceptable */
+				actual_size_block = stcp->actual_size;
 			}
 		} else {
 			char tmpbuf[21];
@@ -857,7 +869,7 @@ procupdreq(req_data, clienthost)
 					strcmp (stcp->ipath, (wfp+1)->upath))
 				create_link (stcp, (wfp+1)->upath);
 			updfreespace (stcp->poolname, stcp->ipath,
-										(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
+						(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			check_waiting_on_req (subreqid, STAGED);
 		}
 		savereqs();
