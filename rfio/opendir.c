@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.11 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: opendir.c,v 1.12 2001/06/13 13:43:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.11 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.12 $ $Date: 2001/06/13 13:43:33 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -91,20 +91,24 @@ int    passwd;
 int rfio_dircleanup(s)      /* cleanup rfio dir. descriptor            */
 int s;
 {
+   int s_index;
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_dircleanup(%d)", s);
   
-   if (rdirfdt[s] != NULL) {
-      if (rdirfdt[s]->magic != RFIO_MAGIC && rdirfdt[s]->magic != B_RFIO_MAGIC) {
-	 serrno = SEBADVERSION ; 
-	 END_TRACE();
-	 return(-1);
-      }
-      TRACE(2, "rfio", "freeing RFIO directory descriptor at 0X%X", rdirfdt[s]);
-      (void) free((char *)rdirfdt[s]->dp.dd_buf);
-      rfio_rdirfdt_freeentry(s);
-      TRACE(2, "rfio", "closing %d",s) ;
-      (void) close(s) ;
+   if ((s_index = rfio_rdirfdt_findentry(s,FINDRDIR_WITHOUT_SCAN)) != -1) {
+     if (rdirfdt[s_index] != NULL) {
+       if (rdirfdt[s_index]->magic != RFIO_MAGIC && rdirfdt[s_index]->magic != B_RFIO_MAGIC) {
+         serrno = SEBADVERSION ; 
+         END_TRACE();
+         return(-1);
+       }
+       TRACE(2, "rfio", "freeing RFIO directory descriptor at 0X%X", rdirfdt[s_index]);
+       (void) free((char *)rdirfdt[s_index]->dp.dd_buf);
+       rfio_rdirfdt_freeentry(s_index);
+       TRACE(2, "rfio", "closing %d",s) ;
+       (void) close(s) ;
+     }
    }
    END_TRACE();
    return(0);
@@ -141,7 +145,6 @@ char  	*vmstr ;
    WORD	   req ;
    struct passwd *pw;
    int 	    rt ; 	/* daemon in site(0) or not (1) */	
-   int    bufsize ; 	/* socket buffer size 		*/	
    struct sockaddr_in      to;
    int                     tolen;
    struct  hostent *hp;
