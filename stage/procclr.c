@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.47 2002/01/29 17:59:58 jdurand Exp $
+ * $Id: procclr.c,v 1.48 2002/02/05 15:25:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.47 $ $Date: 2002/01/29 17:59:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.48 $ $Date: 2002/02/05 15:25:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -73,7 +73,7 @@ extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, 
 extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
-extern int stglogflags _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern char *findpoolname _PROTO((char *));
 
@@ -343,7 +343,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		}
 #endif
 		/* Print the flags */
-		stglogflags(func,flags);
+		stglogflags(func,LOGFILE,(u_signed64) flags);
 	} else {
 		nargs = req2argv (rbp, &argv);
 
