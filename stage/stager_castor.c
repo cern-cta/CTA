@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.33 2002/12/11 08:38:28 jdurand Exp $
+ * $Id: stager_castor.c,v 1.34 2002/12/16 15:04:42 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.33 $ $Date: 2002/12/11 08:38:28 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.34 $ $Date: 2002/12/16 15:04:42 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -96,9 +96,10 @@ int get_subreqid _PROTO((struct stgcat_entry *));
 #ifdef hpux
 int stage_copyfile _PROTO(());
 #else
-int stage_copyfile _PROTO((char *, char *, mode_t, int, u_signed64));
+int stage_copyfile _PROTO((char *, char *, mode_t, int, u_signed64, u_signed64 *));
 #endif
 int copyfile _PROTO((int, int, char *, char *, u_signed64, u_signed64 *));
+void stcplog _PROTO((int, char *));
 
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
@@ -755,8 +756,8 @@ int main(argc,argv,envp)
 		}
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] GO ON WITH gdb /usr/local/bin/stager_castor %d, then break stagewrt_castor_hsm_file\n",getpid());
-		sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(%d)\n",SLEEP_DEBUG);
+		sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN] GO ON WITH gdb /usr/local/bin/stager_castor %d, then break stagewrt_castor_hsm_file\n",getpid());
+		sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(%d)\n",SLEEP_DEBUG);
 		sleep(SLEEP_DEBUG);
 		RESTORE_EID;
 #endif
@@ -937,6 +938,7 @@ int stagein_castor_hsm_file() {
 	char *castor_hsm = NULL;
 	int i, j;
 	int new_tape;
+	int something_to_do;
 	struct stgcat_entry *stcp_tmp = NULL;
 #ifdef STAGER_DEBUG
 	char tmpbuf1[21];
@@ -988,10 +990,53 @@ int stagein_castor_hsm_file() {
 				hsm_mode[i] = sbuf.st_mode;
 				hsm_transferedsize[i] = 0;
 			} else {
+				struct stgcat_entry stcp_input;
+				struct stgcat_entry *stcp_output = NULL;
+				int nstcp_output = 0;
+
 				SAVE_EID;
 				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat64", rfio_serror());
 				RESTORE_EID;
-				RETURN (USERR);
+				/* We have lost the CASTOR filename here */
+				if (stage_setlog(&stcplog) != 0) {
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "stage_setlog", sstrerror(serrno));
+					RETURN(SYERR);
+				}
+				/* We ask for it */
+				memset((void *) &stcp_input,0,sizeof(struct stgcat_entry));
+				stcp_input.reqid = stcp->reqid;
+				if (stage_qry('h',
+							  (u_signed64) STAGE_ALL|STAGE_REQID, /* Flags */
+							  NULL,                        /* Hostname */
+							  1,                           /* nstcp_input */
+							  &stcp_input,                 /* stcp_input */
+							  &nstcp_output,               /* nstcp_output */
+							  &stcp_output,                /* stcp_output */
+							  NULL,                        /* nstpp_output */
+							  NULL                         /* stpp_output */
+					) != 0) {
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "stage_qry", sstrerror(serrno));
+					if (stcp_output != NULL) free(stcp_output);
+					RETURN(SYERR);
+				}
+				if (nstcp_output != 1) {
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "stage_qry", sstrerror(SEINTERNAL));
+					if (stcp_output != NULL) free(stcp_output);
+					RETURN(SYERR);
+				}
+				if ((stcp_output[0].status != STAGEIN) || (stcp_output[0].reqid != stcp->reqid)) {
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "stage_qry", sstrerror(SEINTERNAL));
+					if (stcp_output != NULL) free(stcp_output);
+					RETURN(SYERR);
+				}
+				/* We simply copy stcp_output[0] into stcp... */
+				memcpy((void *) stcp,(void *) stcp_output,sizeof(struct stgcat_entry));
+				/* and go on with normal procedure with a tape mount */
+				if (stcp_output != NULL) free(stcp_output);
+				SAVE_EID;
+				sendrep (&rpfd, MSG_ERR, STG33, stcp->u1.d.xfile, "Switching to tape mount mode");
+				RESTORE_EID;
+				goto forced_tape_mount;
 			}
 			/* check file permissions */
 			mode = S_IREAD;
@@ -1024,6 +1069,8 @@ int stagein_castor_hsm_file() {
 
 			continue;
 		}
+
+	  forced_tape_mount:
 
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
@@ -1260,10 +1307,15 @@ int stagein_castor_hsm_file() {
 
 	/* We loop on all the requests, choosing those that requires the same tape */
 	new_tape = 0;
+	something_to_do = 0;
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 
-		if ((stcp->t_or_d == 'd') && (hsm_transferedsize[i] == 0)) {
-			/* Internal copy - we do it as soon as we meet it - Internal copy has to successful in ONE pass */
+		if (stcp->t_or_d == 'd') {
+			if (hsm_status[i] != 0) {
+				/* Yet done */
+				continue;
+			}
+			/* Internal copy - we do it as soon as we meet it - Internal copy has to be successful in ONE pass */
 
 #ifdef STAGER_DEBUG
 			SAVE_EID;
@@ -1277,8 +1329,8 @@ int stagein_castor_hsm_file() {
 			/* We do almost exactly as in CASTOR/rfio/rfcp via BIN/cpdskdsk */
 #ifdef STAGER_DEBUG
 			SAVE_EID;
-			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] GO ON WITH gdb /usr/local/bin/stager_castor %d, then break stage_copyfile\n",getpid());
-			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(%d)\n",SLEEP_DEBUG);
+			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN] GO ON WITH gdb /usr/local/bin/stager_castor %d, then break stage_copyfile\n",getpid());
+			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(%d)\n",SLEEP_DEBUG);
 			sleep(SLEEP_DEBUG);
 			RESTORE_EID;
 #endif
@@ -1287,9 +1339,19 @@ int stagein_castor_hsm_file() {
 										  stcp->ipath,
 										  hsm_mode[i],
 										  get_subreqid(stcp),
-										  hsm_totalsize[i])) != 0) {
+										  hsm_totalsize[i],
+										  &(hsm_transferedsize[i]))) != 0) {
 				RETURN(rtcp_rc);
 			}
+#ifdef STAGER_DEBUG
+			SAVE_EID;
+			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s copied (%s out of %s bytes)\n",
+					stcp->u1.d.xfile,
+					u64tostr(hsm_totalsize[i], tmpbuf1, 0),
+					u64tostr(hsm_totalsize[i], tmpbuf2, 0)
+					);
+			RESTORE_EID;
+#endif
 			hsm_status[i] = hsm_flag[i] = 1;
 			SETEID(start_passwd.pw_uid,start_passwd.pw_gid);
 			continue;
@@ -1315,6 +1377,8 @@ int stagein_castor_hsm_file() {
 			u_signed64 previous_virtual_size;
 			int do_not_process_any_other_segment;
 			
+			something_to_do = 1;
+
 			/* We search at which segment to start the transfer. It depends on the size */
 			/* yet transfered and the size of each of the segments for file No i */
 			virtual_size = previous_virtual_size = 0;
@@ -1536,44 +1600,8 @@ int stagein_castor_hsm_file() {
 		}
 	}
 
-	if (stcs->t_or_d == 'd') {
-		int correct_exit_code = 0;
-		/* Processing stop here - we have done internal copy using RFIO - nothing to do with RTCOPY */
-		if (hsm_status != NULL) {
-			int ihsm_status;
-			int global_found_error = 0;
-			int have_ignore = 0;
-			for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) {
-				if (hsm_ignore[ihsm_status] != 0) {
-					have_ignore = 1;
-					break;
-				}
-				if (hsm_status[ihsm_status] != 1) {
-					global_found_error = 1;
-					break;
-				}
-			}
-			if ((global_found_error == 0) && (! have_ignore)) {
-				correct_exit_code = 0;
-			} else {
-				int global_userr = 0;
-				int global_syerr = 0;
-				for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) {
-					if (! hsm_ignore[ihsm_status]) continue;
-					switch (hsm_ignore[ihsm_status]) {
-					case SECOMERR:
-						global_syerr++;
-						break;
-					default:
-						global_userr++;
-						break;
-					}
-				}
-				correct_exit_code = (global_syerr ? SYERR : (global_userr ? USERR : SYERR));
-			}
-		}
-		FREEHSM;
-		return(correct_exit_code);
+	if (! something_to_do) {
+		RETURN(0);
 	}
 
 	if ((new_tape == 0) || (last_vid[0] == '\0') || (last_side < 0)) {
@@ -3722,12 +3750,13 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 	}
 }
 
-int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
+int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize,size)
 	char *inpfile;
 	char *outfile;
 	mode_t st_mode;
 	int subreqid;
 	u_signed64 totalsize;           /* How many to transfer */
+	u_signed64 *size;               /* How many transferred */
 {
 	int fd1, fd2;
 	int v, rc;
@@ -3735,7 +3764,6 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 	char ifce1[8] ;
 	char ifce2[8] ;
 	time_t starttime, endtime;
-	u_signed64 size;
 	EXTERN_C char DLL_DECL *getifnam _PROTO(());
 	char stageid[CA_MAXSTGRIDLEN+1];
 	int l1 = -1;
@@ -3907,27 +3935,27 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 	}
 
 	time(&starttime);
-	rc = copyfile(fd1, fd2, inpfile, outfile, totalsize, &size);
+	rc = copyfile(fd1, fd2, inpfile, outfile, totalsize, size);
 	time(&endtime);
 	if (rc == 0) {
-		if (size > 0)  {
+		if (*size > 0)  {
 			char tmpbuf1[21];
 
 			l1 = (int) (endtime-starttime);
 			if ( l1 > 0) {
 				SAVE_EID;
-				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out) (%d KB/sec)\n", u64tostr(size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2, (int) (size/(1024*l1)));
+				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out) (%d KB/sec)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2, (int) ((*size)/(1024*l1)));
 				RESTORE_EID;
 			} else {
 				SAVE_EID;
-				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out)\n", u64tostr(size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2);
+				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2);
 				RESTORE_EID;
 				l1 = 0;
 			}
-			rc = (totalsize == size ? 0 : SYERR);
+			rc = (totalsize == *size ? 0 : SYERR);
 		} else {
 			SAVE_EID;
-			sendrep (&rpfd, RTCOPY_OUT, "%d bytes transferred !!\n",(int) size);
+			sendrep (&rpfd, RTCOPY_OUT, "%d bytes transferred !!\n",(int) 0);
 			RESTORE_EID;
 			rc = (totalsize == 0 ? 0 : SYERR);
 		}
@@ -3942,7 +3970,7 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 		use_subreqid != 0 ? subreqid : -1, /* subreqid      */
 		rc,                      /* Copy rc       */
 		NULL,                    /* Interface     */
-		rc == 0 ? size : 0,      /* Size          */
+		rc == 0 ? (*size) : 0,   /* Size          */
 		0,                       /* Waiting time  */
 		rc == 0 ? l1 : 0,        /* Transfer time */
 		0,                       /* block size    */
@@ -4097,4 +4125,11 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 
 	free(cpbuf);
 	return(0);
+}
+
+void stcplog(level,msg)
+	int level;
+	char *msg;
+{
+	return;
 }
