@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // DiskCopyStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::DiskCopyStatusCodesStrings[10] = {
+const char* castor::stager::DiskCopyStatusCodesStrings[11] = {
   "DISKCOPY_STAGED",
   "DISKCOPY_WAITDISK2DISKCOPY",
   "DISKCOPY_WAITTAPERECALL",
@@ -40,6 +40,7 @@ const char* castor::stager::DiskCopyStatusCodesStrings[10] = {
   "DISKCOPY_STAGEOUT",
   "DISKCOPY_INVALID",
   "DISKCOPY_GCCANDIDATE",
-  "DISKCOPY_BEINGDELETED"
+  "DISKCOPY_BEINGDELETED",
+  "DISKCOPY_CANBEMIGR"
 };
 

@@ -40,6 +40,7 @@
 castor::stager::Disk2DiskCopyDoneRequest::Disk2DiskCopyDoneRequest() throw() :
   Request(),
   m_diskCopyId(0),
+  m_status(0),
   m_id(0) {
 };
 
@@ -65,6 +66,7 @@ void castor::stager::Disk2DiskCopyDoneRequest::print(std::ostream& stream,
   this->Request::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
+  stream << indent << "status : " << m_status << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

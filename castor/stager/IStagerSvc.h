@@ -28,7 +28,7 @@
 #define CASTOR_ISTAGERSVC_H 1
 
 #include "castor/Constants.h"
-
+#include "castor/stager/DiskCopyStatusCodes.h"
 
 /// Forward declarations for the C world
 struct C_IService_t;
@@ -620,6 +620,7 @@ int Cstager_IStagerSvc_updateAndCheckSubRequest
  * Changes are commited
  * @param stgSvc the IStagerSvc used
  * @param diskcopyId the id of the new DiskCopy
+ * @param status the status of the new DiskCopy
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -627,7 +628,8 @@ int Cstager_IStagerSvc_updateAndCheckSubRequest
  */
 int Cstager_IStagerSvc_disk2DiskCopyDone
 (struct Cstager_IStagerSvc_t* stgSvc,
- u_signed64 diskCopyId);
+ u_signed64 diskCopyId,
+ enum Cstager_DiskCopyStatusCodes_t status);
 
 /**
  * Recreates a castorFile. This method cleans up the

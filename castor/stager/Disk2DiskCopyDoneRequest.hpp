@@ -117,6 +117,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_status
+       * The new status of the diskCopy created
+       * @return the value of m_status
+       */
+      int status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * The new status of the diskCopy created
+       * @param new_var the new value of m_status
+       */
+      void setStatus(int new_var) {
+        m_status = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -138,6 +156,9 @@ namespace castor {
 
       /// The DiskCopy created.
       u_signed64 m_diskCopyId;
+
+      /// The new status of the diskCopy created
+      int m_status;
 
       /// The id of this object
       u_signed64 m_id;

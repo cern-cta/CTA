@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -588,11 +588,13 @@ extern "C" {
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_disk2DiskCopyDone
   //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_disk2DiskCopyDone(struct Cstager_IStagerSvc_t* stgSvc,
-                                           u_signed64 diskCopyId) {
+  int Cstager_IStagerSvc_disk2DiskCopyDone
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 diskCopyId,
+   castor::stager::DiskCopyStatusCodes status) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      stgSvc->stgSvc->disk2DiskCopyDone(diskCopyId);
+      stgSvc->stgSvc->disk2DiskCopyDone(diskCopyId, status);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

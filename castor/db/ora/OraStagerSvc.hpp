@@ -501,9 +501,12 @@ namespace castor {
          * status to SUBREQUEST_READY.
          * Changes are commited
          * @param diskcopyId the id of the new DiskCopy
+         * @param status the status of the new DiskCopy
          * @exception Exception throws an Exception in case of error
          */
-        virtual void disk2DiskCopyDone(u_signed64 diskCopyId)
+        virtual void disk2DiskCopyDone
+        (u_signed64 diskCopyId,
+         castor::stager::DiskCopyStatusCodes status)
           throw (castor::exception::Exception);
 
         /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.119 $ $Release$ $Date: 2005/01/31 11:19:37 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.120 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -164,7 +164,7 @@ const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestState
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraStagerSvc::s_disk2DiskCopyDoneStatementString =
-  "BEGIN disk2DiskCopyDone(:1); END;";
+  "BEGIN disk2DiskCopyDone(:1, :2); END;";
 
 /// SQL statement for recreateCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
@@ -1714,7 +1714,8 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 // disk2DiskCopyDone
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::disk2DiskCopyDone
-(u_signed64 diskCopyId)
+(u_signed64 diskCopyId,
+ castor::stager::DiskCopyStatusCodes status)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1725,6 +1726,7 @@ void castor::db::ora::OraStagerSvc::disk2DiskCopyDone
     }
     // execute the statement and see whether we found something
     m_disk2DiskCopyDoneStatement->setDouble(1, diskCopyId);
+    m_disk2DiskCopyDoneStatement->setDouble(2, status);
     m_disk2DiskCopyDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;

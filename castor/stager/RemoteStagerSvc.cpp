@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 16:54:18 $ $Author: bcouturi $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -531,11 +531,13 @@ bool castor::stager::RemoteStagerSvc::updateAndCheckSubRequest
 // disk2DiskCopyDone
 // -----------------------------------------------------------------------
 void castor::stager::RemoteStagerSvc::disk2DiskCopyDone
-(u_signed64 diskCopyId)
+(u_signed64 diskCopyId,
+ castor::stager::DiskCopyStatusCodes status)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
+  req.setStatus(status);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

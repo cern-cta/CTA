@@ -4,7 +4,7 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.8');
+INSERT INTO CastorVersion VALUES ('2.0.0.9');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -89,7 +89,7 @@ BEGIN
     AND TapeCopy.castorfile = Castorfile.id
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
-    AND TapeCopy.status = 2 -- WAITInSTREAMS
+    AND TapeCopy.status = 2 -- WAITINSTREAMS
     AND ROWNUM < 2;
   res := 1;
 EXCEPTION
@@ -136,6 +136,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
     AND FileSystem.id = DiskCopy.filesystem
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
     AND DiskCopy.castorfile = CastorFile.id
+    AND DiskCopy.status = 10 -- CANBEMIGR
     AND TapeCopy.castorfile = Castorfile.id
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
@@ -247,7 +248,7 @@ BEGIN
    AND FileSystem.status = 0 -- PRODUCTION
    AND FileSystem.diskserver = DiskServer.id
    AND DiskServer.status = 0 -- PRODUCTION
-   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
+   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR
    AND ROWNUM < 2;
  IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
  THEN
@@ -263,7 +264,7 @@ BEGIN
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = rsubreqId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 6) -- STAGED, STAGEOUT
+      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status = 0 -- PRODUCTION
       AND DiskServer.id = FileSystem.diskServer
@@ -315,7 +316,7 @@ BEGIN
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.filesystem = fileSystemId
-    AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
  -- If found local one, check whether to wait on it
  IF rstatus IN (1, 2, 5) THEN -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, Make SubRequest Wait
    makeSubRequestWait(srId, dci);
@@ -330,7 +331,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
-    AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
     AND FileSystem.id = DiskCopy.fileSystem
     AND FileSystem.status = 0 -- PRODUCTION
     AND DiskServer.id = FileSystem.diskserver
@@ -350,7 +351,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+      AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status = 0 -- PRODUCTION
       AND DiskServer.id = FileSystem.diskServer
@@ -416,10 +417,11 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
 END;
 
 /* PL/SQL method implementing disk2DiskCopyDone */
-CREATE OR REPLACE PROCEDURE disk2DiskCopyDone(dcId IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
+(dcId IN INTEGER, dcStatus IN INTEGER) AS
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = 0 WHERE id = dcId; -- status DISKCOPY_STAGED
+  UPDATE DiskCopy set status = dcStatus WHERE id = dcId; -- status DISKCOPY_STAGED
   -- update SubRequest
   UPDATE SubRequest set status = 6 WHERE diskCopy = dcId; -- status SUBREQUEST_READY
 END;

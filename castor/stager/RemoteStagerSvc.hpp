@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/31 10:49:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -493,9 +493,12 @@ namespace castor {
        * status to SUBREQUEST_READY.
        * Changes are commited
        * @param diskcopyId the id of the new DiskCopy
+       * @param status the status of the new DiskCopy
        * @exception Exception throws an Exception in case of error
        */
-      virtual void disk2DiskCopyDone(u_signed64 diskCopyId)
+      virtual void disk2DiskCopyDone
+      (u_signed64 diskCopyId,
+       castor::stager::DiskCopyStatusCodes status)
         throw (castor::exception::Exception);
 
       /**
