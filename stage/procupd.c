@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.82 2001/08/07 07:26:13 jdurand Exp $
+ * $Id: procupd.c,v 1.83 2001/09/18 21:06:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.82 $ $Date: 2001/08/07 07:26:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.83 $ $Date: 2001/09/18 21:06:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -59,7 +59,7 @@ extern struct stgdb_fd dbfd;
 extern struct fileclass *fileclasses;
 extern u_signed64 stage_uniqueid;
 
-extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 extern struct waitf *add2wf _PROTO((struct waitq *));
 extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
@@ -78,7 +78,7 @@ extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
@@ -248,7 +248,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:i:I:L:q:R:s:T:U:W:Z:")) != -1) {
 			switch (c) {
 			case 'b':
-				blksize = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&blksize, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-b");
 					errflg++;
@@ -275,7 +275,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				ifce = Coptarg;
 				break;
 			case 'L':
-				lrecl = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&lrecl, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-L");
 					errflg++;
@@ -285,28 +285,28 @@ procupdreq(req_type, magic, req_data, clienthost)
 				fseq = Coptarg;
 				break;
 			case 'R':
-				rc = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&rc, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-R");
 					errflg++;
 				}
 				break;
 			case 's':
-				size = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&size, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
 				}
 				break;
 			case 'T':
-				transfer_time = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&transfer_time, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-T");
 					errflg++;
 				}
 				break;
 			case 'W':
-				waiting_time = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&waiting_time, Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-W");
 					errflg++;
@@ -315,9 +315,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 			case 'Z':
 				Zflag++;
 				if ((p = strtok (Coptarg, ".")) != NULL) {
-					reqid = strtol (p, &dp, 10);
+					stage_strtoi(&reqid, p, &dp, 10);
 					if ((p = strtok (NULL, "@")) != NULL) {
-						key = strtol (p, &dp, 10);
+						stage_strtoi(&key, p, &dp, 10);
 					}
 				}
 				break;
@@ -397,6 +397,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 				/* So we now end up in the case where we simulate a stageout on */
 				/* an entry that is already in stageout */
 
+				/* We decrement the r/w counter on this file system */
+				rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+
 				memset((char *) &stgreq, 0, sizeof(stgreq));
 				stgreq = *stcp;
 				strncpy (stgreq.user, user, CA_MAXUSRNAMELEN);
@@ -442,7 +445,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				/* We try to find another entry immediately */
 				if (pool_user == NULL)
 					pool_user = "stage";
-				if ((c = build_ipath (NULL, stcp, pool_user)) < 0) {
+				if ((c = build_ipath (NULL, stcp, pool_user, 0)) < 0) {
 					stcp->status |= WAITING_SPC;
 					/* But add this request to the waiting queue */
 					if (!wqp) {
@@ -477,10 +480,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* Space successfully allocated - Here c == 0 per construction */
 					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+					/* We increment r/w counter on this new file system */
+					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 					/* wqp->status = 0; */
 				}
 			} else {
-				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL)) != 0) {
+				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL, 0)) != 0) {
 					if (c != CLEARED) {
 						goto reply;
 					} else {
@@ -655,7 +660,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
 				}
 			}
-			c = build_ipath (NULL, stcp, wqp->pool_user);
+			c = build_ipath (NULL, stcp, wqp->pool_user, 0);
 			if (has_trailing != 0) {
 				/* We restore the trailing '-' */
 				strcat(stcp->u1.t.fseq,"-");
@@ -730,11 +735,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 			if (rfio_stat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = (u_signed64) st.st_size;
+				wfp->size_yet_recalled = (u_signed64) st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
 				}
+			rfio_stat_continue:
 				wfp->nb_segments++;
-				wfp->size_yet_recalled += (u_signed64) st.st_size;
 				if (wfp->size_yet_recalled >= wfp->size_to_recall) {
 					/* Final message - Note that wfp->size_to_recall can be zero */
 					/* (always the case it it is not a recall of CASTOR file) */
@@ -772,8 +778,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 #endif
 			} else {
 				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
+				stcp->actual_size += (u_signed64) size;
+				wfp->size_yet_recalled += (u_signed64) size;
 				actual_size_block = stcp->actual_size;
+				goto rfio_stat_continue;
 			}
 		} else {
 			char tmpbuf[21];
@@ -874,7 +884,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 							 "rfio_unlink", rfio_serror());
 		/* Instead of asking immediately for a garbage collector, we give it another immediate try */
 		/* by asking for another filesystem */
-		if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) < 0) {
+		if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0)) < 0) {
 			wqp->status = 0;
 			wqp->clnreq_reqid = upd_reqid;
 			wqp->clnreq_rpfd = rpfd;
@@ -1102,7 +1112,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 									/* No other concurrent migration running : it is meaningful to check */
 									/* if this file can be deleted */
 									time_t thistime = time(NULL);
-									int thisretenp = retenp_on_disk(ifileclass);
+									int thisretenp;
+
+									if ((thisretenp = stcp_found->u1.h.retenp_on_disk) < 0) thisretenp = retenp_on_disk(ifileclass);
 
 									/* Fileclass's retention period on disk larger than current lifetime ? */
 									if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) {
@@ -1112,7 +1124,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 										stglogit(func, STG131, stcp_found->u1.h.xfile, thisretenp, (thistime - stcp_found->a_time));
 										continue_flag = 1;
 									} else {
-										stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp_found->a_time));
+										if (stcp_found->u1.h.retenp_on_disk >= 0) {
+											/* User defined retention period is in action */
+											stglogit (func, STG158, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, stcp_found->u1.h.retenp_on_disk, (int) (thistime - stcp_found->a_time));
+										} else {
+											/* Default fileclass retention period is in action */
+											stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp_found->a_time));
+										}
 									}
 								}
 								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
@@ -1379,7 +1397,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			memcpy(wfp,wfp+1,sizeof(struct waitf));
 		}
 	}
-	if (rc == MNYPARI) wqp->status = rc;
+	if ((rc == MNYPARI) || (rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)) wqp->status = rc;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
@@ -1462,5 +1480,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Tuesday 07 August, 2001 at 09:23:08 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 12 September, 2001 at 23:17:18 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
