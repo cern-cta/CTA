@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.96 2001/03/03 06:19:26 jdurand Exp $
+ * $Id: poolmgr.c,v 1.97 2001/03/03 06:56:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.96 $ $Date: 2001/03/03 06:19:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.97 $ $Date: 2001/03/03 06:56:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1492,6 +1492,9 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   struct pool *sav_pools;
   extern int migr_init;
   struct stgcat_entry *stcp;
+  struct waitq *wqp = NULL;
+  struct waitf *wfp;
+  extern struct waitq *waitqp;
 
   /* save the current configuration */
   strcpy (sav_defpoolname, defpoolname);
@@ -1567,6 +1570,20 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       if (stcp->reqid == 0) break;
       if (ISSTAGEOUT(stcp) || ISSTAGEOUT(stcp)) {
         rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
+      }
+    }
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+      if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
+        wfp = wqp->wf;
+        for (stcp = stcs; stcp < stce; stcp++) {
+          if (stcp->reqid == 0) break;
+          if (stcp->reqid == wfp->subreqid) {
+            if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+              rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
+            }
+            break;
+          }
+        }
       }
     }
   }
