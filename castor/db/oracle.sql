@@ -410,6 +410,23 @@ BEGIN
   WHERE id = fs;
 END;
 
+/* PL/SQL method implementing updateFileSystemForJob */
+CREATE OR REPLACE PROCEDURE updateFileSystemForJob
+(fs IN VARCHAR2, ds IN VARCHAR2,
+ fileSize IN NUMBER) AS
+  fsID NUMBER;
+  dsId NUMBER;
+  dev NUMBER;
+BEGIN
+  SELECT FileSystem.id, FileSystem.fsDeviation,
+         DiskServer.id INTO fsId, dev, dsId
+    FROM FileSystem, DiskServer
+   WHERE FileSystem.diskServer = DiskServer.id
+     AND FileSystem.mountPoint = fs
+     AND DiskServer.name = ds;
+  updateFsFileOpened(dsId, fsId, dev, fileSize);
+END;
+
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,

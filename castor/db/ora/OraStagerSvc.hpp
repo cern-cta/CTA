@@ -590,6 +590,23 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Updates a filesystem state (e.g : weight,
+         * fsdeviation) to take into account the opening of
+         * a new job.
+         * @param fileSystem the file system mount point
+         * @param diskServer the name of the diskserver
+         * where the filesystem resides
+         * @param fileSize the (supposed) size of the file
+         * to be written by the job
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void updateFileSystemForJob
+        (std::string fileSystem,
+         std::string diskServer,
+         u_signed64 fileSize)
+          throw (castor::exception::Exception);
+
+        /**
          * List files to be deleted on a given diskServer.
          * These are the files corresponding to DiskCopies
          * in GCCANDIDATE status. This status is changed
@@ -834,6 +851,12 @@ namespace castor {
 
         /// SQL statement object for function bestFileSystemForJob
         oracle::occi::Statement *m_bestFileSystemForJobStatement;
+
+        /// SQL statement for function updateFileSystemForJob
+        static const std::string s_updateFileSystemForJobStatementString;
+
+        /// SQL statement object for function updateFileSystemForJob
+        oracle::occi::Statement *m_updateFileSystemForJobStatement;
 
         /// SQL statement for function segmentsForTape
         static const std::string s_segmentsForTapeStatementString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.45 $ $Release$ $Date: 2005/02/09 17:05:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.46 $ $Release$ $Date: 2005/02/11 10:30:23 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -585,6 +585,23 @@ namespace castor {
        u_signed64 minFree,
        std::string* mountPoint,
        std::string* diskServer)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Updates a filesystem state (e.g : weight,
+       * fsdeviation) to take into account the opening of
+       * a new job.
+       * @param fileSystem the file system mount point
+       * @param diskServer the name of the diskserver
+       * where the filesystem resides
+       * @param fileSize the (supposed) size of the file
+       * to be written by the job
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void updateFileSystemForJob
+      (std::string fileSystem,
+       std::string diskServer,
+       u_signed64 fileSize)
         throw (castor::exception::Exception) = 0;
 
       /**

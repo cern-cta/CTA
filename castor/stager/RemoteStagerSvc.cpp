@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/09 17:05:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/11 10:30:23 $ $Author: sponcec3 $
  *
  *
  *
@@ -617,6 +617,20 @@ void castor::stager::RemoteStagerSvc::bestFileSystemForJob
   throw ex;
 }
 
+// -----------------------------------------------------------------------
+// updateFileSystemForJob
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::updateFileSystemForJob
+(std::string fileSystem,
+ std::string diskServer,
+ u_signed64 fileSize)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
 
 // -----------------------------------------------------------------------
 // getRemoteStagerClientTimeout

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.128 $ $Release$ $Date: 2005/02/09 17:05:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.129 $ $Release$ $Date: 2005/02/11 10:30:22 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -189,6 +189,10 @@ const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForJobStatementString =
   "BEGIN bestFileSystemForJob(:1, :2, :3, :4, :5); END;";
 
+/// SQL statement for updateFileSystemForJob
+const std::string castor::db::ora::OraStagerSvc::s_updateFileSystemForJobStatementString =
+  "BEGIN updateFileSystemForJob(:1, :2, :3); END;";
+
 /// SQL statement for segmentsForTape
 const std::string castor::db::ora::OraStagerSvc::s_segmentsForTapeStatementString =
   "BEGIN segmentsForTape(:1, :2); END;";
@@ -249,6 +253,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_prepareForMigrationStatement(0),
   m_resetStreamStatement(0),
   m_bestFileSystemForJobStatement(0),
+  m_updateFileSystemForJobStatement(0),
   m_segmentsForTapeStatement(0),
   m_anySegmentsForTapeStatement(0),
   m_selectFiles2DeleteStatement(0),
@@ -313,6 +318,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_prepareForMigrationStatement);
     deleteStatement(m_resetStreamStatement);
     deleteStatement(m_bestFileSystemForJobStatement);
+    deleteStatement(m_updateFileSystemForJobStatement);
     deleteStatement(m_segmentsForTapeStatement);
     deleteStatement(m_anySegmentsForTapeStatement);
     deleteStatement(m_selectFiles2DeleteStatement);
@@ -349,6 +355,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_prepareForMigrationStatement = 0;
   m_resetStreamStatement = 0;
   m_bestFileSystemForJobStatement = 0;
+  m_updateFileSystemForJobStatement = 0;
   m_segmentsForTapeStatement = 0;
   m_anySegmentsForTapeStatement = 0;
   m_selectFiles2DeleteStatement = 0;
@@ -2188,6 +2195,42 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestFileSystemForJob."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// updateFileSystemForJob
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::updateFileSystemForJob
+(std::string fileSystem,
+ std::string diskServer,
+ u_signed64 fileSize)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_updateFileSystemForJobStatement) {
+      m_updateFileSystemForJobStatement =
+        createStatement(s_updateFileSystemForJobStatementString);
+      m_updateFileSystemForJobStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_updateFileSystemForJobStatement->setString(1, fileSystem);
+    m_updateFileSystemForJobStatement->setString(2, diskServer);
+    m_updateFileSystemForJobStatement->setDouble(3, fileSize);
+    unsigned int nb = m_updateFileSystemForJobStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "updateFileSystemForJob did not do anything.";
+      throw ex;
+    }
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in updateFileSystemForJob."
       << std::endl << e.what();
     throw ex;
   }
