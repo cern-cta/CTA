@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.41 2001/07/12 10:54:28 jdurand Exp $
+ * $Id: stage_api.h,v 1.42 2001/09/18 20:13:31 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -498,6 +498,7 @@ EXTERN_C void DLL_DECL dump_stcp _PROTO((int, struct stgcat_entry *, int (*) _PR
 EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
 EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
 #endif
+EXTERN_C int  DLL_DECL stage_strtoi _PROTO((int *,char *,char **, int));
 
 /* ------------------------------------------- */
 /* Utilities used by the API (stage_usrmsg.c)  */
