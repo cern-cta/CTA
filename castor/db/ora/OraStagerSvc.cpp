@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2004/12/06 17:54:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.78 $ $Release$ $Date: 2004/12/06 18:06:03 $ $Author: bcouturi $
  *
  *
  *
@@ -119,7 +119,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3 :4 :5 :6 :7); END;";
+  "BEGIN putStart(:1, :2, :3, :4, :5, :6, :7); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
