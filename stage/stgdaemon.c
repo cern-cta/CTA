@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.103 2001/02/12 08:12:33 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.104 2001/02/12 08:32:48 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.103 $ $Date: 2001/02/12 08:12:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.104 $ $Date: 2001/02/12 08:32:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2345,7 +2345,7 @@ int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
 	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2];
-	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
+	char arg_key[6], arg_nbsubreqs[5], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	char arg_api_flag[2];
 	int c, i;
 	static int pfd[2];
