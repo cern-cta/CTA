@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.5 2005/02/11 17:28:19 jdurand Exp $
+; $Id: castor.clp,v 1.6 2005/02/18 09:00:41 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -639,7 +639,7 @@
 		(type STRING)		; Is a string
 	)
 	(multislot filesystemFactor	; Filesystem factor
-		(default ?NONE)		; No default
+		(default 1.)		; No default
 		(visibility public)	; Any instance can see that slot
 		(pattern-match reactive); Changes triggers pattern-matching
 		(type FLOAT)		; Is a float
@@ -685,7 +685,7 @@
 		(type FLOAT)		; Is an integer
 	)
 	(multislot filesystemReadFactor	; Read Rate correcting factor
-		(default ?NONE)		; No default
+		(default 1.)		; No default
 		(visibility public)	; Any instance can see that slot
 		(pattern-match reactive); Changes triggers pattern-matching
 		(type FLOAT)		; Is a float
@@ -702,7 +702,7 @@
 		(type FLOAT)		; Is an integer
 	)
 	(multislot filesystemWriteFactor	; Write Rate correcting factor
-		(default ?NONE)		; No default
+		(default 1.)		; No default
 		(visibility public)	; Any instance can see that slot
 		(pattern-match reactive); Changes triggers pattern-matching
 		(type FLOAT)		; Is a float
