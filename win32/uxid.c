@@ -1,5 +1,5 @@
 /*
- * $Id: uxid.c,v 1.4 2000/09/21 16:03:33 jdurand Exp $
+ * $Id: uxid.c,v 1.5 2000/11/21 08:27:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.4 $ $Date: 2000/09/21 16:03:33 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.5 $ $Date: 2000/11/21 08:27:32 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -37,6 +37,8 @@ static int gr_key = 0;
 static int group_members_key = 0;
 static int nb_group_members_key = 0;
 static int pw_key = 0;
+static int grbuf_key = 0;
+static int pwbuf_key = 0;
 
 char * DLL_DECL
 cuserid(bufp)
@@ -75,7 +77,7 @@ struct group * DLL_DECL
 fillgrpent(buf)
 char *buf;
 {
-	char *dp;
+	char *dp, *grbuf;
 	struct group *gr;
 	char ***group_members;
 	int n;
@@ -115,10 +117,31 @@ char *buf;
         return(NULL);
       }
     }
+    if (Cthread_getspecific(&grbuf_key,(void **) &grbuf) != 0) {
+      return(NULL);
+	}
+    if (grbuf == NULL) {
+      if ((grbuf = (char *) malloc(strlen(buf) + 1)) == NULL) {
+        return(NULL);
+	  }
+      if (Cthread_setspecific(&grbuf_key,grbuf) != 0) {
+        return(NULL);
+	  }
+	} else if (strlen(grbuf) < strlen(buf)) {
+      /* We need to extend the buffer */
+	  char *dummy;
+	  if ((dummy = (char *) realloc(grbuf, strlen(buf) + 1)) == NULL) {
+        return(NULL);
+	  }
+      if (Cthread_setspecific(&grbuf_key,grbuf) != 0) {
+        return(NULL);
+	  }
+	}
 
 	*(buf + strlen(buf) - 1) = '\0';
-	gr->gr_name = buf;
-	if ((p = strchr (buf, ':')) == NULL) return (NULL);
+	strcpy(grbuf,buf);
+	gr->gr_name = grbuf;
+	if ((p = strchr (grbuf, ':')) == NULL) return (NULL);
 	*p = '\0';
 	gr->gr_passwd = ++p;
 	if ((p = strchr (p, ':')) == NULL) return (NULL);
@@ -159,7 +182,7 @@ struct passwd * DLL_DECL
 fillpwent(buf)
 char *buf;
 {
-	char *dp;
+	char *dp, *pwbuf;
 	char *p, *q;
 	struct passwd *pw;
 
@@ -175,8 +198,30 @@ char *buf;
       }
     }
 
-	pw->pw_name = buf;
-	if ((p = strchr (buf, ':')) == NULL) return (NULL);
+    if (Cthread_getspecific(&pwbuf_key,(void **) &pwbuf) != 0) {
+      return(NULL);
+	}
+    if (pwbuf == NULL) {
+      if ((pwbuf = (char *) calloc(1,strlen(buf) + 1)) == NULL) {
+        return(NULL);
+	  }
+      if (Cthread_setspecific(&pwbuf_key,pwbuf) != 0) {
+        return(NULL);
+	  }
+	} else if (strlen(pwbuf) < strlen(buf)) {
+      /* We need to extend the buffer */
+	  char *dummy;
+	  if ((dummy = (char *) realloc(pwbuf, strlen(buf) + 1)) == NULL) {
+        return(NULL);
+	  }
+      if (Cthread_setspecific(&pwbuf_key,pwbuf) != 0) {
+        return(NULL);
+	  }
+	}
+
+    strcpy(pwbuf,buf);
+	pw->pw_name = pwbuf;
+	if ((p = strchr (pwbuf, ':')) == NULL) return (NULL);
 	*p = '\0';
 	pw->pw_passwd = ++p;
 	if ((p = strchr (p, ':')) == NULL) return (NULL);
