@@ -4,16 +4,20 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvadd.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupvadd.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:21:34 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "Cupv_api.h"
+#include  "Cupv.h"
 
 #define CUPVMODIFYNAME "Cupvmodify"
 
@@ -21,6 +25,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
+
   int c;
   int errflg = 0;
   char *dp;
@@ -41,6 +46,10 @@ char **argv;
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
   int priv = -1;
+  #if defined(_WIN32)
+    WSADATA wsadata;
+  #endif
+
   src[0]=0;
   tgt[0]=0;
   usr[0] = 0;
@@ -125,12 +134,25 @@ char **argv;
     }
   }
 
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, CUP52);
+    exit (SYERR);
+  }
+#endif
+
   /* Adding a line */
   if (Cupv_add (uid, gid, src, tgt, priv) < 0) {
     fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
+    #if defined(_WIN32)
+      WSACleanup();
+    #endif
     exit (USERR);
   }
   
+  #if defined(_WIN32)
+    WSACleanup();
+  #endif
   exit (0);
 }
 
