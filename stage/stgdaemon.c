@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.176 2002/02/27 16:02:00 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.177 2002/03/04 11:16:09 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.176 $ $Date: 2002/02/27 16:02:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.177 $ $Date: 2002/03/04 11:16:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1610,6 +1610,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
+			sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return (SYERR);
@@ -1651,6 +1652,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
+			sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return (SYERR);
@@ -2398,7 +2400,13 @@ void checkwaitq()
 				}
 				wqp->save_nbsubreqid = wqp->nbdskf;
 			}
-			fork_exec_stager (wqp); /* If this fails it will be retried at next loop */
+			if (fork_exec_stager (wqp) != 0) {
+				/* If this fails it will be retried at next loop */
+				/* wqp->nretry is automatically updated only when a forked */
+				/* process exits. In this case we are even not able to */
+				/* execute fork_exec_stager ... */
+				wqp->nretry++;
+			}
 			wqp = wqp->next;
 		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
 							 (! *(wqp->waiting_pool) ||	/* has been freed or */
@@ -3062,6 +3070,9 @@ int fork_exec_stager(wqp)
 #ifdef __INSURE__
 		remove(tmpfile);
 #endif
+		/* Close the fds opened by the pipe */
+		close (pfd[0]);
+		close (pfd[1]);
 		wqp->ovl_pid = sav_ovl_pid;
 		return (SYERR);
 	} else if (pid == 0) {	/* we are in the child */
@@ -3499,7 +3510,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (strcmp (upath, stcp->ipath)) continue;
-				if ((req_type == STAGEUPDC) && (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+				if (((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) && (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
 				found = 1;
 				break;
 			}
@@ -3509,12 +3520,12 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 		stcp = forced_stcp;
 	}
 	if (found == 0 ||
-			(req_type == STAGEUPDC &&
+			(((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) &&
 			 (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) ||
-			(req_type == STAGEPUT &&
+			((req_type == STAGEPUT) &&
 			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
 		sendrep (rpfd, MSG_ERR, STG22);
-		return (USERR);
+		return ((req_type > STAGE_00) ? EINVAL : USERR);
 	}
 	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		u_signed64 actual_size_block;
@@ -3536,7 +3547,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 	}
 	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;
-	} else if (req_type == STAGEUPDC) {
+	} else if ((req_type == STAGEUPDC) || (req_type == STAGE_UPDC)) {
 		if (ISSTAGEOUT(stcp) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
@@ -3546,7 +3557,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
-				return(CLEARED);
+				return((req_type > STAGE_00) ? ESTCLEARED : CLEARED);
 			} else {
 				if (stcp->t_or_d == 'h') {
 					int thisrc;
@@ -3554,13 +3565,17 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 					struct Cns_filestat Cnsfilestat;
 
 					/* This is a CASTOR HSM file */
-					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed,&yetdone_Cns_statx_flag,&Cnsfilestat)) != 0) return(thisrc);
+					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed,&yetdone_Cns_statx_flag,&Cnsfilestat)) != 0) {
+						return(thisrc);
+					}
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
 						done_a_time = 1;
 						stcp->a_time = time(NULL);
-						update_migpool(&stcp,1,0);
+						if ((thisrc = update_migpool(&stcp,1,0)) != 0) {
+							return((req_type > STAGE_00) ? serrno : USERR);
+						}
 					}
 				}
 			}
