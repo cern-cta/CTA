@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit_term.c,v 1.7 2001/03/09 10:58:27 jdurand Exp $
+ * $Id: stglogit_term.c,v 1.8 2001/12/13 17:52:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.7 $ $Date: 2001/03/09 10:58:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.8 $ $Date: 2001/12/13 17:52:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.7 $ $Date
 #include <string.h>
 #include <time.h>
 #include <varargs.h>
-#include "stage.h"
+#include "stage_constants.h"
 extern int reqid;
 
 int stglogit(va_alist) va_dcl
