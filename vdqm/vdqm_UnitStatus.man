@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.17 $ $Date: 2000/08/09 09:56:34 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.18 $ $Date: 2000/08/09 16:08:05 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS 3 "$Date: 2000/08/09 09:56:34 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_UNITSTATUS 3 "$Date: 2000/08/09 16:08:05 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -83,7 +83,7 @@ declared. Thus,
 .B vdqm_UnitStatus
 is the only VDQM API call needed by the process responsible for the server/unit
 although it is recommended to use
-.B vdqm_DelUnit(3)
+.B vdqm_DelDrive(3)
 if the server/unit is permanently removed from service.
 .SS "Unit status flags"
 The unit status flags are defined as follows:
@@ -343,5 +343,5 @@ to VDQM server maintenance. Client should retry after a short delay.
 .SH SEE ALSO
 .BR vdqm_Connect(3) ,
 .BR vdqm_Disconnect(3) , 
-.BR vdqm_SendVolReq(3)
-
+.BR vdqm_SendVolReq(3) ,
+.BR vdqm_DelDrive(3)
