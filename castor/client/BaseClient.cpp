@@ -136,7 +136,9 @@ void castor::client::BaseClient::sendRequest
       }
     }
     req->setMachine(hostname);
-    m_rhHost = hostname;
+    if (m_rhHost == "") {
+      m_rhHost = hostname;
+    }
     free(hostname);
   }
   // create a socket for the callback
