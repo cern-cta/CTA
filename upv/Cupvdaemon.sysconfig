@@ -1,7 +1,7 @@
 #
-# $Id: Cupvdaemon.sysconfig,v 1.1 2004/08/06 14:52:43 motiakov Exp $
+# $Id: Cupvdaemon.sysconfig,v 1.2 2004/08/12 16:34:10 motiakov Exp $
 #
-# @(#)$RCSfile: Cupvdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:52:43 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: Cupvdaemon.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:34:10 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should Cupvdaemon run?
 # any string but "yes" will equivalent to "NO"
@@ -14,6 +14,7 @@ RUN_CUPVDAEMON="yes"
 
 if [ -f /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security CENTRAL
+	export SECURE_CASTOR=1
         export CSEC_TRACE=1
         export CSEC_TRACEFILE=/usr/spool/upv/cupv_trace
 fi
