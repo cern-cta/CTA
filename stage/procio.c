@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.166 2002/03/04 10:08:16 jdurand Exp $
+ * $Id: procio.c,v 1.167 2002/03/05 14:18:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.166 $ $Date: 2002/03/04 10:08:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.167 $ $Date: 2002/03/05 14:18:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1082,6 +1082,21 @@ void procioreq(req_type, magic, req_data, clienthost)
 		nargs = nstcp_input + nstpp_input;
 		Coptind = nstcp_input;
 		if (concat_off != 0 && stcp_input[0].u1.t.fseq[0] != '\0') fseq = stcp_input[0].u1.t.fseq;
+	}
+
+	if ((req_type == STAGEWRT) && (stgreq.t_or_d == 't')) {
+		char *thisfseq = (fseq != NULL) ? fseq : stcp_input[0].u1.t.fseq;
+		/* Note: if fseq != NULL this is command-line, otherise this is API */
+		if (thisfseq[0] == 'n') {
+			/* Note: if *(thisfseq+1) == '\0', atoi() would return 0 */
+			int nwant = thisfseq[1] != '\0' ? atoi(thisfseq+1) : 1;
+			/* We require exactly nwant disk files */
+			if ((nargs - Coptind) != nwant) {
+				sendrep (rpfd, MSG_ERR, STG19);
+				c = USERR;
+				goto reply;
+			}
+		}
 	}
 
 #ifdef STAGER_SIDE_SERVER_SUPPORT
