@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/31 15:37:18 $ $Author: bcouturi $
  *
  * 
  *
@@ -80,16 +80,12 @@ extern "C" {
   // Creplier_RequestReplier_setCallback
   //---------------------------------------------------------------------------
   int Creplier_RequestReplier_setCallback(struct Creplier_RequestReplier_t *rr,
-					  void (*callback)(struct C_IClient_t *client,
-							   int status)) {
+					  void (*callback)(castor::IClient *client,
+							   castor::replier::MajorConnectionStatus)) {
    
-    void (*cpp_callback)(castor::IClient *, castor::replier::MajorConnectionStatus);
-
-    cpp_callback = (void (*) (castor::IClient *, castor::replier::MajorConnectionStatus)) callback;
-
     if (!checkRequestReplier(rr)) return -1;
     try {
-      rr->rr->setCallback(cpp_callback);
+      rr->rr->setCallback(callback);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       rr->errorMsg = e.getMessage().str();
