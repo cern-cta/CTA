@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.21 2002/04/11 10:13:12 jdurand Exp $
+ * $Id: sendrep.c,v 1.22 2002/04/30 13:01:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.21 $ $Date: 2002/04/11 10:13:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.22 $ $Date: 2002/04/30 13:01:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,11 +35,12 @@ extern int stglogit _PROTO(());
 
 int sendrep(va_alist) va_dcl
 {
+#define PROTOBUG 2 /* BUG IN THE PROTOCOL when t_or_d == 'm' , for STGMAGIC <= 2 : need more space */
 	va_list args;
 	char *file1, *file2;
 	struct stgcat_entry *stcp;
-	char api_stcp_out[3 * LONGSIZE + sizeof(struct stgcat_entry)]; /* We overestimate a bit this buffer length (gaps + strings) */
-	char stcp_marshalled[sizeof(struct stgcat_entry)];
+	char api_stcp_out[3 * LONGSIZE + PROTOBUG * sizeof(struct stgcat_entry)]; /* We overestimate a bit this buffer length (gaps + strings) */
+	char stcp_marshalled[PROTOBUG * sizeof(struct stgcat_entry)];
 	int  api_stcp_out_status = 0;
 	char api_stpp_out[3 * LONGSIZE + sizeof(struct stgpath_entry)];
 	char *func_sendrep = "sendrep";
@@ -136,6 +137,9 @@ int sendrep(va_alist) va_dcl
 		if (magic <= STGMAGIC2) {
 			/* We know that this client do not fully support error codes */
 			rc = rc_castor2shift(rc);
+		} else if ((magic == STGMAGIC3) && (rc == SENAMETOOLONG)) {
+			/* Known pb with clients using STGMAGIC3 */
+			rc = EINVAL;
 		}
 		marshall_LONG (sav_rbp_magic, magic);
 		marshall_LONG (rbp, rc);
