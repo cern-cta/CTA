@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:55:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.3 $ $Date: 1999/10/13 14:37:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	chkdirw - extract directory name from full pathname
@@ -14,7 +14,11 @@ static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.2 $ $Date: 1999
  *		0	if writable
  */
 #include <errno.h>
+#if defined(_WIN32)
+#define W_OK 2
+#else
 #include <unistd.h>
+#endif
 chkdirw(path)
 char *path;
 {
