@@ -241,6 +241,7 @@
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
+#define UseLsfVersion	6
 #define UseExpert		YES
 #define UseMaui			YES
 
