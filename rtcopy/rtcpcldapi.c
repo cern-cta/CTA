@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/02 16:26:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/03 10:59:41 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.32 $ $Date: 2004/08/02 16:26:09 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.33 $ $Date: 2004/08/03 10:59:41 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1132,6 +1132,8 @@ static int getUpdates(
                                           segmIterator->segment,
                                           &file->filereq.castorSegAttr.segmCksum
                                           );
+                /* Allow client to add more requests to keep the stream running */
+                callGetMoreInfo = 1;
               case SEGMENT_COPYRUNNING:
                 if ( segmNewStatus == SEGMENT_COPYRUNNING ) {
                   file->filereq.proc_status = RTCP_POSITIONED;
