@@ -153,8 +153,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
     clog() << DEBUG << "Created new Oracle connection : "
-           << std::ios::hex << m_connection
-           << std::ios::dec << std::endl;
+           << m_connection << std::endl;
     //oracle::occi::Statement* stmt = m_connection->createStatement
     //  ("alter session set events '10046 trace name context forever, level 8'");
     //stmt->executeUpdate();
