@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.8 2002/04/30 13:10:42 jdurand Exp $
+ * $Id: stager_tape.c,v 1.9 2002/05/26 07:17:22 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.8 $ $Date: 2002/04/30 13:10:42 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.9 $ $Date: 2002/05/26 07:17:22 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -712,7 +712,7 @@ int stage_tape() {
 		}
 
 		SAVE_EID;
-		if (rtcpcreqs[0]->tapereq.vid > 0) {
+		if (rtcpcreqs[0]->tapereq.side > 0) {
 			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc", sstrerror(save_serrno));
 		} else {
 			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
