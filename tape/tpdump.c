@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.25 $ $Date: 2001/07/30 11:54:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.26 $ $Date: 2002/04/08 09:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -14,11 +14,10 @@ static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.25 $ $Date: 2001
 #include <sys/types.h>
 #include <signal.h>
 #include <varargs.h>
+#include "Cgetopt.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-extern	int	optind;
-extern	char	*optarg;
 int Ctape_kill_needed;
 char *dvrname;
 char infil[CA_MAXPATHLEN+1];
@@ -61,20 +60,27 @@ char	**argv;
 	int fromblock = -1;
 	int fromfile = -1;
 	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
+	static struct Coptions longopts[] = {
+		{"side", REQUIRED_ARGUMENT, 0, TPOPT_SIDE},
+		{0, 0, 0, 0}
+	};
 	int maxblksize = -1;
 	int maxbyte = -1;
 	int maxfile = -1;
 	char *p;
+	int side = 0;
 	char *tempnam();
 	int toblock = -1;
 	static char vid[CA_MAXVIDLEN+1] = "";
 	static char vsn[CA_MAXVSNLEN+1] = "";
 
-	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:q:S:T:V:v:")) != EOF) {
+	Copterr = 1;
+	Coptind = 1;
+	while ((c = Cgetopt_long (argc, argv, "B:b:C:d:E:F:g:N:q:S:T:V:v:", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'B':
 			if (maxbyte < 0) {
-				maxbyte = strtol (optarg, &dp, 10);
+				maxbyte = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					fprintf (stderr, TP006, "-B");
 					errflg++;
@@ -86,7 +92,7 @@ char	**argv;
 			break;
 		case 'b':
 			if (maxblksize < 0) {
-				maxblksize = strtol (optarg, &dp, 10);
+				maxblksize = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					fprintf (stderr, TP006, "-b");
 					errflg++;
@@ -98,9 +104,9 @@ char	**argv;
 			break;
 		case 'C':
 			if (code == 0) {
-				if (strcmp (optarg, "ascii") == 0)
+				if (strcmp (Coptarg, "ascii") == 0)
 					code = DMP_ASC;
-				else if( strcmp (optarg, "ebcdic") == 0) {
+				else if( strcmp (Coptarg, "ebcdic") == 0) {
 					code = DMP_EBC;
 				} else {
 					fprintf (stderr, TP006, "-C");
@@ -113,8 +119,8 @@ char	**argv;
 			break;
 		case 'd':
 			if (aden[0] == '\0') {
-				if (strlen (optarg) <= CA_MAXDENLEN) {
-					strcpy (aden, optarg);
+				if (strlen (Coptarg) <= CA_MAXDENLEN) {
+					strcpy (aden, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-d");
 					errflg++;
@@ -125,7 +131,7 @@ char	**argv;
 			}
 			break;
 		case 'E':
-			if (strcmp (optarg, "ignoreeoi") == 0)
+			if (strcmp (Coptarg, "ignoreeoi") == 0)
 				flags |= IGNOREEOI;
 			else {
 				fprintf (stderr, TP006, "-E");
@@ -134,7 +140,7 @@ char	**argv;
 			break;
 		case 'F':
 			if (maxfile < 0) {
-				maxfile = strtol (optarg, &dp, 10);
+				maxfile = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					fprintf (stderr, TP006, "-F");
 					errflg++;
@@ -146,8 +152,8 @@ char	**argv;
 			break;
 		case 'g':
 			if (dgn[0] == '\0') {
-				if (strlen (optarg) <= CA_MAXDGNLEN) {
-					strcpy (dgn, optarg);
+				if (strlen (Coptarg) <= CA_MAXDGNLEN) {
+					strcpy (dgn, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-g");
 					errflg++;
@@ -159,15 +165,15 @@ char	**argv;
 			break;
 		case 'N':
 			if (fromblock < 0) {
-				if (p = strchr (optarg, ',')) {
+				if (p = strchr (Coptarg, ',')) {
 					*p++ = '\0';
-					fromblock = strtol (optarg, &dp, 10);
+					fromblock = strtol (Coptarg, &dp, 10);
 					if (*dp != '\0') {
 						fprintf (stderr, TP006, "-N");
 						errflg++;
 					}
 				} else {
-					p = optarg;
+					p = Coptarg;
 					fromblock = 1;
 				}
 				toblock = strtol (p, &dp, 10);
@@ -179,7 +185,7 @@ char	**argv;
 			break;
 		case 'q':
 			if (fromfile < 0) {
-				fromfile = strtol (optarg, &dp, 10);
+				fromfile = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					fprintf (stderr, TP006, "-q");
 					errflg++;
@@ -193,8 +199,8 @@ char	**argv;
 			break;
 		case 'V':
 			if (vid[0] == '\0') {
-				if (strlen(optarg) <= CA_MAXVIDLEN) {
-					strcpy (vid, optarg);
+				if (strlen(Coptarg) <= CA_MAXVIDLEN) {
+					strcpy (vid, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-V");
 					errflg++;
@@ -206,14 +212,22 @@ char	**argv;
 			break;
 		case 'v':
 			if (vsn[0] == '\0') {
-				if (strlen(optarg) <= CA_MAXVSNLEN) {
-					strcpy (vsn, optarg);
+				if (strlen(Coptarg) <= CA_MAXVSNLEN) {
+					strcpy (vsn, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-v");
 					errflg++;
 				}
 			} else {
 				fprintf (stderr, TP018, "-v");
+				errflg++;
+			}
+			break;
+		case TPOPT_SIDE:
+			if ((side = strtol (Coptarg, &dp, 10)) < 0 ||
+			    *dp != '\0') {
+				fprintf (stderr,
+				    "invalid side number %s\n", Coptarg);
 				errflg++;
 			}
 			break;
@@ -233,6 +247,8 @@ char	**argv;
 
 	if (code == 0) code = DMP_EBC;
 	if (strcmp (dgn, "CT1") == 0) strcpy (dgn, "CART");
+	if (*vid == '\0')
+		strcpy (vid, vsn);
 
 #if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
@@ -243,19 +259,32 @@ char	**argv;
 #endif
 	signal (SIGTERM, cleanup);
 
-	/* Get defaults from TMS (if installed) */
+	if (*dgn == '\0') {
+#if TMS || VMGR
 
+		/* If dgn not specified, get it from VMGR or TMS (if installed) */
+
+#if VMGR
+		if (c = vmgrcheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, 0, 0)) {
 #if TMS
-	if (tmscheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, NULL))
-		exit_prog (USERR);
-#else
-	if (*vsn == '\0')
-		strcpy (vsn, vid);
-	if (*dgn == '\0')
-		strcpy (dgn, DEFDGN);
-	if (strcmp (dgn, "TAPE") == 0 && *aden == '\0')
-		strcpy (aden, "6250");
+			if (c != ETVUNKN)
 #endif
+			{
+				fprintf (stderr, "%s\n", sstrerror(c));
+				exit_prog (USERR);
+			}
+#endif
+#if TMS
+			if (tmscheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, NULL))
+				exit_prog (USERR);
+#endif
+#if VMGR
+		}
+#endif
+#else
+		strcpy (dgn, DEFDGN);
+#endif
+	}
 	strcpy (infil, tempnam (NULL, "tp"));
 
 #if defined(_AIX) && defined(_IBMR2)
@@ -276,7 +305,7 @@ char	**argv;
 	/* mount and position the input tape */
 
 	Ctape_kill_needed = 1;
-	while ((c = Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
+	while ((c = Ctape_mount (infil, vid, side, dgn, aden, NULL, WRITE_DISABLE,
 	    NULL, "blp", 0)) && serrno == ETVBSY)
 		sleep (VOLBSYRI);
 	if (c)
