@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.23 2001/12/04 10:33:23 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.24 2002/01/24 10:44:48 jdurand Exp $
  */
 
 /*
@@ -18,13 +18,12 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.23 $ $Date: 2001/12/04 10:33:23 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.24 $ $Date: 2002/01/24 10:44:48 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
 extern int stglogit _PROTO(());
-extern char func[];
 #ifndef USECDB
 u_signed64 local_uniqueid = 0;
 #endif
@@ -141,6 +140,10 @@ int DLL_DECL Stgdb_login(dbfd,file,line)
 		 char *file;
 		 int line;
 {
+
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_login called at %s:%d\n",file,line);
+#endif
 #ifdef USECDB
 	if (Cdb_login(dbfd->username,dbfd->password,&(dbfd->Cdb_sess)) != 0) {
 		return(-1);
@@ -155,6 +158,10 @@ int DLL_DECL Stgdb_logout(dbfd,file,line)
 		 char *file;
 		 int line;
 {
+
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_logout called at %s:%d\n",file,line);
+#endif
 #ifdef USECDB
 	return(Cdb_logout(&(dbfd->Cdb_sess)));
 #else
@@ -168,6 +175,10 @@ int DLL_DECL Stgdb_open(dbfd,dbname,file,line)
 		 char *file;
 		 int line;
 {
+
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_open called at %s:%d\n",file,line);
+#endif
 #ifdef USECDB
 	if (Cdb_open(&(dbfd->Cdb_sess),dbname,&Cdb_stage_interface,&(dbfd->Cdb_db)) != 0) {
 		return(-1);
@@ -182,6 +193,10 @@ int DLL_DECL Stgdb_close(dbfd,file,line)
 		 char *file;
 		 int line;
 {
+
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_close called at %s:%d\n",file,line);
+#endif
 #ifdef USECDB
 	return(Cdb_close(&(dbfd->Cdb_db)));
 #else
@@ -200,6 +215,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		 char *file;
 		 int line;
 {
+
 #ifdef USECDB
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
@@ -210,8 +226,9 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	struct stgcat_link link;
 	struct stgcat_alloc alloc;
 
-	/* stglogit(func, "In stgdb_load called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_load called at %s:%d\n",file,line);
+#endif
 	PING;
 
 	/* We init the variable */
@@ -622,11 +639,13 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 	struct stgcat_hpss hsm;
 	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
-
+	char tmpbuf[21];
+	
 	PING;
 
-	/* stglogit(func, "In stgdb_upd_stgcat called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_upd_stgcat called at %s:%d\n",file,line);
+#endif
 	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_upd_stgcat",
 						 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -680,7 +699,12 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 		RETURN(-1);
 	}
 
-	switch (stcp->t_or_d) {
+#ifdef STAGER_DEBUG
+	stglogit("stgdb_upd_stgcat",
+			 "Calling Cdb_update on record found at offset 0x%lx\n", (unsigned long) Cdb_offset);
+#endif
+	
+		switch (stcp->t_or_d) {
 	case 't':
 		update_status = Cdb_update(&(dbfd->Cdb_db),"stgcat_tape",
 															 (void *) &tape,&Cdb_offset,&Cdb_offset);
@@ -709,6 +733,11 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 						 __FILE__,__LINE__,(int) stcp->reqid,file,line,sstrerror(serrno));
 	}
 
+#ifdef STAGER_DEBUG
+	stglogit("stgdb_upd_stgcat",
+			 "Cdb_update returns new offset 0x%lx\n", (unsigned long) Cdb_offset);
+#endif
+	
 	switch (stcp->t_or_d) {
 	case 't':
 		if (Cdb_unlock(&(dbfd->Cdb_db),"stgcat_tape",&Cdb_offset) != 0) {
@@ -766,8 +795,10 @@ int DLL_DECL Stgdb_upd_stgpath(dbfd,stpp,file,line)
 
 	PING;
 
-	/* stglogit(func, "In stgdb_upd_stgpath called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_upd_stgpath called at %s:%d\n",file,line);
+#endif
+	
 	if (stpp2Cdb(stpp,&link) != 0) {
 		stglogit("stgdb_upd_stgpath",
 						 "### Warning[%s:%d] : stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -825,8 +856,10 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 
 	PING;
 
-	/* stglogit(func, "In stgdb_del_stgcat called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_del_stgcat called at %s:%d\n",file,line);
+#endif
+	
 	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_del_stgcat",
 				 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -955,8 +988,10 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
 
 	PING;
 
-	/* stglogit(func, "In stgdb_del_stgpath called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_del_stgpath called at %s:%d\n",file,line);
+#endif
+	
 	if (stpp2Cdb(stpp,&link) != 0) {
 		stglogit("stgdb_del_stgpath",
 						 "### Warning[%s:%d] : stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -1002,11 +1037,13 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
 	struct stgcat_hpss hsm;
 	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
-
+	
 	PING;
 
-	/* stglogit(func, "In stgdb_ins_stgcat called at %s:%d\n",file,line); */
-
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_ins_stgcat called at %s:%d\n",file,line);
+#endif
+	
 	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_ins_stgcat",
 						 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -1043,6 +1080,8 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
 						 __FILE__,__LINE__,(int) stcp->reqid,file,line,sstrerror(serrno));
 		RETURN(-1);
 	}
+
+
 #endif
 	return(0);
 }
@@ -1059,6 +1098,10 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
 
 	PING;
 
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_ins_stgpath called at %s:%d\n",file,line);
+#endif
+	
 	if (stpp2Cdb(stpp,&link) != 0) {
 		stglogit("stgdb_ins_stgpath",
 						 "### Warning[%s:%d] : stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
@@ -1086,6 +1129,10 @@ int DLL_DECL Stgdb_uniqueid(dbfd,uniqueid,file,line)
 		 int line;
 {
 #ifdef USECDB
+#ifdef STAGER_DEBUG
+	stglogit("", "In stgdb_uniqueid called at %s:%d\n",file,line);
+#endif
+	
 	/* The trick is to always a generated uniqueid from the SAME table */
 	/* so that we guarantee its uniqueness. */
 	return(Cdb_uniqueid(&(dbfd->Cdb_db),
