@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/02 15:15:22 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/03 07:57:06 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/02 15:15:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/03 07:57:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -337,10 +337,10 @@ int migratorCallbackMoreWork(
     serrno = SEINTERNAL;
     return(-1);
   }
-  *filereq = fl->filereq;
-  filereq->tape_fseq = rtcpcld_getAndIncrementTapeFseq();
+  fl->filereq.tape_fseq = rtcpcld_getAndIncrementTapeFseq();
   diskFseq++;
-  filereq->disk_fseq = diskFseq;
+  fl->filereq.disk_fseq = diskFseq;
+  *filereq = fl->filereq;
   moreWorkDone = 1;
   if ( rtcpcld_unlockTape() == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
