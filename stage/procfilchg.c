@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.20 2002/01/25 13:33:17 jdurand Exp $
+ * $Id: procfilchg.c,v 1.21 2002/01/25 13:58:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.20 $ $Date: 2002/01/25 13:33:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.21 $ $Date: 2002/01/25 13:58:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -291,23 +291,31 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		if (errflg != 0) break;
 	}
 
-	if (thisunit_mintime != ONE_SECOND) {
-		/* We check that --mintime_beforemigr is not out of range */
-		if (thismintime_beforemigr > (INT_MAX / thisunit_mintime)) {
-			sendrep (rpfd, MSG_ERR, STG06, "--mintime_beforemigr (out of range)");
-			errflg++;
-		} else {
-			thismintime_beforemigr *= thisunit_mintime;
+	if (donemintime_beforemigr) {
+		if (thismintime_beforemigr >= 0) {
+			if (thisunit_mintime != ONE_SECOND) {
+				/* We check that --mintime_beforemigr is not out of range */
+				if (thismintime_beforemigr > (INT_MAX / thisunit_mintime)) {
+					sendrep (rpfd, MSG_ERR, STG06, "--mintime_beforemigr (out of range)");
+					errflg++;
+				} else {
+					thismintime_beforemigr *= thisunit_mintime;
+				}
+			}
 		}
 	}
 
-	if (thisunit_retenp != ONE_SECOND) {
-		/* We check that --retenp_on_disk is not out of range */
-		if (thisretenp_on_disk > (INT_MAX / thisunit_retenp)) {
-			sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
-			errflg++;
-		} else {
-			thisretenp_on_disk *= thisunit_retenp;
+	if (doneretenp_on_disk) {
+		if (thisretenp_on_disk >= 0) {
+			if (thisunit_retenp != ONE_SECOND) {
+				/* We check that --retenp_on_disk is not out of range */
+				if (thisretenp_on_disk > (INT_MAX / thisunit_retenp)) {
+					sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
+					errflg++;
+				} else {
+					thisretenp_on_disk *= thisunit_retenp;
+				}
+			}
 		}
 	}
 
@@ -355,11 +363,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			c = USERR;
 			goto reply;
 		}
-		if (! (donemintime_beforemigr || doneretenp_on_disk || donestatus)) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Supply of --mintime_beforemigr, --retenp_on_disk or --status is mandatory\n");
-			c = USERR;
-			goto reply;
-		}
+		c = 0;
 		/* User choosed the 'option' way of using stagechng */
 		for (stcp = stcs; stcp < stce; stcp++) {
 			struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
@@ -625,7 +629,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			c = 0;
 		}
 	} else {
-		sendrep(rpfd, MSG_ERR, "STG02 - Supply of options xor parameters is mandatory\n");
+		sendrep(rpfd, MSG_ERR, "STG02 - Supply of options or parameters is mandatory\n");
 		c = USERR;
 		goto reply;
 	}
