@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.32 $ $Date: 2001/11/07 12:00:48 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.33 $ $Date: 2002/02/11 16:24:26 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -61,12 +61,6 @@ struct iovec {
 #include <rfio.h>
 #endif /* _RFIO_H_INCLUDED_ */
 #endif /* RFIO_KERNEL */
-
-#ifndef HPSS_IFCE
-#define U_SIGNED64_PROTO u_signed64
-#else
-#define U_SIGNED64_PROTO u_signed64_castor
-#endif
 
 /*
  * RFIO library routines. Common internal and external prototypes
@@ -192,7 +186,7 @@ EXTERN_C int DLL_DECL rfio_HsmIf_creat _PROTO((const char *, mode_t));
 EXTERN_C char DLL_DECL *rfio_HsmIf_getcwd _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
 EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t));
-EXTERN_C int DLL_DECL rfio_HsmIf_open_limbysz _PROTO((const char *, int, mode_t, U_SIGNED64_PROTO));
+EXTERN_C int DLL_DECL rfio_HsmIf_open_limbysz _PROTO((const char *, int, mode_t, u_signed64));
 EXTERN_C DIR DLL_DECL *rfio_HsmIf_opendir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_read _PROTO((int, void *, int));
 EXTERN_C struct dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
