@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2004/11/30 11:24:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2004/11/30 16:09:38 $ $Author: sponcec3 $
  *
  *
  *
@@ -62,6 +62,11 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <Cns_api.h>
+#include <vmgr_api.h>
+#include <Ctape_api.h>
+
+#define NS_SEGMENT_NOTOK (' ')
 
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -917,14 +922,53 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
         << "scheduleSubRequest : unable to schedule SubRequest.";
       throw ex;
     }
-    // Create result
+    // Check result
+    u_signed64 id
+      = (u_signed64)m_scheduleSubRequestStatement->getDouble(3);
+    // If no DiskCopy returned, return null
+    if (0 == id) {
+      cnvSvc()->commit();
+      return 0;
+    }
+    // In case a diskcopy was created in WAITTAPERECALL
+    // status, create the associated TapeCopy and Segments
+    unsigned int status =
+      m_scheduleSubRequestStatement->getInt(5);
+    if (status == 99) {
+      // First get the DiskCopy
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setId(id);
+      castor::IObject* iobj = cnvSvc()->createObj(&ad);
+      castor::stager::DiskCopy *dc =
+        dynamic_cast<castor::stager::DiskCopy*>(iobj);
+      if (0 == dc) {
+        rollback();
+        castor::exception::Internal e;
+        e.getMessage() << "Dynamic cast to DiskCopy failed "
+                       << "in scheduleSubRequest";
+        delete iobj;
+        throw e;
+      }
+      // Then get the associated CastorFile
+      cnvSvc()->fillObj(&ad, iobj, castor::OBJ_CastorFile);
+      // create needed TapeCopy(ies) and Segment(s)
+      createTapeCopySegmentsForRecall(dc->castorFile());
+      // Cleanup
+      delete dc->castorFile();
+      delete dc;
+      // commit and return
+      cnvSvc()->commit();
+      return 0;
+    }
+    // Else create a resulting DiskCopy
     castor::stager::DiskCopy* result =
       new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_scheduleSubRequestStatement->getDouble(3));
+    result->setId(id);
     result->setPath(m_scheduleSubRequestStatement->getString(4));
     result->setStatus
-      ((enum castor::stager::DiskCopyStatusCodes)
-       m_scheduleSubRequestStatement->getInt(5));
+      ((enum castor::stager::DiskCopyStatusCodes) status);
     if (result->status() ==
         castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
@@ -943,6 +987,7 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
           status = rs->next();
         }
       } catch (oracle::occi::SQLException e) {
+        rollback();
         if (e.getErrorCode() != 24338) {
           // if not "statement handle not executed"
           // it's really wrong, else, it's normal
@@ -951,6 +996,7 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
       }
     }
     // return
+    cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
     rollback();
@@ -1256,11 +1302,186 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 // -----------------------------------------------------------------------
 // updateRep
 // -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::updateRep(IAddress* address,
-                                              IObject* object)
+void castor::db::ora::OraStagerSvc::updateRep
+(castor::IAddress* address, castor::IObject* object)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
     << "OraStagerSvc implementation does not supported the updateRep method.";
   throw ex;
 }
+
+// -----------------------------------------------------------------------
+// compareSegments
+// -----------------------------------------------------------------------
+// Helper method to compare segments
+extern "C" {
+  int compareSegments
+  (const void* arg1, const void* arg2) {
+    struct Cns_segattrs *segAttr1 = (struct Cns_segattrs *)arg1;
+    struct Cns_segattrs *segAttr2 = (struct Cns_segattrs *)arg2;
+    int rc = 0;
+    if ( segAttr1->fsec < segAttr2->fsec ) rc = -1;
+    if ( segAttr1->fsec > segAttr2->fsec ) rc = 1;
+    return rc;
+  }
+}
+
+// -----------------------------------------------------------------------
+// validNsSegment
+// -----------------------------------------------------------------------
+int validNsSegment(struct Cns_segattrs *nsSegment) {
+  if ((0 == nsSegment) || (*nsSegment->vid == '\0') ||
+      (nsSegment->s_status != '-')) {
+    return 0;
+  }
+  struct vmgr_tape_info vmgrTapeInfo;
+  int rc = vmgr_querytape(nsSegment->vid,nsSegment->side,&vmgrTapeInfo,0);
+  if (-1 == rc) return 0;
+  if (((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
+      ((vmgrTapeInfo.status & DISABLED) == ARCHIVED) ||
+      ((vmgrTapeInfo.status & DISABLED) == EXPORTED)) {
+    return 0;
+  }
+  return 1;
+}
+
+// -----------------------------------------------------------------------
+// invalidateAllSegmentsForCopy
+// -----------------------------------------------------------------------
+void invalidateAllSegmentsForCopy(int copyNb,
+                                  struct Cns_segattrs * nsSegmentArray,
+                                  int nbNsSegments) {
+  if ((copyNb < 0) || (nbNsSegments <= 0) || (nsSegmentArray == 0)) {
+    return;
+  }
+  for (int i = 0; i < nbNsSegments; i++) {
+    if (nsSegmentArray[i].copyno == copyNb) {
+      nsSegmentArray[i].s_status = NS_SEGMENT_NOTOK;
+    }
+  }
+  return;
+}
+
+// -----------------------------------------------------------------------
+// createTapeCopySegmentsForRecall
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
+(castor::stager::CastorFile *castorFile)
+  throw (castor::exception::Exception) {
+  // check argument
+  if (0 == castorFile) {
+    castor::exception::Internal e;
+    e.getMessage() << "createTapeCopySegmentsForRecall "
+                   << "called with null argument";
+    throw e;
+  }
+  // check nsHost name length
+  if (castorFile->nsHost().length() > CA_MAXHOSTNAMELEN) {
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "createTapeCopySegmentsForRecall "
+                   << "name server host has too long name";
+    throw e;
+  }
+  // Get segments for castorFile
+  struct Cns_fileid fileid;
+  fileid.fileid = castorFile->fileId();
+  strncpy(fileid.server,
+          castorFile->nsHost().c_str(),
+          CA_MAXHOSTNAMELEN);
+  struct Cns_segattrs *nsSegmentAttrs = 0;
+  int nbNsSegments;
+  int rc = Cns_getsegattrs
+    (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
+  if (-1 == rc) {
+    castor::exception::Exception e(serrno);
+    e.getMessage() << "createTapeCopySegmentsForRecall : "
+                   << "Cns_getsegattrs failed";
+    throw e;
+  }
+  // Sort segments
+  qsort((void *)nsSegmentAttrs,
+        (size_t)nbNsSegments,
+        sizeof(struct Cns_segattrs),
+        compareSegments);
+  // Find a valid copy
+  int useCopyNb = -1;
+  for (int i = 0; i < nbNsSegments; i++) {
+    if (validNsSegment(&nsSegmentAttrs[i]) == 0) {
+      invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
+                                   nsSegmentAttrs,
+                                   nbNsSegments);
+      continue;
+    }
+    /*
+     * This segment is valid. Before we can decide to use
+     * it we must check all other segments for the same copy
+     */
+    useCopyNb = nsSegmentAttrs[i].copyno;
+    for (int j = 0; j < nbNsSegments; j++) {
+      if (j == i) continue;
+      if (nsSegmentAttrs[j].copyno != useCopyNb) continue;
+      if (0 == validNsSegment(&nsSegmentAttrs[j])) {
+        // This copy was no good
+        invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
+                                     nsSegmentAttrs,
+                                     nbNsSegments);
+        useCopyNb = -1;
+        break;
+      }
+    }
+  }
+  if (useCopyNb == -1) {
+    // No valid copy found
+    castor::exception::Internal e;
+    e.getMessage() << "createTapeCopySegmentsForRecall : "
+                   << "No valid copy found";
+    throw e;
+  }
+  // DB address
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("OracnvSvc");
+  ad.setCnvSvcType(castor::SVC_ORACNV);
+  // create TapeCopy
+  castor::stager::TapeCopy tapeCopy;
+  tapeCopy.setCopyNb(useCopyNb);
+  tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
+  tapeCopy.setCastorFile(castorFile);
+  castorFile->addTapeCopies(&tapeCopy);
+  cnvSvc()->fillRep(&ad, castorFile,
+                    castor::OBJ_TapeCopy, false);
+  // Go through Segments
+  u_signed64 totalSize = 0;
+  for (int i = 0; i < nbNsSegments; i++) {
+    // create Segment
+    castor::stager::Segment segment;
+    segment.setBlockid(nsSegmentAttrs[i].blockid);
+    segment.setFseq(nsSegmentAttrs[i].fseq);
+    segment.setOffset(totalSize);
+    segment.setStatus(castor::stager::SEGMENT_UNPROCESSED);
+    totalSize += nsSegmentAttrs[i].segsize;
+    // get tape for this segment
+    castor::stager::Tape *tape =
+      selectTape(nsSegmentAttrs[i].vid,
+                 nsSegmentAttrs[i].side,
+                 WRITE_DISABLE);
+    switch (tape->status()) {
+    case castor::stager::TAPE_UNUSED:
+    case castor::stager::TAPE_FINISHED:
+    case castor::stager::TAPE_FAILED:
+    case castor::stager::TAPE_UNKNOWN:
+      tape->setStatus(castor::stager::TAPE_PENDING);
+    }
+    // Link Tape with Segment
+    segment.setTape(tape);
+    tape->addSegments(&segment);
+    // Link Segment with TapeCopy
+    segment.setCopy(&tapeCopy);
+    tapeCopy.addSegments(&segment);
+    // Cleanup
+    delete tape;
+  }
+  // create Segments in DataBase
+  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
+}
+

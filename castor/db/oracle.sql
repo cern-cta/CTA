@@ -361,8 +361,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     WHERE id = srId RETURNING castorFile INTO castorFileId;
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
     VALUES ('', dci, 0, castorFileId, 2); -- status WAITTAPERECALL
-   dci := 0;
-   status := 2; -- WAITTAPERECALL
+   status := 99; -- WAITTAPERECALL, NEWLY CREATED
    close sources;
  ELSE
    FETCH sources INTO dci, unusedPath, status;

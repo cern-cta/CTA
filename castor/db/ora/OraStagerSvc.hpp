@@ -429,7 +429,7 @@ namespace castor {
 
       private:
 
-        /*
+        /**
          * helper method to rollback
          */
         void rollback() {
@@ -440,6 +440,20 @@ namespace castor {
             cnvSvc()->dropConnection();
           }
         }
+
+        /**
+         * creation of TapeCopy(ies) and Segment(s) for
+         * recall of a CastorFile. This methods calls the
+         * name server and vmgr to gather information on
+         * what needs to be recalled. It then creates the
+         * appropriate TapeCopy(ies) and Segment(s) in the
+         * database.
+         * @param castorFile the CastorFile we want to recall
+         * @exception Exception throws an Exception in case of error
+         */
+        void createTapeCopySegmentsForRecall
+        (castor::stager::CastorFile *castorFile)
+          throw (castor::exception::Exception);
 
       private:
 
