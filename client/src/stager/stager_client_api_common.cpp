@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.9 2005/01/24 15:13:52 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.10 2005/01/27 16:36:15 bcouturi Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.9 $ $Date: 2005/01/24 15:13:52 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.10 $ $Date: 2005/01/27 16:36:15 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
 /* System headers */
 /* ============== */
 #include <stdlib.h>
+#include <string.h>
 #include <sstream>
 
 /* ============= */
@@ -22,6 +23,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 /* ============= */
 #include "stager_api.h"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include <serrno.h>
 
 
@@ -151,10 +153,33 @@ FREE_STRUCT_LIST(subrequestquery_resp)
 FREE_STRUCT_LIST(findrequest_resp)
 
 
-
+#define STATUS_NA "NA"
 
 EXTERN_C char *stage_statusName(int statusCode) {
   return (char *)castor::stager::SubRequestStatusCodesStrings[statusCode];
+}
+
+
+EXTERN_C char *stage_requestStatusName(int statusCode) {
+  char *ret = STATUS_NA;
+  if (statusCode >= 0 
+      && statusCode < (sizeof(castor::stager::SubRequestStatusCodesStrings)/
+		       sizeof(castor::stager::SubRequestStatusCodesStrings[0]))) {
+    char *tmp = strchr((char *)(castor::stager::SubRequestStatusCodesStrings[statusCode]), '_');
+    ret = tmp+1;
+  }
+  return ret;
+}
+
+EXTERN_C char *stage_fileStatusName(int statusCode) {
+  char *ret = STATUS_NA;
+  if (statusCode >= 0 
+      && statusCode < (sizeof(castor::stager::DiskCopyStatusCodesStrings)/
+		       sizeof(castor::stager::DiskCopyStatusCodesStrings[0]))) {
+    char *tmp = strchr((char *)castor::stager::DiskCopyStatusCodesStrings[statusCode], '_');
+    ret = tmp+1;
+  }
+  return ret;
 }
 
 
