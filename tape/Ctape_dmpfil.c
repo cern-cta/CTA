@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.16 $ $Date: 2002/04/08 14:50:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.17 $ $Date: 2002/06/25 11:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -134,6 +134,8 @@ int flags;
 	case D60GC:
 	case D100G:
 	case D100GC:
+	case D200G:
+	case D200GC:
 	case DDS:
 	case DDSC:
 		break;
@@ -600,6 +602,10 @@ u_signed64 *Size;
 	} else if (den == D100G || den == D100GC) {
 		perc = tape_used / 1000000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
+			perc);
+	} else if (den == D200G || den == D200GC) {
+		perc = tape_used / 2000000000;
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (200GB) *****\n",
 			perc);
 	} else if (den == DDS || den == DDSC) {
 		perc = tape_used / 40000000;
