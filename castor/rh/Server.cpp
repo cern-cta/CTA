@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/12/13 15:30:52 $ $Author: jdurand $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/13 15:33:48 $ $Author: jdurand $
  *
  *
  *
@@ -40,6 +40,7 @@
 
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/UpdateRepRequest.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -249,7 +250,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
       svcs()->createRep(&ad, req->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_IClient, false);
     }
-    castor::stager::updateRepRequest* urReq =
+    castor::stager::UpdateRepRequest* urReq =
       dynamic_cast<castor::stager::UpdateRepRequest*>(fr);
     if (0 != urReq) {
       svcs()->createRep(&ad, urReq->object(), false);
@@ -257,7 +258,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
       svcs()->createRep(&ad, urReq->address(), false);
       svcs()->fillRep(&ad, urReq, OBJ_IAddress, false);
     }
-    svcs()->commit();
+    svcs()->commit(&ad);
     clog() << "request stored in Oracle, id "
            << fr->id() << std::endl;
   } catch (castor::exception::Exception e) {
