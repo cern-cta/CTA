@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.78 2002/01/30 10:24:39 jdurand Exp $
+ * $Id: procqry.c,v 1.79 2002/02/05 15:26:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.78 $ $Date: 2002/01/30 10:24:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.79 $ $Date: 2002/02/05 15:26:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -79,7 +79,7 @@ extern int sendrep _PROTO(());
 #endif
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
-extern int stglogflags _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
@@ -559,7 +559,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 #endif
 		/* Print the flags */
-		stglogflags("stage_qry",flags);
+		stglogflags("stage_qry",LOGFILE,(u_signed64) flags);
 	} else {
 		Coptind = 1;
 		Copterr = 0;
