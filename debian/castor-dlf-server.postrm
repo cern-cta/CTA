@@ -32,6 +32,7 @@ case "$1" in
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del $servicename
 	rm -f /etc/init.d/$servicename
 	[ -x /usr/sbin/update-rc.d ] && /usr/sbin/update-rc.d -f $servicename remove >/dev/null
+	rm -rf /var/spool/dlf
 	;;
 
        upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
