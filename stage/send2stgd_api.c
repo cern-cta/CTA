@@ -234,6 +234,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	int save_serrno, orig_serrno;
 
 	strcpy (func, "send2stgd");
+	orig_serrno = serrno;
 
     /* We initialize output values */
 	if (nstcp_output != NULL) *nstcp_output = 0;
@@ -307,7 +308,6 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
-	orig_serrno = serrno;
 	serrno = 0;
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
