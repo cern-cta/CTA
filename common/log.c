@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.9 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)log.c,v 1.9 2000/05/31 10:33:53 CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -21,12 +21,12 @@ static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.9 $ $Date: 2000/05/3
 #include <fcntl.h>              /* file control                         */
 #include <time.h>               /* time related definitions             */
 
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
 #include <varargs.h>            /* variable argument list definitions   */
 #else
 #include <stdarg.h>             /* variable argument list definitions   */
 #include <errno.h>              /* standard error numbers & codes       */
-#endif /* IRIX5 || __Lynx__ */
+#endif /* IRIX5 || __Lynx__ || _WIN32 || hpux || SOLARIS || linux */
 #include <log.h>                /* logging options and definitions      */
 #include <Cglobals.h>           /* Thread globals. Get Thread ID.       */
 
@@ -42,7 +42,7 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 
 static int pid;                 /* process identifier                   */
 static int logfd ;              /* logging file descriptor              */
-#if !defined(SOLARIS) && !defined(IRIX5) && !defined(HPUX10) && \
+#if !defined(SOLARIS) && !defined(IRIX5) && !defined(hpux) && \
     !defined(linux) && !defined(AIX42) && !defined(__Lynx__) && \
     !defined(_WIN32)
 extern int syslog();
@@ -54,7 +54,7 @@ extern char *getenv();
 uid_t getpid();
 #endif /* _WIN32 */
 
-void DLL_DECL (*logfunc) _PROTO((int, ...))=(void (*)(int, ...))logit;
+void DLL_DECL (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
 
 /*
  * Opening log file.
@@ -86,9 +86,9 @@ char    *output;                /* output specifier                     */
      * to either syslog or logit.
      */
     if (!strcmp(output,"syslog"))   {
-        logfunc=(void (*) _PROTO((int, ...)))syslog;
+        logfunc=(void (*) _PROTO((int, char *, ...)))syslog;
     } else {
-        logfunc=(void (*) _PROTO((int, ...)))logit;
+        logfunc=(void (*) _PROTO((int, char *, ...)))logit;
         if (strlen(output) == 0) {
             logfd= fileno(stderr) ; /* standard error       */
         } else {
@@ -101,14 +101,13 @@ char    *output;                /* output specifier                     */
  * logit should be called with the following syntax
  * logit(LOG_LEVEL,format[,value,...]) ;
  */
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
 void DLL_DECL logit(va_alist)     va_dcl
 #else
-void DLL_DECL logit(int level, ...)
+void DLL_DECL logit(int level, char *format, ...)
 #endif
 {
     va_list args ;          /* Variable argument list               */
-    char    *format;        /* Format of the log message            */
     time_t  clock;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
     struct tm tmstruc;
@@ -118,17 +117,18 @@ void DLL_DECL logit(int level, ...)
     char    line[BUFSIZ] ;  /* Formatted log message                */
     int     fd;             /* log file descriptor                  */
     int     Tid = 0;        /* Thread ID if MT                      */
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
     int     level;          /* Level of the message                 */
+    char   *format;         /* Level of the message                 */
 
     va_start(args);         /* initialize to beginning of list      */
     level = va_arg(args, int);
+    format = va_arg(args, char *);
 #else
 
-    va_start(args, level);
-#endif /* IRIX5 || __Lynx__ */
+    va_start(args, format);
+#endif /* IRIX5 || __Lynx__ || _WIN32 || hpux || SOLARIS || linux */
     if (loglevel >= level)  {
-        format = va_arg(args, char *);
         (void) time(&clock);
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
         (void)localtime_r(&clock,&tmstruc);
