@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/01 16:31:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -123,7 +123,7 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   if (m_inputFlags.find("A") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()
-      << "-A option is not valid in the stagin command."
+      << "-A option is not valid in the stageout command."
       << std::endl;
     throw e;    
   }
@@ -154,7 +154,7 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   if (m_inputFlags.find("silent") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()
-      << "--silent option is not valid in the stagin command."
+      << "--silent option is not valid in the stageout command."
       << std::endl;
     throw e;    
   }
@@ -162,7 +162,7 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   if (m_inputFlags.find("nowait") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()
-      << "--nowait option is not valid in the stagin command."
+      << "--nowait option is not valid in the stageout command."
       << std::endl;
     throw e;    
   }
@@ -174,7 +174,7 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   if (m_inputFlags.find("rdonly") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()
-      << "--rdonly option is not valid in the stagin command."
+      << "--rdonly option is not valid in the stageout command."
       << std::endl;
     throw e;    
   }
@@ -216,7 +216,7 @@ void castor::client::StageOut::printResult(castor::IObject& result)
 //------------------------------------------------------------------------------
 void castor::client::StageOut::usage(std::string error) throw() {
   std::cout << error << std::endl;
-  std::cout << "usage : stageout [-h stage_host] [-K] [-p pool] [-s size] "
+  std::cout << "usage : stageout [-h rh_host] [-K] [-p pool] [-s size] "
             << "[--noretry] [--nowait] [--silent] [--rdonly]"
             << " hsmfile..." << std::endl;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/01 16:31:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -120,7 +120,7 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   if (m_inputFlags.find("K") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()
-      << "-K option is not valid in the stagin command."
+      << "-K option is not valid in the stagein command."
       << std::endl;
     throw e;    
   }
@@ -214,8 +214,7 @@ void castor::client::StageIn::printResult(castor::IObject& result)
 //------------------------------------------------------------------------------
 void castor::client::StageIn::usage(std::string error) throw() {
   std::cout << error << std::endl;
-  std::cout << "usage : stagein [-A alloc_mode] [-h stage_host] "
-            << "[-p pool] [-s size] "
+  std::cout << "usage : stagein [-A alloc_mode] [-h rh_host] [-p pool] [-s size] "
             << "[--noretry] [--nowait] [--silent] [--rdonly]"
             << " hsmfile..." << std::endl;
 }
