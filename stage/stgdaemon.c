@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.137 2001/06/07 15:16:33 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.138 2001/06/20 13:24:53 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.137 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.138 $ $Date: 2001/06/20 13:24:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -1617,7 +1617,8 @@ void checkpoolstatus()
 						}
 						if (c < 0) {
 							if (wqp->nb_clnreq++ > MAXRETRY) {
-								sendrep (rpfd, MSG_ERR, STG45);
+								sendrep (rpfd, MSG_ERR, STG45,
+										(stcp->poolname[0] != '\0' ? stcp->poolname : "<none>"));
 								wqp->status = ENOSPC;
 							} else {
 								strcpy (wqp->waiting_pool, stcp->poolname);
