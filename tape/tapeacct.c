@@ -4,11 +4,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.1 $ $Date: 1999/09/21 05:17:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.2 $ $Date: 1999/10/22 09:42:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>
+#include "osdep.h"
 #include "sacct.h"
 
 tapeacct(subtype, uid, gid, jid, dgn, drive, vid, fseq, reason)
@@ -27,7 +28,7 @@ int reason;
 	char *p;
 
 	if ((p = getconfent("ACCT", "TAPE", 0)) == NULL ||
-	    (strcmp (p, "YES") && strcmp (p, "yes"))) return;
+	    (strcmp (p, "YES") && strcmp (p, "yes"))) return (0);
 	memset ((char *) &accttape, 0, sizeof(struct accttape));
 	accttape.subtype = subtype;
 	accttape.uid = uid;
@@ -40,4 +41,5 @@ int reason;
 	accttape.reason = reason;
 
 	wsacct (ACCTTAPE, &accttape, sizeof(struct accttape));
+	return (0);
 }
