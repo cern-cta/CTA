@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.191 2002/04/11 10:05:19 jdurand Exp $
+ * $Id: poolmgr.c,v 1.192 2002/04/12 06:41:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.191 $ $Date: 2002/04/11 10:05:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.192 $ $Date: 2002/04/12 06:41:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3644,6 +3644,10 @@ int migpoolfiles(pool_p)
 								   (serrno == EINVAL)     ||
 								   (serrno == ESTKILLED)  ||
 								   (serrno == ESTCLEARED) ||
+								   (serrno == SESYSERR)   ||
+								   (serrno == EACCES)     ||
+								   (serrno == EPERM)      ||
+								   (serrno == EAGAIN)     ||
 								   (serrno == EBUSY)      ||
 								   ISTAPESERRNO(serrno)   ||
 								   ISVDQMSERRNO(serrno)
