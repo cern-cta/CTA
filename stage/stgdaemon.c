@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.100 2001/02/10 18:42:14 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.101 2001/02/10 20:55:47 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.100 $ $Date: 2001/02/10 18:42:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.101 $ $Date: 2001/02/10 20:55:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 200000
@@ -2032,7 +2032,7 @@ void checkwaitq()
 							(wqp->status == REQKILD) ? KILLED : STG_FAILED);
 					break;
 				case STAGEWRT:
-					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
+					if (stcp->t_or_d == 'h') {
 						/* This is a file coming from migration */
 						if (HAVE_SENSIBLE_STCP(stcp)) {
 							struct stgcat_entry *stcp_search, *stcp_found;
@@ -2056,7 +2056,7 @@ void checkwaitq()
 								stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 							} else {
 								update_migpool(stcp,-1,0);
-								stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway beingmigr counters\n");
+								stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
 							}
 						}
 					}
