@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.6 $ $Date: 2000/12/05 09:29:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.7 $ $Date: 2001/06/21 10:30:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2000/12/05 09:29:51 $"
+.TH STAGECLR l "$Date: 2001/06/21 10:30:02 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -98,7 +98,7 @@ This minimum may be specified thru the option
 .BR \-m .
 .TP
 .BI \-F
-Forces request to be deleted - admin user only
+Forces request to be deleted - admin user only except when used with with -M option, for which deletion in the HSM is forced and done under requestor uid/gid.
 .TP
 .BI \-h " host"
 Sends the request to the stager on
@@ -172,3 +172,5 @@ Multiple vids will be separated by colons.
 2	System error.
 .br
 4	Configuration error.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
