@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.1 $ $Date: 1999/12/16 06:53:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 10:52:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.1 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *manufacturer, char *sn, char *TapePoolName)
+vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname)
 {
 	int c;
 	char func[15];
@@ -82,6 +82,16 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, "al");
 	}
+	if (model) {
+		marshall_STRING (sbp, model);
+	} else {
+		marshall_STRING (sbp, "");
+	}
+	if (media_letter) {
+		marshall_STRING (sbp, media_letter);
+	} else {
+		marshall_STRING (sbp, "");
+	}
 	if (manufacturer) {
 		marshall_STRING (sbp, manufacturer);
 	} else {
@@ -92,8 +102,8 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, "");
 	}
-	if (TapePoolName) {
-		marshall_STRING (sbp, TapePoolName);
+	if (poolname) {
+		marshall_STRING (sbp, poolname);
 	} else {
 		marshall_STRING (sbp, "");
 	}

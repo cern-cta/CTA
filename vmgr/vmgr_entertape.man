@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 07:44:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.2 $ $Date: 1999/12/17 10:52:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE l "$Date: 1999/12/17 07:44:54 $"
+.TH VMGR_ENTERTAPE l "$Date: 1999/12/17 10:52:33 $"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -15,9 +15,11 @@ vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .BI "char *" dgn ,
 .BI "char *" density ,
 .BI "char *" lbltype ,
+.BI "char *" model ,
+.BI "char *" media_letter ,
 .BI "char *" manufacturer ,
 .BI "char *" sn ,
-.BI "char *" TapePoolName )
+.BI "char *" poolname )
 .SH DESCRIPTION
 .B vmgr_entertape
 enters a new tape in the CASTOR Volume Manager.
