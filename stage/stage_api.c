@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.46 2002/05/06 17:17:17 jdurand Exp $
+ * $Id: stage_api.c,v 1.47 2002/05/09 17:40:03 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -42,7 +42,7 @@ static int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
 EXTERN_C int DLL_DECL sysreq _PROTO((char *, char *, int *, char *, int *));
 #endif
 #if VMGR
-char vmgr_error_buffer[512];        /* Vmgr error buffer */
+static char vmgr_error_buffer[512];        /* Vmgr error buffer */
 static int stage_api_vmgrcheck _PROTO((char *, char *, char *, char *, char *, int));
 #endif
 

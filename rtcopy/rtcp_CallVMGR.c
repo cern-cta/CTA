@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.2 $ $Date: 2002/05/07 10:50:15 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.3 $ $Date: 2002/05/09 17:40:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -39,7 +39,7 @@ extern gid_t getgid();
 #define LOWERCASE(X) {char *__c; \
     for (__c=X; *__c != '\0'; __c++) *__c=tolower(*__c); } 
 
-char vmgr_error_buffer[512];        /* Vmgr error buffer */
+static char vmgr_error_buffer[512];        /* Vmgr error buffer */
 
 int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     int rc = 0;
