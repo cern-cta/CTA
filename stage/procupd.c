@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.16 2000/05/02 11:57:06 jdurand Exp $
+ * $Id: procupd.c,v 1.17 2000/05/08 10:54:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.16 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.17 $ $Date: 2000/05/08 10:54:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -244,7 +244,7 @@ procupdreq(req_data, clienthost)
 				stcp->status |= WAITING_SPC;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				strcpy (wqp->waiting_pool, stcp->poolname);
@@ -266,7 +266,7 @@ procupdreq(req_data, clienthost)
 		if (has_been_modified != 0) {
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 		}
@@ -289,7 +289,7 @@ procupdreq(req_data, clienthost)
 			stcp->actual_size = st.st_size;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 		}
@@ -319,7 +319,7 @@ procupdreq(req_data, clienthost)
 			stcp->status |= LAST_TPFILE;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 			break;
@@ -363,7 +363,7 @@ procupdreq(req_data, clienthost)
 		wqp->status = rc;
 		if (rc != ENOSPC) goto reply;
 		if (*stcp->poolname == '\0' ||
-				stcp->status == STAGEWRT || stcp->status == STAGEPUT ||
+				stcp->status == STAGEWRT || ((stcp->status & 0xF) == STAGEPUT) ||
 				wqp->nb_clnreq++ > MAXRETRY) {
 			c = ENOSPC;
 			goto reply;
@@ -377,7 +377,7 @@ procupdreq(req_data, clienthost)
 		stcp->status |= WAITING_SPC;
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 		}
 #endif
 		strcpy (wqp->waiting_pool, stcp->poolname);
@@ -418,7 +418,7 @@ procupdreq(req_data, clienthost)
 		if (has_been_updated != 0) {
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 		}
@@ -426,7 +426,7 @@ procupdreq(req_data, clienthost)
 	wqp->nb_subreqs--;
 	wqp->nbdskf--;
 	rpfd = wqp->rpfd;
-	if (stcp->status == STAGEWRT || stcp->status == STAGEPUT) {
+	if (stcp->status == STAGEWRT || ((stcp->status & 0xF) == STAGEPUT)) {
 		n = 1;
 		if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
 			n += wqp->nbdskf;
@@ -440,21 +440,23 @@ procupdreq(req_data, clienthost)
 			if (! stcp->keep && stcp->nbaccesses <= 1) {
 				if (stcp->status == STAGEWRT && stcp->poolname[0] == '\0')
 					delreq (stcp,0);
-				else if (delfile (stcp, 0, 1, 1, "stagewrt ok", uid, gid, 0) < 0) {
+				else if (delfile (stcp, 0, 1, 1, stcp->status == STAGEWRT ? "stagewrt ok" : (((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok"), uid, gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
+					if (stcp->status & CAN_BE_MIGR == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 					stcp->status |= STAGED;
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
 				}
 			} else {
+				if (stcp->status & CAN_BE_MIGR == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 				stcp->status |= STAGED;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 			}
@@ -469,7 +471,7 @@ procupdreq(req_data, clienthost)
 			stcp->status |= STAGED_LSZ;
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 		}
 #endif
 		if (wqp->copytape)
