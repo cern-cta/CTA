@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.1 $ $Date: 2000/01/27 14:08:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.2 $ $Date: 2000/01/28 16:41:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -229,12 +229,13 @@ vmgr_dbrec_addr *rec_addr;
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
 		 NBFILES, STATUS
-		FROM
-			(SELECT *
+		FROM vmgr_tape_info
+		WHERE estimated_free_space =
+			(SELECT min(estimated_free_space)
 			FROM vmgr_tape_info
 			WHERE poolname = :poolname AND status = 0 AND
 			 estimated_free_space >= :reqsize)
-		WHERE ROWNUM < 2
+		AND ROWNUM < 2
 		FOR UPDATE;
 
 	strcpy (func, "vmgr_get_tape_by_size");
