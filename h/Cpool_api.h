@@ -1,8 +1,8 @@
 /*
- * $Id: Cpool_api.h,v 1.4 1999/10/20 19:07:45 jdurand Exp $
+ * Cpool_api.h,v 1.4 1999-10-20 21:07:45+02 jdurand Exp
  *
- * $Log: Cpool_api.h,v $
- * Revision 1.4  1999/10/20 19:07:45  jdurand
+ * Cpool_api.h,v
+ * Revision 1.4  1999-10-20 21:07:45+02  jdurand
  * Removed the unnecessary <osdep.h> header inclusion
  *
  * Revision 1.3  1999/10/14 12:04:28  jdurand
@@ -41,7 +41,8 @@ EXTERN_C void DLL_DECL *Cpool_realloc _PROTO((char *, int, void *, size_t));
 #endif /* _WIN32 */
 EXTERN_C int  DLL_DECL  Cpool_create _PROTO((int, int *));
 EXTERN_C int  DLL_DECL  Cpool_assign _PROTO((int, void *(*)(void *), void *, int));
-EXTERN_C int  DLL_DECL  Cpool_next_index _PROTO((int));
+#define Cpool_next_index(poolnb) Cpool_next_index_timeout(poolnb,-1)
+EXTERN_C int  DLL_DECL  Cpool_next_index_timeout _PROTO((int, int));
 
 #endif /* __cpool_api_h */
 
