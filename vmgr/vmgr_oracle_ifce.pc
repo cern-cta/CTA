@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.9 $ $Date: 2000/03/06 12:39:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.10 $ $Date: 2000/03/06 15:24:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,6 +43,25 @@ vmgr_closedb(dbfd)
 struct vmgr_dbfd *dbfd;
 {
 	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+	return (0);
+}
+
+vmgr_delete_denmap_entry(dbfd, rec_addr)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[25];
+	char rowid_value[19];
+
+	strcpy (func, "vmgr_delete_denmap_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL DELETE FROM vmgr_denmap_info WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
 	return (0);
 }
 
@@ -109,6 +128,60 @@ struct vmgr_dbfd *dbfd;
 	EXEC SQL COMMIT WORK;
 	dbfd->tr_started = 0;
 	return (0);
+}
+
+vmgr_get_denmap_entry(dbfd, model, media_letter, density, denmap_entry, lock, rec_addr)
+struct vmgr_dbfd *dbfd;
+char *model;
+char *media_letter;
+char *density;
+struct vmgr_tape_denmap *denmap_entry;
+int lock;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[22];
+	char rowid_value[19];
+	EXEC SQL DECLARE denmap_cursor CURSOR FOR
+		SELECT
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		FROM vmgr_tape_denmap
+		WHERE md_model = :model AND md_media_letter = :media_letter AND
+		 md_density = :density;
+	EXEC SQL DECLARE denmap_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		FROM vmgr_tape_denmap
+		WHERE md_model = :model AND md_media_letter = :media_letter AND
+		 md_density = :density
+		FOR UPDATE;
+
+	strcpy (func, "vmgr_get_denmap_entry");
+	if (lock) {
+		EXEC SQL OPEN denmap_cursor4upd;
+		EXEC SQL FETCH denmap_cursor4upd INTO
+		 :rowid_value,
+		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density;
+	} else {
+		EXEC SQL OPEN denmap_cursor;
+		EXEC SQL FETCH denmap_cursor INTO
+		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density;
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		return (0);
+	case 1403:
+		serrno = ENOENT;
+		break;
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
 }
 
 vmgr_get_model_entry(dbfd, model, media_letter, model_entry, lock, rec_addr)
@@ -329,6 +402,36 @@ vmgr_dbrec_addr *rec_addr;
 		break;
 	default:
 		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_insert_denmap_entry(dbfd, denmap_entry)
+struct vmgr_dbfd *dbfd;
+struct vmgr_tape_denmap *denmap_entry;
+{
+	char func[25];
+
+	strcpy (func, "vmgr_insert_denmap_entry");
+	EXEC SQL INSERT INTO vmgr_tape_denmap
+		(MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY)
+		VALUES
+		(:denmap_entry->md_model, :denmap_entry->md_media_letter,
+		 :denmap_entry->md_density);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+		serrno = ENOSPC;
+		break;
+	default:
+		vmgrlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 		    sqlca.sqlerrm.sqlerrmc);
 		serrno = SEINTERNAL;
 	}
