@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.43 2002/04/30 12:31:40 jdurand Exp $
+ * $Id: procalloc.c,v 1.44 2002/06/19 06:55:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.43 $ $Date: 2002/04/30 12:31:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.44 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -63,7 +63,7 @@ extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
@@ -201,7 +201,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	stcp->c_time = time(NULL);
 	stcp->a_time = stcp->c_time;
 	stcp->nbaccesses++;
-	if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+	if ((c = build_ipath (upath, stcp, pool_user, 0, 0, (mode_t) 0)) < 0) {
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost,
 								user, stcp->uid, stcp->gid,

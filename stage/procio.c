@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.182 2002/06/13 05:41:21 jdurand Exp $
+ * $Id: procio.c,v 1.183 2002/06/19 06:55:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.182 $ $Date: 2002/06/13 05:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.183 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -219,7 +219,7 @@ extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int savepath _PROTO(());
 extern int savereqs _PROTO(());
@@ -1866,7 +1866,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				strcpy (wfp->upath, upath);
 				strcpy (wqp->pool_user, pool_user);
 				if (! Aflag) {
-					if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+					if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
 						stcp->status |= WAITING_SPC;
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
@@ -2032,7 +2032,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  delreq(stcp,1);
 					  goto reply;
 				  }
-				  if ((c = build_ipath (upath, stcp, pool_user, 1)) != 0) {
+				  if ((c = build_ipath (upath, stcp, pool_user, 1, api_out, (mode_t) openmode)) != 0) {
 					  delreq(stcp,1);
 					  goto reply;
 				  }
@@ -2081,7 +2081,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  strcpy (wfp->upath, upath);
 				  strcpy (wqp->pool_user, pool_user);
 				  if (! Aflag) {
-					  if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+					  if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
 						  stcp->status |= WAITING_SPC;
 						  strcpy (wqp->waiting_pool, stcp->poolname);
 					  } else if (c) {
@@ -2241,7 +2241,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 			STAGE_TIME_END;
 			STAGE_TIME_START("build_ipath");
-			c = build_ipath (upath, stcp, pool_user, 0);
+			c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode);
 			STAGE_TIME_END;
 			if (c < 0) {
 				stcp->status |= WAITING_SPC;

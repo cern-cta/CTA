@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.110 2002/06/13 05:41:22 jdurand Exp $
+ * $Id: procupd.c,v 1.111 2002/06/19 06:55:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.110 $ $Date: 2002/06/13 05:41:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.111 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -78,7 +78,7 @@ extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
@@ -503,7 +503,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					pool_user = STAGERSUPERUSER;
 				if (c == 0) {
 					/* This is how we distinguish from a first pass and a goto */
-					c = build_ipath (NULL, stcp, pool_user, 0);
+					c = build_ipath (NULL, stcp, pool_user, 0, 0, (mode_t) 0);
 				}
 				if (c < 0) {
 					stcp->status |= WAITING_SPC;
@@ -839,7 +839,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
 				}
 			}
-			c = build_ipath (NULL, stcp, wqp->pool_user, 0);
+			c = build_ipath (NULL, stcp, wqp->pool_user, 0, 0, (mode_t) 0);
 			if (has_trailing != 0) {
 				/* We restore the trailing '-' */
 				strcat(stcp->u1.t.fseq,"-");
@@ -1113,7 +1113,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* by asking for another filesystem */
 		if (c == 0) {
 			/* This is how we distinguish from a first pass and a goto */
-			c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
+			c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0, 0, (mode_t) 0);
 		}
 		if (c < 0) {
 			wqp->status = 0;
