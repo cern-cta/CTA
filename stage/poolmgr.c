@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.25 2000/05/30 11:07:23 jdurand Exp $
+ * $Id: poolmgr.c,v 1.26 2000/05/30 11:33:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.25 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.26 $ $Date: 2000/05/30 11:33:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.25 $ $Date: 200
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <netinet/in.h>
 #endif
 #include <errno.h>
 #include "rfio_api.h"
