@@ -123,49 +123,6 @@ void castor::client::BaseClient::parseInput(int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-// getDefaultDescription
-//------------------------------------------------------------------------------
-std::string castor::client::BaseClient::getDefaultDescription()
-  throw (castor::exception::Exception) {
-  struct utsname utsname;
-  if (uname(&utsname) == -1) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to get machine name";
-    throw ex;
-  }
-  uid_t uid = getuid();
-  errno = 0;
-  passwd* pwd = getpwuid(uid);
-  if (pwd == 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to get user name";
-    throw ex;
-  }
-  const time_t stime = time(0);
-  if (stime == -1) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to get time";
-    throw ex;
-  }
-  struct tm *t = localtime(&stime);
-  if (t == 0) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Unable to get local time";
-    throw ex;
-  }
-  std::ostringstream desc;
-  desc << "Request by " << pwd->pw_name
-       << " on " << utsname.nodename
-       << " at " << t->tm_hour
-       << ":" << t->tm_min
-       << ":" << t->tm_sec
-       << " on " << t->tm_mon
-       << "/" << t->tm_mday
-       << "/" << t->tm_year;
-  return desc.str();
-}
-
-//------------------------------------------------------------------------------
 // createClient
 //------------------------------------------------------------------------------
 castor::IClient* castor::client::BaseClient::createClient()

@@ -91,12 +91,6 @@ namespace castor {
       virtual castor::rh::Request* buildRequest() = 0;
 
       /**
-       * builds a default description for a request
-       */
-      std::string getDefaultDescription()
-        throw (castor::exception::Exception);
-
-      /**
        * creates a Client object from the callback socket
        * The caller is responsible for deallocating the
        * new client

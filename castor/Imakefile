@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2004/05/28 08:45:57 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2004/05/28 08:56:54 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -159,8 +159,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
-STAGEIN_OBJ = client/StageIn.Osuf
-MTTEST_OBJ = client/Mttest.Osuf
+STAGEIN_SRCS = client/StageIn.cpp
+STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
+MTTEST_SRCS = client/Mttest.cpp
+MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
 
 PROGS_C = ProgramTargetName(stagein) \
           ProgramTargetName(mttest)
@@ -175,8 +177,8 @@ all: $(COMMONLIB) $(PROGS_C)
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
-NormalProgramTarget(stagein, $(STAGEIN_OBJ),$(GLOBLIB),-lcastorClient -lpthread)
-NormalProgramTarget(mttest, $(MTTEST_OBJ),$(GLOBLIB),-lcastorClient -lpthread)
+NormalProgramTarget(stagein, $(STAGEIN_OBJS),$(GLOBLIB),-lcastorClient -lpthread)
+NormalProgramTarget(mttest, $(MTTEST_OBJS),$(GLOBLIB),-lcastorClient -lpthread)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
@@ -207,7 +209,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend $(INCLUDES) $(STGLIB_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(STGLIB_SRCS) $(STAGEIN_SRCS) $(MTTEST_SRCS) 2> /dev/null
 	for i in $(DEPENDDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \

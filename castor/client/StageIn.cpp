@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 08:56:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -56,7 +56,6 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   // Build request
   castor::rh::StageInRequest* req =
     new castor::rh::StageInRequest();
-  req->setDescription(getDefaultDescription());
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
