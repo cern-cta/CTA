@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2004/08/17 15:17:31 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2004/08/19 08:50:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2004/08/17 15:17:31 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2004/08/19 08:50:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -646,7 +646,6 @@ static int notifyTape(
             }
           }
           serrno = save_serrno;
-          rtcp_log(LOG_DEBUG,"notifyTape(): notified client %s\n",notifyAddr);
           notified[i] = 1;
         } else if ( (notifyAddr != NULL) &&
                     (strcmp(notifyAddr,currentNotifyAddr) == 0) ) {
@@ -1302,7 +1301,7 @@ static int procReqsForVID(
   RtcpcldSegmentList_t *segmIterator = NULL;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
-  char *diskPath, *nsHost;
+  char *diskPath, *nsHost, *fid;
   unsigned char *blockid;
   struct Cns_fileid fileid;
   int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, segmUpdated;
@@ -1366,7 +1365,6 @@ static int procReqsForVID(
     serrno = save_serrno;
     return(-1);
   }
-  rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   if ( nbItems == 0 ) {
     C_IAddress_delete(iAddr);
@@ -1414,6 +1412,7 @@ static int procReqsForVID(
     return(-1);
   }
   Cstager_Tape_delete(dummyTp);
+
   /*
    * END Hack until client can use a createRepNoRec() to add segments
    */
@@ -1504,7 +1503,7 @@ static int procReqsForVID(
                               RTCPCLD_LOG_WHERE
                               );
             }
-            C_Services_rollback(*svcs,iAddr);
+            rc = C_Services_rollback(*svcs,iAddr);
             C_IAddress_delete(iAddr);
             UNLOCKTP;
             serrno = save_serrno;
@@ -1550,8 +1549,19 @@ static int procReqsForVID(
         strcpy(fl->filereq.file_path,".");
         if ( (diskPath != NULL) && (*diskPath != '\0') &&
              (strcmp(diskPath,".") != 0) ) {
-          strcpy(fl->filereq.file_path,diskPath);
+          strncpy(fl->filereq.file_path,
+                  diskPath,
+                  sizeof(fl->filereq.file_path)-1);
         }
+        fid = NULL;
+        Cstager_Segment_fid(
+                            segmArray[i],
+                            (CONST char **)&fid
+                            );
+        if ( fid != NULL ) {
+          strncpy(fl->filereq.fid,fid,sizeof(fl->filereq.fid)-1);
+        }
+
         Cstager_Segment_bytes_in(
                                  segmArray[i],
                                  &(fl->filereq.bytes_in)
@@ -1593,7 +1603,7 @@ static int procReqsForVID(
         ID_TYPE _key = 0;
         Cstager_Segment_id(segmArray[i],&_key);
         iObj = Cstager_Segment_getIObject(segmArray[i]);
-        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,0);
         if ( rc == -1 ) {
           save_serrno = serrno;
           if ( dontLog == 0 ) {
@@ -1618,7 +1628,7 @@ static int procReqsForVID(
                             RTCPCLD_LOG_WHERE
                             );
           }
-          C_Services_rollback(*svcs,iAddr);
+          rc = C_Services_rollback(*svcs,iAddr);
           C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
           UNLOCKTP;
@@ -1631,11 +1641,12 @@ static int procReqsForVID(
   }
 
   /*
-   * BEGIN Hack: always rollback since we haven't modified the Tape.
+   * BEGIN Hack: commit all new segment updates
    */
-  C_Services_rollback(*svcs,iAddr);
+  (void)getStgSvc(&stgsvc);
+  rc = C_Services_commit(*svcs,iAddr);
   /*
-   * END Hack: always rollback since we haven't modified the Tape.
+   * END Hack: commit all new segment updates
    */
   
 /*   if ( updated == 1 ) { */
@@ -1671,12 +1682,10 @@ static int procReqsForVID(
 /*     } */
 /*   } else C_Services_rollback(*svcs,iAddr); */
 
-  UNLOCKTP;
   C_IAddress_delete(iAddr);
+  UNLOCKTP;
   
   if ( segmArray != NULL ) free(segmArray);
-  rtcp_log(LOG_DEBUG,"procReqsForVID() updated=%d, newFileReqs=%d, segmUpdated=%d\n",
-           updated,newFileReqs,segmUpdated);
   if ( (updated == 1) || (incompleteSegments == 1) ) (void)notifyTape(currentTape);
   if ( newFileReqs == 0 ) {
     serrno = EAGAIN;
@@ -1779,7 +1788,6 @@ int rtcpcld_updateVIDStatus(
   struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tapeItem = NULL;
   enum Cstager_TapeStatusCodes_t cmpStatus;  
-  struct Cstager_Tape_t *dummyTp = NULL;
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
   int rc = 0, save_serrno;
 
@@ -1840,47 +1848,6 @@ int rtcpcld_updateVIDStatus(
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
     Cstager_Tape_id(tapeItem,&_key);
-    /*
-     * BEGIN Hack until client can use a createRepNoRec() to add segments
-     */
-    rc = Cstager_IStagerSvc_selectTape(
-                                       stgsvc,
-                                       &dummyTp,
-                                       tape->tapereq.vid,
-                                       tape->tapereq.side,
-                                       tape->tapereq.mode
-                                       );
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+3,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "Cstager_IStagerSvc_selectTape()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);      
-      }
-      C_IAddress_delete(iAddr);
-      UNLOCKTP;
-      serrno = save_serrno;
-      return(-1);
-    }
-    /*
-     * END Hack until client can use a createRepNoRec() to add segments
-     */
     Cstager_Tape_setStatus(tapeItem,toStatus);
     /*
      * Set error info, if TAPE_FAILED status is requested
@@ -1901,18 +1868,6 @@ int rtcpcld_updateVIDStatus(
     
     rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
     save_serrno = serrno;
-    /*
-     * BEGIN Hack: always rollback since we haven't modified the Tape.
-     */
-    if ( dummyTp != NULL ) {
-      C_Services_rollback(*svcs,iAddr);
-      Cstager_Tape_delete(dummyTp);
-      dummyTp = NULL;
-    }
-    serrno = save_serrno;
-    /*
-     * END Hack: always rollback since we haven't modified the Tape.
-     */
     if ( rc == -1 ) {
       save_serrno = serrno;
       C_IAddress_delete(iAddr);
@@ -2229,6 +2184,8 @@ int rtcpcld_updateVIDFileStatus(
         if ( toStatus == SEGMENT_FILECOPIED ) {
           Cstager_Segment_setBlockid(segmItem,
                                      filereq->blockid);
+          Cstager_Segment_setFid(segmItem,
+                                 filereq->fid);
           Cstager_Segment_setBytes_in(segmItem,
                                       filereq->bytes_in);
           Cstager_Segment_setBytes_out(segmItem,
@@ -2337,7 +2294,7 @@ int rtcpcld_setFileStatus(
   Cuuid_t stgUuid;
   char *diskPath;
   unsigned char *blockid = NULL;
-  int rc = 0, save_serrno, fseq;
+  int rc = 0, rcTmp, save_serrno, fseq;
 
   if ( filereq == NULL || 
        *filereq->file_path == '\0' || 
@@ -2352,6 +2309,9 @@ int rtcpcld_setFileStatus(
     UNLOCKTP;
     return(-1);
   }
+
+  svcs = NULL;
+  rc = getDbSvc(&svcs);
 
   if ( rc == 0 || segmItem == NULL ) {
     (void)updateTapeFromDB(NULL);
@@ -2495,6 +2455,10 @@ int rtcpcld_setFileStatus(
                                  segmItem,
                                  filereq->blockid
                                  );
+      Cstager_Segment_setFid(
+                             segmItem,
+                             filereq->fid
+                             );
       Cstager_Segment_setBytes_in(
                                   segmItem,
                                   filereq->bytes_in
@@ -2538,21 +2502,21 @@ int rtcpcld_setFileStatus(
 
     iObj = Cstager_Segment_getIObject(segmItem);
     Cstager_Segment_id(segmItem,&_key);
-    svcs = NULL;
-    rc = getDbSvc(&svcs);
-    if ( rc != -1 && svcs != NULL && *svcs != NULL ) 
-      rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+    if ( rc != -1 && svcs != NULL && *svcs != NULL ) {
+      rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,0);
+      save_serrno = serrno;
+      serrno = save_serrno;
+    }
+    
     save_serrno = serrno;
     /*
-     * BEGIN Hack: always rollback since we haven't modified the Tape.
+     * BEGIN Hack: commit updated segment
      */
-    if ( dummyTp != NULL ) {
-      C_Services_rollback(*svcs,iAddr);
-      Cstager_Tape_delete(dummyTp);
-    }
+    rcTmp = C_Services_commit(*svcs,iAddr);
+    Cstager_Tape_delete(dummyTp);
     serrno = save_serrno;
     /*
-     * END Hack: always rollback since we haven't modified the Tape.
+     * END Hack: commit updated segment
      */
     if ( rc == -1 ) {
       save_serrno = serrno;
