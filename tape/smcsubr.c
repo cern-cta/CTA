@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:29:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.3 $ $Date: 2000/12/20 07:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,6 +14,7 @@ static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.2 $ $Date: 1999
 #include <sys/types.h>
 #include "Ctape.h"
 #include "scsictl.h"
+#include "serrno.h"
 #include "smc.h"
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
@@ -29,10 +30,7 @@ char *msgaddr;
 	smc_msgaddr = msgaddr;
 	smc_status.rc = rc;
 	smc_status.skvalid = 0;
-	if (rc == -1 || rc == -2)
-		smc_status.save_errno = errno;
-	else
-		smc_status.save_errno = EIO;
+	smc_status.save_errno = serrno;
 	if (rc == -4 && nb_sense >= 14) {
 		smc_status.asc = sense[12];
 		smc_status.ascq = sense[13];
