@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.162 2001/12/05 10:03:40 jdurand Exp $
+ * $Id: poolmgr.c,v 1.163 2001/12/07 13:43:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.162 $ $Date: 2001/12/05 10:03:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.163 $ $Date: 2001/12/07 13:43:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -182,6 +182,7 @@ void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
 int mintime_beforemigr _PROTO((int));
+int mintime_beforemigr_vs_pool _PROTO((struct pool *, int));
 void check_delaymig _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
@@ -1955,7 +1956,7 @@ void incr_migpool_counters(stcp,pool_p,immediate,ifileclass,thistime)
   int thismintime_beforemigr;
 
   if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
-    thismintime_beforemigr = mintime_beforemigr(ifileclass);
+    thismintime_beforemigr = mintime_beforemigr_vs_pool(pool_p,ifileclass);
   }
 
   switch (immediate) {
@@ -1966,7 +1967,10 @@ void incr_migpool_counters(stcp,pool_p,immediate,ifileclass,thistime)
     /* We maintain an interval and non-persistent flag so that we remember what action to do at */
     /* next iteration */
     /* Default value for this non-persistent flag is always 0 */
-    if ((stcp->filler[0] == 0) && ((stcp->a_time + thismintime_beforemigr) > thistime)) {
+    /* Please note that if thismintime_beforemigr is high enough the operation */
+    /* stcp->a_time + thismintime_beforemigr will go out of bounds...! */
+    /* That's why we typecase to whole operation into 64bits quantities */
+    if ((stcp->filler[0] == 0) && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime)) {
       /* We udpate global migrator variables (wait mode) */
       pool_p->migr->global_predicates.nbfiles_delaymig++;
       pool_p->migr->global_predicates.space_delaymig += stcp->actual_size;
@@ -1974,7 +1978,7 @@ void incr_migpool_counters(stcp,pool_p,immediate,ifileclass,thistime)
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += stcp->actual_size;
       stcp->filler[0] = 'd'; /* 'd' for 'putted in delayed mode' */
-    } else if ((stcp->filler[0] != 'm') && ((stcp->a_time + thismintime_beforemigr) <= thistime)) {
+    } else if ((stcp->filler[0] != 'm') && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) <= (u_signed64) thistime)) {
       if (stcp->filler[0] == 'd') {
         char tmpbuf[21];
         /* We log the fact that we moved this entry from delayed mode to non-delayed mode */
@@ -2458,10 +2462,12 @@ int insert_in_migpool(stcp)
   }
 
   if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
-    thismintime_beforemigr = mintime_beforemigr(ifileclass);
+    thismintime_beforemigr = mintime_beforemigr_vs_pool(pool_p,ifileclass);
   }
 
-  if ((stcp->a_time + thismintime_beforemigr) > thistime) {
+  /* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
+  /* That's why I typecast everything to u_signed64 */
+  if ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime) {
     pool_p->migr->global_predicates.nbfiles_delaymig++;
     pool_p->migr->global_predicates.space_delaymig += stcp->actual_size;
   } else {
@@ -2473,7 +2479,7 @@ int insert_in_migpool(stcp)
     pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
   }
   if ((ifileclass = upd_fileclass(pool_p,stcp)) >= 0) {
-    if ((stcp->a_time + thismintime_beforemigr) > thistime) {
+    if ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime) {
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += stcp->actual_size;
     } else {
@@ -4276,6 +4282,13 @@ int mintime_beforemigr(ifileclass)
   return(fileclasses[ifileclass].Cnsfileclass.mintime_beforemigr);
 }
 
+int mintime_beforemigr_vs_pool(pool_p,ifileclass)
+     struct pool *pool_p;
+     int ifileclass;
+{
+  return(pool_p->migr->fileclass[ifileclass]->Cnsfileclass.mintime_beforemigr);
+}
+
 void check_delaymig() {
 	time_t thistime = time(NULL);
 	struct stgcat_entry *stcp;
@@ -4315,7 +4328,9 @@ void check_delaymig() {
       if (stcp->status == (STAGEOUT|CAN_BE_MIGR)) {
         if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0)
           thismintime_beforemigr = mintime_beforemigr(ifileclass);
-        if ((stcp->filler[0] != 'm') && (stcp->a_time + thismintime_beforemigr) <= thistime) {
+        /* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
+        /* That's why I typecase everything to u_signed64 */
+        if ((stcp->filler[0] != 'm') && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) <= (u_signed64) thistime)) {
           /* This entry had a mintime_beforemigr and we have reached its latency value */
           update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
         }
