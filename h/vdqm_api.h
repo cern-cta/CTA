@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.3 $ $Date: 1999/09/27 15:49:28 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.4 $ $Date: 1999/11/19 13:59:55 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -41,7 +41,7 @@ EXTERN_C int DLL_DECL vdqm_PingServer(vdqmnw_t *,int);
 EXTERN_C int DLL_DECL vdqm_Connect(vdqmnw_t **);
 EXTERN_C int DLL_DECL vdqm_Disconnect(vdqmnw_t **);
 EXTERN_C int DLL_DECL vdqm_SendVolReq(vdqmnw_t *, int *, char *, char *, char *, char *, int);
-EXTERN_C int DLL_DECL vdqm_UnitStatus(vdqmnw_t *, char *, char *, char *, char *, int *, int *);
+EXTERN_C int DLL_DECL vdqm_UnitStatus(vdqmnw_t *, char *, char *, char *, char *, int *, int *, int);
 EXTERN_C int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *, int, char *, char *, char *, char *, int);
 EXTERN_C int DLL_DECL vdqm_DelDrive(vdqmnw_t *, char *, char *, char *);
 EXTERN_C int DLL_DECL vdqm_GetClientAddr(char *, char *, int *, int *, int *, int *, char *, char *);
