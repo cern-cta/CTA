@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.6 $ $Date: 2000/01/09 17:42:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 06:46:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.6 $ $Date: 2000
  *		3	for blank tape
  */
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #include "serrno.h"
