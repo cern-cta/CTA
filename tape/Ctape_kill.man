@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_kill.man,v $ $Revision: 1.3 $ $Date: 1999/09/11 05:45:10 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_kill.man,v $ $Revision: 1.4 $ $Date: 2000/02/03 10:44:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_KILL l "$Date: 1999/09/11 05:45:10 $"
+.TH CTAPE_KILL 3 "$Date: 2000/02/03 10:44:36 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_kill \- cancel a running Ctape_mount or Ctape_position request.
 .SH SYNOPSIS

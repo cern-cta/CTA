@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.1 $ $Date: 1999/11/05 11:03:04 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 10:44:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH DUMPTAPE l "$Date: 1999/11/05 11:03:04 $"
+.TH DUMPTAPE 1 "$Date: 2000/02/03 10:44:43 $" CASTOR "Ctape User Commands"
 .SH NAME
 dumptape \- dump a tape and analyze its contents
 .SH SYNOPSIS

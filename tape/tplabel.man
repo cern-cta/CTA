@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.1 $ $Date: 1999/12/23 08:51:12 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1996 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 10:44:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL l "$Date: 1999/12/23 08:51:12 $"
+.TH TPLABEL 1 "$Date: 2000/02/03 10:44:45 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS

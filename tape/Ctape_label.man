@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.4 $ $Date: 1999/12/23 08:29:24 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.5 $ $Date: 2000/02/03 10:44:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL l "$Date: 1999/12/23 08:29:24 $"
+.TH CTAPE_LABEL 3 "$Date: 2000/02/03 10:44:37 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written

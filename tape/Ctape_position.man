@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.6 $ $Date: 1999/11/26 15:54:50 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.7 $ $Date: 2000/02/03 10:44:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "$Date: 1999/11/26 15:54:50 $"
+.TH CTAPE_POSITION 3 "$Date: 2000/02/03 10:44:38 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked

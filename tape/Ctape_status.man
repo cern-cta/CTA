@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.4 $ $Date: 1999/10/21 06:30:12 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.5 $ $Date: 2000/02/03 10:44:42 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_STATUS l "$Date: 1999/10/21 06:30:12 $"
+.TH CTAPE_STATUS 3 "$Date: 2000/02/03 10:44:42 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_status \- get the status of all tape drives
 .SH SYNOPSIS
@@ -27,7 +27,7 @@ gives the number of elements in the array of structures
 allocated by the calling program to receive the reply.
 .PP
 .nf
-.cs R 18
+.ft CW
 struct drv_status {             /* tape status reply entry */
         uid_t   uid;
         int     jid;            /* process-group-id */
@@ -43,7 +43,7 @@ struct drv_status {             /* tape status reply entry */
         char    vsn[CA_MAXVIDLEN+1];
         int     cfseq;          /* current file sequence number */
 };
-.cs R
+.ft
 .fi
 .SH RETURN VALUE
 This routine returns the number of entries if the operation was successful
