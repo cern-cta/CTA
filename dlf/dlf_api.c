@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.3 $ $Date: 2003/10/31 13:34:38 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.4 $ $Date: 2003/10/31 19:44:38 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -114,7 +114,7 @@ const char *fac_name;
 	else {
 			port = DLF_PORT;
 	}
-        if ((p = getenv ("DLF_HOST")) || (p = getconfent ("DLF", "HOST")))
+        if ((p = getenv ("DLF_HOST")) || (p = getconfent ("DLF", "HOST", 0)))
 			strncpy (dlfhost, p, CA_MAXHOSTNAMELEN);
 	else
 #if defined(DLF_HOST)
