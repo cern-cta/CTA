@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/01 15:40:02 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2004/06/01 16:31:28 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -165,15 +165,18 @@ STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
 STAGEIN_SRCS = client/StageIn.cpp
 STAGEOUT_SRCS = client/StageOut.cpp
+STAGEUPDC_SRCS = client/StageUpdc.cpp
 MTTEST_SRCS = client/Mttest.cpp
-CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(MTTEST_SRCS)
+CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(MTTEST_SRCS)
 STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
 STAGEOUT_OBJS = $(STAGEOUT_SRCS:.cpp=.Osuf)
+STAGEUPDC_OBJS = $(STAGEUPDC_SRCS:.cpp=.Osuf)
 MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
 CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
 
 PROGS_C = ProgramTargetName(stagein) \
           ProgramTargetName(stageout) \
+          ProgramTargetName(stageupdc) \
           ProgramTargetName(mttest)
 
 COMMONLIB = LibraryTargetName(castorClient) SharedLibraryTargetName(castorClient)
@@ -186,9 +189,10 @@ all: $(COMMONLIB) $(PROGS_C)
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
-NormalProgramTarget(stagein,  $(STAGEIN_OBJS), $(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(stageout, $(STAGEOUT_OBJS),$(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(mttest,   $(MTTEST_OBJS),  $(GLOBLIB),-lcastorClient -lpthread)
+NormalProgramTarget(stagein,  $(STAGEIN_OBJS),  $(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(mttest,   $(MTTEST_OBJS),   $(GLOBLIB),-lcastorClient -lpthread)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
