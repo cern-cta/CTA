@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.12 2000/03/23 02:21:50 jdurand Exp $
+ * $Id: stager.c,v 1.13 2000/03/23 11:38:41 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 #define SKIP_FILEREQ_MAXSIZE
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.12 $ $Date: 2000/03/23 02:21:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.13 $ $Date: 2000/03/23 11:38:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1269,10 +1269,12 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				fseq_elem *fseq_list = NULL;
 				int stcp_nbtpf = 0;
 				int stcp_inbtpf = 0;
+				struct stgcat_entry save_stcp;
 
 				n = -1;
 
 				/* We compute the number of tape files */
+                save_stcp = *stcp;
 				switch (stcp->u1.t.fseq[0]) {
 				case 'n':
 				case 'u':
@@ -1311,32 +1313,33 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 							*(p - 1) = ',';
 					}
 				}
+				*stcp = save_stcp;
 				nbfiles = (nbcat_ent > nbtpf) ? nbcat_ent : nbtpf;
 				if ((fl = (file_list_t *) calloc (nbfiles, sizeof(file_list_t))) == NULL) {
 					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
 					serrno = SEINTERNAL;
 					return(-1);
 				}
-								/* We makes sure it is a circular list and correctly initialized */
-								for (j = 0; j < nbfiles; j++) {
-									switch (j) {
-									case 0:
-										fl[j].prev = &(fl[nbfiles - 1]);
-										fl[j].next = &(fl[nbfiles > 1 ? j + 1 : 0]);
-										break;
-									default:
-										if (j == nbfiles - 1) {
-											fl[j].prev = &(fl[j - 1]); /* Nota : we are there only if nbfiles > 1 */
-											fl[j].next = &(fl[0]);
-										} else {
-											fl[j].prev = &(fl[j-1]);
-											fl[j].next = &(fl[j+1]);
-										}
-										break;
-									}
-									/* Set sensible variables */
-									STAGER_FILEREQ_INIT(fl[j].filereq);
-								}
+				/* We makes sure it is a circular list and correctly initialized */
+				for (j = 0; j < nbfiles; j++) {
+					switch (j) {
+					case 0:
+						fl[j].prev = &(fl[nbfiles - 1]);
+						fl[j].next = &(fl[nbfiles > 1 ? j + 1 : 0]);
+						break;
+					default:
+						if (j == nbfiles - 1) {
+							fl[j].prev = &(fl[j - 1]); /* Nota : we are there only if nbfiles > 1 */
+							fl[j].next = &(fl[0]);
+						} else {
+							fl[j].prev = &(fl[j-1]);
+							fl[j].next = &(fl[j+1]);
+						}
+						break;
+					}
+					/* Set sensible variables */
+					STAGER_FILEREQ_INIT(fl[j].filereq);
+				}
 
 				(*rtcpcreqs_in)[0]->file = fl;
 				last_disk_fseq = 0;
@@ -1431,7 +1434,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						break;
 					}
 					if (trailing2 == '-') {
-						if (nbcat_ent < nbtpf) {
+						if (nbcat_ent >= nbtpf) {
 							fl[j].filereq.concat = CONCAT_TO_EOD;
 						} else {
 							fl[j].filereq.concat = NOCONCAT_TO_EOD;
