@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.3 $ $Date: 1999/11/25 12:42:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.4 $ $Date: 1999/11/25 13:48:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -98,7 +98,7 @@ char *vol1, *hdr1, *hdr2;
 				}
 				n = 30000;	/* arbitrary large count */
 			}
-			tplogit (func, "trying to skip over %d files", n);
+			tplogit (func, "trying to skip over %d files\n", n);
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
 			if (c == 0) {
 				*cfseq = fseq;
@@ -288,7 +288,7 @@ char *vol1, *hdr1, *hdr2;
 				n = (Qfirst - *cfseq - 1) * 3 + 1;
 			else
 				n = 30000;	/* arbitrary large count */
-			tplogit (func, "trying to skip over %d files", n);
+			tplogit (func, "trying to skip over %d files\n", n);
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
 			if (c > 0) {
 				if ((c = skiptpfb (tapefd, path, 2))) goto reply;
