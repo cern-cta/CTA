@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/17 07:55:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/04/01 15:54:02 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/17 07:55:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/04/01 15:54:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,9 @@ typedef struct rtcpcld_RequestList {
 rtcpcld_RequestList_t *requestList = NULL;
 
 static int port = -1;
+static pid_t tapeErrorHandlerPid = 0;
 
+static void startTapeErrorHandler _PROTO((void));
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
 extern int Cinitdaemon _PROTO((char *, void (*)(int)));
 extern int Cinitservice _PROTO((char *, void (*)(int)));
@@ -549,7 +551,10 @@ static void workerFinished(
   return;
 }
 
-static void checkWorkerExit() 
+static void checkWorkerExit(
+                            shutDownFlag
+                            ) 
+     int shutDownFlag;
 {
   int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;
@@ -563,6 +568,10 @@ static void checkWorkerExit()
     } else {
       value = 1;
       stopped = 1;
+    }
+    if ( pid == tapeErrorHandlerPid ) {
+      tapeErrorHandlerPid = 0;
+      continue;
     }
     rc = getTapeRequestItem(
                             -1,        /* VolReqID */
@@ -634,9 +643,15 @@ static void checkWorkerExit()
           (void)rtcpcld_setVIDFailedStatus(item->tape);
         }
       }
+      /*
+       * In all cases where 
+       */
       CLIST_DELETE(requestList,item);
       (void)rtcpcld_cleanupTape(item->tape);
       free(item);
+    }
+    if ( (shutDownFlag == 0) && (value != 0) ) {
+      startTapeErrorHandler();
     }
   }
   return;
@@ -676,6 +691,15 @@ static void shutdownService(
      int signo;
 {
   rtcpcld_RequestList_t *iterator = NULL;
+  (void)dlf_write(
+                  mainUuid,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_SHUTDOWN),
+                  (struct Cns_fileid *)NULL,
+                  1,
+                  "SIGNAL",
+                  DLF_MSG_PARAM_INT,
+                  signo
+                  );
   (void)blockChild(1);
   CLIST_ITERATE_BEGIN(requestList,iterator) {
     if ( iterator->pid > 0 ) {
@@ -684,8 +708,117 @@ static void shutdownService(
   } CLIST_ITERATE_END(requestList,iterator);
   sleep(1);
   (void)blockChild(0);
-  (void)checkWorkerExit();
+  (void)checkWorkerExit(1);
   exit(0);
+  return;
+}
+
+static void startTapeErrorHandler() 
+{
+  char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
+  char **argv = NULL;
+  int argc, c, maxfds, i;
+  pid_t pid;
+  
+  /*
+   * Never run more than one at a time
+   */
+  if ( tapeErrorHandlerPid > 0 ) return;
+
+  pid = fork();
+  if ( pid > 0 ) {
+    /*
+     * Parent
+     */
+    tapeErrorHandlerPid = pid;
+  } else if ( pid == 0 ) {
+    /*
+     * Child
+     */
+    sprintf(cmd,"%s/%s",BIN,TAPEERRORHANDLER_CMD);
+#ifndef _WIN32
+#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+    maxfds = getdtablesize();
+#else
+    maxfds = _NFILE;
+#endif
+    for (c=0; c<maxfds; c++) close(c);
+    argc = 2; /* One extra for the terminating NULL element */
+    argv = (char **)calloc(argc,sizeof(char *));
+    if ( argv == NULL ) {
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "calloc()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      strerror(errno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      return;
+    }
+    argv[0] = cmd;
+    argv[1] = NULL;
+    c = 0;
+    *cmdline = '\0';
+    for (i=0; (i<CA_MAXLINELEN) && (c<argc);) {
+      if ( argv[c] != NULL ) {
+        strcat(cmdline,argv[c]);
+        strcat(cmdline," ");
+      }
+      c++;
+      i = strlen(cmdline)+1;
+    }
+    (void)dlf_write(
+                    mainUuid,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_EXECCMD),
+                    (struct Cns_fileid *)NULL,
+                    1,
+                    "COMMAND",
+                    DLF_MSG_PARAM_STR,
+                    cmdline
+                    );
+    execv(cmd,argv);
+    /*
+     * If we got here something went very wrong
+     */
+    (void)dlf_write(
+                    mainUuid,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "execv()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    strerror(errno),
+                    RTCPCLD_LOG_WHERE
+                    );
+    exit(SYERR);
+#endif /* _WIN32 */    
+  } else {
+    /*
+     * fork() failed
+     */
+    (void)dlf_write(
+                    mainUuid,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL", 
+                    DLF_MSG_PARAM_STR, 
+                    "fork()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    strerror(errno),
+                    RTCPCLD_LOG_WHERE
+                    );
+  }
   return;
 }
 
@@ -882,6 +1015,7 @@ int rtcpcld_main(
      struct main_args *main_args;
 {
   int rc, pid, maxfd, cnt, i, len, save_errno;
+  int timeout_secs = RTCPCLD_CATPOLL_TIMEOUT;
   fd_set rd_set, wr_set, ex_set, rd_setcp, wr_setcp, ex_setcp;
   struct sockaddr_in sin ; /* Internet address */ 
   struct timeval timeout, timeout_cp;
@@ -892,6 +1026,7 @@ int rtcpcld_main(
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
   struct sigaction saOther;
+  char *p = NULL;
 
   /* Initializing the C++ log */
   /* Necessary at start of program and after any fork */
@@ -941,7 +1076,7 @@ int rtcpcld_main(
   if ( rc == SOCKET_ERROR ) {
     (void)dlf_write(
                     mainUuid,
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INITNW),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -972,12 +1107,16 @@ int rtcpcld_main(
     return(1);
   }
 
+  if ( (p = getconfent("rtcpcld","TIMEOUT",0)) != NULL ) {
+    timeout_secs = atoi(p);
+  }
+
   FD_ZERO(&rd_set);
   FD_ZERO(&wr_set);
   FD_ZERO(&ex_set);
   FD_SET(*rtcpdSocket,&rd_set);
   FD_SET(*notificationSocket,&rd_set);
-  timeout.tv_sec = RTCPCLD_CATPOLL_TIMEOUT;
+  timeout.tv_sec = timeout_secs;
   timeout.tv_usec = 0;
   timeout_cp.tv_sec = timeout_cp.tv_usec = 0;
   maxfd = 0;
@@ -1017,7 +1156,7 @@ int rtcpcld_main(
     /*
      * Cleanup from finished workers
      */
-    checkWorkerExit();
+    checkWorkerExit(0);
     if ( rc < 0 ) {
       /*
        * Error, probably a child exit. If so, ignore and continue, otherwise
@@ -1210,7 +1349,7 @@ int rtcpcld_main(
                       DLF_MSG_PARAM_STR,
                       sstrerror(serrno),
                       RTCPCLD_LOG_WHERE
-                        );
+                      );
       continue;
     }
     for ( i=0; i<cnt; i++ ) {
