@@ -1,0 +1,368 @@
+.\" @(#)$RCSfile: tpusage.man,v $ $Revision: 1.1 $ $Date: 1999/10/29 04:51:15 $ CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPUSAGE l "$Date: 1999/10/29 04:51:15 $"
+.SH NAME
+tpusage \- give local or global statistics on device group utilisation, number
+of mount requests, physical mounts, time to mount, mounted volume details and
+number of requests in a queue
+.SH SYNOPSIS
+.B tpusage
+[
+.BI -D
+] [
+.BI -e " end_time"
+] [
+.BI -f " accounting_file"
+] [
+.BI -g " device_group"
+] [
+.BI -L
+] [
+.BI -M
+] [
+.BI -m
+] [
+.BI -Q
+] [
+.BI -S " server_name"
+] [
+.BI -s " start_time"
+] [
+.BI -T
+] [
+.BI -V " volume_vid"
+] [
+.BI -v
+] [
+.BI -w " week_number"
+] [
+.BI -Y
+]
+.SH DESCRIPTION
+.B tpusage
+obtains information on device utilisation, number of mounts and requests in a
+queue, time to mount and mounted volume details by reading the
+.B sacct
+accounting file.  This program must be run on a system with an up to date
+.B shift.conf
+file.
+
+Mount requests and actual mount details are given in tabular form by user group
+and device group.  Device utilisation and queue length statistics are given in
+the form of ascii bar graphs by device group.  If device utilisation is
+requested while reading the accounting file from standard input then a graph is
+not printed.  Time to mounts, summary information and details of mounted
+volumes are also given in tabular form.
+
+All of the statistics can be requested in different forms. Information can be
+given globally, ie for all servers and all device groups, or specifically, ie
+for a particular server and / or device group.
+
+All options except for
+.B -Q
+may be requested when reading the accounting file from standard input.
+
+If no report type is selected then the
+.B -Y
+option is used as a default.
+.SH OPTIONS
+.TP
+.B \-D
+.br
+Gives details of device utilisation for all device groups on all servers.  If
+.B -g
+or
+.B -S
+are not specified the information will be global.
+.TP
+.BI \-e " end_time"
+The date and time up to which information should be collated.  If not specified
+the default is the time of the last relevant entry in the accounting files.  The
+format for date input is
+.BR mmddhhmm [ yy ].
+.B yy
+is the year in the century and is optional:
+if yy between 00 and 37, 21th century is assumed,
+if yy between 70 and 99, 20th century is assumed
+else the command fails.
+.TP
+.BI \-f " accounting_file"
+The file from which information is to be read.  If not specified the default is
+the current
+.B sacct 
+file.  If standard input is required enter
+.BI stdin
+in the
+.I "accounting_file"
+field.
+.TP
+.BI \-g " device_group"
+This option restricts output to the specified device group.
+.TP
+.B \-L
+.br
+Gives a detailed list of mounted volumes.  If
+.B -g
+or
+.B -S
+are not specified the information will be global.
+.TP
+.B \-M
+.br
+Gives statistics on the number of mount requests made by each user group for
+each device group.  If
+.B -g
+or
+.B -S
+are not specified the information will be global.
+.TP
+.B \-m
+.br
+Gives statistics on the number of successful mounts made by each user group for
+each device group.  If
+.B -g
+or
+.B -S
+are not specified the information will be global.
+.TP
+.B \-Q
+.br
+Gives details of waiting queue lengths for device groups over all servers.  If
+.B -g
+or
+.B -S
+are not specified the information will be global.
+.TP
+.BI \-S " server_name"
+This option restricts output to the specified server.
+.TP
+.BI \-s " start_time"
+The date and time from which to begin collating information. If not specified
+the default is the time of the first relevant record in the accounting files.
+The format for date input is
+.BR mmddhhmm [ yy ].
+.B yy
+is the year in the century and is optional:
+if yy between 00 and 37, 21th century is assumed,
+if yy between 70 and 99, 20th century is assumed
+else the command fails.
+.TP
+.B \-T
+.br
+Gives information on the time, number of mount requests and actual mounts per
+device.  Other information supplied is average seconds from mount request to
+mount, minimum and maximum seconds to mount and failure rate.  Can be used with
+either
+.B -S
+or
+.B -g
+options.
+.TP
+.BI \-V " volume_vid"
+.br
+Gives a detailed list of mounts for the
+.I "volume visual identifier"
+specified.  The
+.I "volume_vid"
+entered can be a full regular expression.  Can be used with either
+.B -g
+or
+.B -S
+options.
+.TP
+.B \-v
+.br
+Displays version information, opening and processing messages for each
+accounting file.  It is suggested not to use this option with either
+.B -L
+or
+.B -V
+because processing output will be interleaved with results unless standard
+error is redirected.
+.TP
+.BI \-w " week_number"
+If specified then the files for the given week will be analysed.  If not
+specified then the current weeks
+.B sacct
+files will be read.  The format for week number input is
+.B yyww
+where
+.B yy
+is the year in the century and
+.B ww
+is the week number.
+.TP
+.B \-Y
+.br
+Gives summary information on the number of mount requests and actual mounts by
+device group.  Also provides information on mount failures.  Can be used with
+either
+.B -g
+or
+.B -S
+options.
+.SH EXAMPLES
+To get details of mount requests type the following command:
+.br
+
+.B tpusage -M
+.br
+
+Your results will be displayed in the following format:
+.br
+
+.nf
+.cs R 18
+Run specifications: Mount statistics
+
+
+Number of tape mount requests (29/04/1996 09:03:44  -  24/04/1997 14:17:52)
+
+Group    8500    CART    CT2     DAT     DLR1    DLT
+
+vv         41       0       5       0      34     103
+zh         21       6       3       0      94      33
+xv          0     119       0       0       1      75
+ws          0      57      62       0    2344      97
+xu          0     113      39       0      75     108
+xm          0      82      81       0       0       0
+xx          0      37      33       0     244     120
+wf          0      24      37       0       0      54
+zp          0      16       7       0     113      48
+xi          0      11       2       0      44      26
+v5          0       2      59       0     293     405
+xh          0       0      62       0      62      38
+.cs R
+.fi
+.bp
+.nf
+.cs R 18
+vp          0       0       2       0       0       1
+z5          0       0       1       0       0       0
+ct          0       0      29       0       0       0
+yt          0       0       0       5       0       0
+dr          0       0       0       0       7      41
+vl          0       0       0       0      11       2
+ya          0       0       0       0       6       1
+xg          0       0       0       0       0       1
+c3          0       0       2       0       0       0
+system      0       0       0       0       0       0
+ci          0       0       0       0       0       0
+vx          0       0       0       0       0       0
+Total      62     467     424       5    3328    1153
+.cs R
+.fi
+
+To get statistics on queue lengths for CART device group on shd02, type the following command :
+.br
+
+.B tpusage -Q -g CART -S shd33
+.br
+
+Your results will be displayed in the following format :
+
+.nf
+.cs R 18
+Run specifications: Queue lengths, Devgroup=CART, Tape server=shd15
+
+
+
+Waiting Queue Lengths for Device: CART
+During time interval     (03/02/1997 00:02:55  -  04/02/1997 15:37:12)
+03/02/1997 00:00          5         *****
+03/02/1997 00:40          4         ****
+03/02/1997 01:20          4         ****
+03/02/1997 02:00          4         ****
+03/02/1997 02:40          4         ****
+03/02/1997 03:20          4         ****
+03/02/1997 04:00          3         ***
+03/02/1997 04:40          5         *****
+03/02/1997 05:20          4         ****
+03/02/1997 06:00          4         ****
+03/02/1997 06:40          3         ***
+03/02/1997 07:20          4         ****
+03/02/1997 08:00          4         ****
+03/02/1997 08:40          4         ****
+03/02/1997 09:20          3         ***
+03/02/1997 10:00          1         *
+03/02/1997 10:40          0         
+03/02/1997 11:20          7         *******
+03/02/1997 12:00          8         ********
+03/02/1997 12:40          9         *********
+03/02/1997 13:20          8         ********
+03/02/1997 14:00          11        ***********
+03/02/1997 14:40          10        **********
+ ...
+04/02/1997 15:20          10        **********
+ 
+Maximum queue length for device CART was 11
+.cs R
+.fi
+
+.bp
+To get a detailed list of mounted volumed of type CART, starting with the letter 'E'
+since 00:00 April 23, type the following command:
+.br
+ 
+.B tpusage -V '^E' -g CART
+.B -s 04230000
+.br
+ 
+Your results will be displayed in the following format :
+.br
+
+.nf
+.cs R 18
+Run specifications: Devgroup=CART, Volumes search pattern=^E, Start time=04230000
+
+EX4487 1 Wed Apr 23 11:05:11 1997 delshift xx CART cart1F86@shd15
+EX4064 1 Wed Apr 23 14:00:16 1997 delshift xx CART cart1F84@shd15
+EX1035 3 Wed Apr 23 17:12:56 1997 delshift xx CART cart1F87@shd15
+EX1036 3 Wed Apr 23 17:44:12 1997 delshift xx CART cart1F84@shd15
+EX1035 2 Wed Apr 23 09:16:10 1997 delshift xx CART cart1F83@shd12
+EX1036 2 Wed Apr 23 09:48:42 1997 delshift xx CART cart1F80@shd12
+EX1546 2 Wed Apr 23 10:24:00 1997 delshift xx CART cart1F80@shd12
+EX1546 1 Wed Apr 23 16:27:53 1997 delshift xx CART cart1F82@shd12
+.cs R
+.fi
+
+To get details of times taken to mount etc during the week 16 
+type the following command:
+.br
+
+.B tpusage -T -w 9716
+.br
+
+Your results will be displayed in the following format :
+
+.nf
+.cs R 18
+Run specifications: Device statistics, Week=9716
+
+
+
+Device utilisation (13/04/1997 23:55:11  -  20/04/1997 23:56:08)
+Device			mnt.req	mounts	sec/mnt	min s/m	max s/m	failure rate
+
+  exab05@shd05   	    1	    1	  348	  348	  348	  0.0 %
+  exab02@shd29   	    8	    8	 1238	  218	 2293	  0.0 %
+  exab01@shd29   	   12	   12	 1200	   97	 2403	  0.0 %
+  exab04@shd30   	   11	   11	 1109	  398	 2100	  0.0 %
+  exab03@shd30   	   12	   12	 1271	  298	 2641	  0.0 %
+cart1F85@shd15   	  193	  190	 1290	   23	 5378	  1.6 %
+    ...
+sd3r0191@shd52   	   62	   62	   66	   33	  206	  0.0 %
+sd3r0193@shd52   	   62	   62	   71	   38	  192	  0.0 %
+sd3r0190@shd52   	   29	   29	  101	   37	  176	  0.0 %
+
+.cs R
+.fi
+
+.SH RETURN CODES
+0	Ok.
+.br
+1	User error.
+.br
+2	System error.
