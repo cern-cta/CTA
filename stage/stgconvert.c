@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.2 1999/12/02 14:38:44 jdurand Exp $
+ * $Id: stgconvert.c,v 1.3 1999/12/03 09:53:00 jdurand Exp $
  */
 
 /*
@@ -32,7 +32,7 @@
 /* =============== */
 /* Local variables */
 /* =============== */
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.2 $ $Date: 1999/12/02 14:38:44 $ CERN IT-PDP/DM Jean-Damien Durand / Jean-Philippe Baud";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 09:53:00 $ CERN IT-PDP/DM Jean-Damien Durand / Jean-Philippe Baud";
 
 /* ====== */
 /* Macros */
@@ -60,6 +60,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.2 $ $Date: 19
 /* =================== */
 void stgconvert_usage _PROTO(());
 int stcpcmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
+int stppcmp _PROTO((struct stgpath_entry *, struct stgpath_entry *));
 
 int main(argc,argv)
      int argc;
@@ -348,6 +349,8 @@ int main(argc,argv)
       stpe = stps;
       stpe += stgpath_statbuff.st_size;
       for (stpp = stps; stpp < stpe; stpp++) {
+        struct stgpath_entry *stpp2;
+        struct stgpath_entry *stppok;
         if (stpp->reqid == 0) {
           break;
         }
@@ -445,13 +448,28 @@ int main(argc,argv)
           break;
         }
         if (stpp2Cdb(stpp,&link) != 0) {
-          printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",stpp->reqid);
+        }
+
+        /* stgpath can have multiple entries - We silently deleted previous one it it */
+        /* exists.                                                                    */
+        if (Cdb_keyfind(&Cdb_db,"stgcat_link","stgcat_link_per_reqid","w",&link,&Cdb_offset) == 0) {
+          if (Cdb_delete(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
+            printf("### Cannot delete previous stgpath occurence for reqid=%d\n",link.reqid);
+            if (Cdb_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
+              printf("### Cannot remove lock in Cdb at offset 0x%lx\n",(unsigned long) Cdb_offset);
+            }
+            continue;
+          }
+          if (Cdb_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
+            printf("### Cannot remove lock in Cdb at offset 0x%lx\n",(unsigned long) Cdb_offset);
+          }
         }
 
         /* We insert this record */
         if (Cdb_insert(&Cdb_db,"stgcat_link",NULL,&link,&Cdb_offset) != 0) {
           printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_link\" (%s)\n"
-                 ,stcp->reqid
+                 ,stpp->reqid
                  ,sstrerror(serrno));
         } else {
           printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_link\" [upath=%s] at offset 0x%lx\n",
@@ -510,7 +528,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
 
         if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
           continue;
         }
 
@@ -553,7 +571,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
 
         if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
           continue;
         }
 
@@ -595,7 +613,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
 
         if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
           continue;
         }
 
@@ -637,7 +655,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
 
         if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
           continue;
         }
 
@@ -786,7 +804,7 @@ int main(argc,argv)
         int cmp_status = -2;
 
         if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
           continue;
         }
 
@@ -799,6 +817,7 @@ int main(argc,argv)
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
+            break;
           }
         }
 
@@ -844,7 +863,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
         int cmp_status = -2;
         if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
           continue;
         }
 
@@ -857,6 +876,7 @@ int main(argc,argv)
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
+            break;
           }
         }
         if (cmp_status == -2) {
@@ -900,7 +920,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
         int cmp_status = -2;
         if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
           continue;
         }
 
@@ -913,6 +933,7 @@ int main(argc,argv)
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
+            break;
           }
         }
         if (cmp_status == -2) {
@@ -956,7 +977,7 @@ int main(argc,argv)
         struct stgcat_entry thisstcp;
         int cmp_status = -2;
         if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
+          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
           continue;
         }
 
@@ -969,6 +990,7 @@ int main(argc,argv)
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
+            break;
           }
         }
         if (cmp_status == -2) {
@@ -992,6 +1014,70 @@ int main(argc,argv)
     }
 
     no_alloced_cmp:
+    if (no_stgpath == 0) {
+      printf("\n*** DUMPING stgcat_link TABLE ***\n\n");
+
+      i = 0;
+
+      /* We ask for a dump of link table from Cdb */
+      /* ---------------------------------------- */
+      if (Cdb_dump_start(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+        printf("### Cdb_dump_start error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+        if (Cdb_error(&Cdb_session,&error) == 0) {
+          printf("--> more info:\n%s",error);
+        }
+        rc = EXIT_FAILURE;
+        goto stgconvert_return;
+      }
+
+      while (Cdb_dump(&Cdb_db,"stgcat_link",&Cdb_offset,&link) == 0) {
+        struct stgpath_entry thisstpp;
+        int cmp_status = -2;
+
+        if (Cdb2stpp(&thisstpp,&link) != 0) {
+          printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",link.reqid);
+          continue;
+        }
+
+        for (stpp = stps; stpp < stpe; stpp++) {
+          if (stpp->reqid == 0) {
+            break;
+          }
+          /* It will compare all the version containing the same reqid, up to the last one ! */
+          /* eg up to the correct one.                                                       */
+          if (stpp->reqid == thisstpp.reqid) {
+            cmp_status = stppcmp(stpp,&thisstpp);
+            /* We put reqid to its minus version so that we will know */
+            /* that this value has been previously scanned... */
+            stpp->reqid *= -1;
+            /* break; */
+          }
+        }
+        if (cmp_status == -2) {
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstpp,thisstpp.reqid,stgpath);
+          global_stgcat_cmp_status = -1;
+        } else if (cmp_status == 0) {
+          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstpp,thisstpp.reqid);
+        } else {
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstpp,thisstpp.reqid);
+          global_stgcat_cmp_status = -1;
+        }
+      }
+
+      if (Cdb_dump_end(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+        printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+        if (Cdb_error(&Cdb_session,&error) == 0) {
+          printf("--> more info:\n%s",error);
+        }
+      }
+
+      printf("[### NOTA ### stgpath catalog in Cdb contains unique versions vs. reqid, while yours can]\n");
+      printf("[             contain multiple ones vs. reqid. That is, only the last reqid is compared.]\n");
+      printf("[             This behaviour is normal, and if the global status below is OK, then you  ]\n");
+      printf("[             are done well with stpath conversion.                                     ]\n");
+
+    }
+
     printf("... Comparison finished, global status : %d (%s)\n",
            global_stgcat_cmp_status,
            global_stgcat_cmp_status == 0 ? "OK" : "NOT OK");
@@ -1037,7 +1123,7 @@ void stgconvert_usage() {
          "  -L                Do nothing about stgpath\n"
          "  -u                Cdb username. Defaults to \"%s\"\n"
          "  -p                Cdb password. Defaults to \"%s\"\n"
-         "  -t <type>         Restrict this program to data of type:\n"
+         "  -t <type>         Restrict stgcat catalog to data of type:\n"
          "                    \"t\" (tape)\n"
          "                    \"d\" (disk)\n"
          "                    \"m\" (migrated)\n"
@@ -1141,6 +1227,23 @@ int stcpcmp(stcp1,stcp2)
     break;
   default:
     printf("### Unknown t_or_d = '%c' type\n",stcp1->t_or_d);
+    return(-1);
+  }
+
+  /* OKAY */
+  return(0);
+}
+
+int stppcmp(stpp1,stpp2)
+     struct stgpath_entry *stpp1;
+     struct stgpath_entry *stpp2;
+{
+  if (stpp1 == NULL || stpp2 == NULL) {
+    return(-2);
+  }
+
+  if (stpp1->reqid != stpp2->reqid ||
+      strcmp(stpp1->upath,stpp2->upath) != 0) {
     return(-1);
   }
 
