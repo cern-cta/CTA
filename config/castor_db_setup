@@ -1,0 +1,6 @@
+# ORACLE setup. We use version 10 for gcc 3.2
+ORACLE_CERN=/afs/cern.ch/project/oracle; export ORACLE_CERN
+ORACLE_HOME=${ORACLE_CERN}/linux/10102gcc323; export ORACLE_HOME
+TNS_ADMIN=${ORACLE_CERN}/admin; export TNS_ADMIN
+PATH=${PATH}:${ORACLE_CERN}/script:${ORACLE_HOME}/bin; export PATH
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ORACLE_HOME}/lib; export LD_LIBRARY_PATH
