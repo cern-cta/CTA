@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 07:17:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
