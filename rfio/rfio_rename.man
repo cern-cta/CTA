@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_rename.man,v 1.1 2001/05/29 14:30:21 baud Exp $
+.\" $Id: rfio_rename.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_rename.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 14:30:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_rename.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_RENAME 3 "$Date: 2001/05/29 14:30:21 $" CASTOR "Rfio Library Functions"
+.TH RFIO_RENAME 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_rename \- rename a file or directory
 .SH SYNOPSIS
@@ -134,3 +134,5 @@ Cross-host rename is not supported.
 .BR Castor_limits(4) ,
 .BR rfio_chmod(3) ,
 .BR rfio_unlink(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

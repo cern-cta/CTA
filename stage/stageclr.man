@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.8 $ $Date: 2001/09/18 21:15:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.9 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2001/09/18 21:15:00 $"
+.TH STAGECLR l "$Date: 2001/09/26 09:13:54 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -182,4 +182,4 @@ Multiple vids will be separated by colons.
 .br
 4	Configuration error.
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

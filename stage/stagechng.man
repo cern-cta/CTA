@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.6 2001/07/24 07:57:35 jdurand Exp $
+.\" $Id: stagechng.man,v 1.7 2001/09/26 09:13:54 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.6 $ $Date: 2001/07/24 07:57:35 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2001/07/24 07:57:35 $"
+.TH STAGECHNG l "$Date: 2001/09/26 09:13:54 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
@@ -104,4 +104,4 @@ option values are supported.
 .SH SEE ALSO
 \fBstageqry\fP(l)
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_chmod.man,v 1.4 2001/05/28 13:59:43 baud Exp $
+.\" $Id: rfio_chmod.man,v 1.5 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.4 $ $Date: 2001/05/28 13:59:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CHMOD 3 "$Date: 2001/05/28 13:59:43 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CHMOD 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_chmod \- change access mode of a directory/file
 .SH SYNOPSIS
@@ -119,5 +119,4 @@ Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4)
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_opendir.man,v 1.5 2001/05/28 13:59:45 baud Exp $
+.\" $Id: rfio_opendir.man,v 1.6 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_opendir.man,v $ $Revision: 1.5 $ $Date: 2001/05/28 13:59:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_opendir.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPENDIR 3 "$Date: 2001/05/28 13:59:45 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPENDIR 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_opendir \- open a directory
 .SH SYNOPSIS
@@ -83,5 +83,4 @@ Communication error.
 .BR rfio_readdir(3) ,
 .BR rfio_rewinddir(3)
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

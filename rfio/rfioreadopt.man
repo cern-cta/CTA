@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rfioreadopt.man,v $ $Revision: 1.1 $ $Date: 2001/05/31 05:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfioreadopt.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOREADOPT 3 "$Date: 2001/05/31 05:17:23 $" CASTOR "Rfio Library Functions"
+.TH RFIOREADOPT 3 "$Date: 2001/09/26 09:13:54 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfioreadopt \- get RFIO options
 .SH SYNOPSIS
@@ -41,3 +41,5 @@ is not a valid option.
 .SH SEE ALSO
 .BR rfiosetopt(3) ,
 .BR rfio_open(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

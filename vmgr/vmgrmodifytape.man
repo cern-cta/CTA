@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.4 $ $Date: 2001/01/31 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYTAPE 1 "$Date: 2001/01/31 12:38:37 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYTAPE 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -104,3 +104,5 @@ failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_modifytape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

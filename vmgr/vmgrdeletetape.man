@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdeletetape.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdeletetape.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDELETETAPE 1 "$Date: 2000/03/04 14:43:02 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDELETETAPE 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdeletetape \- remove a tape from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -22,3 +22,5 @@ failed.
 .BR Castor_limits(4) ,
 .BR vmgr_deletetape(3) ,
 .B vmgrentertape(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

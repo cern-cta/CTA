@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.5 $ $Date: 2001/07/27 14:11:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2001/07/27 14:11:51 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -166,3 +166,5 @@ exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
 .BR msgdaemon(1) ,
 .BR oper(1) ,
 .B rep(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

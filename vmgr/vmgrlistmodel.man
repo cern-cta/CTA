@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistmodel.man,v $ $Revision: 1.1 $ $Date: 2000/04/11 09:34:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistmodel.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTMODEL 1 "$Date: 2000/04/11 09:34:48 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTMODEL 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistmodel \- query the CASTOR Volume Manager about a given model or list all existing cartridge models
 .SH SYNOPSIS
@@ -52,3 +52,5 @@ failed.
 .SH SEE ALSO
 .BR vmgr_entermodel(3) ,
 .B vmgrentermodel(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.1 $ $Date: 2000/04/11 09:34:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTDENMAP 1 "$Date: 2000/04/11 09:34:46 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTDENMAP 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistdenmap \- list all existing triplets model/media_letter/density in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -66,3 +66,5 @@ failed.
 .SH SEE ALSO
 .BR vmgr_enterdenmap(3) ,
 .B vmgrenterdenmap(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

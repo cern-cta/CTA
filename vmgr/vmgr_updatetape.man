@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.5 $ $Date: 2001/03/16 06:06:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_UPDATETAPE 3 "$Date: 2001/03/16 06:06:17 $" CASTOR "vmgr Library Functions"
+.TH VMGR_UPDATETAPE 3 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_updatetape \- update tape volume content information in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -88,3 +88,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_gettape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

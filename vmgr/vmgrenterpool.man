@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrenterpool.man,v $ $Revision: 1.2 $ $Date: 2001/02/04 08:38:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrenterpool.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERPOOL 1 "$Date: 2001/02/04 08:38:00 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERPOOL 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrenterpool \- define a new tape pool in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -37,3 +37,5 @@ failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_enterpool(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrenterlibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrenterlibrary.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERLIBRARY 1 "$Date: 2001/03/08 15:22:16 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERLIBRARY 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrenterlibrary \- define a new tape library in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -34,3 +34,5 @@ failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_enterlibrary(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

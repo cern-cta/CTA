@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.5 $ $Date: 2000/03/05 16:57:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERMODEL 3 "$Date: 2000/03/05 16:57:22 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERMODEL 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -71,3 +71,5 @@ Volume manager is not running or is being shutdown.
 .BR Castor_limits(4) ,
 .BR vmgr_deletemodel(3) ,
 .B vmgr_modifymodel(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

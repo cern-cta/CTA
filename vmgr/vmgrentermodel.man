@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.2 $ $Date: 2000/03/05 09:24:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERMODEL 1 "$Date: 2000/03/05 09:24:16 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERMODEL 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -47,3 +47,5 @@ failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_entermodel(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

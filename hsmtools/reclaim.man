@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: reclaim.man,v $ $Revision: 1.1 $ $Date: 2001/03/28 06:22:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: reclaim.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RECLAIM 1 "$Date: 2001/03/28 06:22:22 $" CASTOR "vmgr Administrator Commands"
+.TH RECLAIM 1 "$Date: 2001/09/26 09:13:51 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 reclaim \- reset information concerning a volume
 .SH SYNOPSIS
@@ -33,3 +33,5 @@ failed.
 .BR Castor_limits(4) ,
 .BR Cns_listtape(3) ,
 .B Cns_unlink(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

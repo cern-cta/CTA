@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.5 $ $Date: 2001/06/21 10:39:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "$Date: 2001/06/21 10:39:28 $"
+.TH STAGEUPDC l "$Date: 2001/09/26 09:13:55 $"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
@@ -136,5 +136,5 @@ The value is in the form
 .br
 4       Configuration error.
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>
 

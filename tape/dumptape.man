@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.3 $ $Date: 2000/08/08 11:56:42 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH DUMPTAPE 1 "$Date: 2000/08/08 11:56:42 $" CASTOR "Ctape User Commands"
+.TH DUMPTAPE 1 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape User Commands"
 .SH NAME
 dumptape \- dump a tape and analyze its contents
 .SH SYNOPSIS
@@ -152,3 +152,5 @@ dumptape -B 0 -F 1 -N 4,5 -V 12345A
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

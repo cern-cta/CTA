@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.7 $ $Date: 2000/04/12 06:25:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.8 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2000/04/12 06:25:23 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -108,3 +108,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_updatetape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.6 2001/06/17 07:59:48 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.7 2001/09/26 09:13:54 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.6 $ $Date: 2001/06/17 07:59:48 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2001/06/17 07:59:48 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2001/09/26 09:13:54 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
@@ -115,4 +115,4 @@ Connection closed by remote end
 .B SECOMERR
 Communication error
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fflush.man,v 1.1 2001/05/29 15:03:08 baud Exp $
+.\" $Id: rfio_fflush.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fflush.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 15:03:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fflush.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FFLUSH 3 "$Date: 2001/05/29 15:03:08 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FFLUSH 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fflush \- flush a file
 .SH SYNOPSIS
@@ -35,5 +35,4 @@ Version ID mismatch.
 .SH SEE ALSO
 .BR rfio_fopen(3)
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_lseek.man,v 1.1 2001/05/30 06:37:37 baud Exp $
+.\" $Id: rfio_lseek.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_lseek.man,v $ $Revision: 1.1 $ $Date: 2001/05/30 06:37:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_lseek.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_LSEEK 3 "$Date: 2001/05/30 06:37:37 $" CASTOR "Rfio Library Functions"
+.TH RFIO_LSEEK 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_lseek \- positions/repositions a file
 .SH SYNOPSIS
@@ -75,5 +75,4 @@ Communication error.
 .SH SEE ALSO
 .BR rfio_open(3)
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

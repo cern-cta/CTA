@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_listlibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_listlibrary.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTLIBRARY 3 "$Date: 2001/03/08 15:22:14 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTLIBRARY 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listlibrary \- list all existing tape library entries in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -59,3 +59,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR vmgr_enterlibrary(3) ,
 .B vmgrlistlibrary(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

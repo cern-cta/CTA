@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_info.man,v $ $Revision: 1.7 $ $Date: 2000/03/31 15:07:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_info.man,v $ $Revision: 1.8 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_INFO 3 "$Date: 2000/03/31 15:07:56 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_INFO 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_info \- get tape file information from header labels and mount requests;
 get also information about the tape drive used.
@@ -55,3 +55,5 @@ Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.1 $ $Date: 2000/11/06 15:42:50 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN IT-PDP/DM
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2000/11/06 15:42:50 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2001/09/26 09:13:54 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
@@ -135,4 +135,5 @@ failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 .SH SEE ALSO
 .BI rtcpc(3)
 
-
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

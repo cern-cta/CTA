@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpsrv_in_prod.man,v $ $Revision: 1.1 $ $Date: 2000/11/06 13:01:50 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: tpsrv_in_prod.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPSRV_IN_PROD 1 "$Date: 2000/11/06 13:01:50 $" CASTOR "Set tape server mode"
+.TH TPSRV_IN_PROD 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Set tape server mode"
 .SH NAME
 tpsrv_in_prod \- toggle tape server production/development status
 .SH SYNOPSIS
@@ -43,3 +43,5 @@ This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .BI showqueues(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

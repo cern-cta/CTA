@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stage_put.man,v 1.6 2001/08/21 17:21:15 jdurand Exp $
+.\" $Id: stage_put.man,v 1.7 2001/09/26 09:13:54 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put.man,v $ $Revision: 1.6 $ $Date: 2001/08/21 17:21:15 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT "3" "$Date: 2001/08/21 17:21:15 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT "3" "$Date: 2001/09/26 09:13:54 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -74,4 +74,4 @@ variable might contain the following values:
 .br
 197     Stageing limited by size.
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.5 $ $Date: 2000/02/03 13:32:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPE_OPER 1 "$Date: 2000/02/03 13:32:03 $" CASTOR "Ctape Administrator Commands"
+.TH TAPE_OPER 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tape_oper \- operator interface to tape subsystem
 .SH DESCRIPTION
@@ -92,3 +92,5 @@ type "ok" or "yes" to continue, any other reply will cancel the prelabel.
 .BR oper (1),
 .BR rep (1),
 .BR tpconfig (1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.1 $ $Date: 2001/08/14 06:17:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_DMPFIL 3 "$Date: 2001/08/14 06:17:53 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_DMPFIL 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_dmpfil \- analyze the content of a tape
 .SH SYNOPSIS
@@ -197,3 +197,5 @@ Unrecoverable media error.
 No sense data available.
 .SH SEE ALSO
 .BR Ctape_mount(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

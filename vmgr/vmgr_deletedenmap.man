@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletedenmap.man,v $ $Revision: 1.1 $ $Date: 2000/03/07 08:38:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_deletedenmap.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETEDENMAP 3 "$Date: 2000/03/07 08:38:51 $" CASTOR "vmgr Library Functions"
+.TH VMGR_DELETEDENMAP 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletedenmap \- delete a triplet model/media_letter/density in the CASTOR
 Volume Manager
@@ -68,3 +68,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_enterdenmap(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

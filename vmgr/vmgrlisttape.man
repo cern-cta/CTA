@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.4 $ $Date: 2001/02/20 15:05:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTTAPE 1 "$Date: 2001/02/20 15:05:03 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTTAPE 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlisttape \- query the CASTOR Volume Manager about a tape or list all existing tapes
 .SH SYNOPSIS
@@ -93,3 +93,5 @@ failed.
 .BR vmgrentertape(1) ,
 .B vmgr_listtape(3) ,
 .B vmgr_querytape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

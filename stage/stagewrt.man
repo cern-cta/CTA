@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.9 $ $Date: 2001/09/18 21:24:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.10 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2001/09/18 21:24:12 $"
+.TH STAGEWRT l "$Date: 2001/09/26 09:13:55 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -419,4 +419,4 @@ stagewrt -v CUT333 -F F -L 10240 -b 10240 myfiles.tar
 .br
 197	Stageing limited by size.
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

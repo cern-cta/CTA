@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.5 $ $Date: 2001/06/21 10:30:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEGET l "$Date: 2001/06/21 10:30:20 $"
+.TH STAGEGET l "$Date: 2001/09/26 09:13:54 $"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS
@@ -101,4 +101,4 @@ MyDice_XXX
 .br
 4	Configuration error.
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

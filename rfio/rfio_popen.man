@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_popen.man,v 1.1 2001/06/01 06:08:27 baud Exp $
+.\" $Id: rfio_popen.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.1 $ $Date: 2001/06/01 06:08:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_POPEN 3 "$Date: 2001/06/01 06:08:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_POPEN 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_popen, rfio_pclose \- start a process and open a pipe to it
 .SH SYNOPSIS
@@ -63,5 +63,4 @@ Command string too long.
 .B SECOMERR
 Communication error.
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.4 $ $Date: 2000/04/07 15:55:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL 1 "$Date: 2000/04/07 15:55:38 $" CASTOR "Ctape User Commands"
+.TH TPLABEL 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS
@@ -156,3 +156,5 @@ This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .B Ctape_label(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgshift_to_castor.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 11:22:40 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgshift_to_castor.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGSHIFT_TO_CASTOR l "$Date: 2001/06/21 11:22:40 $"
+.TH STGSHIFT_TO_CASTOR l "$Date: 2001/09/26 09:13:55 $"
 .SH NAME
 stgshift_to_castor \- Convert SHIFT stager catalogs to CASTOR disk ones
 .SH SYNOPSIS
@@ -48,7 +48,7 @@ stgshift_to_castor /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat_cas
 \fBstgconvert\fP(1), \fBstgcastor_to_shift\fP(1), \fBstgshift_cmp_shift\fP(1)
 
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>
 
 
 

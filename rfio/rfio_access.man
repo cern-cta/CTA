@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_access.man,v 1.1 2001/05/29 14:30:21 baud Exp $
+.\" $Id: rfio_access.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_access.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 14:30:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_access.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_ACCESS 3 "$Date: 2001/05/29 14:30:21 $" CASTOR "Rfio Library Functions"
+.TH RFIO_ACCESS 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_access \- check existence/accessibility of a file/directory
 .SH SYNOPSIS
@@ -113,3 +113,5 @@ Communication error.
 .BR Castor_limits(4) ,
 .BR rfio_chmod(3) ,
 .B rfio_stat(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

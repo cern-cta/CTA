@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_DelDrive.man,v $ $Revision: 1.1 $ $Date: 2000/08/09 10:54:31 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_DelDrive.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_DELDRIVE l "$Date: 2000/08/09 10:54:31 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_DELDRIVE l "$Date: 2001/09/26 09:13:56 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_DelDrive \- delete a drive in VDQM
@@ -151,3 +151,5 @@ Failed to propagate the delete operation to the backup server
 .SH SEE ALSO
 .BR vdqm_Connect(3), 
 .BR vdqm_Disconnect(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

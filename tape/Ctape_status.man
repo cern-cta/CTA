@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.8 $ $Date: 2000/04/12 16:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.9 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_STATUS 3 "$Date: 2000/04/12 16:00:10 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_STATUS 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_status \- get the status of all tape drives
 .SH SYNOPSIS
@@ -66,3 +66,5 @@ User buffer too small.
 .TP
 .B ETDNP
 Tape daemon is not running.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

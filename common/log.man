@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: log.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:50:13 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)$RCSfile: log.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:49 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH LOG 3 "$Date: 2000/02/04 14:50:13 $" CASTOR "Common Library Functions"
+.TH LOG 3 "$Date: 2001/09/26 09:13:49 $" CASTOR "Common Library Functions"
 .SH NAME
 log, initlog  \- log messages
 .SH SYNOPSIS
@@ -79,3 +79,5 @@ is a indicating the level logging.
 .RE
 .SH "SEE ALSO"
 .BR syslog (3),
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

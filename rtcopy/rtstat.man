@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.1 $ $Date: 2000/09/19 08:33:41 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
+.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
 .\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RTSTAT 1 "$Date: 2000/09/19 08:33:41 $" CASTOR "RTCOPY User Commands"
+.TH RTSTAT 1 "$Date: 2001/09/26 09:13:54 $" CASTOR "RTCOPY User Commands"
 
 .SH NAME
 rtstat \- gives local or global statistics on rtcopy requests, the number which are successful 
@@ -295,3 +295,6 @@ TP021 - label type mismatch  ->  0.35 % - 2
 1	User error.
 .br
 2	System error.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

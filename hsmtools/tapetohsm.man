@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.2 $ $Date: 2001/03/28 05:53:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPETOHSM 1 "$Date: 2001/03/28 05:53:15 $" CASTOR "vmgr Administrator Commands"
+.TH TAPETOHSM 1 "$Date: 2001/09/26 09:13:51 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 .SH SYNOPSIS
@@ -128,3 +128,5 @@ failed.
 .BR Cns_setsegattrs(3) ,
 .BR vmgr_updatetape(3) ,
 .B vmgrentertape(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

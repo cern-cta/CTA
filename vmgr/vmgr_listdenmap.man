@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_listdenmap.man,v $ $Revision: 1.2 $ $Date: 2000/09/11 06:03:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_listdenmap.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTDENMAP 3 "$Date: 2000/09/11 06:03:02 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTDENMAP 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listdenmap \- list all existing triplets model/media_letter/density in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -59,3 +59,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR vmgr_enterdenmap(3) ,
 .B vmgrlistdenmap(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

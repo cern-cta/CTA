@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: usrlbl.man,v $ $Revision: 1.4 $ $Date: 2001/01/24 11:24:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: usrlbl.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH USRLBL 3 "$Date: 2001/01/24 11:24:49 $" CASTOR "Ctape Library Functions"
+.TH USRLBL 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Library Functions"
 .SH NAME
 .B checkeofeov, wrthdrlbl, wrttrllbl, deltpfil
 \- user callable routines to check/write tape labels
@@ -116,3 +116,5 @@ Unrecoverable media error.
 .TP
 .B ETNOSNS
 No sense data available.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

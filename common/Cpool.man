@@ -1,6 +1,6 @@
-.\" $Id: Cpool.man,v 1.6 2000/07/03 10:11:56 jdurand Exp $
+.\" $Id: Cpool.man,v 1.7 2001/09/26 09:13:48 jdurand Exp $
 .\"
-.TH CPOOL "3" "$Date: 2000/07/03 10:11:56 $" "CASTOR" "Common Library Functions"
+.TH CPOOL "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCpool\fP \- \fBCASTOR\fP \fBPool\fP inferface
 .SH SYNOPSIS
@@ -227,4 +227,4 @@ void *testit(void *arg) {
 .SH SEE ALSO
 \fBCthread\fP
 .SH AUTHOR
-\fPJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

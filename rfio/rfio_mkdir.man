@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_mkdir.man,v 1.5 2001/05/29 14:29:37 baud Exp $
+.\" $Id: rfio_mkdir.man,v 1.6 2001/09/26 09:13:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_mkdir.man,v $ $Revision: 1.5 $ $Date: 2001/05/29 14:29:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_mkdir.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_MKDIR 3 "$Date: 2001/05/29 14:29:37 $" CASTOR "Rfio Library Functions"
+.TH RFIO_MKDIR 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_mkdir \- create a new directory
 .SH SYNOPSIS
@@ -82,5 +82,4 @@ Communication error.
 .BR Castor_limits(4) ,
 .BR rfio_chmod(3)
 .SH AUTHOR
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rfio_chown.man,v $ $Revision: 1.1 $ $Date: 2001/05/30 12:03:13 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_chown.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CHOWN 3 "$Date: 2001/05/30 12:03:13 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CHOWN 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_chown \- change owner and group of a directory/file
 .SH SYNOPSIS
@@ -93,3 +93,5 @@ Connection closed by remote end.
 Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: tpread.man,v $ $Revision: 1.1 $ $Date: 2000/04/25 14:03:27 $ CERN CERN IT-PDP/DM A. Trannoy, F. Hassine
+.\" @(#)$RCSfile: tpread.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ CERN CERN IT-PDP/DM A. Trannoy, F. Hassine
 .\" Copyright (C) 1990-2000 by CERN IT-PDP/DM
 .\" All rights reserved
 .\"
 .nh
-.TH TPREAD,TPWRITE 1 "$Date: 2000/04/25 14:03:27 $" CASTOR "RTCOPY User Commands"
+.TH TPREAD,TPWRITE 1 "$Date: 2001/09/26 09:13:54 $" CASTOR "RTCOPY User Commands"
 .SH NAME
 tpread, tpwrite \- schedule the copying of data from tape to disk, or from disk to tape
 .SH SYNOPSIS
@@ -558,9 +558,5 @@ The amount of staged data was limited to the value given by the option -s.
 .B /etc/shift.conf
 .SH SEE ALSO
 .BR rtcopyd(l)
-.SH "AUTHOR"
-Antoine Trannoy, CERN-CN Division,  CH-1211 Geneva 23, Switzerland
-(trannoy@cernvm.cern.ch)
-.TP
-Felix Hassine, CERN-CN Division, CH-1211 Geneva 23, Switzerland
-(acher@sun2.cern.ch)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

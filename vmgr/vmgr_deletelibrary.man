@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletelibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:21:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_deletelibrary.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETELIBRARY 3 "$Date: 2001/03/08 15:21:17 $" CASTOR "vmgr Library Functions"
+.TH VMGR_DELETELIBRARY 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletelibrary \- remove a tape library definition from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -55,3 +55,5 @@ Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B vmgr_enterlibrary(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
