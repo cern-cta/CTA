@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.4 2004/11/19 18:31:32 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.5 2004/11/22 14:01:19 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/19 18:31:32 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.5 $ $Date: 2004/11/22 14:01:19 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,6 +27,9 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 #include "castor/stager/StageGetRequest.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/rh/Response.hpp"
+#include "castor/rh/FileResponse.hpp"
 
 /* ================= */
 /* External routines */
@@ -59,6 +62,14 @@ class PrepareToGetResponseHandler : public castor::client::IResponseHandler {
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
     std::cout << "Handling response !" << std::endl;
+
+     
+    std::cout << "Response:"; 
+    castor::ObjectSet set; 
+    r.print(std::cout, "", set); 
+    std::cout << std::endl;
+    
+
   };
 
   virtual void terminate()
