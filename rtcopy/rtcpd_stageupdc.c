@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:22:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:56:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -45,7 +45,6 @@ extern char *geterr();
 #include <serrno.h>
 
 #if !defined(USE_STAGEAPI)
-#define STGCMD "/usr/local/bin/stageupdc"
 #define ADD_COPT(X,Y,Z) {if (Z!=NULL && *Z!='\0') sprintf(&X[strlen(X)],Y,Z);}
 #define ADD_NOPT(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y,Z);}
 #define ADD_SWITCH(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y);}
@@ -86,7 +85,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     if ( *filereq->stageID == '\0' ) return(0);
 
 #if !defined(USE_STAGEAPI)
-    sprintf(stageupdc_cmd,"%s -Z %s ",STGCMD,filereq->stageID);
+    sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
     if ( filereq->cprc < 0 && 
         (filereq->err.severity & (RTCP_FAILED | RTCP_EOD)) ) {
             /*
@@ -147,3 +146,4 @@ int rtcpd_stageupdc(tape_list_t *tape,
 #endif /* !USE_STAGEAPI */
     return(0);
 }
+
