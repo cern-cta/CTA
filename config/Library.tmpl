@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.15 $ $Date: 2004/10/22 06:33:45 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.16 $ $Date: 2004/10/27 07:13:04 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -91,7 +91,7 @@ DBLIB = DepLibraryTargetName(db,db)
 #endif
 
 #if BuildStageClient || BuildStageDaemon || BuildStageLibrary
-STGLIB = DepLibraryTargetName(stage,stage)
+STGLIB = DepLibraryTargetName(stager,stager)
 #endif
 
 #if BuildRtcopyClient
@@ -204,7 +204,7 @@ RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #endif
 
 #if BuildStageLibrary
-STGLIB = DepLibraryTargetName(stage,stage)
+STGLIB = DepLibraryTargetName(stager,stager)
 #endif
 
 #if BuildMsgClient
