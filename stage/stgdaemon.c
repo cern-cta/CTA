@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.216 2002/08/16 06:49:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.217 2002/08/27 08:41:39 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.216 $ $Date: 2002/08/16 06:49:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.217 $ $Date: 2002/08/27 08:41:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -324,7 +324,7 @@ extern int rc_shift2castor _PROTO((int,int));
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -1183,7 +1183,7 @@ int main(argc,argv)
 				}
 			}
 			if (c != 0) {
-				sendrep (rpfd, MSG_ERR, STG09, stgconfigfile, "incorrect");
+				sendrep (&rpfd, MSG_ERR, STG09, stgconfigfile, "incorrect");
 			} else {
 				/* @@@@@@@@@@@@@@@@@@@@@@@ */
 				/* RESET MONITOR KNOWLEDGE */
@@ -1193,7 +1193,7 @@ int main(argc,argv)
 #endif
 			  stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
-			sendrep (rpfd, STAGERC, initreq_req_type, STGMAGIC, c);
+			sendrep (&rpfd, STAGERC, initreq_req_type, STGMAGIC, c);
 			force_init = migr_init = 0;
 			initreq_reqid = 0;
 		}
@@ -1253,7 +1253,7 @@ int main(argc,argv)
 
 				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 					stglogit(func, STG141, (unsigned long) magic);
-					close(rqfd);
+					netclose(rqfd);
 					goto endreq;
 				}
 
@@ -1267,12 +1267,12 @@ int main(argc,argv)
 				}
 				if (l > MAX_NETDATA_SIZE) {
 					stglogit(func, "STG45 - request too big (%s bytes)\n", u64tostr((u_signed64) l, tmpbuf, 0));
-					close(rqfd);
+					netclose(rqfd);
 					goto endreq;
 				}
 				if ((req_data = (char *) malloc((size_t) l)) == NULL) {
 					stglogit(func, "STG45 - malloc of %s bytes error (%s)\n", u64tostr((u_signed64) l, tmpbuf, 0), strerror(errno));
-					close(rqfd);
+					netclose(rqfd);
 					goto endreq;
 				}
 				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT)) == l) {
@@ -1282,32 +1282,32 @@ int main(argc,argv)
 						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
 						req_type == STAGE_WRT || req_type == STAGE_PUT) {
 						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
-							sendrep (rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
+							sendrep (&rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
 							goto endreq;
 						}
 					}
 					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 						/* The API of stage_updc only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
-						close(rqfd);
+						netclose(rqfd);
 						goto endreq;
 					}
 					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 						/* The API of stage_clr only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
-						close(rqfd);
+						netclose(rqfd);
 						goto endreq;
 					}
 					if ((req_type == STAGE_INIT) && (magic != STGMAGIC4)) {
 						/* The API of stage_init only exist with magic number version >= 4 */
 						stglogit(func, STG141, (unsigned long) magic);
-						close(rqfd);
+						netclose(rqfd);
 						goto endreq;
 					}
 					if ((req_type == STAGE_SHUTDOWN) && (magic != STGMAGIC4)) {
 						/* The API of stage_shutdown only exist with magic number version >= 4 */
 						stglogit(func, STG141, (unsigned long) magic);
-						close(rqfd);
+						netclose(rqfd);
 						goto endreq;
 					}
 
@@ -1315,7 +1315,7 @@ int main(argc,argv)
 						if (magic == STGMAGIC) {
 							/* Firt version of the API was only accepting a uniqueid given by stgdaemon */
 							++stage_uniqueid;
-							sendrep(rpfd, UNIQUEID, stage_uniqueid);
+							sendrep(&rpfd, UNIQUEID, stage_uniqueid);
 						}
 					}
 
@@ -1372,16 +1372,16 @@ int main(argc,argv)
 						procshutdownreq (req_type, magic, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
 					default:
-						sendrep (rpfd, MSG_ERR, STG03, req_type);
-						sendrep (rpfd, STAGERC, req_type, magic, EINVAL);
+						sendrep (&rpfd, MSG_ERR, STG03, req_type);
+						sendrep (&rpfd, STAGERC, req_type, magic, EINVAL);
 					}
 				} else {
-					close (rqfd);
+					netclose (rqfd);
 					if (l != 0)
 						stglogit (func, STG04, "body", (int) l, (int) read_size, clienthost, errno, strerror(errno), serrno, sstrerror(serrno));
 				}
 			} else {
-				close (rqfd);
+				netclose (rqfd);
 				if (l != 0)
 					stglogit (func, STG04, "header", (int) l, (int) sizeof(req_hdr), clienthost, errno, strerror(errno), serrno, sstrerror(serrno));
 			}
@@ -1444,7 +1444,7 @@ void prockilreq(req_type, req_data, clienthost)
 		if (found == 0) {
 			stglogit(func, "kill received but ignored (no overlay), clientpid=%d, clienthost=%s, user=%s, gid=%d\n", clientpid, clienthost, user, gid);
 		}
-		close (rpfd);
+		netclose (rpfd);
 		break;
 	case STAGE_KILL:
 		/* API version */
@@ -1472,7 +1472,7 @@ void prockilreq(req_type, req_data, clienthost)
 				}
 				wqp->status = ESTKILLED;
 				/* This will close cleanly the connection from the API */
-				sendrep (wqp->rpfd, STAGERC, 0, wqp->magic, ESTKILLED);
+				sendrep (&(wqp->rpfd), STAGERC, 0, wqp->magic, ESTKILLED);
 				wqp->rpfd = -1;
 				break;
 			} else {
@@ -1487,7 +1487,7 @@ void prockilreq(req_type, req_data, clienthost)
 				(int) (this_uniqueid - (this_uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF) - 1,
 				clienthost, user, (int) uid, (int) gid);
 		}
-		close (rpfd);
+		netclose (rpfd);
 		break;
 	default:
 		break;
@@ -1536,8 +1536,8 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 #endif
 	if (initreq_reqid != 0) {
 		if (argv != NULL) free (argv);
-		sendrep (rpfd, MSG_ERR, STG39);
-		sendrep (rpfd, STAGERC, req_type, magic_client, EINVAL);
+		sendrep (&rpfd, MSG_ERR, STG39);
+		sendrep (&rpfd, STAGERC, req_type, magic_client, EINVAL);
 		return;
 	}
 	if (uid == -1) {
@@ -1546,8 +1546,8 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
 			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
 			serrno = SEUSERUNKN;
-			sendrep (rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
-			sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+			sendrep (&rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 			return;
 		}
 		uid = this_passwd->pw_uid;
@@ -1560,8 +1560,8 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 	}
 	/* Allowed to do so ? */
 	if (Cupv_check(uid, gid, clienthost, localhost, P_ADMIN) != 0) {
-		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
-		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+		sendrep (&rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
+		sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 		return;
 	}
 	/* - Do we want to force it to come from local host ? */
@@ -1578,8 +1578,8 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 					if (argv != NULL) free (argv);
 					stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
 					serrno = EACCES;
-					sendrep (rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
-					sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 					return;
 				}
 			}
@@ -1610,8 +1610,8 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 			initreq_reqid = reqid;
 			initreq_rpfd = rpfd;
 		} else {
-			sendrep (rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
-			sendrep (rpfd, STAGERC, req_type, STGMAGIC, EINVAL);
+			sendrep (&rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
+			sendrep (&rpfd, STAGERC, req_type, STGMAGIC, EINVAL);
 		}
 		if (argv != NULL) free (argv);
 	} else {
@@ -1666,8 +1666,8 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 #endif
 	if (shutdownreq_reqid != 0) {
 		if (argv != NULL) free (argv);
-		sendrep (rpfd, MSG_ERR, STG58);
-		sendrep (rpfd, STAGERC, req_type, magic_client, EINVAL);
+		sendrep (&rpfd, MSG_ERR, STG58);
+		sendrep (&rpfd, STAGERC, req_type, magic_client, EINVAL);
 		return;
 	}
 	if (uid == -1) {
@@ -1676,8 +1676,8 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
 			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
 			serrno = SEUSERUNKN;
-			sendrep (rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
-			sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+			sendrep (&rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 			return;
 		}
 		uid = this_passwd->pw_uid;
@@ -1690,8 +1690,8 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 	}
 	/* Allowed to do so ? */
 	if (Cupv_check(uid, gid, clienthost, localhost, P_ADMIN) != 0) {
-		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
-		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+		sendrep (&rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
+		sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 		return;
 	}
 	/* - Do we want to force it to come from local host ? */
@@ -1708,8 +1708,8 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 					if (argv != NULL) free (argv);
 					stglogit (func, "[STAGESHUTDOWN_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
 					serrno = EACCES;
-					sendrep (rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
-					sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 					return;
 				}
 			}
@@ -1742,8 +1742,8 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 
 		if (errflg != 0) {
 			free (argv);
-			sendrep (rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
-			sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
+			sendrep (&rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
+			sendrep (&rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
 			return;
 		}
 
@@ -1813,7 +1813,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 	wqp->flags = (u_signed64) 0;
 	if (wqp->use_subreqid != 0) {
 		if ((wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int))) == NULL) {
-			sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
+			sendrep (&rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
 			wqp->use_subreqid = 0;
 		} else {
 			wqp->save_nbsubreqid = nbwf;
@@ -1856,7 +1856,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 				index_found++;
 			}
 			if (! found) {
-				sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
+				sendrep(&(wqp->rpfd), MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
 				rc = -1;
 				goto add2otherwf_return;
 			}
@@ -1881,13 +1881,13 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 				if (atoi(fseq_orig) < atoi(stcp->u1.t.fseq)) {
 					wfp->waiting_on_req = wfp_new->subreqid;
 #ifdef STAGER_DEBUG
-					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
+					sendrep(&(wqp->rpfd), MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #else
 					stglogit(func, "add2otherwf : Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #endif
 				} else {
 					if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
- 						sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+ 						sendrep(&(wqp->rpfd), MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
 						rc = -1;
 						goto add2otherwf_return;
 					}
@@ -1923,7 +1923,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 #endif
 					savereqs ();
 #ifdef STAGER_DEBUG
-					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+					sendrep(&(wqp->rpfd), MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
 #else
 					stglogit(func, "add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
 #endif
@@ -1936,7 +1936,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 				if (strcmp(stcp->u1.t.fseq, fseq_orig) == 0) continue;
 				wfp->waiting_on_req = wfp_new->subreqid;
 #ifdef STAGER_DEBUG
-				sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
+				sendrep(&(wqp->rpfd), MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
 #else
 				stglogit(func, "add2otherwf : Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
 #endif
@@ -1956,7 +1956,7 @@ add2wf (wqp)
 	struct waitf *newwaitf;
 
 	if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
-		sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+		sendrep(&(wqp->rpfd), MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
 		return(NULL);
 	}
 	wqp->wf = newwaitf;
@@ -1990,7 +1990,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		if (strlen(upath) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 			stcp->ipath[0] = '\0';
 			serrno = SENAMETOOLONG;
-			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 			return(serrno);
 		}
 		strcpy (stcp->ipath, upath);
@@ -2010,7 +2010,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 
 	if ((strlen(stcp->ipath) + 1 + strlen(stcp->group)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 		serrno = SENAMETOOLONG;
-		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 		stcp->ipath[0] = '\0';
 		return(serrno);
@@ -2020,7 +2020,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 	p_u = stcp->ipath + strlen (stcp->ipath);
 	if ((strlen(stcp->ipath) + 1 + strlen(pool_user)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 		serrno = SENAMETOOLONG;
-		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 		stcp->ipath[0] = '\0';
 		return(serrno);
@@ -2033,7 +2033,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 			if (stcp->u1.t.side > 0) {
 				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + stg_count_digits(stcp->u1.t.side,10) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 					serrno = SENAMETOOLONG;
-					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 					stcp->ipath[0] = '\0';
 					return(serrno);
@@ -2043,7 +2043,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 				/* Backward compatiblity */
 				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 					serrno = SENAMETOOLONG;
-					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 					stcp->ipath[0] = '\0';
 					return(serrno);
@@ -2053,7 +2053,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		} else {
 			if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 				serrno = SENAMETOOLONG;
-				sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+				sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 				stcp->ipath[0] = '\0';
 				return(serrno);
@@ -2068,7 +2068,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		}
 		if ((strlen(stcp->ipath) + 1 + strlen(p) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
 			serrno = SENAMETOOLONG;
-			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return(serrno);
@@ -2091,8 +2091,8 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
-			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
-			sendrep (rpfd, MSG_ERR, STG11, pool_user);
+			if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
+			sendrep (&rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return ((errno == ENOENT) ? SEUSERUNKN : SESYSERR);
 		}
@@ -2119,7 +2119,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		if (errno != ENOENT && rfio_errno != ENOENT) {
 			/* If rfio_open fails, it can be a real open error or a client/or/server error */
 			/* We reset our internal path */
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
 							 rfio_serror());
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
@@ -2137,8 +2137,8 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
-			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
-			sendrep (rpfd, MSG_ERR, STG11, pool_user);
+			if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
+			sendrep (&rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
 		}
@@ -2159,7 +2159,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, (int) okmode);
 		STAGE_TIME_END;
 		if (fd < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
 		}
@@ -2167,7 +2167,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 	PRE_RFIO;
 	STAGE_TIME_START("build_ipath : rfio_fchown");
 	if (rfio_fchown (fd, (int) stcp->uid, (int) stcp->gid) < 0) {
-		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_fchown", rfio_serror());
+		sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_fchown", rfio_serror());
 		PRE_RFIO;
 		STAGE_TIME_START("build_ipath : rfio_close");
 		if (rfio_close(fd) != 0) {
@@ -2329,7 +2329,7 @@ killallovl(sig)
 	kill(0,SIGINT);
 
 	/* We reply shutdown is ok */
-	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, c);
+	sendrep (&shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, c);
 
 	/* Reset the permanent RFIO connections */
 	rfio_end();
@@ -2360,8 +2360,8 @@ void checkpoolstatus()
 				rpfd = wqp->rpfd;
 				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 					/* There is a coming shutdown */
-					sendrep (rpfd, MSG_ERR, STG162);
-					sendrep (rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
+					sendrep (&rpfd, MSG_ERR, STG162);
+					sendrep (&rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 					wqp->status = STAGESHUTDOWN;
 					continue;
 				}
@@ -2388,7 +2388,7 @@ void checkpoolstatus()
 						}
 						if (c < 0) {
 							if (wqp->nb_clnreq++ > (wqp->noretry ? 0 : MAXRETRY)) {
-								sendrep (rpfd, MSG_ERR, STG45,
+								sendrep (&rpfd, MSG_ERR, STG45,
 										(stcp->poolname[0] != '\0' ? stcp->poolname : "<none>"));
 								wqp->status = ENOSPC;
 							} else {
@@ -2434,9 +2434,9 @@ void checkpoolstatus()
 								++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
 								if ((stcp->status == STAGEOUT) ||
 									(stcp->status == STAGEALLOC)) {
-									if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+									if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 									if (wqp->Pflag)
-										sendrep (rpfd, MSG_OUT,
+										sendrep (&rpfd, MSG_OUT,
 														 "%s\n", stcp->ipath);
 									if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 										create_link (stcp, wfp->upath);
@@ -2473,8 +2473,8 @@ void checkwaitingspc()
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
 			reqid = wqp->reqid;
-			sendrep (rpfd, MSG_ERR, STG162);
-			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
+			sendrep (&rpfd, MSG_ERR, STG162);
+			sendrep (&(wqp->rpfd), STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			continue;
 		}
@@ -2565,9 +2565,9 @@ void checkwaitingspc()
 				if ((stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
 					if (wqp->api_out)
-						sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+						sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 					if (wqp->Pflag)
-						sendrep (wqp->rpfd, MSG_OUT, "%s\n", stcp->ipath);
+						sendrep (&(wqp->rpfd), MSG_OUT, "%s\n", stcp->ipath);
 					if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 						create_link (stcp, wfp->upath);
 					if (wqp->Upluspath && *((wfp+1)->upath) && strcmp (stcp->ipath, (wfp+1)->upath))
@@ -2629,7 +2629,7 @@ check_waiting_on_req(subreqid, state)
 						if (stcp_check->reqid == wfp->subreqid) break;
 					}
 #ifdef STAGER_DEBUG
-                    sendrep(rpfd, MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
+                    sendrep(&rpfd, MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
 #endif
 					if (strcmp(stcp->u1.t.fseq,stcp_check->u1.t.fseq) != 0) {
 						/* The file sequence of this "-c off" callback does not */
@@ -2641,12 +2641,12 @@ check_waiting_on_req(subreqid, state)
 				stageacct (STGFILS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 									 wqp->reqid, wqp->req_type, 0, 0, stcp, "", (char) 0);
 #endif
-				sendrep (rpfd, RTCOPY_OUT, STG96,
+				sendrep (&rpfd, RTCOPY_OUT, STG96,
 								 strrchr (stcp->ipath, '/')+1,
 								 u64tostr(stcp->actual_size,tmpbuf,0),
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
-				if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+				if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -2729,26 +2729,26 @@ check_waiting_on_req(subreqid, state)
 	rpfd = saverpfd;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
+		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
 					switch (stcp->t_or_d) {
 					case 't':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'd':
 					case 'a':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'm':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'h':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					default:
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
 						break;
                     }
 					break;
@@ -2829,26 +2829,26 @@ check_coff_waiting_on_req(subreqid, state)
 	rpfd = saverpfd;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : Waitq->wf : \n");
+		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : Waitq->wf : \n");
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
 					switch (stcp->t_or_d) {
 					case 't':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'd':
 					case 'a':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'm':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'h':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					default:
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
 						break;
                     }
 					break;
@@ -2876,8 +2876,8 @@ void checkwaitq()
 		reqid = wqp->reqid;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
-			sendrep (rpfd, MSG_ERR, STG162);
-			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
+			sendrep (&rpfd, MSG_ERR, STG162);
+			sendrep (&(wqp->rpfd), STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			wqp1 = wqp;
 			wqp = wqp->next;
@@ -2885,7 +2885,7 @@ void checkwaitq()
 			continue;
 		}
 #ifdef STAGER_DEBUG
-		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] nb_subreqs=%d, concat_off_fseq=%d, nb_waiting_on_req=%d, waiting_pool=%s, ovl_pid=%d\n", wqp->nb_subreqs, wqp->concat_off_fseq, wqp->nb_waiting_on_req, wqp->waiting_pool, wqp->ovl_pid);
+		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] nb_subreqs=%d, concat_off_fseq=%d, nb_waiting_on_req=%d, waiting_pool=%s, ovl_pid=%d\n", wqp->nb_subreqs, wqp->concat_off_fseq, wqp->nb_waiting_on_req, wqp->waiting_pool, wqp->ovl_pid);
 #endif
 		if (wqp->nb_subreqs == 0 && wqp->nb_waiting_on_req == 0 &&
 				! *(wqp->waiting_pool) && ! wqp->ovl_pid) {
@@ -2895,7 +2895,7 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
-			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->magic, wqp->status);
+			sendrep (&(wqp->rpfd), STAGERC, wqp->req_type, wqp->magic, wqp->status);
 			wqp1 = wqp;
 			wqp = wqp->next;
 			rmfromwq (wqp1);
@@ -2907,7 +2907,7 @@ void checkwaitq()
 				   wqp->status != REQKILD && wqp->status != ESTKILLED &&
 				   wqp->nretry < (wqp->noretry ? 0 : MAXRETRY)) {
 			if (wqp->nretry)
-				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
+				sendrep (&(wqp->rpfd), MSG_ERR, STG43, wqp->nretry);
 			if (wqp->save_subreqid != NULL) {
 				int isubreqid;
 				/* This waiting queue is supporting the async callback */
@@ -2952,8 +2952,8 @@ void checkwaitq()
 				if (wqp->clnreq_waitingreqid == stcp->reqid)
 					break;
 			}
-			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
-			sendrep (rpfd, STAGERC, STAGEUPDC, wqp->magic, wqp->status);
+			sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
+			sendrep (&rpfd, STAGERC, STAGEUPDC, wqp->magic, wqp->status);
 			wqp->status = 0;
 			wqp->clnreq_waitingreqid = 0;
 			wqp = wqp->next;
@@ -2965,9 +2965,9 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
-			sendrep (wqp->rpfd, MSG_ERR, STG98, sstrerror(wqp->status));
+			sendrep (&(wqp->rpfd), MSG_ERR, STG98, sstrerror(wqp->status));
 			/* We close cleanly the connection */
-			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->magic, wqp->status);
+			sendrep (&(wqp->rpfd), STAGERC, wqp->req_type, wqp->magic, wqp->status);
 
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
@@ -3053,7 +3053,7 @@ void checkwaitq()
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
-					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+					if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 				}
 			}
 			wqp1 = wqp;
@@ -3065,26 +3065,26 @@ void checkwaitq()
 	}
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : Waitq->wf : \n");
+		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : Waitq->wf : \n");
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
 					switch (stcp->t_or_d) {
 					case 't':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'd':
 					case 'a':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'm':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'h':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					default:
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] check_waitq : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
 						break;
 					}
 					break;
@@ -3111,14 +3111,14 @@ int create_dir(dirname, uid, gid, mask)
 		if (errno == EEXIST || rfio_errno == EEXIST) {
 			return (0);
 		} else {
-			sendrep (rpfd, MSG_ERR, STG02, dirname, "rfio_mkdir",
+			sendrep (&rpfd, MSG_ERR, STG02, dirname, "rfio_mkdir",
 							 rfio_serror());
 			return (SESYSERR);
 		}
 	}
 	PRE_RFIO;
 	if (rfio_chown (dirname, uid, gid) < 0) {
-		sendrep (rpfd, MSG_ERR, STG02, dirname, "rfio_chown",
+		sendrep (&rpfd, MSG_ERR, STG02, dirname, "rfio_chown",
 						 rfio_serror());
 		return (SESYSERR);
 	}
@@ -3160,10 +3160,10 @@ void create_link(stcp, upath)
 	}
 	if (c > 0 || errno == EINVAL || rfio_errno == EINVAL) {
 		stglogit (func, STG93, upath);
-		sendrep (rpfd, RMSYMLINK, upath);
+		sendrep (&rpfd, RMSYMLINK, upath);
 	}
 	stglogit (func, STG94, upath);
-	sendrep (rpfd, SYMLINK, stcp->ipath, upath);
+	sendrep (&rpfd, SYMLINK, stcp->ipath, upath);
  create_link_return:
 	savepath ();
 #ifdef USECDB
@@ -3309,14 +3309,14 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			if (rfio_unlink (stcp->u1.m.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.m.xfile, by);
 			} else {
-				sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
+				sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
 								 "rfio_unlink", rfio_serror());
 			}
 		} else if (stcp->t_or_d == 'h') {
 			if (Cns_unlink (stcp->u1.h.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.h.xfile, by);
 			} else {
-				sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
+				sendrep (&rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
 								 "Cns_unlink", sstrerror(serrno));
 			}
 		}
@@ -3372,7 +3372,7 @@ void dellink(stpp)
 #endif
 	if (rpfd >= 0) {
 		stglogit (func, STG93, stpp->upath);
-		sendrep (rpfd, RMSYMLINK, stpp->upath);
+		sendrep (&rpfd, RMSYMLINK, stpp->upath);
 	} else {
 		stglogit (func, "STG93 - removing silently link %s\n", stpp->upath);
 	}
@@ -3544,7 +3544,7 @@ int fork_exec_stager(wqp)
 			/* We are at the limit - Sorry we have to reject */
 			/* We count on the client retry some time later saying him we are not */
 			/* available for the moment - with ESTNACT */
-			sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
+			sendrep (&rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
 			return(SHIFT_ESTNACT);
 		}
 	}
@@ -3566,12 +3566,12 @@ int fork_exec_stager(wqp)
 	case 'h':
 		break;
 	default:
-		sendrep (wqp->rpfd, MSG_ERR, "STG02 - Unknown request type '%c'\n", t_or_d);
+		sendrep (&(wqp->rpfd), MSG_ERR, "STG02 - Unknown request type '%c'\n", t_or_d);
 		return (SEINTERNAL);
 	}
 
 	if (pipe (pfd) < 0) {
-		sendrep (wqp->rpfd, MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
+		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
 		return (SESYSERR);
 	}
 
@@ -3616,7 +3616,7 @@ int fork_exec_stager(wqp)
 	wqp->ovl_pid = fork ();
 	pid = wqp->ovl_pid;
 	if (pid < 0) {
-		sendrep (wqp->rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
 #ifdef __INSURE__
 		remove(tmpfile);
 #endif
@@ -3985,7 +3985,7 @@ void sendinfo2cptape(rpfd, stcp)
 		sprintf(buf, "-P %s", stcp->ipath);
 		break;
 	}
-	sendrep(rpfd, MSG_ERR, STG47, buf);
+	sendrep(&rpfd, MSG_ERR, STG47, buf);
 }
 
 int ask_stageout(req_type, upath, found_stcp)
@@ -4022,7 +4022,7 @@ int ask_stageout(req_type, upath, found_stcp)
 			 (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) ||
 			((req_type == STAGEPUT) &&
 			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		return (ENOENT);
 	}
 	*found_stcp = stcp;
@@ -4076,7 +4076,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			 (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) ||
 			((req_type == STAGEPUT) &&
 			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		return (ENOENT);
 	}
 	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
@@ -4106,7 +4106,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 				if (delfile(stcp, 0, 1, 1,
 							"upd_stageout update on zero-length to-be-migrated file ok",
 							stcp->uid, stcp->gid, 0, 0, 0) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath,
 									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				return((req_type > STAGE_00) ? ESTCLEARED : CLEARED);
@@ -4180,13 +4180,13 @@ int upd_staged(upath)
 	}
 	if ((found == 0) || ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || ((stcp->status & WAITING_MIGR) == WAITING_MIGR) || (! (((stcp->status & 0xF0) == STAGED) || ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR))))) {
 		if (found == 0) {
-			sendrep (rpfd, MSG_ERR, STG22);
+			sendrep (&rpfd, MSG_ERR, STG22);
 		} else if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) {
-			sendrep (rpfd, MSG_ERR, "STG02 - Request should be on an HSM file\n");
+			sendrep (&rpfd, MSG_ERR, "STG02 - Request should be on an HSM file\n");
 		} else if ((stcp->status & BEING_MIGR) == BEING_MIGR) {
-			sendrep (rpfd, MSG_ERR, "STG02 - Request should not be on a BEING_MIGR HSM file\n");
+			sendrep (&rpfd, MSG_ERR, "STG02 - Request should not be on a BEING_MIGR HSM file\n");
 		} else {
-			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be on a STAGED or CAN_BE_MIGR HSM file\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
+			sendrep (&rpfd, MSG_ERR, "STG02 - %s : Request should be on a STAGED or CAN_BE_MIGR HSM file\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
 		}
 		return (ENOENT);
 	}
@@ -4236,7 +4236,7 @@ int upd_staged(upath)
 		/* Note that in rfio/rfcp.c there is almost the same line, but then there is a +1 to overestimate */
 		/* as less as possible the size...! */
 		stcp->size = elemp_free_plus_blocks;
-		sendrep (rpfd, MSG_ERR, "STG02 - %s : Filesystem too low in space, underestimating initial allocated size from %s to %s\n",  stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, u64tostru(sav_stcp_size,tmpbuf1,0), u64tostru(stcp->size,tmpbuf2,0));
+		sendrep (&rpfd, MSG_ERR, "STG02 - %s : Filesystem too low in space, underestimating initial allocated size from %s to %s\n",  stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, u64tostru(sav_stcp_size,tmpbuf1,0), u64tostru(stcp->size,tmpbuf2,0));
 		/* Give it another try, then allowing overflow in order to allow user to continue */
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size));
