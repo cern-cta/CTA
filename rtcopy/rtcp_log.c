@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.4 $ $Date: 1999/12/17 12:03:22 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 13:32:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -146,6 +146,7 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
     int l_buf;
 
     buf = NULL;
+    if ( format == NULL || *format == '\0' ) return;
     if ( file != NULL ) {
         filereq = &file->filereq;
         buf = filereq->err.errmsgtxt;
