@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2004/06/23 04:06:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2004/06/23 08:26:46 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -49,7 +49,7 @@ libcastorCommonOra.so: $(LIBRARIES2)
 	@mkdir tmp
 	@for i in $? ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS2))
+	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS2))
 	@-rm -rf tmp
 
 libcastorProto.so: $(LIBRARIES3)
@@ -58,7 +58,7 @@ libcastorProto.so: $(LIBRARIES3)
 	@mkdir tmp
 	@for i in $? ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS3))
+	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS3))
 	@-rm -rf tmp
 
 shift.dll:	$(LIBRARIES)
