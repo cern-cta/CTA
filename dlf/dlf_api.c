@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.4 $ $Date: 2003/10/31 19:44:38 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.5 $ $Date: 2003/11/03 09:38:34 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -33,7 +33,6 @@ parameter value.
 
 ***********************************************************************/
 
-#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -83,7 +82,7 @@ char *getenv();
 int DLL_DECL dlf_init(fac_name)
 const char *fac_name;
 {
-        int fac_no;
+        unsigned int fac_no;
 	char *p;
 	int port;
 	char dlfhost[CA_MAXHOSTNAMELEN + 1];
@@ -591,6 +590,7 @@ dlf_msg_text_slist_t *txt_list;
 
 
 char DLL_DECL * dlf_format_str(char *buf, int buf_len, const char *fmt, ...) {
+
   va_list ap;
   int nb;
 
@@ -604,7 +604,8 @@ char DLL_DECL * dlf_format_str(char *buf, int buf_len, const char *fmt, ...) {
 }
 
 int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
-                        U_HYPER ns_invariant, int numparams, ...) {
+                        U_HYPER ns_invariant, int numparams, ...)  {
+
   int i;
   HYPER par_int;
   double par_double;
@@ -740,6 +741,7 @@ dlf_log_message_t *msg;
      static char fmt5[] = " %s=%s";
 
      int n;
+     struct flock64 fl_struct;
      char prtbuf[1024];
      char *txt;
      char *sev_name;
@@ -750,9 +752,17 @@ dlf_log_message_t *msg;
 
      if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
        return (-1);
-     /* Lock file */
-     if (flock(fd, LOCK_EX) < 0)
+
+     /* Lock file at the end of file*/
+     fl_struct.l_type = F_WRLCK;
+     fl_struct.l_whence = SEEK_END;
+     fl_struct.l_start = 0;
+     fl_struct.l_len = 0;
+     fl_struct.l_pid = 0;
+
+     if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
        return (-1);
+
      n = snprintf
        (prtbuf, sizeof(prtbuf), fmt1, 
         msg->time, msg->time_usec, msg->hostname,
@@ -797,8 +807,19 @@ dlf_log_message_t *msg;
 	    return (-1);
      }
      write (fd, "\n", 1);
+     /* Flush buffers */
+     fsync (fd);
+
      /* Unlock the file */
-     flock(fd, LOCK_UN);  
+     fl_struct.l_type = F_UNLCK;
+     fl_struct.l_whence = SEEK_END;
+     fl_struct.l_start = 0;
+     fl_struct.l_len = 0;
+     fl_struct.l_pid = 0;
+
+     if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
+       return (-1);
+
      close (fd);
      return (0);
 }
@@ -839,7 +860,7 @@ dlf_log_message_t *msg;
 		   how to transfer floating point numbers over the network */
 		size += sizeof(U_BYTE)
 		     + strlen(p->name) + 1
-  		     + snprintf (p->strval, DLF_MAXSTRVALLEN, "%f", p->dval) + 1;
+  		     + snprintf ((char*)p->strval, DLF_MAXSTRVALLEN, "%f", p->dval) + 1;
 		break;
 	      case DLF_MSG_PARAM_UUID:
 		size += sizeof(U_BYTE)
@@ -1241,8 +1262,8 @@ const char *par_str_val;
     else return(0);
   }
   for (++p; *p != '\0' && isdigit(*p); p++, i++);
-  if (*p == '\0' && i != 0) return (1); else return(0);
-  return (0);
+  if (*p == '\0' && i != 0) return (1); 
+  else return(0);
 }
 
 int  DLL_DECL dlf_hex2uuid( hex_str, uuid )
@@ -1264,7 +1285,7 @@ Cuuid_t uuid;
 }
 
 int  DLL_DECL dlf_hexto4bits(c)
-const char c;
+const int c;
 {
   int i;
 
