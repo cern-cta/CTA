@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.85 2001/02/12 07:59:25 jdurand Exp $
+ * $Id: poolmgr.c,v 1.86 2001/02/12 08:33:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.85 $ $Date: 2001/02/12 07:59:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.86 $ $Date: 2001/02/12 08:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2037,7 +2037,7 @@ int migpoolfiles(pool_p)
 
       /* In order to reduce as much as possible streams of different sizes, we always chose the */
       /* ones with the highest size first. */
-      qsort((void *) tppool_vs_stcp, ntppool_vs_stcp, sizeof(struct files_per_stream), &tppool_vs_stcp_cmp_vs_size);
+      /* qsort((void *) tppool_vs_stcp, ntppool_vs_stcp, sizeof(struct files_per_stream), &tppool_vs_stcp_cmp_vs_size); */
 
       for (j = 0; j < ntppool_vs_stcp; j++) {
         if (tppool_vs_stcp[j].size > minsize) {
