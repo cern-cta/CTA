@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.22 2002/04/30 13:01:05 jdurand Exp $
+ * $Id: sendrep.c,v 1.23 2002/05/03 04:46:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.22 $ $Date: 2002/04/30 13:01:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.23 $ $Date: 2002/05/03 04:46:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,9 +39,12 @@ int sendrep(va_alist) va_dcl
 	va_list args;
 	char *file1, *file2;
 	struct stgcat_entry *stcp;
+	struct stgpath_entry *stpp;
 	char api_stcp_out[3 * LONGSIZE + PROTOBUG * sizeof(struct stgcat_entry)]; /* We overestimate a bit this buffer length (gaps + strings) */
 	char stcp_marshalled[PROTOBUG * sizeof(struct stgcat_entry)];
+	char stpp_marshalled[sizeof(struct stgpath_entry)];
 	int  api_stcp_out_status = 0;
+	int  api_stpp_out_status = 0;
 	char api_stpp_out[3 * LONGSIZE + sizeof(struct stgpath_entry)];
 	char *func_sendrep = "sendrep";
 	char *func_stgdaemon = "stgdaemon";
@@ -173,6 +176,17 @@ int sendrep(va_alist) va_dcl
 		marshall_STAGE_CAT (magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
 		marshall_LONG(rbp, p - stcp_marshalled);
 		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
+ 		break;
+	case API_STPP_OUT:
+		/* There is another argument on the stack */
+		stpp = va_arg (args, struct stgpath_entry *);
+		magic = va_arg (args, int);
+		api_stpp_out_status = 0;
+		marshall_LONG (sav_rbp_magic, magic);
+		p = stpp_marshalled;
+		marshall_STAGE_PATH (magic, STAGE_OUTPUT_MODE, api_stpp_out_status, p, stpp);
+		marshall_LONG(rbp, p - stpp_marshalled);
+		marshall_OPAQUE(rbp, stpp_marshalled, p - stpp_marshalled);
  		break;
 	case UNIQUEID:
 		uniqueid = va_arg (args, u_signed64);
