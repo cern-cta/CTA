@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.18 2000/03/24 16:03:16 jdurand Exp $
+ * $Id: stager.c,v 1.19 2000/03/30 05:41:39 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.18 $ $Date: 2000/03/24 16:03:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.19 $ $Date: 2000/03/30 05:41:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -840,9 +840,9 @@ int stagewrt_castor_hsm_file() {
 			
 
 		rtcp_rc = rtcpc(rtcpcreqs[0]);
+		fseq_rtcp = rtcpcreqs[0]->file->filereq.tape_fseq;
 			
 #ifdef STAGER_DEBUG
-		fseq_rtcp = rtcpcreqs[0]->file->filereq.tape_fseq;
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] rtcpc() status = %d, returned VID.FSEQ=%s.%d (asked for VID.FSEQ=%s.%d)\n",rtcp_rc,vid,fseq_rtcp,vid,fseq);
 #endif
 			
@@ -920,7 +920,7 @@ int stagewrt_castor_hsm_file() {
 				}
 #ifdef STAGER_DEBUG
 				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid=%d)\n",
-								castor_hsm,i,hsm_fseg[i],u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp, blockid);
+								castor_hsm,i,hsm_fseg[i],i,u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp, blockid);
 #endif
 				if (Cns_setsegattrs (castor_hsm, 1, hsm_fseg[i], hsm_fsegsize[i], vid, fseq_rtcp, blockid) != 0) {
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs",
