@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/10/27 11:05:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.58 $ $Release$ $Date: 2004/10/27 14:49:54 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/10/27 11:05:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.58 $ $Release$ $Date: 2004/10/27 14:49:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1037,7 +1037,7 @@ static int nextSegmentToDo(
     return(-1);
   }
 
-  rc = rtcpcld_nextFileToRecall(tape,&file);
+  rc = rtcpcld_nextFileToProcess(tape,&file);
   if ( (rc != 1) || (file == NULL) ) {
     serrno = ENOENT;
     return(-1);
@@ -1459,7 +1459,10 @@ int procTapeCopiesForStream(
 
   serrno = 0;
   tl = tape;
-  rc = rtcp_NewFileList(&tl,&file,tape->tapereq.mode);
+  rc = rtcpcld_nextFileToProcess(tape,&file);
+  if ( rc == 0 ) {
+    rc = rtcp_NewFileList(&tl,&file,tape->tapereq.mode);
+  }
   if ( rc == -1 ) {
     if ( serrno != 0 ) save_serrno = serrno;
     else save_serrno = errno;

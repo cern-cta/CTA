@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/27 14:10:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/27 14:49:54 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/27 14:10:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/27 14:49:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -559,10 +559,15 @@ int rtcpcld_findFile(
   return(-1);
 }
 
-int rtcpcld_nextFileToRecall(
-                             tape,
-                             file
-                             )
+/*
+ * Find the next file to process: find the first file with
+ * a valid tape fseq or blockid but no path. Used by both
+ * migrator and recaller.
+ */
+int rtcpcld_nextFileToProcess(
+                              tape,
+                              file
+                              )
      tape_list_t *tape;
      file_list_t **file;
 {
@@ -1207,7 +1212,7 @@ int rtcpcld_parseWorkerCmd(
         return(-1);
       }
       fl->filereq.tape_fseq = atoi(Coptarg);
-      fl->filereq.proc_status = RTCP_WAITING;
+      fl->filereq.proc_status = RTCP_REQUEST_MORE_WORK;
       break;
     case 'g':
       /* 
