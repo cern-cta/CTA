@@ -300,10 +300,14 @@ CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
 BEGIN
  SELECT DiskCopy.status, DiskCopy.id
   INTO stat, dci
-  FROM DiskCopy, SubRequest
+  FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
+   AND DiskCopy.fileSystem = FileSystem.id
+   AND FileSystem.status = 0 -- PRODUCTION
+   AND FileSystem.diskserver = DiskServer.id
+   AND DiskServer.status = 0 -- PRODUCTION
    AND ROWNUM < 2;
  IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
  THEN
@@ -322,7 +326,9 @@ BEGIN
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6) -- STAGED, STAGEOUT
       AND FileSystem.id = DiskCopy.fileSystem
-      AND DiskServer.id = FileSystem.diskServer;
+      AND FileSystem.status = 0 -- PRODUCTION
+      AND DiskServer.id = FileSystem.diskServer
+      AND DiskServer.status = 0; -- PRODUCTION
  END IF;
 EXCEPTION
  WHEN NO_DATA_FOUND -- In this case, schedule for recall
@@ -386,11 +392,14 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
          DiskCopy.diskcopyId, FileSystem.weight
   INTO dci, rpath, rstatus, rDiskCopyId, rFsWeight
-  FROM DiskCopy, SubRequest, FileSystem
+  FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
     AND FileSystem.id = DiskCopy.fileSystem
+    AND FileSystem.status = 0 -- PRODUCTION
+    AND DiskServer.id = FileSystem.diskserver
+    AND DiskServer.status = 0 -- PRODUCTION
     AND ROWNUM < 2;
   -- Found a DiskCopy, Check whether to wait on it
   IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
@@ -409,7 +418,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
       AND FileSystem.id = DiskCopy.fileSystem
-      AND DiskServer.id = FileSystem.diskServer;
+      AND FileSystem.status = 0 -- PRODUCTION
+      AND DiskServer.id = FileSystem.diskServer
+      AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
     UPDATE SubRequest SET diskCopy = ids_seq.nextval WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
