@@ -1,0 +1,24 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 12:16:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "msg" directory
+
+INCLUDES = FileName(FileName(..,..),h)
+
+all:
+	@echo 'no test available yet for "msg" directory'
+
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+depend:
+	makedepend -Y$(INCLUDES) *.c
+ 
+Makefiles:
+ 

@@ -1,0 +1,24 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 12:17:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "rtcopy" directory
+
+INCLUDES = FileName(FileName(..,..),h)
+
+all:
+	@echo 'no test available yet for "rtcopy" directory'
+
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+depend:
+	makedepend -Y$(INCLUDES) *.c
+ 
+Makefiles:
+ 
