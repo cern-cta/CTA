@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.46 2003/11/06 16:26:47 jdurand Exp $
+ * $Id: stager_castor.c,v 1.47 2004/03/03 11:02:33 jdurand Exp $
  */
 
 /*
@@ -9,6 +9,11 @@
 
 /* Do we want to maintain maxsize for the transfert... ? */
 /* #define SKIP_FILEREQ_MAXSIZE */
+
+/* If there is support of checksum in the name server */
+/* Shall we do it the update of segments under a */
+/* privilege account ? */
+/* #define SETCHECKSUM_WITH_PRIV_UID_GID */
 
 /* Do you want to do the Cns_setsegattrs() under real uid/gid of the owner of file in Castor Name Server ? */
 #define SETSEGATTRS_WITH_OWNER_UID_GID
@@ -37,7 +42,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.46 $ $Date: 2003/11/06 16:26:47 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.47 $ $Date: 2004/03/03 11:02:33 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -160,6 +165,7 @@ int Flags = 0;                      /* Tape flag for vmgr_updatetape */
 int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback already did the job */
 int error_already_processed = 0;    /* Set by the callback if it processes error */
 struct passwd start_passwd;
+struct passwd stage_passwd;         /* Generic uid/gid stage:st */
 int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
 int fatal_callback_error = 0;       /* Flag to tell us that there was a fatal error in the callback */
 int callback_forced_noretry = 0;    /* Flag to tell us that the callback do NOT want to see retry when mover says so */
@@ -170,7 +176,8 @@ int retryi_vmgr_gettape_enospc = 0; /* Retry Interval if vmgr_gettape() returns 
 #ifdef STAGE_CSETPROCNAME
 static char sav_argv0[1024+1];
 #endif
-int ismig_log = 0; /* Will ask to have few more entries in mig_log rather than in log */
+int ismig_log = 0;                  /* Will ask to have few more entries in mig_log rather than in log */
+int use_checksum;                   /* Is use of checksum enabled ? */
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -180,6 +187,30 @@ int ismig_log = 0; /* Will ask to have few more entries in mig_log rather than i
 #endif
 
 static struct vmgr_tape_info vmgr_tapeinfo;
+
+#define FILL_USE_CHECKSUM_VARIABLE(play_eid) {        \
+	char *p;                                          \
+	use_checksum = 1;                                 \
+	if ((p = getenv("STAGE_USE_CHECKSUM")) == NULL) { \
+		p = getconfent("STG","USE_CHECKSUM",0);       \
+	}                                                 \
+	if (p != NULL) {                                  \
+		if (strcmp(p,"NO") == 0) {                    \
+			use_checksum = 0;                         \
+		} else {                                      \
+			if (strcmp(p,"YES") != 0) {               \
+				if (play_eid) {                       \
+					SAVE_EID;                         \
+				}                                     \
+				stglogit (func, "### Warning : found STG USE_CHECKSUM <something> in config, only YES or NO is supported. Default (YES) will be in use.\n"); \
+				if (play_eid) {                       \
+					RESTORE_EID;                      \
+				}                                     \
+			}                                         \
+		}                                             \
+	}                                                 \
+}
+
 
 #ifdef STGSEGMENT_OK
 #undef STGSEGMENT_OK
@@ -200,6 +231,8 @@ static struct vmgr_tape_info vmgr_tapeinfo;
 #undef RETRYI_VMGR_GETTAPE_ENOSPC_MAX
 #endif
 #define RETRYI_VMGR_GETTAPE_ENOSPC_MAX 3600
+
+EXTERN_C char DLL_DECL *getconfent _PROTO(());
 
 #ifdef STAGER_DEBUG
 #ifdef RETRYI
@@ -232,7 +265,12 @@ int save_euid, save_egid;
 #define SAVE_EID {                               \
 	save_euid = geteuid();                       \
 	save_egid = getegid();                       \
-	SETEID(start_passwd.pw_gid,start_passwd.pw_uid); \
+	SETEID(start_passwd.pw_uid,start_passwd.pw_gid); \
+}
+#define SAVE_EID_V2(uid,gid) {                   \
+	save_euid = geteuid();                       \
+	save_egid = getegid();                       \
+	SETEID(uid,gid);                             \
 }
 #define RESTORE_EID {                            \
 	SETEID(save_euid,save_egid);                 \
@@ -371,6 +409,9 @@ int save_euid, save_egid;
     case SECONNDROP: \
       hsm_ignore[ihsm_ignore] = SECOMERR; \
       break; \
+    case SECHECKSUM: \
+      hsm_ignore[ihsm_ignore] = SECHECKSUM; \
+      break; \
     default: \
       hsm_ignore[ihsm_ignore] = SYERR; \
       break; \
@@ -418,18 +459,22 @@ int save_euid, save_egid;
       } else {                                   \
         int global_userr = 0;                    \
         int global_syerr = 0;                    \
+        int global_checksum = 0;                 \
         for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) { \
           if (! hsm_ignore[ihsm_status]) continue; \
           switch (hsm_ignore[ihsm_status]) {     \
           case SECOMERR:                         \
             global_syerr++;                      \
             break;                               \
+          case SECHECKSUM:                       \
+            global_checksum++;                   \
+            break;                               \
           default:                               \
             global_userr++;                      \
             break;                               \
           }                                      \
         }                                        \
-        correct_exit_code = (global_syerr ? SYERR : (global_userr ? USERR : exit_code)); \
+        correct_exit_code = (global_syerr ? SYERR : (global_userr ? USERR : (global_checksum ? CHECKSUMERR : exit_code))); \
       }                                          \
     }                                            \
 	FREEHSM;                                     \
@@ -619,6 +664,21 @@ int main(argc,argv,envp)
 	if (Cgetgrgid(start_passwd.pw_gid) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",start_passwd.pw_gid,strerror(errno));
 		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", start_passwd.pw_gid, start_passwd.pw_name);
+ 		exit (SYERR);
+	}
+
+	/* We get information on generic stage:st uid/gid */
+	if ((this_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n",STAGERSUPERUSER,strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", STAGERSUPERUSER);
+		stglogit (func, "Exit.\n");
+ 		exit (SYERR);
+	}
+	stage_passwd = *this_passwd;
+	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, STAGERSUPERUSER);
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 
@@ -2871,8 +2931,19 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			/* This is an hsm read request */
 			(*rtcpcreqs_in)[i]->tapereq.mode            = WRITE_DISABLE;
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.check_fid = CHECK_FILE;
+			FILL_USE_CHECKSUM_VARIABLE(1);
+			if (use_checksum) {
+				/* And we might know the checksum of it */
+				strncpy((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.segmCksumAlgorithm, hsm_segments[ihsm][hsm_oksegment[ihsm]].checksum_name,CA_MAXCKSUMNAMELEN);
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.segmCksumAlgorithm[CA_MAXCKSUMNAMELEN] = '\0';
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.segmCksum = hsm_segments[ihsm][hsm_oksegment[ihsm]].checksum;
+			}
 			break;
 		}
+		/* We know invariants in any case */
+		strncpy((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.nameServerHostName, stcp->u1.h.server, CA_MAXHOSTNAMELEN);
+		(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.nameServerHostName[CA_MAXHOSTNAMELEN] = '\0';
+		(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.castorSegAttr.castorFileId = stcp->u1.h.fileid;
 	}
 	return(0);
 }
@@ -3165,16 +3236,42 @@ int stager_hsm_callback(tapereq,filereq)
 							stager_client_true_i,hsm_nsegments[stager_client_true_i],tapereq->side);
 					sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fseq = %d\n",
 							stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->tape_fseq);
+					FILL_USE_CHECKSUM_VARIABLE(0);
+					if (use_checksum) {
+						sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].checksum_name = %s\n",
+								stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->castorSegAttr.segmCksumAlgorithm);
+						sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].checksum = 0x%lx\n",
+								stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->castorSegAttr.segmCksum);
+					}
 					RESTORE_EID;
 #endif
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].copyno = 0;
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].segsize = filereq->bytes_in;
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].compression = compression_factor;
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].s_status = '-';
-					strcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid,tapereq->vid);
+					strncpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid,tapereq->vid, CA_MAXVIDLEN);
+					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid[CA_MAXVIDLEN] = '\0';
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].side = tapereq->side;
 					memcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].blockid,filereq->blockid,sizeof(blockid_t));
 					hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].fseq = filereq->tape_fseq;
+					FILL_USE_CHECKSUM_VARIABLE(0);
+					if (use_checksum) {
+						SAVE_EID;
+						stglogit(func, "%s,{server=\"%s\",fileid=%s}, checksum of segment is {%s,0x%lx}\n",
+								 castor_hsm,
+								 stcp->u1.h.server,
+								 u64tostr(stcp->u1.h.fileid,tmpbuf1,0),
+								 filereq->castorSegAttr.segmCksumAlgorithm,
+								 filereq->castorSegAttr.segmCksum);
+						RESTORE_EID;
+						strncpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].checksum_name, filereq->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
+						hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+						hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].checksum = filereq->castorSegAttr.segmCksum;
+					} else {
+						/* Important, because we have not done a memset, so we must avoid sending garbage */
+						hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].checksum_name[0] = '\0';
+						hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].checksum = 0;
+					}
 					hsm_nsegments[stager_client_true_i]++;
 					if (hsm_transferedsize[stager_client_true_i] >= hsm_totalsize[stager_client_true_i]) {
 						/* tpwrite of this file is over */
@@ -3339,6 +3436,181 @@ int stager_hsm_callback(tapereq,filereq)
 				/* statements or clauses.                                      */
 				u_signed64 dummyvalue;
 
+				strcpy(Cnsfileid.server,stcp->u1.h.server);
+				Cnsfileid.fileid = stcp->u1.h.fileid;
+
+				FILL_USE_CHECKSUM_VARIABLE(1);
+
+				/* We compare current checksum, if any, with last checksum */
+				if (use_checksum && (filereq->castorSegAttr.segmCksumAlgorithm[0] != '\0')) {
+					int rc_replacechecksum;
+					struct Cns_segattrs oldsegattrs = hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]];
+					/* Mover supports checksum */
+					if (hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name[0] == '\0') {
+						/* No segment yet: we update it */
+						SAVE_EID;
+						stglogit(func, "%s,{server=\"%s\",fileid=%s}, no checksum yet, updating segment with {%s,0x%lx}\n",
+								 castor_hsm,
+								 Cnsfileid.server,
+								 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+								 filereq->castorSegAttr.segmCksumAlgorithm,
+								 filereq->castorSegAttr.segmCksum);
+						RESTORE_EID;
+						
+						strncpy(hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name, filereq->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
+						hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+						hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum = filereq->castorSegAttr.segmCksum;
+#ifdef SETCHECKSUM_WITH_PRIV_UID_GID
+						SAVE_EID_V2(stage_passwd.pw_uid,stage_passwd.pw_gid);
+#endif
+						rc_replacechecksum = Cns_updateseg_checksum(Cnsfileid.server,Cnsfileid.fileid,&oldsegattrs,&(hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]]));
+#ifdef SETCHECKSUM_WITH_PRIV_UID_GID
+						RESTORE_EID;
+#endif
+						if (rc_replacechecksum <0) {
+							int save_serrno = serrno;
+							SAVE_EID;
+							sendrep (&rpfd, MSG_ERR, STG02, castor_hsm, "Cns_updateseg_checksum", sstrerror(serrno));
+							RESTORE_EID;
+							if (((api_flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK) && (save_serrno == ENOENT)) {
+								SAVE_EID;
+								/* This is OK to have an ENOENT here */
+								sendrep (&rpfd, MSG_ERR, STG175,
+										 castor_hsm,
+										 u64tostr((u_signed64) Cnsfileid.fileid, tmpbuf1, 0),
+										 Cnsfileid.server,
+										 "skipped : STAGE_HSM_ENOENT_OK in action");
+								RESTORE_EID;
+							} else {
+								callback_error = 1;
+								return(-1);
+							}
+						}
+					} else {
+						/* Already have a checksum: we compare */
+#ifdef STAGER_DEBUG
+						SAVE_EID;
+						stglogit(func, "%s,{server=\"%s\",fileid=%s}, yet known checksum is {%s,0x%lx}, mover says {%s,0x%lx}\n",
+								 castor_hsm,
+								 Cnsfileid.server,
+								 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+								 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+								 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum,
+								 filereq->castorSegAttr.segmCksumAlgorithm,
+								 filereq->castorSegAttr.segmCksum);
+						RESTORE_EID;
+#endif
+						
+						if (strcmp(hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+								   filereq->castorSegAttr.segmCksumAlgorithm) == 0) {
+							/* Same checksum algorithm */
+							if (hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum !=
+								filereq->castorSegAttr.segmCksum) {
+								/* Wrong checksum value ! */
+								int save_serrno;
+
+								save_serrno = serrno = SECHECKSUM;
+								SAVE_EID;
+								sendrep (&rpfd, MSG_ERR, "%s {server=\"%s\",fileid=%s} : %s error : should be {%s,0x%lx}, mover says {%s,0x%lx}\n",
+										 castor_hsm,
+										 Cnsfileid.server,
+										 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+										 sstrerror(save_serrno),
+										 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+										 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum,
+										 filereq->castorSegAttr.segmCksumAlgorithm,
+										 filereq->castorSegAttr.segmCksum);
+								RESTORE_EID;
+								callback_error = 1;
+								SET_HSM_IGNORE(stager_client_true_i,save_serrno);
+								return(-1);
+							} else {
+								SAVE_EID;
+								stglogit(func, "%s,{server=\"%s\",fileid=%s}, checksum {%s,0x%lx} is ok\n",
+										 castor_hsm,
+										 Cnsfileid.server,
+										 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+										 filereq->castorSegAttr.segmCksumAlgorithm,
+										 filereq->castorSegAttr.segmCksum);
+								RESTORE_EID;
+							}
+						} else {
+							char *p;
+
+							if ((p = getenv("STAGE_CHANGE_CHECKSUM_NAME")) == NULL) {
+								p = getconfent("STG","CHANGE_CHECKSUM_NAME",0);
+							}
+
+							if (p != NULL) {
+								if (strcmp(p,"YES") == 0) {
+									/* Not the same checksum algorithm: we update name server */
+									SAVE_EID;
+									sendrep (&rpfd, MSG_ERR, "%s,{server=\"%s\",fileid=%s}, new checksum algorithm - changing from {%s,0x%lx} to what mover says: {%s,0x%lx}\n",
+											 castor_hsm,
+											 Cnsfileid.server,
+											 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+											 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+											 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum,
+											 filereq->castorSegAttr.segmCksumAlgorithm,
+											 filereq->castorSegAttr.segmCksum);
+									RESTORE_EID;
+									
+									strncpy(hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name, filereq->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
+									hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+									hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum = filereq->castorSegAttr.segmCksum;
+#ifdef SETCHECKSUM_WITH_PRIV_UID_GID
+									SAVE_EID_V2(stage_passwd.pw_uid,stage_passwd.pw_gid);
+#endif
+									rc_replacechecksum = Cns_updateseg_checksum(Cnsfileid.server,Cnsfileid.fileid,&oldsegattrs,&(hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]]));
+#ifdef SETCHECKSUM_WITH_PRIV_UID_GID
+									RESTORE_EID;
+#endif
+									if (rc_replacechecksum <0) {
+										int save_serrno = serrno;
+										SAVE_EID;
+										sendrep (&rpfd, MSG_ERR, STG02, castor_hsm, "Cns_updateseg_checksum", sstrerror(serrno));
+										RESTORE_EID;
+										if (((api_flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK) && (save_serrno == ENOENT)) {
+											/* This is OK to have an ENOENT here */
+											SAVE_EID;
+											sendrep (&rpfd, MSG_ERR, STG175,
+													 castor_hsm,
+													 u64tostr((u_signed64) Cnsfileid.fileid, tmpbuf1, 0),
+													 Cnsfileid.server,
+													 "skipped : STAGE_HSM_ENOENT_OK in action");
+											RESTORE_EID;
+										} else {
+											callback_error = 1;
+											return(-1);
+										}
+									}
+								} else {
+									SAVE_EID;
+									stglogit (func, "%s,{server=\"%s\",fileid=%s}, new checksum algorithm - NOT changing from {%s,0x%lx} to what mover says: {%s,0x%lx} (STG CHANGE_CHECKSUM_NAME config do not say YES) \n",
+											 castor_hsm,
+											 Cnsfileid.server,
+											 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+											 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+											 hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum,
+											 filereq->castorSegAttr.segmCksumAlgorithm,
+											 filereq->castorSegAttr.segmCksum);
+									RESTORE_EID;
+								}
+							} else {
+								SAVE_EID;
+								stglogit (func, "%s,{server=\"%s\",fileid=%s}, new checksum algorithm - NOT changing from {%s,0x%lx} to what mover says: {%s,0x%lx} (no STG CHANGE_CHECKSUM_NAME YES config) \n",
+										  castor_hsm,
+										  Cnsfileid.server,
+										  u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+										  hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum_name,
+										  hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].checksum,
+										  filereq->castorSegAttr.segmCksumAlgorithm,
+										  filereq->castorSegAttr.segmCksum);
+								RESTORE_EID;
+							}
+						}
+					}
+				}
 				dummyvalue = filereq->bytes_out;
 				hsm_transferedsize[stager_client_true_i] += dummyvalue;
 
@@ -4111,7 +4383,6 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 	char *cpbuf;
 	extern char *getenv();		/* External declaration */
 	u_signed64 total_bytes = 0;
-	EXTERN_C char DLL_DECL *getconfent _PROTO(());
 
 	*effsize = 0;
 
