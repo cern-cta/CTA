@@ -1,8 +1,8 @@
-.\" $Id: sacct.man,v 1.4 2002/10/01 07:59:19 bcouturi Exp $
+.\" $Id: sacct.man,v 1.5 2002/11/22 09:14:58 jdurand Exp $
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2002/10/01 07:59:19 $" "CASTOR" "Accounting records"
+.TH SACCT "4" "$Date: 2002/11/22 09:14:58 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 
@@ -30,8 +30,8 @@ The package identifies the type of the record, and indicates which structure sho
 .B ACCTSYSTEM
 Accounting for system events. Use \fBstruct acctsystem\fP to read the content. The only availble information is the subtype field, indicating system shutdown or startup. These accounting records are not currently used by CASTOR.
 .TP
-.B ACCTRFIO
-RFIO accounting entries. Use \fBstruct acctrfio\fP to read the content. This record provides the type of request, the uid/gid of the user sending the request, the filename, as well as the summary of the of the data transfered.
+.B ACCTRFIO64
+RFIO accounting entries. Use \fBstruct acctrfio64\fP to read the content. This record provides the type of request, the uid/gid of the user sending the request, the filename, as well as the summary of the of the data transfered.
 .TP
 .B ACCTTAPE
 Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided is: uid/gid of requestor, job id, the device group name of the drive, the drive used, the vid requested and the file sequence number on the tape. The subtype fields indicates what action was actually performed by the tape daemon, or what happened to the daemon the possible values are:
@@ -79,8 +79,8 @@ RTCOPY accounting entries. Use \fBstruct acctrtcp\fP. Contains uid/gid of reques
 .B ACCTRTCPTIM
 RTCOPY timing entries. Use \fBstruct acctrtcp_timing\fP. This records provide, for a given job timing information about the way the request was performed, as well as the quantity of data transfered. There is no subtype for this accounting record.
 .TP
-.B ACCTSTAGE / ACCTSTAGE2
-Stager accounting entries. Use \fBstruct acctstage\fP or \fBstruct acctstage2\fP. These records give information about stage requests, including request id, requestor uid/gid and information concerning the details of the request itself. accstage2 is a new format used by the current stagers. 
+.B ACCTSTAGE64
+Stager accounting entries. Use \fBstruct acctstage64\fP. These records give information about stage requests, including request id, requestor uid/gid and information concerning the details of the request itself.
 The subtypes are:
 
 .br
@@ -124,7 +124,7 @@ int size_read = 0;
 int getacctrec _PROTO((int, struct accthdr *, char *, int *));
 
 /*  This programs opens a remote accounting file, 
-    and reads all the acctstage2 records */
+    and reads all the acctstage64 records */
 int main(argc, argv)
      int argc;
      char **argv;
@@ -132,7 +132,7 @@ int main(argc, argv)
 
   int fd_acct;                  /* File descriptor for remote file */
   struct accthdr accthdr;		/* accthdr record */
-  struct acctstage2 rp;		/* accstage2 record */
+  struct acctstage64 rp;		/* accstage2 record */
   int swapped = 0;		/* flag set if byte order swapped */
 
   char *stgcmd[20] = { "STGSTART", "STGCMDR", "STGFILS", 
@@ -148,7 +148,7 @@ int main(argc, argv)
   printf("Reading all records\\n");
   
   while (getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped) > 0) {
-    if (accthdr.package == ACCTSTAGE2) {
+    if (accthdr.package == ACCTSTAGE64) {
       if (swapped) {
         swap_it(rp.subtype);
 	swap_it(rp.uid);
@@ -166,7 +166,7 @@ int main(argc, argv)
 
 /* Function that reads the accounting records, s
    kipping the records which
-   subtype is not ACCTSTAGE2 */
+   subtype is not ACCTSTAGE64 */
 int getacctrec (fd_acct, accthdr, buf,swapped)
      int fd_acct;
      struct accthdr *accthdr;
@@ -197,7 +197,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
     *swapped = 1;
   }
   
-  if (accthdr->package != ACCTSTAGE2) {
+  if (accthdr->package != ACCTSTAGE64) {
     /* Not a STAGE accouting record - we just seek the pointer */
     rfio_errno = serrno = 0;
     if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
@@ -208,7 +208,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
     return (accthdr->len);
   }
   
-  /* We have an ACCTSTAGE2 record */
+  /* We have an ACCTSTAGE64 record */
 
   if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
     if (c >= 0)
