@@ -1,5 +1,5 @@
 /*
- * $Id: stager_admin_api.h,v 1.2 2004/10/22 20:09:47 jdurand Exp $
+ * $Id: stager_admin_api.h,v 1.3 2004/10/24 22:17:00 jdurand Exp $
  */
 
 #ifndef stager_admin_api_h
@@ -17,5 +17,14 @@ EXTERN_C int DLL_DECL stager_configDbNthread         _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configUserNthread       _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configFacility          _PROTO((size_t, char *));
 EXTERN_C int DLL_DECL stager_configIgnoreCommandLine _PROTO((int *));
+EXTERN_C int DLL_DECL stager_sendToStager            _PROTO((char *, char *, size_t));
+EXTERN_C int DLL_DECL stager_seterrbuf               _PROTO((char *, int));
+EXTERN_C int DLL_DECL stager_setoutbuf               _PROTO((char *, int));
+EXTERN_C int DLL_DECL stager_geterrbuf               _PROTO((char **, int *));
+EXTERN_C int DLL_DECL stager_getoutbuf               _PROTO((char **, int *));
+EXTERN_C int DLL_DECL stager_setlog                  _PROTO((void (*)(int, char*)));
+EXTERN_C int DLL_DECL stage_getlog                   _PROTO((void (**)(int, char*)));
+EXTERN_C int DLL_DECL stage_errmsg                   _PROTO((char *, char *, ...));
+EXTERN_C int DLL_DECL stage_outmsg                   _PROTO((char *, char *, ...));
 
 #endif /* stager_admin_api_h */
