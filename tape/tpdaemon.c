@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.2 2004/08/12 16:27:35 motiakov Exp $
+ * $Id: tpdaemon.c,v 1.3 2005/03/15 23:07:55 bcouturi Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.3 $ $Date: 2005/03/15 23:07:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -185,18 +185,20 @@ struct main_args *main_args;
 	while (1) {
 		check_child_exit();
 		if (FD_ISSET (s, &readfd)) {
+		        char *mech, *clientid;
 			FD_CLR (s, &readfd);
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 			serrno = 0;
 
 #ifdef CSEC
-			Csec_server_reinit_context(&sec_ctx, CSEC_SERVICE_TYPE_TAPE, NULL);
-			if (Csec_server_establish_context(&sec_ctx, rqfd) < 0) {
+			Csec_server_reinitContext(&sec_ctx, CSEC_SERVICE_TYPE_TAPE, NULL);
+			if (Csec_server_establishContext(&sec_ctx, rqfd) < 0) {
 			  tplogit(func, "CSEC: Could not establish context: %s !\n", Csec_geterrmsg());
 			  netclose (rqfd);
 			  continue;
 			}
 			/* Connection could be done from another castor service */
+			Csec_getClientId(&sec_ctx, &mech, &clientid);
 			if ((c = Csec_server_is_castor_service(&sec_ctx)) >= 0) {
 			  tplogit(func, "CSEC: Client is castor service type: %d\n", c);
 			  Csec_service_type = c;

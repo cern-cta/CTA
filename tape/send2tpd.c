@@ -1,12 +1,12 @@
 /*
- * $Id: send2tpd.c,v 1.2 2004/08/12 16:26:52 motiakov Exp $
+ * $Id: send2tpd.c,v 1.3 2005/03/15 23:07:55 bcouturi Exp $
  *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:26:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.3 $ $Date: 2005/03/15 23:07:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -126,14 +126,15 @@ int user_repbuf_len;
 #ifdef CSEC
 
 		if (secure_connection) {
-			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_TAPE, NULL) <0) {
+		  
+		  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_TAPE, NULL) <0) {
 			  Ctape_errmsg (func, TP002, "send", "Could not init context");
 			  (void) netclose (s);
 			  serrno = ESEC_CTX_NOT_INITIALIZED;
 			  return -1;
 			}
 			
-			if(Csec_client_establish_context(&ctx, s)< 0) {
+			if(Csec_client_establishContext(&ctx, s)< 0) {
 			  Ctape_errmsg (func, "%s: %s\n",
 				      "send",
 				      "Could not establish context");
@@ -142,11 +143,7 @@ int user_repbuf_len;
 			  return -1;
 			}
 
-			p = Csec_client_get_service_name(&ctx);
-			n = Csec_client_get_service_type(&ctx);
-			Csec_trace (func, "Service name = %s, type = %d\n",p, n);
-
-			Csec_clear_context(&ctx);
+			Csec_clearContext(&ctx);
 		}
 #endif
 

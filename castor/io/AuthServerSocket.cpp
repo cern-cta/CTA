@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 15:13:59 $ $Author: bcouturi $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/15 23:08:44 $ $Author: bcouturi $
  *
  *
  *
@@ -46,9 +46,8 @@
 // Local Includes
 #include "AuthServerSocket.hpp"
 
-extern "C" {
-  #include "Csec_api.h"
-}
+#include "Csec_api.h"
+
 
 //------------------------------------------------------------------------------
 // constructor
@@ -56,7 +55,7 @@ extern "C" {
 castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () : 
   ServerSocket(socket) {
   // XXX Check what the default should be, why no exception ?
-  Csec_server_init_context(&m_security_context, 0, NULL);
+  Csec_server_initContext(&m_security_context, 0, NULL);
 }
 
 
@@ -67,7 +66,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				       const bool reusable,
 				       int service_type)
   throw (castor::exception::Exception) : ServerSocket(port, reusable) {
-    if (Csec_server_init_context(&m_security_context, 
+    if (Csec_server_initContext(&m_security_context, 
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
@@ -85,7 +84,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				       const bool reusable,
 				       int service_type)
   throw (castor::exception::Exception) :  ServerSocket(port, host, reusable) {
-    if (Csec_server_init_context(&m_security_context, 
+    if (Csec_server_initContext(&m_security_context, 
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
@@ -102,7 +101,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				       const bool reusable,
 				       int service_type)
   throw (castor::exception::Exception) : ServerSocket(port, ip, reusable) {
-    if (Csec_server_init_context(&m_security_context, 
+    if (Csec_server_initContext(&m_security_context, 
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
@@ -116,7 +115,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 // destructor
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::~AuthServerSocket() throw () {
-  Csec_clear_context(&m_security_context);
+  Csec_clearContext(&m_security_context);
   close(m_socket);
 }
 
@@ -128,8 +127,8 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
   throw(castor::exception::Exception) {
 
   castor::io::ServerSocket* as = castor::io::ServerSocket::accept();
-  if (Csec_server_establish_context(&m_security_context, 
-				    as->socket()) < 0) {
+  if (Csec_server_establishContext(&m_security_context, 
+				   as->socket()) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << Csec_geterrmsg();
     throw ex;

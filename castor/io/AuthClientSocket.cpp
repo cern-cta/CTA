@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 15:13:58 $ $Author: bcouturi $
+ * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/15 23:08:44 $ $Author: bcouturi $
  *
  *
  *
@@ -46,10 +46,8 @@
 // Local Includes
 #include "AuthClientSocket.hpp"
 
+#include "Csec_api.h"
 
-extern "C" {
-  #include "Csec_api.h"
-}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -57,7 +55,7 @@ extern "C" {
 castor::io::AuthClientSocket::AuthClientSocket(int socket) throw () :
   ClientSocket(socket) {
     // XXX Check what the default should be, why no exception ?
-    Csec_client_init_context(&m_security_context, 0, NULL);
+    Csec_client_initContext(&m_security_context, 0, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -68,7 +66,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       int service_type)
   throw (castor::exception::Exception): ClientSocket(port, host) {
 
-    if (Csec_client_init_context(&m_security_context, 
+    if (Csec_client_initContext(&m_security_context, 
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
@@ -84,7 +82,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const unsigned long ip,
 					       int service_type)
   throw (castor::exception::Exception) : ClientSocket(port, ip) {
-    if (Csec_client_init_context(&m_security_context, 
+    if (Csec_client_initContext(&m_security_context, 
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
@@ -97,7 +95,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 // destructor
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::~AuthClientSocket() throw () {
-  Csec_clear_context(&m_security_context);
+  Csec_clearContext(&m_security_context);
   close(m_socket);
 }
 
@@ -110,7 +108,7 @@ void castor::io::AuthClientSocket::connect()
   
   castor::io::ClientSocket::connect();
 
-  if (Csec_client_establish_context(&m_security_context, 
+  if (Csec_client_establishContext(&m_security_context, 
 				    this->socket()) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << Csec_geterrmsg();

@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_main.c,v 1.8 2004/08/12 14:02:18 motiakov Exp $
+ * $Id: Cns_main.c,v 1.9 2005/03/15 23:07:37 bcouturi Exp $
  *
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
@@ -262,22 +262,23 @@ void *arg;
 	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
 #ifdef CSEC
-	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
-	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
+	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
+	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  netclose (thip->s);
 	  thip->s = -1;
 	  return NULL;
 	}
 	/* Connection could be done from another castor service */
-	if ((c = Csec_server_is_castor_service(&(thip->sec_ctx))) >= 0) {
+	if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
 	  nslogit(func, "CSEC: Client is castor service type: %d\n", c);
 	  thip->Csec_service_type = c;
 	}
 	else {
-	  if (Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid)) != NULL) {
+	  char *username;
+	  if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx),  &username, &(thip->Csec_uid), &(thip->Csec_gid)) ==0) {
 	    nslogit(func, "CSEC: Client is %s (%d/%d)\n",
-		    Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		    username,
 		    thip->Csec_uid,
 		    thip->Csec_gid);
 	    thip->Csec_service_type = -1;

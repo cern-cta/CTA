@@ -1,5 +1,5 @@
 /*
- * $Id: send2nsd.c,v 1.5 2004/08/12 14:03:25 motiakov Exp $
+ * $Id: send2nsd.c,v 1.6 2005/03/15 23:07:37 bcouturi Exp $
  *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -135,14 +135,14 @@ int user_repbuf_len;
 #ifdef CSEC
 			if (secure_connection) {
 
-			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			    Cns_errmsg (func, NS002, "send", "Could not init context");
 			    (void) netclose (s);
 			    serrno = ESEC_CTX_NOT_INITIALIZED;
 			    return -1;
 			  }
 			
-			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			  if(Csec_client_establishContext(&ctx, s)< 0) {
 			    Cns_errmsg (func, "%s: %s\n",
 					"send",
 					"Could not establish context");
@@ -151,7 +151,7 @@ int user_repbuf_len;
 			    return -1;
 			  }
 
-			  Csec_clear_context(&ctx);
+			  Csec_clearContext(&ctx);
 			}
 #endif
 
