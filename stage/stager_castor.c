@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.49 2004/03/22 13:34:55 jdurand Exp $
+ * $Id: stager_castor.c,v 1.50 2004/06/01 12:12:26 jdurand Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.49 $ $Date: 2004/03/22 13:34:55 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.50 $ $Date: 2004/06/01 12:12:26 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -174,7 +174,6 @@ static char sav_argv0[1024+1];
 #endif
 int ismig_log = 0;                  /* Will ask to have few more entries in mig_log rather than in log */
 int use_checksum;                   /* Is use of checksum enabled ? */
-
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -3436,6 +3435,25 @@ int stager_hsm_callback(tapereq,filereq)
 				Cnsfileid.fileid = stcp->u1.h.fileid;
 
 				FILL_USE_CHECKSUM_VARIABLE(1);
+
+				if (use_checksum && (
+						filereq->bytes_out !=
+						hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].segsize)
+					) {
+					char tmpbuf2[21];
+					char tmpbuf3[21];
+					/* We verify/use checksum only if we have transfered the whole of the segment */
+					/* (user can overwrite this with the -s option on the stagein command-line) */
+					SAVE_EID;
+					stglogit(func, "%s,{server=\"%s\",fileid=%s}, checksum disabled: downloaded %s bytes instead of the full segment that is %s bytes\n",
+							 castor_hsm,
+							 Cnsfileid.server,
+							 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+							 u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
+							 u64tostr((u_signed64) hsm_segments[stager_client_true_i][hsm_oksegment[stager_client_true_i]].segsize, tmpbuf3, 0));
+					RESTORE_EID;
+					use_checksum = 0;
+				}
 
 				/* We compare current checksum, if any, with last checksum */
 				if (use_checksum && (filereq->castorSegAttr.segmCksumAlgorithm[0] != '\0')) {
