@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/30 14:28:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/07 11:58:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -57,7 +57,7 @@ extern "C" {
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }
-    free(svcs);
+    delete svcs;
     return 0;
   }
 
