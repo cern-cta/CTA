@@ -1,0 +1,1904 @@
+/*
+ * Copyright (C) 1999 by CERN IT-PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:46 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
+/*
+ * rtcpc_BuildReq.c - build the tape and file request list from command
+ */
+
+
+#include <stdlib.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <Castor_limits.h>
+#include <Cglobals.h>
+#include <Ctape_api.h>
+#include <log.h>
+#include <osdep.h>
+#include <net.h>
+#include <rtcp_constants.h>
+#include <rtcp.h>
+#include <rtcp_api.h>
+#include <serrno.h>
+
+extern int rtcp_InitLog(char *, FILE *, FILE *);
+
+extern char *optarg;
+extern int optind;
+
+static int rtcpc_A_opt(int , const char *, tape_list_t **);
+static int rtcpc_b_opt(int , const char *, tape_list_t **);
+static int rtcpc_c_opt(int , const char *, tape_list_t **);
+static int rtcpc_C_opt(int , const char *, tape_list_t **);
+static int rtcpc_d_opt(int , const char *, tape_list_t **);
+static int rtcpc_E_opt(int , const char *, tape_list_t **);
+static int rtcpc_f_opt(int , const char *, tape_list_t **);
+static int rtcpc_F_opt(int , const char *, tape_list_t **);
+static int rtcpc_g_opt(int , const char *, tape_list_t **);
+static int rtcpc_G_opt(int , const char *, tape_list_t **);
+static int rtcpc_i_opt(int , const char *, tape_list_t **);
+static int rtcpc_l_opt(int , const char *, tape_list_t **);
+static int rtcpc_L_opt(int , const char *, tape_list_t **);
+static int rtcpc_n_opt(int , const char *, tape_list_t **);
+static int rtcpc_N_opt(int , const char *, tape_list_t **);
+static int rtcpc_o_opt(int , const char *, tape_list_t **);
+static int rtcpc_q_opt(int , const char *, tape_list_t **);
+static int rtcpc_s_opt(int , const char *, tape_list_t **);
+static int rtcpc_S_opt(int , const char *, tape_list_t **);
+static int rtcpc_t_opt(int , const char *, tape_list_t **);
+static int rtcpc_T_opt(int , const char *, tape_list_t **);
+static int rtcpc_v_opt(int , const char *, tape_list_t **);
+static int rtcpc_V_opt(int , const char *, tape_list_t **);
+static int rtcpc_x_opt(int , const char *, tape_list_t **);
+static int rtcpc_X_opt(int , const char *, tape_list_t **);
+static int rtcpc_Z_opt(int , const char *, tape_list_t **);
+static int rtcpc_diskfiles(int , const char *, tape_list_t **);
+
+#define BIND_OPT(X,Y,Z) {strcat(opts,#Z); optlist[X-'A'] = (int (*)(int , const char *, tape_list_t **))rtcpc_##Y##_opt;};
+#define OPT_MAX  'z'-'A'+1
+
+int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
+    static int (*optlist[OPT_MAX])(int, const char *, tape_list_t **);
+    static int recursion_level = 0;
+    char opts[OPT_MAX] = "";
+    int i,j,rc, local_optind, local_repeated[OPT_MAX];
+    char c;
+    int mode;
+    extern int getopt();
+    
+    recursion_level++;
+    for (i=0; i<OPT_MAX; i++) optlist[i] = 0;
+    
+    BIND_OPT('A',A,A:);
+    BIND_OPT('b',b,b:);
+    BIND_OPT('c',c,c:);
+    BIND_OPT('C',C,C:);
+    BIND_OPT('d',d,d:);
+    BIND_OPT('E',E,E:);
+    BIND_OPT('f',f,f:);
+    BIND_OPT('F',F,F:);
+    BIND_OPT('g',g,g:);
+    BIND_OPT('G',G,G);
+    BIND_OPT('i',i,i:);
+    BIND_OPT('l',l,l:);
+    BIND_OPT('L',L,L:);
+    BIND_OPT('n',n,n);
+    BIND_OPT('N',N,N:);
+    BIND_OPT('o',o,o);
+    BIND_OPT('q',q,q:);
+    BIND_OPT('s',s,s:);
+    BIND_OPT('S',S,S:);
+    BIND_OPT('t',t,t:);
+    BIND_OPT('T',T,T);
+    BIND_OPT('v',v,v:);
+    BIND_OPT('V',V,V:);
+    BIND_OPT('x',x,x);
+    BIND_OPT('X',X,X:);
+    BIND_OPT('Z',Z,Z:);
+
+    if ( strstr(argv[0],"tpwrite") != NULL ) mode = WRITE_ENABLE;
+    else mode = WRITE_DISABLE;
+
+    /*
+     * We need to do two passes over the arguments. In the first
+     * pass the file list elements are created given the -q option
+     * and the disk files specified. All recursive levels of
+     * input option files are also checked.
+     */
+    optind = 1;
+    rc = 0;
+    for (j=0; j<OPT_MAX; j++) local_repeated[j] = 0;
+
+    while ( (c = getopt(argc,argv,opts)) != EOF ) {
+        if ( c != 'q' && c != 'i' ) continue;
+        if ( c == '?' ) return(-1);
+        if ( local_repeated[c-'A'] != 0 ) {
+            rtcp_log(LOG_ERR,"REPEATED OPTION -%c NOT ALLOWED\n",c);
+            serrno = EINVAL;
+            return(-1);
+        }
+        local_optind = optind;
+        if ( (rc = (*optlist[c-'A'])(mode,optarg,tape)) == -1 ) return(-1);
+        local_repeated[c-'A']++;
+        optind = local_optind;
+    }
+
+    for (j=optind; j<argc; j++) {
+        if ( (rc = rtcpc_diskfiles(mode,argv[j],tape)) == -1 ) return(-1);
+    }
+
+    /*
+     * In the second pass all other options are checked and the
+     * file list elements created in the first pass are filled.
+     */
+    optind = 1;
+    rc = 0;
+    for (j=0; j<OPT_MAX; j++) local_repeated[j] = 0;
+
+    while ( (c = getopt(argc,argv,opts)) != EOF ) {
+        if ( c == 'q' || c == 'i' ) continue;
+        if ( c == '?' ) return(-1);
+        if ( local_repeated[c-'A'] != 0 ) {
+            rtcp_log(LOG_ERR,"REPEATED OPTION -%c NOT ALLOWED\n",c);
+            serrno = EINVAL;
+            return(-1);
+       }
+        if ( (rc = (*optlist[c-'A'])(mode,optarg,tape)) == -1 ) return(-1);
+        local_repeated[c-'A']++;
+    }
+
+    /*
+     * Finally, if we are at top of the recursion (i.e. we were
+     * the first to be called) set the disk file sequence numbers.
+     */
+    if ( recursion_level == 1 ) rc = rtcpc_diskfiles(mode,NULL,tape);
+    recursion_level--;
+    return(rc);
+}
+
+static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
+                       int mode) {
+    tape_list_t *tl;
+    if ( tape == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    tl = (tape_list_t *)calloc(1,sizeof(tape_list_t));
+    if ( tl == NULL ) return(-1);
+    tl->tapereq.mode = mode;
+    tl->tapereq.err.max_tpretry = -1;
+    tl->tapereq.err.max_cpretry = -1;
+    if ( *tape != NULL ) {
+        CLIST_INSERT((*tape)->prev,tl);
+    } else {
+        CLIST_INSERT(*tape,tl);
+    }
+    if ( newtape != NULL ) *newtape = tl;
+    return(0);
+}
+
+static int newFileList(tape_list_t **tape, file_list_t **newfile,
+                       int mode) {
+    file_list_t *fl;
+    rtcpFileRequest_t *filereq;
+    int rc;
+
+    if ( tape == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    fl = (file_list_t *)calloc(1,sizeof(file_list_t));
+    if ( fl == NULL ) return(-1);
+    filereq = &fl->filereq;
+    filereq->VolReqID = -1;
+    filereq->jobID = -1;
+    filereq->position_method = -1;
+    filereq->tape_fseq = -1;
+    filereq->disk_fseq = -1;
+    filereq->tape_fsec = 1;
+    filereq->blocksize = -1;
+    filereq->recordlength = -1;
+    filereq->retention = -1;
+    filereq->def_alloc = -1;
+    filereq->rtcp_err_action = -1;
+    filereq->tp_err_action = -1;
+    filereq->convert = -1;
+    filereq->check_fid = -1;
+    filereq->concat = -1;
+    filereq->err.max_tpretry = -1;
+    filereq->err.max_cpretry = -1;
+
+    /*
+     * Insert at end of tape request
+     */
+    CLIST_INSERT((*tape)->file,fl);
+
+    if ( newfile != NULL ) *newfile = fl;
+    return(0);
+}
+
+static int rtcpc_A_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+         * Set option if not already set
+         */
+        if ( filereq->def_alloc == -1 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( strcmp(p,"deferred") == 0 ) 
+                filereq->def_alloc = 1;
+            else if ( strcmp(p,"immediate") == 0 ) 
+                filereq->def_alloc = 0;
+            else {
+                rtcp_log(LOG_ERR,"INVALID VALUE %s FOR -A OPTION\n",p);
+                rc = -1;
+                serrno = EINVAL;
+                break;
+            }
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+
+    return(rc);
+}
+
+static int rtcpc_b_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    int blocksize = -1;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+         * Set option
+         */
+        if ( filereq->blocksize == -1 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            blocksize = atoi(p);
+            if ( blocksize == 0 ) {
+                rtcp_log(LOG_ERR,"Block size cannot be equal to zero.\n");
+                serrno = EINVAL;
+                rc = -1;
+                break;
+            }
+            filereq->blocksize = blocksize;
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+
+    return(rc);
+}
+
+/*
+ * This is current a noop. The switch was forseen for a stager
+ * development to enable "blind" copy of a tape, ie. when the number
+ * of tape files is unknown on a tpread. The development was never
+ * finalised but the option is kept reserved for future continuation
+ * of this development.
+ */
+static int rtcpc_c_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    return(rc);
+}
+
+static int rtcpc_C_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc,i;
+    int convert = -1;
+    char *p, *q,*w, *local_value;
+    char valid_convs[][7] = {"block","ascii","ebcdic",""};
+    char conv_values[] = {FIXVAR,ASCCONV,EBCCONV};
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->convert == -1 ) {
+            if ( p != NULL ) convert = 0;
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            do {
+                if ( (w = strstr(p,",")) != NULL ) *w = '\0';
+                i=0;
+                while ( *valid_convs[i] != '\0' && strcmp(p,valid_convs[i]) ) i++;
+                if ( *valid_convs[i] == '\0' ) {
+                    rtcp_log(LOG_ERR,"INVALID CONVERSION SPECIFIED\n");
+                    serrno = EINVAL;
+                    rc = -1;
+                    break;
+                }
+                convert |= conv_values[i];
+                if ( w != NULL ) p = w+1;
+            } while ( w != NULL );
+            if ( !(convert & (ASCCONV | EBCCONV)) ) convert |= ASCCONV;
+            
+            filereq->convert = convert;
+            if ( !VALID_CONVERT(filereq) ) {
+                rtcp_log(LOG_ERR,"INVALID CONVERSION SPECIFIED\n");
+                serrno = EINVAL;
+                rc = -1;
+                break;
+            }
+            
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+static int rtcpc_d_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    rtcpTapeRequest_t *tapereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+
+    if ( rc != -1 ) {
+        /*
+         * Set option
+         */
+        if ( strlen(value) > CA_MAXDENLEN ) {
+            rtcp_log(LOG_ERR,"INVALID DENSITY SPECIFIED\n");
+            serrno = EINVAL;
+            rc = -1;
+        }
+
+        if ( rc != -1 ) strcpy(tapereq->density,value);
+    }
+
+    return(rc);
+}
+static int rtcpc_E_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    int rtcp_err_action = 0;
+    int tp_err_action = 0;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+    int i;
+    char erropts[][10] = { "skip", "keep", "ignoreeoi", "" };
+    int erropt_values[] = {SKIPBAD,KEEPFILE,IGNOREEOI};
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->rtcp_err_action == -1 &&
+            filereq->tp_err_action == -1 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( p != NULL ) {
+                i=0;
+                while ( *erropts[i] != '\0' && strcmp(p,erropts[i])) i++;
+                if ( *erropts[i] == '\0' ) {
+                    rtcp_log(LOG_ERR,"%s IS NOT A VALID OPTIN FOR -E\n",
+                        p);
+                    serrno = EINVAL;
+                    rc = -1;
+                    break;
+                }
+                if ( i<2 ) rtcp_err_action = erropt_values[i];
+                else tp_err_action = erropt_values[i];
+            } else if ( rtcp_err_action == 0 ) 
+                rtcp_err_action = KEEPFILE;
+            
+            filereq->rtcp_err_action = rtcp_err_action;
+            filereq->tp_err_action = tp_err_action;
+            
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+static int rtcpc_f_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    char *p, *q, *local_value,fid[CA_MAXFIDLEN+1];
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option if not already set
+        */
+        if ( *filereq->fid == '\0' ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( p != NULL ) strcpy(fid,p);
+            strcpy(filereq->fid,fid);
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_F_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc,i;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+    char valid_recfm[][10] = {"U,f77","U","U,bin","F","FB","FBS",
+        "FS","F,-f77",""};
+    char set_recfm[][2] =    {"U",    "U","F",    "F","F", "F",
+        "F", "F"};
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option if not already set
+        */
+        if ( *filereq->recfm == '\0' ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( p != NULL ) {
+                i=0;
+                while (*valid_recfm[i] != '\0' &&
+                    strcmp(p,valid_recfm[i]) ) i++;
+                if ( *valid_recfm[i] == '\0' ) {
+                    rtcp_log(LOG_ERR,
+                        "INVALID FORMAT SPECIFIED\n");
+                    serrno = EINVAL;
+                    rc = -1;
+                    break;
+                }
+            }
+            
+            if ( strcmp(valid_recfm[i],"F,-f77") == 0 ) 
+                filereq->convert |= F77CONV;
+            
+            if ( strcmp(set_recfm[i],"U") == 0 ) 
+                filereq->recordlength = 0;
+            
+            strcpy(filereq->recfm,set_recfm[i]);
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_g_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    rtcpTapeRequest_t *tapereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+
+    if ( rc != -1 ) {
+        /*
+         * Set option
+         */
+        if ( strlen(value) > CA_MAXDGNLEN ) {
+            rtcp_log(LOG_ERR,"INVALID DEVICE GROUP SPECIFIED\n");
+            serrno = EINVAL;
+            rc = -1;
+        }
+        if ( rc != -1 ) strcpy(tapereq->dgn,value);
+    }
+    return(rc);
+}
+
+/*
+ * Group user concept for foreign systems not supported
+ * any longer (was mainly intended for CRAY tape servers and/or
+ * VMS client in the old SHIFT era). The switch is still accepted
+ * but there is no action
+ */
+static int rtcpc_G_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    return(rc);
+}
+/*
+ * New -i input.file option to support an input request file for
+ * very large requests. Note: this routine makes reentrant calls
+ * to rtcpc_BuildReq(), one for each record in the file.
+ */
+static int rtcpc_i_opt(int mode,
+                       const char *value,
+                       tape_list_t **tape) {
+    FILE *fd;
+    tape_list_t *tmp_tape;
+    rtcpTapeRequest_t *tmp_tapereq, *tapereq;
+    int rc, i, status;
+    char input_file[CA_MAXPATHLEN+1];
+    static char last_input_file[CA_MAXPATHLEN+1];
+    char input_line[CA_MAXLINELEN+1];
+    static char cmds[][10] = {"tpread","tpwrite",""};
+    char *p, *q;
+    char **argv = NULL;
+    int argc = 0;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    rc = 0;
+    if ( strlen(value) > CA_MAXPATHLEN ) {
+        rtcp_log(LOG_ERR,"TOO LONG PATH NAME GIVEN WITH -i OPTION\n");
+        serrno = EINVAL;
+        return(-1);
+    }
+    strcpy(input_file,value);
+    if ( strcmp(input_file,last_input_file) == 0 ) {
+        rtcp_log(LOG_ERR,"RECURSIVE SPECIFICATION OF INPUT FILE %s\n",
+            input_file);
+        serrno = EINVAL;
+        return(-1);
+    }
+    fd = fopen(input_file,"r");
+    if ( fd == NULL ) {
+        rtcp_log(LOG_ERR,"CANNOT OPEN INPUT OPTION FILE %s: %s\n",
+            input_file,sstrerror(errno));
+        serrno = ENOENT;
+        return(-1);
+    }
+    while ( (status = fscanf(fd,"%[^\n]\n",input_line)) > 0 ) {
+        p = input_line;
+        argc = 1; /* one for the command */
+        if ( *p != '#' ) argc++;
+        while ( (q = strpbrk(p," \t")) != NULL ) {
+            if ( *p == '#' ) break;
+            argc++;
+            p = q+1;
+        }
+        if ( argc > 1 ) {
+            argv = (char **)malloc((argc+1) * sizeof(char *));
+            if ( argv == NULL ) {
+                rc = -1;
+                serrno = errno;
+                break;
+            }
+            if ( mode == WRITE_ENABLE ) argv[0] = cmds[1];
+            else argv[0] = cmds[0];
+            p = input_line;
+            for (i=1; i<argc; i++) {
+                q = strpbrk(p," \t");
+                if ( q != NULL ) *q = '\0';
+                argv[i] = (char *)calloc(1,strlen(p)+1);
+                if ( argv[i] == NULL ) {
+                    rc = -1;
+                    serrno = errno;
+                    break;
+                }
+                strcpy(argv[i],p);
+                p = q+1;
+            }
+            argv[argc] = NULL;
+            strcpy(last_input_file,input_file);
+            tmp_tape = NULL;
+            if ( rc != -1 ) {
+                rc = rtcpc_BuildReq(&tmp_tape,argc,argv);
+                if ( rc != -1 ) {
+                    /*
+                     * Merge tape lists
+                     */
+                    tmp_tapereq = &tmp_tape->tapereq;
+                    tapereq = &(*tape)->tapereq;
+                    if (strcmp(tmp_tapereq->vid,tapereq->vid) != 0 &&
+                        *tmp_tapereq->vid != '\0' && *tapereq->vid != '\0') {
+                        rtcp_log(LOG_ERR,"Specify new VID (%s) in input option file is not allowed\n",
+                            tmp_tapereq->vid);
+                        serrno = EINVAL;
+                        rc = -1;
+                    } else {
+                        CLIST_INSERT((*tape)->file->prev,tmp_tape->file);
+                    }
+                }
+            }
+            for (i=1; i<argc; i++) free(argv[i]);
+            free(argv);
+            if ( rc == -1 ) break;
+        }
+    }
+    if ( rc == 0 && status != EOF ) {
+        rtcp_log(LOG_ERR,"ERROR READING INPUT OPTION FILE %s: %s\n",
+            input_file,sstrerror(errno));
+        rc = -1;
+    }
+    fclose(fd);
+
+    *last_input_file = '\0';
+    return(rc);
+}
+
+
+static int rtcpc_l_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    rtcpTapeRequest_t *tapereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+
+    if ( rc != -1 ) {
+        /*
+         * Set option
+         */
+        if ( strlen(value) > 4 ) {
+            rtcp_log(LOG_ERR,"%s IS AN INVALID LABEL TYPE\n",value);
+            serrno = EINVAL;
+            rc = -1;
+        }
+        if ( rc != -1 ) strcpy(tapereq->label,value);
+    }
+    return(rc);
+}
+static int rtcpc_L_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    int recordlength = -1;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->recordlength == -1 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            recordlength = atoi(p);
+            if ( recordlength <= 0 ) {
+                rtcp_log(LOG_ERR,"%d is an invalid record length\n",
+                    recordlength);
+                serrno = EINVAL;
+                rc = -1;
+                break;
+            }
+            filereq->recordlength = recordlength;
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+static int rtcpc_n_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    if ( rc != -1 ) {
+        CLIST_ITERATE_BEGIN(tl->file,fl) {
+            filereq = &fl->filereq;
+            /*
+             * Set switch
+             */
+            if ( filereq->check_fid == CHECK_FILE ) {
+                rtcp_log(LOG_ERR,"ONLY ONE OF -n AND -o CAN BE SPECIFIED\n");
+                serrno = EINVAL;
+                rc = -1;
+                break;
+            }
+            if ( filereq->check_fid == -1 )
+                filereq->check_fid = NEW_FILE;
+        } CLIST_ITERATE_END(tl->file,fl);
+    } /* if ( rc != -1 )  */
+    return(rc);
+}
+
+static int rtcpc_N_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    unsigned long maxnbrec = 0;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->maxnbrec == 0 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            maxnbrec = strtoul(p,NULL,10);
+            filereq->maxnbrec = (u_signed64)maxnbrec;
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_o_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set switch
+        */
+        if ( filereq->check_fid == NEW_FILE ) {
+            rtcp_log(LOG_ERR,"ONLY ONE OF -n AND -o CAN BE SPECIFIED\n");
+            serrno = EINVAL;
+            rc = -1;
+            break;
+        }
+        if ( filereq->check_fid == -1 ) 
+            filereq->check_fid = CHECK_FILE;
+    } CLIST_ITERATE_END(tl->file,fl);
+    return(rc);
+}
+
+/*
+ * Construct a comma-delimited list of tape file sequence numbers 
+ * from the -q option value.
+ */
+static int rtcpc_expand_fseq(int mode, const char *q_opt, char **fseq_list) {
+    int len;
+    char *tmp,*p, *q_list;
+    int i,j,k;
+    int trailing = 0;
+    char q_default[] = "1";
+    
+    if ( q_opt == NULL || fseq_list == NULL ) return(0);
+    *fseq_list = q_list = NULL;
+    
+    if ( *q_opt == 'n' || *q_opt == 'u' ) {
+        /*
+         * For special values "nx" (append) and "ux" (position by
+         * FID) the value is simply repeated "x" times in the output 
+         * list.
+         */
+        if ( q_opt[1] != '\0' ) 
+            i = atoi(&q_opt[1]);
+        else
+            i = 1;
+        if ( (mode == WRITE_ENABLE) && (*q_opt == 'u') && (i>1) ) {
+            rtcp_log(LOG_ERR,"Position by multiple FID is not valid for tape write\n");
+            return(-1);
+        }
+
+        len = i*2+1;
+        q_list = (char *)malloc(len);
+        if ( q_list == NULL ) {
+            serrno = errno;
+            rtcp_log(LOG_ERR,"malloc(%d): %s\n",len,sstrerror(errno));
+            return(-1);
+        }
+        memset(q_list,'\0',len);
+        for (j=0; j<i; j++) {
+            if ( *q_opt == 'n' ) {
+                if ( mode == WRITE_DISABLE ) {
+                    rtcp_log(LOG_ERR,"-qn option invalid for cptpdsk\n");
+                    serrno = EINVAL;
+                    free(q_list);
+                    q_list = NULL;
+                    return(-1);
+                }
+                strcat(q_list,",n");
+            } else if ( *q_opt == 'u' ) strcat(q_list,",u");
+        }
+        *fseq_list = q_list;
+        return(len);
+    }
+ 
+    tmp = (char *)malloc(strlen(q_opt)+1);
+    if ( tmp == NULL ) {
+        serrno = errno;
+        rtcp_log(LOG_ERR,"malloc(%d): %s\n",strlen(q_opt)+1,
+            sstrerror(errno));
+        return(-1);
+    }
+    for (;;) {
+        strcpy(tmp,q_opt);
+        /*
+         * Check for trailing "-" meaning that the remaining files
+         * to end of tape (tpread only). This entry will be marked 
+         * with a zero "0" in the output list.
+         */
+        if ( tmp[strlen(tmp)-1] == '-' ) {
+            if ( mode == WRITE_ENABLE ) {
+                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalide for cpdsktp\n");
+                serrno = EINVAL;
+                if ( q_list != NULL ) free(q_list);
+                q_list = NULL;
+                free(tmp);
+                return(-1);
+            }
+            tmp[strlen(tmp)-1] = '\0';
+            trailing = 1;
+        }
+        p = strtok(tmp,",");
+        if ( p == NULL || *p == '\0' ) p = (char *)&q_default[0];
+        len = 0;
+        while ( p != NULL ) {
+            if ( strstr(p,"-") ) {
+                i = j = 0;
+                sscanf(p,"%d-%d",&i,&j);
+                if ( i == 0 || j == 0 || j < i ) {
+                    rtcp_log(LOG_ERR,"the file sequence list is not valid\n");
+                    serrno = EINVAL;
+                    free(tmp);
+                    if ( q_list != NULL ) free(q_list);
+                    q_list = NULL;
+                    return(-1);
+                }
+                for (k=i; k<=j; k++) {
+                    int i1,i2;
+                    i2=0;
+                    for (i1=1; i1<=k; i1*=10) i2++;
+                    len += i2+1; /* length of k + extra space for "," */
+                    if ( q_list != NULL )
+                        sprintf(&q_list[strlen(q_list)],",%d",k);
+                }
+            } else {
+                len += strlen(p)+1;
+                if ( q_list != NULL ) 
+                    sprintf(&q_list[strlen(q_list)],",%s",p);
+            }
+            p = strtok(NULL,",");
+        }
+        len++;
+        if ( trailing ) len += 2;
+        if ( q_list == NULL ) {
+            q_list = (char *)malloc(len);
+            if ( q_list == NULL ) {
+                serrno = errno;
+                free(tmp);
+                rtcp_log(LOG_ERR,"malloc(%d): %s\n",len,sstrerror(errno));
+                return(-1);
+            }
+            memset(q_list,'\0',len);
+        } else break;
+    }
+    
+    free(tmp);
+    if ( trailing == 1 ) strcat(q_list,",0");
+    *fseq_list = q_list;
+    return(len);
+}
+
+static int rtcpc_q_opt(int mode,
+                       const char *value,
+                       tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+    char *fseq_list, *p, *q;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    fseq_list = NULL;
+    rc = rtcpc_expand_fseq(mode,value,&fseq_list);
+    if ( rc == -1 || fseq_list == NULL ) return(-1);
+    p = q = fseq_list;
+    if ( *p == ',' ) p++;
+
+    if ( fseq_list == NULL ) rc = -1;
+
+    rc = 0;
+    tl = *tape;
+
+    if ( tl->file == NULL ) rc = newFileList(tape,NULL,mode);
+
+    tapereq = &tl->tapereq;
+
+    while ( rc != -1 && q != NULL ) {
+        CLIST_ITERATE_BEGIN(tl->file,fl) {
+            filereq = &fl->filereq;
+            /*
+             * Set position method and file sequence number for
+             * this tape file.
+             */
+            if ( filereq->position_method == -1 ) {
+                if ( (q = strstr(p,",")) != NULL ) *q = '\0';
+                if ( *p == 'n' ) 
+                    filereq->position_method = TPPOSIT_EOI;
+                else if ( *p == 'u' ) 
+                    filereq->position_method = TPPOSIT_FID;
+                else {
+                    filereq->position_method = TPPOSIT_FSEQ;
+                    filereq->tape_fseq = atoi(p);
+                }
+                
+                if ( q != NULL ) {
+                    p = q;
+                    p++;
+                    if ( fl->next == tl->file &&
+                        tl->next == *tape ) {
+                        rc = newFileList(tape,NULL,mode);
+                        if ( rc == -1 ) break;
+                    }
+                }
+            }
+        } CLIST_ITERATE_END(tl->file,fl);
+        if ( q != NULL ) rc = newFileList(tape,NULL,mode);
+    } /* while ( rc != -1 && q != NULL ) */
+
+    if ( fseq_list != NULL ) free(fseq_list);
+    return(rc);
+}
+
+static int rtcpc_s_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    unsigned long maxsizeMB = 0;
+    u_signed64 maxsize = 0;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->maxsize == 0 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            maxsizeMB = strtoul(p,NULL,10);
+            maxsize = (u_signed64)maxsizeMB * 1024 * 1024;
+            filereq->maxsize = maxsize;
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_S_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    rtcpTapeRequest_t *tapereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+
+    if ( rc != -1 ) {
+        /*
+         * Set option
+         */
+        if ( strlen(value) > CA_MAXHOSTNAMELEN ) {
+            rtcp_log(LOG_ERR,"%s IS AN INVALID HOST NAME\n",value);
+            serrno = EINVAL;
+            rc = -1;
+        }
+
+        if ( rc != -1 ) strcpy(tapereq->server,value);
+    }
+    return(rc);
+}
+
+static int rtcpc_t_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    int retention = 0;
+    char *p, *q, *local_value;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option
+        */
+        if ( filereq->retention == -1 ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            retention = strtoul(p,NULL,10);
+            filereq->retention = retention;
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+static int rtcpc_T_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set switch
+        */
+        filereq->tp_err_action |= NOTRLCHK;
+    } CLIST_ITERATE_END(tl->file,fl);
+    return(rc);
+}
+static int rtcpc_v_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    char *local_value, *p, *q;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+    
+    rc = 0;
+
+    while ( rc != -1 && q != NULL ) {
+        CLIST_ITERATE_BEGIN(*tape,tl) {
+            if ( tl->file == NULL ) {
+                rc = newFileList(&tl,NULL,mode);
+                if ( rc != -1 ) {
+                    tl->file->filereq.tape_fseq = 0;
+                    tl->file->filereq.tape_fsec =
+                        tl->prev->file->filereq.tape_fsec + 1;
+                }
+            }
+            tapereq = &tl->tapereq;
+
+            if ( *tapereq->vsn == '\0' ) {
+                if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+                if ( strlen(p) > CA_MAXVIDLEN ) {
+                    rtcp_log(LOG_ERR,"INVALID VSN SPECIFIED %s\n",p);
+                    serrno = EINVAL;
+                    rc = -1;
+                    break;
+                }
+                strcpy(tapereq->vsn,p);
+
+                if ( q != NULL ) {
+                    p = q;
+                    p++;
+                    if ( fl->next == tl->file &&
+                        tl->next == *tape ) {
+                        rc = newTapeList(tape,NULL,mode);
+                        if ( rc == -1 ) break;
+                    }
+                }
+            }
+        } CLIST_ITERATE_END(*tape,tl);
+        if ( q != NULL ) rc = newTapeList(tape,NULL,mode);
+    } /* while (rc != -1 && q != NULL ) */
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_V_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    char *local_value, *p, *q;
+
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+
+    while ( rc != -1 && q != NULL ) {
+        CLIST_ITERATE_BEGIN(*tape,tl) {
+            if ( tl->file == NULL ) {
+                rc = newFileList(&tl,NULL,mode);
+                if ( rc != -1 ) {
+                    tl->file->filereq.tape_fseq = 0;
+                    tl->file->filereq.tape_fsec =
+                        tl->prev->file->filereq.tape_fsec + 1;
+                }
+            }
+            tapereq = &tl->tapereq;
+
+            if ( *tapereq->vid == '\0' ) {
+                if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+                if ( q == NULL && tl->prev != tl && 
+                     strcmp(tl->prev->tapereq.vid,p) == 0 ) {
+                        strcpy(tapereq->vid,tapereq->vsn);    
+                } else {
+                    if ( strlen(p) > CA_MAXVIDLEN ) {
+                        rtcp_log(LOG_ERR,"INVALID VID SPECIFIED %s\n",p);
+                        serrno = EINVAL;
+                        rc = -1;
+                        break;
+                    }
+                    strcpy(tapereq->vid,p);
+                }
+
+                if ( q != NULL ) {
+                    p = q;
+                    p++;
+                    if ( fl->next == tl->file &&
+                        tl->next == *tape ) {
+                        rc = newTapeList(tape,NULL,mode);
+                        if ( rc == -1 ) break;
+                    }
+                }
+            }
+        } CLIST_ITERATE_END(*tape,tl);
+        if ( q != NULL ) rc = newTapeList(tape,NULL,mode);
+    } /* while (rc != -1 && q != NULL ) */
+    free(local_value);
+    return(rc);
+}
+static int rtcpc_x_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    /*
+     * Set LOG_DEBUG (7) loglevel
+     */
+    putenv("RTCOPY_LOGLEVEL=7");
+    return(rc);
+}
+/*
+ * VMS lega stuff. Must be continued to be supported until
+ * we got rid of all old clients (and hence VMS).
+ */
+static int rtcpc_X_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    char *p, *q, *local_value,vmsopt[RTCP_VMSOPTLEN+1];
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    local_value = (char *)malloc(strlen(value)+1);
+    if ( local_value == NULL ) {
+        serrno = errno;
+        return(-1);
+    }
+    strcpy(local_value,value);
+    q = p = local_value;
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option if not already set
+        */
+        if ( *filereq->vmsopt == '\0' ) {
+            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( p != NULL ) strcpy(vmsopt,p);
+            strcpy(filereq->vmsopt,vmsopt);
+            if ( q != NULL ) {
+                p = q;
+                p++;
+            }
+        }
+    } CLIST_ITERATE_END(tl->file,fl);
+    free(local_value);
+    return(rc);
+}
+
+static int rtcpc_Z_opt(int mode, 
+                     const char *value, 
+                     tape_list_t **tape) {
+    int rc;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+
+    if ( value == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    tapereq = &tl->tapereq;
+    
+    CLIST_ITERATE_BEGIN(tl->file,fl) {
+        filereq = &fl->filereq;
+        /*
+        * Set option if not already set
+        */
+        if ( *filereq->stageID != '\0' )
+            strcpy(filereq->stageID,value);
+    } CLIST_ITERATE_END(tl->file,fl);
+    return(rc);
+}
+
+/*
+ * Process disk files in backward order to assure that input option
+ * files containing disk paths are correctly processed.
+ */
+static int rtcpc_diskfiles(int mode,
+                           const char *filename,
+                           tape_list_t **tape) {
+    int rc, disk_fseq;
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpFileRequest_t *filereq;
+    char *last_filename;
+
+    if ( tape == NULL || *tape == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( filename != NULL && (*filename == '\0' || 
+        strlen(filename) > CA_MAXPATHLEN) ) {
+        rtcp_log(LOG_ERR,"INVALID FILE PATH %s\n",filename);
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    rc = 0;
+    tl = *tape;
+
+    if ( filename != NULL ) {
+        CLIST_ITERATE_BEGIN(tl->file,fl) {
+            filereq = &fl->filereq;
+            if ( ((filereq->tape_fseq > 0) || 
+                  (filereq->position_method != TPPOSIT_FSEQ)) && 
+                 (*filereq->file_path == '\0') ) {
+                strcpy(filereq->file_path,filename);
+                break;
+            }
+        } CLIST_ITERATE_END(tl->file,fl);
+        if ( strcmp(filereq->file_path,filename) != 0 ) {
+            if ( (fl == tl->file) && 
+                 (fl->prev->filereq.tape_fseq == 0) &&
+                 (filereq->position_method == TPPOSIT_FSEQ) &&
+                 (mode == WRITE_DISABLE) ) {
+                /*
+                 * There are more disk files than tape files. This is OK
+                 * on tape read if there was a trailing minus ("-") in the
+                 * tape file sequence list specified with the -q option.
+                 * In this case the tape file sequence number of the last
+                 * file list element is set to zero (0). This last
+                 * element is just a place holder to indicate that there
+                 * was a trailing minus. It should be kept while processing
+                 * the disk files and chopped off when all options and
+                 * disk files have been processed.
+                 */
+                rc = newFileList(tape,&fl,mode);
+                if ( rc != -1 ) {
+                    /*
+                     * Copy the previous last element (place holder).
+                     */
+                    fl->filereq = fl->prev->filereq;
+                    fl = fl->prev;
+                    filereq = &fl->filereq;
+                    filereq->tape_fseq = fl->prev->filereq.tape_fseq + 1;
+                    filereq->concat = NOCONCAT_TO_EOD;
+                    strcpy(filereq->file_path,filename);
+                }
+            } else if ( (fl == tl->file) && 
+                        (((fl->prev->filereq.tape_fseq > 0) &&
+                          (filereq->position_method == TPPOSIT_FSEQ)) ||
+                         (filereq->position_method == TPPOSIT_EOI)) &&
+                       (mode == WRITE_ENABLE) ) {
+                /* 
+                 * There are more disk files than tape files and there
+                 * was *no* trailing minus ("-") in the tape file sequence
+                 * list specified with the -q option. This is OK for
+                 * tape write where all remaining disk files will
+                 * be concatenated to the last tape file.
+                 */
+                rc = newFileList(tape,&fl,mode);
+                if ( rc != -1 ) {
+                    fl->filereq = fl->prev->filereq;
+                    fl->filereq.concat = CONCAT;
+                    strcpy(fl->filereq.file_path,filename);
+                }
+            } else {
+                rtcp_log(LOG_ERR,"incorrect number of filenames specified\n");
+                serrno = EINVAL;
+                rc = -1;
+            }
+        } 
+    } else { 
+        last_filename = NULL;
+        disk_fseq = 0;
+        fl = tl->file->prev;
+        if ( fl->filereq.tape_fseq == 0 ) CLIST_DELETE(tl->file,fl);
+        CLIST_ITERATE_BEGIN(tl->file,fl) {
+            filereq = &fl->filereq;
+            if ( *filereq->file_path == '\0' ) {
+                if ( last_filename == NULL ) {
+                    rtcp_log(LOG_ERR,
+                        "disk file pathnames must be specified\n");
+                    serrno = EINVAL;
+                    rc = -1;    
+                    break;
+                }
+                /*
+                 * More tape files than disk files. Valid for
+                 * tape read where the remaining tape files then
+                 * will be concatenated to the last disk file
+                 */
+                if ( mode == WRITE_ENABLE ) {
+                    rtcp_log(LOG_ERR,"incorrect number of filenames specified\n");
+                    serrno = EINVAL;
+                    rc = -1;
+                    break;
+                }
+                filereq->concat = CONCAT_TO_EOD;
+                strcpy(filereq->file_path,last_filename);
+            } else {
+                if ( last_filename != NULL &&
+                     strcmp(last_filename,filereq->file_path) == 0 ) {
+                    /*
+                     * Concatenate but not to EOD
+                     */
+                    filereq->concat = CONCAT;
+                } else {
+                    /*
+                     * Don't overwrite previous set NOCONCAT_TO_EOD since
+                     * the distinction is needed by server to determine the
+                     * error severity when there are less files on tape than
+                     * the number of specified disk files
+                     */
+                    if ( filereq->concat == -1 ) filereq->concat = NOCONCAT;
+                    disk_fseq++;
+                }
+                last_filename = filereq->file_path;
+            }
+            filereq->disk_fseq = disk_fseq;
+        } CLIST_ITERATE_END(tl->file,fl);
+    }
+
+    return(rc);
+}
+
+#define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_INFO,"%s%s: %s\n",Y,#X,X);}
+#define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: %d\n",Y,#X,X);}
+#define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: 0x%x\n",Y,#X,X);}
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %ld\n",Y,#X,(unsigned long)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%lx\n",Y,#X,(unsigned long)X);}
+int dumpTapeReq(tape_list_t *tl) {
+    rtcpTapeRequest_t *tapereq;
+    char indent[] = " ";
+
+    if (tl == NULL ) return(-1);
+    tapereq = &tl->tapereq;
+
+    rtcp_log(LOG_INFO,"\n%s---->Tape request\n",indent);
+    DUMPSTR(indent,tapereq->vid);
+    DUMPSTR(indent,tapereq->vsn);
+    DUMPSTR(indent,tapereq->label);
+    DUMPSTR(indent,tapereq->dgn);
+    DUMPSTR(indent,tapereq->devtype);
+    DUMPSTR(indent,tapereq->density);
+    DUMPSTR(indent,tapereq->server);
+    DUMPSTR(indent,tapereq->unit);
+    DUMPINT(indent,tapereq->VolReqID);
+    DUMPINT(indent,tapereq->jobID);
+    DUMPINT(indent,tapereq->mode);
+    DUMPINT(indent,tapereq->start_file);
+    DUMPINT(indent,tapereq->end_file);
+    DUMPINT(indent,tapereq->partition);
+    DUMPINT(indent,tapereq->tprc);
+    DUMPINT(indent,tapereq->TStartRequest);
+    DUMPINT(indent,tapereq->TEndRequest);
+    DUMPINT(indent,tapereq->TStartRtcpd);
+    DUMPINT(indent,tapereq->TStartMount);
+    DUMPINT(indent,tapereq->TEndMount);
+    DUMPINT(indent,tapereq->TStartUnmount);
+    DUMPINT(indent,tapereq->TEndUnmount);
+    return(0);
+}
+int dumpFileReq(file_list_t *fl) {
+    rtcpFileRequest_t *filereq;
+    char indent[] = "    ";
+
+    if ( fl == NULL ) return(-1);
+    filereq = &fl->filereq;
+
+    rtcp_log(LOG_INFO,"\n%s---->File request\n",indent);
+    DUMPSTR(indent,filereq->file_path);
+    DUMPSTR(indent,filereq->tape_path);
+    DUMPSTR(indent,filereq->recfm);
+    DUMPSTR(indent,filereq->fid);
+    DUMPSTR(indent,filereq->ifce);
+    DUMPSTR(indent,filereq->stageID);
+    DUMPSTR(indent,filereq->vmsopt);
+    DUMPINT(indent,filereq->VolReqID);
+    DUMPINT(indent,filereq->jobID);
+    DUMPINT(indent,filereq->position_method);
+    DUMPINT(indent,filereq->tape_fseq);
+    DUMPINT(indent,filereq->tape_fsec);
+    DUMPINT(indent,filereq->disk_fseq);
+    DUMPINT(indent,filereq->blocksize);
+    DUMPINT(indent,filereq->recordlength);
+    DUMPINT(indent,filereq->retention);
+    DUMPINT(indent,filereq->def_alloc);
+    DUMPINT(indent,filereq->rtcp_err_action);
+    DUMPINT(indent,filereq->tp_err_action);
+    DUMPINT(indent,filereq->convert);
+    DUMPINT(indent,filereq->check_fid);
+    DUMPINT(indent,filereq->concat);
+
+    DUMPINT(indent,filereq->proc_status);
+    DUMPINT(indent,filereq->cprc);
+    DUMPINT(indent,filereq->TStartPosition);
+    DUMPINT(indent,filereq->TEndPosition);
+    DUMPINT(indent,filereq->TStartTransferDisk);
+    DUMPINT(indent,filereq->TEndTransferDisk);
+    DUMPINT(indent,filereq->TStartTransferTape);
+    DUMPINT(indent,filereq->TEndTransferTape);
+
+    DUMPI64(indent,filereq->blockid);
+    DUMPI64(indent,filereq->bytes_in);
+    DUMPI64(indent,filereq->bytes_out);
+
+    DUMPI64(indent,filereq->maxnbrec);
+    DUMPI64(indent,filereq->maxsize);
+
+    DUMPI64(indent,filereq->startsize);
+
+    return(0);
+}
