@@ -1,13 +1,16 @@
 .\"
-.\" $Id: vdqm_UnitStatus.man,v 1.1 1999/07/31 15:27:01 obarring Exp $
+.\" $Id: vdqm_UnitStatus.man,v 1.2 1999/09/02 15:10:56 obarring Exp $
 .\" $Log: vdqm_UnitStatus.man,v $
+.\" Revision 1.2  1999/09/02 15:10:56  obarring
+.\" Add new status constants.
+.\"
 .\" Revision 1.1  1999/07/31 15:27:01  obarring
 .\" First version. EXAMPLE section still missing.
 .\"
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l
+.TH VDQM_UNITSTATUS l $Id: vdqm_UnitStatus.man,v 1.2 1999/09/02 15:10:56 obarring Exp $
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -90,7 +93,13 @@ be set before the VDQM server will dispatch work to this unit.
 .PP
 .B VDQM_UNIT_DOWN
 \- the unit is configured down. If there was a running job present on the
-unit, it will be replaced on top of the volume request queue.
+unit, it will be replaced on top of the volume request queue. This status
+can only be set by tape server. Requests from other hosts will be rejected.
+.PP
+.B VDQM_UNIT_WAITDOWN
+\- the unit is configuring down. Either the tape server waits for volume
+to unload and dismount or the operator has requested unit to be down and
+VDQM is waiting for confirmation from the tape server.
 .PP
 .B VDQM_UNIT_FREE
 \- the unit is free and ready to receive a new request.
@@ -125,6 +134,15 @@ parameter specifies the local job ID of the job currently associated with the un
 parameter may contain the volume identifier of the unmounted volume. VDQM will then
 cross-check this value with its internal table and return an error if the volume
 identifiers do not correspond.
+.PP
+.B VDQM_UNIT_ERROR
+\- increment error counter for this unit in VDQM. This status should be
+set after a medium error. 
+.PP
+.B VDQM_UNIT_MBCOUNT
+\- increment the MBytes transferred counter for this unit in VDQM. The
+.I value
+parameter specifies the number of MBytes transferred. 
 .PP
 In addition to the listed status flags the VDQM server maintains the following
 two internal unit status flags. Attempt to set these flags with
@@ -162,6 +180,9 @@ VDQM service unknown.
 .TP
 .B SENOSHOST
 VDQM host unknown.
+.TP
+.B EPERM
+A VDQM_UNIT_DOWN request from host different from tape server
 .TP
 .B EVQSYERR
 A fatal system call (e.g. calloc())failure in VDQM server.
