@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.12 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.13 $ $Date: 2002/01/30 08:21:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGEWRT l "$Date: 2002/01/30 08:21:10 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -36,9 +36,13 @@ disk to a Hierarchical Storage Management System.
 .BI \-l " label_type"
 ] [
 .BI \-M " hsmfile"
-] [
+[
+.BI \-M " hsmfile2"
+[
+.BI \-M " ..."
+] ] [
 .BI \-N " nread"
-] [
+]
 .BI \-n
 ] [
 .BI \-o
@@ -80,7 +84,7 @@ or absent if a Fortran unit number is specified.
 .SH OPTIONS
 .TP
 .BI \-A " deferred"
-is valid only when doing stagewrt of CASTOR HSM files. It puts your request in the migration queue, the HSM files will be automatically migrated later. If there is no error when parsing the input, the client then returns immediately. This option requires at least one \-M option and one user file as parameter.
+is valid only when doing stagewrt of CASTOR HSM files. It puts your request in the migration queue, the HSM files will be automatically migrated later. If there is no error when parsing the input, the client then returns immediately. This option requires at least one \-M option and one user file as parameter. The user files must reside in a filesystem known to the stagein system.
 .TP
 .BI \-b " blocksize"
 Specifies the maximum block size.
@@ -283,10 +287,7 @@ defaults to
 .RE
 .TP
 .BI \-M " hsmfile"
-Gives the name of a Hierarchical Storage Manager (HSM) file.
-In this case,
-.B rfcp
-is used to copy the existing disk file to that HSM file.
+Gives the name of a Hierarchical Storage Manager (HSM) file. For CASTOR files multiple \-M options is possible, requiring then that the same number of disk files is given and that \-M option values are unique.
 .TP
 .BI \-N " nread"
 If specified, only 
@@ -402,6 +403,11 @@ Forces a specific tape pool. This applies only to CASTOR HSM files to be migrate
 To save onto tape an existing tar file:
 .RS
 stagewrt \-v CUT333 \-F F \-L 10240 \-b 10240 myfiles.tar
+.RE
+.LP
+To write into CASTOR
+.RS
+stagewrt \-M /castor/cern.ch/... diskfile
 .RE
 .SH RETURN CODES
 \
