@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.2 2000/05/15 13:12:47 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.3 2000/05/15 13:14:14 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.2 $ $Date: 2000/05/15 13:12:47 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.3 $ $Date: 2000/05/15 13:14:14 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:12:47 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:14:14 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
@@ -83,3 +83,9 @@ Bad address (invalid argument)
 .TP
 .B EINVAL
 Invalid argument (bad stageid)
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
