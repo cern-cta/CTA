@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/10/22 15:43:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/10/22 15:57:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -74,7 +74,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
 
 /// SQL statement for anyTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatementString =
-  "SELECT id FROM rh_TapeCopy, rh_Stream2TapeCopy WHERE status = :1 and child == id and ROWNUM < 2";
+  "SELECT id FROM rh_TapeCopy, rh_Stream2TapeCopy WHERE status = :1 and child = id and ROWNUM < 2";
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
