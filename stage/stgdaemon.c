@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.185 2002/04/11 10:41:44 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.186 2002/04/13 12:52:49 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.185 $ $Date: 2002/04/11 10:41:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.186 $ $Date: 2002/04/13 12:52:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -224,6 +224,7 @@ extern void killcleanovl _PROTO((int));
 extern void killmigovl _PROTO((int));
 int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int get_put_failed_retenp _PROTO((char *));
+size_t stg_count_digits _PROTO((int, unsigned int));
 
 struct stgcat_entry *newreq _PROTO((int));
 struct waitf *add2wf _PROTO((struct waitq *));
@@ -1554,6 +1555,12 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 	struct passwd *pw;
 
 	if (*stcp->poolname == '\0' && upath != NULL) {
+		if (strlen(upath) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+			stcp->ipath[0] = '\0';
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+			return(EINVAL);
+		}
 		strcpy (stcp->ipath, upath);
 		return (0);
 	}
@@ -1567,32 +1574,69 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 	/* build full internal path name */
 
+	if ((strlen(stcp->ipath) + 1 + strlen(stcp->group)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+		stcp->ipath[0] = '\0';
+		serrno = SENAMETOOLONG;
+		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+		return(EINVAL);
+	}
 	sprintf (stcp->ipath+strlen(stcp->ipath), "/%s", stcp->group);
 
 	p_u = stcp->ipath + strlen (stcp->ipath);
+	if ((strlen(stcp->ipath) + 1 + strlen(pool_user)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+		stcp->ipath[0] = '\0';
+		serrno = SENAMETOOLONG;
+		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+		return(EINVAL);
+	}
 	sprintf (p_u, "/%s", pool_user);
 
 	p_f = stcp->ipath + strlen (stcp->ipath);
 	if (stcp->t_or_d == 't') {
-		if (*(stcp->u1.t.fseq) != 'n')
+		if (*(stcp->u1.t.fseq) != 'n') {
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-			if (stcp->u1.t.side > 0)
-				sprintf (p_f, "/%s.%d.%s.%s",
-								 stcp->u1.t.vid[0], stcp->u1.t.side, stcp->u1.t.fseq, stcp->u1.t.lbl);
-			else
+			if (stcp->u1.t.side > 0) {
+				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + stg_count_digits(stcp->u1.t.side,10) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+					stcp->ipath[0] = '\0';
+					serrno = SENAMETOOLONG;
+					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+					return(EINVAL);
+				}
+				sprintf (p_f, "/%s.%d.%s.%s", stcp->u1.t.vid[0], stcp->u1.t.side, stcp->u1.t.fseq, stcp->u1.t.lbl);
+			} else {
 				/* Backward compatiblity */
 #endif
-				sprintf (p_f, "/%s.%s.%s",
-								 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl);
-		else
-			sprintf (p_f, "/%s.%s.%s.%d",
-							 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
-							 stcp->reqid);
+				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+					stcp->ipath[0] = '\0';
+					serrno = SENAMETOOLONG;
+					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+					return(EINVAL);
+				}
+				sprintf (p_f, "/%s.%s.%s", stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			}
+#endif
+		} else {
+			if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+				stcp->ipath[0] = '\0';
+				serrno = SENAMETOOLONG;
+				sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+				return(EINVAL);
+			}
+			sprintf (p_f, "/%s.%s.%s.%d", stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl, stcp->reqid);
+		}
 	} else {
-		if ((p = strrchr (stcp->u1.d.xfile, '/')) == NULL)
+		if ((p = strrchr (stcp->u1.d.xfile, '/')) == NULL) {
 			p = stcp->u1.d.xfile;
-		else
+		} else {
 			p++;
+		}
+		if ((strlen(stcp->ipath) + 1 + strlen(p) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+			stcp->ipath[0] = '\0';
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
+			return(EINVAL);
+		}
 		sprintf (p_f, "/%s.%d", p, stcp->reqid);
 	}
 
@@ -3777,4 +3821,36 @@ void check_upd_fileclasses() {
 		/* Update check_upd_fileclasses time */
 		last_upd_fileclasses = time(NULL);
 	}
+}
+
+/* ----------------------------------------------------------- */
+/* Subroutine: stg_count_digits                                */
+/* ----------------------------------------------------------- */
+/* Utility routine to count the number of digits of an integer */
+/* ----------------------------------------------------------- */
+/* Input: integer                                              */
+/*        base                                                 */
+/* Output: number of digits                                    */
+/* ----------------------------------------------------------- */
+size_t stg_count_digits(number, base)
+	int number;
+	unsigned int base;
+{
+	int digits = 1;
+	size_t rc;
+
+	if ( number < 0 ) {
+		++digits;
+		if ( number == INT_MIN ) {
+			number = -(number / (int)base) - (number % (int)base > 0);
+			++digits;
+		} else
+			number = -number;
+	}
+  
+	while ( number /= base )
+		++digits;
+  
+	rc = (size_t) digits;
+	return(rc);
 }
