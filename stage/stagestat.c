@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.38 2002/09/30 12:35:39 jdurand Exp $
+ * $Id: stagestat.c,v 1.39 2002/10/03 09:48:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.38 $ $Date: 2002/09/30 12:35:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.39 $ $Date: 2002/10/03 09:48:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -159,6 +159,13 @@ unsigned int num_mrecs = 0;		/* total number of non-CASTOR-HSM files */
 unsigned int num_hrecs = 0;		/* total number of CASTOR-HSM files */
 char hostname[CA_MAXHOSTNAMELEN + 1];
 int num_fork_exec_stager = 0;			/* number of fork of a stager */
+/* Indice 0: read, Indice 1: write */
+int num_fork_exec_stager2 = 0;			/* number of fork of a stager with information below filled */
+int num_fork_exec_disk2disk = 0;	/* number of forked HSM recalls doing disk2disk copy */
+int num_fork_exec_stager_castor[2] = {0,0};			/* number of forked stager_castor */
+int num_fork_exec_stager_tape[2] = {0,0};			/* number of forked stager_tape */
+int num_fork_exec_stager_disk[2] = {0,0};			/* number of forked stager_disk */
+int num_fork_exec_stager_hsm[2] = {0,0};			    /* number of forked stager_disk for non-CASTOR HSM */
 int verbose = 0;
 int debug = 0;
 u_signed64 size_total, size_read;
@@ -175,7 +182,7 @@ void print_poolstat _PROTO((int, int, int, char *));
 void swap_fields _PROTO((struct acctstage2 *));
 void usage _PROTO((char *));
 void print_fdetails _PROTO((struct file_inf *));
-void print_globstat _PROTO((time_t, time_t, int, int));
+void print_globstat _PROTO((time_t, time_t, int));
 void print_time_interval _PROTO((time_t, time_t));
 void print_ddetails _PROTO((struct file_inf *));
 void print_mdetails _PROTO((struct file_inf *));
@@ -671,6 +678,55 @@ int main(argc, argv)
 			nrecok++;
 		} else if (rp.subtype == STGCMDS) {
 			num_fork_exec_stager++;
+			
+			switch ((char) rp.exitcode) { /* A trick */
+			case '1':
+				/* CASTOR HSM recall with tape mount request */
+ 				num_fork_exec_stager2++;
+				num_fork_exec_stager_castor[0]++;
+				break;
+			case '2':
+				/* CASTOR HSM migration */
+ 				num_fork_exec_stager2++;
+				num_fork_exec_stager_castor[1]++;
+				break;
+			case '3':
+				/* CASTOR HSM recall translated to internal disk2disk copy */
+				num_fork_exec_stager2++;
+				num_fork_exec_disk2disk++;
+				num_fork_exec_stager_castor[0]++;
+				break;
+			case '4':
+				/* Explicit tape read request */
+				num_fork_exec_stager2++;
+				num_fork_exec_stager_tape[0]++;
+				break;
+			case '5':
+				/* Explicit tape write request */
+				num_fork_exec_stager2++;
+				num_fork_exec_stager_tape[1]++;
+				break;
+			case '6':
+				/* Explicit disk read request */
+				num_fork_exec_stager2++;
+				num_fork_exec_stager_disk[0]++;
+				break;
+			case '7':
+				/* Explicit disk write request */
+				num_fork_exec_stager2++;
+				num_fork_exec_stager_disk[1]++;
+				break;
+			case '8':
+				/* Explicit non-CASTOR HSM read request */
+ 				num_fork_exec_stager2++;
+				num_fork_exec_stager_hsm[0]++;
+				break;
+			case '9':
+				/* Explicit non-CASTOR HSM read request */
+ 				num_fork_exec_stager2++;
+				num_fork_exec_stager_hsm[1]++;
+				break;
+			}
 			nrecok++;
 		} else if (rp.subtype == STGCMDS) { /* stager started */
 			nrecok++;
@@ -777,7 +833,7 @@ int main(argc, argv)
 	printf("                                ... %10d (filtered)\n", nrecfiltered);
 	printf("\n");
 	if (nrecok > 0) {
-		print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs);
+		print_globstat (starttime, endtime, num_multireqs);
 		print_poolstat (tflag, aflag, pflag, poolname);
 	}
 
@@ -1407,10 +1463,9 @@ void print_fdetails (frecord)
 
 /* Function to print out global statistics */
 
-void print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs)
+void print_globstat (starttime, endtime, num_multireqs)
 	time_t starttime;
 	time_t endtime;
-	int num_fork_exec_stager;
 	int num_multireqs;
 {
 	int num_pos_requests_avoided = 0;
@@ -1445,14 +1500,39 @@ void print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs)
 	printf ("stageshutdown %4d %6.2f\t\n", nb_req[15], nb_req[15] > 0 ? (float) (100 * nb_apireq[15])/nb_req[15] : 0);
 	printf ("stageping  %7d %6.2f\t\n", nb_req[16], nb_req[16] > 0 ? (float) (100 * nb_apireq[16])/nb_req[16] : 0);
 	printf ("restart(s) %7d\t\n", nb_restart);
-	printf ("\nStagein Statistics :\n");
-	printf ("\tNumber of forked I/O process\t\t\t%d\n", num_fork_exec_stager);
-	printf ("\tNumber of tape remount requests (write mode)\t\t\t%d\n", num_wrt_remount_requests);
-	printf ("\tNumber of tape remount requests (read  mode)\t\t\t%d\n", num_in_remount_requests);
+	printf ("\nStage Statistics :\n");
+	printf ("\tNumber of forked I/O process                \t\t\t:\t%5d\n", num_fork_exec_stager);
+	if (num_fork_exec_stager2 > 0) {
+		printf ("\t... with r/w account information            \t\t\t:\t%5d\n", num_fork_exec_stager2);
+		printf ("\nForked I/O processes statistics using r/w account information (numbers below include retries)\n");
+		if ((num_fork_exec_stager_castor[0] > 0) || (num_fork_exec_stager_castor[1] > 0)) {
+			printf ("\tNumber of forked CASTOR recall              \t\t\t:\t%5d\n", num_fork_exec_stager_castor[0]);
+			if (num_fork_exec_stager_castor[0] > 0) {
+				printf ("\t... Converted to disk to disk copy          \t\t\t:\t%5d\n", num_fork_exec_disk2disk);
+				printf ("\t... Asking for a tape                       \t\t\t:\t%5d\n", num_fork_exec_stager_castor[0] - num_fork_exec_disk2disk);
+			}
+			printf ("\tNumber of forked CASTOR write               \t\t\t:\t%5d\n", num_fork_exec_stager_castor[1]);
+		}
+		if ((num_fork_exec_stager_hsm[0] > 0) || (num_fork_exec_stager_hsm[1] > 0)) {
+			printf ("\tNumber of forked HSM (non-CASTOR) recall    \t\t\t:\t%5d\n", num_fork_exec_stager_hsm[0]);
+			printf ("\tNumber of forked HSM (non-CASTOR) write     \t\t\t:\t%5d\n", num_fork_exec_stager_hsm[1]);
+		}
+		if ((num_fork_exec_stager_disk[0] > 0) || (num_fork_exec_stager_disk[1] > 0)) {
+			printf ("\tNumber of forked explicit DISK read         \t\t\t:\t%5d\n", num_fork_exec_stager_disk[0]);
+			printf ("\tNumber of forked explicit DISK write        \t\t\t:\t%5d\n", num_fork_exec_stager_disk[1]);
+		}
+		if ((num_fork_exec_stager_tape[0] > 0) || (num_fork_exec_stager_tape[1] > 0)) {
+			printf ("\tNumber of forked explicit TAPE read         \t\t\t:\t%5d\n", num_fork_exec_stager_tape[0]);
+			printf ("\tNumber of forked explicit TAPE write        \t\t\t:\t%5d\n", num_fork_exec_stager_tape[1]);
+		}
+		printf("\n");
+	}
+	printf ("\tNumber of tape remount requests (write mode)\t\t\t:\t%5d\n", num_wrt_remount_requests);
+	printf ("\tNumber of tape remount requests (read  mode)\t\t\t:\t%5d\n", num_in_remount_requests);
 	num_pos_requests_avoided = rc[1][0] - num_fork_exec_stager;
 	if (num_pos_requests_avoided < 0 ) num_pos_requests_avoided = 0;
-	printf ("\tNumber of tape requests avoided by stager (read mode)\t%d\n", num_pos_requests_avoided);
-	printf ("\tNumber of multifile requests\t\t%d\n", num_multireqs);
+	printf ("\tNb of read tape requests avoided by stager  \t\t\t:\t%5d\n", num_pos_requests_avoided);
+	printf ("\tNumber of multifile requests                \t\t\t:\t%5d\n", num_multireqs);
 }
 
 /* Function to print out the time interval */
@@ -1920,20 +2000,20 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 		strcpy (current_pool, pf->poolname);
 		if (pflag && strcmp (current_pool,poolname) != 0) continue;
 		printf ("\nFile Request Details for Pool : %10s\n\n", current_pool);
-		printf ("Number of requests started before time period began\t\t\t%d\n",
+		printf ("Number of requests started before time period began\t\t\t:\t%5d\n",
 				pf->acc_clrd + pf->acc);
-		printf ("Out of these:\tNumber accessed before being cleared\t\t\t%d\n",
+		printf ("Out of these:\tNumber accessed before being cleared\t\t\t:\t%5d\n",
 				pf->acc_clrd);
-		printf ("\t\tNumber accessed but not cleared during time period\t%d\n",
+		printf ("\t\tNumber accessed but not cleared during time period\t:\t%5d\n",
 				pf->acc);
-		printf ("\nNumber of requests started after beginning of time period\t\t%d\n",
+		printf ("\nNumber of requests started after beginning of time period\t\t:\t%5d\n",
 				pf->stg_acc+pf->stg_acc_clrd);
-		printf ("Out of these:\tNumber accessed but not cleared\t\t\t\t%d\n",
+		printf ("Out of these:\tNumber accessed but not cleared\t\t\t\t:\t%5d\n",
 				pf->stg_acc);
-		printf ("\t\tNumber accessed and then cleared\t\t\t%d\n", pf->stg_acc_clrd);
+		printf ("\t\tNumber accessed and then cleared\t\t\t:\t%5d\n", pf->stg_acc_clrd);
 
 		if (pf->num_files > 0)
-			printf ("\nAverage number of file accesses \t:\t %8.2f",
+			printf ("\nAverage number of file accesses \t\t\t\t\t:\t%8.2f",
 					pf->total_accesses/pf->num_files);
 
 		range= pf->total_stged_files2;
@@ -1941,7 +2021,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf("\n");
 			printf("Average lifetime of staged and then garbaged%s file using creation time\t:\t%8.2f hours\n",
 					(all_stageclrs ? " or cleared_by_user" : ""), (float) (pf->total_avg_life2/pf->total_stged_files2));
-			printf("Number of files used in this calculation                               \t:\t%8d\n",pf->total_stged_files2);
+			printf("Number of files used in this calculation                               \t:\t%5d\n",pf->total_stged_files2);
 			if (pf->total_stged_files2 > 1) {
 				variance = (pf->total_avg_life22 - (pf->total_avg_life2 * pf->total_avg_life2) / pf->total_stged_files2) / (pf->total_stged_files2 - 1);
 				if (variance >= 0) {
