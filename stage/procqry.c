@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.74 2002/01/25 11:46:40 jdurand Exp $
+ * $Id: procqry.c,v 1.75 2002/01/25 12:28:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.74 $ $Date: 2002/01/25 11:46:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.75 $ $Date: 2002/01/25 12:28:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -122,7 +122,7 @@ extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
 extern int nbpool;
 extern struct pool *pools;
-extern int no_upd_fileclass;
+extern int no_Cns_stat_if_stcp_have_it;
 
 static int nbtpf;
 static int noregexp_flag;
@@ -298,7 +298,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char timestr2[64] ;   /* Time in its ASCII format             */
 	char *dp;
 
-	no_upd_fileclass = 1;   /* Very important variable that prevent polling of name server */
+	no_Cns_stat_if_stcp_have_it = 1;   /* Very important variable that prevent polling of name server */
 	
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.161 2002/01/25 12:25:55 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.162 2002/01/25 12:28:09 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.161 $ $Date: 2002/01/25 12:25:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.162 $ $Date: 2002/01/25 12:28:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -177,7 +177,7 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
-int no_upd_fileclass = 1; /* This is very important variable, setted to one only when forking procqry, or (re-)initiliazing */
+int no_Cns_stat_if_stcp_have_it = 1; /* This is very important variable, setted to one only when forking procqry, or (re-)initiliazing */
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -821,7 +821,7 @@ int main(argc,argv)
 		/* Before accept() we execute some automatic thing that are client disconnected */
 		rpfd = -1;
 
-		no_upd_fileclass = 0;   /* Very important variable that prevent polling of name server - changed in procqry.c */
+		no_Cns_stat_if_stcp_have_it = 0;   /* Very important variable that prevent polling of name server - changed in procqry.c */
 
 		stgcat_shrunk_pages();
 		stgpath_shrunk_pages();

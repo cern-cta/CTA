@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.174 2002/01/25 11:46:39 jdurand Exp $
+ * $Id: poolmgr.c,v 1.175 2002/01/25 12:28:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.174 $ $Date: 2002/01/25 11:46:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.175 $ $Date: 2002/01/25 12:28:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3684,7 +3684,7 @@ int upd_fileclass(pool_p,stcp,yetdone_Cnsfilestat)
   int ifileclass = -1;
   int ifileclass_vs_migrator = -1;
   int i;
-  extern int no_upd_fileclass;
+  extern int no_Cns_stat_if_stcp_have_it;
   
   if ((stcp == NULL) || (stcp->t_or_d != 'h')) {
     serrno = SEINTERNAL;
@@ -3695,9 +3695,9 @@ int upd_fileclass(pool_p,stcp,yetdone_Cnsfilestat)
   /* Fileclass is always checked if stcp->u1.h.fileclass is <= 0 or if there is yet done Cns_stat() result */
   /* sent to us - in the later case, caller can anyway prevent call Cns_statx() even if there was not previous */
   /* call to Cns_statx() sent to us if original record neverthless contains a fileclass - this mean that setting */
-  /* external value no_upd_fileclass to anything != 0, we guarantee that there will never be a Cns_statx() call if */
+  /* external value no_Cns_stat_if_stcp_have_it to anything != 0, we guarantee that there will never be a Cns_statx() call if */
   /* the original record contains already a fileclass */
-  if ((stcp->u1.h.fileclass <= 0) || ((! no_upd_fileclass) && (! yetdone_Cnsfilestat))) {
+  if ((stcp->u1.h.fileclass <= 0) || ((! no_Cns_stat_if_stcp_have_it) && (! yetdone_Cnsfilestat))) {
     strcpy(Cnsfileid.server,stcp->u1.h.server);
     Cnsfileid.fileid = stcp->u1.h.fileid;
 	if (! yetdone_Cnsfilestat) {
