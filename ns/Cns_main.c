@@ -258,6 +258,12 @@ void *arg;
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  return -1;
 	}
+	Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid));
+	nslogit(func, "CSEC: Client is %s (%d/%d)\n",
+		Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		thip->Csec_uid,
+		thip->Csec_gid);
+		
 #endif
 
 	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
