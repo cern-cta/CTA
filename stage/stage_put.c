@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.3 2000/06/23 07:21:17 jdurand Exp $
+ * $Id: stage_put.c,v 1.4 2000/09/01 13:18:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.3 $ $Date: 2000/06/23 07:21:17 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.4 $ $Date: 2000/09/01 13:18:45 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,9 +33,8 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.3 $ $Date: 20
 
 extern char *getconfent();
 
-int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
+int DLL_DECL stage_put_hsm(stghost,hsmstruct)
      char *stghost;
-     int Migrationflag;
      stage_hsm_t *hsmstruct;
 {
 	uid_t uid;
@@ -93,16 +92,13 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 	sendbuf_size += WORDSIZE;                      /* Pid */
 	sendbuf_size += WORDSIZE;                      /* Narg */
 	sendbuf_size += strlen(command) + 1;           /* Command */
-    if (Migrationflag) {
-		sendbuf_size += strlen("-m") + 1;          /* Migration Flag */
-    }
     hsm = hsmstruct;
     while (hsm != NULL) {
       if (hsm->xfile[0] == '\0') {
         serrno = EFAULT;
         return (-1);
       }
-      sendbuf_size += strlen("-M") + 1;            /* Migration file */
+      sendbuf_size += strlen("-M") + 1;            /* HSM or CASTOR file */
       sendbuf_size += strlen(hsm->xfile) + 1;
       hsm = hsm->next;
 	}
@@ -133,11 +129,6 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 	nargs = 1;
 	marshall_WORD (sbp, nargs);
 	marshall_STRING (sbp, command);
-
-    if (Migrationflag) {
-		marshall_STRING (sbp, "-m");
-		nargs++;
-    }
 
     hsm = hsmstruct;
     while (hsm != NULL) {
