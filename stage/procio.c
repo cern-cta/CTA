@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.155 2002/01/25 11:46:40 jdurand Exp $
+ * $Id: procio.c,v 1.156 2002/01/27 08:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.155 $ $Date: 2002/01/25 11:46:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.156 $ $Date: 2002/01/27 08:52:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -186,7 +186,7 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *, int *, int *, struct Cns_filestat *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
-extern int update_migpool _PROTO((struct stgcat_entry **, int, int, struct Cns_filestat *));
+extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern u_signed64 stage_uniqueid;
 extern void getdefsize _PROTO((char *, int *));
@@ -222,7 +222,7 @@ extern void rmfromwq _PROTO((struct waitq *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_filestat *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
 extern char *next_tppool _PROTO((struct fileclass *));
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -1925,7 +1925,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  if ((nhsmfiles > 0) && (hsmsize == 0)) {
 				  int ifileclass;
 
-				  if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0)) {
+				  if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0)) {
 					  int save_serrno = serrno;
 					  sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 					  c = (api_out != 0) ? save_serrno : USERR;
@@ -2551,7 +2551,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				int ifileclass;
 
 				if (stcp->u1.h.tppool[0] == '\0') {
-					if ((ifileclass = upd_fileclass(NULL,stcp,have_Cnsfilestat ? &Cnsfilestat : NULL)) < 0) {
+					if ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0) {
 						int save_serrno = serrno;
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
@@ -2586,7 +2586,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
 					/* This entry is in the pool anyway and this is not for internal migration */
 					/* if (! Aflag) update_migpool(&stcp,1,4); */ /* Don't needed in theory - Condition move DELAY -> CAN_BE_MIGR */
-					if (update_migpool(&stcp,1,Aflag ? 0 : 1, have_Cnsfilestat ? &Cnsfilestat : NULL) != 0) {
+					if (update_migpool(&stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
 						c = (api_out != 0) ? serrno : USERR;
 						delreq(stcp,0);
@@ -2665,7 +2665,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				for (stclp = stcs; stclp < stce; stclp++) {
 					if (stclp->reqid == 0) break;
 					if (stclp->reqid != save_stcp_for_Cns_creatx.reqid) continue;
-					update_migpool(&stclp,-1,0,NULL);
+					update_migpool(&stclp,-1,0);
 					stclp->status |= PUT_FAILED;
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stclp) != 0) {
@@ -2685,7 +2685,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				for (stclp = stcs; stclp < stce; stclp++) {
 					if (stclp->reqid == 0) break;
 					if (stclp->reqid != save_stcp_for_Cns_creatx.reqid) continue;
-					update_migpool(&stclp,-1,0,NULL);
+					update_migpool(&stclp,-1,0);
 					stclp->status |= PUT_FAILED;
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stclp) != 0) {
@@ -3128,7 +3128,7 @@ void procputreq(req_type, req_data, clienthost)
 							goto reply;
 						}
 						if (stcp->u1.h.tppool[0] == '\0') {
-							if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) {
+							if ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0) {
 								sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 								c = USERR;
 								goto reply;
@@ -3231,10 +3231,10 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
-					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4,NULL); /* Condition move DELAY -> CAN_BE_MIGR */
+					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2, NULL) != 0) {
+					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
 						c = USERR;
 						goto reply;
 					}
@@ -3264,7 +3264,7 @@ void procputreq(req_type, req_data, clienthost)
 				if (hsmfilesstcp[ihsmfiles]->t_or_d == 'h') {
 					if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid,0,NULL,NULL) != 0) {
 						if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpool(&(hsmfilesstcp[ihsmfiles]),-1,0,NULL);
+							update_migpool(&(hsmfilesstcp[ihsmfiles]),-1,0);
 							if ((hsmfilesstcp[ihsmfiles]->status & STAGEWRT) == STAGEWRT) {
 								delreq(hsmfilesstcp[ihsmfiles],0);
 							} else {
@@ -3344,7 +3344,7 @@ void procputreq(req_type, req_data, clienthost)
 						goto reply;
 					}
 					if (found_stcp->u1.h.tppool[0] == '\0') {
-						if ((ifileclass = upd_fileclass(NULL,found_stcp,NULL)) < 0) {
+						if ((ifileclass = upd_fileclass(NULL,found_stcp,0)) < 0) {
 							sendrep (rpfd, MSG_ERR, STG132, found_stcp->u1.h.xfile, sstrerror(serrno));
 							c = USERR;
 							goto reply;
@@ -3444,10 +3444,10 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
-					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4,NULL); /* Condition move DELAY -> CAN_BE_MIGR */
+					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2,NULL) != 0) {
+					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
 						c = USERR;
 						goto reply;
 					}
@@ -3490,7 +3490,7 @@ void procputreq(req_type, req_data, clienthost)
 				/* We check if the file yet exist in the name server and if we have to recreate it */
 				if (stageput_check_hsm(hsmfilesstcp[i],uid,gid,0,NULL,NULL) != 0) {
 					if ((hsmfilesstcp[i]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						update_migpool(&(hsmfilesstcp[i]),-1,0,NULL);
+						update_migpool(&(hsmfilesstcp[i]),-1,0);
 						if ((hsmfilesstcp[i]->status & STAGEWRT) == STAGEWRT) {
 							delreq(hsmfilesstcp[i],0);
 						} else {
@@ -3557,7 +3557,7 @@ void procputreq(req_type, req_data, clienthost)
 				}
 				if (found == 0) continue;
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					update_migpool(&stcp,-1,0,NULL);
+					update_migpool(&stcp,-1,0);
 					if ((stcp->status & STAGEWRT) == STAGEWRT) {
 						delreq(stcp,0);
 					} else {
@@ -3595,7 +3595,7 @@ void procputreq(req_type, req_data, clienthost)
 						if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
 						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, Coptarg) != 0) continue;
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpool(&stcp,-1,0,NULL);
+							update_migpool(&stcp,-1,0);
 							if ((stcp->status & STAGEWRT) == STAGEWRT) {
 								delreq(stcp,0);
 							} else {

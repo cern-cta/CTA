@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.163 2002/01/25 13:32:54 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.164 2002/01/27 08:52:51 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.163 $ $Date: 2002/01/25 13:32:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.164 $ $Date: 2002/01/27 08:52:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -177,7 +177,6 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
-int no_Cns_stat_if_stcp_have_it = 1; /* This is very important variable, setted to one only when forking procqry, or (re-)initiliazing */
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -229,7 +228,7 @@ extern int get_put_failed_retenp _PROTO((char *));
 struct stgcat_entry *newreq _PROTO((int));
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
-extern int update_migpool _PROTO((struct stgcat_entry **, int, int, struct Cns_filestat *));
+extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *, int, int));
@@ -255,7 +254,7 @@ extern void checkpoolspace _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern int get_create_file_option _PROTO((char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_filestat *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern void check_delaymig _PROTO(());
@@ -730,7 +729,7 @@ int main(argc,argv)
 			}
 		}
 		if (stcp->t_or_d == 'h') {
-			upd_fileclass(NULL,stcp,NULL);
+			upd_fileclass(NULL,stcp,0);
 		}
 		if ((((stcp->status & 0xF) == STAGEIN) &&
 				 ((stcp->status & 0xF0) != STAGED)) ||
@@ -786,12 +785,12 @@ int main(argc,argv)
 		} else if (stcp->status == (STAGEPUT|CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpool(&stcp,1,0,NULL);
+			update_migpool(&stcp,1,0);
 			stcp++;
 		} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpool(&stcp,1,0,NULL);
+			update_migpool(&stcp,1,0);
 			stcp++;
 		} else stcp++;
 	}
@@ -820,8 +819,6 @@ int main(argc,argv)
 
 		/* Before accept() we execute some automatic thing that are client disconnected */
 		rpfd = -1;
-
-		no_Cns_stat_if_stcp_have_it = 0;   /* Very important variable that prevent polling of name server - changed in procqry.c */
 
 		stgcat_shrunk_pages();
 		stgpath_shrunk_pages();
@@ -2473,7 +2470,7 @@ void checkwaitq()
 								}
 							}
 							if (stcp_found != NULL) {
-								update_migpool(&stcp_found,-1,0,NULL);
+								update_migpool(&stcp_found,-1,0);
 								stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 #ifdef USECDB
 								if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
@@ -2482,7 +2479,7 @@ void checkwaitq()
 #endif
 								savereqs();
 							} else {
-								update_migpool(&stcp,-1,0,NULL);
+								update_migpool(&stcp,-1,0);
 								if (! logged_once) {
 									/* Print this only once per migration request */
 									stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
@@ -2505,7 +2502,7 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (automatic or not) migration */
-						update_migpool(&stcp,-1,0,NULL);
+						update_migpool(&stcp,-1,0);
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
@@ -2740,7 +2737,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				(((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED))
 				) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(&stcp,-1,0,NULL);
+				update_migpool(&stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
 						((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size_block)));
@@ -2751,7 +2748,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				(((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED))
 				) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(&stcp,-1,0,NULL);
+				update_migpool(&stcp,-1,0);
 			}
 		}
 	}
@@ -3544,7 +3541,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 						/* This is a file for automatic migration */
 						done_a_time = 1;
 						stcp->a_time = time(NULL);
-						update_migpool(&stcp,1,0,yetdone_Cns_statx_flag ? &Cnsfilestat : NULL);
+						update_migpool(&stcp,1,0);
 					}
 				}
 			}
@@ -3608,7 +3605,7 @@ int upd_staged(upath)
 	}
 	if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
 		/* There are the migration counters to update */
-		update_migpool(&stcp,-1,0,NULL);
+		update_migpool(&stcp,-1,0);
 	}
 	stcp->status = STAGEOUT;
 	rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
