@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.46 2002/01/23 10:08:12 jdurand Exp $
+ * $Id: procclr.c,v 1.47 2002/01/29 17:59:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.46 $ $Date: 2002/01/23 10:08:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.47 $ $Date: 2002/01/29 17:59:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -306,7 +306,9 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 			stglogit(func,"stpp[1/1] : %s\n",stpp_input.upath);
-			this_reqid = stpp_input.reqid;
+			if ((flags & STAGE_REQID) == STAGE_REQID) {
+				this_reqid = stpp_input.reqid;
+			}
 			/* We set the flags */
 			if ((flags & STAGE_LINKNAME) == STAGE_LINKNAME) linkname = stpp_input.upath;
 			if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) path = stpp_input.upath;
@@ -665,8 +667,10 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		return (USERR);
 	}
 
-	if ((stcp->status & 0xF0) == STAGED ||
-		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
+	if (((stcp->status & 0xF0) == STAGED) ||
+		((stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) ||
+		(stcp->status == (STAGEOUT|CAN_BE_MIGR))) {
+		/* Note: The STAGEOUT|CAN_BE_MIGR|PUT_FAILED case is handle by the second test */
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
