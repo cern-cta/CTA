@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.20 2000/05/08 10:16:32 jdurand Exp $
+ * $Id: procqry.c,v 1.21 2000/05/12 12:17:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.20 $ $Date: 2000/05/08 10:16:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.21 $ $Date: 2000/05/12 12:17:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -94,7 +94,7 @@ void procqryreq(req_data, clienthost)
 	struct group *gr;
 	int hdrprinted = 0;
 	int Lflag = 0;
-	static char l_stat[3][11] = {"", "STAGED_LSZ", "STAGED_TPE"};
+	static char l_stat[4][11] = {"", "STAGED_LSZ", "STAGED_TPE", "CAN_BE_MIGR"};
 	int lflag = 0;
 	char *mfile = NULL;
 	int nargs;
@@ -126,7 +126,7 @@ void procqryreq(req_data, clienthost)
 	int uflag = 0;
 	char *user;
 	char vid[MAXVSN][7];
-	static char x_stat[8][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED","CAN_BE_MIGR"};
+	static char x_stat[7][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED"};
 	char *xfile = NULL;
 	int xflag = 0;
 
