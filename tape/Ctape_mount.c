@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.15 $ $Date: 2000/08/04 05:47:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.16 $ $Date: 2000/08/04 05:56:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -154,8 +154,8 @@ int vdqm_reqid;
 	else
 		strcpy (actual_lbltype, lbltype);
 
-	if ((c = tmscheck (actual_vid, actual_vsn, actual_dgn, actual_den,
-		actual_lbltype, mode, acctname)) {
+	if (c = tmscheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+	    actual_lbltype, mode, acctname)) {
 		serrno = c;
 		return (-1);
 	}
