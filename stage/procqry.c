@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.104 2002/10/26 13:15:48 jdurand Exp $
+ * $Id: procqry.c,v 1.105 2002/10/30 16:21:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.104 $ $Date: 2002/10/26 13:15:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.105 $ $Date: 2002/10/30 16:21:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -87,7 +87,6 @@ extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
-extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
