@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.9 $ $Date: 2000/08/14 14:35:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.10 $ $Date: 2000/11/08 14:03:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -153,7 +153,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     rc = rtcpd_Reserve(tape);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     if ( rc == -1 ) {
-        (void)rtcpd_Deassign(-1,&tape->tapereq);
+        (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
     }
     CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
 
@@ -166,7 +166,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     rc = rtcpd_Mount(tape);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     strcpy(tape->tapereq.label,lbltyp);
-    if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq);
+    if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
     CHECK_PROC_ERR(tape,NULL,"rtcpd_Mount() error");
 
     TP_STATUS(RTCP_PS_POSITION);
