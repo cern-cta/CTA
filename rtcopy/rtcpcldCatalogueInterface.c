@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/13 16:51:15 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2004/08/17 15:17:31 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/13 16:51:15 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2004/08/17 15:17:31 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision:
 extern char *geterr();
 WSADATA wsadata;
 #else /* _WIN32 */
+#include <unistd.h>
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
@@ -62,7 +63,9 @@ WSADATA wsadata;
 #include <dlf_api.h>
 #include <Cnetdb.h>
 #include <Cuuid.h>
+#include <Cmutex.h>
 #include <u64subr.h>
+#include <Cglobals.h>
 #include <serrno.h>
 #if defined(VMGR)
 #include <vmgr_api.h>
@@ -503,6 +506,14 @@ static int updateTapeFromDB(
   return(0);
 }
 
+int rtcpcld_updateTapeFromDB(
+                             tp
+                             )
+     struct Cstager_Tape_t *tp;
+{
+  return(updateTapeFromDB(tp));
+}
+
 /**
  * Update the memory copy of the segment from the database.
  */
@@ -511,7 +522,6 @@ static int updateSegmentFromDB(
                                )
      struct Cstager_Segment_t *segm;
 {
-  struct Cdb_DbAddress_t *dbAddr;
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -703,29 +713,35 @@ static int notifySegment(
 }
 /**
  * Find the segment matching the passed filereq. This routine is only
- * called from methods used by the VidWorker and hence the tape is always
- * the currentTape. Match criteria is either that
+ * called from methods used by the VidWorker. Match criteria is either that
+ *   - the client address (if specified) must match that of the segment
  *   - the tape fseq or blockid are valid and match
  *   - the disk paths (not '\0' or '.') are valid and match
  */
-static int findSegment(
-                       filereq,
-                       segment
-                       )
-     rtcpFileRequest_t *filereq;
+int rtcpcld_findSegmentFromFile(
+                                file,
+                                tp,
+                                segment,
+                                clientAddr
+                                )
+     file_list_t *file;
+     struct Cstager_Tape_t *tp;
      struct Cstager_Segment_t **segment;
+     char *clientAddr;
 {
-  int found = 0, i, nbItems, fseq, rc;
+  int found = 0, i, nbItems, fseq;
   unsigned char *blockid;
-  char *diskPath;
+  char *diskPath, *cAddr;
   struct Cstager_Segment_t **segments = NULL, *segm;
+  rtcpFileRequest_t *filereq = NULL;
 
   if ( segment != NULL ) *segment = NULL;
 
-  if ( filereq == NULL ) {
+  if ( file == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
+  filereq = &file->filereq;
 
   if ( (filereq->tape_fseq <= 0) && 
        (memcmp(filereq->blockid,nullblkid,4) == 0) &&
@@ -735,22 +751,37 @@ static int findSegment(
     return(-1);
   }
 
-  if ( currentTape == NULL ) {
-    rc = updateTapeFromDB(NULL);
-    if ( rc == -1 ) return(-1);
-  }
-  
-  Cstager_Tape_segments(currentTape,&segments,&nbItems);
+  Cstager_Tape_segments(tp,&segments,&nbItems);
 
   for (i=0; i<nbItems; i++) {
     segm = segments[i];
-    Cstager_Segment_fseq(segm,&fseq);
-    Cstager_Segment_blockid(segm,(CONST unsigned char **)&blockid);
-    Cstager_Segment_diskPath(segm,(CONST char **)&diskPath);
+    diskPath = cAddr = NULL;
+    blockid = NULL;
+    fseq = -1;
+    Cstager_Segment_fseq(
+                         segm,
+                         &fseq
+                         );
+    Cstager_Segment_blockid(
+                            segm,
+                            (CONST unsigned char **)&blockid
+                            );
+    Cstager_Segment_diskPath(
+                             segm,
+                             (CONST char **)&diskPath
+                             );
+    if ( clientAddr != NULL ) Cstager_Segment_clientAddress(
+                                                            segm,
+                                                            (CONST char **)&cAddr
+                                                            );
     if ( blockid == NULL || diskPath == NULL ) {
       continue;
     }
-    
+
+    if ( clientAddr != NULL ) {
+      if ( (cAddr == NULL) || (strcmp(clientAddr,cAddr) != 0) ) continue;
+    }
+
     if ( (fseq > 0) ||
          (memcmp(blockid,nullblkid,4) != 0) ||
          ((*diskPath != '\0') &&
@@ -779,6 +810,128 @@ static int findSegment(
   if ( segments != NULL ) free(segments);
   if ( (found == 1) && (segment != NULL) ) *segment = segm;
   return(found);
+}
+
+static int findSegment(
+                       filereq,
+                       segment
+                       )
+     rtcpFileRequest_t *filereq;
+     struct Cstager_Segment_t **segment;
+{
+  int rc;
+  file_list_t file;
+  if ( filereq == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  file.filereq = *filereq;
+
+  if ( currentTape == NULL ) {
+    rc = updateTapeFromDB(NULL);
+    if ( rc == -1 ) return(-1);
+  }
+
+  return(rtcpcld_findSegmentFromFile(&file,currentTape,segment,NULL));
+}
+
+/**
+ * This method is only called from methods used by the VidWorker childs.
+ * Search the passed tape request for an entry matching the passed segment.
+ * Match criteria is either that
+ *   - the client address (if specified) must match that of the segment
+ *   - the tape fseq or blockid are valid and match
+ *   - the disk paths (not '\0' or '.') are valid and match
+ */
+int rtcpcld_findFileFromSegment(
+                                segment,
+                                tape,
+                                clientAddr,
+                                file
+                                )
+     struct Cstager_Segment_t *segment;
+     tape_list_t *tape;
+     char *clientAddr;
+     file_list_t **file;
+{
+  unsigned char  *blockid = NULL;
+  file_list_t *fl;
+  char *diskPath = NULL, *cAddr = NULL;
+  int found = 0, fseq = -1;
+
+  if ( segment == NULL || tape == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  if ( file != NULL ) *file = NULL;
+
+  if ( clientAddr != NULL ) {
+    Cstager_Segment_clientAddress(
+                                  segment,
+                                  (CONST char **)&cAddr
+                                  );
+    if ( (cAddr == NULL) || (strcmp(clientAddr,cAddr) != 0) ) return(0);
+  }
+  
+  Cstager_Segment_fseq(
+                       segment,
+                       &fseq
+                       );
+  Cstager_Segment_blockid(
+                          segment,
+                          (CONST unsigned char **)&blockid
+                          );
+  Cstager_Segment_diskPath(
+                           segment,
+                           (CONST char **)&diskPath
+                           );
+  if ( blockid == NULL || diskPath == NULL ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+    
+  CLIST_ITERATE_BEGIN(tape->file,fl) 
+    {
+      if ( (fseq > 0) ||
+           (memcmp(blockid,nullblkid,4) != 0) ||
+           ((*diskPath != '\0') &&
+            (strcmp(diskPath,".") != 0)) ) {
+        /*
+         * Either the tape position MUST correspond ...
+         */
+        if ( ((fseq > 0) && 
+              (fseq == fl->filereq.tape_fseq)) ||
+             ((memcmp(blockid,nullblkid,4) != 0) &&
+              (memcmp(blockid,fl->filereq.blockid,4) == 0)) ) {
+          found = 1;
+          break;
+        } else if ( (fseq <= 0) &&
+                    (memcmp(blockid,nullblkid,4) == 0) &&
+                    (strcmp(diskPath,fl->filereq.file_path) == 0) ) {
+          /*
+           * ... or, the tape position is not known and the disk file paths match
+           */
+          found = 1;
+          break;
+        }
+      }
+    }
+  CLIST_ITERATE_END(tape->file,fl);
+  if ( (found == 1) && (file != NULL) ) *file = fl;
+  return(found);
+}
+
+int findFileFromSegment(
+                        segment,
+                        tape,
+                        file
+                        )
+     struct Cstager_Segment_t *segment;
+     tape_list_t *tape;
+     file_list_t **file;
+{
+  return(rtcpcld_findFileFromSegment(segment,tape,NULL,file));
 }
 
 /**
@@ -1053,72 +1206,6 @@ int rtcpcld_getVIDsToDo(
   return(0);
 }
 
-/**
- * This method is only called from methods used by the VidWorker childs.
- * Search the passed tape request for an entry matching the passed segment.
- * This routine is only called from methods used by the VidWorker and hence the
- * tape is always the currentTape. Match criteria is either that
- *   - the tape fseq or blockid are valid and match
- *   - the disk paths (not '\0' or '.') are valid and match
- */
-static int findFileFromSegment(
-                               segment,
-                               tape,
-                               file
-                               )
-     struct Cstager_Segment_t *segment;
-     tape_list_t *tape;
-     file_list_t **file;
-{
-  unsigned char  *blockid;
-  file_list_t *fl;
-  char *diskPath;
-  int found = 0, fseq;
-
-  if ( segment == NULL || tape == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  if ( file != NULL ) *file = NULL;
-  Cstager_Segment_fseq(segment,&fseq);
-  Cstager_Segment_blockid(segment,(CONST unsigned char **)&blockid);
-  Cstager_Segment_diskPath(segment,(CONST char **)&diskPath);
-  if ( blockid == NULL || diskPath == NULL ) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-    
-  CLIST_ITERATE_BEGIN(tape->file,fl) 
-    {
-      if ( (fseq > 0) ||
-           (memcmp(blockid,nullblkid,4) != 0) ||
-           ((*diskPath != '\0') &&
-            (strcmp(diskPath,".") != 0)) ) {
-        /*
-         * Either the tape position MUST correspond ...
-         */
-        if ( ((fseq > 0) && 
-              (fseq == fl->filereq.tape_fseq)) ||
-             ((memcmp(blockid,nullblkid,4) != 0) &&
-              (memcmp(blockid,fl->filereq.blockid,4) == 0)) ) {
-          found = 1;
-          break;
-        } else if ( (fseq <= 0) &&
-                    (memcmp(blockid,nullblkid,4) == 0) &&
-                    (strcmp(diskPath,fl->filereq.file_path) == 0) ) {
-          /*
-           * ... or, the tape position is not known and the disk file paths match
-           */
-          found = 1;
-          break;
-        }
-      }
-    }
-  CLIST_ITERATE_END(tape->file,fl);
-  if ( (found == 1) && (file != NULL) ) *file = fl;
-  return(found);
-}
-
 static int validPosition(
                          segment
                          )
@@ -1215,7 +1302,7 @@ static int procReqsForVID(
   RtcpcldSegmentList_t *segmIterator = NULL;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
-  char *diskPath, *nsHost, *cksumAlg;
+  char *diskPath, *nsHost;
   unsigned char *blockid;
   struct Cns_fileid fileid;
   int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, segmUpdated;
@@ -1881,8 +1968,7 @@ int rtcpcld_setVidWorkerAddress(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tapeItem = NULL;
-  enum Cstager_TapeStatusCodes_t cmpStatus;  
-  char myHost[CA_MAXHOSTNAMELEN+1], vwAddress[CA_MAXHOSTNAMELEN+12], *p;
+  char myHost[CA_MAXHOSTNAMELEN+1], vwAddress[CA_MAXHOSTNAMELEN+12];
   int rc = 0, save_serrno;
   ID_TYPE _key = 0;
 
@@ -2251,7 +2337,7 @@ int rtcpcld_setFileStatus(
   Cuuid_t stgUuid;
   char *diskPath;
   unsigned char *blockid = NULL;
-  int rc = 0, updated = 0, save_serrno, fseq;
+  int rc = 0, save_serrno, fseq;
 
   if ( filereq == NULL || 
        *filereq->file_path == '\0' || 
