@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.11 2004/12/13 15:13:14 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.12 2004/12/13 17:14:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2004/12/13 15:13:14 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.12 $ $Date: 2004/12/13 17:14:18 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -194,7 +194,7 @@ namespace castor {
         /* Loading the subrequest from Oracle */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Loading the subrequest from Oracle");
-        ad.setId(sReq->subreqId());
+        ad.setTarget(sReq->subreqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
           castor::exception::Internal e;
@@ -379,7 +379,7 @@ namespace castor {
         /* Loading the subrequest from Oracle */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Loading the subrequest from Oracle");
-        ad.setId(mcReq->subReqId());
+        ad.setTarget(mcReq->subReqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
           castor::exception::Internal e;
