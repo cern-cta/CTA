@@ -1,5 +1,5 @@
 /*
- * $Id: stage_protocol.h,v 1.5 2002/04/30 12:17:07 jdurand Exp $
+ * $Id: stage_protocol.h,v 1.6 2002/05/06 17:16:13 jdurand Exp $
  */
 
 #ifndef __stage_protocol_h
@@ -23,14 +23,14 @@
 /* (might be better to say : not used information), only the relevant members */
 /* of the structures are transfered in the INPUT mode. */
 
-#define marshall_STAGE_PATH(magic,from,output,ptr,st) { \
-  if (magic >= STGMAGIC3) {                             \
+#define marshall_STAGE_PATH(magicfrom,magicto,from,output,ptr,st) { \
+  if (magicto >= STGMAGIC3) {                           \
     marshall_LONG(ptr,(st)->reqid);                     \
   }                                                     \
   marshall_STRING(ptr,(st)->upath);                     \
 }
-#define unmarshall_STAGE_PATH(magic,from,output,ptr,st) { \
-  if (magic >= STGMAGIC3) {                               \
+#define unmarshall_STAGE_PATH(magicfrom,magicto,from,output,ptr,st) { \
+  if (magicfrom >= STGMAGIC3) {                           \
     unmarshall_LONG(ptr,(st)->reqid);                     \
   }                                                       \
   output += unmarshall_STRINGN(ptr,(st)->upath,(CA_MAXHOSTNAMELEN+MAXPATH)+1); \
@@ -39,7 +39,7 @@
 /* Note: 'size' member is an u_signed64. Old clients were working with an int instead */
 /* The 'magic' parameter always says in which format we are going to send the structure */
 
-#define marshall_STAGE_CAT(magic,from,output,ptr,st) {   \
+#define marshall_STAGE_CAT(magicfrom,magicto,from,output,ptr,st) {   \
   marshall_LONG(ptr,(st)->reqid);                  \
   marshall_LONG(ptr,(st)->blksize);                \
   marshall_BYTE(ptr,(st)->charconv);               \
@@ -48,15 +48,23 @@
   marshall_LONG(ptr,(st)->nread);                  \
   marshall_STRING(ptr,(st)->poolname);             \
   marshall_STRING(ptr,(st)->recfm);                \
-  if (magic >= STGMAGIC4) {                        \
-    marshall_HYPER(ptr,(st)->size);                \
-  } else {                                         \
-    int size_in_MB = (int) ((st)->size / ONE_MB);  \
-    if ((u_signed64) size_in_MB * (u_signed64) ONE_MB == (st)->size) { \
-      marshall_LONG(ptr,size_in_MB);               \
+  if (magicto >= STGMAGIC4) {                      \
+    if (magicfrom < STGMAGIC4) {                   \
+		marshall_HYPER(ptr,(st)->size * ONE_MB);   \
     } else {                                       \
-      ++size_in_MB;                                \
-      marshall_LONG(ptr,size_in_MB);               \
+		marshall_HYPER(ptr,(st)->size);            \
+    }                                              \
+  } else {                                         \
+    if (magicfrom >= STGMAGIC4) {                  \
+      int size_in_MB = (int) ((st)->size / ONE_MB); \
+      if ((u_signed64) size_in_MB * (u_signed64) ONE_MB == (st)->size) { \
+        marshall_LONG(ptr,size_in_MB);             \
+      } else {                                     \
+        ++size_in_MB;                              \
+        marshall_LONG(ptr,size_in_MB);             \
+      }                                            \
+    } else {                                       \
+      marshall_LONG(ptr,(st)->size);               \
     }                                              \
   }                                                \
   if (from == STAGE_OUTPUT_MODE) {                 \
@@ -86,7 +94,7 @@
       marshall_STRING(ptr,(st)->u1.t.fseq);        \
       marshall_STRING(ptr,(st)->u1.t.lbl);         \
       marshall_LONG(ptr,(st)->u1.t.retentd);       \
-      if (magic >= STGMAGIC4) {                    \
+      if (magicto >= STGMAGIC4) {                  \
         marshall_LONG(ptr,(st)->u1.t.side);        \
       }                                            \
       marshall_STRING(ptr,(st)->u1.t.tapesrvr);    \
@@ -106,12 +114,12 @@
     break;                                         \
   case 'm':                                        \
     marshall_STRING(ptr,(st)->u1.m.xfile);         \
-    if (magic >= STGMAGIC4) {                      \
+    if (magicto >= STGMAGIC4) {                    \
       break;                                       \
     }                                              \
   case 'h':                                        \
     marshall_STRING(ptr,(st)->u1.h.xfile);         \
-    if (magic <= STGMAGIC2) {                      \
+    if (magicto <= STGMAGIC2) {                    \
       if (from == STAGE_OUTPUT_MODE) {             \
         marshall_STRING(ptr,(st)->u1.h.server);    \
         marshall_HYPER(ptr,(st)->u1.h.fileid);     \
@@ -123,7 +131,7 @@
       marshall_SHORT(ptr,(st)->u1.h.fileclass);    \
     }                                              \
     marshall_STRING(ptr,(st)->u1.h.tppool);        \
-    if (magic >= STGMAGIC3) {                      \
+    if (magicto >= STGMAGIC3) {                    \
       marshall_HYPER(ptr,(st)->u1.h.retenp_on_disk); \
       marshall_HYPER(ptr,(st)->u1.h.mintime_beforemigr); \
     }                                              \
@@ -134,7 +142,7 @@
   }                                                \
 }
 
-#define unmarshall_STAGE_CAT(magic,from,output,ptr,st) {   \
+#define unmarshall_STAGE_CAT(magicfrom,magicto,from,output,ptr,st) {   \
   unmarshall_LONG(ptr,(st)->reqid);                  \
   unmarshall_LONG(ptr,(st)->blksize);                \
   unmarshall_BYTE(ptr,(st)->charconv);               \
@@ -143,11 +151,21 @@
   unmarshall_LONG(ptr,(st)->nread);                  \
   output += unmarshall_STRINGN(ptr,(st)->poolname,CA_MAXPOOLNAMELEN+1); \
   output += unmarshall_STRINGN(ptr,(st)->recfm,CA_MAXRECFMLEN+1); \
-  if (magic >= STGMAGIC4) {                          \
-    unmarshall_HYPER(ptr,(st)->size);                \
+  if (magicfrom >= STGMAGIC4) {                      \
+    if (magicto < STGMAGIC4) {                       \
+      u_signed64 dummyvalue;                         \
+      unmarshall_HYPER(ptr,dummyvalue);              \
+      dummyvalue /= ONE_MB;                          \
+    } else {                                         \
+      unmarshall_HYPER(ptr,(st)->size);              \
+    }                                                \
   } else {                                           \
-    unmarshall_LONG(ptr,(st)->size);                 \
-    (st)->size *= ONE_MB;                            \
+    if (magicto >= STGMAGIC4) {                      \
+      unmarshall_LONG(ptr,(st)->size);               \
+      (st)->size *= ONE_MB;                          \
+    } else {                                         \
+      unmarshall_LONG(ptr,(st)->size);               \
+    }                                                \
   }                                                  \
   if (from == STAGE_OUTPUT_MODE) {                   \
     output += unmarshall_STRINGN(ptr,(st)->ipath,(CA_MAXHOSTNAMELEN+MAXPATH)+1); \
@@ -177,7 +195,7 @@
       output += unmarshall_STRINGN(ptr,(st)->u1.t.fseq,CA_MAXFSEQLEN+1); \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.lbl,CA_MAXLBLTYPLEN+1); \
       unmarshall_LONG(ptr,(st)->u1.t.retentd);       \
-      if (magic >= STGMAGIC4) {                      \
+      if (magicfrom >= STGMAGIC4) {                  \
         unmarshall_LONG(ptr,(st)->u1.t.side);        \
       }                                              \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.tapesrvr,CA_MAXHOSTNAMELEN+1); \
@@ -197,12 +215,12 @@
     break;                                           \
   case 'm':                                          \
     output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,STAGE_MAX_HSMLENGTH+1);    \
-    if (magic >= STGMAGIC4) {                        \
+    if (magicfrom >= STGMAGIC4) {                    \
       break;                                         \
     }                                                \
   case 'h':                                          \
     output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,STAGE_MAX_HSMLENGTH+1);    \
-    if (magic <= STGMAGIC2) {                        \
+    if (magicfrom <= STGMAGIC2) {                      \
       if (from == STAGE_OUTPUT_MODE) {                 \
         output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
         unmarshall_HYPER(ptr,(st)->u1.h.fileid);       \
@@ -214,7 +232,7 @@
       unmarshall_SHORT(ptr,(st)->u1.h.fileclass);    \
     }                                                \
     output += unmarshall_STRINGN(ptr,(st)->u1.h.tppool,CA_MAXPOOLNAMELEN+1); \
-    if (magic >= STGMAGIC3) {                        \
+    if (magicfrom >= STGMAGIC3) {                      \
       unmarshall_HYPER(ptr,(st)->u1.h.retenp_on_disk); \
       unmarshall_HYPER(ptr,(st)->u1.h.mintime_beforemigr); \
     }                                                \
