@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.8 2004/12/06 20:33:50 bcouturi Exp $
+ * $Id: connect.c,v 1.9 2004/12/07 11:49:55 obarring Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ static int nodeHasPort(char *node, char *host, int *port) {
     return 0;
   }
   
-  if (pos - node > 0) {
+  if (pos - nodecp > 0) {
     *pos = '\0';
     strncpy(host, nodecp,CA_MAXHOSTNAMELEN);
     host[CA_MAXHOSTNAMELEN] = '\0';
