@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.32 2000/12/18 16:00:25 jdurand Exp $
+ * $Id: stage.h,v 1.33 2000/12/21 15:20:49 jdurand Exp $
  */
 
 /*
@@ -29,7 +29,8 @@
 /* This macro returns TRUE is the host is an hpss one */
 #define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
 
-/* This macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
+/* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
+/* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
 /* This handles: STAGEOUT|CAN_BE_MIGR */
 /*               STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
 /*               STAGEPUT|CAN_BE_MIGR */
@@ -37,7 +38,8 @@
 /*               STAGEWRT|CAN_BE_MIGR|BEING_MIGR */
 /* This macro is used in particular in procqry.c to determine if we have to hardcoded a '*' instead of */
 /* allocated size */
-#define ISCASTORMIG(stcp) ((stcp->t_or_d == 'h') && ((stcp->status == (STAGEOUT|CAN_BE_MIGR)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR|BEING_MIGR)) || (stcp->status == (STAGEPUT|CAN_BE_MIGR)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR|BEING_MIGR))))
+#define ISCASTORMIG(stcp) ((stcp->t_or_d == 'h') && ((stcp->status & PUT_FAILED) != PUT_FAILED) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
+#define ISCASTORBEINGMIG(stcp) (ISCASTORMIG(stcp) && (((stcp->status & BEING_MIGR) == BEING_MIGR) || (stcp->status == (STAGEPUT|CAN_BE_MIGR))))
 #define ISHPSSMIG(stcp) ((stcp->t_or_d == 'm') && ((stcp->status == STAGEPUT) || (stcp->status == STAGEWRT)))
 
 /* This macro returns TRUE is the file is a castor one */
