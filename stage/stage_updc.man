@@ -1,0 +1,85 @@
+.\" $Id: stage_updc.man,v 1.1 2000/05/15 13:00:42 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 13:00:42 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:00:42 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_updc \- update the stager catalog
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_updc_tppos(char *" stageid ", int " status ", int " blksize ", char *" drive ", char *" fid ", int " fseq ", int " lrecl ", char *" recfm ", char *" path ");"
+.sp
+.BI "int stage_updc_filcp(char *" stageid ", int " status ", char *" ifce ", u_signed64 " size ", int " waiting_time ", int " transfer_time ", int " blksize ", char *" drive ", char *" fid ", int " fseq ", int " lrecl ", char *" recfm ", char *" path ");"
+
+.SH DESCRIPTION
+The \fBstage_updc_filcp\fP and \fBstage_updc_tppos\fP API methods calls for an update of a entry in the
+.I stager
+catalog.
+.P
+The \fBstage_updc_tppos\fP method is typically used to indicate to the stager that there has been a successful tape positionning, whereas \fBstage_updc_filcp\fB indicates to the stager that the current subrequest corresponding to global request
+.BI stageid
+is over.
+
+.SH PARAMETERS
+.TP 2.0i
+.BI "char *" stageid
+Gives the global stageid. This parameters is in the form: reqid.key@stagehost
+.TP
+.BI "int status"
+Exit code for the file stage subrequest. It is used in \fBstage_updc_tppos\fP only if its value is \fBETFSQ\fP.
+.TP
+.BI "char *" ifce
+Identifies the network interface used for the transfer between the tape server and the disk server.
+.TP
+.BI "u_signed64 " size
+Gives the actual filesize in bytes.
+.TP
+.BI "int " waiting_time
+Time spent before starting to transfer data between tape and disk server.
+.TP
+.BI "int " transfer_time
+Time spent transferring data between tape and disk server.
+.TP
+.BI "int " blksize
+Specifies the maximum block size.
+.TP
+.BI "char *" drive
+Identifies the drive where the tape is mounted.
+.TP
+.BI "char *" fid
+Specifies the fileid in HDR1.
+.TP
+.BI "int " fseq
+Specifies the file sequence number of the tape file.
+.TP
+.BI "int " lrecl
+Specifies the logical record length for fixed length record format files.
+.TP
+.BI "char *" recfm
+Specifies the record format of the data on the tape. It may be
+.BR U ,
+.B F
+or
+.BR FB .
+.TP
+.BI "char *" path
+Buffer where to receives enventual full path filename. Its recommended size is
+.B CA_MAXPATHLEN+1.
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database
+.TP
+.B EFAULT
+Bad address (invalid argument)
+.TP
+.B EINVAL
+Invalid argument (bad stageid)
