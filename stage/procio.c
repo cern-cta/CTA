@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.82 2001/02/02 23:52:15 jdurand Exp $
+ * $Id: procio.c,v 1.83 2001/02/04 22:15:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.82 $ $Date: 2001/02/02 23:52:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.83 $ $Date: 2001/02/04 22:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -338,23 +338,23 @@ void procioreq(req_type, req_data, clienthost)
 		unmarshall_LONG(rbp, nstcp_input);
 		unmarshall_LONG(rbp, nstpp_input);
 		if ((nstpp_input > 0) && ((flags & STAGE_COFF) == STAGE_COFF)) {
-			sendrep(rpfd, "STG02 - Link file structures (%d of them) is not allowed in concatenation off mode\n", nstpp_input);
+			sendrep(rpfd, MSG_ERR, "STG02 - Link file structures (%d of them) is not allowed in concatenation off mode\n", nstpp_input);
 			c = USERR;
 			goto reply;
 		}
 		if (nstcp_input <= 0) {
-			sendrep(rpfd, "STG02 - Invalid number of input structure (%d)\n", nstcp_input);
+			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d)\n", nstcp_input);
 			c = USERR;
 			goto reply;
 		}
 		if ((nstpp_input > 0) && (nstpp_input != nstcp_input)) {
-			sendrep(rpfd, "STG02 - Number of link file structures (%d) must match number of disk file structures (%d)\n",nstpp_input,nstcp_input);
+			sendrep(rpfd, MSG_ERR, "STG02 - Number of link file structures (%d) must match number of disk file structures (%d)\n",nstpp_input,nstcp_input);
 			c = USERR;
 			goto reply;
 		}
 		if ((stcp_input = (struct stgcat_entry *) calloc(nstcp_input,sizeof(struct stgcat_entry))) == NULL ||
 			(nstpp_input > 0  && (stpp_input = (struct stgpath_entry *) calloc(nstpp_input,sizeof(struct stgpath_entry))) == NULL)) {
-			sendrep(rpfd, "STG02 - memory allocation error (%s)\n", strerror(errno));
+			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
 			c = SYERR;
 			goto reply;
 		}
@@ -364,13 +364,13 @@ void procioreq(req_type, req_data, clienthost)
 			struct_status = 0;
 			unmarshall_STAGE_CAT(STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
 			if (struct_status != 0) {
-				sendrep(rpfd, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
+				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
 				c = SYERR;
 				goto reply;
 			}
 			/* Note - per construction u1.m.xfile and u1.h.xfile points to same area... */
 			if (check_hsm_type_light(stcp_input[i].u1.m.xfile,&(stcp_input[i].t_or_d)) != 0) {
-				sendrep(rpfd, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
+				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
 				c = SYERR;
 				goto reply;
 			}
@@ -405,7 +405,7 @@ void procioreq(req_type, req_data, clienthost)
 			path_status = 0;
 			unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
 			if (path_status != 0) {
-				sendrep(rpfd, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
+				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
 				c = SYERR;
 				goto reply;
 			}

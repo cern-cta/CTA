@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.46 2001/02/02 14:18:01 jdurand Exp $
+ * $Id: procqry.c,v 1.47 2001/02/04 22:15:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.46 $ $Date: 2001/02/02 14:18:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.47 $ $Date: 2001/02/04 22:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -266,7 +266,7 @@ void procqryreq(req_type, req_data, clienthost)
 	if (req_type > STAGE_00) {
       /* This is coming from the API */
 		if (nstcp_input != 1) {
-			sendrep(rpfd, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
+			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
 			c = USERR;
 			goto reply;
 		}
@@ -278,7 +278,7 @@ void procqryreq(req_type, req_data, clienthost)
 			stcp_input.reqid = -1;
 			unmarshall_STAGE_CAT(STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 			if (struct_status != 0) {
-				sendrep(rpfd, "STG02 - Bad catalog entry input\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
 				c = SYERR;
 				goto reply;
 			}
@@ -303,14 +303,14 @@ void procqryreq(req_type, req_data, clienthost)
 		}
 		if ((flags & STAGE_ALLOCED) == STAGE_ALLOCED) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
-				sendrep(rpfd, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = SYERR;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
-				sendrep(rpfd, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
 				c = SYERR;
 				goto reply;
 			}
@@ -337,14 +337,14 @@ void procqryreq(req_type, req_data, clienthost)
         }
 		if ((flags & STAGE_EXTERNAL) == STAGE_EXTERNAL) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
-				sendrep(rpfd, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = SYERR;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
-				sendrep(rpfd, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
 				c = SYERR;
 				goto reply;
 			}
@@ -387,7 +387,7 @@ void procqryreq(req_type, req_data, clienthost)
 		}
 		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 			if (t_or_d != 't') {
-				sendrep(rpfd, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
 				c = SYERR;
 				goto reply;
 			}
@@ -395,7 +395,7 @@ void procqryreq(req_type, req_data, clienthost)
         if ((t_or_d == 't') && stcp_input.u1.t.fseq[0] != '\0') {
 			if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 				if ((nbtpf = unpackfseq (Coptarg, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0) {
-					sendrep(rpfd, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
+					sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
 					c = SYERR;
 					goto reply;
 				}
