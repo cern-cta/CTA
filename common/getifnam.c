@@ -1,27 +1,10 @@
 /*
- * $Id: getifnam.c,v 1.5 1999/10/08 16:58:27 jdurand Exp $
- * $Log: getifnam.c,v $
- * Revision 1.5  1999/10/08 16:58:27  jdurand
- * *** empty log message ***
- *
- * Revision 1.4  1999-07-26 13:28:46+02  obarring
- * Add typecast to avoid warnings
- *
- * Revision 1.3  1999/07/26 10:55:57  obarring
- * Add missing closing parenthesis
- *
- * Revision 1.2  1999/07/22 16:07:04  obarring
- * Make MT safe
- *
- */
-
-/*
  * Copyright (C) 1991-1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getifnam.c,v 1.5 1999/10/08 16:58:27 jdurand Exp $";
+static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.6 $ $Date: 1999/10/14 12:05:12 $ CERN IT-PDP/SC Frederic Hemmer";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -31,6 +14,8 @@ static char cvsId[] = "$Id: getifnam.c,v 1.5 1999/10/08 16:58:27 jdurand Exp $";
 #if !defined(_WIN32)
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
+#else
+#include <winsock2.h>
 #endif
 #if defined(SOLARIS)
 #include <sys/sockio.h>
