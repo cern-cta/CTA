@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.7 2005/01/10 12:32:22 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.8 2005/01/11 11:06:58 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -325,7 +325,7 @@
 
 /* Until "Unknown" stops being transient in moab there are few */
 /* candidates for node's state. Draining or Down is one of them */
-#define NODE_TIMEOUT_STATE "Draining"
+#define NODE_TIMEOUT_STATE "Down"
 
 /* Number of seconds between jobs survey iteration */
 #define JOBS_SURVEY_INTERVAL 30
