@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/02/03 07:58:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/02/03 10:31:24 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/02/03 07:58:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/02/03 10:31:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -613,21 +613,24 @@ int rtcpcld_updateTape(
    */
   if ( tapereq->mode == WRITE_DISABLE ) return(0);
 
+  /*
+   * Make sure we don't override some important status already set
+   */
+  rc = tapeStatus(tape,&freeSpace,&flags);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
+    return(-1);
+  }
+
   /**
    * Make sure to maintain BUSY state if this is not end of request
+   *and the tape is not full
    */
   if ( endOfRequest == 0 ) {
-    flags = TAPE_BUSY;
+    if ( flags != TAPE_FULL) flags = TAPE_BUSY;
   } else {
     /*
-     * Make sure we don't override some important status already set
-     */
-    rc = tapeStatus(tape,&freeSpace,&flags);
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
-      return(-1);
-    }
-    /*
+     * End of request. This is rtcpclientd calling us after a migrator exit.
      * If tape not busy, do nothing
      */
     if ( (flags & TAPE_BUSY) == 0 ) return(0);
@@ -659,6 +662,9 @@ int rtcpcld_updateTape(
       break;
     case ETARCH:                          /* Volume in inactive library */
       flags = ARCHIVED;
+      break;
+    case ENOSPC:
+      if ( flags == TAPE_FULL ) return(0); /* Tape already flagged full */
       break;
     default:
       break;
