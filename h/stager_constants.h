@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.8 2004/11/30 09:38:11 jdurand Exp $
+ * $Id: stager_constants.h,v 1.9 2005/01/03 17:08:20 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -86,6 +86,9 @@
 
 #define STAGER_OPTION_ECHO     CONSTLL(0x00000000000001) /* --echo */
 #define STAGER_OPTION_START    CONSTLL(0x00000000000002) /* --start */
+#define STAGER_OPTION_CREATE   CONSTLL(0x00000000000004) /* --create */
+#define STAGER_OPTION_DELETE   CONSTLL(0x00000000000010) /* --delete */
+#define STAGER_OPTION_UPDATE   CONSTLL(0x00000000000020) /* --update */
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
