@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.83 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.84 $ $Date: 2001/09/03 09:59:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1708,6 +1708,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
     (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
+        (void)tellClient(client_socket,tape,NULL,-1);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
@@ -1736,6 +1737,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_ClientListen(): %s\n",
             sstrerror(serrno));
+        (void)tellClient(client_socket,tape,NULL,-1);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
@@ -1775,6 +1777,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rc = rtcpd_AllocBuffers();
     if ( rc == -1 ) {
+		tape->tapereq.err.max_tpretry--;
         (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to allocate buffers\n");
         (void)rtcpd_AppendClientMsg(tape,NULL,RT105,cmd,sstrerror(serrno));
@@ -1808,6 +1811,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             &thPoolSz,sstrerror(serrno));
         (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_InitDiskIO(): %s\n",
               sstrerror(serrno));
+        (void)tellClient(client_socket,tape,NULL,-1);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
