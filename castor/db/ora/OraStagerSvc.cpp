@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.84 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.85 $ $Release$ $Date: 2004/12/10 13:22:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -859,8 +859,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       }
       stmtString
         << ") RETURNING id, retryCounter, fileName, "
-        << "protocol, xsize, priority, status"
-        << " INTO :1, :2, :3, :4, :5 ,:6 , :7";
+        << "protocol, xsize, priority, status, modeBits, flags"
+        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
 
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
@@ -878,6 +878,10 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (6, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (9, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -899,6 +903,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     result->setStatus
       ((enum castor::stager::SubRequestStatusCodes)
        m_subRequestToDoStatement->getInt(7));
+    result->setModeBits(m_subRequestToDoStatement->getInt(8));
+    result->setFlags(m_subRequestToDoStatement->getInt(9));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
