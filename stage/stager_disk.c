@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.12 2002/10/01 07:10:02 jdurand Exp $
+ * $Id: stager_disk.c,v 1.13 2003/05/12 12:50:11 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.12 $ $Date: 2002/10/01 07:10:02 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.13 $ $Date: 2003/05/12 12:50:11 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -60,6 +60,8 @@ void stager_log_callback _PROTO((int, char *));
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
 int api_flag;                       /* Api flag, .e.g we will NOT re-arrange the file sequences in case of a tape request */
+uid_t rtcp_uid;                     /* Uid under which it is running */
+gid_t rtcp_gid;                     /* Gid under which it is running */
 u_signed64 api_flags;               /* Api flags themselves */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int silent;                         /* Tells if we are running in silent mode or not */
@@ -245,8 +247,16 @@ int main(argc,argv)
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
 #endif
+	rtcp_uid = atoi (argv[12]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_uid = %d\n", (int) rtcp_uid);
+#endif
+	rtcp_gid = atoi (argv[13]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_gid = %d\n", (int) rtcp_gid);
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[12];
+	tmpfile = argv[14];
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
@@ -502,7 +512,9 @@ int filecopy(stcp, key, hostname)
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		/* This way we will sure that it will be logged... */
+		SAVE_EID;
 		sendrep(&rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
+		RESTORE_EID;
 		return(rfio_serrno() << 8); /* We simulate the output from rfio_pclose() */
 	}
 
@@ -518,7 +530,9 @@ int filecopy(stcp, key, hostname)
 	PRE_RFIO;
 	c = rfio_pclose (rf);
 	if (c != 0) {
+		SAVE_EID;
 		sendrep(&rpfd, MSG_ERR, "STG02 - %s : error reported at %s time : status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
+		RESTORE_EID;
 	}
 	return(c); /* This is the output of rfio_pclose, e.g. status in the higher byte */
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.15 2002/12/11 08:38:28 jdurand Exp $
+ * $Id: stager_tape.c,v 1.16 2003/05/12 12:50:11 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.15 $ $Date: 2002/12/11 08:38:28 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.16 $ $Date: 2003/05/12 12:50:11 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -80,6 +80,8 @@ char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
 int api_flag;                       /* Api flag, .e.g we will NOT re-arrange the file sequences in case of a tape request */
 int api_flags;                      /* Api flags themselves */
+uid_t rtcp_uid;                     /* Forced uid */
+gid_t rtcp_gid;                     /* Forced gid */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int silent;                         /* Tells if we are running in silent mode or not */
 int use_subreqid;                   /* Tells if we allow asynchroneous callbacks from RTCOPY */
@@ -351,8 +353,16 @@ int main(argc,argv)
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
 #endif
+	rtcp_uid = atoi (argv[12]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_uid = %d\n", (int) rtcp_uid);
+#endif
+	rtcp_gid = atoi (argv[13]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_gid = %d\n", (int) rtcp_gid);
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[12];
+	tmpfile = argv[14];
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
