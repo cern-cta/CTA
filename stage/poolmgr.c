@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.167 2001/12/20 12:47:19 jdurand Exp $
+ * $Id: poolmgr.c,v 1.168 2001/12/20 12:50:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.167 $ $Date: 2001/12/20 12:47:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.168 $ $Date: 2001/12/20 12:50:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -995,6 +995,8 @@ findfs(path,found_server,found_dirpath)
       }
     }
   }
+  if (found_server != NULL) *found_server = NULL;
+  if (found_dirpath != NULL) *found_dirpath = NULL;
   return(-1);
 }
 
