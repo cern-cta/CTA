@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      StageIn.hpp
+ *                      StageOut.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENT_STAGEIN_HPP 
-#define CLIENT_STAGEIN_HPP 1
+#ifndef CLIENT_STAGEOUT_HPP 
+#define CLIENT_STAGEOUT_HPP 1
 
 // Include Files
 #include "BaseClient.hpp"
@@ -40,7 +40,7 @@ namespace castor {
 
   namespace client {
 
-    class StageIn : public BaseClient {
+    class StageOut : public BaseClient {
 
     public:
 
@@ -75,4 +75,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CLIENT_STAGEIN_HPP
+#endif // CLIENT_STAGEOUT_HPP

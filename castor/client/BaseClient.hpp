@@ -36,6 +36,7 @@
 #include <vector>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
+#include "Cgetopt.h"
 
 namespace castor {
 
@@ -77,9 +78,17 @@ namespace castor {
 
       /**
        * parses the input arguments and store them
+       * @return whether it was successful or not
        */
-      void parseInput(int argc, char** argv)
+      bool parseInput(int argc, char** argv)
         throw (castor::exception::Exception);
+      
+      /**
+       * Display an error message and
+       * show usage of the executable.
+       * Has to be reimplemented in each client.
+       */
+      virtual void usage(std::string message) throw () = 0;
 
       /**
        * builds the actual request. This method has to be
@@ -125,7 +134,7 @@ namespace castor {
 
       /// The request handler port
       int m_rhPort;
-
+      
       /// The callback socket
       castor::io::Socket* m_callbackSocket;
 
@@ -134,10 +143,11 @@ namespace castor {
 
       /// The input arguments
       std::vector<std::string> m_inputArguments;
+
     };
 
   } // end of namespace client
-
+  
 } // end of namespace castor
 
 #endif // CLIENTS_BASECLIENT_HPP

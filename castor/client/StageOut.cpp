@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      StageIn.cpp
+ *                      StageOut.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/01 15:34:51 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,22 +30,21 @@
 #include <vector>
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/File.hpp"
-#include "castor/rh/StageInRequest.hpp"
+#include "castor/rh/StageOutRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
 #include "common.h"
 #include "stage_api.h"
 
 // Local Files
-#include "StageIn.hpp"
+#include "StageOut.hpp"
 
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
-castor::rh::Request* castor::client::StageIn::buildRequest()
+castor::rh::Request* castor::client::StageOut::buildRequest()
   throw (castor::exception::Exception) {
   u_signed64 flags = 0;
-  int openflags = 0;
   {
     // RH server host. Can be passed in the -h option
     // or given through the RH_HOST environment variable
@@ -118,24 +117,15 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   }
   // -K option (parsed by BaseClient)
   if (m_inputFlags.find("K") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-K option is not valid in the stagin command."
-      << std::endl;
-    throw e;    
+    flags |= STAGE_KEEP;
   }
   // Allocation policy
   if (m_inputFlags.find("A") != m_inputFlags.end()) {
-    if (m_inputFlags["A"] == "deferred") {
-      flags |= STAGE_DEFERRED;
-    } else if (m_inputFlags["A"] != "immediate") {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Invalid argument for -A option.\n"
-        << "Should be either deferred or immediate."
-        << std::endl;
-      throw e;
-    }
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "-A option is not valid in the stagin command."
+      << std::endl;
+    throw e;    
   }
   // Size
   std::vector<u_signed64> sizes;
@@ -162,11 +152,19 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   }
   // Silent
   if (m_inputFlags.find("silent") != m_inputFlags.end()) {
-    flags |= STAGE_SILENT;
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "--silent option is not valid in the stagin command."
+      << std::endl;
+    throw e;    
   }
   // NoWait
   if (m_inputFlags.find("nowait") != m_inputFlags.end()) {
-    flags |= STAGE_NOWAIT;
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "--nowait option is not valid in the stagin command."
+      << std::endl;
+    throw e;    
   }
   // NoRetry
   if (m_inputFlags.find("noretry") != m_inputFlags.end()) {
@@ -174,13 +172,17 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   }
   // RdOnly
   if (m_inputFlags.find("rdonly") != m_inputFlags.end()) {
-    openflags |= STAGE_RDONLY;
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "--rdonly option is not valid in the stagin command."
+      << std::endl;
+    throw e;    
   }
   // Build request
-  castor::rh::StageInRequest* req =
-    new castor::rh::StageInRequest();
+  castor::rh::StageOutRequest* req =
+    new castor::rh::StageOutRequest();
   req->setFlags(flags);
-  req->setOpenflags(openflags);
+  req->setOpenmode(0);  // XXX To be fixed. Ask Jean-Damien
   int n = 0;
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
@@ -203,7 +205,7 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
 //------------------------------------------------------------------------------
 // printResult
 //------------------------------------------------------------------------------
-void castor::client::StageIn::printResult(castor::IObject& result)
+void castor::client::StageOut::printResult(castor::IObject& result)
   throw (castor::exception::Exception) {
   castor::ObjectSet set;
   result.print(std::cout, "", set);
@@ -212,10 +214,9 @@ void castor::client::StageIn::printResult(castor::IObject& result)
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::client::StageIn::usage(std::string error) throw() {
+void castor::client::StageOut::usage(std::string error) throw() {
   std::cout << error << std::endl;
-  std::cout << "usage : stagein [-A alloc_mode] [-h stage_host] "
-            << "[-p pool] [-s size] "
+  std::cout << "usage : stageout [-h stage_host] [-K] [-p pool] [-s size] "
             << "[--noretry] [--nowait] [--silent] [--rdonly]"
             << " hsmfile..." << std::endl;
 }
@@ -224,7 +225,7 @@ void castor::client::StageIn::usage(std::string error) throw() {
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char** argv) {
-  castor::client::StageIn req;
+  castor::client::StageOut req;
   req.run(argc, argv);
   return 0;
 }

@@ -37,6 +37,7 @@
 #include <sys/utsname.h>
 #include <sstream>
 #include "castor/io/Socket.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
@@ -57,7 +58,7 @@ extern "C" {
 // constructor
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient() throw() :
-  BaseObject(), m_rhPort(0), m_callbackSocket(0) {}
+  BaseObject(), m_callbackSocket(0), m_rhPort(-1) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -73,9 +74,17 @@ void castor::client::BaseClient::run(int argc, char** argv)
   throw() {
   try {
     // parses the command line
-    parseInput(argc, argv);
+    if (!parseInput(argc, argv)) {
+      return;
+    }
     // builds a request
-    castor::rh::Request* req = buildRequest();
+    castor::rh::Request* req;
+    try {
+      req = buildRequest(); 
+    } catch (castor::exception::Exception e) {
+      usage(e.getMessage().str());
+      return;
+    }
     // create a socket for the callback
     m_callbackSocket = new castor::io::Socket(0, true);
     unsigned short port;
@@ -104,22 +113,69 @@ void castor::client::BaseClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 // parseInput
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::parseInput(int argc, char** argv)
+bool castor::client::BaseClient::parseInput(int argc, char** argv)
   throw (castor::exception::Exception) {
+  int nowait_flag = 0;  /** --nowait option flag */
+  int noretry_flag = 0; /** --noretry option flag */
+  int rdonly_flag = 0;  /** --rdonly option flag */
+  int silent_flag = 0;  /** --silent option flag */
+  /**
+   * List of options supported
+   */
+  struct Coptions longopts[] = {
+    {"allocation_mode", REQUIRED_ARGUMENT,  NULL,        'A'},
+    {"host",            REQUIRED_ARGUMENT,  NULL,        'h'},
+    {"keep",            NO_ARGUMENT,        NULL,        'K'},
+    {"poolname",        REQUIRED_ARGUMENT,  NULL,        'p'},
+    {"size",            REQUIRED_ARGUMENT,  NULL,        's'},
+    {"silent",          NO_ARGUMENT,        &silent_flag,  1},
+    {"nowait",          NO_ARGUMENT,        &nowait_flag,  1},
+    {"noretry",         NO_ARGUMENT,        &noretry_flag, 1},
+    {"rdonly",          NO_ARGUMENT,        &rdonly_flag,  1},
+    {NULL,              0,                  NULL,          0}
+  };
+
   Coptind = 1;    /* Required */
   Copterr = 1;    /* Some stderr output if you want */
   Coptreset = 1;  /* In case we are parsing several times the same argv */
   int ch;
-  while ((ch = Cgetopt(argc, argv, "h:p:")) != -1) {
-    std::string opt = "-";
-    opt += (char) ch;
-    m_inputFlags[opt] = Coptarg;
+
+	while ((ch = Cgetopt_long (argc, argv, "A:h:Kp:s:", longopts, NULL)) != -1) {
+    switch (ch) {
+		case 'A':
+		case 'h':
+		case 's':
+		case 'p':
+			m_inputFlags[std::string(1, ch)] = Coptarg;
+      break;
+    case 'K':
+			m_inputFlags["K"] = "";
+      break;
+    case 0:
+			// Long option without short option correspondance
+      // they will be handled at the end
+      break;
+    default:
+      std::string s("Unknown option : -");
+      s += ch;
+      usage(s);
+      // Unsuccessful completion
+      return false;
+    }
   }
   argc -= Coptind;
   argv += Coptind;
+  // Handling of long opts with no corresponding short option
+  if (nowait_flag)  m_inputFlags["nowait"] = "";
+  if (noretry_flag) m_inputFlags["noretry"] = "";
+  if (rdonly_flag)  m_inputFlags["rdonly"] = "";
+  if (silent_flag)  m_inputFlags["silent"] = "";
+  // Dealing with arguments
   for (int i = 0; i < argc; i++) {
     m_inputArguments.push_back(argv[i]);
   }
+  // Successful completion
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -149,7 +205,7 @@ castor::IClient* castor::client::BaseClient::createClient()
 void castor::client::BaseClient::sendRequest(castor::rh::Request& request)
   throw (castor::exception::Exception) {
   // creates a socket
-  castor::io::Socket s(m_rhPort, m_rhHost);
+  castor::io::Socket s(RHSERVER_PORT, m_rhHost);
   // sends the request
   s.sendObject(request);
   // wait for acknowledgment
@@ -213,5 +269,3 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
   return obj;
 
 }
-
-

@@ -87,6 +87,11 @@ namespace castor {
    * Magic numbers
    */
 #define SEND_REQUEST_MAGIC 0x1e10131
+
+  /**
+   * RH server port
+   */
+#define RHSERVER_PORT 9002
     
 #ifdef __cplusplus
 } // end of namespace castor

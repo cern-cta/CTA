@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2004/05/28 09:40:26 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/01 15:34:50 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -161,11 +161,16 @@ STGLIB_SRCS = IAddressCInt.cpp \
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
 STAGEIN_SRCS = client/StageIn.cpp
-STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
+STAGEOUT_SRCS = client/StageOut.cpp
 MTTEST_SRCS = client/Mttest.cpp
+CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(MTTEST_SRCS)
+STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
+STAGEOUT_OBJS = $(STAGEOUT_SRCS:.cpp=.Osuf)
 MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
+CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
 
 PROGS_C = ProgramTargetName(stagein) \
+          ProgramTargetName(stageout) \
           ProgramTargetName(mttest)
 
 COMMONLIB = LibraryTargetName(castorClient) SharedLibraryTargetName(castorClient)
@@ -178,8 +183,9 @@ all: $(COMMONLIB) $(PROGS_C)
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
-NormalProgramTarget(stagein, $(STAGEIN_OBJS),$(GLOBLIB),-lcastorClient -lpthread)
-NormalProgramTarget(mttest, $(MTTEST_OBJS),$(GLOBLIB),-lcastorClient -lpthread)
+NormalProgramTarget(stagein,  $(STAGEIN_OBJS), $(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(stageout, $(STAGEOUT_OBJS),$(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(mttest,   $(MTTEST_OBJS),  $(GLOBLIB),-lcastorClient -lpthread)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
@@ -210,7 +216,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend $(INCLUDES) $(STGLIB_SRCS) $(STAGEIN_SRCS) $(MTTEST_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(STGLIB_SRCS) $(CLIENTS_SRCS) 2> /dev/null
 	for i in $(DEPENDDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -226,7 +232,7 @@ depend:
 
 clean::
 	@echo cleaning in CurDir
-	-@RemoveFiles($(STGLIB_OBJS) $(STAGEIN_OBJ) $(MTTEST_OBJ))
+	-@RemoveFiles($(STGLIB_OBJS) $(CLIENTS_OBJ))
 
 clobber::	clean
 	@echo clobbering in CurDir
