@@ -1,9 +1,9 @@
 /*
- * $Id: marshall.h,v 1.8 2000/03/31 08:59:12 baud Exp $
+ * $Id: marshall.h,v 1.9 2000/05/09 16:16:50 jdurand Exp $
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.8 $ $Date: 2000/03/31 08:59:12 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.9 $ $Date: 2000/05/09 16:16:50 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -187,4 +187,20 @@ typedef  char*          bitvct; /* bit vector type definition           */
 #define unmarshall_OPAQUE(ptr,raw,n)	{ (void) memcpy((raw),(ptr),(n)); \
 					  INC_PTR(ptr,(n)); \
 					}
+
+/*
+ *    T I M E
+ */
+
+#define  marshall_TIME_T(ptr,n)       {  \
+					   TIME_T _marshall_time_dummy = (TIME_T) n; \
+					   marshall_HYPER(ptr,_marshall_time_dummy); \
+					}
+
+#define  unmarshall_TIME_T(ptr,n)     { \
+					   TIME_T _unmarshall_time_dummy; \
+					   unmarshall_HYPER(ptr,_unmarshall_time_dummy); \
+					   n = (time_t) _unmarshall_time_dummy; \
+					}
+
 #endif /* _MARSHALL_H_INCLUDED_ */

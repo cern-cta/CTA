@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.11 2000/03/03 11:31:30 baud Exp $
+ * $Id: osdep.h,v 1.12 2000/05/09 16:16:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.11 $ $Date: 2000/03/03 11:31:30 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.12 $ $Date: 2000/05/09 16:16:53 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -25,6 +25,7 @@
 #define LONGSIZE        4
 #define QUADSIZE        8
 #define HYPERSIZE       8
+#define TIME_TSIZE      HYPERSIZE
 
 typedef unsigned char   U_BYTE;
 /* typedef unsigned short  U_WORD; */
@@ -62,6 +63,7 @@ typedef int mode_t;
 
 typedef signed64 HYPER;
 typedef u_signed64 U_HYPER;
+typedef U_HYPER TIME_T;
 
 #define ONE_KB 0x400
 #define ONE_MB 0x100000
