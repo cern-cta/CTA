@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_errmsg.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 13:30:13 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_errmsg.c,v $ $Revision: 1.3 $ $Date: 2004/07/08 08:39:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -36,7 +36,7 @@ dlf_errmsg(const char *args, ...)
 {
   va_list ap;
   char *msg;
-  char prtbuf[PRTBUFSZ];
+  char prtbuf[DLF_PRTBUFSZ];
   int save_errno;
   struct dlf_api_thread_info *thip;
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:09:18 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:39:53 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -120,7 +120,7 @@ int* reply_type;
         int n;
         char* p;
 	char func[15];
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[DLF_PRTBUFSZ];
 
 	strcpy (func, "getrep");
 

@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf.h,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:35:23 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf.h,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:41:37 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLF_H
@@ -21,7 +21,7 @@
 #define	RETRYI	60
 #define LISTBUFSZ 3960
 #define LOGBUFSZ 1024
-#define PRTBUFSZ  180
+#define DLF_PRTBUFSZ  180
 #define DLF_REPBUFSZ 16380	/* must be >= max DLF reply size */
 #define DLF_REQBUFSZ 10240	/* must be >= max DLF request size */
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:09:40 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:39:53 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,7 +29,7 @@ int sendrep(int rpfd, int rep_type, ...)
 	char *msg;
 	int n;
 	char *p;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[DLF_PRTBUFSZ];
 	char *q;
 	char *rbp;
 	int rc;
