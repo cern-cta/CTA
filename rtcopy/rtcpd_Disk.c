@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.59 $ $Date: 2000/03/20 19:43:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.60 $ $Date: 2000/03/24 15:37:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1422,9 +1422,10 @@ void *diskIOthread(void *arg) {
         p = strchr(u64buf,' ');
         if ( p != NULL ) p = '\0';
         if ( nbbytes > 0 ) 
-        rtcp_log(LOG_INFO,
-                 "network interface for data transfer (%s bytes) is %s\n",
-                 u64buf,filereq->ifce);
+            rtcp_log(LOG_INFO,
+                     "network interface for data transfer (%s bytes) is %s\n",
+                     u64buf,filereq->ifce);
+
         fl = NULL;
         if ( (filereq->convert & FIXVAR) != 0 ) {
             /*

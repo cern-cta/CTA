@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.44 $ $Date: 2000/03/20 19:43:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.45 $ $Date: 2000/03/24 15:37:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -883,6 +883,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                 filereq = &(nextfile->filereq);
                 strcpy(ifce,filereq->ifce);
                 if ( filereq->proc_status == RTCP_FINISHED ||
+                     filereq->proc_status == RTCP_PARTIALLY_FINISHED ||
                      filereq->proc_status == RTCP_EOV_HIT ) {
                     /*
                      * Transfer time of tape file.
