@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:48:36 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 08:34:19 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:48:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 08:34:19 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -479,10 +479,12 @@ int rtcpcld_gettape(
   return(0);
 }
 
-int rtcpcld_tapeOK(
-                   tape
-                   )
+int tapeStatus(
+               tape,
+               status
+               )
      tape_list_t *tape;
+     int *status;
 {
   int rc, save_serrno, nbRetries = 0;
   int retryTime = RTCPCLD_GETTAPE_RETRY_TIME;
@@ -504,6 +506,7 @@ int rtcpcld_tapeOK(
     rc = vmgr_querytape(tapereq->vid,tapereq->side,&vmgrTapeInfo,tapereq->dgn);
     save_serrno = serrno;
     statusStr = rtcpcld_tapeStatusStr(vmgrTapeInfo.status);
+    if ( status != NULL ) *status = vmgrTapeInfo.status;
     if ( rc == 0 ) {
       if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
            ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
@@ -567,6 +570,14 @@ int rtcpcld_tapeOK(
   return(0);
 }
 
+int rtcpcld_tapeOK(
+                   tape
+                   )
+     tape_list_t *tape;
+{
+  return(tapeStatus(tape,NULL));
+}
+
 int rtcpcld_updateTape(
                        tape,
                        filereq,
@@ -606,12 +617,20 @@ int rtcpcld_updateTape(
     /*
      * Make sure we don't override some important status already set
      */
-    rc = rtcpcld_tapeOK(tape);
+    rc = tapeStatus(tape,&flags);
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
       return(-1);
     }
-    flags = 0;
+    /*
+     * If tape not busy, do nothing
+     */
+    if ( (flags & TAPE_BUSY) == 0 ) return(0);
+    /*
+     * We're finished with this tape (since endOfRequest != 0).
+     * Always reset the BUSY flag.
+     */
+    flags = flags & ~TAPE_BUSY;
     if ( rtcpc_serrno > 0 ) {
       /*
        * Request finished. rtcpc_serrno should only be set if there was an error
