@@ -446,6 +446,7 @@ int rtcpd_Mount(tape_list_t *tape) {
             case SENOSHOST:
             case ETDNP:
             case ETIDN:
+            case ETBADMIR:
                 severity = RTCP_FAILED | RTCP_SYERR;
                 break;
             case EINVAL: /* Wrong parameter...*/
