@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.49 2002/05/30 12:31:11 jdurand Exp $
+ * $Id: stagein.c,v 1.50 2002/08/27 08:02:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.49 $ $Date: 2002/05/30 12:31:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.50 $ $Date: 2002/08/27 08:02:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -906,7 +906,7 @@ static int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
 	char tmrepbuf[132];
 	static char tmsden[6] = "     ";
 	static char tmsdgn[7] = "      ";
-	static char tmslbl[3] = "  ";
+	static char tmslbl[4] = "   ";
 	char tmsreq[80];
 	static char tmsvsn[7] = "      ";
 	
@@ -973,8 +973,10 @@ static int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
 		strcpy (den, tmsden);
 	}
 	
+	/* Indexes 74..76 contains the label type (padded with a blank if necessary at index 76) */
 	tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
 	tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
+	tmslbl[2] = (tmrepbuf[76] == ' ') ? '\0' : tmrepbuf[76] - 'A' + 'a';
 	if (*lbl) {
 		if (strcmp (lbl, "blp") && strcmp (lbl, tmslbl)) {
 			fprintf (stderr, STG15, lbl, tmslbl);

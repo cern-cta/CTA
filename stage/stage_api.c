@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.52 2002/07/22 09:31:11 jdurand Exp $
+ * $Id: stage_api.c,v 1.53 2002/08/27 08:02:40 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.52 $ $Date: 2002/07/22 09:31:11 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.53 $ $Date: 2002/08/27 08:02:40 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -777,7 +777,7 @@ static int stage_api_tmscheck(vid, vsn, dgn, den, lbl)
   char tmrepbuf[132];
   static char tmsden[6] = "     ";
   static char tmsdgn[7] = "      ";
-  static char tmslbl[3] = "  ";
+  static char tmslbl[4] = "   ";
   char tmsreq[80];
   static char tmsvsn[7] = "      ";
   char *func = "tmscheck";
@@ -844,9 +844,11 @@ static int stage_api_tmscheck(vid, vsn, dgn, den, lbl)
   } else {
     strcpy (den, tmsden);
   }
-	
+
+  /* Indexes 74..76 contains the label type (padded with a blank if necessary at index 76) */
   tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
   tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
+  tmslbl[2] = (tmrepbuf[76] == ' ') ? '\0' : tmrepbuf[76] - 'A' + 'a';
   if (*lbl) {
     if (strcmp (lbl, "blp") && strcmp (lbl, tmslbl)) {
       stage_errmsg(func, STG15, lbl, tmslbl);
