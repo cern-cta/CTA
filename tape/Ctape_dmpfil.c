@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.10 $ $Date: 2000/10/31 15:57:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.11 $ $Date: 2000/12/20 08:53:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -451,9 +451,10 @@ u_signed64 *Size;
 			if (lcode == 0 || qlab < 0) return (0);
 		} else {
 			errcat = 0;
-			if (errno == ENOMEM)
+			if (errno == ENOMEM) {
 				msgaddr = "Large block";
-			else if (errno == EIO)
+				errcat = ENOMEM;
+			} else if (errno == EIO)
 				errcat = gettperror (infd, path, &msgaddr);
 			else
 #if sgi || (__alpha && __osf__)
@@ -487,7 +488,7 @@ u_signed64 *Size;
 			dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
 		}
 		dmp_usrmsg (MSG_OUT, " DUMP - DUMP ABORTED\n");
-		serrno = errcat;
+		serrno = (errcat > 0) ? errcat : EIO;
 		close (infd);
 		return (-1);
 	}
