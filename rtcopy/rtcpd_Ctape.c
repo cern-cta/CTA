@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.47 $ $Date: 2000/09/25 10:09:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.48 $ $Date: 2000/09/27 15:33:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -599,7 +599,8 @@ int rtcpd_Position(tape_list_t *tape,
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                     rc = 0;
                     break;
-                } else if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 ) {
+                } else if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 &&
+                            file != tape->file ) {
                     /*
                      * The client asked to read until EOD and
                      * specified more disk files than there was 
