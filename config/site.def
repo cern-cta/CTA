@@ -169,9 +169,6 @@
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
-#define ClipsDir /usr/local/sbin/clips
-#define ClipsBin /usr/local/bin/clips
-
 #define BuildCommands		YES
 #define BuildCommon		YES
 #define BuildCopytapeClient	NO
@@ -216,15 +213,15 @@
 #define BuildVolumeMgrDaemon	NO
 #define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
-#define BuildExpertClient	NO
-#define BuildExpertDaemon	NO
+#define BuildExpertClient	YES
+#define BuildExpertDaemon	YES
 
 #define BuildClientCpp          YES
 #define BuildDstageCpp          YES
-#define BuildRHCpp              NO
-#define BuildOraCpp             NO
-#define BuildCppTest	        NO
-#define BuildProtoCppStager     NO
+#define BuildRHCpp              YES
+#define BuildOraCpp             YES
+#define BuildCppTest	        YES
+#define BuildProtoCppStager     YES
 
 #define Accounting		YES
 #define ClientLogging           NO
@@ -244,7 +241,7 @@
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
-#define UseClips		YES
+#define UseExpert		YES
 #define UseMaui			YES
 
 /* 
