@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.6 $ $Date: 2000/03/27 09:14:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.7 $ $Date: 2000/05/04 14:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #ifdef _WIN32
 #include <stdarg.h>         /* _WIN32's UNIX compatibility */
 #endif
@@ -17,7 +18,6 @@ static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.6 $ $Date:
 #include <stdlib.h>
 #include "serrno.h"
 #include "stage.h"
-#include "Cthread_api.h"
 #include "Cglobals.h"
 
 static int errbufp_key = 0;
