@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.152 2001/09/22 07:49:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.153 2001/09/22 07:57:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.152 $ $Date: 2001/09/22 07:49:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.153 $ $Date: 2001/09/22 07:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2004,7 +2004,13 @@ int get_retenp(stcp,timestr)
       }
       /* If no explicit value for retention period we take the default */
       if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) this_retenp = retenp_on_disk(ifileclass);
-      switch (this_retenp) {
+#ifdef hpux
+      /* hpux10 complaints: 'cc: "poolmgr.c", line 2007: error 1654: Expression type is too large for switch expression.' */
+      switch ((time_t) this_retenp)
+#else
+      switch (this_retenp)
+#endif
+        {
       case AS_LONG_AS_POSSIBLE:
         strcpy(timestr,"AS_LONG_AS_POSSIBLE");
         break;
