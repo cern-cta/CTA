@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.8 $ $Date: 2005/01/19 17:58:52 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.9 $ $Date: 2005/01/19 18:04:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -20,32 +20,32 @@
 #ifndef _WIN32
 #if HasNroff
 #define IMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	cat name.man | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $$1 \"$${2}castor\"/g' | nroff -man > ManPageTargetName(name,dir,suffix)
 #else
 #define IMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	cat name.cat | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $$1 \"$${2}castor\"/g' > ManPageTargetName(name,dir,suffix)
 #endif
 #else
 #if HasNroff
 #define IMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	nroff -man name.man > ManPageTargetName(name,dir,suffix)
 #else
 #define IMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	cp name.cat ManPageTargetName(name,dir,suffix)
 #endif
 #endif
 
 #ifndef _WIN32
 #define EMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	cat name.man | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $$1 \"$${2}castor\"/g' > ManPageTargetName(name,dir,suffix)
 #else
 #define EMANPAGE(name,dir,suffix) \
-ManPageTargetName(name,dir,suffix):	name.man	@@\
+dir/name.suffix:	name.man	@@\
 	cp name.man ManPageTargetName(name,dir,suffix)
 #endif
 
