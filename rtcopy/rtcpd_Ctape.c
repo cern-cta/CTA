@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.24 $ $Date: 2000/03/20 13:09:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.25 $ $Date: 2000/03/28 10:31:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -68,9 +68,15 @@ int rtcpd_CtapeInit() {
 char *rtcpd_CtapeErrMsg() {
     char *errbuf;
     int errbufsiz = CA_MAXLINELEN+1;
+    int save_serrno;
 
+    save_serrno = serrno > 0 ? serrno : errno;
     Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
     if ( errbuf == NULL ) return(Unkn_errorstr);
+    if ( *errbuf == '\0' ) {
+        if ( save_serrno > 0 ) return(sstrerror(save_serrno));
+        else return(Unkn_errorstr);
+    }
     return(errbuf);
 }
 
