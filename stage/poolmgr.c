@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.97 2001/03/03 06:56:24 jdurand Exp $
+ * $Id: poolmgr.c,v 1.98 2001/03/03 07:45:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.97 $ $Date: 2001/03/03 06:56:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.98 $ $Date: 2001/03/03 07:45:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3716,6 +3716,7 @@ void bestnextpool_out(nextout,mode)
     /* Sort them */
     qsort((void *) best_elements, nbest_elements, sizeof(struct pool_element_ext), &pool_elements_cmp);
 
+#ifdef STAGER_DEBUG
     for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
       stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
                j,
@@ -3729,8 +3730,9 @@ void bestnextpool_out(nextout,mode)
                u64tostru(this_best_element->free, tmpbuf, 0)
                );
     }
+#endif
   } else {
-
+#ifdef STAGER_DEBUG
     stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
@@ -3741,6 +3743,7 @@ void bestnextpool_out(nextout,mode)
              this_best_element->poolmigrating,
              u64tostru(this_best_element->free, tmpbuf, 0)
              );
+#endif
   }
 
  bestnextpool_out_getit:
@@ -3927,6 +3930,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
   jfound = -1;
   for (j = 0; j < pool_p->nbelem; j++) {
     if (reqsize <= 0) {
+#ifdef STAGER_DEBUG
       stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
                j,
                elements[j].server,
@@ -3938,9 +3942,11 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                elements[j].poolmigrating,
                u64tostru(elements[j].free, tmpbuf, 0)
                );
+#endif
       if (jfound < 0) jfound = j;
     } else {
       if (elements[j].free < reqsize) {
+#ifdef STAGER_DEBUG
         stglogit(func, "[reqsize=%s => rejected] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
                  u64tostru(reqsize, tmpbufreqsize, 0),
                  j,
@@ -3953,7 +3959,9 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                  elements[j].poolmigrating,
                  u64tostru(elements[j].free, tmpbuf, 0)
                  );
+#endif
       } else {
+#ifdef STAGER_DEBUG
         stglogit(func, "[reqsize=%s => accepted] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
                  u64tostru(reqsize, tmpbufreqsize, 0),
                  j,
@@ -3966,6 +3974,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                  elements[j].poolmigrating,
                  u64tostru(elements[j].free, tmpbuf, 0)
                  );
+#endif
         if (jfound < 0) jfound = j;
       }
     }
