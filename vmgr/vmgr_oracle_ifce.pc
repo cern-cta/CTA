@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.27 $ $Date: 2003/10/29 08:32:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.28 $ $Date: 2003/10/30 08:00:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -618,7 +618,7 @@ struct vmgr_tape_tag *tag_entry;
 int lock;
 vmgr_dbrec_addr *rec_addr;
 {
-	char func[19];
+	char func[20];
 	char rowid_value[20];
 	struct sqlca sqlca;
 	EXEC SQL DECLARE tag_cursor CURSOR FOR
