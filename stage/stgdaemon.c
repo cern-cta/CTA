@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.167 2002/01/30 10:25:09 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.168 2002/02/05 16:11:53 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.167 $ $Date: 2002/01/30 10:25:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.168 $ $Date: 2002/02/05 16:11:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -266,6 +266,7 @@ extern char *findpoolname _PROTO((char *));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
 #else
@@ -1379,6 +1380,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
 	wqp->last_rwcounterfs_vs_R = 0;
+	wqp->flags = (u_signed64) 0;
 	if (wqp->use_subreqid != 0) {
 		if ((wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int))) == NULL) {
 			sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
@@ -2970,7 +2972,8 @@ int fork_exec_stager(wqp)
 {
 	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2], t_or_d;
 	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
-	char arg_api_flag[2];
+	char arg_api_flag[2];      /* Flag telling if this is an API call or not */
+	char arg_api_flags[21];    /* Flag giving the API flags themselves */
 	int c, i, sav_ovl_pid;
 	static int pfd[2];
 	int pid;
@@ -3092,9 +3095,9 @@ int fork_exec_stager(wqp)
 		}
 		sprintf (arg_use_subreqid, "%d", wqp->use_subreqid);
 		sprintf (arg_api_flag, "%d", wqp->api_out);
-
+		u64tostr(wqp->flags, arg_api_flags, 0);
 #ifdef __INSURE__
-		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, tmpfile=%s, pid=%d\n",
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s, tmpfile=%s, pid=%d\n",
 							progname,
 							arg_reqid,
 							arg_key,
@@ -3106,6 +3109,7 @@ int fork_exec_stager(wqp)
 							arg_silent,
 							arg_use_subreqid,
 							arg_api_flag,
+							stglogflags(NULL,NULL,(u_signed64) wqp->flags),
 							tmpfile,
 							(int) getpid());
 		execl (progfullpath, progname,
@@ -3118,10 +3122,11 @@ int fork_exec_stager(wqp)
 							arg_silent,
 							arg_use_subreqid,
 							arg_api_flag,
+							arg_api_flags,
 							tmpfile,
 							NULL);
 #else
-		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, pid=%d\n",
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s, pid=%d\n",
 							progname,
 							arg_reqid,
 							arg_key,
@@ -3133,6 +3138,7 @@ int fork_exec_stager(wqp)
 							arg_silent,
 							arg_use_subreqid,
 							arg_api_flag,
+							stglogflags(NULL,NULL,(u_signed64) wqp->flags),
 							(int) getpid());
 		execl (progfullpath, progname,
 							arg_reqid,
@@ -3145,6 +3151,7 @@ int fork_exec_stager(wqp)
 							arg_silent,
 							arg_use_subreqid,
 							arg_api_flag,
+							arg_api_flags,
 							NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
