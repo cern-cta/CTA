@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.7 2002/01/15 08:28:03 jdurand Exp $
+ * $Id: stage_messages.h,v 1.8 2002/01/21 08:43:07 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -148,5 +148,9 @@
 #define STG166  "STG166 - %s : not found within current pool definition\n"
 #define STG167  "STG167 - %s : loop detected in filesystem selection\n"
 #define STG168  "STG168 - %s : fileclass %s@%s (classid %d) specifies a %s filesize of %dM, yours is %s bytes (%s) - this file will not be migrated\n"
+#define STG169  "STG169 - %s : refered by two physical files (%s and %s)\n"
+#define STG170  "STG170 - %s : Ok for reqid=%d but reqid=%d should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED status\n"
+#define STG171  "STG171 - %s : size in name server (%s) != size on disk (%s)\n"
+#define	STG172	"STG172 - Duplicate HSM file %s skipped because same invariants (fileid=%s@%s)\n"
 
 #endif /* __stage_messages_h */
