@@ -39,7 +39,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_DBSVC,
     RTCPCLD_MSG_WRONG_TAPE,
     RTCPCLD_MSG_FILEREQ,
-    RTCPCLD_MSG_RESERVED22,
+    RTCPCLD_MSG_SEGMFAILED,
     RTCPCLD_MSG_RESERVED23,
     RTCPCLD_MSG_RESERVED24,
     RTCPCLD_MSG_RESERVED25
@@ -75,7 +75,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_DBSVC, DLF_LVL_ERROR, "Database service error"},
     { RTCPCLD_MSG_WRONG_TAPE, DLF_LVL_ALERT, "Retrieved inconsistent tape request"},
     { RTCPCLD_MSG_FILEREQ, DLF_LVL_SYSTEM, "New file request"},
-    { RTCPCLD_MSG_RESERVED22, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_SEGMFAILED, DLF_LVL_ERROR, "Attempt to update segment with SEGMENT_FAILED status "},
     { RTCPCLD_MSG_RESERVED23, DLF_LVL_DEBUG, ""},
     { RTCPCLD_MSG_RESERVED24, DLF_LVL_DEBUG, ""},
     { RTCPCLD_MSG_RESERVED25, DLF_LVL_DEBUG, ""}
