@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.6 $ $Date: 2001/02/28 08:20:39 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.7 $ $Date: 2001/02/28 10:15:40 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -490,6 +490,7 @@ main (argc, argv)
 	if (vflag)
       fprintf (stderr, "\nopening file : %s\n", acctfile);
       first_rec = 1;
+      swapped = 0;
 	if ((fd_acct = rfio_open (acctfile, O_RDONLY)) < 0) 
       {
         strcpy(serv_list->failure_msg, rfio_serror());
