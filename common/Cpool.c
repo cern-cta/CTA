@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.36 $ $Date: 2004/03/18 10:12:38 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.37 $ $Date: 2004/03/18 10:16:01 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -2015,26 +2015,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					}
 #endif
 					if (current->state[i] == 0) {
-						/* We take care of any previous call to Cpool_next_index */
-						if (current->forceid != -1) {
-							if (i != current->forceid) {
-#ifdef CPOOL_DEBUG
-								if (Cpool_debug != 0) {
-									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d, but expected %d instead\n",
-										_Cpool_self(),_Cthread_self(),i,current->forceid);
-								}
-#endif
-#ifdef CPOOL_DEBUG
-								if (Cpool_debug != 0) {
-									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
-										_Cpool_self(),_Cthread_self(), i);
-								}
-#endif
-		  
-								Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
-								continue;
-							}
-						}
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
 							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d\n",
