@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/18 15:53:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 16:16:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/18 15:53:09 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 16:16:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1583,35 +1583,34 @@ int rtcpcld_updateVIDFileStatus(
       rc = findFileFromSegment(segmItem,tape,&fl);
       if ( (rc != 1) || (fl == NULL) ) {
         rtcp_log(LOG_DEBUG,"rtcpcld_updateVIDFileStatus(): unexpected failure to find segment\n");
-        continue;
-      }
-      
-      filereq = &(fl->filereq);
-      if ( toStatus == SEGMENT_FILECOPIED ) {
-        Cstager_Segment_setBlockid(segmItem,
-                                   filereq->blockid);
-        Cstager_Segment_setBytes_in(segmItem,
-                                    filereq->bytes_in);
-        Cstager_Segment_setBytes_out(segmItem,
-                                     filereq->bytes_out);
-        Cstager_Segment_setHost_bytes(segmItem,
-                                      filereq->host_bytes);
-        Cstager_Segment_setSegmCksumAlgorithm(segmItem,
-                                              filereq->castorSegAttr.segmCksumAlgorithm);
-        Cstager_Segment_setSegmCksum(segmItem,
-                                     filereq->castorSegAttr.segmCksum);
-      }
-      if ( toStatus == SEGMENT_FAILED ) {
-        if ( (filereq->cprc != 0) ||
-             (filereq->err.errorcode > 0) ||
-             (filereq->err.severity != RTCP_OK) ||
-             (*filereq->err.errmsgtxt != '\0') ) {
-          Cstager_Segment_setErrorCode(segmItem,
-                                       filereq->err.errorcode);
-          Cstager_Segment_setErrMsgTxt(segmItem,
-                                       filereq->err.errmsgtxt);
-          Cstager_Segment_setSeverity(segmItem,
-                                      filereq->err.severity);
+      } else {
+        filereq = &(fl->filereq);
+        if ( toStatus == SEGMENT_FILECOPIED ) {
+          Cstager_Segment_setBlockid(segmItem,
+                                     filereq->blockid);
+          Cstager_Segment_setBytes_in(segmItem,
+                                      filereq->bytes_in);
+          Cstager_Segment_setBytes_out(segmItem,
+                                       filereq->bytes_out);
+          Cstager_Segment_setHost_bytes(segmItem,
+                                        filereq->host_bytes);
+          Cstager_Segment_setSegmCksumAlgorithm(segmItem,
+                                                filereq->castorSegAttr.segmCksumAlgorithm);
+          Cstager_Segment_setSegmCksum(segmItem,
+                                       filereq->castorSegAttr.segmCksum);
+        }
+        if ( toStatus == SEGMENT_FAILED ) {
+          if ( (filereq->cprc != 0) ||
+               (filereq->err.errorcode > 0) ||
+               (filereq->err.severity != RTCP_OK) ||
+               (*filereq->err.errmsgtxt != '\0') ) {
+            Cstager_Segment_setErrorCode(segmItem,
+                                         filereq->err.errorcode);
+            Cstager_Segment_setErrMsgTxt(segmItem,
+                                         filereq->err.errmsgtxt);
+            Cstager_Segment_setSeverity(segmItem,
+                                        filereq->err.severity);
+          }
         }
       }
       updated = 1;

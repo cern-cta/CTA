@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/18 08:46:33 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/18 16:16:39 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/18 08:46:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/18 16:16:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -386,7 +386,8 @@ int rtcpcld_Callback(
      * is changed to RTCP_FINISHED when there is nothing more
      * to do.
      */
-    if ( getMoreWork == 0 && filereq->proc_status == RTCP_FINISHED ) {
+    if ( getMoreWork == 0 && (filereq->cprc == -1 || 
+                              filereq->proc_status == RTCP_FINISHED) ) {
       if ( filereq->cprc == 0 ) status = SEGMENT_FILECOPIED;
       else status = SEGMENT_FAILED;
       rc = rtcpcld_setFileStatus(
