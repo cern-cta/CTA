@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Release$ $Date: 2004/07/29 17:00:21 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/19 12:55:12 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -213,7 +213,7 @@ PROGS_C = $(patsubst %,ProgramTargetName(%),$(PROGS_S))
 
 COMMONLIB = LibraryTargetName(castorClient)
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
-LDFLAGS = $(MTLDFLAGS)
+LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
 all: $(COMMONLIB) $(PROGS_C)
