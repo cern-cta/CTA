@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.11 $ $Date: 2004/03/08 17:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.12 $ $Date: 2004/04/01 12:02:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -350,7 +350,7 @@ char *pool_name;
 	printf ("%s Vid %s: %d segments to repack\n", timestamp(), vid, nbsegs);
 	fflush (stdout);
 
-	if ((stcp_input = calloc ((nbsegs <= 1000) ? nbsegs : 1000,
+	if ((stcp_input = calloc ((nbsegs <= stage_util_max_stcp_per_request()) ? nbsegs : stage_util_max_stcp_per_request(),
 	    sizeof(struct stgcat_entry))) == NULL) {
 		fprintf (stderr, "repack error: %s\n", strerror(ENOMEM));
 		return (USERR);
@@ -365,15 +365,17 @@ char *pool_name;
 		strcpy (stcp->u1.t.vid[0], vid);
 		j++;
 		stcp++;
-		if (j == 1000 || i + 1 == nbsegs) {
-			printf ("%s Stageing in %s set of segments from %s\n",
-			    timestamp(), i <= 1000 ? "first" : (i + 1 == nbsegs) ?
-			    "last" : "next", vid);
+		if (j == stage_util_max_stcp_per_request() || i + 1 == nbsegs) {
+			printf ("%s Stageing in %s set of segments from %s (%d file sequence%s)\n",
+			    timestamp(), i <= stage_util_max_stcp_per_request() ? "first" : (i + 1 == nbsegs) ?
+			    "last" : "next", vid, j, (j > 1) ? "s" : "");
 			fflush (stdout);
 			stage_kill_needed = 1;
 			if (stage_in_tape ((u_signed64) STAGE_DEFERRED,
 			    O_RDONLY, NULL, NULL, j, stcp_input, &nstcp_output,
 			    &stcp_output, 0, NULL) < 0) {
+				fprintf (stderr, "stage_in_tape %s error: %s\n", vid,
+						 sstrerror(serrno));
 				c = rc_castor2shift(serrno);
 				break;
 			}
@@ -518,7 +520,7 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 				/* Same algorithm - then the values have to match */
 				if (seg_list[last_seg_repacked].checksum != fl->castorSegAttr.segmCksum) {
 					serrno = SECHECKSUM;
-					printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d,\"%s\",0x%lx) to (%s,%d,%d,%02x%02x%02x%02x,%d, \"%s\", 0x%lx) error: %s\n",
+					fprintf (stderr, "%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d,\"%s\",0x%lx) to (%s,%d,%d,%02x%02x%02x%02x,%d, \"%s\", 0x%lx) error: %s\n",
 							timestamp(),
 							u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
 							seg_list[last_seg_repacked].copyno,
