@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/01 13:14:53 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/03 10:58:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/01 13:14:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/03 10:58:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -653,6 +653,11 @@ int main(
   /* Initializing the C++ log */
   /* Necessary at start of program and after any fork */
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
+
+  /*
+   * Make sure that recalled disk files are properly protected
+   */
+  umask(077);
 
   Cuuid_create(
                &childUuid
