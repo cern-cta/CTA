@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.59 $ $Release$ $Date: 2004/10/27 16:50:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/10/28 08:05:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.59 $ $Release$ $Date: 2004/10/27 16:50:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/10/28 08:05:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -927,7 +927,56 @@ void rtcpcld_cleanupTape(
   free(tape);
   return;
 }
-  
+
+void rtcpcld_cleanupFile(
+                         file
+                         )
+     file_list_t *file;
+{
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL, **tapeCopyArray = NULL;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+  struct Cstager_DiskCopy_t **diskCopyArray = NULL;
+  int i, nbCopies = 0;
+
+  if ( file == NULL ) return;
+  if ( file->dbRef != NULL ) {
+    segment = (struct Cstager_Segment_t *)file->dbRef->row;
+    if ( segment != NULL ) {
+      Cstager_Segment_copy(segment,&tapeCopy);
+      Cstager_Segment_delete(segment);
+      if ( tapeCopy != NULL ) {
+        Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+        Cstager_TapeCopy_delete(tapeCopy);
+        if ( castorFile != NULL ) {
+          Cstager_CastorFile_diskCopies(
+                                        castorFile,
+                                        &diskCopyArray,
+                                        &nbCopies
+                                        );
+          for ( i=0; i<nbCopies; i++ ) {
+            Cstager_DiskCopy_delete(diskCopyArray[i]);
+          }
+          if ( diskCopyArray != NULL ) free(diskCopyArray);
+          nbCopies = 0;
+          Cstager_CastorFile_tapeCopies(
+                                        castorFile,
+                                        &tapeCopyArray,
+                                        &nbCopies
+                                        );
+          for ( i=0; i<nbCopies; i++ ) {
+            Cstager_TapeCopy_delete(tapeCopyArray[i]);
+          }
+          Cstager_CastorFile_delete(castorFile);
+        }
+      }
+    }
+    free(file->dbRef);
+  }
+  CLIST_DELETE(file->tape->file,file);
+  free(file);
+  return;
+}  
 
 static int validPosition(
                          segment
