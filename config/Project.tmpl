@@ -83,6 +83,13 @@ COPYTAPEDIR = copytape
 DBDIR = db
 #endif
 
+#if BuildJob
+JOBDIR = job
+#if !BuildRmClient
+#define BuildRmClient YES
+#endif
+#endif
+
 #if BuildRmClient || BuildRmMaster || BuildRmNode
 RESOURCEMONITORINGDIR = resourcemonitoring
 #endif

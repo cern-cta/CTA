@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.17 $ $Date: 2004/11/24 15:17:51 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.18 $ $Date: 2004/11/29 16:49:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -87,6 +87,12 @@ DBLIB = DepLibraryTargetName(db,db)
 #if BuildRfioClient != YES
 #undef BuildRfioClient
 #define BuildRfioClient       YES
+#endif
+#endif
+
+#if BuildJob
+#if !BuildRmClient
+#define BuildRmClient YES
 #endif
 #endif
 
