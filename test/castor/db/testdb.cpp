@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/18 12:55:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/19 09:51:16 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include "castor/stager/StageInRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/CastorFile.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
@@ -39,117 +39,112 @@
 
 int main (int argc, char** argv) {
   // initalizes log
-  castor::BaseObject::initLog("", castor::SVC_STDMSG);
+  castor::BaseObject::initLog("MsgSvc", castor::SVC_STDMSG);
 
-  // Prepare a request
-  castor::stager::StageInRequest* fr = new castor::stager::StageInRequest();
+  // Build a castorFile
+  castor::stager::CastorFile* cf = new castor::stager::CastorFile();
+  cf->setNsHost("TestNameServer");
+
+  // Build a diskCopy
+  castor::stager::DiskCopy* dc1 = new castor::stager::DiskCopy();
+  dc1->setPath("/my/disk/copy1.dat");
+  dc1->setCastorFile(cf);
+  cf->addDiskCopies(dc1);
   
-  castor::rh::Client *cl = new castor::rh::Client();
-  cl->setIpAddress(0606);
-  cl->setPort(0707);
-  cl->setRequest(fr);
-  fr->setClient(cl);
-
-  castor::stager::SubRequest* s1 = new castor::stager::SubRequest();
-  s1->setFileName("First test SubRequest");
-  fr->addSubRequests(s1);
-  s1->setRequest(fr);
-
-  castor::stager::SubRequest* s2 = new castor::stager::SubRequest();
-  s2->setFileName("2nd test SubRequest");
-  fr->addSubRequests(s2);
-  s2->setRequest(fr);
-
+  // Build a second diskCopy
+  castor::stager::DiskCopy* dc2 = new castor::stager::DiskCopy();
+  dc2->setPath("/my/disk/copy2.dat");
+  dc2->setCastorFile(cf);
+  cf->addDiskCopies(dc2);
+  
   // Get a Services instance
-  castor::Services* svcs = new castor::Services();
+  castor::Services* svcs = castor::BaseObject::services();
 
-  // Stores the request
+  // Stores the castorFile and DiskCopies
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   try {
-    svcs->createRep(&ad, fr, false);
-    svcs->fillRep(&ad, fr, castor::OBJ_SubRequest, false);
-    svcs->fillRep(&ad, fr, castor::OBJ_IClient, true);
+    svcs->createRep(&ad, cf, false);
+    svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     // release the memory
     delete svcs;
-    delete fr;
+    delete cf;
     return 1;
   }
 
-  // Retrieves it in a separate object
-  castor::db::DbAddress ad2(fr->id(), "OraCnvSvc", castor::SVC_ORACNV);
-  castor::stager::Request* fr2;
+  // Retrieves everything in a separate objects
+  castor::db::DbAddress ad2(cf->id(), "OraCnvSvc", castor::SVC_ORACNV);
+  castor::stager::CastorFile* cf2;
   try{
-    castor::IObject* fr2Obj = svcs->createObj(&ad2);
-    svcs->fillObj(&ad2, fr2Obj, castor::OBJ_SubRequest);
-    svcs->fillObj(&ad2, fr2Obj, castor::OBJ_IClient);
-    fr2 = dynamic_cast<castor::stager::Request*>(fr2Obj);
+    castor::IObject* cf2Obj = svcs->createObj(&ad2);
+    svcs->fillObj(&ad2, cf2Obj, castor::OBJ_DiskCopy);
+    cf2 = dynamic_cast<castor::stager::CastorFile*>(cf2Obj);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createObj : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     delete svcs;
-    delete fr;
+    delete cf;
     return 1;
   }
   
   // Display both objects for comparison
   std::cout << "Originally :" << std::endl;
   castor::ObjectSet alreadyPrinted;
-  fr->print(std::cout, "  ", alreadyPrinted);
+  cf->print(std::cout, "  ", alreadyPrinted);
   castor::ObjectSet alreadyPrinted2;
   std::cout << "Finally :" << std::endl;
-  fr2->print(std::cout, "  ", alreadyPrinted2);
+  cf2->print(std::cout, "  ", alreadyPrinted2);
   
   // Now modify the first object
-  fr->removeSubRequests(s2);
-  castor::stager::SubRequest* s3 = new castor::stager::SubRequest();
-  s3->setFileName("3rd test SubRequest");
-  fr->addSubRequests(s3);
-  s3->setRequest(fr);
+  cf->removeDiskCopies(dc2);
+  castor::stager::DiskCopy* dc3 = new castor::stager::DiskCopy();
+  dc3->setPath("/my/disk/copy3.dat");
+  cf->addDiskCopies(dc3);
+  dc3->setCastorFile(cf);
 
   // update the database
   try {
-    svcs->updateRep(&ad, fr, false);
-    svcs->fillRep(&ad, fr, castor::OBJ_SubRequest, true);
+    svcs->updateRep(&ad, cf, false);
+    svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in updateRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     delete svcs;
-    delete fr;
-    delete fr2;
+    delete cf;
+    delete cf2;
     return 1;
   }
 
   // And update the second representation of the object
   try {
-    svcs->updateObj(&ad, fr2);
-    svcs->fillObj(&ad, fr2, castor::OBJ_SubRequest);
+    svcs->updateObj(&ad, cf2);
+    svcs->fillObj(&ad, cf2, castor::OBJ_DiskCopy);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in updateObj : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     delete svcs;
-    delete fr;
-    delete fr2;
+    delete cf;
+    delete cf2;
     return 1;
   }
   
   // Finally display the two modified objects to check
   std::cout << "Originally modified :" << std::endl;
   castor::ObjectSet alreadyPrinted3;
-  fr->print(std::cout, "  ", alreadyPrinted3);
+  cf->print(std::cout, "  ", alreadyPrinted3);
   castor::ObjectSet alreadyPrinted4;
   std::cout << "Finally modified :" << std::endl;
-  fr2->print(std::cout, "  ", alreadyPrinted4);
+  cf2->print(std::cout, "  ", alreadyPrinted4);
 
   delete svcs;
-  delete fr;
-  delete fr2;
+  delete cf;
+  delete cf2;
   return 0;
 }
 
