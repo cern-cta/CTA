@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2004/12/01 17:40:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2004/12/02 08:35:12 $ $Author: jdurand $
  *
  *
  *
@@ -1495,7 +1495,7 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     case castor::stager::TAPE_UNKNOWN:
       tape->setStatus(castor::stager::TAPE_PENDING);
     }
-    cnvSvc()->updateRep(&ad, tape false);
+    cnvSvc()->updateRep(&ad, tape, false);
     // Link Tape with Segment
     segment->setTape(tape);
     tape->addSegments(segment);
