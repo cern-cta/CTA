@@ -1,7 +1,10 @@
 .\"
-.\" $Id: rfcp.man,v 1.3 2001/05/31 13:17:36 jdurand Exp $
+.\" $Id: rfcp.man,v 1.4 2001/06/20 11:12:20 jdurand Exp $
 .\"
 .\" $Log: rfcp.man,v $
+.\" Revision 1.4  2001/06/20 11:12:20  jdurand
+.\" Support of -v2 option
+.\"
 .\" Revision 1.3  2001/05/31 13:17:36  jdurand
 .\" Added RETURN CODES section
 .\"
@@ -22,6 +25,8 @@ rfcp \- Remote file copy
 .B rfcp
 [
 .BI -s " size"
+] [
+.BI -v2
 ]
 .IR filename1
 .IR filename2
@@ -29,6 +34,8 @@ rfcp \- Remote file copy
 .B rfcp
 [
 .BI -s " size"
+] [
+.BI -v2
 ]
 .IR filename
 .IR directory
@@ -40,6 +47,8 @@ rfcp \- Remote file copy
 .BI -b
 ] [
 .BI -s " size"
+] [
+.BI -v2
 ]
 .BI @ command_file
 .SH DESCRIPTION
@@ -72,6 +81,9 @@ that the source is a binary file (Windows/NT only)
 If specified, only
 .I size
 bytes will be copied
+.TP
+.BI \-v2
+If specified, forces the RFIO V.2 protocol.
 .SH RETURN CODES
 \
 .br
@@ -82,9 +94,8 @@ bytes will be copied
 2	System error.
 .br
 196	Request killed.
-.SH "SEE ALSO"
+.SH SEE ALSO
 .BR rcp(1), 
 .BR rfiod(l)
-.SH "AUTHOR"
-Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
-(olof.barring@cern.ch)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
