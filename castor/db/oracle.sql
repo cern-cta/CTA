@@ -2,10 +2,12 @@
 /* and is inserted at the beginning of the generated code           */
 
 /* SQL statements for object types */
-DROP INDEX I_ID2TYPE_FULL;
-DROP TABLE ID2TYPE;
-CREATE TABLE ID2TYPE (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_ID2TYPE_FULL on ID2TYPE (id, type);
+DROP INDEX I_Id2Type_type;
+DROP INDEX I_Id2Type_full;
+DROP TABLE Id2Type;
+CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
+CREATE INDEX I_Id2Type_full on Id2Type (id, type);
+CREATE INDEX main.I_Id2Type_type ON Id2Type(type);
 
 /* Sequence for indices */
 DROP SEQUENCE ids_seq;
@@ -231,6 +233,14 @@ ALTER TABLE FileClass ADD UNIQUE (name);
 /* Add unique constraint on castorFiles */
 ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
 
+/* get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  ret NUMBER;
+BEGIN
+  SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
+  RETURN ret;
+END;
+
 /***************************************/
 /* Some triggers to prevent dead locks */
 /***************************************/
@@ -281,8 +291,60 @@ END;
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
 BEGIN
  UPDATE SubRequest
-  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci), status = 5 -- WAITSUBREQ
+  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci),
+      status = 5, lastModificationTime = getTime() -- WAITSUBREQ
   WHERE SubRequest.id = subreqId;
+END;
+
+/* PL/SQL method to archive a SubRequest and its request if needed */
+CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
+  rid INTEGER;
+  rtype INTEGER;
+  rclient INTEGER;
+  nb INTEGER;
+BEGIN
+  -- update status of SubRequest
+  UPDATE SubRequest SET status = 8 -- FINISHED
+   WHERE id = srId RETURNING request INTO rid;
+  -- Try to see whether another subrequest in the same
+  -- request is still procesing
+  SELECT count(*) INTO nb FROM SubRequest
+   WHERE status != 8; -- FINISHED
+  -- Archive request, client and SubRequests if needed
+  IF nb > 0 THEN
+    -- DELETE request from Id2Type
+    DELETE FROM Id2Type WHERE id = rid RETURNING type INTO rtype;
+    -- delete request and get client id
+    CASE rtype
+      WHEN 35 THEN -- StageGetRequest
+        DELETE FROM StageGetRequest WHERE id = rid RETURNING client into rclient;
+      WHEN 40 THEN -- StagePutRequest
+        DELETE FROM StagePutRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 44 THEN -- StageUpdateRequest
+        DELETE FROM StageUpdateRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 39 THEN -- StagePutDoneRequest
+        DELETE FROM StagePutDoneRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 42 THEN -- StageRmRequest
+        DELETE FROM StageRmRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 51 THEN -- StageReleaseFilesRequest
+        DELETE FROM StageReleaseFilesRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 43 THEN -- StageUpdateFileStatusRequest
+        DELETE FROM StageUpdateFileStatusRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 36 THEN -- StagePrepareToGetRequest
+        DELETE FROM StagePrepareToGetRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 37 THEN -- StagePrepareToPutRequest
+        DELETE FROM StagePrepareToPutRequest WHERE id = rid RETURNING client INTO rclient;
+      WHEN 38 THEN -- StagePrepareToUpdateRequest
+        DELETE FROM StagePrepareToUpdateRequest WHERE id = rid RETURNING client INTO rclient;
+    END CASE;
+    -- DELETE Client
+    DELETE FROM Id2Type WHERE id = rclient;
+    DELETE FROM Client WHERE id = rclient;
+    -- Delete SubRequests
+    DELETE FROM Id2Type WHERE id IN
+      (SELECT id FROM SubRequest WHERE request = rid);
+    DELETE FROM SubRequest WHERE request = rid;
+  END IF;
 END;
 
 /* PL/SQL method implementing anyTapeCopyForStream */
@@ -428,8 +490,10 @@ SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
 UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_STAGED
-UPDATE SubRequest SET status = 1 WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+UPDATE SubRequest SET status = 1, lastModificationTime = getTime()
+ WHERE id = SubRequestId; -- SUBREQUEST_RESTART
+UPDATE SubRequest SET status = 1, lastModificationTime = getTime()
+ WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 updateFsFileClosed(fsId, fileSize, fileSize);
 END;
 
@@ -463,7 +527,8 @@ BEGIN
  IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
  THEN
   -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
-  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = rsubreqId;
+  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci),
+                        lastModificationTime = getTime() WHERE id = rsubreqId;
   result := 0;  -- no nschedule
  ELSE
   result := 1;  -- schedule and diskcopies available
@@ -567,21 +632,23 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
       AND DiskServer.id = FileSystem.diskServer
       AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
-    UPDATE SubRequest SET diskCopy = ids_seq.nextval WHERE id = srId
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval,
+                          lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-     VALUES (rpath, dci, fileSystemId, cfid, 1); -- status WAITDISK2DISKCOPY
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
+     VALUES (rpath, dci, fileSystemId, cfid, 1, getTime()); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
     rstatus := 1; -- status WAITDISK2DISKCOPY
   END IF;
  EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on any FileSystem
   -- create one for recall
-  UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4 -- WAITTAPERECALL
+  UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4,
+                        lastModificationTime = getTime() -- WAITTAPERECALL
    WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
   buildPathFromFileId(fid, nh, rpath);
-  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-   VALUES (rpath, dci, fileSystemId, cfid, 2); -- status WAITTAPERECALL
+  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
+   VALUES (rpath, dci, fileSystemId, cfid, 2, getTime()); -- status WAITTAPERECALL
   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
  END;
@@ -616,7 +683,8 @@ BEGIN
   AND Id2Type.id = SubRequest.request
   FOR UPDATE;
  -- Update Status
- UPDATE SubRequest SET status = newStatus WHERE id = srId;
+ UPDATE SubRequest SET status = newStatus,
+                       lastModificationTime = getTime() WHERE id = srId;
  -- Check whether it was the last subrequest in the request
  SELECT id INTO result FROM SubRequest
   WHERE request = reqId
@@ -633,7 +701,9 @@ BEGIN
   -- update DiskCopy
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId; -- status DISKCOPY_STAGED
   -- update SubRequest
-  UPDATE SubRequest set status = 6 WHERE diskCopy = dcId; -- status SUBREQUEST_READY
+  UPDATE SubRequest set status = 6,
+                        lastModificationTime = getTime()
+   WHERE diskCopy = dcId; -- status SUBREQUEST_READY
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
@@ -678,13 +748,14 @@ BEGIN
  -- create new DiskCopy
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);
- INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-  VALUES (rpath, ids_seq.nextval, 0, cfId, 5) -- status WAITFS
+ INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
+  VALUES (rpath, ids_seq.nextval, 0, cfId, 5, getTime()) -- status WAITFS
   RETURNING id INTO dcId;
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  COMMIT;
  -- link SubRequest and DiskCopy
- UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
+ UPDATE SubRequest SET diskCopy = dcId,
+                       lastModificationTime = getTime() WHERE id = srId;
  COMMIT;
 END;
 
@@ -712,8 +783,11 @@ BEGIN
       (SELECT euid, egid, id from StagePutRequest UNION
        SELECT euid, egid, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- update the DiskCopy status
+ UPDATE DiskCopy SET status = 10 -- CANBEMIGR
+  WHERE castorFile = cfid AND status = 6 -- STAGEOUT
+  RETURNING fileSystem INTO fsId;
  -- update the FileSystem free space
- SELECT fileSystem INTO fsId FROM DiskCopy WHERE castorFile = cfid AND status = 6; -- STAGEOUT
  updateFsFileClosed(fsId, reservedSpace, fs);
  -- if 0 length file, stop here
  IF fs = 0 THEN
@@ -731,6 +805,8 @@ BEGIN
     RETURNING id INTO tcId;
   INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
  END LOOP TapeCopyCreation;
+ -- archive Subrequest
+ archiveSubReq(srId);
  COMMIT;
 END;
 
@@ -749,10 +825,14 @@ BEGIN
     -- try to find an existing file
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
+    -- update lastAccess time
+    UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
+      WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
-    INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs)
+    INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
+                            creationTime, lastAccessTime, nbAccesses)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
