@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.1 $ $Date: 1999/12/19 10:02:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.2 $ $Date: 1999/12/24 10:06:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -25,6 +25,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
+	char acctname[7];
 	int c;
 	void cleanup();
 	int count;
@@ -46,7 +47,7 @@ char	**argv;
 	while ((c = getopt (argc, argv, "D:d:g:H:l:V:v:")) != EOF) {
 		switch (c) {
 		case 'D':
-			if (drive[0]) {
+			if (! drive[0]) {
 				if (strlen (optarg) <= CA_MAXUNMLEN) {
 					strcpy (drive, optarg);
 				} else {
@@ -59,7 +60,7 @@ char	**argv;
 			}
 			break;
 		case 'd':
-			if (density[0]) {
+			if (! density[0]) {
 				if (strlen (optarg) <= CA_MAXDENLEN) {
 					strcpy (density, optarg);
 				} else {
@@ -72,7 +73,7 @@ char	**argv;
 			}
 			break;
 		case 'g':
-			if (dgn[0]) {
+			if (! dgn[0]) {
 				if (strlen (optarg) <= CA_MAXDGNLEN) {
 					strcpy (dgn, optarg);
 				} else {
@@ -98,7 +99,7 @@ char	**argv;
 			}
 			break;
 		case 'l':
-			if (lbltype[0]) {
+			if (! lbltype[0]) {
 				if (strlen (optarg) <= 2) {
 					strcpy (lbltype, optarg);
 				} else {
@@ -111,7 +112,7 @@ char	**argv;
 			}
 			break;
 		case 'V':
-			if (vid[0]) {
+			if (! vid[0]) {
 				if (strlen (optarg) <= CA_MAXVIDLEN) {
 					strcpy (vid, optarg);
 				} else {
@@ -124,7 +125,7 @@ char	**argv;
 			}
 			break;
 		case 'v':
-			if (vsn[0]) {
+			if (! vsn[0]) {
 				if (strlen (optarg) <= CA_MAXVIDLEN) {
 					strcpy (vsn, optarg);
 				} else {
@@ -148,6 +149,7 @@ char	**argv;
 
 	/* Set default values */
 
+	if (nbhdr < 0) nbhdr = 1;
 	strcpy (path, tempnam(NULL, "tp"));
 
 #if ! defined(_WIN32)
@@ -162,7 +164,13 @@ char	**argv;
 	/* Get defaults from TMS (if installed) */
 
 #if TMS
-	if (tmscheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, NULL))
+	p = getacct();
+	if (p == NULL) {
+		fprintf (stderr, TP027);
+		exit_prog (USERR);
+	}
+	strcpy (acctname, p);
+	if (tmscheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, acctname))
 		exit_prog (USERR);
 #endif
 
