@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.26 1999/11/30 18:22:03 jdurand Exp $
+ * $Id: Cthread.c,v 1.27 1999/12/01 08:00:58 obarring Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.26 $ $Date: 1999/11/30 18:22:03 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.27 $ $Date: 1999/12/01 08:00:58 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -632,7 +632,7 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     status = (unsigned)routine(routineargs);
     /* 
      * Destroy the entry in Cthread internal linked list. Note that
-     * if we are still non-detached (i.e. Cthread_detached has not
+     * if we are non-detached (i.e. Cthread_detached has not
      * been called) the _Cthread_destroy has no effect. The thread
      * element in linked list will remain until somebody calls
      * Cthread_join()
@@ -640,59 +640,6 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
 
     return(status);
-}
-/* ============================================ */
-/* Routine  : _Cthread_start_thread             */
-/* Arguments: thread startup parameters         */
-/* -------------------------------------------- */
-/* Output   :                                   */
-/* -------------------------------------------- */
-/* History:                                     */
-/* 22-APR-1999       First implementation       */
-/*                   Olof.Barring@cern.ch       */
-/* 29-APR-1999       Add _Cthread_addcid        */
-/*                   Jean-Damien.Durand@cern.ch */
-/* 30-APR-1999       Change addcid call to pass */
-/*                   NULL for thread handle     */
-/*                   since it is not available  */
-/*                   to the thread.             */
-/*                   (Olof)                     */
-/* ============================================ */
-/* Notes:                                       */
-/* Thread startup wrapper (Windows only!)       */
-/* Start routine for detached threads.          */
-/* This routine should be passed to             */
-/* _beginthread(). No system resource cleanup is*/
-/* needed for these threads because             */
-/* CloseHandle() is automatically called by     */
-/* system at thread exit).                      */
-/* ============================================ */
-void __cdecl _Cthread_start_thread(void *arg) {
-    Cthread_start_params_t *start_params;
-    void                 *status;
-    int                   thID;
-    void               *(*routine)(void *);
-    void               *routineargs;
-
-
-    if ( arg == NULL ) {
-        serrno = EINVAL;
-        return;
-    }
-    start_params = (Cthread_start_params_t *)arg;
-    thID = GetCurrentThreadId();
-    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,NULL,thID,start_params->_thread_routine,start_params->detached) < 0) {
-        free(arg);
-        return;
-    }
-    routine = start_params->_thread_routine;
-    routineargs = start_params->_thread_arg;
-    free(start_params);
-    status = routine(routineargs);
-
-    /* Destroy the entry in Cthread internal linked list */
-    _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
-    return;
 }
 #else /* _CTHREAD_PROTO_WIN32 */
 /* ============================================ */
@@ -1291,10 +1238,8 @@ int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
     return(-1);
   }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  starter = (Cthread_start_params_t *)malloc(sizeof(Cthread_start_params_t));
-  starter->_thread_routine = startroutine;
-  starter->_thread_arg = arg;
-  if ( (pid = _beginthread(_Cthread_start_thread,0,starter)) == -1 ) {
+  if ( (pid = _beginthreadex(NULL,0,_Cthread_start_threadex,starter,0,&thID)) ==
+ 0 ) {
       free(starter);
       serrno = SECTHREADERR;
       return(-1);
@@ -4039,7 +3984,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
   if (
 #ifdef _CTHREAD
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-      ourthID == current->thID;
+      ourthID == current->thID
 #  else
       pthread_equal(ourpid,current->pid)
 #  endif
