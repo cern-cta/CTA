@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.15 $ $Date: 2000/01/24 16:34:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.16 $ $Date: 2000/02/01 13:17:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -205,7 +205,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * Tape files must be in sequence on write
      */
     if ( mode == WRITE_ENABLE && file != tape->file && 
-         filereq->concat == NOCONCAT &&
+         (filereq->concat & NOCONCAT) != 0 &&
         (file->prev->filereq.tape_fseq != filereq->tape_fseq - 1) ) {
         serrno = EINVAL;
         sprintf(errmsgtxt,RT151,"CPDSKTP");

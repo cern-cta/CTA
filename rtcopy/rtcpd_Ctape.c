@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.11 $ $Date: 2000/01/24 17:08:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.12 $ $Date: 2000/02/01 13:17:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -358,8 +358,8 @@ int rtcpd_Position(tape_list_t *tape,
     prevreq = (file == tape->file ? NULL : &file->prev->filereq);
 
     if ( *filereq->tape_path == '\0' ) {
-        if ( prevreq != NULL ) 
-            strcpy(filereq->tape_path,prevreq->tape_path);
+        if ( *tape->file->filereq.tape_path != '\0' ) 
+            strcpy(filereq->tape_path,tape->file->filereq.tape_path);
         else {
             rtcpd_AppendClientMsg(NULL, file,"rtcpd_Position(): cannot determine tape path\n");
             rtcp_log(LOG_DEBUG,"rtcpd_Position(): cannot determine tape path\n");

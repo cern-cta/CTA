@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.19 $ $Date: 2000/01/24 17:42:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.20 $ $Date: 2000/02/01 13:17:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -402,13 +402,14 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
     file_list_t *nextfile, *tmpfile;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
-    char ifce[5];
+    char ifce[5],dgn[CA_MAXDGNLEN+1],unit[CA_MAXUNMLEN+1];
     u_signed64 totSz = 0;
     int totKBSz = 0;
+    int totMBSz = 0;
     int Twait = 0;
     int Tservice = 0;
     int Ttransfer = 0;
-    int mode;
+    int mode,jobID,status,rc;
 
     /*
      * Close and free client listen socket if still active. This
@@ -434,6 +435,9 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         CLIST_ITERATE_BEGIN(*tape,nexttape) {
             tapereq = &(nexttape->tapereq);
             mode = tapereq->mode;
+            jobID = tapereq->jobID;
+            strcpy(unit,tapereq->unit);
+            strcpy(dgn,tapereq->dgn);
             Tservice = (tapereq->TEndUnmount - tapereq->TStartRequest);
             if ( Twait == 0 ) 
                 Twait = (tapereq->TStartMount - tapereq->TStartRequest);
@@ -443,13 +447,25 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
             while ( nextfile != NULL ) {
                 filereq = &(nextfile->filereq);
                 strcpy(ifce,filereq->ifce);
-                Ttransfer += 
-                  max(filereq->TEndTransferTape,filereq->TEndTransferDisk) -
-                  min(filereq->TStartTransferTape,filereq->TStartTransferDisk);
-                if ( tapereq->mode == WRITE_ENABLE )
-                    totSz += filereq->bytes_in;
-                else
-                    totSz += filereq->bytes_out;
+                if ( filereq->proc_status == RTCP_FINISHED ||
+                     filereq->proc_status == RTCP_EOV_HIT ) {
+                    /*
+                     * Transfer time of tape file.
+                     */
+                    if ( tapereq->mode == WRITE_DISABLE ||
+                        (filereq->concat & CONCAT) == 0 ) {
+                        Ttransfer += max(
+                                  (time_t)filereq->TEndTransferDisk,
+                                  (time_t)filereq->TEndTransferTape) -
+                                  filereq->TEndPosition;
+                    }
+
+                    if ( tapereq->mode == WRITE_ENABLE &&
+                         filereq->proc_status == RTCP_FINISHED )
+                        totSz += filereq->bytes_in;
+                    else if ( tapereq->mode == WRITE_DISABLE )
+                        totSz += filereq->bytes_out;
+                }
                 
                 CLIST_DELETE(nextfile,tmpfile);
                 rtcp_log(LOG_DEBUG,"rtcpd_FreeResources() free file element 0x%lx\n",
@@ -469,6 +485,13 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         }
     }
     totKBSz = (int)(totSz / 1024);
+    totMBSz = totKBSz / 1024;
+    status = VDQM_UNIT_MBCOUNT;
+    rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&totMBSz,jobID);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"vdqm_UnitStatus(VDQM_UNIT_MBCOUNT,%d MB): %s\n",
+                 totMBSz,sstrerror(serrno));
+    }
 
     if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
         rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);
@@ -492,8 +515,10 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 }
 
 int rtcpd_AbortHandler(int sig) {
-    if ( sig == SIGTERM ) AbortFlag = 2;
-    else AbortFlag = 1;
+    if ( sig == SIGTERM ) {
+        AbortFlag = 2;
+        proc_cntl.ProcError = RTCP_FAILED;
+    } else AbortFlag = 1;
     return(0);
 }
 
@@ -503,33 +528,39 @@ void rtcpd_BroadcastException() {
     if ( databufs != NULL ) {
         for (i=0;i<nb_bufs;i++) {
             if ( databufs[i] != NULL ) {
+                rtcp_log(LOG_DEBUG,
+                    "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
                 (void)Cthread_mutex_lock_ext(databufs[i]->lock);
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             }
         }
     }
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to cntl_lock\n");
     (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
 
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to ReqStatus_lock\n");
     (void)Cthread_mutex_lock_ext(proc_cntl.ReqStatus_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.ReqStatus_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
 
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to DiskFileAppend_lock\n");
     (void)Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
+
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() finished\n");
+    return; 
 }
 
 static int rtcpd_ProcError(int *code) {
     static int global_code, rc;
 
     if ( AbortFlag != 0 ) {
-        if ( AbortFlag == 1 ) 
-            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST ABORTED by user\n");
-        else
-            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST ABORTED by operator\n");
+        if ( AbortFlag == 2 ) 
+            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST killed by operator\n");
         return(proc_cntl.ProcError);
     }
     rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);

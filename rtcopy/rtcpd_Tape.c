@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.19 $ $Date: 2000/01/24 17:42:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.20 $ $Date: 2000/02/01 13:17:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -78,12 +78,13 @@ static int last_block_done = 0;
 int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     int rc;
 
+    rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() called\n");
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
     if ( tape->tapereq.mode == WRITE_ENABLE ||
-         file->filereq.stageID == '\0' ) return(0);
+         *file->filereq.stageID == '\0' ) return(0);
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(p
@@ -105,6 +106,7 @@ xt(proc_cntl): %s\n",
                  sstrerror(serrno));
         return(-1);
     }
+    rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() returns\n");
     return(0);
 }
 
@@ -269,12 +271,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     /*
                      * Have we read all data in this buffer yet?
                      */
-                    if ( j*blksiz >= databufs[i]->data_length ) break;
+                    if ( j*blksiz >= databufs[i]->data_length + 
+                                     (*firstblk) * blksiz ) {
+                        DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() reached EOB (buffer %d), j=%d, blksiz=%d, data_length=%d, firstblk=%d\n",
+                                i,j,blksiz,databufs[i]->data_length,*firstblk));
+                        break;
+                    }
                     /*
                      * Normal no record padding format.
                      * Note: last block of file may be partial.
                      */
-                    nb_bytes = databufs[i]->data_length - j*blksiz;
+                    nb_bytes = databufs[i]->data_length - (j-*firstblk)*blksiz;
                     if ( nb_bytes > blksiz ) nb_bytes = blksiz;
                     convert_buffer = databufs[i]->buffer + j*blksiz;
                 } else {
@@ -890,7 +897,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * If end of volume, break out from inifinite loop
          * and return to main tape I/O thread
          */
-        if ( file->eovflag == 1 ) break;
+        if ( file->eovflag == 1 ) {
+            filereq->bytes_out = file->tapebytes_sofar - filereq->startsize;
+            break;
+        }
 
         /*
          * Has something fatal happened while we were occupied
@@ -952,10 +962,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
 
 void *tapeIOthread(void *arg) {
     tape_list_t *tape, *nexttape;
-    file_list_t *nextfile, *tmpfile;
+    file_list_t *nextfile, *tmpfile, *prevfile;
     SOCKET client_socket;
     char *p, u64buf[22];
-    u_signed64 totsz;
+    u_signed64 bytes_in,totsz;
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
@@ -972,6 +982,7 @@ void *tapeIOthread(void *arg) {
     free(arg);
     nexttape = NULL;
     nextfile = NULL;
+    bytes_in = 0;
 
     /*
      * Initialize the tapeIO processing status
@@ -1021,12 +1032,13 @@ void *tapeIOthread(void *arg) {
      * Main loop over all tapes requested
      */
     totsz = 0;
+    prevfile = tape->file;
     CLIST_ITERATE_BEGIN(tape,nexttape) {
         /*
          * Mount the volume
          */
         if ( (nexttape->local_retry == 0) && 
-             ((nexttape == tape) || (nextfile->eovflag == 1)) ) {
+             ((nexttape == tape) || (prevfile->eovflag == 1)) ) {
             TP_STATUS(RTCP_PS_MOUNT);
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -1039,36 +1051,55 @@ void *tapeIOthread(void *arg) {
             /*
              * Handle file section number for multivolume requests. The
              * file section number is 1 for all files on first volume. Only
-             * the last file can span over several volumes and in this case
-             * its file section number is incremented for each new volume.
+             * the last (tape) file can span over several volumes and in this
+             * case its file section number is incremented for each new volume.
              * The tape file sequence number must be the same as for the
              * last file on previous volume (Ctape does not store this
              * information).
              */
             if ( nexttape == tape ) nextfile->tape_fsec = 1;
             else {
-                nextfile->tape_fsec = nexttape->prev->file->tape_fsec + 1;
-                nextfile->filereq.tape_fseq = 
-                          nexttape->prev->file->filereq.tape_fseq;
-                if ( nexttape->prev->file->eovflag != 1 ) {
+                nextfile->tape_fsec = nexttape->prev->file->tape_fsec+1;
+                nextfile->filereq.startsize = prevfile->tapebytes_sofar; 
+                nextfile->filereq.tape_fseq = prevfile->filereq.tape_fseq;
+                /*
+                 * If several disk files are concatenated into one single,
+                 * volume spanning, tapefile we have to start with the 
+                 * file request structure for the current disk file (which
+                 * is already partially copied). We simply skip over the
+                 * the file requests for all disk files which were copied
+                 * to the previous volume.
+                 */
+                if ( nextfile->filereq.disk_fseq<prevfile->filereq.disk_fseq ) 
+                    nextfile->filereq.proc_status = RTCP_UNREACHABLE;
+                if ( prevfile->eovflag != 1 ) {
                     /* 
                      * More volumes than needed have been specified. This
                      * not an error so we just mark the request as ended.
                      */
                     nextfile->filereq.proc_status = RTCP_FINISHED;
-                    nextfile->filereq.cprc = nexttape->prev->file->filereq.cprc;
+                    nextfile->filereq.cprc = prevfile->filereq.cprc;
+                    tellClient(&client_socket,NULL,nextfile,0);
                 }
             }
             /*
              * If we are concatenating to tape all involved file
              * requests are done in a single iteration. This has to
              * be so to avoid partial blocks in the middle of tape
-             * files.
+             * files. A further complication is the concatenation of
+             * disk files into a single tape file which is spanning over
+             * several volumes: if we have switched tape we obviously
+             * need to enter the branch to position the tape and continue
+             * the copy....
              */
-            if ( (nextfile->filereq.proc_status != RTCP_FINISHED) &&
+            rtcp_log(LOG_DEBUG,"tapeIOthread(): file iteration: fseq=%d,%d concat=0x%x, previous file proc_stat=%d\n",
+                     nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
+                     nextfile->filereq.concat,prevfile->filereq.proc_status);
+            if ( (nextfile->filereq.proc_status < RTCP_FINISHED) &&
                  ((nexttape->tapereq.mode == WRITE_DISABLE) ||
                   ((nexttape->tapereq.mode == WRITE_ENABLE) &&
-                   (nextfile->filereq.concat == NOCONCAT))) ) {
+                   (nextfile->filereq.concat & NOCONCAT) != 0) ||
+                  (nextfile->tape_fsec != prevfile->tape_fsec)) ) { 
                 /*
                  * Position the volume
                  */
@@ -1197,30 +1228,23 @@ void *tapeIOthread(void *arg) {
                  * Tape file is closed in MemoryToTape() or TapeToMemory()
                  */
                 tape_fd = -1;
+                prevfile = nextfile;
 
                 if ( nextfile->eovflag == 1 ) {
                     /*
-                     * File is spanning two volumes. It must
-                     * be the last file of the request. Release
-                     * to unload but keep drive reservation.
+                     * File is spanning two volumes. 
+                     * Release to unload but keep drive reservation.
                      */
-                    if ( nextfile->next != nexttape->file ||
-                         nexttape->next == tape ) {
-                        if ( nexttape->next == tape ) {
-                            /*
-                             * No second volume specified
-                             */
-                            rtcpd_AppendClientMsg(NULL,nextfile,RT124,
+                    if ( nexttape->next == tape ) {
+                         /*
+                          * There are no more volumes specified!
+                          */
+                         rtcpd_AppendClientMsg(NULL,nextfile,RT124,
                                (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
-                            if ( nexttape->tapereq.mode == WRITE_ENABLE )
-                                serrno = ENOSPC;
-                            else
-                                serrno = EFBIG;
-                        } else {
-                           rtcpd_AppendClientMsg(NULL,nextfile,RT127,
-                               (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
-                           serrno = EINVAL;
-                        }
+                         if ( nexttape->tapereq.mode == WRITE_ENABLE )
+                             serrno = ENOSPC;
+                         else
+                             serrno = EFBIG;
                         rtcpd_SetReqStatus(NULL,nextfile,serrno,
                             RTCP_FAILED | RTCP_USERR);
                         rtcpd_BroadcastException();
@@ -1238,11 +1262,10 @@ void *tapeIOthread(void *arg) {
                         (void) rtcp_CloseConnection(&client_socket);
                         return((void *)&failure);
                     }
-                    rtcp_log(LOG_DEBUG,"tapeIOthread() file %d spanning volumes %s:%s\n",
+                    rtcp_log(LOG_DEBUG,"tapeIOthread() file %d spanns volumes %s:%s\n",
                              nextfile->filereq.tape_fseq,
                              nexttape->tapereq.vid,
                              nexttape->next->tapereq.vid);
-                    break;
                 }
 
                 /*
@@ -1282,21 +1305,9 @@ void *tapeIOthread(void *arg) {
                 }
             } /* !FINISHED && NOCONCAT */
             if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
-                /*
-                 * Decrement the total (concatenated) size and check
-                 * if it is consistent with sum of the individual
-                 * file sizes. This may happen if the max number
-                 * of records limit was specified by the user. In
-                 * this case we must make sure the copied file size
-                 * is updated.
-                 */
-                if ( totsz > nextfile->filereq.bytes_in ) {
-                    totsz -= nextfile->filereq.bytes_in;
-                } else {
-                    nextfile->filereq.bytes_in = totsz;
-                    totsz = 0;
-                }
-                if ( nextfile->filereq.concat == CONCAT ) {
+                bytes_in = nextfile->filereq.bytes_in;
+                if ( (nextfile->filereq.concat & CONCAT) != 0 &&
+                     (nextfile != prevfile)  ) {
                     /*
                      * When concatenating to tape all disk file
                      * requests are clumped together and treated
@@ -1306,6 +1317,9 @@ void *tapeIOthread(void *arg) {
                      * and end transfer time for each individual file
                      * is unknown. We simply set it to the total (all
                      * concatenated files together) start and end.
+                     * The test nextfile != prevfile assures that a new
+                     * file section (volume spanning) that starts in the
+                     * middle of a concat (to tape) chain is not overwritten.
                      */
                     nextfile->filereq.TStartTransferTape = 
                         nextfile->prev->filereq.TStartTransferTape;
@@ -1321,23 +1335,61 @@ void *tapeIOthread(void *arg) {
                         nextfile->prev->filereq.bytes_from_host;
                     nextfile->filereq.bytes_out = 
                         nextfile->prev->filereq.bytes_out;
+                    strcpy(nextfile->filereq.ifce,nextfile->prev->filereq.ifce);
                     /*
                      * bytes_in contains the value for each disk file. 
                      */ 
                 }
-                nextfile->filereq.proc_status = RTCP_FINISHED;
-                p = u64tostr(nextfile->filereq.bytes_out,u64buf,0);
-                p = strchr(u64buf,' ');
-                if ( p != NULL ) p = '\0';
-                rtcp_log(LOG_INFO,"network interface for data transfer (%s bytes) is %s\n",
-                         u64buf,nextfile->filereq.ifce);
+                /*
+                 * Decrement the total (concatenated) size and check
+                 * if it is consistent with sum of the individual
+                 * file sizes. This may happen if the max number
+                 * of records limit was specified by the user. In
+                 * this case we must make sure the copied file size
+                 * is updated.
+                 */
+                if ( totsz > nextfile->filereq.bytes_in ) {
+                    totsz -= nextfile->filereq.bytes_in;
+                    nextfile->eovflag = prevfile->eovflag;
+                    prevfile = nextfile;
+                } else {
+                    bytes_in = totsz;
+                    /*
+                     * For a disk file spanning over two volumes we cannot
+                     * change bytes_in in the file structure since the disk
+                     * IO thread still depends on it.
+                     */
+                    if ( (nextfile->filereq.concat & VOLUME_SPANNING) == 0 )
+                        nextfile->filereq.bytes_in = totsz;
+                    totsz = 0;
+                    nextfile->eovflag = prevfile->eovflag;
+                    if ( bytes_in > 0 ) prevfile = nextfile;
+                }
+
+
+                if ( bytes_in == nextfile->filereq.bytes_in ||
+                     nextfile->eovflag == 0 )
+                    nextfile->filereq.proc_status = RTCP_FINISHED;
+                else if ( bytes_in > 0 )
+                    nextfile->filereq.proc_status = RTCP_EOV_HIT;
+                else 
+                    nextfile->filereq.proc_status = RTCP_UNREACHABLE;
+
+                if ( bytes_in>0 ) {
+                    p = u64tostr(bytes_in,u64buf,0);
+                    p = strchr(u64buf,' ');
+                    if ( p != NULL ) p = '\0';
+                    rtcp_log(LOG_INFO,
+                       "network interface for data transfer (%s bytes) is %s\n",
+                       u64buf,nextfile->filereq.ifce);
+                }
                 tellClient(&client_socket,NULL,nextfile,0);
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
-            }
+            } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
-        if ( nexttape->next != nexttape ) {
+        if ( nexttape->next != tape ) {
             TP_STATUS(RTCP_PS_RELEASE);
             rc = rtcpd_Release(nexttape,nexttape->file);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -1346,7 +1398,7 @@ void *tapeIOthread(void *arg) {
     } CLIST_ITERATE_END(tape,nexttape);
 
     TP_STATUS(RTCP_PS_RELEASE);
-    rtcpd_Release(nexttape,NULL);
+    rtcpd_Release(nexttape->prev,NULL);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     tellClient(&client_socket,NULL,NULL,0);
     (void) rtcp_CloseConnection(&client_socket);
