@@ -140,7 +140,7 @@ END;
 CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT INTEGER) AS
   unused INTEGER;
 BEGIN
-  SELECT TapeCopy.id INTO unused
+  SELECT /*+ FIRST_ROWS */ TapeCopy.id INTO unused
   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
    WHERE DiskServer.id = FileSystem.diskserver
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
