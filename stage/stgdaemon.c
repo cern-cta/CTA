@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.160 2002/01/25 11:46:41 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.161 2002/01/25 12:25:55 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.160 $ $Date: 2002/01/25 11:46:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.161 $ $Date: 2002/01/25 12:25:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -177,7 +177,7 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
-int no_upd_fileclass; /* This is very important variable, setted to one only when forking procqry */
+int no_upd_fileclass = 1; /* This is very important variable, setted to one only when forking procqry, or (re-)initiliazing */
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
