@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 12:56:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -169,6 +169,10 @@ castor::db::ora::OraStagerSvc::tapesToDo()
         delete obj;
         throw ex;
       }
+      // Change tape status
+      tape->setStatus(castor::stager::TAPE_WAITMOUNT);
+      castor::ObjectSet alreadyDone;
+      updateRep(0, tape, alreadyDone, false);
       result.push_back(tape);
     }
   } catch (oracle::occi::SQLException e) {
@@ -178,5 +182,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       << std::endl << e.what();
     throw ex;
   }
+  // Commit all status changes
+  getConnection()->commit();
   return result;
 }
