@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.34 2000/07/04 10:08:21 jdurand Exp $
+ * $Id: poolmgr.c,v 1.35 2000/09/01 13:16:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.34 $ $Date: 2000/07/04 10:08:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.35 $ $Date: 2000/09/01 13:16:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -451,7 +451,7 @@ getpoolconf(defpoolname)
 
 	for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
 		if (! *migr_p->migp_name) continue;
-		for (j = 0, migp_p = migpolicies; j < nbmigpolicy; j++)
+		for (j = 0, migp_p = migpolicies; j < nbmigpolicy; j++, migp_p++)
 			if (strcmp (migr_p->migp_name, migp_p->name) == 0) break;
 		if (nbmigpolicy == 0 || j >= nbmigpolicy) {
 			stglogit (func, STG56, migr_p->migp_name);
@@ -465,7 +465,7 @@ getpoolconf(defpoolname)
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (! *pool_p->migr_name) continue;
-		for (j = 0, migr_p = migrators; j < nbmigrator; j++)
+		for (j = 0, migr_p = migrators; j < nbmigrator; j++, migr_p++)
 			if (strcmp (pool_p->migr_name, migr_p->name) == 0) break;
 		if (nbmigrator == 0 || j >= nbmigrator) {
 			stglogit (func, STG55, pool_p->migr_name);
@@ -966,7 +966,7 @@ selectfs(poolname, size, path, t_or_d)
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	if (*size == 0) {
-		if (t_or_d != 'm') {
+		if (t_or_d != 'm' && t_or_d != 'h') {
 			*size = pool_p->defsize;
 		}
 		size_to_use = pool_p->defsize;
@@ -1495,7 +1495,7 @@ int migpoolfiles(migr_p)
               seteuid(0);
               setegid(itype != 0 ? scc->stcp->gid : stpasswd->pw_gid);
               seteuid(itype != 0 ? scc->stcp->uid : stpasswd->pw_uid);
-              rc = stage_put_hsm(NULL, 1, files);
+              rc = stage_put_hsm(NULL, files);
               free(files);
               free (scs);
               exit(rc != 0 ? SYERR : 0);
