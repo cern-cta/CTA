@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.41 $ $Date: 2000/06/23 14:05:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.42 $ $Date: 2000/06/23 14:10:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     if ( TransferTime < 0 ) TransferTime = 0;
 
     strcpy(recfm,filereq->recfm);
-    if ( (filereq->convert & NOF77CWD) != 0 ) {
+    if ( (filereq->convert & NOF77CW) != 0 ) {
         if ( *filereq->recfm == 'U' ) strcat(recfm,",bin");
         else if ( *filereq->recfm == 'F' ) strcat(recfm,",-f77");
     }
