@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.70 $ $Date: 2000/05/04 10:08:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.71 $ $Date: 2000/05/19 07:25:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -83,6 +83,9 @@ int AbortFlag = 0;
 
 extern int SHIFTclient;
 int SHIFTclient = FALSE;
+
+extern int Dumptape;
+int Dumptape = FALSE;
 
 /*
  * Global variable needed to flag that an ENOSPC has been sent to the
@@ -1717,6 +1720,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * Dumptape request?
      */
     if ( tape->file == NULL ) {
+        Dumptape = TRUE;
         rc = rtcpd_tpdump(client,tape);
         rtcp_InitLog(NULL,NULL,NULL,NULL);
         if ( rc == -1 ) {
