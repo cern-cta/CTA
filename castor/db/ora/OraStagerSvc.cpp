@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2004/10/27 14:49:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2004/10/27 15:02:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -97,9 +97,9 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
   "BEGIN isSubRequestToSchedule(:1) END;";
 
-/// SQL statement for scheduleDiskCopy
-const std::string castor::db::ora::OraStagerSvc::s_scheduleDiskCopyStatementString =
-  "BEGIN scheduleDiskCopy(:1, :2, :3, :4, :5) END;";
+/// SQL statement for scheduleSubRequest
+const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementString =
+  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5) END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
