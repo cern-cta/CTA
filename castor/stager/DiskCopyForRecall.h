@@ -31,7 +31,6 @@
 #include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_float_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
@@ -213,12 +212,12 @@ int Cstager_DiskCopyForRecall_setDiskServer(struct Cstager_DiskCopyForRecall_t* 
  * Get the value of fsWeight
  * The weight of the filesystem on which the file resides/should be put
  */
-int Cstager_DiskCopyForRecall_fsWeight(struct Cstager_DiskCopyForRecall_t* instance, struct C_float_t* var);
+int Cstager_DiskCopyForRecall_fsWeight(struct Cstager_DiskCopyForRecall_t* instance, float* var);
 
 /**
  * Set the value of fsWeight
  * The weight of the filesystem on which the file resides/should be put
  */
-int Cstager_DiskCopyForRecall_setFsWeight(struct Cstager_DiskCopyForRecall_t* instance, struct C_float_t new_var);
+int Cstager_DiskCopyForRecall_setFsWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
 
 #endif // CASTOR_STAGER_DISKCOPYFORRECALL_H
