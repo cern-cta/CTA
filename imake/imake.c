@@ -121,6 +121,18 @@
 #include	<string.h>
 #include "imakemdep.h"
 
+/* Macros for prototyping */
+#ifdef _PROTO
+#undef _PROTO
+#endif
+#if (defined(__STDC__) || defined(_WIN32))
+/* On Win32, compiler is STDC compliant but the */
+/* __STDC__ definition itself is not a default. */
+#define _PROTO(a) a
+#else
+#define _PROTO(a) ()
+#endif
+
 
 #define	TRUE		1
 #define	FALSE		0
@@ -135,7 +147,8 @@ int	InRule = FALSE;
  * space instead of being deleted.  Blech.
  */
 #ifdef FIXUP_CPP_WHITESPACE
-void KludgeOutputLine(), KludgeResetRule();
+void KludgeOutputLine _PROTO((char **));
+void KludgeResetRule();
 #else
 #define KludgeOutputLine(arg)
 #define KludgeResetRule()
@@ -161,31 +174,43 @@ char	*Makefile = "Makefile";
 char	*Template = "Imake.tmpl";
 boolean	haveImakefileC = FALSE;
 char	*program;
-char	*FindImakefile();
-char	*ReadLine();
-char	*CleanCppInput();
-char	*Strdup();
-char	*Emalloc();
+char	*FindImakefile _PROTO((char *));
+char	*ReadLine _PROTO((FILE *, char *));
+char	*CleanCppInput _PROTO((char *));
+char	*Strdup _PROTO((register char *));
+char	*Emalloc _PROTO((int));
 
-void	AddCppArg();
-void	AddMakeArg();
-void	CleanCppOutput();
-void	cppit();
-void	init();
-boolean	isempty();
-void	LogFatal(), LogFatalI();
-void	makeit();
-void	SetOpts();
-void	showit();
-void	wrapup();
-void	writetmpfile();
+void	AddCppArg _PROTO((char *));
+void	AddMakeArg _PROTO((char *));
+void	CleanCppOutput _PROTO((FILE *, char *));
+void	cppit _PROTO((char *, char *, FILE *, char *));
+void	init _PROTO(());
+boolean	isempty _PROTO((char *));
+void	LogFatal _PROTO((char *, char *));
+void    LogFatalI _PROTO((char *, int));
+void	makeit _PROTO(());
+void	SetOpts _PROTO((int, char **));
+void	showit _PROTO((FILE *));
+void	wrapup _PROTO(());
+/*
+ * This function is not used. Is it ?
+ *
+  void	writetmpfile _PROTO((FILE *, int, char *));
+*/
+
+#if SIGNALRETURNSINT
+int
+#else
+void
+#endif
+imake_catch _PROTO((int));
 
 boolean	verbose = FALSE;
 boolean	show = TRUE;
 extern int	errno;
-extern char	*realloc();
-extern char	*getenv();
-extern char	*mktemp();
+extern char	*realloc _PROTO((void *, size_t));
+extern char	*getenv _PROTO((const char *));
+extern char	*mktemp _PROTO((char *));
 
 main(argc, argv)
 	int	argc;
@@ -253,7 +278,7 @@ int
 #else
 void
 #endif
-catch(sig)
+imake_catch(sig)
 	int	sig;
 {
 	errno = 0;
@@ -297,7 +322,7 @@ init()
 		make_argv[0] = p;
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-		signal(SIGINT, catch);
+		signal(SIGINT, imake_catch);
 }
 
 void
@@ -472,7 +497,7 @@ cppit(Imakefile, template, outfd, outfname)
 	cleanedImakefile = CleanCppInput(Imakefile);
 #if defined(_WIN32)
 	if ((pipeFile = fopen(ImakefileC, "w")) == NULL)
-		LogFatalI("Cannot open %s for output.", ImakefileC);
+		LogFatalI("Cannot open %s for output.", (int) ImakefileC);
 	haveImakefileC = TRUE;
 	fprintf(pipeFile, "#define IMAKE_TEMPLATE\t\"%s\"\n",
 		template);
@@ -812,16 +837,20 @@ NULL };
 	return(p2);
 }
 
-void
+/*
+ * This function is not used. Is it ?
+ *
+  void
 writetmpfile(fd, buf, cnt)
 	FILE	*fd;
-	int	cnt;
+	int	     cnt;
 	char	*buf;
 {
 	errno = 0;
 	if (fwrite(buf, cnt, 1, fd) != 1)
 		LogFatal("Cannot write to %s.", tmpMakefile);
 }
+*/
 
 char *Emalloc(size)
 	int	size;
