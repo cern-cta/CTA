@@ -207,7 +207,7 @@ BEGIN
  -- Check whether it was the last subrequest in the request
  SELECT id INTO result FROM SubRequest
   WHERE request = reqId
-    AND status = 0 -- SUBREQUEST_START
+    AND status NOT IN (6, 7) -- SUBREQUEST_READY, SUBREQUEST_FAILED
     AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
