@@ -563,3 +563,31 @@ BEGIN
  END LOOP TapeCopyCreation;
  COMMIT;
 END;
+
+/* PL/SQL method implementing selectCastorFile */
+CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
+                                              nh IN VARCHAR,
+                                              sc IN INTEGER,
+                                              fc IN INTEGER,
+                                              fs IN INTEGER,
+                                              rid OUT INTEGER,
+                                              rfs OUT INTEGER) AS
+BEGIN
+  -- try to find an existing file
+  SELECT id, fileSize INTO rid, rfs FROM CastorFile
+    WHERE fileId = fid AND nsHost = nh;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  BEGIN
+    -- lock table to be atomic
+    LOCK TABLE CastorFile in share mode;
+    -- retry the select in case a creation was done in between
+    SELECT id, fileSize INTO rid, rfs FROM CastorFile
+      WHERE fileId = fid AND nsHost = nh;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- insert new row
+    INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs)
+      RETURNING id, fileSize INTO rid, rfs;
+    INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
+  END;
+END;

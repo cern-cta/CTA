@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/14 10:57:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -432,8 +432,9 @@ castor::stager::RemoteStagerSvc::selectFileClass
 // -----------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::stager::RemoteStagerSvc::selectCastorFile
-(const u_signed64 fileId,
- const std::string nsHost)
+(const u_signed64 fileId, const std::string nsHost,
+ u_signed64 svcClass, u_signed64 fileClass,
+ u_signed64 fileSize)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

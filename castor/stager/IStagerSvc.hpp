@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.33 $ $Release$ $Date: 2004/12/16 12:31:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.34 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -386,16 +386,23 @@ namespace castor {
 
       /**
        * Retrieves a CastorFile from the database based on its fileId
-       * and name server.
+       * and name server. Creates a new one if none if found.
        * Caller is in charge of the deletion of the allocated object
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
+       * @param svcClass the service class of the castor file.
+       * Used only in case of creation of a new castor file.
+       * @param fileClass the file class of the castor file.
+       * Used only in case of creation of a new castor file.
+       * @param fileSize the size fo the castor file.
+       * Used only in case of creation of a new castor file.
        * @return the CastorFile, or 0 if none found
        * @exception Exception in case of error
        */
       virtual castor::stager::CastorFile* selectCastorFile
-      (const u_signed64 fileId,
-       const std::string nsHost)
+      (const u_signed64 fileId, const std::string nsHost,
+       u_signed64 svcClass, u_signed64 fileClass,
+       u_signed64 fileSize)
         throw (castor::exception::Exception) = 0;
 
       /**

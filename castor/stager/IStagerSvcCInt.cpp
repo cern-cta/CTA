@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2004/12/14 10:57:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -441,11 +441,13 @@ extern "C" {
   int Cstager_IStagerSvc_selectCastorFile
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::CastorFile** castorFile,
-   const u_signed64 fileId,
-   const char* nsHost) {
+   const u_signed64 fileId, const char* nsHost,
+   u_signed64 svcClass, u_signed64 fileClass,
+   u_signed64 fileSize) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *castorFile = stgSvc->stgSvc->selectCastorFile(fileId, nsHost);
+      *castorFile = stgSvc->stgSvc->selectCastorFile
+        (fileId, nsHost, svcClass, fileClass, fileSize);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.91 $ $Release$ $Date: 2004/12/15 11:30:23 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -136,7 +136,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectFileClassStatementStrin
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-  "SELECT id, fileSize FROM CastorFile WHERE fileId = :1 AND nsHost = :2";
+  "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7); END;";
 
 /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraStagerSvc::s_selectFileSystemStatementString =
@@ -1384,32 +1384,44 @@ castor::db::ora::OraStagerSvc::selectFileClass
 // -----------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile
-(const u_signed64 fileId,
- const std::string nsHost)
+(const u_signed64 fileId, const std::string nsHost,
+ u_signed64 svcClass, u_signed64 fileClass,
+ u_signed64 fileSize)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
     m_selectCastorFileStatement =
       createStatement(s_selectCastorFileStatementString);
+    m_selectCastorFileStatement->registerOutParam
+      (6, oracle::occi::OCCIDOUBLE);
+    m_selectCastorFileStatement->registerOutParam
+      (7, oracle::occi::OCCIDOUBLE);
+    m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   unsigned long id;
   try {
     m_selectCastorFileStatement->setDouble(1, fileId);
     m_selectCastorFileStatement->setString(2, nsHost);
+    m_selectCastorFileStatement->setDouble(3, svcClass);
+    m_selectCastorFileStatement->setDouble(4, fileClass);
+    m_selectCastorFileStatement->setDouble(5, fileSize);
     oracle::occi::ResultSet *rset = m_selectCastorFileStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
+      // Nothing found, throw exception
       m_selectCastorFileStatement->closeResultSet(rset);
-      return 0;
+      castor::exception::Internal e;
+      e.getMessage()
+        << "selectCastorFile returned no CastorFile";
+      throw e;
     }
     // Found the CastorFile, so create it in memory
     castor::stager::CastorFile* result =
       new castor::stager::CastorFile();
-    result->setId((u_signed64)rset->getDouble(1));
+    result->setId((u_signed64)rset->getDouble(5));
     result->setFileId(fileId);
     result->setNsHost(nsHost);
-    result->setFileSize((u_signed64)rset->getDouble(2));
+    result->setFileSize((u_signed64)rset->getDouble(6));
     m_selectCastorFileStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {

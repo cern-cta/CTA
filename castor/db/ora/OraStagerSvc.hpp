@@ -395,12 +395,19 @@ namespace castor {
          * Retrieves a CastorFile from the database based on its fileId.
          * Caller is in charge of the deletion of the allocated object
          * @param fileId the fileId of the CastorFile
+         * @param svcClass the service class of the castor file.
+         * Used only in case of creation of a new castor file.
+         * @param fileClass the file class of the castor file.
+         * Used only in case of creation of a new castor file.
+         * @param fileSize the size fo the castor file.
+         * Used only in case of creation of a new castor file.
          * @return the CastorFile, or 0 if none found
          * @exception Exception in case of error
          */
         virtual castor::stager::CastorFile* selectCastorFile
-        (const u_signed64 fileId,
-         const std::string nsHost)
+        (const u_signed64 fileId, const std::string nsHost,
+         u_signed64 svcClass, u_signed64 fileClass,
+         u_signed64 fileSize)
           throw (castor::exception::Exception);
 
         /**

@@ -479,6 +479,10 @@ int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
  * @param castorFile the CastorFile object returned, or 0 if none found
  * @param fileId the fileId of the CastorFile
  * @param nsHost the name server to use
+ * @param svcClass the service class of the castor file.
+ * Used only in case of creation of a new castor file.
+ * @param fileSize the size fo the castor file.
+ * Used only in case of creation of a new castor file.
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -487,8 +491,8 @@ int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
 int Cstager_IStagerSvc_selectCastorFile
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_CastorFile_t** castorFile,
- const u_signed64 fileId,
- const char* nsHost);
+ const u_signed64 fileId, const char* nsHost,
+ u_signed64 svcClass, u_signed64 fileSize);
 
 /**
  * Retrieves a FileSystem from the database based on its
