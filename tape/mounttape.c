@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.10 $ $Date: 1999/11/25 06:37:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.11 $ $Date: 1999/12/24 10:07:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -492,11 +492,12 @@ unload_loop1:
 #if linux
 #endif
 
-		/* check VOL1 label if not blp and not prelabel */
+		/* check VOL1 label if not blp */
 
-		if (lblcode == BLP || prelabel) break;
+		if (lblcode == BLP) break;
 
 		if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
+		if (prelabel >= 0 && c == 3) break;	/* tape is new. ok to prelabel */
 		if (c) {	/* record read is not 80 bytes long */
 			c = 0;
 			tplbl = NL;
@@ -505,6 +506,26 @@ unload_loop1:
 			ebc2asc (vol1, 80);
 			if (strncmp (vol1, "VOL1", 4) == 0) tplbl = SL;
 			else tplbl = NL;
+		}
+		if (tplbl != NL) {
+			strncpy (tpvsn, vol1 + 4, 6);
+			tpvsn[6] = '\0';
+			if ((p = strchr (tpvsn, ' ')) != NULL) *p = '\0';
+		}
+		if (prelabel >= 0) {
+			if (tplbl == NL)
+				sprintf (msg, TP062, vid, "is an NL tape", "");
+			else
+				sprintf (msg, TP062, vid, "has vsn ", tpvsn);
+			usrmsg (func, "%s", msg);
+			omsgr (func, msg, 0);
+			checkorep (func, orepbuf);
+			if (strcmp (orepbuf, "ok") && strcmp (orepbuf, "yes")) {
+				usrmsg (func, TP023, orepbuf);
+				c = EACCES;
+				goto reply;
+			}
+			break;	/* operator gave ok */
 		}
 		if (tplbl == NL && lblcode == NL) break;
 		if (tplbl != NL)
@@ -515,9 +536,6 @@ unload_loop1:
 			goto reply;
 		}
 		if (tplbl != NL) {
-			strncpy (tpvsn, vol1 + 4, 6);
-			tpvsn[6] = '\0';
-			if ((p = strchr (tpvsn, ' ')) != NULL) *p = '\0';
 			if (lblcode == tplbl && strcmp (tpvsn, vsn) == 0) break;
 		}
 		if (*loader != 'm' && vsnretry++) {
@@ -587,6 +605,7 @@ positp:
 #if SONYRAW
 	    if (! sonyraw) {
 #endif
+		if ((c = rwndtape (tapefd, path))) goto reply;
 		close (tapefd);
 		if ((tapefd = open (path, O_WRONLY)) < 0) {
 			usrmsg (func, TP042, path, "reopen", sys_errlist[errno]);
