@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/19 10:48:41 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/20 13:53:03 $ $Author: bcouturi $
  *
  * 
  *
@@ -35,10 +35,11 @@ namespace castor {
 
   namespace stager {
 
-      /**
-       * Name of the Service class environment variables
-       */
-      extern const char* SVCCLASS_ENV;
+    /**
+     * Name of the Service class environment variables
+     */
+    extern const char* SVCCLASS_ENV;
+    extern const char* SVCCLASS_ENV_ALT;
 
 
     /**

@@ -57,6 +57,20 @@ extern "C" {
 #include "BaseClient.hpp"
 
 //------------------------------------------------------------------------------
+// String constants
+//------------------------------------------------------------------------------
+const char *castor::client::HOST_ENV = "STAGE_HOST";
+const char *castor::client::HOST_ENV_ALT = "RH_HOST";
+const char *castor::client::PORT_ENV = "STAGE_PORT";
+const char *castor::client::PORT_ENV_ALT = "RH_PORT";
+const char *castor::client::CATEGORY_CONF = "RH";
+const char *castor::client::HOST_CONF = "HOST";
+const char *castor::client::PORT_CONF = "PORT";
+const char *castor::client::STAGE_EUID = "STAGE_EUID";
+const char *castor::client::STAGE_EGID = "STAGE_EGID";
+
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
@@ -83,16 +97,18 @@ std::string castor::client::BaseClient::sendRequest
   setRhPort();
   // Uid
   uid_t euid;
-  if (0 != getenv("STAGE_EUID")) {
-    euid = atoi(getenv("STAGE_EUID"));
+  char *stgeuid = getenv(castor::client::STAGE_EUID);
+  if (0 != stgeuid) {
+    euid = atoi(stgeuid);
   } else {
     euid = geteuid();
   }
   req->setEuid(euid);
   // GID
   uid_t egid;
-  if (0 != getenv("STAGE_EGID")) {
-    egid = atoi(getenv("STAGE_EGID"));
+  char *stgegid = getenv(castor::client::STAGE_EGID);
+  if (0 != stgegid) {
+    egid = atoi(stgegid);
   } else {
     egid = getegid();
   }
@@ -361,8 +377,10 @@ void castor::client::BaseClient::setRhPort()
   // RH server port. Can be given through the environment
   // variable RH_PORT or in the castor.conf file as a
   // RH/PORT entry. If none is given, default is used
-  if ((port = getenv ("RH_PORT")) != 0 ||
-      (port = getconfent("RH","PORT",0)) != 0) {
+  if ((port = getenv (castor::client::PORT_ENV)) != 0 
+      || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
+      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+			    (char *)castor::client::PORT_CONF,0)) != 0) {
     char* dp = port;
     errno = 0;
     int iport = strtoul(port, &dp, 0);
@@ -395,8 +413,10 @@ void castor::client::BaseClient::setRhHost()
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
   char* host;
-  if ((host = getenv ("RH_HOST")) != 0 ||
-      (host = getconfent("RH","HOST",0)) != 0) {
+  if ((host = getenv (castor::client::HOST_ENV)) != 0
+      || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
+      || (host = getconfent((char *)castor::client::CATEGORY_CONF,
+			    (char *)castor::client::HOST_CONF,0)) != 0) {
     m_rhHost = host;
   } else {
     m_rhHost = RH_HOST;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/19 13:38:15 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/20 13:53:03 $ $Author: bcouturi $
  *
  * 
  *
@@ -29,7 +29,8 @@
 #include <iostream>
 #include <string>
 
-const char *castor::stager::SVCCLASS_ENV = "SVCCLASS";
+const char *castor::stager::SVCCLASS_ENV = "STAGE_SVCCLASS";
+const char *castor::stager::SVCCLASS_ENV_ALT = "SVCCLASS";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -51,7 +52,11 @@ void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
   if (0 != opts && opts->service_class != 0) {
     m_request->setSvcClassName(std::string(opts->service_class));
   } else {
-    char *svc = (char *)getenv(castor::stager::SVCCLASS_ENV);
+    char *svc = 0;
+    svc = (char *)getenv(castor::stager::SVCCLASS_ENV);
+    if (0 == svc) {
+      svc = (char *)getenv(castor::stager::SVCCLASS_ENV_ALT);
+    }
     if (0 != svc) {
       m_request->setSvcClassName(std::string(svc));
     }

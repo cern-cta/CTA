@@ -53,6 +53,19 @@ namespace castor {
 
   namespace client {
 
+    /**
+     * Name of the Service class environment variables
+     */
+    extern const char* HOST_ENV;;
+    extern const char* HOST_ENV_ALT;
+    extern const char* PORT_ENV;
+    extern const char* PORT_ENV_ALT;
+    extern const char* CATEGORY_CONF;
+    extern const char* HOST_CONF;
+    extern const char* PORT_CONF;
+    extern const char* STAGE_EUID;
+    extern const char* STAGE_EGID;
+
     // Forward declaration
     class IResponseHandler;
 
