@@ -1,6 +1,10 @@
 /*
- * $Id: stage_util.c,v 1.24 2002/09/13 08:15:38 jdurand Exp $
+ * $Id: stage_util.c,v 1.25 2002/09/13 09:49:38 jdurand Exp $
  */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.25 $ $Date: 2002/09/13 09:49:38 $ CERN IT-DS/HSM Jean-Damien Durand";
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -44,6 +48,8 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define PRINT_VAL(st,member) fprintf(stdout, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define DUMP_VALHEX(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define PRINT_VALHEX(st,member) fprintf(stdout, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
+#define DUMP_VALOCT(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20lo (oct)\n", NAMEOFVAR(member) , (unsigned long) st->member)
+#define PRINT_VALOCT(st,member) fprintf(stdout, "%-23s : %20lo (oct)\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define DUMP_VALSTATUS(rpfd,st,member) { \
 	char statusstring[1024]; \
 	funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
@@ -209,7 +215,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	DUMP_STRING(rpfd,stcp,user);
 	DUMP_VAL(rpfd,stcp,uid);
 	DUMP_VAL(rpfd,stcp,gid);
-	DUMP_VAL(rpfd,stcp,mask);
+	DUMP_VALOCT(rpfd,stcp,mask);
 	DUMP_VALSTATUS(rpfd,stcp,status);
 	DUMP_U64(rpfd,stcp,actual_size);
 	DUMP_TIME(rpfd,stcp,c_time);
@@ -308,7 +314,7 @@ void DLL_DECL print_stcp(stcp)
 	PRINT_STRING(stcp,user);
 	PRINT_VAL(stcp,uid);
 	PRINT_VAL(stcp,gid);
-	PRINT_VAL(stcp,mask);
+	PRINT_VALOCT(stcp,mask);
 	PRINT_VALSTATUS(stcp,status);
 	PRINT_U64(stcp,actual_size);
 	PRINT_TIME(stcp,c_time);
