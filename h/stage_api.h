@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.50 2002/04/11 09:57:43 jdurand Exp $
+ * $Id: stage_api.h,v 1.51 2002/04/23 12:01:10 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -286,8 +286,8 @@ EXTERN_C int  DLL_DECL  stage_getuniqueid _PROTO((u_signed64 *));
 EXTERN_C int  DLL_DECL  stage_setuniqueid _PROTO((u_signed64));
 EXTERN_C int  DLL_DECL  stage_getlaststghost _PROTO((char **));
 EXTERN_C int  DLL_DECL  stage_setlaststghost _PROTO((char *));
-EXTERN_C int  DLL_DECL  build_linkname _PROTO((char *, char *, int, int));
-EXTERN_C int  DLL_DECL  build_Upath _PROTO((int, char *, int, int));
+EXTERN_C int  DLL_DECL  build_linkname _PROTO((char *, char *, size_t, int));
+EXTERN_C int  DLL_DECL  build_Upath _PROTO((int, char *, size_t, int));
 EXTERN_C int  DLL_DECL  rc_castor2shift _PROTO((int));
 
 #endif /* __stage_api_h */
