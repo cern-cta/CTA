@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.18 2005/02/01 10:48:30 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.19 2005/02/14 17:28:15 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.18 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.19 $ $Date: 2005/02/14 17:28:15 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -35,6 +35,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
+#include "stager_client_api_common.h"
 
 // To be removed when getting rid of 
 // request printing
@@ -193,13 +194,17 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
   
   char *func = "stage_put";
 
+
   if (0 == filename
       || 0 ==  response) {
     serrno = EINVAL;
     stage_errmsg(func, "Invalid input parameter");
     return -1;
   }
-  
+
+  stage_trace(3, "%s %s %s %s mode=%d/size=%llu", 
+	      func, userTag, protocol, filename, mode, size);
+
 
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);

@@ -48,6 +48,7 @@
 #include "castor/exception/Communication.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "stager_client_api_common.h"
 extern "C" {
 #include <Cgetopt.h>
 #include <common.h>
@@ -193,12 +194,14 @@ std::string castor::client::BaseClient::sendRequest
   m_callbackSocket->getPortIp(port, ip);
   clog() << DEBUG << "Opened callback socket on port "
          << port << std::endl;
+  stage_trace(3, "Will wait for stager callback on port %d", port);
   m_rhPort = port;
   // set the Client
   castor::IClient *cl = createClient();
   req->setClient(cl);
   // sends the request
   std::string requestId = internalSendRequest(*req);
+  stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
   // waits for callbacks, first loop on the request
   // replier connections
   bool stop = false;
@@ -329,6 +332,8 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
+  stage_trace(3, "Waiting for callback from stager");
+
   int rc, nonblocking=1;
 
   rc = ioctl(m_callbackSocket->socket(),FIONBIO,&nonblocking);
@@ -402,6 +407,8 @@ void castor::client::BaseClient::setRhPort()
            << CSP_RHSERVER_PORT << ")." << std::endl;
     m_rhPort = CSP_RHSERVER_PORT;
   }
+
+  stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
 }
 
 //------------------------------------------------------------------------------
@@ -428,6 +435,8 @@ void castor::client::BaseClient::setRhHost()
 //       << std::endl;
 //     throw e;
   }
+
+  stage_trace(3, "Looking up RH Host - Using %s", m_rhHost.c_str());
 }
 
 //------------------------------------------------------------------------------
