@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.8 $ $Date: 2003/12/03 13:09:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.9 $ $Date: 2004/03/04 16:59:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -54,7 +54,23 @@ char *timestamp();
 int usr_errflg;
 struct vol_elem *vol_list;
 int vol_list_size;
+int use_checksum;
 extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
+EXTERN_C char DLL_DECL *getconfent _PROTO(());
+
+#define FILL_USE_CHECKSUM_VARIABLE() {                \
+	char *p;                                          \
+	use_checksum = 1;                                 \
+	if ((p = getenv("REPACK_USE_CHECKSUM")) == NULL) {\
+		p = getconfent("REPACK","USE_CHECKSUM",0);    \
+	}                                                 \
+	if (p != NULL) {                                  \
+		if (strcmp(p,"NO") == 0) {                    \
+			use_checksum = 0;                         \
+		}                                             \
+	}                                                 \
+}
+
 main(argc, argv)
 int argc;
 char **argv;
@@ -204,7 +220,7 @@ char **argv;
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-		exit (usr_errflg ? USERR : sys_errflg ? SYERR : 0);
+		exit (usr_errflg ? USERR : (sys_errflg ? SYERR : 0));
 	}
 
 #if ! defined(_WIN32)
@@ -495,6 +511,39 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 			return (-1);
 		}
 
+		FILL_USE_CHECKSUM_VARIABLE();
+		if (use_checksum && (fl->castorSegAttr.segmCksumAlgorithm[0] != '\0')) {
+			/* We verify from the tpread with the checksum we got from name server */
+			if (strcmp(fl->castorSegAttr.segmCksumAlgorithm,seg_list[last_seg_repacked].checksum_name) == 0) {
+				/* Same algorithm - then the values have to match */
+				if (seg_list[last_seg_repacked].checksum != fl->castorSegAttr.segmCksum) {
+					serrno = SECHECKSUM;
+					printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d,\"%s\",0x%lx) to (%s,%d,%d,%02x%02x%02x%02x,%d, \"%s\", 0x%lx) error: %s\n",
+							timestamp(),
+							u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
+							seg_list[last_seg_repacked].copyno,
+							seg_list[last_seg_repacked].fsec,
+							seg_list[last_seg_repacked].vid,
+							seg_list[last_seg_repacked].side,
+							seg_list[last_seg_repacked].fseq,
+							seg_list[last_seg_repacked].blockid[0],
+							seg_list[last_seg_repacked].blockid[1],
+							seg_list[last_seg_repacked].blockid[2],
+							seg_list[last_seg_repacked].blockid[3],
+							seg_list[last_seg_repacked].compression,
+							seg_list[last_seg_repacked].checksum_name,
+							seg_list[last_seg_repacked].checksum,
+							tl->vid, tl->side, fl->tape_fseq, fl->blockid[0], fl->blockid[1],
+							fl->blockid[2], fl->blockid[3], compression_factor,
+							fl->castorSegAttr.segmCksumAlgorithm, fl->castorSegAttr.segmCksum,
+							sstrerror(serrno)
+						);
+					fflush (stdout);
+					return(-1);
+				}				
+			}
+		}
+
 		fileid = seg_list[last_seg_repacked].fileid;
 
 		old_segattrs.copyno = seg_list[last_seg_repacked].copyno;
@@ -511,6 +560,17 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 		new_segattrs.fseq = fl->tape_fseq;
 		memcpy (new_segattrs.blockid, fl->blockid, 4);
 
+		if (use_checksum) {
+			/* Propagate checksum */
+			strncpy(seg_list[last_seg_repacked].checksum_name, fl->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
+			seg_list[last_seg_repacked].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+			seg_list[last_seg_repacked].checksum = fl->castorSegAttr.segmCksum;
+		} else {
+			/* Make sure it is zero */
+			seg_list[last_seg_repacked].checksum_name[0] = '\0';
+			seg_list[last_seg_repacked].checksum = 0;
+		}
+		
 		if (Cns_replaceseg (host, fileid, &old_segattrs, &new_segattrs) < 0) {
 			fprintf (stderr, "Cns_replaceseg (%s %d %d) error: %s\n",
 			    u64tostr (fileid, tmpbuf, 0), old_segattrs.copyno,
@@ -523,22 +583,25 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 				return (-1);
 			}
 		}
-
-		printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d) to (%s,%d,%d,%02x%02x%02x%02x,%d)\n",
-		    timestamp(),
-		    u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
-		    seg_list[last_seg_repacked].copyno,
-		    seg_list[last_seg_repacked].fsec,
-		    seg_list[last_seg_repacked].vid,
-		    seg_list[last_seg_repacked].side,
-		    seg_list[last_seg_repacked].fseq,
-		    seg_list[last_seg_repacked].blockid[0],
-		    seg_list[last_seg_repacked].blockid[1],
-		    seg_list[last_seg_repacked].blockid[2],
-		    seg_list[last_seg_repacked].blockid[3],
-		    seg_list[last_seg_repacked].compression,
-		    tl->vid, tl->side, fl->tape_fseq, fl->blockid[0], fl->blockid[1],
-		    fl->blockid[2], fl->blockid[3], compression_factor);
+		
+		printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d,\"%s\",0x%lx) to (%s,%d,%d,%02x%02x%02x%02x,%d,\"%s\",0x%lx)\n",
+				timestamp(),
+				u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
+				seg_list[last_seg_repacked].copyno,
+				seg_list[last_seg_repacked].fsec,
+				seg_list[last_seg_repacked].vid,
+				seg_list[last_seg_repacked].side,
+				seg_list[last_seg_repacked].fseq,
+				seg_list[last_seg_repacked].blockid[0],
+				seg_list[last_seg_repacked].blockid[1],
+				seg_list[last_seg_repacked].blockid[2],
+				seg_list[last_seg_repacked].blockid[3],
+				seg_list[last_seg_repacked].compression,
+				seg_list[last_seg_repacked].checksum_name,
+				seg_list[last_seg_repacked].checksum,
+				tl->vid, tl->side, fl->tape_fseq, fl->blockid[0], fl->blockid[1],
+				fl->blockid[2], fl->blockid[3], compression_factor,
+				fl->castorSegAttr.segmCksumAlgorithm, fl->castorSegAttr.segmCksum);
 		fflush (stdout);
 
 		if (! nodelete_flag) {
@@ -639,6 +702,13 @@ char *pool_name;
 		fl->filereq.disk_fseq = i + 1 - last_stcp_repacked;
 		fl->filereq.check_fid = NEW_FILE;
 		fl->filereq.concat = NOCONCAT;
+		FILL_USE_CHECKSUM_VARIABLE();
+		if (use_checksum) {
+			/* We propage to the tpwrite the checksum we got from name server */
+			strncpy(fl->filereq.castorSegAttr.segmCksumAlgorithm, seg_list[i].checksum_name,CA_MAXCKSUMNAMELEN);
+			fl->filereq.castorSegAttr.segmCksumAlgorithm[CA_MAXCKSUMNAMELEN] = '\0';
+			fl->filereq.castorSegAttr.segmCksum = seg_list[i].checksum;
+		}
 		stcp++;
 	}
 	last_rtcp_disk_fseq = fl->filereq.disk_fseq;
@@ -721,5 +791,8 @@ char *pool_name;
 	} while (fl != tl->file);
 	free (tl);
 	
+	if (c && serrno == SECHECKSUM) {
+		c = CHECKSUMERR;
+	}
 	return (c);
 }
