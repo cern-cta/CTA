@@ -496,7 +496,7 @@ int Cstager_IStagerSvc_selectCastorFile
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_CastorFile_t** castorFile,
  const u_signed64 fileId, const char* nsHost,
- u_signed64 svcClass, u_signed64 fileSize);
+ u_signed64 svcClass, u_signed64 fileClass, u_signed64 fileSize);
 
 /**
  * Retrieves a FileSystem from the database based on its
