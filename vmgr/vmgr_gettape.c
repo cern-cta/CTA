@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.3 $ $Date: 2000/01/05 09:42:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.4 $ $Date: 2000/02/10 11:15:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.3 $ $Date:
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_gettape(const char *poolname, int Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, int *fseq, unsigned int *blockid)
+vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, int *fseq, unsigned int *blockid)
 {
 	int c;
 	char func[16];
@@ -67,7 +67,7 @@ vmgr_gettape(const char *poolname, int Size, const char *Condition, char *vid, c
 	} else {
 		marshall_STRING (sbp, "");
 	}
-	marshall_LONG (sbp, Size);
+	marshall_HYPER (sbp, Size);
 	if (Condition) {
 		marshall_STRING (sbp, Condition);
 	} else {
