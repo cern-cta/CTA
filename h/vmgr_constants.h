@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_constants.h,v 1.2 2004/08/12 13:39:24 motiakov Exp $
+ * $Id: vmgr_constants.h,v 1.3 2005/03/17 10:16:13 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/12 13:39:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.3 $ $Date: 2005/03/17 10:16:13 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_CONSTANTS_H
@@ -48,6 +48,13 @@
 #define	OPT_NBSIDES		13
 #define	OPT_SIDE		14
 #define	OPT_TAG			15
+#define OPT_DGN			16
+#define OPT_WEIGHT		17
+#define OPT_DELTA		18
+
+#define OPT_VALID_WEIGHT        (0x1)
+#define OPT_VALID_DELTA		(0x2)
+
 
 			/* volume manager utilities exit codes */
 
