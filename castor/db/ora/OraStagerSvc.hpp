@@ -334,6 +334,21 @@ namespace castor {
         virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
           throw (castor::exception::Exception);
 
+        /**
+         * Updates a SubRequest status in the DB and tells
+         * whether the request to which it belongs still
+         * has some SubRequests in SUBREQUEST_START status.
+         * The two operations are executed atomically.
+         * The update is commited before returning.
+         * @param subreq the SubRequest to update
+         * @return whether there are still SubRequests in
+         * SUBREQUEST_START status within the same request
+         * @exception Exception in case of error
+         */
+        virtual bool updateAndCheckSubRequest
+        (castor::stager::SubRequest *subreq)
+          throw (castor::exception::Exception);
+
       private:
 
         /*
@@ -418,6 +433,12 @@ namespace castor {
 
         /// SQL statement object for function selectCastorFile
         oracle::occi::Statement *m_selectCastorFileStatement;
+
+        /// SQL statement for function updateAndCheckSubRequest
+        static const std::string s_updateAndCheckSubRequestStatementString;
+
+        /// SQL statement object for function updateAndCheckSubRequest
+        oracle::occi::Statement *m_updateAndCheckSubRequestStatement;
 
       }; // end of class OraStagerSvc
 

@@ -378,4 +378,23 @@ int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
                                         struct Cstager_CastorFile_t** svcClass,
                                         const u_signed64 fileId);
 
+/**
+ * Updates a SubRequest status in the DB and tells
+ * whether the request to which it belongs still
+ * has some SubRequests in SUBREQUEST_START status.
+ * The two operations are executed atomically.
+ * The update is commited before returning.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq the SubRequest to update
+ * @param result whether there are still SubRequests in
+ * SUBREQUEST_START status within the same request
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int updateAndCheckSubRequest(struct Cstager_IStagerSvc_t* stgSvc,
+                             struct Cstager_SubRequest_t* subreq,
+                             int* result);
+
 #endif // CASTOR_ISTAGERSVC_H

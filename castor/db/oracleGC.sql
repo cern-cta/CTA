@@ -137,6 +137,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
+/* PL/SQL method implementing scheduleSubRequest */
 CREATE OR REPLACE PROCEDURE scheduleSubRequest(subreqId IN INTEGER, fileSystemId IN INTEGER,
                                                diskCopyId OUT INTEGER, path OUT VARCHAR,
                                                status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
@@ -187,4 +188,25 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
      status := 1; -- status WAITDISK2DISKCOPY
    END IF;
  END IF;
+END;
+
+/* PL/SQL method implementing updateAndCheckSubRequest */
+CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
+  reqId INTEGER;
+BEGIN
+ -- Lock the access to the Request
+ SELECT Id2Type.id INTO reqId
+  FROM SubRequest, Id2Type
+  WHERE SubRequest.id = srId
+  AND Id2Type.id = SubRequest.request
+  FOR UPDATE;
+ -- Update Status
+ UPDATE SubRequest SET status = newStatus WHERE id = srId;
+ -- Check whether it was the last subrequest in the request
+ SELECT id INTO result FROM SubRequest
+  WHERE request = reqId
+    AND status = 0 -- SUBREQUEST_START
+    AND ROWNUM < 2;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
+  result := 0;
 END;

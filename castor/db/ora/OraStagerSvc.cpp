@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2004/11/10 16:55:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2004/11/12 10:58:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -111,6 +111,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "SELECT id, nsHost, fileSize FROM CastorFile WHERE fileId = :1";
 
+/// SQL statement for scheduleSubRequest
+const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
+  "BEGIN updateAndCheckSubRequest(:1, :2, :3) END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -121,7 +125,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_bestTapeCopyForStreamStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
-  m_selectSvcClassStatement(0), m_selectCastorFileStatement(0) {
+  m_selectSvcClassStatement(0), m_selectCastorFileStatement(0),
+  m_updateAndCheckSubRequestStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -162,6 +167,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectCastorFileStatement);
+    deleteStatement(m_updateAndCheckSubRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -174,6 +180,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_subRequestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectCastorFileStatement = 0;
+  m_updateAndCheckSubRequestStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -737,7 +744,7 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 }
 
 // -----------------------------------------------------------------------
-// selectTape
+// scheduleSubRequest
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::db::ora::OraStagerSvc::scheduleSubRequest
@@ -877,6 +884,43 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     ex.getMessage()
       << "Unable to select castorFile by fileId :"
       << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// updateAndCheckSubRequest
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
+(castor::stager::SubRequest* subreq)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_updateAndCheckSubRequestStatement) {
+      m_updateAndCheckSubRequestStatement =
+        createStatement(s_updateAndCheckSubRequestStatementString);
+      m_updateAndCheckSubRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+      m_updateAndCheckSubRequestStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_updateAndCheckSubRequestStatement->setDouble(1, subreq->id());
+    m_updateAndCheckSubRequestStatement->setInt(2, subreq->status());
+    unsigned int nb = m_updateAndCheckSubRequestStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "updateAndCheckSubRequest did not return any result.";
+      throw ex;
+    }
+    // return
+    return m_updateAndCheckSubRequestStatement->getDouble(3) != 0;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in updateAndCheckSubRequest."
+      << std::endl << e.what();
     throw ex;
   }
 }

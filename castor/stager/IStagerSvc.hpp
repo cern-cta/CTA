@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/08 15:40:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/12 10:58:41 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -305,6 +305,21 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Updates a SubRequest status in the DB and tells
+       * whether the request to which it belongs still
+       * has some SubRequests in SUBREQUEST_START status.
+       * The two operations are executed atomically.
+       * The update is commited before returning.
+       * @param subreq the SubRequest to update
+       * @return whether there are still SubRequests in
+       * SUBREQUEST_START status within the same request
+       * @exception Exception in case of error
+       */
+      virtual bool updateAndCheckSubRequest
+      (castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
