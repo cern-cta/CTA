@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.19 2000/05/18 14:59:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.20 2000/05/19 14:08:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.19 $ $Date: 2000/05/18 14:59:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.20 $ $Date: 2000/05/19 14:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -465,8 +465,6 @@ getpoolconf(defpoolname)
 				errflg++;
 				goto reply;
 			}
-			pool_p->migr->poolp[0] = pool_p;
-			pool_p->migr->nbpool++;
 		} else {
 			struct pool **dummy;
 			if ((dummy = (struct pool **) realloc(pool_p->migr->poolp,(pool_p->migr->nbpool + 1) * sizeof(char *))) == NULL) {
@@ -474,8 +472,9 @@ getpoolconf(defpoolname)
 				errflg++;
 				goto reply;
 			}
-			pool_p->migr->poolp[pool_p->migr->nbpool++] = pool_p;
+			pool_p->migr->poolp = dummy;
 		}
+		pool_p->migr->poolp[pool_p->migr->nbpool++] = pool_p;
 	}
 
 	/* 3rd pass: store pool elements */
