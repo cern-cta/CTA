@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/03 11:01:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/06 08:30:53 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/03 11:01:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/06 08:30:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -422,3 +422,24 @@ int rtcpcld_setVIDFailedStatus(
   else return(0);
 }
 
+char *rtcpcld_fixStr(
+                     str
+                     )
+     CONST char *str; 
+{
+  char *retStr = NULL, *p;
+  
+  if ( str == NULL ) return(strdup(""));
+  retStr = strdup(str);
+  if ( retStr == NULL ) return(strdup(""));
+
+  p = retStr;
+  while ( (p != NULL) && (*p != '\0') ) {
+    if ( !isalnum(*p) ) {
+      if ( (*p == '\n') || (*p == '\t') ) *p = ' ';
+      else *p = '?';
+    }
+    p++;
+  }
+  return(retStr);
+}
