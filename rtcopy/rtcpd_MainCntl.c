@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.84 $ $Date: 2001/09/03 09:59:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.85 $ $Date: 2001/09/21 08:28:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -967,7 +967,8 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
     }
     if ( nb_blks > databufs[indxp]->nbrecs ) {
         if ( databufs[indxp] != NULL ) {
-            free(databufs[indxp]->lrecl_table);
+            if ( databufs[indxp]->lrecl_table != NULL ) 
+                free(databufs[indxp]->lrecl_table);
             databufs[indxp]->lrecl_table = NULL;
             databufs[indxp]->nbrecs = 0;
         }
