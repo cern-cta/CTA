@@ -1,5 +1,5 @@
 /*
- * $Id: pread.c,v 1.5 1999/12/10 19:46:16 baran Exp $
+ * $Id: pread.c,v 1.6 2000/05/30 10:49:47 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:16 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.6 $ $Date: 2000/05/30 10:49:47 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.5 $ $Date: 1999/1
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int rfio_pread(ptr, size, items, fp)    /* Remote file read             */
+int DLL_DECL rfio_pread(ptr, size, items, fp)    /* Remote file read    */
 char    *ptr;                           /* buffer pointer               */
 int     size, items;                    /* .. size items                */
 RFILE   *fp;                            /* remote file pointer          */

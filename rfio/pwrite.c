@@ -1,5 +1,5 @@
 /*
- * $Id: pwrite.c,v 1.5 1999/12/10 19:46:21 baran Exp $
+ * $Id: pwrite.c,v 1.6 2000/05/30 10:49:47 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:21 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.6 $ $Date: 2000/05/30 10:49:47 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pwrite.c     Remote command I/O - write input to a popened command   */
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.5 $ $Date: 1999/
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int rfio_pwrite(ptr, size, items, fp)   /* Remote file write            */
+int DLL_DECL rfio_pwrite(ptr, size, items, fp)   /* Remote file write   */
 char    *ptr;                           /* buffer pointer               */
 int     size, items;                    /* .. size items                */
 RFILE   *fp;                            /* remote file pointer          */

@@ -1,5 +1,5 @@
 /*
- * $Id: setopt.c,v 1.3 1999/12/09 13:47:17 jdurand Exp $
+ * $Id: setopt.c,v 1.4 2000/05/30 10:49:47 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:17 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.4 $ $Date: 2000/05/30 10:49:47 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* remote file I/O definitions          */
@@ -30,7 +30,7 @@ static int rfio_forcelocal = RFIO_NOLOCAL ;
 /*
  * User can set option through this function.
  */
-int	rfiosetopt(opt,pval,len) 
+int DLL_DECL rfiosetopt(opt,pval,len) 
 	int	opt ; 
 	int  * pval ;		
 	int	len ;
