@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.117 2001/03/22 11:00:20 jdurand Exp $
+ * $Id: procio.c,v 1.118 2001/03/22 11:26:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.117 $ $Date: 2001/03/22 11:00:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.118 $ $Date: 2001/03/22 11:26:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2835,24 +2835,26 @@ void procputreq(req_type, req_data, clienthost)
 #endif
 				}
 				/* We check if the file yet exist in the name server and if we have to recreate it */
-				if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid) != 0) {
-					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						update_migpool(&(hsmfilesstcp[ihsmfiles]),-1,0);
-						if ((hsmfilesstcp[ihsmfiles]->status & STAGEWRT) == STAGEWRT) {
-							delreq(hsmfilesstcp[ihsmfiles],0);
+				if (hsmfilesstcp[ihsmfiles]->t_or_d == 'h') {
+					if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid) != 0) {
+						if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+							update_migpool(&(hsmfilesstcp[ihsmfiles]),-1,0);
+							if ((hsmfilesstcp[ihsmfiles]->status & STAGEWRT) == STAGEWRT) {
+								delreq(hsmfilesstcp[ihsmfiles],0);
+							} else {
+								hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+							}
 						} else {
-							hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+							hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED;
 						}
-					} else {
-						hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED;
-					}
 #ifdef USECDB
-					if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
-						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-					}
+						if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
+							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
 #endif
-	                continue;
-                }
+		                continue;
+    	            }
+				}
 				if (!wqp) {
 					wqp = add2wq (clienthost,
 									user, uid, gid,
