@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -28,8 +28,6 @@ extern char *sys_errlist[];     /* system error list                    */
 #define RFIO_KERNEL     1 
 #include "rfio.h"  
 #include "rfio_rfilefdt.h"
-
-static int socset_key = -1;
 
 /* Forward reference */
 
@@ -66,7 +64,6 @@ int     s, size;
    int status ;		/* Status and return code from remote   */
    int HsmType, save_errno;
    int nbytes ; 		/* Bytes still to read			*/
-   int *socset = NULL ;
    int s_index;
 
    INIT_TRACE("RFIO_TRACE");
@@ -129,14 +126,13 @@ int     s, size;
       return(-1);
    }
 
-   Cglobals_get(&socset_key, (void**)&socset, sizeof(int));
-   if ( ! *socset ) {
+   if ( ! rfilefdt[s_index]->socset ) {
       char * ifce, *p ;
       int bufsize ;
       extern char * getconfent() ;
       extern char * getifnam() ;
 		
-      (*socset)++ ;
+      rfilefdt[s_index]->socset ++ ;
       ifce = ( char * ) getifnam(s) ;
       bufsize= DEFIOBUFSIZE ;
       if ( (p = getconfent("RFIORCVBUF", ifce , 0)) != NULL ) {
