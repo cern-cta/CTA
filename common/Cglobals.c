@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.16 2000/05/31 10:33:52 obarring Exp $
+ * $Id: Cglobals.c,v 1.17 2001/06/12 07:42:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.16 $ $Date: 2000/05/31 10:33:52 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.17 $ $Date: 2001/06/12 07:42:54 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -173,47 +173,76 @@ void DLL_DECL Cglobals_init(getspec,setspec,getTid)
  * in multi-thread environment. This routine should be called for
  * every internal static storage in the Castor library.
  */
-void DLL_DECL Cglobals_get(key, addr, size)
+/*
+ * Returns:       -1            on error
+ *                 0            on success and not first call
+ *                 1            on success and first call (e.g. alloc)
+ */
+int DLL_DECL Cglobals_get(key, addr, size)
      int *key;
      void **addr;
      size_t size;
 {
-    int rc;
-    Cglobals_t *tmp;
-
-    if ( key == NULL || addr == NULL || size<= (size_t)0 ) return;
+    if ( key == NULL || addr == NULL || size<= (size_t)0 ) {
+        return(-1);
+    }
     if ( local_setspec == NULL ) {
         if ( *key <= 0 ) {
-            *addr = calloc(1,size);
-            if ( *addr == NULL ) return;
+            Cglobals_t *tmp;
+
+            if ((*addr = calloc(1,size)) == NULL) {
+              return(-1);
+            }
             if ( single_thread_globals == NULL ) {
-                single_thread_globals = 
-                    (Cglobals_t **)malloc(sizeof(Cglobals_t *)*alloc_size);
+                if ((single_thread_globals = (Cglobals_t **) malloc(sizeof(Cglobals_t *)*alloc_size)) == NULL) {
+                  free(*addr);
+                  *addr = NULL;
+                  return(-1);
+                }
             } else if ( nb_globals == alloc_size ) {
-                single_thread_globals = 
-                    (Cglobals_t **)realloc(single_thread_globals,
-                    sizeof(Cglobals_t *)*(nb_globals+alloc_size));
+                Cglobals_t **dummy;
+
+                if ((dummy =  (Cglobals_t **) realloc(single_thread_globals, sizeof(Cglobals_t *)*(nb_globals+alloc_size))) == NULL) {
+                  free(*addr);
+                  *addr = NULL;
+                  return(-1);
+                }
+                single_thread_globals = dummy;
             }
-            if ( single_thread_globals == NULL ) {
-                free(*addr);
-                *addr = NULL;
-                return;
+            if ((tmp = (Cglobals_t *) malloc(sizeof(Cglobals_t))) == NULL) {
+              free(*addr);
+              *addr = NULL;
+              return(-1);
             }
-            tmp = (Cglobals_t *)malloc(sizeof(Cglobals_t));
             tmp->addr = *addr;
             tmp->key = key;
             single_thread_globals[nb_globals] = tmp;
             nb_globals++;
             *key = nb_globals;
-        } else *addr = (void *)single_thread_globals[*key-1]->addr;
+            return(1);
+        } else {
+            *addr = (void *) single_thread_globals[(*key) - 1]->addr;
+            return(0);
+        }
     } else {
+        int rc;
+
         rc = local_getspec(key,addr);
-        if ( rc == -1 || *addr == NULL ) {
-            *addr = calloc(1,size);
-            rc = local_setspec(key,*addr);
+        if ( (rc == -1) || (*addr == NULL) ) {
+            if ((*addr = calloc(1,size)) == NULL) {
+              return(-1);
+            }
+            if ((rc = local_setspec(key,*addr)) != 0) {
+              free(*addr);
+              *addr = NULL;
+              return(-1);
+            } else {
+              return(1);
+            }
+        } else {
+          return(0);
         }
     }
-    return;
 }
 
 /*
