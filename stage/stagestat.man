@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.12 $ $Date: 2002/09/29 08:13:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.13 $ $Date: 2002/09/29 08:29:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/09/29 08:13:11 $"
+.TH STAGESTAT l "$Date: 2002/09/29 08:29:43 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -179,7 +179,7 @@ To get information on pool wacdr sorted by lifetime type the following command :
 .nf
 .sp
 \s-2
-[] ~ > stagestat -h wacdr -p wacdr -g 170,260,30 >& /tmp/toto
+[] ~ > stagestat -h wacdr -p wacdr -g 170,260,30
 
 [INFO] Using default account file "wacdr:/usr/spool/sacct/sacct"
 
