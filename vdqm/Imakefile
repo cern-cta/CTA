@@ -1,5 +1,5 @@
 COMM
-COMM $Id: Imakefile,v 1.2 2004/12/21 22:28:37 jdurand Exp $
+COMM $Id: Imakefile,v 1.3 2005/01/23 08:51:57 jdurand Exp $
 COMM
 
 COMM
@@ -205,7 +205,9 @@ clobber:	clean
 	-@RemoveFiles(ProgramTargetName(vdqmserv))
 	-@RemoveFiles(ProgramTargetName(showqueues))
 	-@RemoveFiles(ProgramTargetName(tpsrv_in_prod))
-	-@RemoveFiles(ProgramTargetName(vdqmbs_serv))
+	-@RemoveFiles(ProgramTargetName(vdqmbc_serv))
+	-@RemoveFiles(ProgramTargetName(vdqm_admin))
+	-@RemoveFiles(ProgramTargetName(vdqmc_SendRecv.c))
 
 Makefiles:
 
