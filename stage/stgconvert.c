@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.35 2002/05/09 16:25:04 jdurand Exp $
+ * $Id: stgconvert.c,v 1.36 2003/10/31 13:13:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.35 $ $Date: 2002/05/09 16:25:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.36 $ $Date: 2003/10/31 13:13:01 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -1572,7 +1572,7 @@ int main(argc,argv)
 											printf("### write error on \"%s\" (%s)\n",stgcat,strerror(errno));
 											printf("### Sorted stgcat output probably corrupted\n");
 										} else {
-											printf("... ... %d saved (record size=%d)\n", (int) statbuff.st_size / sizeof(struct stgcat_entry), (int) sizeof(struct stgcat_entry));
+											printf("... ... %d saved (record size=%d)\n", (int) (statbuff.st_size / sizeof(struct stgcat_entry)), (int) sizeof(struct stgcat_entry));
 										}
 										if (ftruncate(stgcat_fd, (size_t) statbuff.st_size) != 0) {
 											printf("### ftruncate on %s error, %s\n"
@@ -1782,7 +1782,7 @@ int main(argc,argv)
 											printf("### write error on \"%s\" (%s)\n",stgpath,strerror(errno));
 											printf("### Sorted stgpath output probably corrupted\n");
 										} else {
-											printf("... ... %d saved (record size=%d)\n", (int) statbuff.st_size / sizeof(struct stgpath_entry), (int) sizeof(struct stgpath_entry));
+											printf("... ... %d saved (record size=%d)\n", (int) (statbuff.st_size / sizeof(struct stgpath_entry)), (int) sizeof(struct stgpath_entry));
 										}
 										if (ftruncate(stgpath_fd, (size_t) statbuff.st_size) != 0) {
 											printf("### ftruncate on %s error, %s\n"
