@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.82 2001/02/09 00:16:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.83 2001/02/09 18:16:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.82 $ $Date: 2001/02/09 00:16:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.83 $ $Date: 2001/02/09 18:16:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2098,6 +2098,8 @@ int migpoolfiles(pool_p)
           tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
           tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
           tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
           stcp = NULL;
           stpp = NULL;
           /* We know try to create enough room for our new stream */
@@ -2121,6 +2123,9 @@ int migpoolfiles(pool_p)
             /* We also know in advance that this new streams will be of size virtual_new_size and */
             /* will contain nstcp_to_move entries */
 
+            /* We copy in advance the uid/gid that we yet found for the previous tape pool that we are going */
+            /* to duplicate */
+            
             for (j = 0; j < (ntppool_vs_stcp - 1); j++) {
               if (tppool_vs_stcp[j].size > minsize) {
                 int save_nstcp = tppool_vs_stcp[j].nstcp;
@@ -2153,6 +2158,13 @@ int migpoolfiles(pool_p)
                   tppool_vs_stcp[ntppool_vs_stcp - 1].size += tppool_vs_stcp[j].stcp[k].actual_size;
                   /* We decrement old stream total size to migrate */
                   tppool_vs_stcp[j].size -= tppool_vs_stcp[j].stcp[k].actual_size;
+
+                  if (tppool_vs_stcp[ntppool_vs_stcp - 1].euid == 0) {
+                    tppool_vs_stcp[ntppool_vs_stcp - 1].euid = tppool_vs_stcp[j].euid;
+                  }
+                  if (tppool_vs_stcp[ntppool_vs_stcp - 1].egid == 0) {
+                    tppool_vs_stcp[ntppool_vs_stcp - 1].egid = tppool_vs_stcp[j].egid;
+                  }
 
                   /* We have moved entry No k from tape pool No j - we shift all remaining entries */
                   m = 0;
