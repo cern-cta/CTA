@@ -1,5 +1,5 @@
 /*
- * $Id: uxid.c,v 1.7 2001/05/03 11:03:06 jdurand Exp $
+ * $Id: uxid.c,v 1.8 2001/05/03 13:02:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.7 $ $Date: 2001/05/03 11:03:06 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.8 $ $Date: 2001/05/03 13:02:33 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -41,8 +41,6 @@ static int grbuf_key = 0;
 static int pwbuf_key = 0;
 static int grlen_key = 0;
 static int pwlen_key = 0;
-char *dummy_group_member = NULL;
-char **dummy_group_members = &dummy_group_member;
 
 char * DLL_DECL
 cuserid(bufp)
@@ -121,6 +119,7 @@ char *buf;
     if (Cthread_setspecific(&nb_group_members_key,nb_group_members) != 0) {
       return(NULL);
     }
+    *nb_group_members = -1;
   }
 
   if (Cthread_getspecific(&grlen_key,(void **) &grlen) != 0) {
@@ -152,10 +151,10 @@ char *buf;
     if ((dummy = (char *) realloc(grbuf, strlen(buf) + 1)) == NULL) {
       return(NULL);
     }
+    grbuf = dummy;
     if (Cthread_setspecific(&grbuf_key,grbuf) != 0) {
       return(NULL);
     }
-    grbuf = dummy;
     *grlen = strlen(buf) + 1;
   }
 
@@ -179,18 +178,17 @@ char *buf;
     n++;
     p++;
   }
+  /* Because of initialization of *nb_group_members to -1 this code ensures */
+  /* that *group_members is always allocated, thus gr_mem is never NULL */
   if (n != *nb_group_members) {
-    if (*group_members) free (*group_members);
+    if (*group_members != NULL) free (*group_members);
     *group_members = (char **) malloc ((n + 1) * sizeof(char *));
     if (*group_members == NULL) return (NULL);
     *nb_group_members = n;
     gr->gr_mem = *group_members;
     (*group_members)[*nb_group_members] = NULL;
   }
-  if (*nb_group_members == 0) {
-    gr->gr_mem = dummy_group_members;
-    return (gr);
-  }
+  if (*nb_group_members == 0) return (gr);
   n = 0;
   p = q;
   while ((p = strchr (q, ',')) != NULL) {
@@ -252,10 +250,10 @@ char *buf;
     if ((dummy = (char *) realloc(pwbuf, strlen(buf) + 1)) == NULL) {
       return(NULL);
     }
+    pwbuf = dummy;
     if (Cthread_setspecific(&pwbuf_key,pwbuf) != 0) {
       return(NULL);
     }
-    pwbuf = dummy;
     *pwlen = strlen(buf) + 1;
   }
 
