@@ -127,7 +127,6 @@
 #define RtcopyWorkDir	/usr/tmp/RTCOPY
 #define	RtcpclientdHost	"lxshare003d"
 #define SacctDir	/usr/spool/sacct
-#define SconfigDir	/etc/shift
 #if defined(_WIN32)
 #define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor.conf
 #else
