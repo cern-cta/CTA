@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.12 2002/03/11 06:51:40 jdurand Exp $
+ * $Id: stageacct.c,v 1.13 2002/04/30 13:06:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.12 $ $Date: 2002/03/11 06:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.13 $ $Date: 2002/04/30 13:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -38,14 +38,14 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
 	char forced_t_or_d;
 #endif
 {
-  int acctreclen;
-  struct acctstage acctstage;
+  int acctreclen = 0;
+  struct acctstage2 acctstage;
   char *getconfent();
   char *p;
   
   if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
       (strcmp (p, "YES") && strcmp (p, "yes"))) return;
-  memset ((char *) &acctstage, 0, sizeof(struct acctstage));
+  memset ((char *) &acctstage, 0, sizeof(struct acctstage2));
   acctstage.subtype = subtype;
   acctstage.uid = uid;
   acctstage.gid = gid;
@@ -60,12 +60,11 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
     strcpy (acctstage.u2.s.poolname, stcp->poolname);
     acctstage.u2.s.t_or_d = stcp->t_or_d;
     acctstage.u2.s.actual_size = stcp->actual_size;
+    acctstage.u2.s.c_time = stcp->c_time;
     acctstage.u2.s.nbaccesses = stcp->nbaccesses;
     switch (stcp->t_or_d) {
     case 't':
-#ifdef STAGER_SIDE_SERVER_SUPPORT
       acctstage.u2.s.u1.t.side = stcp->u1.t.side;
-#endif
       strcpy (acctstage.u2.s.u1.t.dgn, stcp->u1.t.dgn);
       strcpy (acctstage.u2.s.u1.t.fseq, stcp->u1.t.fseq);
       strcpy (acctstage.u2.s.u1.t.vid, stcp->u1.t.vid[0]);
@@ -97,5 +96,5 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
     acctreclen = ((char *) acctstage.u2.clienthost
                   - (char *) &acctstage) + strlen (acctstage.u2.clienthost) + 1;
   }
-  wsacct (ACCTSTAGE, (char *) &acctstage, acctreclen);
+  if (acctreclen) wsacct (ACCTSTAGE2, (char *) &acctstage, acctreclen);
 }
