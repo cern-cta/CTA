@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.32 $ $Date: 2000/03/10 14:38:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.33 $ $Date: 2000/03/13 10:03:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1335,6 +1335,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
     }
+    /*
+     * Initialize stageupdc API
+     */
+    (void)rtcpd_init_stgupdc();
 
     /*
      * Start up the disk IO thread pool (only once on NT).

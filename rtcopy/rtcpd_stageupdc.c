@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.17 $ $Date: 2000/03/13 08:47:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.18 $ $Date: 2000/03/13 10:03:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,39 @@ extern char *geterr();
 #endif /* STGCMD */
 #endif /* USE_STAGECMD */
 
+#define STG_ERRTXT (rtcpd_stgupdcErrMsg()!='\0' ? rtcpd_stgupdcErrMsg() : sstrerror(serrno))
+
+static int stgupdc_key = -1;
+static char Unkn_errorstr[] = "unknown error";
+
+int rtcpd_init_stgupdc() {
+    char *errbuf;
+    int errbufsiz = CA_MAXLINELEN + 1;
+
+    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
+    if ( errbuf == NULL ) return(-1);
+    stage_seterrbuf(errbuf,errbufsiz);
+    return(0); 
+}
+
+char *rtcpd_stgupdcErrMsg() {
+    char *errbuf;
+    int errbufsiz = CA_MAXLINELEN + 1;
+
+    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
+    if ( errbuf == NULL ) return(Unkn_errorstr);
+    return(errbuf);
+}
+
+void rtcpd_ResetstgupdcError() {
+    char *errbuf;
+    int errbufsiz = CA_MAXLINELEN+1;
+
+    Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
+    if ( errbuf != NULL ) *errbuf = '\0';
+    return;
+}
+
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
     int rc, status, retval, want_reply, save_serrno, WaitTime, TransferTime;
@@ -96,6 +129,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
 
 #if !defined(USE_STAGECMD)
+    rtcpd_ResetstgupdcError(); 
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
         want_reply = 0 ;
@@ -115,7 +149,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
-                         sstrerror(serrno));
+                         STG_ERRTXT);
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
                     return(-1);
             }
@@ -147,7 +181,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   want_reply);
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
-                         sstrerror(serrno));
+                         STG_ERRTXT);
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
                     return(-1);
             }
