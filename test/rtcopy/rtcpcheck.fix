@@ -3,7 +3,7 @@
 #  Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 #  All rights reserved
 #
-#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.3 $ $Date: 2002/05/07 08:56:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.4 $ $Date: 2004/03/11 17:43:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 #
 #	rtcpcheck.fix - test rtcopy in fixed format mode
 #
@@ -123,17 +123,17 @@ do
 	#
 	# Updating TMS
 	#
-    if [ "$lab" != "aul" ]; then
-	  echo sysreq tms update vid $vid SET LABEL $lab
-	  sysreq tms update vid $vid SET LABEL $lab
-	  if [ $? != 0 ]
-	  then
-		  echo "ERROR UPDATING TMS"
-		  exit 1 
-	  fi
-    else
-        echo "TMS UPDATE SKIPPED (label type is $lab)"
-    fi
+    #if [ "$lab" != "aul" ]; then
+	#  echo sysreq tms update vid $vid SET LABEL $lab
+	#  sysreq tms update vid $vid SET LABEL $lab
+	#  if [ $? != 0 ]
+	#  then
+	#	  echo "ERROR UPDATING TMS"
+	#	  exit 1 
+	#  fi
+    #else
+    #    echo "TMS UPDATE SKIPPED (label type is $lab)"
+    #fi
 	#
 	# Prelabeling the tape
 	#
