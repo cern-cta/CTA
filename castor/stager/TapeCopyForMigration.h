@@ -156,9 +156,9 @@ int Cstager_TapeCopyForMigration_status(struct Cstager_TapeCopyForMigration_t* i
  */
 int Cstager_TapeCopyForMigration_setStatus(struct Cstager_TapeCopyForMigration_t* instance, enum Cstager_TapeCopyStatusCodes_t new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

@@ -73,9 +73,9 @@ int Cstager_Tape_print(struct Cstager_Tape_t* instance);
  */
 int Cstager_Tape_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

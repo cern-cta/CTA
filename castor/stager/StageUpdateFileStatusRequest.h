@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/23 15:02:53 $ $Author: sponcec3 $
  *
  * 
  *
@@ -254,9 +254,9 @@ int Cstager_StageUpdateFileStatusRequest_client(struct Cstager_StageUpdateFileSt
  */
 int Cstager_StageUpdateFileStatusRequest_setClient(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct C_IClient_t* new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

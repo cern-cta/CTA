@@ -72,9 +72,9 @@ int Cstager_SubRequest_print(struct Cstager_SubRequest_t* instance);
  */
 int Cstager_SubRequest_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

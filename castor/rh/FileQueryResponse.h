@@ -79,9 +79,9 @@ int Crh_FileQueryResponse_print(struct Crh_FileQueryResponse_t* instance);
  */
 int Crh_FileQueryResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

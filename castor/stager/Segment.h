@@ -74,9 +74,9 @@ int Cstager_Segment_print(struct Cstager_Segment_t* instance);
  */
 int Cstager_Segment_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

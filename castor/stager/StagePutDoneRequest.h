@@ -254,9 +254,9 @@ int Cstager_StagePutDoneRequest_client(struct Cstager_StagePutDoneRequest_t* ins
  */
 int Cstager_StagePutDoneRequest_setClient(struct Cstager_StagePutDoneRequest_t* instance, struct C_IClient_t* new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

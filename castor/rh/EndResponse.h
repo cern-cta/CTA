@@ -80,9 +80,9 @@ int Crh_EndResponse_print(struct Crh_EndResponse_t* instance);
  */
 int Crh_EndResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

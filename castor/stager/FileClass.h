@@ -69,9 +69,9 @@ int Cstager_FileClass_print(struct Cstager_FileClass_t* instance);
  */
 int Cstager_FileClass_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

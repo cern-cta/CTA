@@ -79,9 +79,9 @@ int Crh_StringResponse_print(struct Crh_StringResponse_t* instance);
  */
 int Crh_StringResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

@@ -72,9 +72,9 @@ int Cstager_CastorFile_print(struct Cstager_CastorFile_t* instance);
  */
 int Cstager_CastorFile_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

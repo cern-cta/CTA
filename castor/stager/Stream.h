@@ -72,9 +72,9 @@ int Cstager_Stream_print(struct Cstager_Stream_t* instance);
  */
 int Cstager_Stream_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

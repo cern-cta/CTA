@@ -79,9 +79,9 @@ int Crh_FindReqResponse_print(struct Crh_FindReqResponse_t* instance);
  */
 int Crh_FindReqResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

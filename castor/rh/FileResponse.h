@@ -79,9 +79,9 @@ int Crh_FileResponse_print(struct Crh_FileResponse_t* instance);
  */
 int Crh_FileResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

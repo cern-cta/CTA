@@ -71,9 +71,9 @@ int Cstager_DiskCopy_print(struct Cstager_DiskCopy_t* instance);
  */
 int Cstager_DiskCopy_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

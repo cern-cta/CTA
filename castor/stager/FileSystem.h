@@ -71,9 +71,9 @@ int Cstager_FileSystem_print(struct Cstager_FileSystem_t* instance);
  */
 int Cstager_FileSystem_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

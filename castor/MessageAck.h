@@ -68,9 +68,9 @@ int C_MessageAck_print(struct C_MessageAck_t* instance);
  */
 int C_MessageAck_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

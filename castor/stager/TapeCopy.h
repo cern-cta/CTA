@@ -72,9 +72,9 @@ int Cstager_TapeCopy_print(struct Cstager_TapeCopy_t* instance);
  */
 int Cstager_TapeCopy_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

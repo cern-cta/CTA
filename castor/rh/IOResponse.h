@@ -186,9 +186,9 @@ int Crh_IOResponse_subreqId(struct Crh_IOResponse_t* instance, const char** var)
  */
 int Crh_IOResponse_setSubreqId(struct Crh_IOResponse_t* instance, const char* new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

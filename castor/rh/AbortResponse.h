@@ -79,9 +79,9 @@ int Crh_AbortResponse_print(struct Crh_AbortResponse_t* instance);
  */
 int Crh_AbortResponse_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

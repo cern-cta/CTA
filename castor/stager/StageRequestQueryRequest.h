@@ -234,9 +234,9 @@ int Cstager_StageRequestQueryRequest_client(struct Cstager_StageRequestQueryRequ
  */
 int Cstager_StageRequestQueryRequest_setClient(struct Cstager_StageRequestQueryRequest_t* instance, struct C_IClient_t* new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

@@ -71,9 +71,9 @@ int Cstager_DiskPool_print(struct Cstager_DiskPool_t* instance);
  */
 int Cstager_DiskPool_TYPE(int* ret);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

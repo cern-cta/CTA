@@ -146,9 +146,9 @@ int Cstager_DiskCopyForRecall_status(struct Cstager_DiskCopyForRecall_t* instanc
  */
 int Cstager_DiskCopyForRecall_setStatus(struct Cstager_DiskCopyForRecall_t* instance, enum Cstager_DiskCopyStatusCodes_t new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object

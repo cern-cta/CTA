@@ -234,9 +234,9 @@ int Cstager_StageFileQueryRequest_client(struct Cstager_StageFileQueryRequest_t*
  */
 int Cstager_StageFileQueryRequest_setClient(struct Cstager_StageFileQueryRequest_t* instance, struct C_IClient_t* new_var);
 
-/********************************************/
-/* Implementation of IObject abstract class */
-/********************************************/
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 /**
  * Sets the id of the object
