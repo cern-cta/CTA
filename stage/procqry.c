@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.54 2001/03/28 14:06:52 jdurand Exp $
+ * $Id: procqry.c,v 1.55 2001/06/21 10:16:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.54 $ $Date: 2001/03/28 14:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.55 $ $Date: 2001/06/21 10:16:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -62,8 +62,6 @@ void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int));
-void dump_stpp _PROTO((int, struct stgpath_entry *));
-void dump_stcp _PROTO((int, struct stgcat_entry *));
 
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int req2argv _PROTO((char *, char ***));
@@ -113,35 +111,17 @@ struct stgdb_fd *dbfd_query;
 extern u_signed64 stage_uniqueid;
 
 int nbtpf;
-int noregexp_flag;
-int reqid_flag;
-int dump_flag;
-int migrator_flag;
-int class_flag;
-int queue_flag;
-int counters_flag;
+static int noregexp_flag;
+static int reqid_flag;
+static int dump_flag;
+static int migrator_flag;
+static int class_flag;
+static int queue_flag;
+static int counters_flag;
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-
-#ifdef __STDC__
-#define NAMEOFVAR(x) #x
-#else
-#define NAMEOFVAR(x) "x"
-#endif
-
-#define DUMP_VAL(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : %20d\n", NAMEOFVAR(member) , (int) st->member)
-#define DUMP_VALHEX(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : 0x%lx\n", NAMEOFVAR(member) , (unsigned long) st->member)
-#define DUMP_U64(rpfd,st,member) {                                          \
-    char tmpbuf[21];                                                        \
-	sendrep(rpfd, MSG_OUT, "%-14s : %20s\n", NAMEOFVAR(member) ,	            \
-				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
-}
-
-#define DUMP_CHAR(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : %20c\n", NAMEOFVAR(member) , st->member != '\0' ? st->member : ' ')
-
-#define DUMP_STRING(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : %20s\n", NAMEOFVAR(member) , st->member)
 
 void procqryreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -264,8 +244,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			unmarshall_LONG(rbp, nstcp_input);
 			unmarshall_HYPER (rbp, stage_uniqueid);
 		}
+		stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", "stage_qry", user, gid, clienthost);
     } else {
 		unmarshall_WORD (rbp, gid);
+		stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", "stageqry", user, gid, clienthost);
 		nargs = req2argv (rbp, &argv);
 	}
 #if SACCT
@@ -723,7 +705,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if (Pflag) {
 			sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 			if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp);
-			if (dump_flag != 0) dump_stcp(rpfd, stcp);
+			if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 			continue;
 		}
 		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp);
@@ -922,7 +904,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 		}
-		if (dump_flag != 0) dump_stcp(rpfd, stcp);
+		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
 	rfio_end();
  reply:
@@ -986,7 +968,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 			if ((this_reqid > 0) && (stpp->reqid != this_reqid)) continue;
 			sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
 			if (req_type > STAGE_00) sendrep(rpfd, API_STPP_OUT, stpp);
-			if (dump_flag != 0) dump_stpp(rpfd, stpp);
+			if (dump_flag != 0) dump_stpp(rpfd, stpp, &sendrep);
 		}
 		return;
 	}
@@ -1053,8 +1035,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 			if (stcp->reqid == stpp->reqid) {
 				sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
 				if (req_type > STAGE_00) sendrep(rpfd, API_STPP_OUT, stpp);
-				if (dump_flag != 0) dump_stpp(rpfd, stpp);
-			}
+				if (dump_flag != 0) dump_stpp(rpfd, stpp, &sendrep);
 		}
 	}
 }
@@ -1244,7 +1225,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			return (-1);
 		}
 		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp);
-		if (dump_flag != 0) dump_stcp(rpfd, stcp);
+		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
 	free (scs);
 	return (0);
@@ -1296,82 +1277,6 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		sendrep (rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
 						 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
 		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp);
-		if (dump_flag != 0) dump_stcp(rpfd, stcp);
-	}
-}
-
-void dump_stpp(rpfd, stpp)
-	int rpfd;
-	struct stgpath_entry *stpp;
-{
-	sendrep(rpfd, MSG_OUT, "----------------------------------\n");
-	sendrep(rpfd, MSG_OUT, "Path entry  -   dump of reqid %d\n", stpp->reqid);
-	sendrep(rpfd, MSG_OUT, "----------------------------------\n");
-	DUMP_VAL(rpfd,stpp,reqid);
-	DUMP_STRING(rpfd,stpp,upath);
-}
-
-void dump_stcp(rpfd, stcp)
-	int rpfd;
-	struct stgcat_entry *stcp;
-{
-	int i;
-
-	sendrep(rpfd, MSG_OUT, "-------------------------------------\n");
-	sendrep(rpfd, MSG_OUT, "Catalog entry - dump of reqid %d\n", stcp->reqid);
-	sendrep(rpfd, MSG_OUT, "-------------------------------------\n");
-	DUMP_VAL(rpfd,stcp,reqid);
-	DUMP_VAL(rpfd,stcp,blksize);
-	DUMP_STRING(rpfd,stcp,filler);
-	DUMP_CHAR(rpfd,stcp,charconv);
-	DUMP_CHAR(rpfd,stcp,keep);
-	DUMP_VAL(rpfd,stcp,lrecl);
-	DUMP_VAL(rpfd,stcp,nread);
-	DUMP_STRING(rpfd,stcp,poolname);
-	DUMP_STRING(rpfd,stcp,recfm);
-	DUMP_U64(rpfd,stcp,size);
-	DUMP_STRING(rpfd,stcp,ipath);
-	DUMP_CHAR(rpfd,stcp,t_or_d);
-	DUMP_STRING(rpfd,stcp,group);
-	DUMP_STRING(rpfd,stcp,user);
-	DUMP_VAL(rpfd,stcp,uid);
-	DUMP_VAL(rpfd,stcp,gid);
-	DUMP_VAL(rpfd,stcp,mask);
-	DUMP_VALHEX(rpfd,stcp,status);
-	DUMP_U64(rpfd,stcp,actual_size);
-	DUMP_U64(rpfd,stcp,c_time);
-	DUMP_U64(rpfd,stcp,a_time);
-	DUMP_VAL(rpfd,stcp,nbaccesses);
-	switch (stcp->t_or_d) {
-	case 't':
-		DUMP_STRING(rpfd,stcp,u1.t.den);
-		DUMP_STRING(rpfd,stcp,u1.t.dgn);
-		DUMP_STRING(rpfd,stcp,u1.t.fid);
-		DUMP_CHAR(rpfd,stcp,u1.t.filstat);
-		DUMP_STRING(rpfd,stcp,u1.t.fseq);
-		DUMP_STRING(rpfd,stcp,u1.t.lbl);
-		DUMP_VAL(rpfd,stcp,u1.t.retentd);
-		DUMP_STRING(rpfd,stcp,u1.t.tapesrvr);
-		DUMP_CHAR(rpfd,stcp,u1.t.E_Tflags);
-		for (i = 0; i < MAXVSN; i++) {
-			DUMP_STRING(rpfd,stcp,u1.t.vid[i]);
-			DUMP_STRING(rpfd,stcp,u1.t.vsn[i]);
-		}
-		break;
-	case 'd':
-	case 'a':
-		DUMP_STRING(rpfd,stcp,u1.d.xfile);
-		DUMP_STRING(rpfd,stcp,u1.d.Xparm);
-		break;
-	case 'm':
-		DUMP_STRING(rpfd,stcp,u1.m.xfile);
-		break;
-	case 'h':
-		DUMP_STRING(rpfd,stcp,u1.h.xfile);
-		DUMP_STRING(rpfd,stcp,u1.h.server);
-		DUMP_U64(rpfd,stcp,u1.h.fileid);
-		DUMP_VAL(rpfd,stcp,u1.h.fileclass);
-		DUMP_STRING(rpfd,stcp,u1.h.tppool);
-		break;
+		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
 }
