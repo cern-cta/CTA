@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.122 2001/02/12 10:15:52 jdurand Exp $
+ * $Id: stager.c,v 1.123 2001/02/13 12:30:21 jdurand Exp $
  */
 
 /*
@@ -18,8 +18,11 @@
 /* #define TAPESRVR_EVEN "shd79" */
 #define USE_SUBREQID
 
+/* If you want to always migrate the full data to tape do: */
+#define FULL_STAGEWRT_HSM
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.122 $ $Date: 2001/02/12 10:15:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.123 $ $Date: 2001/02/13 12:30:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1486,6 +1489,8 @@ int stagewrt_castor_hsm_file() {
 	char *castor_hsm;
 #ifdef STAGER_DEBUG
 	char tmpbuf[21];
+	char tmpbuf1[21];
+	char tmpbuf2[21];
 #endif
 	extern char* poolname2tapepool _PROTO((char *));
     struct devinfo *devinfo;
@@ -1499,6 +1504,8 @@ int stagewrt_castor_hsm_file() {
 	/* We initialize those size arrays */
 	i = 0;
 	for (stcp = stcs; stcp < stce; stcp++, i++) {
+		struct Cns_fileid Cnsfileid;
+
 		SETEID(stcp->uid,stcp->gid);
 		if (rfio_stat (stcp->ipath, &statbuf) < 0) {
 			SAVE_EID;
@@ -1522,6 +1529,33 @@ int stagewrt_castor_hsm_file() {
 		}
 
 		hsm_totalsize[i] = (u_signed64) statbuf.st_size;
+
+		/* We compare with the stcp->actual_size - they have to match */
+		if (hsm_totalsize[i] != stcp->actual_size) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "stat()", "size mismatch v.s. previous stageupdc - updated");
+			RESTORE_EID;
+			stcp->actual_size = hsm_totalsize[i];
+            /* We set also the filesize in the nameserver */
+			strcpy(Cnsfileid.server,stcp->u1.h.server);
+			Cnsfileid.fileid = stcp->u1.h.fileid;
+#ifdef STAGER_DEBUG
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_setfsize(path=\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},correc_size=%s)\n",
+	                castor_hsm,
+    	            Cnsfileid.server,
+        	        u64tostr(Cnsfileid.fileid, tmpbuf1, 0),
+        	        u64tostr(hsm_totalsize[i], tmpbuf1, 0));
+			RESTORE_EID;
+#endif
+			if (Cns_setfsize(NULL,&Cnsfileid,hsm_totalsize[i]) != 0) {
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_setfsize", sstrerror(serrno));
+				RESTORE_EID;
+				RETURN (SYERR);
+			}
+		}
+#ifndef FULL_STAGEWRT_HSM
 		if ((stcs->status & STAGEWRT) == STAGEWRT) {
 			/* Here we support limitation of number of bytes in write-to-tape */
 			if (stcp->size > 0) {
@@ -1536,6 +1570,7 @@ int stagewrt_castor_hsm_file() {
 				}
 			}
 		}
+#endif /* FULL_STAGEWRT_HSM */
 		hsm_transferedsize[i] = 0;
 		hsm_fseq[i] = -1;
 		hsm_vid[i] = NULL;
@@ -2784,6 +2819,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #ifndef SKIP_FILEREQ_MAXSIZE
 			/* Here we support maxsize in the rtcopy structure only if explicit STAGEWRT */
 			if ((stcs->status & STAGEWRT) == STAGEWRT) {
+#ifndef FULL_STAGEWRT_HSM
 				/* Here we support limitation of number of bytes in write-to-tape */
 				if (stcp->size > 0) {
 					u_signed64 dummysize;
@@ -2792,6 +2828,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					dummysize -= (u_signed64) hsm_transferedsize[ihsm];
 					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
 				}
+#endif /* FULL_STAGEWRT_HSM */
             } else {
 				/* Here we do NOT support limitation of number of bytes */
 				if (stcp->size > 0) {
@@ -3490,6 +3527,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Monday 12 February, 2001 at 11:13:32 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 13 February, 2001 at 12:52:37 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
