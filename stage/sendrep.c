@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.27 2002/08/27 08:44:07 jdurand Exp $
+ * $Id: sendrep.c,v 1.28 2002/09/20 06:14:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.27 $ $Date: 2002/08/27 08:44:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.28 $ $Date: 2002/09/20 06:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,6 +64,8 @@ int sendrep(va_alist) va_dcl
 	static int saveflag = 0;
 	u_signed64 uniqueid;
 	int magic_client;
+	int save_serrno = serrno;
+	int save_errno = errno;
 
 	va_start (args);
 	rpfd = va_arg (args, int *);
@@ -201,13 +203,15 @@ int sendrep(va_alist) va_dcl
 		stglogit (func, "STG02 - unknown rep_type (%d)\n", rep_type);
 		if (*rpfd >= 0) netclose (*rpfd);
 		*rpfd = -1;
+		serrno = save_serrno;
+		errno = save_errno;
 		return (-1);
 	}
  sndmsg:
 	va_end (args);
 	repsize = rbp - (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
 	if (*rpfd >= 0) {
-      /* At the startup, *rpfd is < 0 */
+		/* At the startup, *rpfd is < 0 */
 		errno = serrno = 0;
 		if (netwrite_timeout (*rpfd, (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf)), repsize, STGTIMEOUT) != repsize) {
 			stglogit (func, STG02, "", "write", errno ? strerror(errno) : sstrerror(serrno));
@@ -222,12 +226,16 @@ int sendrep(va_alist) va_dcl
 				netclose (*rpfd);
 				*rpfd = -1;
 			}
+			serrno = save_serrno;
+			errno = save_errno;
 			return (-1);
 		} else if (rep_type == STAGERC) {
 			netclose (*rpfd);
 			*rpfd = -1;
 		}
 	}
+	serrno = save_serrno;
+	errno = save_errno;
 	return (0);
 }
 
