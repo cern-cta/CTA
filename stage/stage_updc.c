@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.11 2000/11/17 07:45:45 jdurand Exp $
+ * $Id: stage_updc.c,v 1.12 2000/12/18 10:38:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.11 $ $Date: 2000/11/17 07:45:45 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.12 $ $Date: 2000/12/18 10:38:28 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -158,6 +158,10 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   sendbuf_size += 3 * WORDSIZE;                      /* uid, gid, nargs */
   sendbuf_size += strlen(command) + 1;               /* Command name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
   if (blksize > 0) {
     sprintf (tmpbuf, "%d", blksize);
     sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
@@ -237,6 +241,12 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   if (blksize > 0) {
     sprintf (tmpbuf, "%d", blksize);
     marshall_STRING (sbp,"-b");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
@@ -419,6 +429,10 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   sendbuf_size += 3 * LONGSIZE;                       /* uid, gid, nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
   if (blksize > 0) {
     sprintf (tmpbuf, "%d", blksize);
     sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
@@ -480,6 +494,12 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   marshall_STRING (sbp, "-Z");
   marshall_STRING (sbp, stageid);
   nargs += 2;
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
   if (blksize > 0) {
     sprintf (tmpbuf, "%d", blksize);
     marshall_STRING (sbp,"-b");
