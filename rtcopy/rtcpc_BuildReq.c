@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 11:56:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.4 $ $Date: 1999/12/17 13:13:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -29,8 +29,6 @@ static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.3 $ $Dat
 #include <rtcp.h>
 #include <rtcp_api.h>
 #include <serrno.h>
-
-extern int rtcp_InitLog(char *, FILE *, FILE *);
 
 extern char *optarg;
 extern int optind;
@@ -1814,18 +1812,18 @@ static int rtcpc_diskfiles(int mode,
     return(rc);
 }
 
-#define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_INFO,"%s%s: %s\n",Y,#X,X);}
-#define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: %d\n",Y,#X,X);}
-#define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: 0x%x\n",Y,#X,X);}
+#define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,X);}
+#define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: %d\n",Y,#X,X);}
+#define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%x\n",Y,#X,X);}
 #if defined(_WIN32)
-#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %I64u\n",Y,#X,(u_signed64)X);}
-#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%I64x\n",Y,#X,(u_signed64)X);}
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %I64u\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%I64x\n",Y,#X,(u_signed64)X);}
 #elif defined(__osf__) && defined(__alpha)
-#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %lu\n",Y,#X,(u_signed64)X);}
-#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%lx\n",Y,#X,(u_signed64)X);}
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %lu\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%lx\n",Y,#X,(u_signed64)X);}
 #else 
-#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
-#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
 #endif
 int dumpTapeReq(tape_list_t *tl) {
     rtcpTapeRequest_t *tapereq;
@@ -1834,7 +1832,7 @@ int dumpTapeReq(tape_list_t *tl) {
     if (tl == NULL ) return(-1);
     tapereq = &tl->tapereq;
 
-    rtcp_log(LOG_INFO,"\n%s---->Tape request\n",indent);
+    rtcp_log(LOG_DEBUG,"\n%s---->Tape request\n",indent);
     DUMPSTR(indent,tapereq->vid);
     DUMPSTR(indent,tapereq->vsn);
     DUMPSTR(indent,tapereq->label);
@@ -1866,7 +1864,7 @@ int dumpFileReq(file_list_t *fl) {
     if ( fl == NULL ) return(-1);
     filereq = &fl->filereq;
 
-    rtcp_log(LOG_INFO,"\n%s---->File request\n",indent);
+    rtcp_log(LOG_DEBUG,"\n%s---->File request\n",indent);
     DUMPSTR(indent,filereq->file_path);
     DUMPSTR(indent,filereq->tape_path);
     DUMPSTR(indent,filereq->recfm);
@@ -1901,8 +1899,8 @@ int dumpFileReq(file_list_t *fl) {
 
     DUMPI64(indent,filereq->blockid);
     DUMPI64(indent,filereq->bytes_in);
-    DUMPX64(indent,filereq->bytes_in);
     DUMPI64(indent,filereq->bytes_out);
+    DUMPI64(indent,filereq->bytes_from_host);
 
     DUMPI64(indent,filereq->maxnbrec);
     DUMPI64(indent,filereq->maxsize);
