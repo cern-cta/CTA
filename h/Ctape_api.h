@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.8 2000/02/15 16:51:29 baud Exp $
+ * $Id: Ctape_api.h,v 1.9 2000/02/16 06:50:53 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.8 $ $Date: 2000/02/15 16:51:29 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.9 $ $Date: 2000/02/16 06:50:53 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -35,7 +35,7 @@ struct drv_status {		/* tape status reply entry */
 	time_t	asn_time;	/* timestamp of drive assignment */
 	char	drive[CA_MAXUNMLEN+1];	/* drive name */
 	int	mode;		/* WRITE_DISABLE or WRITE_ENABLE */
-	char	lbltype[4];	/* label type: al, nl, sl or blp */
+	char	lbltype[CA_MAXLBLTYPLEN+1];  /* label type: al, nl, sl or blp */
 	int	tobemounted;	/* 1 means tape to be mounted */
 	char	vid[CA_MAXVIDLEN+1];
 	char	vsn[CA_MAXVSNLEN+1];
