@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.2 2004/11/01 11:36:10 jdurand Exp $
+ * $Id: stager_macros.h,v 1.3 2004/11/01 12:30:10 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -10,7 +10,6 @@
 #include "stager_messages.h"
 #include "serrno.h"
 #include "osdep.h"
-#include "Cthread_api.h"
 #include "Cuuid.h"
 #include "u64subr.h"
 
@@ -49,9 +48,8 @@
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+3, \
+	      STAGER_NB_PARAMS+2, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
 	      message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
 	      STAGER_LOG_WHERE \
 	      ); \
@@ -61,9 +59,8 @@
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+2, \
+	      STAGER_NB_PARAMS+1, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
 	      STAGER_LOG_WHERE \
 	      ); \
   } \
