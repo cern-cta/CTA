@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.20 2001/06/08 14:41:25 jdurand Exp $
+ * $Id: stage_api.c,v 1.21 2001/06/21 10:23:18 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -38,7 +38,6 @@ int stage_api_chkdirw _PROTO((char *));
 #if TMS
 int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
 #endif
-int rc_shift2castor _PROTO((int));
 
 #define STVAL2BUF(stcp,member,option,buf,bufsize) {                                       \
   char tmpbuf1[21 + 4];                                                                   \
@@ -70,8 +69,10 @@ int rc_shift2castor _PROTO((int));
 
 #define STSTR2BUF_V2(stcp,member,option,buf,bufsize) {                                    \
   if ((stcp)->member[0] != '\0') {                                                        \
-    if ((strlen(buf) + strlen(option) + 2 + strlen((stcp)->member) + 1) > bufsize) { serrno = SEUMSG2LONG; return(-1); } \
-    sprintf(buf + strlen(buf)," %s %s",option,(stcp)->member);                            \
+    if ((strlen(buf) + strlen(option) + 1 + strlen((stcp)->member) + 1) > bufsize) { serrno = SEUMSG2LONG; return(-1); } \
+    strcat(buf,option);                                                                   \
+    strcat(buf, " ");                                                                     \
+    strcat(buf,(stcp)->member);                                                           \
   }                                                                                       \
 }
 
@@ -119,8 +120,8 @@ int rc_shift2castor _PROTO((int));
 int DLL_DECL rc_castor2shift(rc)
      int rc;
 {
-  /* Input  is a CASTOR return code */
-  /* Output is a SHIFT  return code */
+  /* Input  is a CASTOR return code (usually serrno) */
+  /* Output is a SHIFT  return code (usually process return code) */
   switch (rc) {
   case ERTBLKSKPD:
     return(BLKSKPD);
@@ -135,6 +136,8 @@ int DLL_DECL rc_castor2shift(rc)
     return(USERR);
   case SESYSERR:
     return(SYERR);
+  case ESTKILLED:
+    return(REQKILD);
   default:
     return(rc);
   }
@@ -540,8 +543,6 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   }
   free(sendbuf);
 
-  /* Unpack for the output */
-
 #if defined(_WIN32)
   WSACleanup();
 #endif
@@ -693,9 +694,6 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
     return(-1);
   }
 
-  STCHR2BUF(stcp,keep,'K',buf,bufsize);
-  STSTR2BUF(stcp,poolname,'p',buf,bufsize);
-  STVAL2BUF(stcp,size,'s',buf,bufsize);
   switch (stcp->t_or_d) {
   case 't':
     /* Special case of VID and VSN */
@@ -751,23 +749,42 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
       if (strlen(buf) + strlen(" -E ignoreeoi") + 1 > bufsize) { serrno = SEUMSG2LONG; return(-1); }
       strcat(buf," -E ignoreeoi");
     }
+    STSTR2BUF_V2(stcp,u1.t.tapesrvr," --tapesrvr",buf,bufsize);
     break;
   case 'd':
   case 'a':
     STSTR2BUF(stcp,u1.d.xfile,'I',buf,bufsize);
+    STSTR2BUF_V2(stcp,u1.d.Xparm," --Xparm",buf,bufsize);
     break;
   case 'm':
     STSTR2BUF(stcp,u1.m.xfile,'M',buf,bufsize);
     break;
   case 'h':
     STSTR2BUF(stcp,u1.h.xfile,'M',buf,bufsize);
-    STVAL2BUF_V2(stcp,u1.h.fileid,"--fileid",buf,bufsize)
-    STVAL2BUF_V2(stcp,u1.h.fileclass,"--fileclass",buf,bufsize)
+    STSTR2BUF_V2(stcp,u1.h.server," --server",buf,bufsize);
+    STVAL2BUF_V2(stcp,u1.h.fileid," --fileid",buf,bufsize);
+    STVAL2BUF_V2(stcp,u1.h.fileclass," --fileclass",buf,bufsize);
+    /* STSTR2BUF_V2(stcp,u1.h.tppool," --tppool",buf,bufsize); */
     break;
   default:
     serrno = EFAULT;
     return(-1);
   }
+  STVAL2BUF_V2(stcp,reqid," --reqid",buf,bufsize);
+  STSTR2BUF_V2(stcp,ipath," --ipath",buf,bufsize);
+  STCHR2BUF(stcp,keep,'K',buf,bufsize);
+  STSTR2BUF(stcp,poolname,'p',buf,bufsize);
+  STVAL2BUF(stcp,size,'s',buf,bufsize);
+  STSTR2BUF_V2(stcp,group," --group",buf,bufsize);
+  STSTR2BUF_V2(stcp,user," --user",buf,bufsize);
+  STVAL2BUF_V2(stcp,uid," --uid",buf,bufsize);
+  STVAL2BUF_V2(stcp,gid," --gid",buf,bufsize);
+  STVAL2BUF_V2(stcp,mask," --mask",buf,bufsize);
+  STVAL2BUF_V2(stcp,status," --status",buf,bufsize);
+  STVAL2BUF_V2(stcp,actual_size," --actual_size",buf,bufsize);
+  STVAL2BUF_V2(stcp,c_time," --c_time",buf,bufsize);
+  STVAL2BUF_V2(stcp,a_time," --a_time",buf,bufsize);
+  STVAL2BUF_V2(stcp,nbaccesses," --nbaccesses",buf,bufsize);
   return(0);
 }
 
@@ -1254,9 +1271,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
      struct stgpath_entry *stpp_input;     
 {
   int req_type = STAGE_UPDC;
-  struct stgcat_entry *thiscat; /* Catalog current pointer */
   struct stgpath_entry *thispath; /* Path current pointer */
-  int istcp;                    /* Counter on catalog structures passed in the protocol */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries;                   /* Number of retries */
@@ -1382,7 +1397,11 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
   sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
-  sendbuf_size += strlen(pw->pw_name) + 1;
+  if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {
+    sendbuf_size += strlen(Gname) + 1;     /* Name under which request is to be done */
+  } else {
+    sendbuf_size += strlen(pw->pw_name) + 1;
+  }
   sendbuf_size += LONGSIZE;                /* Uid */
   sendbuf_size += LONGSIZE;                /* Gid */
   sendbuf_size += LONGSIZE;                /* Mask */
@@ -1497,8 +1516,6 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   }
   free(sendbuf);
 
-  /* Unpack for the output */
-
 #if defined(_WIN32)
   WSACleanup();
 #endif
@@ -1550,7 +1567,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     return(-1);
   }
 
-  /* It is not allowed ot have both stcp_input and stpp_input */
+  /* It is not allowed to have both stcp_input and stpp_input */
   if ((nstcp_input > 0) && (nstpp_input > 0)) {
     serrno = EINVAL;
     return(-1);
@@ -1663,11 +1680,6 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
   sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
-  if ((flagsok & STAGE_GRPUSER) == STAGE_GRPUSER) {
-    sendbuf_size += strlen(Gname) + 1;     /* Name under which request is to be done */
-  } else {
-    sendbuf_size += strlen(pw->pw_name) + 1;
-  }
   sendbuf_size += LONGSIZE;                /* Uid */
   sendbuf_size += LONGSIZE;                /* Gid */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
@@ -1676,7 +1688,6 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   sendbuf_size += LONGSIZE;                /* Number of catalog structures */
   sendbuf_size += LONGSIZE;                /* Number of path structures */
   for (istcp = 0; istcp < nstcp_input; istcp++) {
-    int i, numvid, numvsn;
 
     thiscat = &(stcp_input[istcp]);              /* Current catalog structure */
 
@@ -1815,8 +1826,6 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     stage_sleep (RETRYI);
   }
   free(sendbuf);
-
-  /* Unpack for the output */
 
 #if defined(_WIN32)
   WSACleanup();
