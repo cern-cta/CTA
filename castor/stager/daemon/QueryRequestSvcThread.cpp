@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.5 2005/01/31 17:18:36 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.6 2005/02/02 18:11:13 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/01/31 17:18:36 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2005/02/02 18:11:13 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -43,10 +43,13 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/SegmentStatusCodes.hpp"
+#include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQueryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
-
+#include "stager_client_api.h"
 
 
 #undef logfunc
@@ -183,6 +186,79 @@ namespace castor {
       }
 
 
+      void setFileResponseStatus(castor::rh::FileQueryResponse* fr,
+                                 castor::stager::DiskCopyInfo*  dc,
+                                 bool& foundDiskCopy) {
+
+        // 1. Mapping diskcopy/tapecopy/segment status to one file status
+        stage_fileStatus st = FILE_INVALID_STATUS;
+        switch(dc->diskCopyStatus()) {
+          // Just IGNORE the discopies in those statuses !
+        case DISKCOPY_WAITDISK2DISKCOPY:
+        case DISKCOPY_DELETED:
+        case DISKCOPY_FAILED:
+        case DISKCOPY_GCCANDIDATE:
+        case DISKCOPY_BEINGDELETED:
+        case DISKCOPY_INVALID:
+          return;
+          
+        case DISKCOPY_WAITTAPERECALL:
+          st = FILE_STAGEIN;
+          break;
+
+        case  DISKCOPY_STAGED:
+          st = FILE_STAGED;
+          break;
+
+        case DISKCOPY_WAITFS:
+        case DISKCOPY_STAGEOUT:
+                    
+          // fprintf(stderr, "---------> DC %d TC %d Seg %d\n", 
+                  dc->diskCopyStatus(), 
+                  dc->tapeCopyStatus(),
+                  dc->segmentStatus());
+
+          switch (dc->tapeCopyStatus()) {
+          case -1:
+            st =  FILE_STAGEOUT;
+            break;
+          case TAPECOPY_CREATED:
+            st = FILE_CANBEMIGR;
+            break;
+          case TAPECOPY_TOBEMIGRATED:
+          case TAPECOPY_WAITINSTREAMS:
+            st = FILE_WAITINGMIGR;
+            break;
+          case TAPECOPY_SELECTED:
+            if (dc->segmentStatus() == SEGMENT_FAILED) {
+              st = FILE_PUTFAILED;
+            } else {
+              st = FILE_BEINGMIGR;
+            }
+            break;
+        }
+        break;
+          
+        case DISKCOPY_CANBEMIGR:
+          st =  FILE_CANBEMIGR;
+          break;
+            
+        }
+
+        // 2. Aggregate status for the various diskcopies
+        if (!foundDiskCopy) {
+          //fprintf(stderr, "---------> !founDiskCopy Fr:%d dc:%d\n", st, dc->diskCopyStatus());
+          fr->setStatus(st);
+          foundDiskCopy = true;
+        } else {
+          //fprintf(stderr, "---------> founDiskCopy %d\n", st);
+          if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
+            fr->setStatus(FILE_STAGED);
+          }
+        }
+      }
+
+
       /**
        * Handles a fileQueryRequest and replies to client.
        * @param req the request to handle
@@ -290,26 +366,25 @@ namespace castor {
                 throw e;
               }
 
+
+              castor::rh::FileQueryResponse res;
+              res.setFileName(pval);    
+              bool foundDiskCopy = false;
               
               for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
                     = result.begin();
                   dcit != result.end();
                   ++dcit) {
                 
-                castor::stager::DiskCopyInfo* diskcopy = *dcit;
-                
+                castor::stager::DiskCopyInfo* diskcopy = *dcit;  
                 /* Preparing the response */
                 /* ---------------------- */
-                STAGER_LOG_DEBUG(NULL, "Building Response");
-                castor::rh::FileQueryResponse res;
-                res.setStatus(diskcopy->diskCopyStatus());
-                res.setFileName(pval);
-                
-                /* Sending the response */
-                /* -------------------- */
-                replyToClient(client, &res);
-                
+                setFileResponseStatus(&res, diskcopy, foundDiskCopy);
               }
+
+              /* Sending the response */
+              /* -------------------- */
+              replyToClient(client, &res);
 
             } catch (castor::exception::Exception e) {
               serrno = e.code();
