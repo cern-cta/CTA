@@ -1,6 +1,9 @@
 /*
- * $Id: remote.c,v 1.3 1999/07/28 16:16:19 obarring Exp $
+ * $Id: remote.c,v 1.4 1999/07/30 15:38:57 obarring Exp $
  * $Log: remote.c,v $
+ * Revision 1.4  1999/07/30 15:38:57  obarring
+ * Replace gethostbyname with Cgethostbyname (from Cnetdb.c)
+ *
  * Revision 1.3  1999/07/28 16:16:19  obarring
  * Fix aggregate initialization for HPUX
  *
@@ -15,7 +18,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: remote.c,v 1.3 1999/07/28 16:16:19 obarring Exp $";
+static char cvsId[] = "$Id: remote.c,v 1.4 1999/07/30 15:38:57 obarring Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,6 +50,7 @@ static char cvsId[] = "$Id: remote.c,v 1.3 1999/07/28 16:16:19 obarring Exp $";
 #include <Castor_limits.h>
 #include <log.h> 
 #include <net.h>
+#include <Cnetdb.h>
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -135,7 +139,7 @@ char *hostname ;
      * getting local IP number
      */
     gethostname(local,MAXHOSTNAMELEN);
-    if ( (h=(struct hostent *)gethostbyname(local))==NULL) {
+    if ( (h=(struct hostent *)Cgethostbyname(local))==NULL) {
         log(LOG_ERR,"isremote(): gethostbyname() error\n");
         return -1 ;
     }
