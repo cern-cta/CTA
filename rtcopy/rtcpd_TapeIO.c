@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.23 $ $Date: 2000/06/13 16:55:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.24 $ $Date: 2000/06/14 11:17:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -51,8 +51,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.23 $ $Date
 
 char *getconfent _PROTO((char *, char *, int));
 int gettperror _PROTO((int, char *, char **));
-static int read_sony _PROTO((int, char *, int));
-static int write_sony _PROTO((int, char *, int));
+static int read_sony _PROTO((int, char *, int, tape_list_t *, file_list_t *));
+static int write_sony _PROTO((int, char *, int, tape_list_t *, file_list_t *));
 
 #if defined(_AIX) && defined(_IBMR2)
 static char driver_name[7];
@@ -508,7 +508,11 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
             if ( serrno != SEOPNOTSUP ) rtcp_log(LOG_ERR,
                 "get_compression_stats() failed, rc = %d: %s\n",
                 comp_rc,sstrerror(serrno));
-            filereq->host_bytes = 0;
+            if ( tapereq->mode == WRITE_ENABLE ) {
+                filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
+            } else {
+                filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
+            }
         }
     }
 #endif /* !_WIN32 && !(_AIX && !ADSTAR) */
@@ -653,7 +657,7 @@ int twrite(int fd,char *ptr,int len,
     } else {
         if ( file->trec == 0 ) filereq->TStartTransferTape = (int)time(NULL);
         file->trec ++ ;
-        rc = write_sony(fd, ptr, len);
+        rc = write_sony(fd, ptr, len, tape, file);
     }
     return(rc);
 }
@@ -747,14 +751,15 @@ int tread(int fd,char *ptr,int len,
             return(rc);
     } else {
         file->trec ++ ;
-        return (read_sony(fd, ptr, len));
+        return (read_sony(fd, ptr, len, tape, file));
     }
 }
 
 /*  tpio_sony - sends scsi commands to support RAW mode on SONY DIR1000
     using a DFC-1500/1700 controller */
 
-static int read_sony(int fd, char *buf, int len) {
+static int read_sony(int fd, char *buf, int len, 
+                     tape_list_t *tape, file_list_t *file) {
 #if SONYRAW
     unsigned char cdb[6];
     int errcat;
@@ -765,6 +770,7 @@ static int read_sony(int fd, char *buf, int len) {
     int ntracks;
     int offset;
     int rc;
+    int trec;
     char sense[MAXSENSE];
     int tpt;
 
@@ -779,11 +785,11 @@ static int read_sony(int fd, char *buf, int len) {
 #endif
 #endif
     offset = 0;
-    trec++;
+    trec = file->trec;
     flags = SCSI_IN | SCSI_SEL_WITH_ATN;
-    if (! negotiate) {  /* Set Fast/Wide on first xfer */
+    if (! file->negotiate) {  /* Set Fast/Wide on first xfer */
         flags |= (SCSI_SYNC | SCSI_WIDE);
-        negotiate = 1;
+        file->negotiate = 1;
     }
     while (ntracks > 0) {
         memset (cdb, 0, sizeof(cdb));
@@ -794,16 +800,25 @@ static int read_sony(int fd, char *buf, int len) {
         rc = send_scsi_cmd (fd, "", 1, cdb, 6, buf + offset, n * 144432,
             sense, 38, 30000, flags, &nb_sense_ret, &msgaddr);
         if (rc == -1 || rc == -2) {
-            (void) fprintf (stderr, RT113, "CPTPDSK", msgaddr, trec);
-            exit (UNERR);
+            errcat = serrno;
+            rtcpd_AppendClientMsg(NULL, file, RT113, "CPTPDSK", msgaddr, trec);
+            rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_UNERR);
+            serrno = errcat;
+            return(-1);
         }
         if (rc < 0) {
-            (void) fprintf (stderr, RT125, "CPTPDSK", msgaddr, trec);
+            rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", msgaddr, trec);
             if (rc == -4 && nb_sense_ret >= 14 &&
-                get_sk_msg (sense[2] & 0xF, sense[12], sense[13], &msgaddr) == ETPARIT)
-                exit (USERR);
-            else
-                exit (SYERR);
+                (errcat = get_sk_msg (sense[2] & 0xF, sense[12], sense[13], &msgaddr)) == ETPARIT) {
+                rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_USERR);
+                serrno = errcat;
+                return(-1);
+            } else {
+                if ( errcat <= 0 ) errcat = EIO;
+                rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_SYERR);
+                serrno = errcat;
+                return(-1);
+            }
         }
         ntracks -= n;
         offset += n * 144432;
@@ -814,7 +829,9 @@ static int read_sony(int fd, char *buf, int len) {
 #endif /* SONYRAW */
 }
         
-static int write_sony(int fd, char *buf, int len) {
+static int write_sony(int fd, char *buf, int len,
+                      tape_list_t *tape,
+                      file_list_t *file ) {
 #if defined(SONYRAW)
     unsigned char cdb[6];
     int errcat;
@@ -825,6 +842,7 @@ static int write_sony(int fd, char *buf, int len) {
     int ntracks;
     int offset;
     int rc;
+    int trec;
     char sense[MAXSENSE];
     int tpt;
 
@@ -839,11 +857,11 @@ static int write_sony(int fd, char *buf, int len) {
 #endif
 #endif
     offset = 0;
-    trec++;
+    trec = file->trec;
     flags = SCSI_OUT | SCSI_SEL_WITH_ATN;
-    if (! negotiate) {  /* Set Fast/Wide on first xfer */
+    if (! file->negotiate) {  /* Set Fast/Wide on first xfer */
         flags |= (SCSI_SYNC | SCSI_WIDE);
-        negotiate = 1;
+        file->negotiate = 1;
     }
     while (ntracks > 0) {
         memset (cdb, 0, sizeof(cdb));
@@ -854,16 +872,24 @@ static int write_sony(int fd, char *buf, int len) {
         rc = send_scsi_cmd (fd, "", 1, cdb, 6, buf + offset, n * 144432,
             sense, 38, 30000, flags, &nb_sense_ret, &msgaddr);
         if (rc == -1 || rc == -2) {
-            (void) fprintf (stderr, RT116, "CPDSKTP", msgaddr, trec);
-            exit (UNERR);
+            errcat = serrno;
+            rtcpd_AppendClientMsg(NULL,file, RT116, "CPDSKTP", msgaddr, trec);
+            rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_UNERR);
+            serrno = errcat;
+            return(-1);
         }
         if (rc < 0) {
-            (void) fprintf (stderr, RT126, "CPDSKTP", msgaddr, trec);
+            rtcpd_AppendClientMsg(NULL, file, RT126, "CPDSKTP", msgaddr, trec);
             if (rc == -4 && nb_sense_ret >= 14 &&
-                get_sk_msg (sense[2] & 0xF, sense[12], sense[13], &msgaddr) == ETPARIT)
-                exit (USERR);
-            else
-                exit (SYERR);
+                (errcat = get_sk_msg (sense[2] & 0xF, sense[12], sense[13], &msgaddr)) == ETPARIT) {
+                rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_USERR);
+                serrno = errcat;
+                return(-1);
+            } else {
+                rtcpd_SetReqStatus(NULL,file,errcat,RTCP_FAILED|RTCP_SYERR);
+                serrno = errcat;
+                return(-1);
+            }
         }
         ntracks -= n;
         offset += n * 144432;
