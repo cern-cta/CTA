@@ -1,3 +1,11 @@
+castor (2.0.0-20) unstable; urgency=low
+
+  * Fix in PROTO2/h/Castor_limits.h (IBM 3592 densities definition)
+  * Fix in build of rtcopy binaries: only rtcpclientd should have dependency on oracle library
+  * Fix in startup scripts when the daemon fails to start
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri, 11 Mar 2005 09:50:54 +0100
+
 castor (2.0.0-19) unstable; urgency=low
 
   * Packaged to have up-to-date s/w to install on tape servers
