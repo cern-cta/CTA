@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.44 $ $Release$ $Date: 2004/08/10 14:15:05 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.45 $ $Release$ $Date: 2004/08/10 15:55:45 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.44 $ $Date: 2004/08/10 14:15:05 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.45 $ $Date: 2004/08/10 15:55:45 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1041,6 +1041,29 @@ static int addSegmentToDB(
 /*     return(-1); */
 /*   } */
   C_IAddress_delete(iAddr);
+
+  /*
+   * Update the local instance (not sure this is needed?)
+   */
+  tapeIObj = Cstager_Tape_getIObject(tpIterator->tp);
+  rc = getIAddr(tapeIObj,&iAddr);
+  if ( rc != -1 ) {
+    rc = C_Services_updateObj(svcs,iAddr,tapeIObj);
+    if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()",
+                                    C_Services_errorMsg(svcs));
+  } else {
+    LOG_FAILED_CALL("getIAddr()","");
+  }
+  
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    filereq->err.errorcode = serrno;
+    strcpy(filereq->err.errmsgtxt,
+           C_Services_errorMsg(svcs));
+    filereq->err.severity = RTCP_FAILED|RTCP_SYERR;
+    serrno = save_serrno;
+    return(-1);
+  }
   return(0);
 }
 
