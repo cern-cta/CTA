@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.126 $ $Release$ $Date: 2005/02/24 15:45:11 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.127 $ $Release$ $Date: 2005/04/01 13:32:48 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.126 $ $Release$ $Date: 2005/02/24 15:45:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.127 $ $Release$ $Date: 2005/04/01 13:32:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1342,7 +1342,20 @@ static int nextSegmentToRecall(
     LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
                          "Unexpected successful return without candidate",
                          fl->dbRef->key);
-    filereq->err.errorcode = ENOENT;
+    /*
+     * Force something else than ENOENT here because this an error that
+     * can only happen if:
+     *  1) there are no available disk resources
+     *  2) there is a bug
+     *
+     * In either case, ENOENT will be interpreted by the recaller as if
+     * there is nothing more to recall, which is not true since we have
+     * been called with a valid segment. So to avoid that the recaller
+     * thinks it has finished its work, we force another error. ENOSPC
+     * is most appropriate in the normal case when there are no available
+     * disk resources (1 above).
+     */
+    filereq->err.errorcode = ENOSPC;
     filereq->err.severity = RTCP_FAILED;
     strcpy(filereq->err.errmsgtxt,
            "Cstager_IStagerSvc_bestFileSystemForSegment() returned no candidate");
