@@ -1,0 +1,74 @@
+.\" $Id: stage_put_hsm.man,v 1.1 2002/10/08 08:52:25 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 08:52:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 08:52:25 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_put_hsm \- copy disk files to Hierarchical Storage Management System.
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_put (char *" stghost ,
+.BI "stage_hsm_t " *hsmstruct ");"
+
+.SH DESCRIPTION
+.B stage_put
+copies disk files to a Hierarchical Storage Management System. It can only be used after a
+.B stageout
+command, or a
+.B stage_out_hsm
+API call. The HSM file must be in state STAGEOUT or PUT_FAILED. This command is deprecated and new applications should use \fBstagewrt_hsm\fP instead.
+
+.SH PARAMETERS
+.B stghost
+is the stager machine name that hosts the stage daemon. If this parameter is
+.P
+.B NULL
+, then default value is taken (either from configuration file, from environment variable
+.B STAGE_HOST
+, or from hardcoded value, "castor").
+.P
+.B hsmstruct
+is a linked list giving all the HSM files that have to be writen on tape. This structure is composed of the following members:
+.TP 1.9i
+.B char *xfile
+Pointer to a HSM file name. Required to be non-NULL and non-zero length.
+.TP
+.B char *path
+Pointer to the corresponding user filename. Required to be non-NULL and non-zero length.
+.TP
+.B u_signed64 size
+Size limitation. Will be ignored if equal to zero.
+.TP
+.B stage_hsm_t *next
+Pointer to next structure.
+.B NULL
+will indicate the end of the linked list.
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+The
+.B serrno
+variable might contain the following values:
+\
+.br
+0       Ok.
+.br
+1       Bad parameter.
+.br
+2       System error.
+.br
+4       Configuration error.
+.br
+28      ENOSPC: tape volume overflow.
+.br
+192     Request cancelled by stageclr.
+.br
+197     Stageing limited by size.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
