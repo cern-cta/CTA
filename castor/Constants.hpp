@@ -48,6 +48,7 @@ namespace castor {
     OBJ_StageOutRequest,
     OBJ_StageUpdcRequest,
     OBJ_StageQryRequest,
+    OBJ_StageClrRequest,
     OBJ_MessageAck,
     OBJ_Cuuid,
     OBJ_CastorFile,
