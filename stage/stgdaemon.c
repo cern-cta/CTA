@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.20 2000/03/08 17:35:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.21 2000/03/14 09:51:02 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.20 $ $Date: 2000/03/08 17:35:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.21 $ $Date: 2000/03/14 09:51:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -88,6 +88,7 @@ struct winsize {
 #endif
 #include <serrno.h>
 #include "osdep.h"
+#include "Cnetdb.h"
 
 extern char *optarg;
 extern int optind;
@@ -133,7 +134,7 @@ extern int optind;
 void prockilreq _PROTO((char *, char *));
 void procinireq _PROTO((char *, char *));
 void checkpoolstatus _PROTO(());
-void check_child_exit_q _PROTO(());
+void check_child_exit _PROTO(());
 void checkwaitq _PROTO(());
 void create_link _PROTO((struct stgcat_entry *, char *));
 void dellink _PROTO((struct stgpath_entry *));
@@ -141,9 +142,7 @@ void delreq _PROTO((struct stgcat_entry *, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
-struct child_exit_q *child_exit_qp = NULL;	/* pointer to list of children
-                                               having exited */
-
+void wait4child _PROTO(());
 
 main(argc,argv)
      int argc;
@@ -171,7 +170,6 @@ main(argc,argv)
   int stg_s;
   struct stgpath_entry *stpp;
   struct timeval timeval;
-  void wait4child();
   int errflg = 0;
   int foreground = 0;
 
@@ -269,7 +267,7 @@ main(argc,argv)
     stglogit (func, STG02, "", "socket", sys_errlist[errno]);
     exit (CONFERR);
   }
-  if ((sp = getservbyname (STG, "tcp")) == NULL) {
+  if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
     stglogit (func, STG09, STG, "not defined in /etc/services");
     exit (CONFERR);
   }
@@ -469,7 +467,7 @@ main(argc,argv)
   /* main loop */
 
   while (1) {
-    check_child_exit_q(); /* check childs [pid,status] */
+    check_child_exit(); /* check childs [pid,status] */
     checkpoolstatus ();	/* check if any pool just cleaned */
     checkwaitq ();	/* scan the wait queue */
     if (initreq_reqid && (waitqp == NULL || force_init)) {
@@ -1610,52 +1608,19 @@ upd_stageout(req_type, upath, subreqid)
 #if ! defined(_WIN32)
 void wait4child()
 {
-  struct child_exit_q *ceqp;
+}
+
+void check_child_exit()
+{
   int pid;
-  struct child_exit_q *prev;
   int status;
 
   while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
-    ceqp = child_exit_qp;
-    while (ceqp) {
-      prev = ceqp;
-      ceqp = ceqp->next;
-    }
-    ceqp = (struct child_exit_q *) malloc (sizeof(struct child_exit_q));
-    if (child_exit_qp)
-      prev->next = ceqp;
-    else
-      child_exit_qp = ceqp;
-    ceqp->next = 0;
-    ceqp->ovly_pid = pid;
-    ceqp->status = status;
+    checkovlstatus(pid,status & 0xFFFF);
   }
-}
-
-void check_child_exit_q()
-{
-  struct child_exit_q *ceqp;
-  struct child_exit_q *ceqp_sav;
-  int i;
-  struct confq *rqp;
-  struct tptab *tunp;
-
-  sa.sa_handler = SIG_IGN;
-  sa.sa_flags = SA_RESTART;
-  sigaction (SIGCHLD, &sa, NULL);
-  ceqp = child_exit_qp;
-  while (ceqp) {
-    checkovlstatus(ceqp->ovly_pid,ceqp->status & 0xFFFF);
-    ceqp_sav = ceqp;
-    ceqp = ceqp->next;
-    free (ceqp_sav);
-  }
-  child_exit_qp = NULL;
-  sa.sa_handler = wait4child;
-  sa.sa_flags = SA_RESTART;
-  sigaction (SIGCHLD, &sa, NULL);
 }
 #endif
+
 void stgdaemon_usage() {
   printf("\nUsage : stgdaemon [options]\n"
          "  where options can be\n"
