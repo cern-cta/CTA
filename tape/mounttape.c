@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.26 $ $Date: 2000/08/15 11:15:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.27 $ $Date: 2000/11/07 15:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -101,6 +101,7 @@ char	**argv;
 	struct timeval timeval;
 	int tplbl;
 	int tpmode;
+	int tpmounted;
 	char tpvsn[CA_MAXVSNLEN+1];
 	int ux;
 	int vbsyretry;
@@ -139,6 +140,7 @@ char	**argv;
 	den = atoi (argv[18]);
 	prelabel = atoi (argv[19]);
 	vdqm_reqid = atoi (argv[20]);
+	tpmounted = atoi (argv[21]);
 
 	if (prelabel > 2) {
 		prelabel -= DOUBLETM;
@@ -193,6 +195,33 @@ char	**argv;
 	if (c)
 		goto reply;
 #endif
+
+	if (tpmounted) {	/* tape already mounted */
+#if SONYRAW
+	    if (! sonyraw) {
+#endif
+#ifndef SOLARIS25
+		if (!scsi)
+#endif
+			tapefd = open (path, O_RDONLY);
+#ifndef SOLARIS25
+		else
+			tapefd = open (path, O_RDONLY|O_NDELAY);
+#endif
+		if (tapefd >= 0) {
+			if (chkdriveready (tapefd) > 0) goto mounted;
+			else close (tapefd);
+		}
+#if SONYRAW
+	    } else {
+		tapefd = open (path, O_RDWR|O_NDELAY);
+		if (tapefd >= 0) {
+			if (chkdriveready_sony (tapefd) > 0) goto mounted;
+			else close (tapefd);
+		}
+	    }
+#endif
+	}
 
 	/* build mount message */
 
@@ -598,6 +627,7 @@ unload_loop1:
 		goto reply;
 	}
 #endif
+mounted:
 #ifdef TMS
 	if (c = sendtmsmount (mode, "CO", vid, jid, name, acctname, drive))
 		goto reply;
@@ -610,8 +640,6 @@ unload_loop1:
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
-
-positp:
 
 	/* do the prelabel if flag is set */
 
