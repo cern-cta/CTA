@@ -39,9 +39,8 @@ namespace castor {
 
   /**
    * class IAddress
-   *  Base class for all addresses. An address allows to find a foreign representation
-   * of an object. Fully empty except for an id telling the type of the address and
-   * the infrastructure for printing any address
+   * Base class for all addresses. An address allows to find a foreign representation
+   * of an object.
    */
   class IAddress : public virtual IObject {
 
@@ -74,12 +73,6 @@ namespace castor {
      * gets the type of the conversion service able to deal with this address
      */
     virtual unsigned int cnvSvcType() const = 0;
-
-    /**
-     * prints the address into an output stream
-     * @param s The stream where to print
-     */
-    virtual void print(std::ostream& s) const = 0;
 
     /**
      * Outputs this object in a human readable format

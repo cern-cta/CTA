@@ -27,7 +27,6 @@
 // Include Files
 #include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
-#include <iostream>
 
 extern "C" {
 
@@ -92,9 +91,8 @@ extern "C" {
   //----------------------------------------------------------------------------
   // C_IAddress_print
   //----------------------------------------------------------------------------
-  int C_IAddress_print(castor::IAddress* instance,
-                       std::ostream& s) {
-    instance->print(s);
+  int C_IAddress_print(castor::IAddress* instance) {
+    instance->print();
     return 0;
   }
 

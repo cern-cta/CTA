@@ -34,9 +34,8 @@ struct C_IObject_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class IAddress
-//  Base class for all addresses. An address allows to find a foreign representation
-// of an object. Fully empty except for an id telling the type of the address and
-// the infrastructure for printing any address
+// Base class for all addresses. An address allows to find a foreign representation
+// of an object.
 //------------------------------------------------------------------------------
 
 /**
@@ -81,10 +80,9 @@ int C_IAddress_cnvSvcType(struct C_IAddress_t* instance,
                           unsigned int* ret);
 
 /**
- * prints the address into an output stream
+ * Outputs this object in a human readable format
  */
-int C_IAddress_print(struct C_IAddress_t* instance,
-                     ostream& s);
+int C_IAddress_print(struct C_IAddress_t* instance);
 
 /***************************************/
 /* Implementation of IObject interface */

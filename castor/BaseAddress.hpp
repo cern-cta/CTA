@@ -81,12 +81,6 @@ namespace castor {
     /*********************************************/
     /* Implementation of IAddress abstract class */
     /*********************************************/
-    /**
-     * prints the address into an output stream
-     * @param s The stream where to print
-     */
-    virtual void print(std::ostream& s) const;
-
     /**********************************/
     /* End of IAddress abstract class */
     /**********************************/
