@@ -63,7 +63,7 @@ namespace castor {
       /**
        * constructor
        */
-      BaseClient() throw();
+      BaseClient(int acceptTimeout = 1800) throw();
 
       /**
        * destructor
@@ -160,7 +160,12 @@ namespace castor {
       /// The callback socket
       castor::io::ServerSocket* m_callbackSocket;
 
+      /// The request id, if returned by the request handler
       std::string m_requestId;
+
+      /// Timeout for the accept
+      int m_acceptTimeout;
+      
     };
 
   } // end of namespace client

@@ -59,8 +59,9 @@ extern "C" {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::client::BaseClient::BaseClient() throw() :
-  BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId("") {}
+castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
+  BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId(""),
+  m_acceptTimeout(acceptTimeout) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -322,7 +323,6 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   }
 
   struct pollfd pollit;
-  int timeout = 1800; // In seconds, half an hour
   bool stop =false;
   
   pollit.fd = m_callbackSocket->socket();
@@ -332,7 +332,7 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   // Here we have anyway to retry the EINTR
   while (!stop) {
     /* Will return > 0 if the descriptor is readable */
-    rc = poll(&pollit,1,timeout*1000);
+    rc = poll(&pollit,1, m_acceptTimeout*1000);
     if (0 == rc) { 
       castor::exception::Communication e(requestId(), SETIMEDOUT); // XXX To be changed
       e.getMessage() << "Accept timeout";
