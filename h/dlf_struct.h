@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.3 $ $Date: 2003/11/06 07:35:14 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:04:48 $ CERN IT-ADC Vitaly Motyakov
  */
 
 
@@ -13,6 +13,7 @@
 #include "Cuuid.h"
 #include "osdep.h"
 #include "Castor_limits.h"
+#include "Cns_api.h"
 
 #include "dlf.h"
 
@@ -120,7 +121,7 @@ typedef struct _dlf_log_message
   pid_t pid;
 #endif
   int cid;                                /* Cthread identifier */
-  U_HYPER ns_invariant;
+  struct Cns_fileid ns_fileid;
   U_BYTE facility_no;
   U_BYTE severity;
   U_SHORT message_no;
