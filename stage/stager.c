@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.92 2000/10/06 09:16:06 jdurand Exp $
+ * $Id: stager.c,v 1.93 2000/10/06 09:52:33 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.92 $ $Date: 2000/10/06 09:16:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.93 $ $Date: 2000/10/06 09:52:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -76,7 +76,6 @@ extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_
 int isuserlevel _PROTO((char *));
 int getnamespace _PROTO((char *, char *));
 void init_hostname _PROTO(());
-int CheckRetry _PROTO((tape_list_t *));
 
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
@@ -1100,7 +1099,7 @@ int stagein_castor_hsm_file() {
 			RETURN (USERR);
 		}
 
-		if (CheckRetry(rtcpcreqs[0]) == 0) {
+		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 			tape_list_t *tl;
 			file_list_t *fl;
 			/* Rtcopy bits suggest to retry */
@@ -1494,7 +1493,7 @@ int stagewrt_castor_hsm_file() {
 					RETURN (USERR);
 				}
 
-				if (CheckRetry(rtcpcreqs[0]) == 0) {
+				if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 					tape_list_t *tl;
 					file_list_t *fl;
 					/* Rtcopy bits suggest to retry */
@@ -1646,7 +1645,7 @@ int stage_tape() {
 		int stage_tape_retry_flag = 0;
 		int i;
 
-		if (CheckRetry(rtcpcreqs[0]) == 0) {
+		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 			tape_list_t *tl;
 			file_list_t *fl;
 			/* Rtcopy bits suggest to retry */
@@ -3009,29 +3008,7 @@ void init_hostname()
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 }
 
-/* Copy of the routine of the same name in the rtcopy directory */
-int CheckRetry(tape)
-	tape_list_t *tape;
-{
-	tape_list_t *tl;
-	file_list_t *fl;
 
-	if ( tape == NULL ) return(-1);
-	/* Make sure nothing failed seriously */
-	CLIST_ITERATE_BEGIN(tape,tl) {
-		if ( (tl->tapereq.err.severity & RTCP_FAILED) != 0 ) return(-1);
-		CLIST_ITERATE_BEGIN(tl->file,fl) {
-			if ( (fl->filereq.err.severity & RTCP_FAILED) != 0 ) return(-1);
-		} CLIST_ITERATE_END(tl->file,fl);
-	} CLIST_ITERATE_END(tape,tl);
-	/* Now check if a retry is possible */
-	CLIST_ITERATE_BEGIN(tape,tl) {
-		if ((tl->tapereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
-			(tl->tapereq.err.severity & RTCP_FAILED) == 0 ) return(0);
-		CLIST_ITERATE_BEGIN(tl->file,fl) {
-			if ((fl->filereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
-				(fl->filereq.err.severity & RTCP_FAILED) == 0 ) return(0);
-		} CLIST_ITERATE_END(tl->file,fl);
-	} CLIST_ITERATE_END(tape,tl);
-	return(-1);
-}
+/*
+ * Last Update: "Friday 06 October, 2000 at 11:46:13 CEST by Jean-Damien Durand (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ */
