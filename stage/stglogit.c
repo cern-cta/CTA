@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.30 2002/01/27 08:55:30 jdurand Exp $
+ * $Id: stglogit.c,v 1.31 2002/02/05 15:31:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.30 $ $Date: 2002/01/27 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.31 $ $Date: 2002/02/05 15:31:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -23,8 +23,10 @@ static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.30 $ $Date: 20
 #endif
 #include "stage_constants.h"
 #include "osdep.h"
+#include "Cglobals.h"
 
 extern int reqid;
+static int prtbuf_key = -1;
 
 struct flag2name {
 	u_signed64 flag;
@@ -70,25 +72,16 @@ int stglogit(va_alist) va_dcl
 	return(0);
 }
 
-int stglogtppool(va_alist) va_dcl
-{
-	va_list args;
+int stglogtppool(func,tppool)
 	char *func;
+	char *tppool;
+{
 	char prtbuf[PRTBUFSZ];
 	struct tm *tm;
 	time_t current_time;
 	int fd_log;
-	char *tppool;
 
-	va_start (args);
-	func = va_arg (args, char *);
-	tppool = va_arg (args, char *);
-	va_end (args);
-
-	if (tppool == NULL) {
-		return(-1);
-	}
-	if (tppool[0] == '\0') {
+	if ((func == NULL) || (tppool == NULL)) {
 		return(-1);
 	}
 
@@ -111,12 +104,12 @@ int stglogtppool(va_alist) va_dcl
 }
 
 
-int stglogflags(va_alist) va_dcl
-{
-	va_list args;
+char *stglogflags(func,logfile,flags)
 	char *func;
+	char *logfile;
 	u_signed64 flags;
-	char prtbuf[PRTBUFSZ];
+{
+	char *prtbuf = NULL;
 	char *thisp;
 	struct tm *tm;
 	time_t current_time;
@@ -167,24 +160,26 @@ int stglogflags(va_alist) va_dcl
  		{ STAGE_FILE_WOPEN  , "STAGE_FILE_WOPEN"  },
  		{ STAGE_FILE_WCLOSE , "STAGE_FILE_WCLOSE" },
  		{ STAGE_REQID       , "STAGE_REQID"       },
+ 		{ STAGE_HSM_ENOENT_OK , "STAGE_HSM_ENOENT_OK" },
         { 0                , NULL               }
 	};
       
-	va_start (args);
-	func = va_arg (args, char *);
-	flags = va_arg (args, u_signed64);
-	va_end (args);
+	Cglobals_get(&prtbuf_key, (void**)&prtbuf, (size_t) PRTBUFSZ);
+	if (prtbuf == NULL) return(NULL);
 
-	/* Buffersize all the flags */
-	time (&current_time);		/* Get current time */
-	tm = localtime (&current_time);
+	prtbuf[0] = '\0';
+	if (func != NULL) {
+		/* Buffersize all the flags */
+		time (&current_time);		/* Get current time */
+		tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
-			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+		sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
+				 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
-			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+		snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
+				  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
+	}
 	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
 	i = -1;
@@ -201,21 +196,20 @@ int stglogflags(va_alist) va_dcl
 			something_to_print = 1;
 		}
 	}
-	if (something_to_print != 0) {
+	if ((something_to_print != 0) && (logfile != NULL)) {
 		strcat(prtbuf, "\n");
-		if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
+		if ((fd_log = open (logfile, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
 			write (fd_log, prtbuf, strlen(prtbuf));
 			close (fd_log);
 		}
 	}
-	return(0);
+	return(prtbuf);
 }
 
-int stglogopenflags(va_alist) va_dcl
-{
-	va_list args;
+int stglogopenflags(func,flags)
 	char *func;
 	u_signed64 flags;
+{
 	char prtbuf[PRTBUFSZ];
 	char *thisp;
 	struct tm *tm;
@@ -270,10 +264,9 @@ int stglogopenflags(va_alist) va_dcl
         { 0                , NULL     }
 	};
       
-	va_start (args);
-	func = va_arg (args, char *);
-	flags = va_arg (args, u_signed64);
-	va_end (args);
+	if (func == NULL) {
+		return(-1);
+	}
 
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
