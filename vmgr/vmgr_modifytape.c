@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifytape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 10:52:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifytape.c,v $ $Revision: 1.3 $ $Date: 2000/01/05 13:50:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifytape - modify an existing tape volume */
@@ -69,7 +69,7 @@ vmgr_modifytape(const char *vid, char *vsn, char *dgn, char *density, char *lblt
 	if (vsn) {
 		marshall_STRING (sbp, vsn);
 	} else {
-		marshall_STRING (sbp, vid);
+		marshall_STRING (sbp, "");
 	}
 	if (dgn) {
 		marshall_STRING (sbp, dgn);
@@ -84,7 +84,7 @@ vmgr_modifytape(const char *vid, char *vsn, char *dgn, char *density, char *lblt
 	if (lbltype) {
 		marshall_STRING (sbp, lbltype);
 	} else {
-		marshall_STRING (sbp, "al");
+		marshall_STRING (sbp, "");
 	}
 	if (model) {
 		marshall_STRING (sbp, model);
