@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.7 2004/11/09 11:04:43 jdurand Exp $
+ * $Id: stager_macros.h,v 1.8 2004/11/09 18:11:25 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include "dlf_api.h"
 #include "Cns_api.h"
 #include "stager_messages.h"
@@ -59,15 +61,15 @@
       if (optionStagerLog) { \
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
 	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s : %s : %s\n", func, stagerMessages[what].messageTxt, value, value2); \
+	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	  } else { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s : %s : %d\n", func, stagerMessages[what].messageTxt, value, value2); \
+	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	  } \
 	} else { \
 	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s : %d : %s\n", func, stagerMessages[what].messageTxt, value, value2); \
+	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	  } else { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s : %d : %d\n", func, stagerMessages[what].messageTxt, value, value2); \
+	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	  } \
 	} \
       }	\
@@ -84,9 +86,9 @@
 	        ); \
       if (optionStagerLog) { \
 	if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s : %s\n", func, stagerMessages[what].messageTxt, value); \
+	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	} else { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s : %d\n", func, stagerMessages[what].messageTxt, value); \
+	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	} \
       } \
     } \
@@ -104,9 +106,9 @@
 		); \
       if (optionStagerLog) { \
 	if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s : %s\n", func, stagerMessages[what].messageTxt, value2); \
+	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
 	} else { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s : %d\n", func, stagerMessages[what].messageTxt, value2); \
+	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
 	} \
       } \
     } else { \
@@ -120,7 +122,7 @@
 		STAGER_LOG_WHERE \
 		); \
       if (optionStagerLog) { \
-	log(stagerMessages[what].severity2LogLevel, "%s : %s\n", func, stagerMessages[what].messageTxt); \
+	log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt); \
       } \
     } \
   } \
