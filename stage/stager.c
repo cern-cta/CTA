@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.121 2001/02/08 22:15:55 jdurand Exp $
+ * $Id: stager.c,v 1.122 2001/02/12 10:15:52 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #define USE_SUBREQID
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.121 $ $Date: 2001/02/08 22:15:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.122 $ $Date: 2001/02/12 10:15:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1403,7 +1403,7 @@ int stagein_castor_hsm_file() {
 		if (callback_error != 0) {
 			/* This is a callback error - considered as fatal */
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "callback error", sstrerror(serrno));
+			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "callback", sstrerror(serrno));
 			RESTORE_EID;
 			free(stcp_start);
 			RETURN (SYERR);
@@ -1750,7 +1750,7 @@ int stagewrt_castor_hsm_file() {
 				if (callback_error != 0) {
 					/* This is a callback error - considered as fatal */
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback error", sstrerror(serrno));
+					sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback", sstrerror(serrno));
 					RESTORE_EID;
 					RETURN (SYERR);
 				}
@@ -1884,7 +1884,7 @@ int stage_tape() {
     if (callback_error != 0) {
 		/* This is a callback error - considered as fatal */
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "callback error", sstrerror(serrno));
+		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "callback", sstrerror(serrno));
 		RESTORE_EID;
 		RETURN (SYERR);
 	}
@@ -3358,13 +3358,14 @@ int stager_hsm_callback(tapereq,filereq)
 			sendrep(rpfd, MSG_ERR, "### [%s] Setting tape %s to %s state\n", castor_hsm, tapereq->vid, this_string);
 			if (vmgr_updatetape(tapereq->vid, 0, 0, 0, this_flag) != 0) {
 				sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
+				RESTORE_EID;
+				callback_error = 1;
+				return(-1);
 			}
 			RESTORE_EID;
+			/* By resetting this variable we makes sure that our decision is not overwriten by the cleanup() */
+			vid[0] = '\0';
 		}
-		callback_error = 1;
-		/* By resetting this variable we makes sure that our decision is not overwriten by the cleanup() */
-		vid[0] = '\0';
-		return(-1);
 	}
 
 	return(0);
@@ -3489,6 +3490,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Thursday 08 February, 2001 at 19:19:12 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 12 February, 2001 at 11:13:32 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
