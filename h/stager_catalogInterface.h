@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.8 2004/11/23 16:31:46 jdurand Exp $
+ * $Id: stager_catalogInterface.h,v 1.9 2004/11/26 08:34:46 jdurand Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -14,6 +14,7 @@
 #include "castor/stager/FileRequest.h"
 #include "castor/stager/SvcClass.h"
 #include "castor/stager/FileClass.h"
+#include "castor/stager/FileSystem.h"
 #include "castor/Services.h"
 #include "castor/Constants.h"
 #include "castor/BaseAddress.h"
