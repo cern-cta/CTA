@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.34 $ $Date: 2002/02/07 10:30:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.35 $ $Date: 2002/04/08 13:47:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -78,7 +78,7 @@ char	**argv;
 	char hdr1[81];
 	char hdr2[81];
 	int i;
-	static char labels[5][4] = {"", "al", "nl", "sl", "blp"};
+	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
 	int lblcode;
 #if DUXV4
 	char *msgaddr;
@@ -97,6 +97,7 @@ char	**argv;
 	char rings[9];
 	char *sbp;
 	int scsi;
+	int side;
 	int sonyraw;
 	int status;
 	int Tflag = 0;
@@ -143,6 +144,7 @@ char	**argv;
 	prelabel = atoi (argv[20]);
 	vdqm_reqid = atoi (argv[21]);
 	tpmounted = atoi (argv[22]);
+	side = atoi (argv[23]);
 
 	if (prelabel > 2) {
 		prelabel -= DOUBLETM;
@@ -275,7 +277,7 @@ reselect_loop:
 remount_loop:
 		if (*loader != 'm' && needrbtmnt) {
 			do {
-				c = rbtmount (vid, drive, dvn, mode, loader);
+				c = rbtmount (vid, side, drive, dvn, mode, loader);
 				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
 					goto reply;
 			} while (n == 1);
@@ -569,6 +571,7 @@ unload_loop1:
 		if (tplbl == NL && lblcode == NL) break;
 		if (tplbl != NL)
 			tplogit (func, "vol1 = %s\n", vol1);
+		if (tplbl == AL && lblcode == AUL) break;
 		if (lblcode != tplbl && vsnretry) {	/* wrong label type */
 			usrmsg (func, TP021, labels[lblcode], labels[tplbl]);
 			c = ETWLBL;
@@ -669,7 +672,7 @@ mounted:
 				else
 					blksize = 262144;
 				buildhdrlbl(hdr1, hdr2,
-					"PRELABEL", 1, 1, 0,
+					"PRELABEL", vsn, 1, 1, 0,
 					"U", blksize, 0, den, lblcode);
 				if (lblcode == SL) asc2ebc (hdr1, 80);
 				if ((c = writelbl (tapefd, path, hdr1)) < 0)
