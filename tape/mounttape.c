@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.39 $ $Date: 2003/10/14 12:24:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.40 $ $Date: 2004/01/23 10:05:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,8 @@ static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.39 $ $Date: 2
 #if VMGR
 #include "vmgr_api.h"
 #endif
+
+
 char *acctname;
 char *devtype;
 char *drive;
@@ -118,7 +120,7 @@ char	**argv;
 	int vsnretry = 0;
 	char *why;
 	int why4a;
-
+    
 	void cleanup();
 	void mountkilled();
 
@@ -627,6 +629,30 @@ unload_loop1:
 	}
 
 	/* tape is mounted */
+    if (strcmp (devtype, "9840") == 0 ||
+        strcmp (devtype, "9940") == 0 ||
+        strcmp (devtype, "994B") == 0) {
+        
+        /* BC Now checking the MIR */
+        if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
+            char mirmsg[OPRMSGSZ];
+            char mirrepbuf[OPRMSGSZ];
+            
+            sprintf (mirmsg, TP065, vid, labels[lblcode], drive, hostname,
+                     name, jid);
+            omsgr(func, mirmsg, 1);
+            checkorep (func, mirrepbuf);
+            if (strncmp (mirrepbuf, "cancel", 6) == 0) {
+                tplogit(func, "Request cancelled by operator due to bad MIR\n");
+                cleanup();
+                sendrep (rpfd, TAPERC, ETBADMIR);
+                exit(0);
+            }
+                
+        } else {
+            tplogit(func, "MIR is valid\n");
+        }
+    }
 
 #if SACCT
 	tapeacct (TPMOUNTED, uid, gid, jid, dgn, drive, vid, 0, 0);
@@ -1046,3 +1072,5 @@ char *loader;
 		return (-1);	/* unrecoverable error */
 	}
 }
+
+
