@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.16 2002/10/03 14:33:53 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.17 2002/10/03 14:35:41 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.16 $ $Date: 2002/10/03 14:33:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.17 $ $Date: 2002/10/03 14:35:41 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/03 14:33:53 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/03 14:35:41 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -368,6 +368,9 @@ Here is a small log:
 01/13 07:30:17    12 sendrep: STG99 \- stage returns 0
 .SH SEE ALSO
 .BR Castor_limits(4) ,
-.B Cdbserver(1)
+.BR Cdbserver(1) ,
+.BR stageinit(1) ,
+.BR stgdump(1) ,
+.B stgconvert(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
