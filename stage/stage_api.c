@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.40 2002/03/26 09:09:38 jdurand Exp $
+ * $Id: stage_api.c,v 1.41 2002/03/27 08:14:48 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -483,13 +483,13 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
         }
       } else if (thiscat->u1.h.xfile[0] != '/') {
         char *thiscwd;
-        char dummy[167];
+        char dummy[STAGE_MAX_HSMLENGTH+1];
 
         /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
 
         if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
           /* We check that we have enough room for such a CASTOR full pathname */
-          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile) + 1) > 167) {
+          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
             free(thiscwd);
             serrno = EFAULT;
             return(-1);
@@ -1261,7 +1261,7 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
     return(-1);
   }
   /* Check hsmname length and poolname validity */
-  if (((*hsmname == '\0') || (strlen(hsmname)  > 166              )) ||
+  if (((*hsmname == '\0') || (strlen(hsmname)  > STAGE_MAX_HSMLENGTH)) ||
       ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
     serrno = EINVAL;
     return(-1);
@@ -1822,13 +1822,13 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
         }
       } else if (thiscat->u1.h.xfile[0] != '/') {
         char *thiscwd;
-        char dummy[167];
+        char dummy[STAGE_MAX_HSMLENGTH+1];
 
         /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
 
         if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
           /* We check that we have enough room for such a CASTOR full pathname */
-          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile) + 1) > 167) {
+          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
             free(thiscwd);
             serrno = EFAULT;
             return(-1);
@@ -2005,7 +2005,7 @@ int DLL_DECL stageclr_Hsm(flags,hostname,hsmname)
     return(-1);
   }
   /* Check hsmname length and poolname validity */
-  if (((*hsmname == '\0') || (strlen(hsmname)  > 166              ))) {
+  if (((*hsmname == '\0') || (strlen(hsmname)  > STAGE_MAX_HSMLENGTH))) {
     serrno = EINVAL;
     return(-1);
   }
