@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.72 2002/01/22 07:36:36 jdurand Exp $
+ * $Id: procqry.c,v 1.73 2002/01/22 12:03:12 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.72 $ $Date: 2002/01/22 07:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.73 $ $Date: 2002/01/22 12:03:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
-#define STAGEQRY_IN_MAIN
+/* #define STAGEQRY_IN_MAIN */
 
 /* Disable the update of the catalog in stageqry mode */
 #ifdef USECDB
