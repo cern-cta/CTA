@@ -17,7 +17,11 @@
 #include <hp.cf>
 #endif
 #if linux
+#if defined(ppc64)
+#include <linux_ppc64.cf>
+#else
 #include <linux.cf>
+#endif
 #endif
 #if __Lynx__
 #include <lynx.cf>

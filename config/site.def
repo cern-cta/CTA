@@ -24,6 +24,16 @@
    This option has no efect on all other platforms.
 */
 
+/* Uncomment this for linux ppc64 systems. Currently, the arch is not
+correctly identified by CPP flags (tested on SuSE SLES9)
+*/
+/*
+#if linux
+#define ppc64
+#define __ppc64__
+#endif
+*/
+
 #define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9"
 #define AuthorizedHosts	/etc/castor/rtcopy.hosts
 #define CDKDir	/usr/local/src/CDK
@@ -76,7 +86,11 @@
 #if defined(_WIN32)
 #define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
 #else
+#if defined(__x86_64)||defined(__ppc64__)
+#define InstallLibDir	/usr/lib64
+#else
 #define InstallLibDir	/usr/lib
+#endif
 #endif
 #define LibManDir       /usr/share/man/man3
 #define LibManSuffix    3
