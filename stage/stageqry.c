@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.33 2002/10/07 09:05:10 jdurand Exp $
+ * $Id: stageqry.c,v 1.34 2002/10/20 08:26:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.33 $ $Date: 2002/10/07 09:05:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.34 $ $Date: 2002/10/20 08:26:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -79,6 +79,7 @@ int withstatusnumber_flag = 0;
 int withtimenumber_flag = 0;
 int check_format_string = 0;
 u_signed64 flags = 0;
+int noretry_flag = 0;
 
 int main(argc, argv)
 	int	argc;
@@ -135,6 +136,7 @@ int main(argc, argv)
         {"withunit",           NO_ARGUMENT, &withunit_flag,     1},
         {"withstatusnumber",   NO_ARGUMENT, &withstatusnumber_flag, 1},
         {"withtimenumber",     NO_ARGUMENT, &withtimenumber_flag, 1},
+		{"noretry",            NO_ARGUMENT,     &noretry_flag,  1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -287,6 +289,7 @@ int main(argc, argv)
     if (display_side_flag) flags |= STAGE_DISPLAY_SIDE;
     if (mintime_flag) flags |= STAGE_MINTIME;
     if (side_flag) flags |= STAGE_SIDE;
+    if (noretry_flag) flags |= STAGE_NORETRY;
 
 	if (argc > Coptind) {
 		fprintf (stderr, STG16);

@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.23 2002/10/03 14:03:56 jdurand Exp $
+.\" $Id: stageqry.man,v 1.24 2002/10/20 08:26:19 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.23 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.24 $ $Date: 2002/10/20 08:26:19 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/10/20 08:26:19 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -41,6 +41,8 @@ stageqry \- give the status of all files known to the stage system
 .BI \-\-noheader
 ] [
 .BI \-\-noregexp
+] [ 
+.BI \-\-noretry
 ] [
 .BI \-\-output " filename"
 ] [
@@ -72,6 +74,8 @@ stageqry \- give the status of all files known to the stage system
 .BI \-\-mintime
 ] [
 .BI \-\-migrator
+] [ 
+.BI \-\-noretry
 ] [
 .BI \-\-queue
 ] [
@@ -308,6 +312,9 @@ gives current minimum time before migration. This concerns only entries that are
 .TP
 .BI \-\-noregexp
 prevents regular expression to be applied in case of \-M option. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
+.TP
+.B \-\-noretry
+There will be no retry in case of any failure. Can be set using environment variable STAGE_NORETRY to a non-zero value, or an entry 'STG NORETRY' in /etc/shift.conf.
 .TP
 .BI \-\-queue
 gives CASTOR's waiting queue content.
