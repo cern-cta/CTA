@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.12 $ $Date: 1999/11/23 10:11:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.13 $ $Date: 1999/11/26 15:21:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1040,7 +1040,19 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
      */
     drvrec = NULL;
     rc = GetDrvRecord(dgn_context,DrvReq,&drvrec);
-    
+
+    if ( DrvReq->status == VDQM_UNIT_QUERY ) {
+        if ( rc < 0 || drvrec == NULL ) {
+            log(LOG_ERR,"vdqm_NewDrvReq(): Query request for unknown drive %s@%s\n",DrvReq->drive,DrvReq->server);
+            FreeDgnContext(&dgn_context);
+            vdqm_SetError(ENOENT);
+            return(-1);
+        }
+        *DrvReq = drvrec->drv;
+        FreeDgnContext(&dgn_context);
+        return(0);
+    }
+
     if ( rc < 0 || drvrec == NULL ) {
         /*
          * Drive record did not exist, create it!
