@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.3 $ $Date: 2000/12/20 07:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.4 $ $Date: 2001/09/19 12:57:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -149,8 +149,8 @@ struct smc_element_info element_info[];
 			element_info[i].element_address = *p * 256 + *(p+1);
 			element_info[i].element_type = *(page_start-8);
 			element_info[i].state = *(p+2);
-			element_info[i].asc = *(data+4);
-			element_info[i].ascq = *(data+5);
+			element_info[i].asc = *(p+4);
+			element_info[i].ascq = *(p+5);
 			element_info[i].source_address = *(p+10) * 256 + *(p+11);
 			if (*(p+12) == '\0')
 				element_info[i].name[0] = '\0';
