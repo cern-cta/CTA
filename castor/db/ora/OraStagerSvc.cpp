@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2004/11/25 11:04:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2004/11/25 18:45:20 $ $Author: bcouturi $
  *
  *
  *
@@ -104,7 +104,7 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementString =
-  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5); END;";
+  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -750,7 +750,7 @@ castor::db::ora::OraStagerSvc::requestToDo
     if (0 == m_requestToDoStatement) {
       std::ostringstream stmtString;
       stmtString
-        << "UPDATE RequestsStatus SET status = 'PROCESSED'"
+        << "UPDATE RequestsStatus SET status = 'PROCESSING'"
         << " WHERE status = 'NEW' AND ROWNUM < 2 AND "
         << "(SELECT type FROM Id2Type WHERE Id2Type.id = RequestsStatus.id)"
         << " IN (";
@@ -890,6 +890,8 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
     oracle::occi::ResultSet *rs =
       m_scheduleSubRequestStatement->getCursor(6);
     oracle::occi::ResultSet::Status status = rs->status(); 
+    
+
     status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::DiskCopyForRecall* item =
@@ -1048,7 +1050,7 @@ castor::db::ora::OraStagerSvc::selectFileSystem
   unsigned long id;
   try {
     m_selectFileSystemStatement->setString(1, diskServer);
-    m_selectFileSystemStatement->setString(1, mountPoint);
+    m_selectFileSystemStatement->setString(2, mountPoint);
     oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found, return 0
