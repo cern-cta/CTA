@@ -1288,10 +1288,10 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     
     if ( hdr == NULL || VolReq == NULL ) return(-1);
     
-    log(LOG_INFO,"vdqm_NewVolReq() (%d,%d)@%s:%d requests %s, mode=%d in DGN %s (%s@%s)\n",
-        VolReq->clientUID,VolReq->clientGID,VolReq->client_host,
-        VolReq->client_port,VolReq->volid,VolReq->mode,VolReq->dgn,
-        (*VolReq->drive == '\0' ? "***" : VolReq->drive),
+    log(LOG_INFO,"vdqm_NewVolReq() %s(%d,%d)@%s:%d requests %s, mode=%d in DGN %s (%s@%s)\n",
+        VolReq->client_name,VolReq->clientUID,VolReq->clientGID,
+        VolReq->client_host,VolReq->client_port,VolReq->volid,VolReq->mode,
+        VolReq->dgn,(*VolReq->drive == '\0' ? "***" : VolReq->drive),
         (*VolReq->server == '\0' ? "***" : VolReq->server));
     /*
      * Check that the requested device exists.
