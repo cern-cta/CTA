@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.3 2005/01/20 11:05:44 jdurand Exp $
+# $Id: makerpm.zsh,v 1.4 2005/01/22 09:04:05 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -11,8 +11,31 @@ if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
   exit 1
 fi
 
-cd /tmp
-foreach this (castor-*_${MAJOR_CASTOR_VERSION}-${MINOR_CASTOR_VERSION}_*deb)
+#
+## We expect ${MAJOR_CASTOR_VERSION} in the form a.b
+#
+echo ${MAJOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.0"
+  exit 1
+fi
+
+#
+## We expect ${MINOR_CASTOR_VERSION} in the form c.d
+#
+echo ${MINOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MINOR_CASTOR_VERSION (${MINOR_CASTOR_VERSION}) should be in the form c.d, example: 99.1"
+  exit 1
+fi
+
+a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
+b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
+d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+
+# cd /tmp
+foreach this (castor-*_${a}.${b}.${c}-${d}_*deb)
   dir=`echo $this | sed 's/\-[0-9].*//g' | sed 's/_/\-/g'`
   fakeroot rm -rf $dir
   fakeroot alien --to-rpm --generate --keep-version $this
