@@ -95,7 +95,7 @@ void castor::client::BaseClient::run(int argc, char** argv)
     } else {
       euid = geteuid();
     }
-    req->setUid(euid);
+    req->setEuid(euid);
     // GID
     uid_t egid;
     if (0 != getenv("STAGE_EGID")) {
@@ -103,7 +103,7 @@ void castor::client::BaseClient::run(int argc, char** argv)
     } else {
       egid = getegid();
     }
-    req->setGid(egid);
+    req->setEgid(egid);
     // Username
     errno = 0;
     struct passwd *pw = Cgetpwuid(euid);
@@ -279,7 +279,7 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
   }
 
   struct pollfd pollit;
-  int timeout = 2; // In seconds
+  int timeout = 10; // In seconds
 
   pollit.fd = m_callbackSocket->socket();
   pollit.events = POLLIN;
