@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.13 $ $Date: 2001/01/18 16:02:53 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.14 $ $Date: 2001/04/20 13:19:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -47,12 +47,14 @@ typedef void    Sigfunc();
 #if defined(__STDC__)
 int      _net_readable(int, int);
 int      _net_writable(int, int);
+int      _net_connectable(SOCKET, int);
 #ifndef _WIN32
 Sigfunc *_netsignal(int, Sigfunc *);
 #endif
 #else
 int      _net_readable();
 int      _net_writable();
+int      _net_connectable();
 #ifndef _WIN32
 Sigfunc *_netsignal();
 #endif
@@ -68,7 +70,6 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 #ifndef _WIN32
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
-
 
 #ifndef _WIN32
   /* In any case we catch and trap SIGPIPE */
@@ -108,9 +109,19 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
   }
 
   if ( timeout >= 0 && rc != -1 ) {
+    time_t time_start = time(NULL);
+    int time_elapsed = 0;
+    int nloop = 0;              /* To give it a try at least once */
     for (;;) {
-      rc = _net_connectable(fd, timeout);
-      if ( rc == -1 && errno == EINTR ) continue;
+      time_elapsed = (int) (time(NULL) - time_start);
+      if ((time_elapsed >= timeout) && (nloop > 0)) {
+        rc = -1;
+        serrno = SETIMEDOUT;
+        break;
+      }
+      nloop++;
+      rc = _net_connectable(fd, timeout - time_elapsed);
+      if ( (rc == -1) && (errno == EINTR) ) continue;
       else break;
     }
   }
@@ -148,6 +159,9 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 #ifndef _WIN32
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
+  time_t time_start;
+  int time_elapsed;
+  int nloop = 0;               /* To give it a try at least once */
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
@@ -171,8 +185,21 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
   nleft = n;
   nread = 0;
 
+  time_start = time(NULL);
+  time_elapsed = 0;
+
   while (nleft > 0) {
-    if ((select_status = _net_readable(fd, timeout)) <= 0) {
+
+    time_elapsed = (int) (time(NULL) - time_start);
+    if ((time_elapsed >= timeout) && (nloop > 0)) {
+      /* Timeout */
+      serrno = SETIMEDOUT;
+      flag = -1;
+      break;
+    }
+    nloop++;
+
+    if ((select_status = _net_readable(fd, timeout - time_elapsed)) <= 0) {
       if (select_status == 0) {
         /* Timeout */
         serrno = SETIMEDOUT;
@@ -235,6 +262,9 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
   int     select_status = 0;
+  time_t time_start;
+  int time_elapsed;
+  int nloop = 0;
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
@@ -257,8 +287,21 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
   ptr      = vptr;
   nleft    = n;
 
+  time_start = time(NULL);
+  time_elapsed = 0;
+
   while (nleft > 0) {
-    if ((select_status = _net_writable(fd, timeout)) <= 0) {
+
+    time_elapsed = (int) (time(NULL) - time_start);
+    if ((time_elapsed >= timeout) && (nloop > 0)) {
+      /* Timeout */
+      serrno = SETIMEDOUT;
+      flag = -1;
+      break;
+    }
+    nloop++;
+
+    if ((select_status = _net_writable(fd, timeout - time_elapsed)) <= 0) {
       if (select_status == 0) {
         /* Timeout */
         serrno = SETIMEDOUT;
