@@ -263,21 +263,30 @@
  * Section specifying the build of the Security packages
  */
 
-#define BuildSecurity		NO
-#define UseGSI                  NO
-#define UseKRB5                 NO
-#define UseKRB4                 NO
+#define BuildSecurity		YES
+#define UseGSI                  YES
+#define UseKRB5                 YES
+#define UseHeimdalKrb5		YES
+#define UseKRB4                 YES
 
 #if BuildSecurity
 
-
+#if UseHeimdalKrb5
+#define KRB5CONFIG /usr/heimdal/bin/krb5-config
+#else
+#define KRB5CONFIG /usr/kerberos/bin/krb5-config
+#endif
+#define KRB4CONFIG /usr/kerberos4/bin/krb4-config
 
 #if UseKRB5
 #define KRB5Mech KRB5
-#define SecAuthMechKRB5       -DKRB5
-#define SecIncludeDirKRB5 -I/usr/kerberos/include
-#define SecLibsDirKRB5 -L/usr/kerberos/lib
-#define SecLibsKRB5 -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err  -lresolv
+#if UseHeimdalKrb5
+#define SecAuthMechKRB5    -DKRB5 -DHEIMDAL
+#else
+#define SecAuthMechKRB5    -DKRB5
+#endif
+#define SecIncludeDirKRB5 $(shell KRB5CONFIG gssapi --cflags)
+#define SecLibsKRB5 $(shell KRB5CONFIG gssapi --libs)
 #else
 #define KRB5Mech
 #endif
@@ -286,17 +295,15 @@
 #define GSIMech GSI
 #define SecAuthMechGSI       -DGSI 
 #define SecIncludeDirGSI -I/opt/globus/include/gcc32dbg
-#define SecLibsDirGSI -L/opt/globus/lib
-#define SecLibsGSI -lglobus_gssapi_gsi_gcc32dbg -lglobus_gss_assist_gcc32dbg
+#define SecLibsGSI -L/opt/globus/lib -lglobus_gssapi_gsi_gcc32dbg -lglobus_gss_assist_gcc32dbg
 #else
 #define GSIMech
 #endif
 
 #if UseKRB4
 #define KRB4Mech KRB4
-#define SecIncludeDirKRB4 -I/usr/kerberos4/include
-#define SecLibsDirKRB4 -L/usr/kerberos4/lib
-#define SecLibsKRB4 -lkrb -lroken -lresolv -lcrypto
+#define SecIncludeDirKRB4 $(shell KRB4CONFIG  --cflags)
+#define SecLibsKRB4 $(shell KRB4CONFIG  --libs)
 #else
 #define KRB4Mech
 #endif
