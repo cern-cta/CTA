@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.3 $ $Date: 2000/01/07 13:35:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.4 $ $Date: 2000/05/30 05:24:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -48,7 +48,7 @@ static char action[8];
 static char cur_unm[9];
 static char cur_vid[7];
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
-static int mount_req_id = -1;
+static int mount_req_id_3495 = -1;
 #endif
 #if defined(CDK)
 static REQ_ID dismount_req_id = 0;
@@ -164,7 +164,7 @@ unsigned int force;
 		int c;
 		int status;
 
-		if (mount_req_id < 0 || qmid3495 (&status) ||
+		if (mount_req_id_3495 < 0 || qmid3495 (&status) ||
 		    (status != MT_PENDING_STS) || cancel3495()) {
 			closelmcp();
 			c = demount3495 (vid, dvn, loader, force);
@@ -290,7 +290,7 @@ char *loader;
 	memset ((char *)&mtlqmidarg, 0, sizeof(mtlqmidarg));
 	mtlqmidarg.device = device;
 	mtlqmidarg.req_id = mtlmarg.mtlmret.req_id;
-	mount_req_id = mtlmarg.mtlmret.req_id;
+	mount_req_id_3495 = mtlmarg.mtlmret.req_id;
 	RETURN (0);
 }
 
@@ -377,7 +377,7 @@ cancel3495 ()
 	ENTRY (cancel3495);
 	memset ((char *)&mtlcarg, 0, sizeof(mtlcarg));
 	mtlcarg.device = device;
-	mtlcarg.req_id = mount_req_id;
+	mtlcarg.req_id = mount_req_id_3495;
 	mtlcarg.cancel_type = MIDC;
 	if (ioctl (lmcpfd, MTIOCLC, &mtlcarg) < 0) {
 		c = ibmrbterr (func, ldr, action, mtlcarg.mtlcret.cc,
