@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.35 2001/01/31 19:07:33 jdurand Exp $
+ * $Id: stage.h,v 1.36 2001/02/01 10:36:59 jdurand Exp $
  */
 
 /*
@@ -402,6 +402,7 @@ struct waitq {
 #else
 	mode_t	openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
 #endif
+	int openflags;  /* Used only to remember the openflags in entries in STAGEOUT|WAITING_NS state */
 	int	silent; /* Determine if done in silent mode or not */
 	int use_subreqid; /* Says if we allow RTCOPY to do asynchroneous callback */
 	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
