@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.24 2001/02/01 15:45:22 jdurand Exp $
+ * $Id: stage_api.h,v 1.25 2001/02/01 16:31:30 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -15,8 +15,8 @@
 #else
 #include <time.h>              /* For time_t */
 #endif
-#include "Castor_limits.h"     /* Get all hardcoded CASTOR constants                              */
-#include "stage.h"             /* To get the API req_type constants - bijection with stgdaemon    */
+#include "Castor_limits.h"     /* Get all hardcoded CASTOR constants */
+#include "stage_struct.h"      /* To get the stager structures definitions */
 #include "osdep.h"             /* For OS-dependencies */
 #include "marshall.h"          /* For marshalling macros */
 

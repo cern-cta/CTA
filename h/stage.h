@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.38 2001/02/01 15:45:21 jdurand Exp $
+ * $Id: stage.h,v 1.39 2001/02/01 16:31:30 jdurand Exp $
  */
 
 /*
@@ -74,12 +74,7 @@
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
-#ifdef MAXPATH
-#undef MAXPATH
-#endif
-#define MAXPATH 80	/* maximum path length */
 #define	MAXRETRY 5
-#define	MAXVSN 3	/* maximum number of vsns/vids on a stage command */
 #define PRTBUFSZ 1024
 #define REPBUFSZ  512	/* must be >= max stage daemon reply size */
 #define REQBUFSZ 20000	/* must be >= max stage daemon request size */
@@ -216,12 +211,9 @@
 #define	STG58	"STG58 - another stageshutdown is pending\n"
 #define	STG59	"STG59 - Duplicate HSM file %s\n"
 #define	STG60	"STG60 - Duplicated file sequence %s reduced by one\n"
-#if defined(vms)
-#define	STG80	"STG80 - invalid GRPUSER entry (username missing) : %s\n"
-#define	STG81	"STG81 - invalid GRPUSER entry (uid missing) : %s\n"
-#define	STG82	"STG82 - invalid GRPUSER entry (gid missing) : %s\n"
-#define	STG83	"STG83 - -G parameter is mandatory for VMS users\n"
-#endif
+/*
+ * Old vms support was defining STG80 to STG83
+ */
 #define	STG92	"STG92 - %s request by %s (%d,%d) from %s\n"
 #define	STG93	"STG93 - removing link %s\n"
 #define	STG94	"STG94 - creating link %s\n"
@@ -284,75 +276,7 @@
 
 			/* stage daemon internal tables */
 
-typedef char fseq_elem[7];
-#if defined(_WIN32)
-typedef long gid_t;
-typedef long uid_t;
-#endif
-
-#if ! defined(vms)
-struct stgcat_entry {		/* entry format in STGCAT table */
-	int	blksize;	/* maximum block size */
-	char	filler[2];
-	char	charconv;	/* character conversion */
-	char	keep;		/* keep data on disk after successful stagewrt */
-	int	lrecl;		/* record length */
-	int	nread;		/* number of blocks/records to be copied */
-	char	poolname[CA_MAXPOOLNAMELEN+1];
-	char	recfm[CA_MAXRECFMLEN+1];	/* record format */
-	int	size;		/* size in Mbytes of data to be staged */
-	char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
-	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk , 'm' for non-CASTOR HSM, 'h' for CASTOR HSM */
-	char	group[CA_MAXGRPNAMELEN+1];
-	char	user[CA_MAXUSRNAMELEN+1];	/* login name */
-	uid_t	uid;		/* uid or Guid */
-	gid_t	gid;
-#if defined(vms) || defined(_WIN32)
-	int mask;
-#else
-	mode_t	mask;
-#endif
-	int	reqid;
-	int	status;
-	off_t	actual_size;
-	time_t	c_time;
-	time_t	a_time;
-	int	nbaccesses;
-	union {
-	    struct {			/* tape specific info */
-		char	den[CA_MAXDENLEN+1];	/* density */
-		char	dgn[CA_MAXDGNLEN+1];	/* device group */
-		char	fid[CA_MAXFIDLEN+1];	/* file id */
-		char	filstat;	/* file status: new = 'n', old = 'o' */
-		char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
-		char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
-		int	retentd;	/* retention period in days */
-		char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
-		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
-		char	vid[MAXVSN][CA_MAXVIDLEN+1];
-		char	vsn[MAXVSN][CA_MAXVSNLEN+1];
-	    } t;
-	    struct {			/* info for disk file stageing */
-		char	xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
-		char	Xparm[23];
-	    } d;
-      struct {			/* Migrated files (non-CASTOR) */
-		char	xfile[167];
-	    } m;
-	    struct {			/* HSM files (CASTOR) */
-		char	xfile[167];
-		char		server[CA_MAXHOSTNAMELEN+1];
-		u_signed64	fileid;
-		short	fileclass;
-		char tppool[CA_MAXPOOLNAMELEN+1];
-	    } h;
-	} u1;
-};
-
-struct stgpath_entry {		/* entry format in STGPATH table */
-	int	reqid;
-	char	upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
-};
+#include "stage_struct.h"
 
 struct waitf {
 	int	subreqid;
@@ -398,7 +322,7 @@ struct waitq {
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
 	int	api_out; /* Flag to tell if we have to send structure in output (API mode) */
-#if defined(vms) || defined(_WIN32)
+#if defined(_WIN32)
 	int openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
 #else
 	mode_t	openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
@@ -474,6 +398,5 @@ struct sorted_ent {
 	int scanned;            /* Flag telling if we yet scanned this entry */
 	double	weight;
 };
-#endif
 
 #endif /* __stage_h */
