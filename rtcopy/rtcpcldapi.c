@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/21 16:25:20 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/21 16:43:02 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.11 $ $Date: 2004/06/21 16:25:20 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.12 $ $Date: 2004/06/21 16:43:02 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -341,7 +341,8 @@ static int updateOldStgCat(tape,file)
         }
       } else break; 
     }
-  }
+    if ( rc == 0 ) break;
+  } /* for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) */
   if ( rc == -1 ) {
     if ( save_serrno == SECOMERR || save_serrno == SESYSERR ) {
       filereq->err.errorcode = save_serrno;
