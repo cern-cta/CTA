@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.39 $ $Date: 2000/06/08 13:44:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.40 $ $Date: 2000/06/14 10:14:44 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -119,6 +119,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
     TransferTime = max((time_t)filereq->TEndTransferDisk,
                        (time_t)filereq->TEndTransferTape) -
                        (time_t)filereq->TEndPosition;
+    if ( WaitTime < 0 ) WaitTime = 0;
+    if ( TransferTime < 0 ) TransferTime = 0;
 
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc(): fseq=%d, status=%d, concat=%d, err=%d\n",
              filereq->tape_fseq,filereq->proc_status,filereq->concat,filereq->err.errorcode);
@@ -140,8 +142,9 @@ int rtcpd_stageupdc(tape_list_t *tape,
                     (void)rtcpd_LockForTpPos(0);
                 return(0);
             }
-            rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
+                     filereq->stageSubreqID,
                      status,
                      filereq->blocksize,
                      tapereq->unit,
@@ -152,6 +155,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      newpath);
 
             rc = stage_updc_tppos(filereq->stageID,
+                                  filereq->stageSubreqID,
                                   status,
                                   filereq->blocksize,
                                   tapereq->unit,
@@ -246,8 +250,9 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
             *newpath = '\0';
 
-            rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_filcp(%s,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_filcp(%s,%d,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
+                     filereq->stageSubreqID,
                      retval,
                      filereq->ifce,
                      (int)nb_bytes,
@@ -262,6 +267,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      newpath);
 
             rc = stage_updc_filcp(filereq->stageID,
+                                  filereq->stageSubreqID,
                                   retval,
                                   filereq->ifce,
                                   nb_bytes,
