@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.2 $ $Date: 1999/11/23 12:49:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.3 $ $Date: 1999/11/25 12:42:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -147,7 +147,9 @@ char *vol1, *hdr1, *hdr2;
 				goto reply;
 			}
 			c = 3 - c;
+#if defined(SOLARIS) || defined(linux)
 			if (c > 0)
+#endif
 				c = skiptpfb (tapefd, path, c);
 			goto reply;
 		}
@@ -177,7 +179,9 @@ char *vol1, *hdr1, *hdr2;
 					c = rwndtape (tapefd, path);
 				} else {
 					c = 3 + rewritetm - c;
+#if defined(SOLARIS) || defined(linux)
 					if (c > 0)
+#endif
 						c = skiptpfb (tapefd, path, c);
 				}
 				goto reply;
@@ -356,7 +360,9 @@ char *vol1, *hdr1, *hdr2;
 					goto reply;
 				}
 				c = 3 + rewritetm - c;
+#if defined(SOLARIS) || defined(linux)
 				if (c > 0)
+#endif
 					c = skiptpfb (tapefd, path, c);
 				goto reply;
 			}
