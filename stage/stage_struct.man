@@ -1,10 +1,10 @@
-.\" $Id: stage_struct.man,v 1.4 2002/09/14 06:19:07 jdurand Exp $
+.\" $Id: stage_struct.man,v 1.5 2002/09/14 06:52:49 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.4 $ $Date: 2002/09/14 06:19:07 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.5 $ $Date: 2002/09/14 06:52:49 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_STRUCT "3" "$Date: 2002/09/14 06:19:07 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_STRUCT "3" "$Date: 2002/09/14 06:52:49 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage structures \- Definition of the stager structures used by daemon and clients
 .SH SYNOPSIS
@@ -472,9 +472,9 @@ structure needs the
 command to support HSM files not of the CASTOR type.
 .sp
 Using more than one entry in the
-.I vid
+.BI vid
 or
-.I vsn
+.BI vsn
 arrays is meaningul only for volume spanning
 
 .SH LIMITS
