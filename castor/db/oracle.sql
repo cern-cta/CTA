@@ -187,6 +187,8 @@ DROP INDEX I_TapeCopy_Castorfile;
 DROP INDEX I_SubRequest_Castorfile;
 DROP INDEX I_FileSystem_DiskPool;
 DROP INDEX I_SubRequest_DiskCopy;
+DROP INDEX I_CastorFile_fileIdNsHost;
+CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);

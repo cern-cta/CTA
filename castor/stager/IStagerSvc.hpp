@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/12 10:58:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/16 16:22:14 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -32,6 +32,7 @@
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 #include <vector>
+#include <string>
 #include <list>
 
 namespace castor {
@@ -298,13 +299,17 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Retrieves a CastorFile from the database based on its fileId.
+       * Retrieves a CastorFile from the database based on its fileId
+       * and name server.
        * Caller is in charge of the deletion of the allocated object
        * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
        * @return the CastorFile, or 0 if none found
        * @exception Exception in case of error
        */
-      virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
+      virtual castor::stager::CastorFile* selectCastorFile
+      (const u_signed64 fileId,
+       const std::string nsHost)
         throw (castor::exception::Exception) = 0;
 
       /**

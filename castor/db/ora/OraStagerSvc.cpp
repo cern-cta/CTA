@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2004/11/12 10:58:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2004/11/16 16:22:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -109,7 +109,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-  "SELECT id, nsHost, fileSize FROM CastorFile WHERE fileId = :1";
+  "SELECT id, fileSize FROM CastorFile WHERE fileId = :1 AND nsHost = :2";
 
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
@@ -854,7 +854,8 @@ castor::db::ora::OraStagerSvc::selectSvcClass
 // -----------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile
-(const u_signed64 fileId)
+(const u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
@@ -864,6 +865,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
   unsigned long id;
   try {
     m_selectCastorFileStatement->setDouble(1, fileId);
+    m_selectCastorFileStatement->setString(2, nsHost);
     oracle::occi::ResultSet *rset = m_selectCastorFileStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found, return 0
@@ -875,8 +877,8 @@ castor::db::ora::OraStagerSvc::selectCastorFile
       new castor::stager::CastorFile();
     result->setId((u_signed64)rset->getDouble(1));
     result->setFileId(fileId);
-    result->setNsHost(rset->getString(2));
-    result->setFileSize((u_signed64)rset->getDouble(3));
+    result->setNsHost(nsHost);
+    result->setFileSize((u_signed64)rset->getDouble(2));
     m_selectCastorFileStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {

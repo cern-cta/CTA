@@ -369,14 +369,17 @@ int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
  * @param stgSvc the IStagerSvc used
  * @param castorFile the CastorFile object returned, or 0 if none found
  * @param fileId the fileId of the CastorFile
+ * @param nsHost the name server to use
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
-                                        struct Cstager_CastorFile_t** castorFile,
-                                        const u_signed64 fileId);
+int Cstager_IStagerSvc_selectCastorFile
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_CastorFile_t** castorFile,
+ const u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Updates a SubRequest status in the DB and tells

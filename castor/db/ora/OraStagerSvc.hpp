@@ -331,7 +331,9 @@ namespace castor {
          * @return the CastorFile, or 0 if none found
          * @exception Exception in case of error
          */
-        virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
+        virtual castor::stager::CastorFile* selectCastorFile
+        (const u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
