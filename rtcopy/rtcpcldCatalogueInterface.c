@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 15:29:16 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/09 16:18:47 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 15:29:16 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/09 16:18:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -138,7 +138,7 @@ static int getDbSvc(
   svc = NULL;
   rc = Cglobals_get(&dbSvcKey,(void **)&svc,sizeof(struct C_Services_t **));
   if ( rc == -1 || svc == NULL ) {
-      serrno = save_serrno;
+      save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       DLF_LVL_ERROR,
@@ -153,13 +153,14 @@ static int getDbSvc(
                       sstrerror(serrno),
                       RTCPCLD_LOG_WHERE
                       );
+    serrno = save_serrno;
     return(-1);
   }
   
   if ( *svc == NULL ) {
     rc = C_Services_create(svc);
     if ( rc == -1 ) {
-      serrno = save_serrno;
+      save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       DLF_LVL_ERROR,
@@ -204,7 +205,7 @@ static int getStgSvc(
   iSvc = NULL;
   rc = Cglobals_get(&iSvcKey,(void **)&iSvc,sizeof(struct C_IServices_t *));
   if ( rc == -1 || iSvc == NULL ) {
-    serrno = save_serrno;
+    save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
@@ -219,11 +220,12 @@ static int getStgSvc(
                     sstrerror(serrno),
                     RTCPCLD_LOG_WHERE
                     );
+    serrno = save_serrno;
     return(-1);
   }
   rc = C_Services_service(svcs,"OraStagerSvc",SVC_ORASTAGERSVC, iSvc);
   if ( rc == -1 || *iSvc == NULL ) {
-    serrno = save_serrno;
+    save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
@@ -447,7 +449,7 @@ static int lockTpList(
     
     rc = C_Services_createObj(svcs,iAddr,&object);
     if ( rc == -1 ) {
-      serrno = save_serrno;
+      save_serrno = serrno;
       (void)Cmutex_unlock(&tpList);
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
@@ -563,7 +565,7 @@ int rtcpcld_getVIDsToDo(
                                     &nbItems
                                     );
   if ( rc == -1 ) {
-    serrno = save_serrno;
+    save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
@@ -709,7 +711,7 @@ int rtcpcld_procReqsForVID(
                                           &nbItems
                                           );
   if ( rc == -1 ) {
-    serrno = save_serrno;
+    save_serrno = serrno;
     (void)unlockTpList();
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -951,7 +953,7 @@ int rtcpcld_anyReqsForVID(
 
   rc = Cstager_IStagerSvc_anySegmentsForTape(stgsvc,tpItem->tp);
   if ( rc == -1 ) {
-    serrno = save_serrno;
+    save_serrno = serrno;
     (void)unlockTpList();
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
