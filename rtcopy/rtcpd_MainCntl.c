@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.47 $ $Date: 2000/03/28 09:10:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.48 $ $Date: 2000/03/29 16:51:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -342,11 +342,13 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
     if ( qstr != NULL ) LOGLINE_APPEND(" -q %s",qstr);
     CLIST_ITERATE_BEGIN(tape->file,fl) {
         filereq = &fl->filereq;
-        if ( strlen(logline)+strlen(filereq->file_path)+4 < CA_MAXLINELEN ) {
-            LOGLINE_APPEND(" %s",filereq->file_path);
-        } else {
-            rtcp_log(LOG_INFO,"%s \\\n",logline);
-            *logline = '\0';
+        if ( !(mode==WRITE_DISABLE && (filereq->concat & CONCAT) != 0) ) {
+            if ( strlen(logline)+strlen(filereq->file_path)+4<CA_MAXLINELEN ) {
+                LOGLINE_APPEND(" %s",filereq->file_path);
+            } else {
+                rtcp_log(LOG_INFO,"%s \\\n",logline);
+                *logline = '\0';
+            }
         }
     } CLIST_ITERATE_END(tape->file,fl);
     if ( *logline != '\0' ) rtcp_log(LOG_INFO,"%s\n",logline);
