@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.8 2001/10/28 08:02:02 jdurand Exp $
+ * $Id: stage_util.c,v 1.9 2001/11/30 12:09:33 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -15,11 +15,11 @@
 #else
 #include <winsock2.h>
 #endif
-#include "stage.h"
-#include "stage_api.h"
 #include "osdep.h"
 #include "u64subr.h"
 #include "serrno.h"
+#include "stage_struct.h"
+#include "stage_messages.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -27,18 +27,45 @@
 #define NAMEOFVAR(x) "x"
 #endif
 
+#ifdef SIXMONTHS
+#undef SIXMONTHS
+#endif
+#define SIXMONTHS (6*30*24*60*60)
+
+#if defined(_WIN32)
+static char strftime_format_sixmonthsold[] = "%b %d %Y";
+static char strftime_format[] = "%b %d %H:%M:%S";
+#else /* _WIN32 */
+static char strftime_format_sixmonthsold[] = "%b %e %Y";
+static char strftime_format[] = "%b %e %H:%M:%S";
+#endif /* _WIN32 */
+
 #define DUMP_VAL(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define PRINT_VAL(st,member) fprintf(stdout, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define DUMP_VALHEX(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define PRINT_VALHEX(st,member) fprintf(stdout, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
+#define DUMP_TIME(rpfd,st,member) {                                         \
+    char tmpbuf[21];                                                        \
+	char timestr[64] ;                                                      \
+    stage_util_time((time_t) st->member, timestr);                          \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	    \
+				 u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	    \
+}
+#define PRINT_TIME(st,member) {                                             \
+    char tmpbuf[21];                                                        \
+	char timestr[64] ;                                                      \
+    stage_util_time((time_t) st->member, timestr);                          \
+	fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	            \
+				 u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	    \
+}
 #define DUMP_U64(rpfd,st,member) {                                          \
     char tmpbuf[21];                                                        \
-	funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) ,	            \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) ,	        \
 				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
 }
-#define PRINT_U64(st,member) {                                          \
+#define PRINT_U64(st,member) {                                              \
     char tmpbuf[21];                                                        \
-	fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) ,	            \
+	fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) ,	                \
 				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
 }
 
@@ -53,6 +80,7 @@ extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
 
 char *forced_endptr_error = "Z";
+static void stage_util_time _PROTO((time_t, char *));
 
 void DLL_DECL stage_sleep(nsec)
      int nsec;
@@ -60,7 +88,6 @@ void DLL_DECL stage_sleep(nsec)
   struct timeval ts;
 
   if (nsec <= 0) return;
-
   ts.tv_sec = nsec;
   ts.tv_usec = 0;
   select(0,NULL,NULL,NULL,&ts);
@@ -154,8 +181,8 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	DUMP_VAL(rpfd,stcp,mask);
 	DUMP_VALHEX(rpfd,stcp,status);
 	DUMP_U64(rpfd,stcp,actual_size);
-	DUMP_U64(rpfd,stcp,c_time);
-	DUMP_U64(rpfd,stcp,a_time);
+	DUMP_TIME(rpfd,stcp,c_time);
+	DUMP_TIME(rpfd,stcp,a_time);
 	DUMP_VAL(rpfd,stcp,nbaccesses);
 	switch (stcp->t_or_d) {
 	case 't':
@@ -231,8 +258,8 @@ void DLL_DECL print_stcp(stcp)
 	PRINT_VAL(stcp,mask);
 	PRINT_VALHEX(stcp,status);
 	PRINT_U64(stcp,actual_size);
-	PRINT_U64(stcp,c_time);
-	PRINT_U64(stcp,a_time);
+	PRINT_TIME(stcp,c_time);
+	PRINT_TIME(stcp,a_time);
 	PRINT_VAL(stcp,nbaccesses);
 	switch (stcp->t_or_d) {
 	case 't':
@@ -317,4 +344,25 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 	return(rc);
 }
 
+static void stage_util_time(this,timestr)
+     time_t this;
+     char *timestr;
+{
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
 
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+  localtime_r(&(this),&tmstruc);
+  tp = &tmstruc;
+#else
+  tp = localtime(&(this));
+#endif /* _REENTRANT || _THREAD_SAFE */
+  if ((this - this_time) > SIXMONTHS) {
+    strftime(timestr,64,strftime_format_sixmonthsold,tp);
+  } else {
+    strftime(timestr,64,strftime_format,tp);
+  }
+}
