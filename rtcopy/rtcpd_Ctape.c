@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:53:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.3 $ $Date: 1999/12/17 13:05:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ static char Unkn_errorstr[] = "unknown error";
 extern int AbortFlag;
 
 extern char *getconfent(char *, char *, int);
+static char tape_path[CA_MAXPATHLEN+1];  /* Needed for Ctape_kill */
 
 int rtcpd_CtapeInit() {
     char *errbuf;
@@ -61,6 +62,7 @@ int rtcpd_CtapeInit() {
     if ( errbuf == NULL ) return(-1);
 
     Ctape_seterrbuf(errbuf,errbufsiz);
+    tape_path[0] = '\0';
     return(0);
 }
 
@@ -165,6 +167,11 @@ int rtcpd_Deassign(int VolReqID,
     return(rc);
 }
 
+void rtcpd_CtapeKill() {
+    if ( *tape_path != '\0' ) Ctape_kill(tape_path);
+    return;
+}
+
 int rtcpd_Reserve(tape_list_t *tape) {
     struct dgn_rsv rsv;
     int rc, count, save_serrno;
@@ -201,7 +208,6 @@ int rtcpd_Reserve(tape_list_t *tape) {
 int rtcpd_Mount(tape_list_t *tape) {
     int rc, j, save_serrno,severity, jobID;
     char *p, confparam[16];
-    char tape_path[CA_MAXPATHLEN+1];
     struct stat st;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
@@ -254,6 +260,7 @@ int rtcpd_Mount(tape_list_t *tape) {
         rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING! Calling Ctape_kill(%s)\n",
             tape_path);
         Ctape_kill(tape_path);
+        *tape_path = '\0';
         severity = RTCP_FAILED | RTCP_USERR;
         rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
         return(-1);
@@ -336,6 +343,7 @@ int rtcpd_Mount(tape_list_t *tape) {
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
+    *tape_path = '\0';
     return(rc);
 }
 
@@ -343,7 +351,6 @@ int rtcpd_Position(tape_list_t *tape,
                    file_list_t *file) {
     int rc, j, save_serrno, flags,filstat, do_retry, severity;
     char *p, confparam[32];
-    char tape_path[CA_MAXPATHLEN+1];
     rtcpFileRequest_t *prevreq,*filereq;
     rtcpTapeRequest_t *tapereq;
 
@@ -448,6 +455,7 @@ int rtcpd_Position(tape_list_t *tape,
             save_serrno = EINTR;
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
             Ctape_kill(tape_path);
+            *tape_path = '\0';
             return(-1);
         }
         if ( rc == -1 ) {
@@ -585,6 +593,7 @@ int rtcpd_Position(tape_list_t *tape,
     tapereq->tprc = rc;
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position() successful\n");
+    *tape_path = '\0';
     return(rc);
 }
 
@@ -647,8 +656,19 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
             tapereq->unit,unit);
         rc = -1;
     }
+    if ( filereq->blocksize <= 0 ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_Info() Ctape_info() returns blocksize = %d\n",
+            filereq->blocksize);
+        rtcpd_AppendClientMsg(NULL, file, 
+            "rtcpd_Info() Ctape_info() returns blocksize = %d\n",
+            filereq->blocksize);
+        rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED | RTCP_UNERR);
+        rc = -1;
+    }
     if ( rc == 0 )
-        rtcp_log(LOG_DEBUG,"rtcpd_Info() Ctape_info() successful, unit=%s\n",unit);
+        rtcp_log(LOG_DEBUG,"rtcpd_Info() Ctape_info() successful, unit=%s, blocksize=%d, recordlength=%d\n",
+             unit,filereq->blocksize,filereq->recordlength);
 
     return(rc);
 }
