@@ -1,21 +1,25 @@
 /*
- * $Id: sendrep.c,v 1.10 2000/03/23 01:41:26 jdurand Exp $
+ * $Id: sendrep.c,v 1.11 2000/08/15 09:51:54 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.11 $ $Date: 2000/08/15 09:51:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <sys/types.h>
 #include <string.h>
-#include <varargs.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
+#include <varargs.h>
 #include "marshall.h"
 #include "net.h"
 #include "stage.h"
