@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.7 $ $Date: 2000/11/07 15:49:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.8 $ $Date: 2001/01/29 07:35:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL 3 "$Date: 2000/11/07 15:49:27 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_LABEL 3 "$Date: 2001/01/29 07:35:33 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -151,7 +151,10 @@ I/O error.
 Drive not operational. The drive is automatically configured down.
 .TP
 .B EACCES
-Operator cancel, access denied by TMS.
+Access denied by TMS.
+.TP
+.B EBUSY
+Requested drive is not free or no free drive.
 .TP
 .B EINVAL
 Bad parameter value.
@@ -203,5 +206,29 @@ Reselect server requested by operator.
 .TP
 .B ETVBSY
 Volume busy or inaccessible.
+.TP
+.B ETABSENT
+Volume absent.
+.TP
+.B ETARCH	 
+Volume archived.
+.TP
+.B ETHELD
+Volume held (TMS).
+.TP
+.B ETOPAB
+Operator cancel.
+.TP
+.B ETVUNKN
+Volume unknown.
+.TP
+.B ETWLBL
+Wrong label type.
+.TP
+.B ETWPROT
+Cartridge write protected.
+.TP
+.B ETWVSN
+Wrong vsn.
 .SH SEE ALSO
 .BR vdqm_SendVolReq(3)

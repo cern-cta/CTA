@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.6 $ $Date: 2000/06/30 15:01:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
@@ -58,15 +58,25 @@ char *drive;
 			rc = 0;		/* ok */
 			break;
 		case 12:
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
+			rc = EACCES;	/* access denied */
+			break;
 		case 182:
-		case 184:
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
+			rc = ETWPROT;	/* volume locked read-only */
+			break;
 		case 185:
 		case 186:
-		case 187:
-		case 189:
-		case 2193:
 			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
-			rc = EACCES;	/* access denied or volume inactive */
+			rc = ETABSENT;	/* volume is absent */
+			break;
+		case 187:
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
+			rc = ETHELD;	/* volume is held */
+			break;
+		case 189:
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
+			rc = ETARCH;	/* volume in an inactive library */
 			break;
 		case 190:
 		case 2190:
@@ -75,7 +85,7 @@ char *drive;
 			break;
 		case 188:
 			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
-			rc = EACCES;	/* volume unknown */
+			rc = ETVUNKN;	/* volume unknown */
 			break;
 		default:
 			sleep (60);

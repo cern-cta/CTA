@@ -4,13 +4,14 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.6 $ $Date: 2000/08/04 05:49:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "serrno.h"
 #if TMS
 tmscheck(vid, vsn, dgn, den, lbl, mode, acctname)
 char *vid;
@@ -61,11 +62,13 @@ char *acctname;
 			Ctape_errmsg (func, "%s\n", tmrepbuf);
 			return (EINVAL);
 		case 12:
-			if (tmrepbuf[41] == 'R')
+			if (tmrepbuf[41] == 'R') {
 				Ctape_errmsg (func, "Volume locked read-only\n");
-			else
+				return (ETWPROT);
+			} else {
 				Ctape_errmsg (func, "%s\n", tmrepbuf);
-			return (EACCES);
+				return (EACCES);
+			}
 		default:
 			sleep (60);
 			continue;

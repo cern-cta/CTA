@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.29 $ $Date: 2001/01/26 08:07:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.30 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -386,7 +386,7 @@ procorep:
 			if (strlen (orepbuf) == 0) continue;
 			if (strncmp (orepbuf, "cancel", 6) == 0) {
 				usrmsg (func, TP023, orepbuf);
-				c = EACCES;
+				c = ETOPAB;
 				goto reply;
 			} else if (strcmp (orepbuf, "reselect server") == 0) {
 				usrmsg (func, TP047);
@@ -472,7 +472,7 @@ unload_loop1:
 			sprintf (msg, TP041, "mount", vid, drive, "write protected");
 			usrmsg (func, "%s\n", msg);
 			omsgr (func, msg, 0);
-			c = EACCES;
+			c = ETWPROT;
 			goto reply;
 		}
 		if (tpmode != mode && *loader == 'm') {
@@ -559,7 +559,7 @@ unload_loop1:
 			checkorep (func, orepbuf);
 			if (strcmp (orepbuf, "ok") && strcmp (orepbuf, "yes")) {
 				usrmsg (func, TP023, orepbuf);
-				c = EACCES;
+				c = ETOPAB;
 				goto reply;
 			}
 			break;	/* operator gave ok */
@@ -569,7 +569,7 @@ unload_loop1:
 			tplogit (func, "vol1 = %s\n", vol1);
 		if (lblcode != tplbl && vsnretry) {	/* wrong label type */
 			usrmsg (func, TP021, labels[lblcode], labels[tplbl]);
-			c = EACCES;
+			c = ETWLBL;
 			goto reply;
 		}
 		if (tplbl != NL) {
@@ -577,7 +577,7 @@ unload_loop1:
 		}
 		if (*loader != 'm' && vsnretry++) {
 			usrmsg (func, TP039, vsn, tpvsn);
-			c = EACCES;
+			c = ETWVSN;
 			goto reply;
 		}
 		if (*loader != 'n')
@@ -934,7 +934,7 @@ unsigned int *demountforce;
 		return (-1);
 	case RBT_OMSG_NORTRY:
 		omsgr (func, msg, 0);
-		*c = EACCES;
+		*c = ETABSENT;
 		return (-1);
 	case RBT_OMSG_SLOW_R:
 	case RBT_OMSGR:
@@ -1011,7 +1011,7 @@ char *loader;
 		return (-1);
 	case RBT_OMSG_NORTRY:
 		omsgr (func, msg, 0);
-		*c = EACCES;	/* volume not in library */
+		*c = ETABSENT;	/* volume not in library */
 		return (-1);
 	case RBT_OMSG_SLOW_R:
 		omsgr (func, msg, 0);

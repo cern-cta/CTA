@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.10 $ $Date: 2000/11/02 06:59:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.11 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION 3 "$Date: 2000/11/02 06:59:19 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_POSITION 3 "$Date: 2001/01/29 07:35:34 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -206,9 +206,6 @@ I/O error.
 .B ENXIO
 Drive not operational. The drive is automatically configured down.
 .TP
-.B EACCES
-File not expired.
-.TP
 .B EINVAL
 Bad parameter value.
 .TP
@@ -250,3 +247,6 @@ No sense data available.
 .TP
 .B ETNRDY
 Drive not ready.
+.TP
+.B ETNXPD
+File not expired.

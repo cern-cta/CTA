@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.6 $ $Date: 2000/04/07 14:08:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -191,7 +191,7 @@ char	**argv;
 
 	if (Ctape_label (path, vid, partition, dgn, density, drive, vsn,
 	    lbltype, nbhdr, flags, 0))
-		exit_prog ((serrno == EACCES || serrno == EINVAL) ? USERR : SYERR);
+		exit_prog ((serrno == ETOPAB || serrno == ETWPROT || serrno == EINVAL) ? USERR : SYERR);
 	exit_prog (0);
 }
 

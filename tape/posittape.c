@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.9 $ $Date: 2001/01/24 08:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.10 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -447,7 +447,8 @@ chkexpdat:
 				tm->tm_year % 100, tm->tm_yday + 1);
 			if (strncmp (hdr1 + 47, "000000", 6) != 0 &&
 			    strncmp (hdr1 + 47, buf, 6) > 0) {
-				c = EACCES;
+				c = ETNXPD;
+				usrmsg (func, TP028);
 				goto reply;
 			}
 			if (*cfseq == 1 || fsec > 1) {
@@ -471,21 +472,16 @@ finalpos:
 	}
 reply:
 	switch (c) {
-	case 0:
-		break;
-	case EACCES:
-		usrmsg (func, TP028);
-		break;
 	case ETFSQ:
 		if (fseq == -2)		/* -q u */
 			usrmsg (func, TP024, fid);
 		else
 			usrmsg (func, TP024, sfseq);
 		break;
-	case ENOENT:
-		break;
 	case ETLBL:
 		usrmsg (func, TP025);
+		break;
+	default:
 		break;
 	}
 	RETURN (c);
