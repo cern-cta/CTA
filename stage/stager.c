@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.126 2001/02/16 06:26:04 jdurand Exp $
+ * $Id: stager.c,v 1.127 2001/02/16 09:42:48 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.126 $ $Date: 2001/02/16 06:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.127 $ $Date: 2001/02/16 09:42:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -777,9 +777,40 @@ int hsmidx_vs_ipath(ipath)
 {
 	struct stgcat_entry *stcx;
 	int i;
+	char *host = NULL;
+	char *filename = NULL;
+	char save_ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
+	char host1[CA_MAXHOSTNAMELEN+1];
+	char path1[MAXPATH];
+	char host2[CA_MAXHOSTNAMELEN+1];
+	char path2[MAXPATH];
 
+	strcpy(save_ipath,ipath);
+	(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
+	if (host != NULL) {
+		strcpy(host1,host);
+	} else {
+		host1[0] = '\0';
+	}
+	if (filename != NULL) {
+		strcpy(path1,filename);
+	} else {
+		path1[0] = '\0';
+	}
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
-		if (strcmp(stcx->ipath,ipath) == 0) {
+		strcpy(save_ipath,stcx->ipath);
+		(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
+		if (host != NULL) {
+			strcpy(host2,host);
+		} else {
+			host2[0] = '\0';
+		}
+		if (filename != NULL) {
+			strcpy(path2,filename);
+		} else {
+			path2[0] = '\0';
+		}
+		if ((strcmp(host1,host2) == 0) && (strcmp(path1,path2) == 0)) {
 			return(i);
 		}
 	}
@@ -3530,6 +3561,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Friday 16 February, 2001 at 07:24:39 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 16 February, 2001 at 10:05:56 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
