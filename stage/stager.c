@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.11 2000/03/23 01:41:44 jdurand Exp $
+ * $Id: stager.c,v 1.12 2000/03/23 02:21:50 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 #define SKIP_FILEREQ_MAXSIZE
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.11 $ $Date: 2000/03/23 01:41:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.12 $ $Date: 2000/03/23 02:21:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -590,43 +590,43 @@ int stagein_castor_hsm_file() {
 		/* We checked if there is pending things to stagein */
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 			if (hsm_vid[i] != NULL) {
-							if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
-								/* Entry did not exist - We make the stager believe that this request was */
-								/* successful neverthless...                                              */
-				hsm_transferedsize[i] = hsm_totalsize[i];
-								sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", strerror(ENOENT));
-							} else {
-				hsm_transferedsize[i] += rtcpcreqs[0]->file[i].filereq.bytes_out;
-				waiting_time += rtcpcreqs[0]->file[i].filereq.TEndPosition -
+				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
+					/* Entry did not exist - We make the stager believe that this request was */
+					/* successful neverthless...                                              */
+					hsm_transferedsize[i] = hsm_totalsize[i];
+					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", strerror(ENOENT));
+				} else {
+					hsm_transferedsize[i] += rtcpcreqs[0]->file[i].filereq.bytes_out;
+					waiting_time += rtcpcreqs[0]->file[i].filereq.TEndPosition -
 									rtcpcreqs[0]->tapereq.TStartRequest;
-				transfer_time += rtcpcreqs[0]->file[i].filereq.TEndTransferDisk -
+					transfer_time += rtcpcreqs[0]->file[i].filereq.TEndTransferDisk -
 									rtcpcreqs[0]->file[i].filereq.TEndPosition;
-				if ((castor_hsm = hsmpath(stcp)) == NULL) {
-									sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
-									RETURN (USERR);
+					if ((castor_hsm = hsmpath(stcp)) == NULL) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
+						RETURN (USERR);
+					}
 				}
-							}
 #ifdef STAGER_DEBUG
-							sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_setatime(%s)\n",castor_hsm);
+				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_setatime(%s)\n",castor_hsm);
 #endif
-							Cns_setatime (castor_hsm);
-						}
+				Cns_setatime (castor_hsm);
+			}
 		}
 
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
-					if (stcp->size > 0) {
-			if (hsm_transferedsize[i] < hsm_totalsize[i] &&
-								hsm_transferedsize[i] < stcp->size * ONE_MB) {
-							/* Not finished */
-							goto getseg;
-			}
-					} else {
-			if (hsm_transferedsize[i] < hsm_totalsize[i]) {
-							/* Not finished */
-							goto getseg;
-			}
-					}
+			if (stcp->size > 0) {
+				if (hsm_transferedsize[i] < hsm_totalsize[i] &&
+					hsm_transferedsize[i] < stcp->size * ONE_MB) {
+					/* Not finished */
+					goto getseg;
 				}
+			} else {
+				if (hsm_transferedsize[i] < hsm_totalsize[i]) {
+					/* Not finished */
+					goto getseg;
+				}
+			}
+		}
 
 		/* Finished */
 		break;
