@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.25 $ $Date: 2000/04/27 09:27:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.26 $ $Date: 2000/05/24 06:25:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -427,29 +427,31 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
      */
     retval = rtcp_CheckClientAuth(hdr,req);
     while ( retval == 0 ) { 
+        if ( CLThId == -1 ) {
 #if !defined(_WIN32)
-        if ( setgid((gid_t)req->gid) == -1 ) {
-            rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
-            return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
-        }
-        if ( setuid((uid_t)req->uid) == -1 ) {
-            rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
-            return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
-        }
-        if ( *req->acctstr != '\0' ) {
-            (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
-            if ( putenv(envacct) != 0 ) {
-                rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
+            if ( setgid((gid_t)req->gid) == -1 ) {
+                rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
                 return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
             }
-        }
+            if ( setuid((uid_t)req->uid) == -1 ) {
+                rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
+                return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+            }
+            if ( *req->acctstr != '\0' ) {
+                (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
+                if ( putenv(envacct) != 0 ) {
+                    rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
+                    return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+                }
+            }
 #endif /* !_WIN32 */
 
-        /*
-         * Kick off client listen thread to answer pings etc.
-         */
-        CLThId = rtcpd_ClientListen(*s);
-        if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+            /*
+             * Kick off client listen thread to answer pings etc.
+             */
+            CLThId = rtcpd_ClientListen(*s);
+            if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+        }
         namelen = sizeof(req->tape->tapereq.server)-1;
         gethostname(req->tape->tapereq.server,namelen);
  
