@@ -1,8 +1,8 @@
-.\"   $Id: Cpwd.man,v 1.1 2000/10/27 13:32:49 jdurand Exp $
+.\"   $Id: Cpwd.man,v 1.2 2000/10/27 13:38:38 jdurand Exp $
 .\"
-.TH CPWD "3" "$Date: 2000/10/27 13:32:49 $" "CASTOR" "Common Library Functions"
+.TH CPWD "3" "$Date: 2000/10/27 13:38:38 $" "CASTOR" "Common Library Functions"
 .SH NAME
-\fBCpwd\fP \- \fBCASTOR\fP \fBP\fPassword file Thread-Safe inferface
+\fBCpwd\fP \- \fBCASTOR\fP \fBP\fPass\fBw\fPor\fBd\fP file Thread-Safe inferface
 .SH SYNOPSIS
 .B #include <Cpwd.h>
 .P
