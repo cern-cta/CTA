@@ -44,10 +44,19 @@ EXTERN_C void DLL_DECL *Cpool_malloc _PROTO((char *, int, size_t));
 EXTERN_C void DLL_DECL  Cpool_free _PROTO((char *, int, void *));
 EXTERN_C void DLL_DECL *Cpool_realloc _PROTO((char *, int, void *, size_t));
 #endif /* _WIN32 */
-EXTERN_C int  DLL_DECL  Cpool_create _PROTO((int, int *));
-EXTERN_C int  DLL_DECL  Cpool_assign _PROTO((int, void *(*)(void *), void *, int));
+#define Cpool_create(nbreq,nbget) Cpool_create_ext(nbreq,nbget,NULL)
+#define Cpool_assign(poolid,addr,args,timeout) Cpool_assign_ext(poolid,NULL,addr,args,timeout)
 #define Cpool_next_index(poolnb) Cpool_next_index_timeout(poolnb,-1)
-EXTERN_C int  DLL_DECL  Cpool_next_index_timeout _PROTO((int, int));
+#define Cpool_next_index_timeout(poolnb,timeout) Cpool_next_index_timeout_ext(poolnb,NULL,timeout)
+
+/* ===================================== */
+/* Extended version (a-la-Cthread's ext) */
+/* goal: get rid of internal mutexes     */
+/* ===================================== */
+
+EXTERN_C int  DLL_DECL  Cpool_create_ext _PROTO((int, int *, void **));
+EXTERN_C int  DLL_DECL  Cpool_assign_ext _PROTO((int, void *, void *(*)(void *), void *, int));
+EXTERN_C int  DLL_DECL  Cpool_next_index_timeout_ext _PROTO((int, void *, int));
 
 #endif /* __cpool_api_h */
 
