@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/26 12:32:33 $ $Author: sponcec3 $
  *
  *
  *
@@ -141,10 +141,24 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   MessageAck ack;
   ack.setStatus(true);
 
-  // get the incoming request
+  // We know it's a ServerSocket
   castor::io::ServerSocket* sock =
     (castor::io::ServerSocket*) param;
   castor::stager::Request* fr = 0;
+
+  // Retrieve info on the client
+  unsigned short port;
+  unsigned long ip;
+  try {
+    sock->getPeerIp(port, ip);
+  } catch(castor::exception::Exception e) {
+    clog() << ERROR << "Exception :" << sstrerror(e.code())
+           << std::endl << e.getMessage() << std::endl;
+  }
+  clog() << USAGE << "Got request from client "
+         << castor::ip << ip << ":" << port << std::endl;
+
+  // get the incoming request
   try {
     castor::IObject* obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
@@ -183,17 +197,6 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       clog() << cuuid;
 
       // Complete its client field
-      unsigned short port;
-      unsigned long ip;
-      try {
-        sock->getPeerIp(port, ip);
-      } catch(castor::exception::Exception e) {
-        clog() << ERROR << "Exception :" << sstrerror(e.code())
-               << std::endl << e.getMessage() << std::endl;
-      }
-      
-      clog() << USAGE << "Got request from client "
-             << castor::ip << ip << ":" << port << std::endl;
       castor::rh::Client *client =
         dynamic_cast<castor::rh::Client *>(fr->client());
       if (0 == client) {
