@@ -309,13 +309,13 @@ void CppCppOraCnvWriter::writeConstants() {
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << secondMember->name
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_insert"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"INSERT INTO rh_"
                 << capitalizeFirstLetter(firstMember->typeName)
@@ -324,13 +324,13 @@ void CppCppOraCnvWriter::writeConstants() {
                 << " (Parent, Child) VALUES (:1, :2)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << secondMember->name
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_delete"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"DELETE FROM rh_"
                 << capitalizeFirstLetter(firstMember->typeName)
@@ -339,12 +339,13 @@ void CppCppOraCnvWriter::writeConstants() {
                 << " WHERE Parent = :1 AND Child = :2\";"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
-                << secondMember->name
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
-                << "Cnv::s_select" << capitalizeFirstLetter(secondMember->typeName)
+                << "Cnv::s_select"
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"SELECT Child from rh_"
                 << capitalizeFirstLetter(firstMember->typeName)
@@ -450,17 +451,19 @@ void CppCppOraCnvWriter::writeSqlStatements() {
       Member* firstMember = 0;
       Member* secondMember = 0;
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
-      stream << "DROP TABLE rh_"
-             << capitalizeFirstLetter(firstMember->typeName)
-             << "2"
-             << capitalizeFirstLetter(secondMember->typeName)
-             << ";" << endl
-             << "CREATE TABLE rh_"
-             << capitalizeFirstLetter(firstMember->typeName)
-             << "2"
-             << capitalizeFirstLetter(secondMember->typeName)
-             << " (Parent INTEGER, Child INTEGER);"
-             << endl;
+      if (firstMember == &as->localPart) {
+        stream << "DROP TABLE rh_"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << ";" << endl
+               << "CREATE TABLE rh_"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << " (Parent INTEGER, Child INTEGER);"
+               << endl;
+      }
     }
   }
   stream << endl;
@@ -498,18 +501,15 @@ void CppCppOraCnvWriter::writeConstructors() {
       // N to N association
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
-      Member* firstMember = 0;
-      Member* secondMember = 0;
-      ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       *m_stream << "," << endl << getIndent()
                 << "  m_insert"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)," << endl << getIndent()
                 << "  m_delete"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)," << endl << getIndent()
                 << "  m_select"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)";
     } else {
       if (as->type.multiRemote == MULT_N) {
@@ -588,18 +588,15 @@ void CppCppOraCnvWriter::writeReset() {
       // N to N association
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
-      Member* firstMember = 0;
-      Member* secondMember = 0;
-      ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       *m_stream << getIndent()
                 << "deleteStatement(m_insert"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_delete"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_select"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl;
     } else {
       if (as->type.multiRemote == MULT_N) {
@@ -653,18 +650,15 @@ void CppCppOraCnvWriter::writeReset() {
       // N to N association
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
-      Member* firstMember = 0;
-      Member* secondMember = 0;
-      ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       *m_stream << getIndent()
                 << "m_insert"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl << getIndent()
                 << "m_delete"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl << getIndent()
                 << "m_select"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl;
     } else {
       if (as->type.multiRemote == MULT_N) {
@@ -1302,6 +1296,10 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     // N to N association
     // Here we will use a dedicated table for the association
     // Find out the parent and child in this table
+    Member* firstMember = 0;
+    Member* secondMember = 0;
+    ordonnateMembersInAssoc(as, &firstMember, &secondMember);
+    bool inverted = firstMember == &as->remotePart;
     *m_stream << getIndent()
               << "if (0 == m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1318,12 +1316,14 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
-              << endl << getIndent()
+              << "Statement->setDouble(1, "
+              << (inverted ? "*it" : "obj->id()")
+              << ");" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(2, *it);"
-              << endl << getIndent()
+              << "Statement->setDouble(2, "
+              << (inverted ? "obj->id()" : "*it")
+              << ");" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
@@ -1838,9 +1838,6 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
         // N to N association
         // Here we will use a dedicated table for the association
         // Find out the parent and child in this table
-        Member* firstMember = 0;
-        Member* secondMember = 0;
-        ordonnateMembersInAssoc(as, &firstMember, &secondMember);
         *m_stream << getIndent()
                   << "// Check whether the statement is ok"
                   << endl << getIndent()
