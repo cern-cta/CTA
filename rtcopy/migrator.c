@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:54:45 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 13:58:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:54:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 13:58:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -87,6 +87,7 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            ));
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
+int diskFseq = 0;
 
 static tape_list_t *tape = NULL;
 
@@ -169,7 +170,7 @@ int migratorCallbackFileCopied(
       serrno = save_serrno;
       return(-1);
     }
-    
+
     rc = rtcpcld_updateNsSegmentAttributes(tape,filereq);
     if ( rc == -1 ) {
       save_serrno = serrno;
@@ -206,8 +207,28 @@ int migratorCallbackFileCopied(
       serrno = save_serrno;
       return(-1);
     }
+    rc = rtcpcld_updcFileMigrated(
+                                  tape,
+                                  filereq
+                                  );
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
+      return(-1);
+    }
+  } else {
+    /*
+     * Segment failed with something else than ENOSPC
+     */
+    rc = rtcpcld_updcMigrFailed(
+                                tape,
+                                filereq
+                                );
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_updcMigrFailed()");
+      return(-1);
+    }
   }
-
+  
   return(0);
 }
 
@@ -218,7 +239,66 @@ int migratorCallbackMoreWork(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  int rc = 0;
+  static int moreWorkDone = 0; /* We're always called from a serialized context */
+  int rc = 0, save_serrno;
+
+  if ( moreWorkDone != 0 ) {
+    /*
+     * There was already something to do. Let tape mover go ahead
+     * with the processing of the new segment. Since the filereq
+     * already has proc_status == RTCP_REQUEST_MORE_WORK we just leave
+     * it as it is and we will be called back again when tape mover
+     * is ready to receive next file.
+     */
+    moreWorkDone = 0;
+    return(0);
+  }
+
+  rc = rtcpcld_getSegmentsToDo(tape);  
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    if ( serrno == ENOENT ) {
+      /*
+       * Nothing more to do. Flag the file request as finished in order to
+       * stop the processing (any value different from RTCP_REQUEST_MORE_WORK
+       * or RTCP_WAITING would do the job).
+       */
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_SYSTEM,
+                      RTCPCLD_MSG_NOMORESEGMS,
+                      (struct Cns_fileid *)NULL,
+                      0
+                      );
+      filereq->proc_status = RTCP_FINISHED;
+      return(0);
+    } else {
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "rtcpcld_getSegmentsToDo()",
+                      "ERROR_STRING",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      serrno = save_serrno;
+      return(-1);
+    }
+  }
+  /*
+   * We got a new file to migrate. Assign the next
+   * tape fseq.
+   */
+  filereq->tape_fseq = rtcpcld_getAndIncrementTapeFseq();
+  diskFseq++;
+  filereq->disk_fseq = diskFseq;
+  moreWorkDone = 1;
   
   return(rc);
 }
@@ -458,12 +538,23 @@ int main(
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("initThreadPool()");
     } else {
-      rc = rtcpcld_runWorker(
-                             tape,
-                             &sock,
-                             rtcpcld_myDispatch,
-                             migratorCallback
-                             );
+      if ( (tape->file == NULL) ||
+           (tape->file->filereq.tape_fseq <= 0) ) {
+        rc = -1;
+        serrno = SEINTERNAL;
+      } else {
+        rc = rtcpcld_setTapeFseq(tape->file->filereq.tape_fseq);
+      }
+      if ( rc == -1 ) {
+        LOG_SYSCALL_ERR("rtcpcld_setTapeFseq()");
+      } else {
+        rc = rtcpcld_runWorker(
+                               tape,
+                               &sock,
+                               rtcpcld_myDispatch,
+                               migratorCallback
+                               );
+      }
     }
   }
   if ( rc == -1 ) save_serrno = serrno;
