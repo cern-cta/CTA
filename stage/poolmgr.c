@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.193 2002/04/30 12:30:46 jdurand Exp $
+ * $Id: poolmgr.c,v 1.194 2002/05/15 06:41:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.193 $ $Date: 2002/04/30 12:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.194 $ $Date: 2002/05/15 06:41:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3583,9 +3583,15 @@ int migpoolfiles(pool_p)
 		} else if (fork_pid == 0) {
 			/* We are in the child */
 			int rc = 0;
+			char *myenv = "STAGE_STGMAGIC=0x13140704"; /* STGMAGIC4 explicit value - Note: size was reset to 0 */
 
 			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
+			if (putenv(myenv) != 0) {
+				stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
+			} else {
+				stglogit(func, "Setted environment variable %s\n", myenv);
+			}
 
 #ifdef STAGER_DEBUG
 			stglogit(func, "### stagewrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
@@ -3650,7 +3656,7 @@ int migpoolfiles(pool_p)
 					} else {
 						nb_in_this_request = tppool_vs_stcp[j].nstcp - nb_done_request;
 					}
-					if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK, /* Flags */
+					if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK|STAGE_VOLATILE_TPPOOL, /* Flags */
 										   0,                            /* open flags - disabled */
 										   localhost,                    /* Hostname */
 										   NULL,                         /* Pooluser */
