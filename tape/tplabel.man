@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.3 $ $Date: 2000/02/03 13:32:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.4 $ $Date: 2000/04/07 15:55:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL 1 "$Date: 2000/02/03 13:32:04 $" CASTOR "Ctape User Commands"
+.TH TPLABEL 1 "$Date: 2000/04/07 15:55:38 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS
@@ -18,6 +18,8 @@ tplabel \- initialize a new blank tape
 ] [
 .BI -l " label_type"
 ] [
+.B -T
+] [
 .BI -V " visual_identifier"
 ] [
 .BI -v " volume_serial_number"
@@ -29,9 +31,12 @@ has write permission. It asks the operator or the robot to mount it write
 enabled on a drive selected by the tape daemon or specified in the -D option.
 When the tape is ready, it checks if the tape is blank (if not the operator will
 be asked for confirmation). Then the tape daemon
-rewinds it and writes VOL1 and HDR1 label records followed by two
-tape marks for labelled tapes or only two tape marks for unlabelled
+rewinds it and writes VOL1 and HDR1 label records followed by one or two
+tape marks for labelled tapes or only one or two tape marks for unlabelled
 tapes.
+By default, the number of tapemarks is one for tapes with directory such as DLT,
+NTP, Redwood and 9840, two tapemarks otherwise.
+The option -T can be used to force two tapamarks to be written.
 .SH OPTIONS
 .TP
 .BI \-D " drive"
@@ -108,6 +113,9 @@ or
 .BR sl .
 It must match the label type specified in TMS.
 Default is sl.
+.TP
+.B \-T
+Forces writing of 2 tapemarks at the end of a label.
 .TP
 .BI \-V " vid"
 Specifies the tape visual identifier. It must be at most six characters long
