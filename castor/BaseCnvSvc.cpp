@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/26 09:33:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -81,10 +81,31 @@ bool castor::BaseCnvSvc::removeConverter(const unsigned int id) {
 }
 
 //-----------------------------------------------------------------------------
+// addAlias
+//-----------------------------------------------------------------------------
+void castor::BaseCnvSvc::addAlias(const unsigned int alias,
+                                  const unsigned int real) {
+  m_aliases[alias] = real;
+}
+
+//-----------------------------------------------------------------------------
+// removeAlias
+//-----------------------------------------------------------------------------
+void castor::BaseCnvSvc::removeAlias(const unsigned int id) {
+  m_aliases.erase(id);
+}
+
+//-----------------------------------------------------------------------------
 // converter
 //-----------------------------------------------------------------------------
-castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
+castor::IConverter* castor::BaseCnvSvc::converter
+(const unsigned int origObjType)
   throw (castor::exception::Exception) {
+  // First uses aliases
+  unsigned int objType = origObjType;
+  if (m_aliases.find(objType) != m_aliases.end()) {
+    objType = m_aliases[objType];
+  }
   // check if we have one
   IConverter* conv = m_converters[objType];
   if (0 != conv) return conv;
@@ -98,7 +119,6 @@ castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
                    << repType();
     throw e;
   }
-
   m_converters[objType] = fac->instantiate(this);
   if (0!= m_converters[objType]) return m_converters[objType];
   // Throw an exception since we did not find any suitable converter

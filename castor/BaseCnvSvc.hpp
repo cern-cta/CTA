@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/26 09:33:36 $ $Author: sponcec3 $
  *
  *
  *
@@ -75,6 +75,23 @@ namespace castor {
      * @return boolean indicating success or failure.
      */
     virtual bool removeConverter(const unsigned int id);
+
+    /**
+     * Add an alias, that a rule that says that a given
+     * type should be converted using converters of another
+     * type
+     * @param alias the alias type
+     * @param real the actual type, whose converters should
+     * be used for the alias type
+     */
+    virtual void addAlias(const unsigned int alias,
+                            const unsigned int real);
+
+    /**
+     * Remove an alias
+     * @param id Id of the alias type
+     */
+    virtual void removeAlias(const unsigned int id);
 
     /**
      * Retrieve converter from list
@@ -228,6 +245,13 @@ namespace castor {
      * The list of available converters, indexed by id
      */
     std::map<unsigned int, IConverter*> m_converters;
+
+    /**
+     * The list of aliases. That is the list of types
+     * for which we should look for a converter of another
+     * type.
+     */
+    std::map<unsigned int, unsigned int> m_aliases;
 
   };
 
