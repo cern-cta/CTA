@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.56 2003/10/31 06:58:07 jdurand Exp $
+ * $Id: stagein.c,v 1.57 2003/10/31 20:06:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.56 $ $Date: 2003/10/31 06:58:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.57 $ $Date: 2003/10/31 20:06:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -215,9 +215,9 @@ int main(argc, argv)
 	}
 	
 	if (req_type == STAGEOUT) {
-		if (((p = getenv("STAGE_ENOSPC_RETRY")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRY")) != NULL)) {
+		if (((p = getenv("STAGE_ENOSPC_RETRY")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRY",1)) != NULL)) {
 			enospc_retry = atoi(p);
-			if (((p = getenv("STAGE_ENOSPC_RETRYINT")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRYINT")) != NULL)) {
+			if (((p = getenv("STAGE_ENOSPC_RETRYINT")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRYINT",1)) != NULL)) {
 				enospc_retryint = atoi(p);
 			} else {
 				enospc_retryint = RETRYI;
@@ -480,7 +480,7 @@ int main(argc, argv)
 	if (! noretry_flag) {
 		if (
 			(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-			(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0))
+			(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0))
 			) {
 			noretry_flag = 1;
 		}
