@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.89 2001/01/31 19:00:10 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.90 2001/02/01 10:08:05 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.89 $ $Date: 2001/01/31 19:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.90 $ $Date: 2001/02/01 10:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -1409,6 +1409,46 @@ killallovl(sig)
 
 	/* kill every process in our process group */
 	stglogit(func, STG124);
+
+    /*
+      ### Warning ### This call is NOT standard v.s. __STDC__, but neverthless behaves the
+      same on all UNIX platforms we officially support:
+
+      SGI claims:
+      If pid is 0, sig will be sent to all processes excluding proc0 and proc1
+      whose process group ID is equal to the process group ID of the sender.
+      
+      Tru64 claims:
+      If the process parameter is equal to 0 (zero), the signal specified by the
+      signal parameter is sent to all of the processes (other than system
+      processes) whose process group ID is equal to the process group ID of the
+      sender.
+      
+      SunOS claims:
+      If pid is 0, sig will be sent  to  all  processes  excluding
+      special  processes  (see intro(2)) whose process group ID is
+      equal to the process group ID of the sender.
+      
+      HP-UX claims:
+      If pid is 0, sig is sent to all processes excluding special system
+      processes whose process group ID is equal to the process group ID of
+      the sender.
+      
+      Linux claims:
+      If pid equals 0, then sig is sent to every process in  the
+      process group of the current process.
+      
+      Lynx claims (Nota : Lynx is not an officially supported platform, though)
+      If pid is 0, the signal is sent to all other processes in the process
+      group of the caller. If pid is -1, the signal is sent to all
+      processes on the system except processes 0 and 1.
+
+      AIX claims:
+      If the Process parameter is 0, the signal specified by the Signal parameter
+      is sent to all processes, excluding proc0 and proc1, whose process group
+      ID matches the process group ID of the sender.
+    */
+
 	kill(0,SIGINT);
 
 	/* We reply shutdown is ok */
