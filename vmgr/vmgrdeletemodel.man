@@ -1,0 +1,33 @@
+.\" @(#)$RCSfile: vmgrdeletemodel.man,v $ $Revision: 1.1 $ $Date: 2002/01/17 15:46:09 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH VMGRDELETEMODEL 1 "$Date: 2002/01/17 15:46:09 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrdeletemodel \- remove the definition of a media model from the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrdeletemodel
+[
+.BI --ml " media_letter"
+]
+.BI --mo " model"
+.SH DESCRIPTION
+.B vmgrdeletemodel
+removes the definition of a media model from the CASTOR Volume Manager.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the name of the media model.
+It must be at most CA_MAXMODELLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_deletemodel(3) ,
+.B vmgrentermodel(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
