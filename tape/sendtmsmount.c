@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.1 $ $Date: 1999/09/21 08:05:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.2 $ $Date: 1999/11/18 07:45:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
@@ -24,6 +24,7 @@ char *drive;
 {
 	char account[3];
 	int c;
+	char func[16];
 	int rc;
 	int repsize;
 	int reqlen;
@@ -31,6 +32,7 @@ char *drive;
 	char tmsreq[85];
 	char userid[4];
 
+	ENTRY (sendtmsmount);
 	strncpy (userid, acctname, 3);
 	userid[3] = '\0';
 	strncpy (account, acctname + 4, 2);
@@ -41,6 +43,7 @@ char *drive;
 		logonid, account);
 	if (*drive)
 		sprintf (tmsreq + strlen (tmsreq), " UN %s", drive);
+	tplogit (func, "%s\n", tmsreq);
 	reqlen = strlen (tmsreq);
 	while (1) {
 		repsize = sizeof(tmrepbuf);
@@ -78,5 +81,5 @@ char *drive;
 		}
 		break;
 	}
-	return (rc);
+	RETURN (rc);
 }
