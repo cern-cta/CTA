@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.28 $ $Date: 2000/09/25 10:07:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.29 $ $Date: 2001/01/19 08:46:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -557,7 +557,8 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
             if ( AbortFlag == 0 ) 
                 rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_SYERR);
             rtcpd_AppendClientMsg(NULL,file, RT141, "CPDSKTP");
-            rtcp_log(LOG_ERR,RT141,"CPDSKTP");
+            rtcp_log(LOG_ERR,"deltpfil(%d,%s) failed with error %d\n",
+                     fd,filereq->tape_path,-rc);
         }
     }
     (void) close(fd) ;
