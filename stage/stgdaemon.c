@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.114 2001/03/06 16:27:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.115 2001/03/08 17:52:41 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.114 $ $Date: 2001/03/06 16:27:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.115 $ $Date: 2001/03/08 17:52:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -249,6 +249,7 @@ extern int retenp_on_disk _PROTO((int));
 extern void check_retenp_on_disk _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -612,6 +613,9 @@ int main(argc,argv)
 	for (stcp = stcs; stcp < stce; ) {
 		if (stcp->reqid == 0) {
 			break;
+		}
+		if (stcp->t_or_d == 'h') {
+			upd_fileclass(NULL,stcp);
 		}
 		if ((((stcp->status & 0xF) == STAGEIN) &&
 				 ((stcp->status & 0xF0) != STAGED)) ||

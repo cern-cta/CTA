@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.106 2001/03/07 13:10:29 jdurand Exp $
+ * $Id: poolmgr.c,v 1.107 2001/03/08 17:52:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.106 $ $Date: 2001/03/07 13:10:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.107 $ $Date: 2001/03/08 17:52:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1681,7 +1681,7 @@ int update_migpool(stcp,flag,immediate)
   int rc = 0;
 
   if (((flag != 1) && (flag != -1)) || ((immediate != 0) && (immediate != 1) && (immediate != 2))) {
-    sendrep(rpfd, MSG_ERR, STG105, func,  "flag should be 1 or -1, and immediate should be 1, 2 or 3");
+    stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 1, 2 or 3");
     serrno = EINVAL;
     rc = -1;
     goto update_migpool_return;
@@ -1743,13 +1743,13 @@ int update_migpool(stcp,flag,immediate)
     /* This is a return from automatic migration */
     /* We update global migrator variables */
     if (--pool_p->migr->global_predicates.nbfiles_canbemig < 0) {
-      sendrep(rpfd, MSG_ERR, STG106, func,
+      stglogit (func, STG106, func,
               stcp->poolname,
               "nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)");
       pool_p->migr->global_predicates.nbfiles_canbemig = 0;
     }
     if (pool_p->migr->global_predicates.space_canbemig < stcp->actual_size) {
-      sendrep(rpfd, MSG_ERR, STG106,
+      stglogit (func, STG106,
               func,
               stcp->poolname,
               "space_canbemig < stcp->actual_size after automatic migration OK (resetted to 0)");
@@ -1759,14 +1759,14 @@ int update_migpool(stcp,flag,immediate)
     }
     if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
       if (--pool_p->migr->global_predicates.nbfiles_beingmig < 0) {
-        sendrep(rpfd, MSG_ERR, STG106,
+        stglogit (func, STG106,
                 func,
                 stcp->poolname,
                 "nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)");
         pool_p->migr->global_predicates.nbfiles_beingmig = 0;
       }
       if (pool_p->migr->global_predicates.space_beingmig < stcp->actual_size) {
-        sendrep(rpfd, MSG_ERR, STG106,
+        stglogit (func, STG106,
                 func,
                 stcp->poolname,
                 "space_beingmig < stcp->actual_size after automatic migration OK (resetted to 0)");
@@ -1777,7 +1777,7 @@ int update_migpool(stcp,flag,immediate)
     }
     /* We update fileclass_vs_migrator variables */
     if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig < 0) {
-      sendrep(rpfd, MSG_ERR, STG110,
+      stglogit (func, STG110,
               func,
               stcp->poolname,
               pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
@@ -1786,7 +1786,7 @@ int update_migpool(stcp,flag,immediate)
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig = 0;
     }
     if (pool_p->migr->fileclass_predicates[ifileclass].space_canbemig < stcp->actual_size) {
-      sendrep(rpfd, MSG_ERR, STG110,
+      stglogit (func, STG110,
               func,
               stcp->poolname,
               pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
@@ -1798,7 +1798,7 @@ int update_migpool(stcp,flag,immediate)
     }
     if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
       if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig < 0) {
-        sendrep(rpfd, MSG_ERR, STG110,
+        stglogit (func, STG110,
                 func,
                 stcp->poolname,
                 pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
@@ -1807,7 +1807,7 @@ int update_migpool(stcp,flag,immediate)
         pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig = 0;
       }
       if (pool_p->migr->fileclass_predicates[ifileclass].space_beingmig < stcp->actual_size) {
-        sendrep(rpfd, MSG_ERR, STG110,
+        stglogit (func, STG110,
                 func,
                 stcp->poolname,
                 pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
@@ -1983,6 +1983,7 @@ void checkfile2mig()
       continue;
     if (pool_p->migr->mig_pid != 0)	/* migration already running */
       continue;
+
     if ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig) <= 0)	/* No point anyway */
       continue;
 
@@ -3592,15 +3593,18 @@ void check_retenp_on_disk() {
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
+		int thisretenp;
 
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 		if (stcp->keep) continue;               /* Has -K option */
 		if ((! ISSTAGEOUT(stcp)) || (! ISSTAGEWRT(stcp))) continue; /* Not coming from a STAGEOUT or a STAGEWRT request */
 		if ((stcp->status & STAGED) != STAGED) continue; /* Not STAGEd */
 		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
-		if (((int) (this_time - stcp->a_time)) > retenp_on_disk(ifileclass)) { /* Lifetime exceeds ? */
+		thisretenp = retenp_on_disk(ifileclass);
+		if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
+		if (((int) (this_time - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
 			/* Candidate for garbage */
-			stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (this_time - stcp->a_time));
+			stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (this_time - stcp->a_time));
 			if (delfile (stcp, 0, 1, 1, "check_retenp_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
 				stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
 			}

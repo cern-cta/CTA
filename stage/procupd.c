@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.60 2001/03/05 12:07:24 jdurand Exp $
+ * $Id: procupd.c,v 1.61 2001/03/08 17:52:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.60 $ $Date: 2001/03/05 12:07:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.61 $ $Date: 2001/03/08 17:52:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -782,12 +782,17 @@ procupdreq(req_data, clienthost)
 								/* this means it was a migration request */
 								if (ifileclass >= 0) {
 									time_t thistime = time(NULL);
+									int thisretenp = retenp_on_disk(ifileclass);
+
 									/* Fileclass's retention period on disk larger than current lifetime ? */
-									if (((int) (thistime - stcp_found->a_time)) < retenp_on_disk(ifileclass)) {
-										stglogit(func, STG131, stcp_found->u1.h.xfile, retenp_on_disk(ifileclass), (thistime - stcp_found->a_time));
+									if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) {
+										stglogit(func, STG142, stcp_found->u1.h.xfile, (thisretenp == INFINITE_LIFETIME) ? "INFINITE_LIFETIME" : "AS_LONG_AS_POSSIBLE");
+										continue_flag = 1;
+									} else if (((int) (thistime - stcp_found->a_time)) < thisretenp) {
+										stglogit(func, STG131, stcp_found->u1.h.xfile, thisretenp, (thistime - stcp_found->a_time));
 										continue_flag = 1;
 									} else {
-										stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (thistime - stcp_found->a_time));
+										stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp_found->a_time));
 									}
 								}
 								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {

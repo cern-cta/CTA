@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.51 2001/03/05 12:08:03 jdurand Exp $
+ * $Id: procqry.c,v 1.52 2001/03/08 17:52:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.51 $ $Date: 2001/03/05 12:08:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.52 $ $Date: 2001/03/08 17:52:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -56,6 +56,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.51 $ $Date: 200
 #include "rfio_api.h"
 #include "Cgetopt.h"
 #include "u64subr.h"
+#include "Cns_api.h"
 
 void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int));
@@ -81,6 +82,8 @@ extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern int retenp_on_disk _PROTO((int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -1096,6 +1099,13 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		if (stcp->reqid == 0) break;
 		if ((this_reqid > 0) && (stcp->reqid != this_reqid)) continue;
 		if ((stcp->status & 0xF0) != STAGED) continue;
+		if (stcp->t_or_d == 'h') {
+			/* We explicitely exclude all CASTOR HSM files that have a retention period on disk INFINITE_LIFETIME */
+			int ifileclass;
+
+			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
+			if (retenp_on_disk(ifileclass) == INFINITE_LIFETIME) continue;
+		}
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
