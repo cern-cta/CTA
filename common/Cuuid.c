@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.4 2003/12/08 12:06:22 obarring Exp $
+ * $Id: Cuuid.c,v 1.5 2004/03/18 18:26:14 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.4 $ $Date: 2003/12/08 12:06:22 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.5 $ $Date: 2004/03/18 18:26:14 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -206,6 +206,11 @@ static void    _Cuuid_Transform                _PROTO((UINT4 *,
 static void    _Cuuid_read_state               _PROTO((U_SHORT *,
 													   Cuuid_time_t *,
 													   Cuuid_node_t *));
+#if (defined(hpux) || defined(sun))
+/* I don't know why the compiler complains about identifier redeclared */
+static void    _Cuuid_write_state              _PROTO(());
+static void    _Cuuid_format_uuid_v1           _PROTO(());
+#else
 static void    _Cuuid_write_state              _PROTO((U_SHORT,
 													   Cuuid_time_t,
 													   Cuuid_node_t));
@@ -213,6 +218,7 @@ static void    _Cuuid_format_uuid_v1           _PROTO((Cuuid_t *,
 													   U_SHORT,
 													   Cuuid_time_t,
 													   Cuuid_node_t));
+#endif
 static void    _Cuuid_format_uuid_v3           _PROTO((Cuuid_t *,
 													   unsigned char[16]));
 static void    _Cuuid_get_current_time         _PROTO((Cuuid_time_t *));
