@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.63 $ $Date: 2000/03/29 11:43:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.64 $ $Date: 2000/03/29 16:46:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -786,10 +786,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                          save_serrno = ENOSPC;
                          rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
                                   filereq->file_path);
-                         if ( *filereq->stageID != '\0' &&
-                              filereq->err.max_cpretry >= 0 ) {
+                         if ( *filereq->stageID != '\0' ) {
                              rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
-                             filereq->err.max_cpretry--;
                              rtcpd_SetReqStatus(NULL,file,save_serrno,
                                                 RTCP_LOCAL_RETRY);
                          } else {
@@ -1234,6 +1232,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 rtcpd_SetProcError(RTCP_FAILED); \
         } \
         if ( mode == WRITE_DISABLE ) { \
+            if ( rtcpd_stageupdc(tape,file) == -1 ) \
+                rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
             } else { \
@@ -1243,7 +1243,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 rtcpd_SetProcError(severity); \
             } \
             if ( AbortFlag == 0 ) \
-            (void) rtcpd_stageupdc(tape,file); \
             (void)rtcp_WriteAccountRecord(client,tape,file,RTCPEMSG); \
         if ( disk_fd != -1 ) \
             (void)DiskFileClose(disk_fd,pool_index,tape,file); \

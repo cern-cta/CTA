@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.32 $ $Date: 2000/03/24 18:15:41 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.33 $ $Date: 2000/03/29 16:46:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -246,8 +246,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             save_serrno = serrno;
             if ( rc == 0 && (filereq->concat & CONCAT_TO_EOD) == 0 &&
                  (rtcpd_LockForTpPos(0) == -1) ) {
-                rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): %s\n"
-,
+                rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): %s\n",
                          sstrerror(serrno));
             }   
 
@@ -258,6 +257,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
                     serrno = save_serrno;
+                    return(-1);
+                case ENOSPC:
+                    if ( retval == ENOSPC ) 
+                        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
+                    else 
+                        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_SYERR);
                     return(-1);
                 case SECOMERR:
                 case SESYSERR:
