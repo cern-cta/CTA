@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/12 14:19:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/30 13:03:57 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -93,12 +93,11 @@ namespace castor {
      */
     static castor::logstream& clog() throw(castor::exception::Exception);
 
-  private:
-    
     /**
-     * gets the thread local storage
+     * gets the thread local storage for a given key
      */
-    static void getTLS(void** thip) throw(castor::exception::Exception);
+    static void getTLS(int* key, void** thip)
+      throw(castor::exception::Exception);
 
   private:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/12 14:19:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/30 13:03:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -86,7 +86,8 @@ castor::Services* castor::BaseObject::svcs()
 castor::Services* castor::BaseObject::services()
   throw (castor::exception::Exception) {
   void **tls;
-  getTLS((void **)&tls);
+  static int C_BaseObject_TLSkey = -1;
+  getTLS(&C_BaseObject_TLSkey, (void **)&tls);
   if (0 == *tls) {
     *tls = (void *)(new castor::Services());
   }
@@ -96,10 +97,9 @@ castor::Services* castor::BaseObject::services()
 //------------------------------------------------------------------------------
 // getTLS
 //------------------------------------------------------------------------------
-void castor::BaseObject::getTLS(void **thip)
- throw (castor::exception::Exception) {
-  static int Cns_api_key = -1;
-  int rc = Cglobals_get (&Cns_api_key, (void **) thip, sizeof(void *));
+void castor::BaseObject::getTLS(int *key, void **thip)
+  throw (castor::exception::Exception) {
+  int rc = Cglobals_get (key, (void **) thip, sizeof(void *));
   if (*thip == NULL) {
     castor::exception::Internal ex;
     ex.getMessage() << "Could not get thread local storage";
