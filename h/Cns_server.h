@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.4 2004/07/15 09:25:48 bcouturi Exp $
+ * $Id: Cns_server.h,v 1.5 2004/07/26 15:15:29 motiakov Exp $
  */
 
 /*
@@ -140,6 +140,7 @@ struct Cns_srv_thread_info {
         Csec_context_t sec_ctx;
         uid_t Csec_uid;
         gid_t Csec_gid;
+        int Csec_service_type;    /* Type of the service if client is another Castor server */
 #endif
 };
 

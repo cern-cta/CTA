@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_server.h,v 1.1 2004/07/15 16:21:40 motiakov Exp $
+ * $Id: vmgr_server.h,v 1.2 2004/07/26 15:15:29 motiakov Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.1 $ $Date: 2004/07/15 16:21:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:15:29 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_SERVER_H
@@ -109,6 +109,7 @@ struct vmgr_srv_thread_info {
         Csec_context_t sec_ctx;
         uid_t Csec_uid;
         gid_t Csec_gid;
+        int Csec_service_type;    /* Type of the service if client is another Castor server */
 #endif
 };
 
