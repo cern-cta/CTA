@@ -1,9 +1,9 @@
 /*
- * $Id: stager_castor.c,v 1.30 2002/11/06 13:22:58 jdurand Exp $
+ * $Id: stager_castor.c,v 1.31 2002/11/19 09:09:36 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
 
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.30 $ $Date: 2002/11/06 13:22:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.31 $ $Date: 2002/11/19 09:09:36 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -965,7 +965,7 @@ int stagein_castor_hsm_file() {
 	/* We initialize those size arrays */
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		struct Cns_fileid Cnsfileid;
-		struct stat sbuf;
+		struct stat64 sbuf;
 
 		if (stcp->t_or_d == 'd') {
 			/* Check totalsize for this internal copy */
@@ -973,13 +973,13 @@ int stagein_castor_hsm_file() {
 			SETEID(stcp->uid,stcp->gid);
 
 			PRE_RFIO;
-			if (((rfio_stat_rc = rfio_stat (stcp->u1.d.xfile, &sbuf)) == 0) && (S_ISDIR(sbuf.st_mode) || S_ISCHR(sbuf.st_mode)
+			if (((rfio_stat_rc = rfio_stat64 (stcp->u1.d.xfile, &sbuf)) == 0) && (S_ISDIR(sbuf.st_mode) || S_ISCHR(sbuf.st_mode)
 #if !defined(_WIN32)
 																				|| S_ISBLK(sbuf.st_mode)
 #endif
 				)) {
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat",
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat64",
 						 "Not a regular file");
 				RESTORE_EID;
 				RETURN (USERR);
@@ -989,7 +989,7 @@ int stagein_castor_hsm_file() {
 				hsm_transferedsize[i] = 0;
 			} else {
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat64", rfio_serror());
 				RESTORE_EID;
 				RETURN (USERR);
 			}
@@ -1002,7 +1002,7 @@ int stagein_castor_hsm_file() {
 			}
 			if ((sbuf.st_mode & mode) != mode) {
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat", sstrerror (EACCES));
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.d.xfile, "rfio_stat64", sstrerror (EACCES));
 				RESTORE_EID;
 				RETURN (USERR);
 			}
@@ -3781,17 +3781,17 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open(\"%s\",O_RDONLY,0644)\n", inpfile);
+	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_RDONLY,0644)\n", inpfile);
 	RESTORE_EID;
 #endif
 
 	PRE_RFIO;
-	fd1 = rfio_open(inpfile,O_RDONLY ,0644);
+	fd1 = rfio_open64(inpfile,O_RDONLY ,0644);
 
 	if (fd1 < 0) {
 		if (serrno) {
 			SAVE_EID;
-			sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open", rfio_serror());
+			sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
 			RESTORE_EID;
 			rc = serrno;
 		} else {
@@ -3801,7 +3801,7 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 			case ENOENT:
 			case EPERM :
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
 				RESTORE_EID;
 				rc = rfio_errno;
 				break ;
@@ -3812,20 +3812,20 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 				case ENOENT:
 				case EPERM :
 					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
 					RESTORE_EID;
 					rc = errno;
 					break;
 				default:
 					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
 					RESTORE_EID;
 					rc = SYERR;
 				}
 				break;
 			default:
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
 				RESTORE_EID;
 				rc = SYERR;
 			}
@@ -3846,16 +3846,16 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open(\"%s\",O_WRONLY|O_CREAT|O_TRUNC,st_mode & 0777)\n", outfile);
+	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_WRONLY|O_CREAT|O_TRUNC,st_mode & 0777)\n", outfile);
 	RESTORE_EID;
 #endif
 
 	PRE_RFIO;
-	fd2 = rfio_open(outfile, O_WRONLY|O_CREAT|O_TRUNC, st_mode & 0777);
+	fd2 = rfio_open64(outfile, O_WRONLY|O_CREAT|O_TRUNC, st_mode & 0777);
 	if (fd2 < 0) {
 		if (serrno) {
 			SAVE_EID;
-			sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open", rfio_serror());
+			sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 			RESTORE_EID;
 			rc = serrno;
 		} else {
@@ -3865,7 +3865,7 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 			case ENOENT:
 			case EPERM :
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 				RESTORE_EID;
 				rc = rfio_errno;
 				break;
@@ -3876,20 +3876,20 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 				case ENOENT:
 				case EPERM :
 					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 					RESTORE_EID;
 					rc = errno;
 					break;
 				default:
 					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 					RESTORE_EID;
 					rc = SYERR;
 				}
 				break;
 			default:
 				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 				RESTORE_EID;
 				rc = SYERR;
 			}
@@ -3972,7 +3972,7 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 	u_signed64 *effsize;
 {
 	int n, m = 0, mode;
-	struct stat sbuf;
+	struct stat64 sbuf;
 	char *p;
 	int bufsize = TRANSFER_UNIT;
 	char *cpbuf;
@@ -4028,9 +4028,9 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 					RESTORE_EID;
 				} else {
 					PRE_RFIO;
-					if (rfio_stat(outfile, &sbuf) != 0) {
+					if (rfio_stat64(outfile, &sbuf) != 0) {
 						SAVE_EID;
-						sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_stat", rfio_serror());
+						sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_stat64", rfio_serror());
 						RESTORE_EID;
 					} else {
 						mode = sbuf.st_mode & S_IFMT;
@@ -4074,9 +4074,9 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 		sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_close", rfio_serror());
 		RESTORE_EID;
 		PRE_RFIO;
-		if (rfio_stat(outfile, &sbuf) != 0) {
+		if (rfio_stat64(outfile, &sbuf) != 0) {
 			SAVE_EID;
-			sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_stat", rfio_serror());
+			sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_stat64", rfio_serror());
 			RESTORE_EID;
 		} else {
 			mode = sbuf.st_mode & S_IFMT;
