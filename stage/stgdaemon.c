@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.125 2001/03/22 14:57:21 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.126 2001/03/27 08:35:32 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.125 $ $Date: 2001/03/22 14:57:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.126 $ $Date: 2001/03/27 08:35:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -249,7 +249,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern int retenp_on_disk _PROTO((int));
-extern void check_retenp_on_disk _PROTO(());
+extern void check_lifetime_on_disk _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
@@ -718,7 +718,8 @@ int main(argc,argv)
 			stglogit(func, STG33, "upd_fileclasses_int update - value changed", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
 		}
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
-		check_retenp_on_disk (); /* remove all CASTOR files that are out of disk retention time */
+		check_lifetime_on_disk (); /* remove all CASTOR files that are out of disk retention time or */
+									/* put in PUT_FAILED the STAGEOUT files that have too long lifetime */
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
 		checkwaitingspc ();	/* check requests that are waiting for space */
