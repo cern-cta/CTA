@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.2 $ $Date: 2000/05/29 14:28:39 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.3 $ $Date: 2000/05/29 14:49:14 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -111,12 +111,16 @@ EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
                                       /* parse file path                  */
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
                                       /* parse file path                  */
-EXTERN_C int DLL_DECL rfio_connect _PROTO((char *, int));
+EXTERN_C int DLL_DECL rfio_connect _PROTO((char *, int *));
                                      /* connect remote rfio server        */
-EXTERN_C void striptb();          /* strip trailing blanks                */
-EXTERN_C char *getconfent();      /* get configuration file entry         */
-EXTERN_C char *getacct();         /* get account string name              */
-EXTERN_C char *lun2fn();          /* resolve lun to filename translation  */
+EXTERN_C void DLL_DECL striptb _PROTO((char *));  
+                                  /* strip trailing blanks                */
+EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int)); 
+                                  /* get configuration file entry         */
+EXTERN_C char DLL_DECL *getacct _PROTO((void));
+                                  /* get account string name              */
+EXTERN_C char DLL_DECL *lun2fn _PROTO((int));
+                                  /* resolve lun to filename translation  */
 
 EXTERN_C int DLL_DECL rfio_HsmIf_access _PROTO((const char *, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_chdir _PROTO((const char *));
