@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.15 2004/12/07 11:05:56 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.16 2004/12/07 12:18:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.15 $ $Date: 2004/12/07 11:05:56 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.16 $ $Date: 2004/12/07 12:18:03 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -220,6 +220,8 @@ static int setsock_ceiling = 256 * 1024;
 int max_rcvbuf;
 int max_sndbuf;
 char *forced_filename = NULL;
+int forced_umask = -1;
+int ignore_uid_gid = 0;
 
 #if defined(_WIN32)         /* WIN32 version with multithread support */
 #define MAX_THREADS 64      /*  */
@@ -337,7 +339,7 @@ char    **argv;
    }
 #endif /* if WIN32 */
 #if !defined(_WIN32)
-   while ((option = getopt(argc,argv,"sdltf:p:P:D:nS:1T:")) != EOF) {
+   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1T:U")) != EOF) {
       switch (option) {
          case 'd':
 			debug++;
@@ -358,6 +360,9 @@ char    **argv;
          case 'T':
             select_timeout=atoi(optarg);
             break;
+         case 'M':
+            forced_umask=atoi(optarg);
+            break;
          case 'p':
             port=atoi(optarg);
             break;
@@ -375,6 +380,9 @@ char    **argv;
             break;
          case '1':
 			once_only++;
+            break;
+         case 'U':
+			ignore_uid_gid++;
             break;
 	  default:
 		  fprintf(stderr,"Unknown option '%c'\n", option);
