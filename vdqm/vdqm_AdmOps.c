@@ -17,8 +17,6 @@ static char sccsid[] = "@(#)vdqm_AdmOps.c,v 1.1 2000/02/29 07:51:10  CERN IT-PDP
 #include <errno.h>
 #if !defined(_WIN32)
 #include <regex.h>
-#else
-typedef void * regex_t
 #endif /* !_WIN32 */
 #include <stdlib.h>
 #include <pwd.h>

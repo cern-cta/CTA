@@ -15,8 +15,6 @@ static char sccsid[] = "@(#)vdqm_QueueOp.c,v 1.27 2000/02/29 17:27:35 CERN IT-PD
 #include <time.h>
 #if !defined(_WIN32)
 #include <regex.h>
-#else /* _WIN32 */
-typedef void * regex_t
 #endif /* _WIN32 */
 #include <osdep.h>
 #include <net.h>
