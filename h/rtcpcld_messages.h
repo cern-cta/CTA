@@ -93,6 +93,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_PUTFAILED,
     RTCPCLD_MSG_GETFAILED,
     RTCPCLD_MSG_INVALSEGM,
+    RTCPCLD_MSG_SHUTDOWN,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -175,6 +176,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_PUTFAILED, DLF_LVL_ALERT,"Migration retry rejected by policy"},
     { RTCPCLD_MSG_GETFAILED, DLF_LVL_WARNING,"Recall retry rejected by policy"},
     { RTCPCLD_MSG_INVALSEGM, DLF_LVL_ERROR,"Name server segment no longer valid"},
+    { RTCPCLD_MSG_SHUTDOWN, DLF_LVL_ALERT,"Service shutdown"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
