@@ -1,0 +1,122 @@
+.\"
+.\" $Id: rfio_chmod.man,v 1.1 2000/07/07 13:44:41 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 13:44:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_CHMOD 3 "$Date: 2000/07/07 13:44:41 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_chmod \- change access mode of a directory/file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_chmod (const char *" path ,
+.BI "mode_t " mode )
+.SH DESCRIPTION
+.B rfio_chmod
+sets the access permission portion of the mode of a directory/file to the bit pattern in
+.IR mode.
+.TP
+.I path
+specifies the logical pathname relative to the current directory or
+the full pathname.
+.TP
+.I mode
+is constructed by OR'ing the bits defined in
+.RB < sys/stat.h >
+under Unix or to be explicitely defined under Windows/NT:
+.sp
+.RS
+.B S_IRUSR	0000400		
+read by owner
+.br
+.B S_IWUSR	0000200		
+write by owner
+.br
+.B S_IXUSR	0000100		
+execute/search by owner
+.br
+.B S_IRGRP	0000040		
+read by group
+.br
+.B S_IWGRP	0000020		
+write by group
+.br
+.B S_IXGRP	0000010		
+execute/search by group
+.br
+.B S_IROTH	0000004		
+read by others
+.br
+.B S_IWOTH	0000002		
+write by others
+.br
+.B S_IXOTH	0000001		
+execute/search by others
+.RE
+.sp
+The effective user ID of the process must match the owner of the file or be
+super-user.
+If a directory is writable and has the sticky bit set, files/directories within
+that directory can be removed or renamed only if:
+.RS
+.LP
+the effective user ID of the requestor matches the owner ID of the file or
+.LP
+the effective user ID of the requestor matches the owner ID of the directory or
+.LP
+the file is writable by the requestor or
+.LP
+the requestor is super-user.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The effective user ID does not match the owner of the file and is not super-user.
+.TP
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or write permission on the file itself is denied.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR rfio_chdir(3)
