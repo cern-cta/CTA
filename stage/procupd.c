@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.42 2000/12/12 14:43:30 jdurand Exp $
+ * $Id: procupd.c,v 1.43 2000/12/14 15:25:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.42 $ $Date: 2000/12/12 14:43:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.43 $ $Date: 2000/12/14 15:25:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -698,7 +698,7 @@ void update_hsm_a_time(stcp)
 		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf) == 0) {
 			stcp->a_time = Cstatbuf.mtime;
 		} else {
-			stglogit (func, STG02, stcp->u1.h.xfile, "Cns_stats", sstrerror(serrno));
+			stglogit (func, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
 		}
 		break;
 	default:
