@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.12 1999/12/15 08:21:37 jdurand Exp $
+ * $Id: procqry.c,v 1.13 1999/12/22 07:23:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.12 $ $Date: 1999/12/15 08:21:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.13 $ $Date: 1999/12/22 07:23:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -266,12 +266,14 @@ char *clienthost;
             strcpy(dbfd_in_fork.password,dbfd.password);
 
 			if (stgdb_login(&dbfd_in_fork) != 0) {
+                sendrep(rpfd, MSG_ERR, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
 
 			/* Open the database */
 			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
+                sendrep(rpfd, MSG_ERR, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
@@ -401,7 +403,9 @@ char *clienthost;
             has_been_updated = 1;
           }
           if (has_been_updated != 0) {
-            stgdb_upd_stgcat(dbfd_query,stcp);
+            if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
           }
 		}
 		if (stcp->t_or_d == 't') {
@@ -529,8 +533,12 @@ reply:
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
-      stgdb_close(dbfd_query);
-      stgdb_logout(dbfd_query);
+      if (stgdb_close(dbfd_query) != 0) {
+        sendrep(rpfd, MSG_ERR, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
+      }
+      if (stgdb_logout(dbfd_query) != 0) {
+        sendrep(rpfd, MSG_ERR, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
+      }
       exit (c);
     }
 }
@@ -705,7 +713,9 @@ char *mfile;
             has_been_updated = 1;
           }
           if (has_been_updated != 0) {
-            stgdb_upd_stgcat(dbfd_query,stcp);
+            if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
           }
 		}
 		sci->weight = (double)stcp->a_time;

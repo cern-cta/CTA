@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.12 1999/12/15 08:20:02 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.13 1999/12/22 07:23:42 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.12 $ $Date: 1999/12/15 08:20:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.13 $ $Date: 1999/12/22 07:23:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -300,19 +300,19 @@ main(argc,argv)
 
   /* Log to the database server */
   if (stgdb_login(&dbfd) != 0) {
-    stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
+    stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
     exit(SYERR);
   }
 
   /* Open the database */
   if (stgdb_open(&dbfd,"stage") != 0) {
-    stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
+    stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
     exit(SYERR);
   }
 
   /* Ask for a dump of the catalog */
   if (stgdb_load(&dbfd,&stcs,&stce,&stgcat_bufsz,&stps,&stpe,&stgpath_bufsz) != 0) {
-    stglogit(func, "Error loading \"stage\" databases into memory\n");
+    stglogit(func, STG100, "load", sstrerror(serrno), __FILE__, __LINE__);
     exit(SYERR);
   }
 
@@ -414,7 +414,9 @@ main(argc,argv)
                stcp->status == STAGEALLOC) {
       if (rfio_stat (stcp->ipath, &st) == 0) {
         stcp->actual_size = st.st_size;
-        stgdb_upd_stgcat(&dbfd,stcp);
+        if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+          stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+        }
       }
       updfreespace (stcp->poolname, stcp->ipath,
                     (int)stcp->actual_size - stcp->size*1024*1024);
@@ -423,7 +425,9 @@ main(argc,argv)
       delreq (stcp,0);
     } else if (stcp->status == STAGEPUT) {
       stcp->status = STAGEOUT|PUT_FAILED;
-      stgdb_upd_stgcat(&dbfd,stcp);
+      if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+        stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+      }
       stcp++;
     } else stcp++;
   }
@@ -444,7 +448,9 @@ main(argc,argv)
             stcp->status == STAGEALLOC) {
           if (rfio_stat (stcp->ipath, &st) == 0) {
             stcp->actual_size = st.st_size;
-            stgdb_upd_stgcat(&dbfd,stcp);
+            if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
           }
           updfreespace (stcp->poolname, stcp->ipath,
 					    (int)stcp->actual_size - stcp->size*1024*1024);
@@ -844,7 +850,9 @@ void checkpoolstatus()
               wqp->status = c;
             } else {
               stcp->status &= 0xF;
-              stgdb_upd_stgcat(&dbfd,stcp);
+              if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+                sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+              }
               *wqp->waiting_pool = '\0';
               if (stcp->status == STAGEOUT ||
                   stcp->status == STAGEALLOC) {
@@ -935,17 +943,23 @@ check_waiting_on_req(subreqid, state)
             if ((c = build_ipath (wfp->upath, stcp,
                                   wqp->pool_user)) < 0) {
               stcp->status |= WAITING_SPC;
-              stgdb_upd_stgcat(&dbfd,stcp);
+              if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+                stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+              }
               strcpy (wqp->waiting_pool, stcp->poolname);
               wqp->nb_clnreq++;
               cleanpool (stcp->poolname);
             } else if (c) {
               wqp->status = c;
             } else {
-              stgdb_upd_stgcat(&dbfd,stcp);
+              if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+                stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+              }
             }
           } else {
-            stgdb_upd_stgcat(&dbfd,stcp);
+            if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
           }
           wqp->nb_waiting_on_req--;
           wfp->waiting_on_req = -1;
@@ -1047,7 +1061,9 @@ void checkwaitq()
           break;
         case STAGEPUT:
           stcp->status = STAGEOUT | PUT_FAILED;
-          stgdb_upd_stgcat(&dbfd,stcp);
+          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+          }
         }
       }
       wqp1 = wqp;
@@ -1116,7 +1132,9 @@ void create_link(stcp, upath)
   stglogit (func, STG94, upath);
   sendrep (rpfd, SYMLINK, stcp->ipath, upath);
   savepath ();
-  stgdb_ins_stgpath(&dbfd,stpp);
+  if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
+    sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+  }
 }
 
 delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
@@ -1156,7 +1174,9 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
         else
           actual_size = stcp->actual_size;
 
-        stgdb_upd_stgcat(&dbfd,stcp);
+        if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+        }
       }
       if (rfio_unlink (stcp->ipath) == 0) {
 #if SACCT
@@ -1204,7 +1224,9 @@ void dellink(stpp)
   char *p1, *p2;
 
   stglogit (func, STG93, stpp->upath);
-  stgdb_del_stgpath(&dbfd,stpp);
+  if (stgdb_del_stgpath(&dbfd,stpp) != 0) {
+    sendrep(rpfd, MSG_ERR, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+  }
   sendrep (rpfd, RMSYMLINK, stpp->upath);
   nbpath_ent--;
   p2 = (char *)stps + (nbpath_ent * sizeof(struct stgpath_entry));
@@ -1225,7 +1247,9 @@ void delreq(stcp,nodb_delete_flag)
   char *p1, *p2;
 
   if (nodb_delete_flag == 0) {
-    stgdb_del_stgcat(&dbfd,stcp);
+    if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
+      sendrep(rpfd, MSG_ERR, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+    }
   }
 
   nbcat_ent--;
@@ -1531,7 +1555,9 @@ upd_stageout(req_type, upath, subreqid)
   stcp->a_time = time (0);
   *subreqid = stcp->reqid;
 
-  stgdb_upd_stgcat(&dbfd,stcp);
+  if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+    sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+  }
 
   return (0);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.9 1999/12/14 14:51:39 jdurand Exp $
+ * $Id: procio.c,v 1.10 1999/12/22 07:23:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.9 $ $Date: 1999/12/14 14:51:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.10 $ $Date: 1999/12/22 07:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -33,6 +33,7 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.9 $ $Date: 1999/
 #include "../h/sacct.h"
 #endif
 #include "stgdb_Cdb_ifce.h"
+#include <serrno.h>
 #include "osdep.h"
 
 extern char *optarg;
@@ -507,7 +508,9 @@ char *clienthost;
 			case STAGEIN:	/* stage in progress */
 			case STAGEIN|WAITING_SPC:	/* waiting space */
 				stcp->nbaccesses++;
-				stgdb_upd_stgcat(&dbfd,stcp);
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+                }
 				savereqid = stcp->reqid;
 				stcp = newreq ();
 				memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -520,7 +523,9 @@ char *clienthost;
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
 				stcp->status |= WAITING_REQ;
-				stgdb_ins_stgcat(&dbfd,stcp);
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+                  sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+                }
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
 					stcp->uid, stcp->gid, clientpid,
@@ -572,7 +577,9 @@ char *clienthost;
 			case STAGEWRT:
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
-				stgdb_upd_stgcat(&dbfd,stcp);
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+                }
 #if SACCT
 				stageacct (STGFILS, stgreq.uid, stgreq.gid,
 				    clienthost, reqid, req_type, 0, 0, stcp, "");
@@ -635,7 +642,9 @@ notstaged:
 						goto reply;
 					}
 				}
-				stgdb_ins_stgcat(&dbfd,stcp);
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+                  sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+                }
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
 				wfp++;
@@ -714,7 +723,9 @@ notstaged:
 				    strcmp (stcp->ipath, argv[optind+1]))
 					create_link (stcp, argv[optind+1]);
 			}
-			stgdb_ins_stgcat(&dbfd,stcp);
+			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+            }
 			break;
 		case STAGEWRT:
 			if (p = findpoolname (upath)) {
@@ -767,7 +778,9 @@ notstaged:
 			}
 			stcp->a_time = time (0);
 			strcpy (stcp->ipath, upath);
-			stgdb_ins_stgcat(&dbfd,stcp);
+			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+            }
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
 				stcp->gid, clientpid, Upluspath, reqid, req_type,
 				nbdskf, &wfp);
@@ -818,7 +831,9 @@ notstaged:
 			stcp->a_time = st.st_atime;
 			stcp->nbaccesses = 1;
 			strcpy (stcp->ipath, upath);
-			stgdb_ins_stgcat(&dbfd,stcp);
+			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+            }
 			break;
 		}
 	}
@@ -1006,7 +1021,9 @@ char *clienthost;
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
-			stgdb_upd_stgcat(&dbfd,stcp);
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 				clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 			wfp->subreqid = stcp->reqid;
@@ -1044,7 +1061,9 @@ char *clienthost;
 		}
 		stcp->status = STAGEPUT;
 		stcp->a_time = time (0);
-		stgdb_upd_stgcat(&dbfd,stcp);
+		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+        }
 		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 			clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 		wfp->subreqid = stcp->reqid;
@@ -1087,7 +1106,9 @@ reply:
 					break;
 			}
 			stcp->status = STAGEOUT|PUT_FAILED;
-			stgdb_upd_stgcat(&dbfd,stcp);
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
 		}
 		rmfromwq (wqp);
 	}
