@@ -1,0 +1,2 @@
+.so ./rfio_symlink.man
+.\" @(#)$RCSfile: rfio_msymlink.man,v $ $Revision: 1.1 $ $Date: 2001/11/30 13:28:39 $ CERN IT-PDP/DM Jean-Damien Durand
