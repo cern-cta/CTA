@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2000/01/07 14:58:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2000/06/13 14:49:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -7,16 +7,50 @@ COMM
 COMM		Make CASTOR tests for "common" directory
 
 INCLUDES = FileName(FileName(..,..),h)
+DEBUG          = -g
 
+COMM --------------------------
+COMM Resume there ALL the flags
+COMM --------------------------
+CFLAGS         = $(MTCCFLAGS) -I$(INCLUDES) $(DEBUG)
+LDFLAGS        = $(MTLDFLAGS)
+
+OBJS = Csched_test.Osuf
+
+PROGS = ProgramTargetName(Csched_test)
+
+DEPLIBS = DepLibraryTargetName(FileName(..,common),common)
+
+#ifdef _WIN32
+SLIB          = advapi32.lib wsock32.lib mpr.lib
+#else
+#ifdef SOLARIS
+COMM Because of h_errno external and POSIX4 library
+SLIB         = -lnsl -lposix4
+#else
+#ifdef __osf__
+SLIB         = -lrt
+#endif
+#endif
+#endif
+
+#if _WIN32
 all:
-	@echo 'no test available yet for "common" directory'
+#else
+all: $(PROGS)
+#endif
+
+#ifndef _WIN32
+NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(MTLDLIBS))
+MakeDepLibrary(FileName(..,common),common)
+#endif
 
 clean:
 	-@RemoveFiles(FilesToClean)
- 
+
 clobber:        clean
 	-@RemoveFiles($(PROGS))
- 
+
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -26,4 +60,10 @@ depend:
 #endif
 
 Makefiles:
- 
+
+FORCE:
+
+COMM -------------------------
+COMM DEPENDENCIES of *.c files
+COMM -------------------------
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

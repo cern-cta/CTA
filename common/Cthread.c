@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.37 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.38 $ $Date: 2000/06/13 14:49:28 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1277,7 +1277,7 @@ int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
       return(-1);
   }
 #else
-  serrno = EOPNOTSUP;
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif
   return(_Cthread_addcid(__FILE__,__LINE__,file,line,&pid,thID,startroutine,1));
@@ -1305,7 +1305,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
      int **status;
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-  int                 n;                /* Status           */
+  int                   n;                /* Status           */
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
@@ -1428,7 +1428,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
      _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
 #  else
-  serrno = EOPNOTSUP;
+  serrno = SEOPNOTSUP;
   return(-1);
 #  endif
 #endif /* _CTHREAD_PROTO_WIN32 */
@@ -1528,7 +1528,7 @@ int DLL_DECL Cthread_Detach(file, line, cid)
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   /* This is a noop. Windows doesn't make any real distinction */
 #else /* _CTHREAD_PROTO */
-  serrno = EOPNOTSUP;
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif
   return(0);
@@ -1876,7 +1876,7 @@ int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
     rc = _Cthread_win32_cond_signal(&(current->cond));
   }
 #else
-  serrno = EOPNOTSUP;
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif /* _CTHREAD_PROTO */
   return(rc);
@@ -2002,7 +2002,7 @@ int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
     rc = _Cthread_win32_cond_signal(&(current->cond));
   }
 #else
-  serrno = EOPNOTSUP;
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif /* _CTHREAD_PROTO */
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
@@ -5202,4 +5202,413 @@ int DLL_DECL _Cthread_self() {
 /* =============================================== */
 void DLL_DECL Cthread_unprotect() {
   _Cthread_unprotect = 1;
+}
+
+/* =============================================== */
+/* Routine  : Csched_Getschedparam                 */
+/* Arguments: Caller filename                      */
+/*            Caller line number                   */
+/*            CThread ID                           */
+/*            Policy (output)                      */
+/*            Parameters (output)                  */
+/* ----------------------------------------------- */
+/* Output   : 0 if (OK), -1 if not OK              */
+/*            Policy, Parameters                   */
+/* ----------------------------------------------- */
+/* History:                                        */
+/* 12-JUN-2000       First implementation          */
+/*                   Jean-Damien.Durand@cern.ch    */
+/* =============================================== */
+/* Notes:                                          */
+/* =============================================== */
+int DLL_DECL Csched_Getschedparam(file,line,cid,policy,Cparam)
+     char *file;
+     int line;
+     int cid;
+     int *policy;
+     Csched_param_t *Cparam;
+{
+  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
+  int                   n;                /* Status           */
+
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Getschedparam(%d,0x%lx,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),cid,(unsigned long) policy,(unsigned long) Cparam,file, line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+  /* We check that this cid correspond to a known */
+  /* process                                      */
+  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
+    return(-1);
+
+  n = 1;
+  while (current->next != NULL) {
+    current = current->next;
+    if (current->cid == cid) {
+      n = 0;
+      break;
+    }
+  }
+  _Cthread_release_mtx(file,line,&(Cthread.mtx));
+
+  if (n) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+#ifdef _NOCTHREAD
+  /* Cannot be supported - wrong environment */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  if (policy == NULL || Cparam == NULL) {
+    /* policy and param are required to be non-NULL */
+    serrno = EINVAL;
+    return(-1);
+  }
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  /* Not yet supported on _WIN32 */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  {
+    struct sched_param param;
+
+    if ((n = pthread_getschedparam(current->pid, policy, &param)) != 0) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+
+    Cparam->sched_priority = param.sched_priority;
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if ((n = pthread_getscheduler(current->pid)) < 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  *policy = n;
+  if ((n = pthread_getprio(current->pid)) < 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  Cparam->sched_priority = n;
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  {
+    struct sched_param param;
+
+    if ((n = pthread_getschedparam(current->pid, policy, &param)) != 0) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+
+    Cparam->sched_priority = param.sched_priority;
+  }
+#endif /* _CTHREAD_PROTO */
+#endif /* _NOCTHREAD */
+  /* OK */
+  return(0);
+}
+
+/* =============================================== */
+/* Routine  : Csched_Setschedparam                 */
+/* Arguments: Caller filename                      */
+/*            Caller line number                   */
+/*            CThread ID                           */
+/*            Policy                               */
+/*            Parameters                           */
+/* ----------------------------------------------- */
+/* Output   : 0 if (OK), -1 if not OK              */
+/* ----------------------------------------------- */
+/* History:                                        */
+/* 12-JUN-2000       First implementation          */
+/*                   Jean-Damien.Durand@cern.ch    */
+/* =============================================== */
+/* Notes:                                          */
+/* =============================================== */
+int DLL_DECL Csched_Setschedparam(file,line,cid,policy,Cparam)
+     char *file;
+     int line;
+     int cid;
+     int policy;
+     Csched_param_t *Cparam;
+{
+  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
+  int                   n;                /* Status           */
+
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Setschedparam(%d,%d,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),cid,policy,(unsigned long) Cparam,file, line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+  /* We check that this cid correspond to a known */
+  /* process                                      */
+  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
+    return(-1);
+
+  n = 1;
+  while (current->next != NULL) {
+    current = current->next;
+    if (current->cid == cid) {
+      n = 0;
+      break;
+    }
+  }
+  _Cthread_release_mtx(file,line,&(Cthread.mtx));
+
+  if (n) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+#ifdef _NOCTHREAD
+  /* Cannot be supported - wrong environment */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  if (policy == CSCHED_UNKNOWN) {
+    /* Known to be unsupported */
+    serrno = SEOPNOTSUP;
+    return(-1);
+  }
+  if (Cparam == NULL) {
+    /* param is required to be non-NULL */
+    serrno = EINVAL;
+    return(-1);
+  }
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  /* Not yet supported on _WIN32 */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  {
+    struct sched_param param;
+
+    param.sched_priority = Cparam->sched_priority;
+
+    if ((n = pthread_setschedparam(current->pid, policy, &param)) != 0) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if ((n = pthread_setscheduler(current->pid, policy, Cparam->sched_priority)) < 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  {
+    struct sched_param param;
+
+    param.sched_priority = Cparam->sched_priority;
+
+    if ((n = pthread_setschedparam(current->pid, policy, &param)) != 0) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+  }
+#endif /* _CTHREAD_PROTO */
+#endif /* _NOCTHREAD */
+  /* OK */
+  return(0);
+}
+
+/* =============================================== */
+/* Routine  : Csched_Get_priority_min              */
+/* Arguments: Caller filename                      */
+/*            Caller line number                   */
+/*            Policy                               */
+/* ----------------------------------------------- */
+/* Output   : 0 if (OK), -1 if not OK              */
+/* ----------------------------------------------- */
+/* History:                                        */
+/* 12-JUN-2000       First implementation          */
+/*                   Jean-Damien.Durand@cern.ch    */
+/* =============================================== */
+/* Notes:                                          */
+/* =============================================== */
+int DLL_DECL Csched_Get_priority_min(file,line,policy)
+     char *file;
+     int line;
+     int policy;
+{
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_min(%d) called at/behind %s:%d\n",
+          _Cthread_self(),policy,file,line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+#ifdef _NOCTHREAD
+  /* Cannot be supported - wrong environment */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  if (policy == CSCHED_UNKNOWN) {
+    /* Known to be unsupported */
+    serrno = SEOPNOTSUP;
+    return(-1);
+  }
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  /* Not yet supported on _WIN32 */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  {
+    int min;
+
+    if ((min = sched_get_priority_min(policy)) < 0) {
+      errno = min;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+
+    return(min);
+  }
+#endif /* _CTHREAD_PROTO */
+#endif /* _NOCTHREAD */
+}
+
+/* =============================================== */
+/* Routine  : Csched_Get_priority_max              */
+/* Arguments: Caller filename                      */
+/*            Caller line number                   */
+/*            Policy                               */
+/* ----------------------------------------------- */
+/* Output   : 0 if (OK), -1 if not OK              */
+/* ----------------------------------------------- */
+/* History:                                        */
+/* 12-JUN-2000       First implementation          */
+/*                   Jean-Damien.Durand@cern.ch    */
+/* =============================================== */
+/* Notes:                                          */
+/* =============================================== */
+int DLL_DECL Csched_Get_priority_max(file,line,policy)
+     char *file;
+     int line;
+     int policy;
+{
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_max(%d) called at/behind %s:%d\n",
+          _Cthread_self(),policy,file,line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+#ifdef _NOCTHREAD
+  /* Cannot be supported - wrong environment */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  if (policy == CSCHED_UNKNOWN) {
+    /* Known to be unsupported */
+    serrno = SEOPNOTSUP;
+    return(-1);
+  }
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  /* Not yet supported on _WIN32 */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  {
+    int max;
+
+    if ((max = sched_get_priority_max(policy)) < 0) {
+      errno = max;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+
+    return(max);
+  }
+#endif /* _CTHREAD_PROTO */
+#endif /* _NOCTHREAD */
+}
+
+/* =============================================== */
+/* Routine  : Csched_Get_priority_mid              */
+/* Arguments: Caller filename                      */
+/*            Caller line number                   */
+/*            Policy                               */
+/* ----------------------------------------------- */
+/* Output   : 0 if (OK), -1 if not OK              */
+/* ----------------------------------------------- */
+/* History:                                        */
+/* 12-JUN-2000       First implementation          */
+/*                   Jean-Damien.Durand@cern.ch    */
+/* =============================================== */
+/* Notes:                                          */
+/* =============================================== */
+int DLL_DECL Csched_Get_priority_mid(file,line,policy)
+     char *file;
+     int line;
+     int policy;
+{
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_mid(%d) called at/behind %s:%d\n",
+          _Cthread_self(),policy,file,line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+#ifdef _NOCTHREAD
+  /* Cannot be supported - wrong environment */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  if (policy == CSCHED_UNKNOWN) {
+    /* Known to be unsupported */
+    serrno = SEOPNOTSUP;
+    return(-1);
+  }
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  /* Not yet supported on _WIN32 */
+  serrno = SEOPNOTSUP;
+  return(-1);
+#else
+  {
+    int min, max;
+
+    if ((min = Csched_get_priority_min(policy)) < 0 ||
+        (max = Csched_get_priority_max(policy)) < 0) {
+      return(-1);
+    }
+
+    if ((min % 2) != (max % 2)) {
+      /* One is even and one is odd : exact medium does not exist */
+      return((max - min + 1) / 2);
+    } else {
+      /* Both are even or both are odd */
+      return((max - min) / 2);
+    }
+  }
+#endif /* _CTHREAD_PROTO */
+#endif /* _NOCTHREAD */
 }
