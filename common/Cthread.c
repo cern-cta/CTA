@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.24 1999/11/22 13:17:26 obarring Exp $
+ * $Id: Cthread.c,v 1.25 1999/11/30 15:18:38 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.24 $ $Date: 1999/11/22 13:17:26 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.25 $ $Date: 1999/11/30 15:18:38 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -3988,7 +3988,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
     /* In any case we overwrite our TSD keyvalue   */
     /* The fact that current_cid >= 0 says that we */
     /* are executing in our namespace.             */
-    * (int *) tsd = current_cid;
+    /* * (int *) tsd = current_cid; */
 
   }
 
