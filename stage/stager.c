@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.123 2001/02/13 12:30:21 jdurand Exp $
+ * $Id: stager.c,v 1.124 2001/02/13 13:01:44 jdurand Exp $
  */
 
 /*
@@ -19,10 +19,10 @@
 #define USE_SUBREQID
 
 /* If you want to always migrate the full data to tape do: */
-#define FULL_STAGEWRT_HSM
+/* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.123 $ $Date: 2001/02/13 12:30:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.124 $ $Date: 2001/02/13 13:01:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3527,6 +3527,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Tuesday 13 February, 2001 at 12:52:37 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 13 February, 2001 at 13:34:54 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
