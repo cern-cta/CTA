@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.60 $ $Date: 2000/04/13 13:10:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.61 $ $Date: 2000/04/13 16:36:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -836,6 +836,8 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
             if ( rc == -1 || (rtcpd_CheckProcError() &
                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
                 *lockflag = lock;
+                (*nb_waiters)--;
+                for (i=0; i<proc_stat.nb_diskIO; i++) (*wait_list)[i]--;
                 (void)Cthread_cond_broadcast_ext(lockaddr);
                 (void)Cthread_mutex_unlock_ext(lockaddr);
                 return(-1);
