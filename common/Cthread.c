@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.29 2000/01/19 11:04:08 obarring Exp $
+ * $Id: Cthread.c,v 1.30 2000/02/04 10:46:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.29 $ $Date: 2000/01/19 11:04:08 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.30 $ $Date: 2000/02/04 10:46:47 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -2025,6 +2025,13 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
+  if (timeout > 0) {
+    Sigfunc *old_alrm;
+    if ((old_alrm = _Cthread_signal(__FILE__,__LINE__,SIGALRM,SIG_DFL)) != SIG_ERR) {
+      sleep(timeout);
+      _Cthread_signal(__FILE__,__LINE__,SIGALRM,old_alrm);
+    }
+  }
   return(0);
 #else
   /* Verify the arguments */
@@ -2186,6 +2193,13 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
   
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
+  if (timeout > 0) {
+    Sigfunc *old_alrm;
+    if ((old_alrm = _Cthread_signal(__FILE__,__LINE__,SIGALRM,SIG_DFL)) != SIG_ERR) {
+      sleep(timeout);
+      _Cthread_signal(__FILE__,__LINE__,SIGALRM,old_alrm);
+    }
+  }
   return(0);
 #else
 
