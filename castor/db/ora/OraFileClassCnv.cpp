@@ -27,7 +27,6 @@
 // Include Files
 #include "OraFileClassCnv.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -74,18 +73,6 @@ const std::string castor::db::ora::OraFileClassCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraFileClassCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL select statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementString =
-"SELECT id from CastorFile WHERE fileClass = :1";
-
-/// SQL delete statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_deleteCastorFileStatementString =
-"UPDATE CastorFile SET fileClass = 0 WHERE id = :1";
-
-/// SQL remote update statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_remoteUpdateCastorFileStatementString =
-"UPDATE CastorFile SET fileClass = :1 WHERE id = :2";
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -96,10 +83,7 @@ castor::db::ora::OraFileClassCnv::OraFileClassCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0),
-  m_selectCastorFileStatement(0),
-  m_deleteCastorFileStatement(0),
-  m_remoteUpdateCastorFileStatement(0) {}
+  m_deleteTypeStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -121,9 +105,6 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_deleteCastorFileStatement);
-    deleteStatement(m_selectCastorFileStatement);
-    deleteStatement(m_remoteUpdateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -132,9 +113,6 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_selectCastorFileStatement = 0;
-  m_deleteCastorFileStatement = 0;
-  m_remoteUpdateCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -163,9 +141,6 @@ void castor::db::ora::OraFileClassCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::stager::FileClass*>(object);
   try {
     switch (type) {
-    case castor::OBJ_CastorFile :
-      fillRepCastorFile(obj);
-      break;
     default :
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "fillRep called for type " << type 
@@ -194,9 +169,6 @@ void castor::db::ora::OraFileClassCnv::fillObj(castor::IAddress* address,
   castor::stager::FileClass* obj = 
     dynamic_cast<castor::stager::FileClass*>(object);
   switch (type) {
-  case castor::OBJ_CastorFile :
-    fillObjCastorFile(obj);
-    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
