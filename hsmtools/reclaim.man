@@ -1,0 +1,35 @@
+.\" @(#)$RCSfile: reclaim.man,v $ $Revision: 1.1 $ $Date: 2001/03/28 06:22:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RECLAIM 1 "$Date: 2001/03/28 06:22:22 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+reclaim \- reset information concerning a volume
+.SH SYNOPSIS
+.B reclaim
+[
+.BI -h " name_server"
+]
+.BI -V " vid"
+.SH DESCRIPTION
+.B reclaim
+resets information concerning a volume.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.LP
+The volume status in the Volume Manager must be
+.B FULL
+and the volume must not contain any active file.
+Logically deleted files are removed from the Name Server.
+The volume status and the number of files are reset to zero, The estimated free
+space is set to the cartridge native capacity and the tape pool free space is
+also updated.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_listtape(3) ,
+.B Cns_unlink(3)
