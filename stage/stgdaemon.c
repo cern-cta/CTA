@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.200 2002/05/31 08:18:13 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.201 2002/06/03 13:34:00 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.200 $ $Date: 2002/05/31 08:18:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.201 $ $Date: 2002/06/03 13:34:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1454,7 +1454,7 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 		*/
 	}
 	/* Allowed to do so ? */
-	if (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN) != 0) {
+	if (Cupv_check(uid, gid, clienthost, localhost, P_ADMIN) != 0) {
 		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
 		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
 		return;
@@ -1584,7 +1584,7 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 		*/
 	}
 	/* Allowed to do so ? */
-	if (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN) != 0) {
+	if (Cupv_check(uid, gid, clienthost, localhost, P_ADMIN) != 0) {
 		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
 		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
 		return;

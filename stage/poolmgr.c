@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.204 2002/05/31 11:46:35 jdurand Exp $
+ * $Id: poolmgr.c,v 1.205 2002/06/03 13:33:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.204 $ $Date: 2002/05/31 11:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.205 $ $Date: 2002/06/03 13:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -870,8 +870,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				strcpy(save_gc,pool_p->gc);
 				rfio_parseln (save_gc, &gc_host, &gc_path, NORDLINKS);
 				/* Note : gc_host can be NULL - this is valid in the call to Cupv_check() */
-				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, NULL, P_ADMIN) != 0) {
-					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s] is probably needed in Cupv\n", pool_p->name, pool_p->gc, (gc_host != NULL) ? gc_host : localhost, localhost);
+				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, localhost, P_ADMIN) != 0) {
+					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv\n", pool_p->name, pool_p->gc, (gc_host != NULL) ? gc_host : localhost, localhost);
 				} else {
 					stglogit (func, "... Pool %s : GC %s : Cupv check ok\n", pool_p->name, pool_p->gc);
 				}
