@@ -1,9 +1,9 @@
 .lf 1 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:27 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.2 $ $Date: 2004/07/06 08:39:30 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 1 "$Date: 2004/07/02 07:56:27 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 1 "$Date: 2004/07/06 08:39:30 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -20,7 +20,8 @@ When a request arrives the daemon forks a child which processes the request.
 The child reads the configuration file and if the request is valid and
 can be fulfilled it replaces itself by the external program.
 .LP
-All error messages are kept in a log.
+All error messages are kept in a log. The log directory is taken
+from the definition of ExpertSpool in site.def.
 .LP
 The Expert daemon listen port number can be defined on client hosts
 and on the machine where the Expert daemon runs in either of the
@@ -30,7 +31,7 @@ following ways:
 setting an environment variable EXPERT_PORT
 .RS
 .HP
-setenv DLF_PORT 5045
+setenv EXPERT_PORT 5045
 .RE
 .LP
 an entry in
@@ -51,7 +52,8 @@ expert   5045/tcp     # CASTOR Expert
 .RE
 .LP
 If none of these methods is used, the default port number is taken from the
-definition of EXPERT_PORT in expert_constants.h.
+definition of EXPERT_PORT in expert_constants.h. Currently it is defined as
+5045.
 .LP
 The EXPERT host name can be defined on client hosts
 in either of the following ways:
@@ -78,6 +80,33 @@ definition of ExpertHost in site.def.
 The Expert configuration file contains the associations between requests
 and command lines which should be executed.The working directory
 (i.e. the directory where files are located) should also be specified.
+The lines started with hash (#) are considered as comments. The
+configuration file line format:
+.LP
+.B
+<request_type><sp><working_directory><sp><command_line>
+.LP
+where
+.TP
+.I <request_type>
+currently must be one of the following:
+.RS
+.TP
+.B EXP_RQ_STAGER
+.TP
+.B EXP_RQ_MIGRATOR
+.RE
+.TP
+.I sp
+is any number of space characters or tabs;
+.TP
+.I <working_directory>
+is a working directory. Expertd changes to that directory just before
+launching an external program;
+.TP
+.I <command_line>
+is the last component on the line and is terminated by new line character.
+.LP
 For example:
 .RS
 .HP
@@ -96,8 +125,17 @@ or via the entry in
 .HP
 EXPERT CONFIG /etc/sysconfig/castor/expert.conf
 .RE
+.RE
 .LP
 If none of these methods is used, the name of the configuration file
 is taken from the definition of ExpertConfig in site.def.
+.SH FILES
+.TP 1.5i
+.B /etc/EXPCONFIG
+- configuration file
+.TP 1.5i
+.B /usr/spool/expert/log
+- log file
+.fi
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,9 +1,9 @@
 .lf 1 expert.man
-.\" @(#)$RCSfile: expert.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:28 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expert.man,v $ $Revision: 1.2 $ $Date: 2004/07/06 08:39:29 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERT 1 "$Date: 2004/07/02 07:56:28 $" CASTOR "EXPERT Service"
+.TH EXPERT 1 "$Date: 2004/07/06 08:39:29 $" CASTOR "EXPERT Service"
 .SH DESCRIPTION
 An Expert Facility Daemon is used to execute external programs (such as CLIPS)
 which get their input from stdin and send output to stdout.
@@ -52,5 +52,7 @@ EXPERT CONFIG /etc/sysconfig/castor/expert.conf
 .RE
 .RE
 .LP
+.SH SEE ALSO
+.BR expertd(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
