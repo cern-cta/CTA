@@ -1,0 +1,34 @@
+.\"
+.\" $Id: stagechng.man,v 1.1 2000/06/17 07:59:39 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.1 $ $Date: 2000/06/17 07:59:39 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGECHNG l "$Date: 2000/06/17 07:59:39 $"
+.SH NAME
+stagechng \- change status in the stager catalog
+.SH SYNOPSIS
+.B stagechng
+[
+.BI -h " host"
+]
+.I files
+.SH DESCRIPTION
+.B stagechng
+changes request in status STAGED to status STAGEOUT in the stager catalog.
+The file must be in state STAGED.
+.I file
+may be a local path, the combination
+.I machine:fullpath
+(NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.SH RETURN CODES
+\
+.br
+0       Ok.
+.br
+1       Bad parameter.
+.br
+2       System error.
+.br
+4       Configuration error.
