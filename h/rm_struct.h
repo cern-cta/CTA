@@ -57,6 +57,7 @@ struct rmjob {
 	char stageid[1024]; /* for callback to stager - not used directly by maui */
 	short subreqid; /* for callback to stager - not used directly by maui */
 	char tasklist[CA_MAXHOSTNAMELEN+1];
+	char hostlist[CA_MAXLINELEN+1];
 	char exec[1024]; /* name of reservation in which job must run */
 	u_signed64 lsf_jobid;
 	u_signed64 finished_job_scanned_by_maui; /* Will be setted only if maui scanned it and job is 'Completed' or 'Removed' */

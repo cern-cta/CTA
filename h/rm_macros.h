@@ -241,6 +241,7 @@
         }                                                   \
         marshall_HYPER(p, (rmjob)->clientStructLenWithNullByte);  \
 	if ((rmjob)->clientStructLenWithNullByte > 0) marshall_STRING(p, (rmjob)->clientStruct); \
+	marshall_STRING(p, (rmjob)->hostlist);              \
 }
 
 #define unmarshall_RMJOB(p, rmjob, status) {                  \
@@ -301,6 +302,7 @@
         } else {                                              \
           (rmjob)->clientStruct = NULL;                       \
         }                                                     \
+	unmarshall_STRING(p, (rmjob)->hostlist);              \
 }
 
 #define overwrite_RMJOB(out,in,status) {                                            \
@@ -360,6 +362,7 @@
             strcpy((out)->clientStruct,(in)->clientStruct);   \
           }                                                   \
     }                                                         \
+    if ((in)->hostlist[0] != '\0') strcpy((out)->hostlist,(in)->hostlist);          \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -411,6 +414,7 @@
     if ((filter)->subrequestid[0] != '\0' && strcmp((ref)->subrequestid,(filter)->subrequestid) != 0) status++;  \
     if ((filter)->clientStructLenWithNullByte > 0 && (ref)->clientStructLenWithNullByte != (filter)->clientStructLenWithNullByte) status++;  \
     if ((filter)->clientStruct != NULL && memcmp((ref)->clientStruct, (filter)->clientStruct, (filter)->clientStructLenWithNullByte) != 0) status++;  \
+    if ((filter)->hostlist[0] != '\0' && strcmp((ref)->hostlist,(filter)->hostlist) != 0)          status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
