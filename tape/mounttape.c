@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 07:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.19 $ $Date: 2000/03/06 07:58:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -519,6 +519,7 @@ unload_loop1:
 			else
 				sprintf (msg, TP062, vid, "has vsn ", tpvsn);
 			usrmsg (func, "%s\n", msg);
+			strcat (msg, ", ok to continue?");
 			omsgr (func, msg, 0);
 			checkorep (func, orepbuf);
 			if (strcmp (orepbuf, "ok") && strcmp (orepbuf, "yes")) {
