@@ -799,4 +799,22 @@ int Cstager_IStagerSvc_putFailed
 (struct Cstager_IStagerSvc_t* stgSvc,
  u_signed64 subReqId);
 
+/*
+ * Get an array of segments that are in SEGMENT_FAILED
+ * status. This method does not take any lock on the segments
+ * and thus may return twice the same segments in two
+ * different threads calling it at the same time
+ * @param stgSvc the IStagerSvc used
+ * @param segmentArray array with all failed segments
+ * @param nbItems number of items in the array
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_failedSegments
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_Segment_t*** segmentArray,
+ int* nbItems);
+
 #endif // CASTOR_ISTAGERSVC_H

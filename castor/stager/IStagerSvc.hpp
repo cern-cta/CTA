@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.47 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.48 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -661,6 +661,18 @@ namespace castor {
        * @param subReqId the id of the failing SubRequest
        */
       virtual void putFailed(u_signed64 subReqId)
+        throw (castor::exception::Exception) = 0;
+      
+      /*
+       * Get an array of segments that are in SEGMENT_FAILED
+       * status. This method does not take any lock on the segments
+       * and thus may return twice the same segments in two
+       * different threads calling it at the same time
+       * @return vector with all failed segments
+       * @exception in case of error
+       */
+      virtual std::vector<castor::stager::Segment*>
+      failedSegments()
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

@@ -665,6 +665,18 @@ namespace castor {
         virtual void putFailed(u_signed64 subReqId)
           throw (castor::exception::Exception);
 
+        /*
+         * Get an array of segments that are in SEGMENT_FAILED
+         * status. This method does not take any lock on the segments
+         * and thus may return twice the same segments in two
+         * different threads calling it at the same time
+         * @return vector with all failed segments
+         * @exception in case of error
+         */
+        virtual std::vector<castor::stager::Segment*>
+        failedSegments()
+          throw (castor::exception::Exception);
+
       private:
 
         /**
@@ -902,6 +914,12 @@ namespace castor {
 
         /// SQL statement object for function putFailed
         oracle::occi::Statement *m_putFailedStatement;
+
+        /// SQL statement for function failedSegments
+        static const std::string s_failedSegmentsStatementString;
+
+        /// SQL statement object for function failedSegments
+        oracle::occi::Statement *m_failedSegmentsStatement;
 
       }; // end of class OraStagerSvc
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -748,6 +748,31 @@ extern "C" {
       return -1;
     }
     return 0;    
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_putFailed
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_failedSegments
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   struct castor::stager::Segment*** segmentArray,
+   int* nbItems) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      std::vector<castor::stager::Segment*> result =
+        stgSvc->stgSvc->failedSegments();
+      *nbItems = result.size();
+      *segmentArray = (castor::stager::Segment**)
+        malloc((*nbItems) * sizeof(castor::stager::Segment*));
+      for (int i = 0; i < *nbItems; i++) {
+        (*segmentArray)[i] = result[i];
+      }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
   }
 
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.135 $ $Release$ $Date: 2005/03/04 11:32:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.136 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -223,6 +223,10 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateFailedStatementStrin
 const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
   "BEGIN putFailed(:1); END;";
 
+/// SQL statement for segmentsForTape
+const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =
+  "BEGIN failedSegment(:1); END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -262,7 +266,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_filesDeletedStatement(0),
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
-  m_putFailedStatement(0) {
+  m_putFailedStatement(0),
+  m_failedSegmentsStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -328,6 +333,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_getUpdateDoneStatement);
     deleteStatement(m_getUpdateFailedStatement);
     deleteStatement(m_putFailedStatement);
+    deleteStatement(m_failedSegmentsStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -365,6 +371,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
+  m_failedSegmentsStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -2404,3 +2411,61 @@ void castor::db::ora::OraStagerSvc::putFailed
     throw ex;
   }
 }
+
+// -----------------------------------------------------------------------
+// failedSegments
+// -----------------------------------------------------------------------
+std::vector<castor::stager::Segment*>
+castor::db::ora::OraStagerSvc::failedSegments ()
+  throw (castor::exception::Exception) {
+  std::vector<castor::stager::Segment*> result;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_failedSegmentsStatement) {
+      m_failedSegmentsStatement =
+        createStatement(s_failedSegmentsStatementString);
+      m_failedSegmentsStatement->registerOutParam
+        (1, oracle::occi::OCCICURSOR);
+    }
+    // execute the statement and see whether we found something
+    unsigned int nb = m_failedSegmentsStatement->executeUpdate();
+    if (0 == nb) {
+      // NO failed Segments. Good news !
+      return result;
+    }
+    oracle::occi::ResultSet *rs =
+      m_failedSegmentsStatement->getCursor(1);
+    // Run through the cursor
+    oracle::occi::ResultSet::Status status = rs->next();
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::stager::Segment* item =
+        new castor::stager::Segment();
+      item->setFseq(rs->getInt(1));
+      item->setOffset((u_signed64)rs->getDouble(2));
+      item->setBytes_in((u_signed64)rs->getDouble(3));
+      item->setBytes_out((u_signed64)rs->getDouble(4));
+      item->setHost_bytes((u_signed64)rs->getDouble(5));
+      item->setSegmCksumAlgorithm(rs->getString(6));
+      item->setSegmCksum(rs->getInt(7));
+      item->setErrMsgTxt(rs->getString(8));
+      item->setErrorCode(rs->getInt(9));
+      item->setSeverity(rs->getInt(10));
+      item->setBlockId0(rs->getInt(11));
+      item->setBlockId1(rs->getInt(12));
+      item->setBlockId2(rs->getInt(13));
+      item->setBlockId3(rs->getInt(14));
+      item->setId((u_signed64)rs->getDouble(15));
+      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(18));
+      result.push_back(item);
+      status = rs->next();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in failedSegments."
+      << std::endl << e.what();
+    throw ex;
+  }
+  return result;
+}
+

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -785,4 +785,17 @@ void castor::stager::RemoteStagerSvc::putFailed
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
+}
+
+// -----------------------------------------------------------------------
+// failedSegments
+// -----------------------------------------------------------------------
+std::vector<castor::stager::Segment*>
+castor::stager::RemoteStagerSvc::failedSegments()
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
 }

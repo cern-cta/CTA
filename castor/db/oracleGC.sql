@@ -1060,3 +1060,11 @@ BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
    WHERE id = subReqId;
 END;
+
+/* PL/SQL method implementing failedSegments */
+CREATE OR REPLACE PROCEDURE failedSegments
+(segments OUT castor.Segment_Cur) AS
+BEGIN
+  OPEN segments FOR SELECT * FROM Segment
+                     WHERE Segment.status = 6; -- SEGMENT_FAILED
+END;
