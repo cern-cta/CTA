@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.3 2004/11/19 18:31:32 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.4 2004/11/23 15:34:15 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/19 18:31:32 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/23 15:34:15 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -18,6 +18,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 /* ============= */
 /* Local headers */
 /* ============= */
+#include "errno.h"
 #include "stager_client_api.h"
 #include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"

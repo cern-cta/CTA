@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "errno.h"
 #include "VectorResponseHandler.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/exception/Exception.hpp"

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/19 11:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/23 15:34:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "errno.h"
 #include <signal.h>
 
 #include "castor/io/ServerSocket.hpp"
