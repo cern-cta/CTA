@@ -46,7 +46,6 @@ int DLL_DECL Cmonit_send_stager_status(time_t last_init_time)
   int data_left, space_left;
   char buf[CA_MAXUDPPLEN * 2];
   char *p, *p_message_length, *p_start_content;
-  char *previous_record;
 
   /* Structures containing the Stager status */
   time_t this_time = time(NULL);
