@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.22 2002/06/12 06:19:39 jdurand Exp $
+ * $Id: stager_castor.c,v 1.23 2002/06/21 16:49:58 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.22 $ $Date: 2002/06/12 06:19:39 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.23 $ $Date: 2002/06/21 16:49:58 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3814,7 +3814,9 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize)
 			}
 			rc = (totalsize == size ? 0 : SYERR);
 		} else {
-			fprintf(stdout,"%d bytes transferred !!\n",(int) size);
+			SAVE_EID;
+			sendrep (rpfd, RTCOPY_OUT, "%d bytes transferred !!\n",(int) size);
+			RESTORE_EID;
 			rc = (totalsize == 0 ? 0 : SYERR);
 		}
 	}
