@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.6 $ $Date: 1999/09/08 13:04:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.7 $ $Date: 1999/09/20 14:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -15,6 +15,8 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.6 $ $Date:
 #include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
+#else
+#include <netinet/in.h>
 #endif
 #include "Ctape.h"
 #include "marshall.h"
