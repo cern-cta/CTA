@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.4 $ $Date: 2000/12/07 08:19:27 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -58,6 +58,9 @@ int size ;
         char * p ;
  
         nfsroot = getconfent("RFIO","NFS_ROOT",0) ;
+#ifdef NFSROOT
+        if (nfsroot == NULL) nfsroot = NFSROOT;
+#endif
         if ( (nfsroot == NULL  && strstr(path,":/") != NULL )  ||
              (nfsroot != NULL && !strncmp(path,nfsroot,strlen(nfsroot)) )) {
                         if ((int)strlen(path)>size) {

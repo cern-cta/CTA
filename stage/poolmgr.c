@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.52 2000/12/06 11:29:01 jdurand Exp $
+ * $Id: poolmgr.c,v 1.53 2000/12/07 08:19:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.52 $ $Date: 2000/12/06 11:29:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.53 $ $Date: 2000/12/07 08:19:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -587,7 +587,11 @@ getpoolconf(defpoolname)
 				goto reply;
 			}
 			strcpy (elemp->dirpath, p);
-			if ((nfsroot = getconfent ("RFIO", "NFS_ROOT", 0)) != NULL &&
+			nfsroot = getconfent ("RFIO", "NFS_ROOT", 0);
+#ifdef NFSROOT
+			if (nfsroot == NULL) nfsroot = NFSROOT;
+#endif
+			if (nfsroot != NULL &&
 			    strncmp (elemp->dirpath, nfsroot, strlen (nfsroot)) == 0 &&
 			    *(elemp->dirpath + strlen(nfsroot)) == '/')	/* /shift syntax */
 				strcpy (path, elemp->dirpath);
@@ -1007,7 +1011,11 @@ selectfs(poolname, size, path)
 		stglogit ("selectfs", "### Warning, elemp->free > elemp->capacity. elemp->free set to 0\n");
 		elemp->free = 0;
 	}
-	if ((nfsroot = getconfent ("RFIO", "NFS_ROOT", 0)) != NULL &&
+	nfsroot = getconfent ("RFIO", "NFS_ROOT", 0);
+#ifdef NFSROOT
+	if (nfsroot == NULL) nfsroot = NFSROOT;
+#endif
+	if (nfsroot != NULL &&
 			strncmp (elemp->dirpath, nfsroot, strlen (nfsroot)) == 0 &&
 			*(elemp->dirpath + strlen(nfsroot)) == '/')	/* /shift syntax */
 		strcpy (path, elemp->dirpath);

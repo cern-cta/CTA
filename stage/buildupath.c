@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.9 2000/03/23 01:40:48 jdurand Exp $
+ * $Id: buildupath.c,v 1.10 2000/12/07 08:19:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:40:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.10 $ $Date: 2000/12/07 08:19:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -36,7 +36,12 @@ init_cwd_hostname()
 	char *p;
 
 	initialized = 1;
-	if (p = getconfent ("RFIO", "NFS_ROOT", 0))
+	p = getconfent ("RFIO", "NFS_ROOT", 0);
+#ifdef NFSROOT
+	if (p == NULL) p = NFSROOT;
+#endif
+
+	if (p != NULL)
 		strcpy (nfsroot, p);
 	else
 		nfsroot[0] = '\0';
