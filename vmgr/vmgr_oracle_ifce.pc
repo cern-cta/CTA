@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.11 $ $Date: 2000/03/22 15:57:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.12 $ $Date: 2000/04/11 05:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -536,6 +536,141 @@ struct vmgr_tape_info *tape_entry;
 		serrno = SEINTERNAL;
 	}
 	return (-1);
+}
+
+vmgr_list_denmap_entry(dbfd, bol, denmap_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_denmap *denmap_entry;
+{
+	char func[23];
+	EXEC SQL DECLARE list_denmap_cursor CURSOR FOR
+		SELECT
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		FROM vmgr_tape_denmap;
+
+	strcpy (func, "vmgr_list_denmap_entry");
+	if (bol) {
+		EXEC SQL OPEN list_denmap_cursor;
+	}
+	EXEC SQL FETCH list_denmap_cursor INTO
+	 :denmap_entry->md_model, :denmap_entry->md_media_letter,
+	 :denmap_entry->md_density;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+}
+
+vmgr_list_model_entry(dbfd, bol, model_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_media *model_entry;
+{
+	char func[22];
+	EXEC SQL DECLARE list_model_cursor CURSOR FOR
+		SELECT
+		 M_MODEL, M_MEDIA_LETTER, NATIVE_CAPACITY, MEDIA_COST_GB
+		FROM vmgr_tape_media;
+
+	strcpy (func, "vmgr_list_model_entry");
+	if (bol) {
+		EXEC SQL OPEN list_model_cursor;
+	}
+	EXEC SQL FETCH list_model_cursor INTO
+	 :model_entry->m_model, :model_entry->m_media_letter,
+	 :model_entry->native_capacity, :model_entry->media_cost_GB;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+}
+
+vmgr_list_pool_entry(dbfd, bol, pool_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_pool *pool_entry;
+{
+	char func[21];
+	char tot_free_space_str[21];
+	EXEC SQL DECLARE list_pool_cursor CURSOR FOR
+		SELECT
+		 NAME, OWNER_UID, GID, TO_CHAR(TOT_FREE_SPACE)
+		FROM vmgr_tape_pool;
+
+	strcpy (func, "vmgr_list_pool_entry");
+	if (bol) {
+		EXEC SQL OPEN list_pool_cursor;
+	}
+	EXEC SQL FETCH list_pool_cursor INTO
+	 :pool_entry->name, :pool_entry->uid, :pool_entry->gid,
+	 :tot_free_space_str;
+	switch (sqlca.sqlcode) {
+	case 0:
+		pool_entry->tot_free_space = strtou64 (tot_free_space_str);
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+}
+
+vmgr_list_tape_entry(dbfd, bol, tape_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_info *tape_entry;
+{
+	char func[21];
+	short mf_ind;	/* indicator variable for manufacturer column */
+	short sn_ind;	/* indicator variable for sn column */
+	EXEC SQL DECLARE list_tape_cursor CURSOR FOR
+		SELECT
+		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
+		FROM vmgr_tape_info;
+
+	strcpy (func, "vmgr_list_tape_entry");
+	if (bol) {
+		EXEC SQL OPEN list_tape_cursor;
+	}
+	EXEC SQL FETCH list_tape_cursor INTO
+	 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
+	 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+	 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
+	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
+	 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+	 :tape_entry->wtime, :tape_entry->status;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
 }
 
 vmgr_opendb(db_srvr, db_user, db_pwd, dbfd)
