@@ -298,7 +298,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjSvcClass(castor::stage
   if (0 != obj->svcClass() &&
       (0 == svcClassId ||
        obj->svcClass()->id() != svcClassId)) {
-    delete obj->svcClass();
     obj->setSvcClass(0);
   }
   // Update object or create new one
@@ -307,7 +306,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjSvcClass(castor::stage
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
          (cnvSvc()->getObjFromId(svcClassId)));
-    } else if (obj->svcClass()->id() == svcClassId) {
+    } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
   }
@@ -337,7 +336,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjIClient(castor::stager
   if (0 != obj->client() &&
       (0 == clientId ||
        obj->client()->id() != clientId)) {
-    delete obj->client();
+    obj->client()->setRequest(0);
     obj->setClient(0);
   }
   // Update object or create new one
@@ -346,9 +345,10 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjIClient(castor::stager
       obj->setClient
         (dynamic_cast<castor::IClient*>
          (cnvSvc()->getObjFromId(clientId)));
-    } else if (obj->client()->id() == clientId) {
+    } else {
       cnvSvc()->updateObj(obj->client());
     }
+    obj->client()->setRequest(obj);
   }
 }
 

@@ -460,7 +460,6 @@ void castor::db::ora::OraCastorFileCnv::fillObjSvcClass(castor::stager::CastorFi
   if (0 != obj->svcClass() &&
       (0 == svcClassId ||
        obj->svcClass()->id() != svcClassId)) {
-    delete obj->svcClass();
     obj->setSvcClass(0);
   }
   // Update object or create new one
@@ -469,7 +468,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjSvcClass(castor::stager::CastorFi
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
          (cnvSvc()->getObjFromId(svcClassId)));
-    } else if (obj->svcClass()->id() == svcClassId) {
+    } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
   }
@@ -499,7 +498,6 @@ void castor::db::ora::OraCastorFileCnv::fillObjFileClass(castor::stager::CastorF
   if (0 != obj->fileClass() &&
       (0 == fileClassId ||
        obj->fileClass()->id() != fileClassId)) {
-    delete obj->fileClass();
     obj->setFileClass(0);
   }
   // Update object or create new one
@@ -508,7 +506,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjFileClass(castor::stager::CastorF
       obj->setFileClass
         (dynamic_cast<castor::stager::FileClass*>
          (cnvSvc()->getObjFromId(fileClassId)));
-    } else if (obj->fileClass()->id() == fileClassId) {
+    } else {
       cnvSvc()->updateObj(obj->fileClass());
     }
   }
@@ -550,14 +548,17 @@ void castor::db::ora::OraCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFi
        it != toBeDeleted.end();
        it++) {
     obj->removeDiskCopies(*it);
-    delete (*it);
+    (*it)->setCastorFile(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = diskCopiesList.begin();
        it != diskCopiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addDiskCopies(dynamic_cast<castor::stager::DiskCopy*>(item));
+    castor::stager::DiskCopy* remoteObj = 
+      dynamic_cast<castor::stager::DiskCopy*>(item);
+    obj->addDiskCopies(remoteObj);
+    remoteObj->setCastorFile(obj);
   }
 }
 
@@ -597,14 +598,17 @@ void castor::db::ora::OraCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFi
        it != toBeDeleted.end();
        it++) {
     obj->removeTapeCopies(*it);
-    delete (*it);
+    (*it)->setCastorFile(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = tapeCopiesList.begin();
        it != tapeCopiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(item));
+    castor::stager::TapeCopy* remoteObj = 
+      dynamic_cast<castor::stager::TapeCopy*>(item);
+    obj->addTapeCopies(remoteObj);
+    remoteObj->setCastorFile(obj);
   }
 }
 

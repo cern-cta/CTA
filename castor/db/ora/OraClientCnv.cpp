@@ -232,7 +232,7 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
   if (0 != obj->request() &&
       (0 == requestId ||
        obj->request()->id() != requestId)) {
-    delete obj->request();
+    obj->request()->setClient(0);
     obj->setRequest(0);
   }
   // Update object or create new one
@@ -241,9 +241,10 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
       obj->setRequest
         (dynamic_cast<castor::stager::Request*>
          (cnvSvc()->getObjFromId(requestId)));
-    } else if (obj->request()->id() == requestId) {
+    } else {
       cnvSvc()->updateObj(obj->request());
     }
+    obj->request()->setClient(obj);
   }
 }
 

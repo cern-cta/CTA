@@ -368,14 +368,17 @@ void castor::db::ora::OraDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool
        it != toBeDeleted.end();
        it++) {
     obj->removeFileSystems(*it);
-    delete (*it);
+    (*it)->setDiskPool(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addFileSystems(dynamic_cast<castor::stager::FileSystem*>(item));
+    castor::stager::FileSystem* remoteObj = 
+      dynamic_cast<castor::stager::FileSystem*>(item);
+    obj->addFileSystems(remoteObj);
+    remoteObj->setDiskPool(obj);
   }
 }
 
@@ -415,14 +418,17 @@ void castor::db::ora::OraDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* 
        it != toBeDeleted.end();
        it++) {
     obj->removeSvcClasses(*it);
-    delete (*it);
+    (*it)->removeDiskPools(obj);
   }
   // Create new objects
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addSvcClasses(dynamic_cast<castor::stager::SvcClass*>(item));
+    castor::stager::SvcClass* remoteObj = 
+      dynamic_cast<castor::stager::SvcClass*>(item);
+    obj->addSvcClasses(remoteObj);
+    remoteObj->addDiskPools(obj);
   }
 }
 

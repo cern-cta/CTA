@@ -294,14 +294,17 @@ void castor::db::ora::OraDiskServerCnv::fillObjFileSystem(castor::stager::DiskSe
        it != toBeDeleted.end();
        it++) {
     obj->removeFileSystems(*it);
-    delete (*it);
+    (*it)->setDiskserver(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addFileSystems(dynamic_cast<castor::stager::FileSystem*>(item));
+    castor::stager::FileSystem* remoteObj = 
+      dynamic_cast<castor::stager::FileSystem*>(item);
+    obj->addFileSystems(remoteObj);
+    remoteObj->setDiskserver(obj);
   }
 }
 

@@ -386,7 +386,6 @@ void castor::db::ora::OraSubRequestCnv::fillObjDiskCopy(castor::stager::SubReque
   if (0 != obj->diskcopy() &&
       (0 == diskcopyId ||
        obj->diskcopy()->id() != diskcopyId)) {
-    delete obj->diskcopy();
     obj->setDiskcopy(0);
   }
   // Update object or create new one
@@ -395,7 +394,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjDiskCopy(castor::stager::SubReque
       obj->setDiskcopy
         (dynamic_cast<castor::stager::DiskCopy*>
          (cnvSvc()->getObjFromId(diskcopyId)));
-    } else if (obj->diskcopy()->id() == diskcopyId) {
+    } else {
       cnvSvc()->updateObj(obj->diskcopy());
     }
   }
@@ -425,7 +424,6 @@ void castor::db::ora::OraSubRequestCnv::fillObjCastorFile(castor::stager::SubReq
   if (0 != obj->castorFile() &&
       (0 == castorFileId ||
        obj->castorFile()->id() != castorFileId)) {
-    delete obj->castorFile();
     obj->setCastorFile(0);
   }
   // Update object or create new one
@@ -434,7 +432,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjCastorFile(castor::stager::SubReq
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
          (cnvSvc()->getObjFromId(castorFileId)));
-    } else if (obj->castorFile()->id() == castorFileId) {
+    } else {
       cnvSvc()->updateObj(obj->castorFile());
     }
   }
@@ -464,7 +462,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjSubRequest(castor::stager::SubReq
   if (0 != obj->parent() &&
       (0 == parentId ||
        obj->parent()->id() != parentId)) {
-    delete obj->parent();
+    obj->parent()->removeChild(obj);
     obj->setParent(0);
   }
   // Update object or create new one
@@ -473,9 +471,10 @@ void castor::db::ora::OraSubRequestCnv::fillObjSubRequest(castor::stager::SubReq
       obj->setParent
         (dynamic_cast<castor::stager::SubRequest*>
          (cnvSvc()->getObjFromId(parentId)));
-    } else if (obj->parent()->id() == parentId) {
+    } else {
       cnvSvc()->updateObj(obj->parent());
     }
+    obj->parent()->addChild(obj);
   }
 }
 
@@ -503,7 +502,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjFileRequest(castor::stager::SubRe
   if (0 != obj->request() &&
       (0 == requestId ||
        obj->request()->id() != requestId)) {
-    delete obj->request();
+    obj->request()->removeSubRequests(obj);
     obj->setRequest(0);
   }
   // Update object or create new one
@@ -512,9 +511,10 @@ void castor::db::ora::OraSubRequestCnv::fillObjFileRequest(castor::stager::SubRe
       obj->setRequest
         (dynamic_cast<castor::stager::FileRequest*>
          (cnvSvc()->getObjFromId(requestId)));
-    } else if (obj->request()->id() == requestId) {
+    } else {
       cnvSvc()->updateObj(obj->request());
     }
+    obj->request()->addSubRequests(obj);
   }
 }
 

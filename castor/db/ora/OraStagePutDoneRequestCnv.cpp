@@ -388,14 +388,17 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjSubRequest(castor::stage
        it != toBeDeleted.end();
        it++) {
     obj->removeSubRequests(*it);
-    delete (*it);
+    (*it)->setRequest(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(item));
+    castor::stager::SubRequest* remoteObj = 
+      dynamic_cast<castor::stager::SubRequest*>(item);
+    obj->addSubRequests(remoteObj);
+    remoteObj->setRequest(obj);
   }
 }
 
@@ -423,7 +426,6 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjSvcClass(castor::stager:
   if (0 != obj->svcClass() &&
       (0 == svcClassId ||
        obj->svcClass()->id() != svcClassId)) {
-    delete obj->svcClass();
     obj->setSvcClass(0);
   }
   // Update object or create new one
@@ -432,7 +434,7 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjSvcClass(castor::stager:
       obj->setSvcClass
         (dynamic_cast<castor::stager::SvcClass*>
          (cnvSvc()->getObjFromId(svcClassId)));
-    } else if (obj->svcClass()->id() == svcClassId) {
+    } else {
       cnvSvc()->updateObj(obj->svcClass());
     }
   }
@@ -462,7 +464,7 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjIClient(castor::stager::
   if (0 != obj->client() &&
       (0 == clientId ||
        obj->client()->id() != clientId)) {
-    delete obj->client();
+    obj->client()->setRequest(0);
     obj->setClient(0);
   }
   // Update object or create new one
@@ -471,9 +473,10 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjIClient(castor::stager::
       obj->setClient
         (dynamic_cast<castor::IClient*>
          (cnvSvc()->getObjFromId(clientId)));
-    } else if (obj->client()->id() == clientId) {
+    } else {
       cnvSvc()->updateObj(obj->client());
     }
+    obj->client()->setRequest(obj);
   }
 }
 

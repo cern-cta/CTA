@@ -367,14 +367,17 @@ void castor::db::ora::OraSvcClassCnv::fillObjTapePool(castor::stager::SvcClass* 
        it != toBeDeleted.end();
        it++) {
     obj->removeTapePools(*it);
-    delete (*it);
+    (*it)->removeSvcClasses(obj);
   }
   // Create new objects
   for (std::set<int>::iterator it = tapePoolsList.begin();
        it != tapePoolsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addTapePools(dynamic_cast<castor::stager::TapePool*>(item));
+    castor::stager::TapePool* remoteObj = 
+      dynamic_cast<castor::stager::TapePool*>(item);
+    obj->addTapePools(remoteObj);
+    remoteObj->addSvcClasses(obj);
   }
 }
 
@@ -414,14 +417,17 @@ void castor::db::ora::OraSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* 
        it != toBeDeleted.end();
        it++) {
     obj->removeDiskPools(*it);
-    delete (*it);
+    (*it)->removeSvcClasses(obj);
   }
   // Create new objects
   for (std::set<int>::iterator it = diskPoolsList.begin();
        it != diskPoolsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addDiskPools(dynamic_cast<castor::stager::DiskPool*>(item));
+    castor::stager::DiskPool* remoteObj = 
+      dynamic_cast<castor::stager::DiskPool*>(item);
+    obj->addDiskPools(remoteObj);
+    remoteObj->addSvcClasses(obj);
   }
 }
 

@@ -385,7 +385,7 @@ void castor::db::ora::OraTapeCnv::fillObjStream(castor::stager::Tape* obj)
   if (0 != obj->stream() &&
       (0 == streamId ||
        obj->stream()->id() != streamId)) {
-    delete obj->stream();
+    obj->stream()->setTape(0);
     obj->setStream(0);
   }
   // Update object or create new one
@@ -394,9 +394,10 @@ void castor::db::ora::OraTapeCnv::fillObjStream(castor::stager::Tape* obj)
       obj->setStream
         (dynamic_cast<castor::stager::Stream*>
          (cnvSvc()->getObjFromId(streamId)));
-    } else if (obj->stream()->id() == streamId) {
+    } else {
       cnvSvc()->updateObj(obj->stream());
     }
+    obj->stream()->setTape(obj);
   }
 }
 
@@ -436,14 +437,17 @@ void castor::db::ora::OraTapeCnv::fillObjSegment(castor::stager::Tape* obj)
        it != toBeDeleted.end();
        it++) {
     obj->removeSegments(*it);
-    delete (*it);
+    (*it)->setTape(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addSegments(dynamic_cast<castor::stager::Segment*>(item));
+    castor::stager::Segment* remoteObj = 
+      dynamic_cast<castor::stager::Segment*>(item);
+    obj->addSegments(remoteObj);
+    remoteObj->setTape(obj);
   }
 }
 

@@ -421,14 +421,17 @@ void castor::db::ora::OraTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* ob
        it != toBeDeleted.end();
        it++) {
     obj->removeStream(*it);
-    delete (*it);
+    (*it)->removeTapeCopy(obj);
   }
   // Create new objects
   for (std::set<int>::iterator it = streamList.begin();
        it != streamList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addStream(dynamic_cast<castor::stager::Stream*>(item));
+    castor::stager::Stream* remoteObj = 
+      dynamic_cast<castor::stager::Stream*>(item);
+    obj->addStream(remoteObj);
+    remoteObj->addTapeCopy(obj);
   }
 }
 
@@ -468,14 +471,17 @@ void castor::db::ora::OraTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* o
        it != toBeDeleted.end();
        it++) {
     obj->removeSegments(*it);
-    delete (*it);
+    (*it)->setCopy(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addSegments(dynamic_cast<castor::stager::Segment*>(item));
+    castor::stager::Segment* remoteObj = 
+      dynamic_cast<castor::stager::Segment*>(item);
+    obj->addSegments(remoteObj);
+    remoteObj->setCopy(obj);
   }
 }
 
@@ -503,7 +509,7 @@ void castor::db::ora::OraTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy
   if (0 != obj->castorFile() &&
       (0 == castorFileId ||
        obj->castorFile()->id() != castorFileId)) {
-    delete obj->castorFile();
+    obj->castorFile()->removeTapeCopies(obj);
     obj->setCastorFile(0);
   }
   // Update object or create new one
@@ -512,9 +518,10 @@ void castor::db::ora::OraTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
          (cnvSvc()->getObjFromId(castorFileId)));
-    } else if (obj->castorFile()->id() == castorFileId) {
+    } else {
       cnvSvc()->updateObj(obj->castorFile());
     }
+    obj->castorFile()->addTapeCopies(obj);
   }
 }
 

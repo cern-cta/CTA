@@ -447,14 +447,17 @@ void castor::db::ora::OraStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
        it != toBeDeleted.end();
        it++) {
     obj->removeTapeCopy(*it);
-    delete (*it);
+    (*it)->removeStream(obj);
   }
   // Create new objects
   for (std::set<int>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addTapeCopy(dynamic_cast<castor::stager::TapeCopy*>(item));
+    castor::stager::TapeCopy* remoteObj = 
+      dynamic_cast<castor::stager::TapeCopy*>(item);
+    obj->addTapeCopy(remoteObj);
+    remoteObj->addStream(obj);
   }
 }
 
@@ -482,7 +485,7 @@ void castor::db::ora::OraStreamCnv::fillObjTape(castor::stager::Stream* obj)
   if (0 != obj->tape() &&
       (0 == tapeId ||
        obj->tape()->id() != tapeId)) {
-    delete obj->tape();
+    obj->tape()->setStream(0);
     obj->setTape(0);
   }
   // Update object or create new one
@@ -491,9 +494,10 @@ void castor::db::ora::OraStreamCnv::fillObjTape(castor::stager::Stream* obj)
       obj->setTape
         (dynamic_cast<castor::stager::Tape*>
          (cnvSvc()->getObjFromId(tapeId)));
-    } else if (obj->tape()->id() == tapeId) {
+    } else {
       cnvSvc()->updateObj(obj->tape());
     }
+    obj->tape()->setStream(obj);
   }
 }
 
@@ -521,7 +525,7 @@ void castor::db::ora::OraStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
   if (0 != obj->tapePool() &&
       (0 == tapePoolId ||
        obj->tapePool()->id() != tapePoolId)) {
-    delete obj->tapePool();
+    obj->tapePool()->removeStreams(obj);
     obj->setTapePool(0);
   }
   // Update object or create new one
@@ -530,9 +534,10 @@ void castor::db::ora::OraStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
       obj->setTapePool
         (dynamic_cast<castor::stager::TapePool*>
          (cnvSvc()->getObjFromId(tapePoolId)));
-    } else if (obj->tapePool()->id() == tapePoolId) {
+    } else {
       cnvSvc()->updateObj(obj->tapePool());
     }
+    obj->tapePool()->addStreams(obj);
   }
 }
 

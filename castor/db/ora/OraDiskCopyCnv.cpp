@@ -307,7 +307,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy
   if (0 != obj->fileSystem() &&
       (0 == fileSystemId ||
        obj->fileSystem()->id() != fileSystemId)) {
-    delete obj->fileSystem();
+    obj->fileSystem()->removeCopies(obj);
     obj->setFileSystem(0);
   }
   // Update object or create new one
@@ -316,9 +316,10 @@ void castor::db::ora::OraDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy
       obj->setFileSystem
         (dynamic_cast<castor::stager::FileSystem*>
          (cnvSvc()->getObjFromId(fileSystemId)));
-    } else if (obj->fileSystem()->id() == fileSystemId) {
+    } else {
       cnvSvc()->updateObj(obj->fileSystem());
     }
+    obj->fileSystem()->addCopies(obj);
   }
 }
 
@@ -346,7 +347,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy
   if (0 != obj->castorFile() &&
       (0 == castorFileId ||
        obj->castorFile()->id() != castorFileId)) {
-    delete obj->castorFile();
+    obj->castorFile()->removeDiskCopies(obj);
     obj->setCastorFile(0);
   }
   // Update object or create new one
@@ -355,9 +356,10 @@ void castor::db::ora::OraDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy
       obj->setCastorFile
         (dynamic_cast<castor::stager::CastorFile*>
          (cnvSvc()->getObjFromId(castorFileId)));
-    } else if (obj->castorFile()->id() == castorFileId) {
+    } else {
       cnvSvc()->updateObj(obj->castorFile());
     }
+    obj->castorFile()->addDiskCopies(obj);
   }
 }
 

@@ -384,7 +384,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskPool(castor::stager::FileSyst
   if (0 != obj->diskPool() &&
       (0 == diskPoolId ||
        obj->diskPool()->id() != diskPoolId)) {
-    delete obj->diskPool();
+    obj->diskPool()->removeFileSystems(obj);
     obj->setDiskPool(0);
   }
   // Update object or create new one
@@ -393,9 +393,10 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskPool(castor::stager::FileSyst
       obj->setDiskPool
         (dynamic_cast<castor::stager::DiskPool*>
          (cnvSvc()->getObjFromId(diskPoolId)));
-    } else if (obj->diskPool()->id() == diskPoolId) {
+    } else {
       cnvSvc()->updateObj(obj->diskPool());
     }
+    obj->diskPool()->addFileSystems(obj);
   }
 }
 
@@ -435,14 +436,17 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskCopy(castor::stager::FileSyst
        it != toBeDeleted.end();
        it++) {
     obj->removeCopies(*it);
-    delete (*it);
+    (*it)->setFileSystem(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = copiesList.begin();
        it != copiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addCopies(dynamic_cast<castor::stager::DiskCopy*>(item));
+    castor::stager::DiskCopy* remoteObj = 
+      dynamic_cast<castor::stager::DiskCopy*>(item);
+    obj->addCopies(remoteObj);
+    remoteObj->setFileSystem(obj);
   }
 }
 
@@ -470,7 +474,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskServer(castor::stager::FileSy
   if (0 != obj->diskserver() &&
       (0 == diskserverId ||
        obj->diskserver()->id() != diskserverId)) {
-    delete obj->diskserver();
+    obj->diskserver()->removeFileSystems(obj);
     obj->setDiskserver(0);
   }
   // Update object or create new one
@@ -479,9 +483,10 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskServer(castor::stager::FileSy
       obj->setDiskserver
         (dynamic_cast<castor::stager::DiskServer*>
          (cnvSvc()->getObjFromId(diskserverId)));
-    } else if (obj->diskserver()->id() == diskserverId) {
+    } else {
       cnvSvc()->updateObj(obj->diskserver());
     }
+    obj->diskserver()->addFileSystems(obj);
   }
 }
 

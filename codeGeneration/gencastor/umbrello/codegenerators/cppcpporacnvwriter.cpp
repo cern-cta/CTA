@@ -1340,10 +1340,22 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << "()->id() != " << as->remotePart.name
             << "Id)) {" << endl;
   m_indent++;
+  if (as->localPart.name != "") {
+    *m_stream << getIndent()
+              << "obj->"
+              << as->remotePart.name << "()->";
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << "set"
+                << capitalizeFirstLetter(as->localPart.name)
+                << "(0)";
+    } else {
+      *m_stream << "remove"
+                << capitalizeFirstLetter(as->localPart.name)
+                << "(obj)";
+    }
+    *m_stream << ";" << endl;
+  }
   *m_stream << getIndent()
-            << "delete obj->"
-            << as->remotePart.name << "();" << endl
-            << getIndent()
             << "obj->set"
             << capitalizeFirstLetter(as->remotePart.name)
             << "(0);" << endl;
@@ -1372,10 +1384,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << endl;
   m_indent--;
   *m_stream << getIndent()
-            << "} else if (obj->"
-            << as->remotePart.name
-            << "()->id() == " << as->remotePart.name
-            << "Id) {" << endl;
+            << "} else {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->updateObj(obj->"
@@ -1384,6 +1393,18 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
+  if (as->localPart.name != "") {
+    // Update back link
+    *m_stream << getIndent() << "obj->"
+              << as->remotePart.name << "()->";
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << "set";
+    } else {
+      *m_stream << "add";
+    }
+    *m_stream << capitalizeFirstLetter(as->localPart.name)
+              << "(obj);" << endl;
+  }
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
@@ -1759,8 +1780,21 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   m_indent++;
   *m_stream << getIndent() << "obj->remove"
             << capitalizeFirstLetter(as->remotePart.name)
-            << "(*it);" << endl << getIndent()
-            << "delete (*it);" << endl;
+            << "(*it);" << endl;
+  if (as->localPart.name != "") {
+    *m_stream << getIndent()
+              << "(*it)->";
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << "set"
+                << capitalizeFirstLetter(as->localPart.name)
+                << "(0)";
+    } else {
+      *m_stream << "remove"
+                << capitalizeFirstLetter(as->localPart.name)
+                << "(obj)";
+    }
+    *m_stream << ";" << endl;
+  }
   m_indent--;
   *m_stream << getIndent() << "}" << endl
             << getIndent()
@@ -1778,13 +1812,29 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   *m_stream << getIndent() << "IObject* item"
             << " = cnvSvc()->getObjFromId(*it);"
             << endl << getIndent()
-            << "obj->add"
-            << capitalizeFirstLetter(as->remotePart.name)
-            << "(dynamic_cast<"
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
-            << "*>(item));" << endl;
+            << "* remoteObj = " << endl << getIndent()
+            << "  dynamic_cast<"
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
+                           m_classInfo->packageName)
+            << "*>(item);" << endl << getIndent()
+            << "obj->add"
+            << capitalizeFirstLetter(as->remotePart.name)
+            << "(remoteObj);" << endl;
+  if (as->localPart.name != "") {
+    // Update back link
+    *m_stream << getIndent() << "remoteObj->";
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << "set";
+    } else {
+      *m_stream << "add";
+    }
+    *m_stream << capitalizeFirstLetter(as->localPart.name)
+              << "(obj);" << endl;
+  }
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 

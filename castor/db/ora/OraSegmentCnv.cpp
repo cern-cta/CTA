@@ -308,7 +308,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTape(castor::stager::Segment* obj)
   if (0 != obj->tape() &&
       (0 == tapeId ||
        obj->tape()->id() != tapeId)) {
-    delete obj->tape();
+    obj->tape()->removeSegments(obj);
     obj->setTape(0);
   }
   // Update object or create new one
@@ -317,9 +317,10 @@ void castor::db::ora::OraSegmentCnv::fillObjTape(castor::stager::Segment* obj)
       obj->setTape
         (dynamic_cast<castor::stager::Tape*>
          (cnvSvc()->getObjFromId(tapeId)));
-    } else if (obj->tape()->id() == tapeId) {
+    } else {
       cnvSvc()->updateObj(obj->tape());
     }
+    obj->tape()->addSegments(obj);
   }
 }
 
@@ -347,7 +348,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTapeCopy(castor::stager::Segment* ob
   if (0 != obj->copy() &&
       (0 == copyId ||
        obj->copy()->id() != copyId)) {
-    delete obj->copy();
+    obj->copy()->removeSegments(obj);
     obj->setCopy(0);
   }
   // Update object or create new one
@@ -356,9 +357,10 @@ void castor::db::ora::OraSegmentCnv::fillObjTapeCopy(castor::stager::Segment* ob
       obj->setCopy
         (dynamic_cast<castor::stager::TapeCopy*>
          (cnvSvc()->getObjFromId(copyId)));
-    } else if (obj->copy()->id() == copyId) {
+    } else {
       cnvSvc()->updateObj(obj->copy());
     }
+    obj->copy()->addSegments(obj);
   }
 }
 
