@@ -166,12 +166,20 @@ void castor::client::BaseClient::run(int argc, char** argv)
     // sends the request
     sendRequest(*req);
     delete req;
-    // waits for a callback
-    IObject* result = waitForCallBack();
-    // Print the request
-    printResult(*result);
-    // delete the result
-    delete result;
+    // waits for callbacks
+    bool stop = false;
+    while (!stop) {
+      IObject* result = waitForCallBack();
+      printResult(*result);
+      if (OBJ_EndResponse == result->type()) {
+        stop = true;
+      } else {
+        // Print the request
+        printResult(*result);
+      }
+      // delete the result
+      delete result;
+    }
   } catch (castor::exception::Exception ex) {
     std::cout << ex.getMessage().str() << std::endl;
   }
@@ -312,7 +320,7 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
   }
 
   struct pollfd pollit;
-  int timeout = 10; // In seconds
+  int timeout = 1800; // In seconds, half an hour
 
   pollit.fd = m_callbackSocket->socket();
   pollit.events = POLLIN;
