@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.6 $ $Date: 1999/11/18 10:00:35 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.7 $ $Date: 1999/11/19 14:17:08 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 1999/11/18 10:00:35 $"
+.TH VDQM_UNITSTATUS l "$Date: 1999/11/19 14:17:08 $"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -31,7 +31,9 @@ vdqm_UnitStatus \- update volume drive unit status in VDQM
 .br
 .BI "                int *" status ,
 .br
-.BI "                int *" value );
+.BI "                int *" value ,
+.br
+.BI "                int jobID );
 .SH PARAMETERS
 .I nw
 \- points to a structure containing internal VDQM API network information returned
@@ -68,6 +70,10 @@ recommended by the VDQM server (currently only VDQM_VOL_UNMOUNT).
 .I value
 \- points to an integer which contains a value associated with the status parameter.
 .PP
+.I jobID
+\- integer containing the assigned job ID. If this parameter is less or equal
+to zero the job ID is taken to be the PID of the calling process.
+.PP
 .SH DESCRIPTION
 .B vdqm_UnitStatus
 updates the status of a server/unit pair in the Volume and Drive Queue
@@ -103,13 +109,14 @@ VDQM is waiting for confirmation from the tape server.
 \- the unit is assigned. The
 .I value
 parameter specifies the VDQM client volume request identifier on input and the local 
-job identifier (process ID of calling process) on output. The VDQM_UNIT_ASSIGN 
-flag should therefore be set by the process group leader (normally the RTCOPY child 
-process).
+job identifier (either the one assigned with the jobID parameter or process ID 
+of calling process if jobID <= 0) on output. If the jobID parameter
+is greater than zero the assigned jobID is taken from it. Otherwise the jobID
+is taken to be the PID of the calling process.
 .PP
 .B VDQM_UNIT_RELEASE
 \- the unit is released and de-assigned from previous job ID. On input the
-.I value
+.I jobID
 parameter specifies the local job ID of the job currently associated with the unit.
 On output the
 .I status
@@ -120,7 +127,7 @@ recommendation from the VDQM server to unmount the volume from unit.
 \- the volume idenfier specified with the
 .I VID
 parameter has been mounted on the unit. On input the
-.I value 
+.I jobID 
 parameter specifies the local job ID of the job currently associated with the unit.
 .PP
 .B VDQM_VOL_UNMOUNT
@@ -177,7 +184,9 @@ VDQM service unknown.
 VDQM host unknown.
 .TP
 .B EPERM
-A VDQM_UNIT_DOWN request from host different from tape server
+Either a VDQM_UNIT_DOWN request from host different from tape server
+or a VDQM_VOL_MOUNT for a request without associated volume request and
+the volume is busy.
 .TP
 .B EVQSYERR
 A fatal system call (e.g. calloc())failure in VDQM server.
@@ -207,5 +216,7 @@ A VDQM_UNIT_MOUNT unit status to mount a volume was requested with a
 different VOLID than specified in assinged volume request.
 
 .SH SEE ALSO
-.BR vdqm_Connect(l), vdqm_Disconnect(l), vdqm_SendVolReq(l)
+.BR vdqm_Connect(l), 
+.BR vdqm_Disconnect(l), 
+.BR vdqm_SendVolReq(l)
 
