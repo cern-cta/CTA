@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/07/22 07:00:34 $ $Author: jdurand $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/07/22 07:02:10 $ $Author: jdurand $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/07/22 07:00:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/07/22 07:02:10 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -59,6 +59,7 @@ WSADATA wsadata;
 #include <rtcpcld_constants.h>
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
+#include "castor/Constants.h"
 extern int rtcpc_runReq_ext _PROTO((
                                     rtcpHdr_t *,
                                     rtcpc_sockets_t **,
