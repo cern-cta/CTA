@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.75 2000/06/08 12:43:49 jdurand Exp $
+ * $Id: stager.c,v 1.76 2000/06/13 11:01:26 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.75 $ $Date: 2000/06/08 12:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.76 $ $Date: 2000/06/13 11:01:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.75 $ $Date: 2000
 #include "stage.h"
 #include "stage_api.h"
 #include "vmgr_api.h"
+#include "Ctape_api.h"
 #include "Castor_limits.h"
 #include "u64subr.h"
 #include "osdep.h"
@@ -87,6 +88,7 @@ char vid[CA_MAXVIDLEN+1];           /* Vid returned by vmgr_gettape or Cns_getse
 char vsn[CA_MAXVIDLEN+1];           /* Vsn returned by vmgr_gettape or vmgr_querytape */
 char dgn[CA_MAXDENLEN+1];           /* Dgn returned by vmgr_gettape or vmgr_querytape */
 char aden[CA_MAXDENLEN+1];          /* Aden returned by vmgr_gettape or vmgr_querytape */
+char model[CA_MAXMODELLEN+1];       /* Model returned by vmgr_gettape or vmgr_querytape */
 char lbltype[3];                    /* Lbltype returned by vmgr_gettape or vmgr_querytape */
 int fseq = -1;                      /* Fseq returned by vmgr_gettape or vmgr_querytape */
 char tmpbuf[21];                    /* Printout of u_signed64 quantity temp. buffer */
@@ -616,6 +618,7 @@ int stagein_castor_hsm_file() {
 #endif
 	unsigned char blockid[4];
 	char fseg_status;
+    struct devinfo *devinfo;
 
 	/* We allocate as many size arrays */
 	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))        == NULL ||
@@ -757,7 +760,7 @@ int stagein_castor_hsm_file() {
 #ifdef STAGER_DEBUG
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] [%s] Calling vmgr_querytape(vid,vdn,dgn,aden,lbltype,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm);
 #endif
-			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, NULL, NULL, NULL,
+			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, model, NULL, NULL,
 								NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == 0) {
 				strcpy(vid,last_vid);
 				break;
@@ -770,6 +773,12 @@ int stagein_castor_hsm_file() {
 		}
 		/* In any case we reinit vid variable to last_vid */
 		strcpy(last_vid,vid);
+
+		/* We grab the optimal blocksize */
+		if ((devinfo = Ctape_devinfo(model)) == NULL) {
+			sendrep (rpfd, MSG_ERR, STG02, vid, "Ctape_devinfo",sstrerror (serrno));
+			RETURN (SYERR);
+		}
 	}
 
 	/* Build the request from where we found vid (included) up to our next (excluded) */
@@ -804,6 +813,8 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0, stcp_tmp = stcs_tmp; stcp < stce; stcp++, i++) {
 		if (hsm_vid[i] != NULL) {
 			*stcp_tmp = *stcp;
+			/* We also force the blocksize while migrating */
+			stcp_tmp->blksize = devinfo->defblksize;
 			stcp_tmp++;
 		}
 	}
@@ -1431,6 +1442,7 @@ int filecopy(stcp, key, hostname)
 		sprintf (stageid, "%d.%d@%s", reqid, key, hostname);
 		if (stage_updc_filcp (
 								stageid,                 /* Stage ID      */
+								0,                       /* subreqid      */
 								0,                       /* Copy rc       */
 								NULL,                    /* Interface     */
 								(u_signed64) stcp->size, /* Size          */
@@ -2042,6 +2054,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.file_path, ".");
 			}
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].tape = (*rtcpcreqs_in)[i];
+			if (stcp->blksize > 0) {
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blocksize = stcp->blksize;
+			}
 			switch (stcp->status & 0xF) {
 			case STAGEWRT:
 			case STAGEPUT:
@@ -2050,10 +2065,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.check_fid = CHECK_FILE;
 				}
 				(*rtcpcreqs_in)[i]->tapereq.mode            = WRITE_ENABLE;
-#ifdef ALICETEST
-				/* ALICE TEST - FORCE BLOCKSIZE */
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blocksize = 256 * ONE_KB;
-#endif
 				break;
 			default:
 				/* This is an hsm read request */

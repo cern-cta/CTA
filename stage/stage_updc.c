@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.6 2000/05/26 12:52:30 jdurand Exp $
+ * $Id: stage_updc.c,v 1.7 2000/06/13 11:01:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.6 $ $Date: 2000/05/26 12:52:30 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.7 $ $Date: 2000/06/13 11:01:27 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -52,8 +52,9 @@ int copyrc_castor2shift(copyrc)
   }
 }
 
-int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfer_time, blksize, drive, fid, fseq, lrecl, recfm, path)
+int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_time, transfer_time, blksize, drive, fid, fseq, lrecl, recfm, path)
      char *stageid;
+     int subreqid;
      int copyrc;
      char *ifce;
      u_signed64 size;
@@ -312,8 +313,9 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
   return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl, recfm, path)
+int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fseq, lrecl, recfm, path)
      char *stageid;
+     int subreqid;
      int status;
      int blksize;
      char *drive;
