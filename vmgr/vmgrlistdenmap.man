@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.3 $ $Date: 2002/05/30 10:17:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTDENMAP 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTDENMAP 1 "$Date: 2002/05/30 10:17:53 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistdenmap \- list all existing triplets model/media_letter/density in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -36,6 +36,8 @@ vmgrlistdenmap
 8500     8500C
 9840   R 20G
 9840   R 20GC
+9940   P 60G
+9940   P 60GC
 DAT120   DDS
 DAT120   DDSC
 DLT2     10G
@@ -50,6 +52,16 @@ DLT7   D 20G
 DLT7   D 20GC
 DLT7   D 35G
 DLT7   D 35GC
+DLT8   D 10G
+DLT8   D 10GC
+DLT8   D 20G
+DLT8   D 20GC
+DLT8   D 35G
+DLT8   D 35GC
+DLT8   D 40G
+DLT8   D 40GC
+LTO1   L 100G
+LTO1   L 100GC
 SD1M     RAW
 SD1L     RAW
 SD3S   A 10G
