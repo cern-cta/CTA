@@ -1,5 +1,5 @@
 /*
- * $Id: stager_admin_api.h,v 1.9 2004/11/28 20:51:19 jdurand Exp $
+ * $Id: stager_admin_api.h,v 1.10 2004/11/30 09:39:23 jdurand Exp $
  */
 
 #ifndef stager_admin_api_h
@@ -9,6 +9,7 @@
 #include "osdep.h"
 
 EXTERN_C int DLL_DECL stager_configTimeout           _PROTO((int *));
+EXTERN_C int DLL_DECL stager_configNoDlf             _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configPort              _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configSecurePort        _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configNotifyPort        _PROTO((int *));
