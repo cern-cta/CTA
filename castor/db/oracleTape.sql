@@ -315,6 +315,7 @@ BEGIN
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
  getId(1, dcId);
+ dcId := dcId - 1;
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)

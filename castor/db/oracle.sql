@@ -494,7 +494,7 @@ BEGIN
  END;
  BEGIN
    SELECT id INTO dcId FROM DiskCopy
-     WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
+     WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
      AND castorFile = cfId;
    -- We found something, thus we cannot recreate
    dcId := 0;
@@ -511,6 +511,7 @@ BEGIN
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
  getId(1, dcId);
+ dcId := dcId - 1;
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
