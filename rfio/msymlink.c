@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.10 2002/05/23 10:03:31 jdurand Exp $
+ * $Id: msymlink.c,v 1.11 2002/08/15 08:27:36 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.10 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.11 $ $Date: 2002/08/15 08:27:36 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -35,6 +35,7 @@ static int rfio_smsymlink _PROTO((int,  char *, char *));
 static int rfio_msymlink_allocentry _PROTO((char *, int, int));
 static int rfio_msymlink_findentry _PROTO((char *,int));
 static int rfio_symend_this _PROTO((int,int));
+extern int rfio_newhost _PROTO((char *));
 
 int DLL_DECL rfio_msymlink(n1,file2)
      char *n1 ;
@@ -92,11 +93,8 @@ int DLL_DECL rfio_msymlink(n1,file2)
       rc = rfio_smsymlink(fd,n1,filename);
     } else {
       rc = rfio_smsymlink(fd,n1,filename) ;
-      if ( rc != -1 ) {
-        TRACE(2,"rfio","rfio_msymlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-        netclose(fd);
-      }
-      fd = -1;
+      TRACE(2,"rfio","rfio_msymlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
+      netclose(fd);
     }
   }
   END_TRACE();
@@ -362,6 +360,8 @@ static int rfio_msymlink_findentry(hostname,Tid)
   for (i = 0; i < MAXMCON; i++) {
     if ((strcmp(msymlink_tab[i].host,hostname) == 0) && (msymlink_tab[i].Tid == Tid)) {
       rc = i;
+      /* Lie to rfio_lasthost() */
+      rfio_newhost(hostname);
       goto _rfio_msymlink_findentry_return;
     }
   }

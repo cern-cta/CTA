@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.9 2002/05/23 10:03:31 jdurand Exp $
+ * $Id: munlink.c,v 1.10 2002/08/15 08:27:36 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.9 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.10 $ $Date: 2002/08/15 08:27:36 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -34,6 +34,7 @@ static int rfio_smunlink _PROTO((int, char *));
 static int rfio_munlink_allocentry _PROTO((char *, int, int));
 static int rfio_munlink_findentry _PROTO((char *,int));
 static int rfio_unend_this _PROTO((int,int));
+extern int rfio_newhost _PROTO((char *));
 
 int DLL_DECL rfio_munlink(file)
      char *file ;
@@ -85,11 +86,8 @@ int DLL_DECL rfio_munlink(file)
       rc = rfio_smunlink(fd,filename);
     } else {
       rc = rfio_smunlink(fd,filename) ;
-      if ( rc != -1 ) {
-        TRACE(2,"rfio","rfio_munlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-        netclose(fd);
-      }
-      fd = -1;
+      TRACE(2,"rfio","rfio_munlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
+      netclose(fd);
     }
   }
   END_TRACE();
@@ -354,6 +352,8 @@ static int rfio_munlink_findentry(hostname,Tid)
   for (i = 0; i < MAXMCON; i++) {
     if ((strcmp(munlink_tab[i].host,hostname) == 0) && (munlink_tab[i].Tid == Tid)) {
       rc = i;
+      /* Lie to rfio_lasthost() */
+      rfio_newhost(hostname);
       goto _rfio_munlink_findentry_return;
     }
   }
