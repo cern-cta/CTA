@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.30 $ $Release$ $Date: 2004/08/02 12:46:07 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/02 15:14:16 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.30 $ $Date: 2004/08/02 12:46:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.31 $ $Date: 2004/08/02 15:14:16 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -87,6 +87,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.30 $ $Date: 
         serrno = _save_serrno; \
         errno = _save_errno; \
 }
+
+#define DUMP_FILE_LIST(X) (dumpFileList((X),__FILE__,__LINE__))
 
 TpReqMap_t *runningReqsMap = NULL;
 
@@ -596,6 +598,7 @@ static int updateSegmentInDB(
     serrno = save_serrno;
     return(-1);
   }
+  C_IAddress_delete(iAddr);
   return(0);
 }
 
@@ -682,7 +685,11 @@ static int addSegment(
                               rtcpcldSegm->segment,
                               file->filereq.stgReqId
                               );
-  if ( file->filereq.proc_status == RTCP_WAITING ||
+
+  if ( file->filereq.proc_status < RTCP_WAITING )
+    file->filereq.proc_status = RTCP_WAITING;
+  
+  if ( file->filereq.proc_status <= RTCP_WAITING ||
        file->filereq.proc_status == RTCP_POSITIONED ) {
     segmentStatus = SEGMENT_UNPROCESSED;
   } else if ( file->filereq.proc_status == RTCP_FINISHED ) {
@@ -749,6 +756,27 @@ static int findInFileList(
   return(found);
 }
 
+static void dumpFileList(
+                         fileList,
+                         fname,
+                         line
+                         )
+     file_list_t *fileList;
+     char *fname;
+     int line;
+{
+  file_list_t *fl;
+
+  rtcp_log(LOG_DEBUG,"dumpFileList(): dumping file list from %s:%d\n",
+           (fname != NULL ? fname : "(unknown)"),line);
+  CLIST_ITERATE_BEGIN(fileList,fl)
+    {
+      (void)dumpFileReq(fl);
+    }
+  CLIST_ITERATE_END(fileList,fl);
+  return;
+}
+
 static int updateSegmList(
                          tpList,
                          newFileList
@@ -775,6 +803,7 @@ static int updateSegmList(
         else {
           rtcp_log(LOG_DEBUG,"updateSegmList() segment for diskFseq=%d removed\n",segment->diskFseq);
           Cstager_Segment_delete(segment->segment);
+          DUMP_FILE_LIST(newFileList);
           CLIST_DELETE(tpList->segments,segment);
           moreToDo = 1;
           break;
@@ -1159,16 +1188,12 @@ static int getUpdates(
           tape_list_t *tl;
           file_list_t *fl;
           rtcp_log(LOG_DEBUG,
-                   "Full dump of tape list returned by getMoreInfo()"
+                   "Full dump of tape list returned by getMoreInfo()\n"
                    );
           CLIST_ITERATE_BEGIN(tape,tl) 
             {
               (void)dumpTapeReq(tl);
-              CLIST_ITERATE_BEGIN(tl->file,fl)
-                {
-                  (void)dumpFileReq(fl);
-                }
-              CLIST_ITERATE_END(tl->file,fl);
+              DUMP_FILE_LIST(tl->file);
             }
           CLIST_ITERATE_END(tape,tl);
           rc = updateSegmList(tpIterator,tape->file);
@@ -1816,8 +1841,6 @@ int rtcpcldc(tape)
           fl->filereq.err.severity = fl->filereq.err.severity &
             ~RTCP_RESELECT_SERV;
           fl->filereq.cprc = 0;
-          if ( fl->filereq.proc_status <= RTCP_WAITING )
-            fl->filereq.proc_status = RTCP_WAITING;
           rc = addSegment(
                           rtcpcldTp,
                           fl,
