@@ -1,13 +1,13 @@
 .\"
-.\" $Id: stagechng.man,v 1.9 2002/01/23 11:02:24 jdurand Exp $
+.\" $Id: stagechng.man,v 1.10 2002/01/24 17:43:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.9 $ $Date: 2002/01/23 11:02:24 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.10 $ $Date: 2002/01/24 17:43:53 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2002/01/23 11:02:24 $"
+.TH STAGECHNG l "$Date: 2002/01/24 17:43:53 $"
 .SH NAME
-stagechng \- change status in the stager catalog
+stagechng \- change status and time dependency of records in the stager catalog
 .SH SYNOPSIS
 .B stagechng
 [
@@ -83,7 +83,7 @@ This may also be specified thru the environment variable STAGE_POOL.
 Forces the search to this internal request id.
 .TP
 .BI \--retenp " retenp"
-Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Default unit is in second. If the option value ends with 'S', 's', second is also assumed. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day. With 'Y' or 'y', unit is the year (365 days). Special keywords \fBAS_LONG_AS_POSSIBLE\fP and \fBINFINITE_LIFETIME\fP are supported.
+Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Default unit is in day. If the option value ends with 'S', 's', second is assumed. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day (e.g. the default). With 'Y' or 'y', unit is the year (considered to be 365 days). Special keywords \fBAS_LONG_AS_POSSIBLE\fP and \fBINFINITE_LIFETIME\fP are supported.
 .TP
 .BI \--status " status"
 Sets the internal status. Only
