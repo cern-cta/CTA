@@ -1193,7 +1193,10 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << fixTypeName("BaseAddress",
                              "castor",
                              "")
-              << " ad(\"OraCnvSvc\", castor::SVC_ORACNV);"
+              << " ad;" << endl << getIndent()
+              << "ad.setCnvSvcName(\"OraCnvSvc\");"
+              << endl << getIndent()
+              << "ad.setCnvSvcType(castor::SVC_ORACNV);"
               << endl << getIndent()
               << "cnvSvc()->createRep(&ad, obj->"
               << as->remotePart.name
@@ -2272,13 +2275,13 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
 // writeCreateObjContent
 //=============================================================================
 void CppCppOraCnvWriter::writeCreateObjContent() {
-  *m_stream << getIndent() << fixTypeName("DbAddress",
-                                          "castor::db",
+  *m_stream << getIndent() << fixTypeName("BaseAddress",
+                                          "castor",
                                           m_classInfo->packageName)
             << "* ad = " << endl
             << getIndent() << "  dynamic_cast<"
-            << fixTypeName("DbAddress",
-                           "castor::db",
+            << fixTypeName("BaseAddress",
+                           "castor",
                            m_classInfo->packageName)
             << "*>(address);"
             << endl;

@@ -180,8 +180,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // ID attribute
           UMLClass* cl = dynamic_cast <UMLClass*>(c);
           if (0 != cl) {
-            UMLAttribute* idAt =
-              new UMLAttribute(c, "id", m_doc->getUniqueID(), "u_signed64");
+            UMLAttribute* idAt = new UMLAttribute
+              (c, "id", m_doc->getUniqueID(), "u_signed64", Uml::Public);
             idAt->setDoc("The id of this object");
             cl->getAttList()->append(idAt);
           }

@@ -50,6 +50,11 @@ public:
 	//
 	
 	/**
+	 * Lists of all attributes (included inherited)
+	 */
+  UMLAttributeList allAttributes;
+
+	/**
 	 * Lists of attributes of this classifier (if a class)
 	 * Sorted by scope.
 	 */

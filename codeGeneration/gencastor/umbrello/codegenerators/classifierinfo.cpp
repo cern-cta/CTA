@@ -143,6 +143,20 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	realizations = c->getRealizations();
 	realizations.setAutoDelete(false);
 
+  // List of all attributes
+  allAttributes = m_AttsList;
+  for (UMLClassifier *uc = allSuperclasses.first();
+       0 != uc;
+       uc = allSuperclasses.next()) {
+    UMLClass * myClass = dynamic_cast<UMLClass *>(uc);
+    if (0 == myClass) continue;
+    UMLAttributeList *atl = myClass->getFilteredAttributeList();
+    if (0 == atl) continue;
+    for(UMLAttribute *at=atl->first(); at ; at=atl->next()) {
+      allAttributes.append(at);
+    }
+  }
+      
 	// set some summary information about the classifier now
 	hasAssociations = plainAssociations.count() > 0 || aggregations.count() > 0 || compositions.count() > 0;
   hasAttributes[Uml::Public] = false;

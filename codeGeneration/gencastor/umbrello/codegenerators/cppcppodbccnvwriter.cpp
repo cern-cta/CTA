@@ -1079,13 +1079,13 @@ void CppCppOdbcCnvWriter::writeDeleteRepContent() {
 //=============================================================================
 void CppCppOdbcCnvWriter::writeCreateObjContent() {
   // Get the precise address
-  *m_stream << getIndent() << fixTypeName("DbAddress",
-                                          "castor::db",
+  *m_stream << getIndent() << fixTypeName("BaseAddress",
+                                          "castor",
                                           m_classInfo->packageName)
             << "* ad = " << endl
             << getIndent() << "  dynamic_cast<"
-            << fixTypeName("DbAddress",
-                           "castor::db",
+            << fixTypeName("BaseAddress",
+                           "castor",
                            m_classInfo->packageName)
             << "*>(address);"
             << endl;

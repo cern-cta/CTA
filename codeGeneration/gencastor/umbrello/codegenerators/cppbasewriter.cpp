@@ -477,6 +477,8 @@ void CppBaseWriter::writeOperations
  QValueList<std::pair<QString, int> >& alreadyGenerated) {
   QString className = m_classInfo->fullPackageName;
   className.append(m_classInfo->className);
+  // create a list of members
+  UMLAttributeList *members = m_classInfo->getAttList();
   // generate method decl for each operation given
   for (UMLOperation *op = oplist.first();
        0 != op;
@@ -490,6 +492,21 @@ void CppBaseWriter::writeOperations
       name = name.left(name.length()-6);
       constOp = true;
     }
+    // Check we will not generate this method as an accessor
+    bool skip = false;
+    for (UMLAttribute* mem = members->first();
+         0 != mem;
+         mem = members->next()) {
+      QString n = mem->getName();
+      if (0 == name.compare(n) ||
+          0 == name.compare(QString("set") +
+                            n.left(1).upper() +
+                            n.right(n.length() - 1))) {
+        skip = true;
+        break;
+      }
+    }
+    if (skip) continue;
     // Check we did not already generate this method
     std::pair<QString, int> p(name, op->getParmList()->count());
     if (alreadyGenerated.find(p) != alreadyGenerated.end()) {
@@ -515,10 +532,11 @@ void CppBaseWriter::writeOperations
     }
     // Now write the method itself
     int paramIndent = INDENT*m_indent;
-    QString methodReturnType = fixTypeName(op->getReturnType(),
-                                           getNamespace(op->getReturnType()),
-                                           m_classInfo->packageName,
-                                           !isHeaderMethod);
+    QString methodReturnType =
+      fixTypeName(op->getReturnType(),
+                  getNamespace(op->getReturnType()),
+                  m_classInfo->packageName,
+                  !isHeaderMethod);
     bool forceVirtual = false;
     if (methodReturnType.left(8) == "virtual ") {
       methodReturnType = methodReturnType.remove(0,8);

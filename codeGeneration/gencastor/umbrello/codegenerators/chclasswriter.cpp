@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/23 15:02:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/30 11:45:11 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -488,6 +488,8 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
                                     QValueList<QString>& alreadyGenerated) {
   QString className = m_classInfo->fullPackageName;
   className.append(m_classInfo->className);
+  // create a list of members
+  UMLAttributeList *members = m_classInfo->getAttList();
   // generate method decl for each operation given
   for (UMLOperation *op = oplist.first();
        0 != op;
@@ -500,6 +502,21 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
       name = name.left(name.length()-6);
       constOp = true;
     }
+    // Check we will not generate this method as an accessor
+    bool skip = false;
+    for (UMLAttribute* mem = members->first();
+         0 != mem;
+         mem = members->next()) {
+      QString n = mem->getName();
+      if (0 == name.compare(n) ||
+          0 == name.compare(QString("set") +
+                            n.left(1).upper() +
+                            n.right(n.length() - 1))) {
+        skip = true;
+        break;
+      }
+    }
+    if (skip) continue;
     // Check we did not already generate this method
     if (alreadyGenerated.find(name) != alreadyGenerated.end()) {
       // already done, skip
@@ -550,7 +567,8 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
       }
       stream << methodReturnType;
       if (methodReturnType.stripWhiteSpace().right(1) != "*" ||
-          isLastTypeVector()) {
+          isLastTypeVector() ||
+          0 == methodReturnType.stripWhiteSpace().compare("const char*")) {
         stream << "*";
       }
       stream << " ret";

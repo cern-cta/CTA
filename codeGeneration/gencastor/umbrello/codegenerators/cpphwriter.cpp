@@ -99,6 +99,8 @@ bool CppHWriter::finalize() {
       *m_mainStream << "#endif" << endl;
     }
   }
+  // Write anything needed after the closing of the last namespace
+  writeAfterNSClose();
   // last thing : close our hashdefine
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
   if (!hashDefine.isEmpty()) hashDefine.append('_');

@@ -25,6 +25,12 @@ class CppHClassWriter : public CppHWriter {
    */
   void writeClass(UMLClassifier *c);
 
+  /**
+   * Writes after the clasing of all scopes.
+   * Called by finalize. Usefull for inline implementations.
+   */
+  virtual void writeAfterNSClose();
+
  private:
   /**
    * Writes class documentation and the class header

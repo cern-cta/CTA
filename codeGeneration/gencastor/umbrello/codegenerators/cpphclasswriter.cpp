@@ -126,6 +126,34 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 }
 
 //=============================================================================
+// writeAfterNSClose
+//=============================================================================
+void CppHClassWriter::writeAfterNSClose() {
+  if (0 == m_classInfo->className.compare(QString("IObject"))) {
+    // Write declaration of << operator
+    *m_mainStream
+      << getIndent() << "/**" << endl
+      << getIndent() << " * outputs this "
+      << m_classInfo->className
+      << " to an output stream"
+      << endl << getIndent()
+      << " * This method is actually not virtual as is always the case for"
+      << endl << getIndent()
+      << " * streaming operators. However, it makes use of the print method"
+      << endl << getIndent()
+      << " * which is pure virtual." << endl
+      << getIndent()<<" */" << endl << getIndent()
+      << fixTypeName("ostream&", "", "")
+      << " operator<<("
+      << fixTypeName("ostream&", "", "")
+      << " s, const "
+      << fixTypeName(m_classInfo->className + "&",
+                     m_classInfo->packageName, "")
+      << " addr);" << endl << endl;
+  }
+}
+
+//=============================================================================
 // writeClassDecl
 //=============================================================================
 void CppHClassWriter::writeClassDecl(UMLClassifier *c,

@@ -43,6 +43,12 @@ class CppHWriter : public CppBaseWriter {
    */
   virtual bool finalize();
 
+  /**
+   * Writes after the clasing of all scopes.
+   * Called by finalize. Usefull for inline implementations.
+   */
+  virtual void writeAfterNSClose() {}
+
 };
 
 #endif // CODEGENERATORS_CPPHWRITER_H
