@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.60 $ $Date: 2000/03/24 15:37:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.61 $ $Date: 2000/03/28 09:12:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -449,7 +449,8 @@ static int DiskFileOpen(int pool_index,
             else if ( serrno = SETIMEDOUT && rfio_errno == 0 &&
                       filereq->err.max_cpretry >= 0 ) {
                 filereq->err.max_cpretry--;
-                rtcpd_SetReqStatus(NULL,file,serrno,RTCP_LOCAL_RETRY);
+                rtcpd_SetReqStatus(NULL,file,serrno,RTCP_RESELECT_SERV|
+                                                    RTCP_UNERR);
             } else
                 rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_UNERR | 
                                                          RTCP_FAILED);
@@ -1264,7 +1265,7 @@ void *diskIOthread(void *arg) {
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
-    int rc, mode, severity, save_errno,save_serrno, retry;
+    extern char *u64tostr _PROTO((u_signed64, char *, int));
     extern int ENOSPC_occurred;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
     if ( arg == NULL ) {
@@ -1322,26 +1323,8 @@ void *diskIOthread(void *arg) {
         CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
     }
     if ( (severity & RTCP_EOD) == 0 ) {
-    retry = 0;
-    do {
-        rc = DiskFileOpen(pool_index,tape,file);
-        save_serrno = serrno;
-        disk_fd = rc;
-        if ( rc != -1 ) break;
-        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
-        if ( (severity & RTCP_EOD) != 0 && 
-             (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) {
-            rtcp_log(LOG_DEBUG,"diskIOthread(%s): EOD reached\n",
-                     filereq->file_path);
-            rc = 0;
-            break;
-        }
-        if ( (severity & RTCP_LOCAL_RETRY) == 0 ) break;
-        retry++;
-        rtcp_log(LOG_INFO,"diskIOthread(%s): local retry %d open\n",
-                 filereq->file_path,retry);
-    } while ( retry < 10 &&
-              (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
+    rc = DiskFileOpen(pool_index,tape,file);
+    disk_fd = rc;
     CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
         if ( mode == WRITE_DISABLE ) {
     if ( (severity & RTCP_EOD) == 0 ) {
