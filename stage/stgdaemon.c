@@ -1,9 +1,9 @@
 /*
- * $Id: stgdaemon.c,v 1.55 2000/07/04 10:08:23 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.56 2000/08/07 10:32:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.55 $ $Date: 2000/07/04 10:08:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.56 $ $Date: 2000/08/07 10:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -23,7 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.55 $ $Date: 2
 #include <pwd.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#if sgi || sun || ultrix
+#if sgi || sun
 #include <sys/termio.h>
 #endif
 #include <string.h>
@@ -72,9 +72,6 @@ struct winsize {
 #include <sys/select.h>
 #endif
 #include <sys/wait.h>
-#if defined(ultrix) || (defined(sun) && !defined(SOLARIS))
-#include <sys/resource.h>
-#endif
 #include "marshall.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
@@ -167,6 +164,8 @@ main(argc,argv)
 {
 	int c, i, l;
 	char *clienthost;
+	int errflg = 0;
+	int foreground = 0;
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
 	struct hostent *hp;
@@ -186,8 +185,6 @@ main(argc,argv)
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	struct timeval timeval;
-	int errflg = 0;
-	int foreground = 0;
 
 #ifdef linux
 	optind = 0;
@@ -221,7 +218,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-#if defined(ultrix) || (defined(sun) && (!defined(SOLARIS) || defined(SOLARIS25))) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(IRIX6)
+#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
 	maxfds = getdtablesize();
 #else
 	maxfds = _NFILE;
@@ -234,9 +231,6 @@ main(argc,argv)
 			exit (1);
 		} else
 			if (c > 0) exit (0);
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_IBMESA)
-		c = setpgrp(0, getpid());
-#else
 #if (defined(__osf__) && defined(__alpha)) || defined(linux)
 		c = setsid();
 #else
@@ -246,10 +240,9 @@ main(argc,argv)
 		c = setpgrp();
 #endif
 #endif
-#endif
 		for (c = 0; c < maxfds; c++)
 			close (c);
-#if ultrix || sun || sgi
+#if sun || sgi
 		c = open ("/dev/tty", O_RDWR);
 		if (c >= 0) {
 			ioctl (c, TIOCNOTTY, 0);
@@ -337,7 +330,7 @@ main(argc,argv)
 		}
 
 		if (strlen(p_u) > CA_MAXUSRNAMELEN || strlen(p_p) > CA_MAXUSRNAMELEN) {
-			stglogit("func", 
+			stglogit(func, 
 							 "Database username and/or password exceeds maximum length of %d characters !\n",
 							 CA_MAXUSRNAMELEN);
 			exit (CONFERR);
@@ -1161,7 +1154,7 @@ void checkwaitq()
 						stglogit (func, STG02, stcp->ipath,
 											"rfio_unlink", rfio_serror());
 					check_waiting_on_req (wfp->subreqid,
-																(wqp->status == REQKILD) ? KILLED : STG_FAILED);
+							(wqp->status == REQKILD) ? KILLED : STG_FAILED);
 					break;
 				case STAGEOUT:
 				case STAGEWRT:
@@ -1195,7 +1188,7 @@ create_dir(dirname, uid, gid, mask)
 		 char *dirname;
 		 uid_t uid;
 		 gid_t gid;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix)
+#if defined(_WIN32)
 		 int mask;
 #else
 		 mode_t mask;
@@ -1316,7 +1309,8 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					stglogit (func, STG02, stcp->ipath, "rfio_unlink",
 										rfio_serror());
 			}
-			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR &&
+			    (stcp->status & PUT_FAILED) != PUT_FAILED) {
 				/* This was a file coming from automatic migration */
 				update_migpool(stcp,-1);
 			}
