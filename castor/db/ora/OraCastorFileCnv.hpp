@@ -147,14 +147,19 @@ namespace castor {
         void reset() throw ();
 
         /**
-         * Fill the database with some of the objects refered by a given object.
-         * @param object the original object
+         * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
+         * @param address the place where to find the foreign representation
+         * @param object the original C++ object
          * @param type the type of the refered objects to store
+         * @param autocommit whether the changes to the database
+         * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**
@@ -238,11 +243,35 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL insert statement for member diskFileCopies
+        static const std::string s_insertCastorFile2DiskCopyStatementString;
+
+        /// SQL insert statement object for member diskFileCopies
+        oracle::occi::Statement *m_insertCastorFile2DiskCopyStatement;
+
+        /// SQL delete statement for member diskFileCopies
+        static const std::string s_deleteCastorFile2DiskCopyStatementString;
+
+        /// SQL delete statement object for member diskFileCopies
+        oracle::occi::Statement *m_deleteCastorFile2DiskCopyStatement;
+
         /// SQL select statement for member diskFileCopies
         static const std::string s_CastorFile2DiskCopyStatementString;
 
         /// SQL select statement object for member diskFileCopies
         oracle::occi::Statement *m_CastorFile2DiskCopyStatement;
+
+        /// SQL insert statement for member copies
+        static const std::string s_insertCastorFile2TapeCopyStatementString;
+
+        /// SQL insert statement object for member copies
+        oracle::occi::Statement *m_insertCastorFile2TapeCopyStatement;
+
+        /// SQL delete statement for member copies
+        static const std::string s_deleteCastorFile2TapeCopyStatementString;
+
+        /// SQL delete statement object for member copies
+        oracle::occi::Statement *m_deleteCastorFile2TapeCopyStatement;
 
         /// SQL select statement for member copies
         static const std::string s_CastorFile2TapeCopyStatementString;

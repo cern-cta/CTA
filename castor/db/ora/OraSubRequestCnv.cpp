@@ -83,6 +83,18 @@ const std::string castor::db::ora::OraSubRequestCnv::s_insertRequest2SubRequestS
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteRequest2SubRequestStatementString =
 "DELETE FROM rh_Request2SubRequest WHERE Parent = :1 AND Child = :2";
 
+/// SQL insert statement for member status
+const std::string castor::db::ora::OraSubRequestCnv::s_insertSubRequest2SubRequestStatusCodesStatementString =
+"INSERT INTO rh_SubRequest2SubRequestStatusCodes (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member status
+const std::string castor::db::ora::OraSubRequestCnv::s_deleteSubRequest2SubRequestStatusCodesStatementString =
+"DELETE FROM rh_SubRequest2SubRequestStatusCodes WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member status
+const std::string castor::db::ora::OraSubRequestCnv::s_SubRequest2SubRequestStatusCodesStatementString =
+"SELECT Child from rh_SubRequest2SubRequestStatusCodes WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -95,7 +107,10 @@ castor::db::ora::OraSubRequestCnv::OraSubRequestCnv() :
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_insertRequest2SubRequestStatement(0),
-  m_deleteRequest2SubRequestStatement(0) {}
+  m_deleteRequest2SubRequestStatement(0),
+  m_insertSubRequest2SubRequestStatusCodesStatement(0),
+  m_deleteSubRequest2SubRequestStatusCodesStatement(0),
+  m_SubRequest2SubRequestStatusCodesStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -119,6 +134,8 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_insertRequest2SubRequestStatement);
     deleteStatement(m_deleteRequest2SubRequestStatement);
+    deleteStatement(m_insertSubRequest2SubRequestStatusCodesStatement);
+    deleteStatement(m_SubRequest2SubRequestStatusCodesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -129,6 +146,9 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_insertRequest2SubRequestStatement = 0;
   m_deleteRequest2SubRequestStatement = 0;
+  m_insertSubRequest2SubRequestStatusCodesStatement = 0;
+  m_deleteSubRequest2SubRequestStatusCodesStatement = 0;
+  m_SubRequest2SubRequestStatusCodesStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +170,8 @@ const unsigned int castor::db::ora::OraSubRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                unsigned int type)
+                                                unsigned int type,
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
@@ -164,6 +185,9 @@ void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -259,7 +283,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjRequest(castor::stager::SubReques
   u_signed64 requestId = (unsigned long long)rset->getDouble(5);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->request() &&
       (0 == requestId ||
        obj->request()->id() != requestId)) {
@@ -485,7 +509,7 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setPoolName(rset->getString(4));
     object->setXsize((unsigned long long)rset->getDouble(5));
     object->setId((unsigned long long)rset->getDouble(6));
-    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(7));
+    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(8));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

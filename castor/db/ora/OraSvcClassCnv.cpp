@@ -133,7 +133,8 @@ const unsigned int castor::db::ora::OraSvcClassCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSvcClassCnv::fillRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              unsigned int type)
+                                              unsigned int type,
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SvcClass* obj = 
     dynamic_cast<castor::stager::SvcClass*>(object);
@@ -144,6 +145,9 @@ void castor::db::ora::OraSvcClassCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 

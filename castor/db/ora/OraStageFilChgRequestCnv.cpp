@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 14:13:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -85,9 +85,29 @@ const std::string castor::db::ora::OraStageFilChgRequestCnv::s_insertStatusState
 const std::string castor::db::ora::OraStageFilChgRequestCnv::s_deleteStatusStatementString =
 "DELETE FROM rh_requestsStatus WHERE id = :1";
 
+/// SQL insert statement for member subRequests
+const std::string castor::db::ora::OraStageFilChgRequestCnv::s_insertRequest2SubRequestStatementString =
+"INSERT INTO rh_Request2SubRequest (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member subRequests
+const std::string castor::db::ora::OraStageFilChgRequestCnv::s_deleteRequest2SubRequestStatementString =
+"DELETE FROM rh_Request2SubRequest WHERE Parent = :1 AND Child = :2";
+
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageFilChgRequestCnv::s_Request2SubRequestStatementString =
 "SELECT Child from rh_Request2SubRequest WHERE Parent = :1";
+
+/// SQL insert statement for member client
+const std::string castor::db::ora::OraStageFilChgRequestCnv::s_insertRequest2IClientStatementString =
+"INSERT INTO rh_Request2IClient (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member client
+const std::string castor::db::ora::OraStageFilChgRequestCnv::s_deleteRequest2IClientStatementString =
+"DELETE FROM rh_Request2IClient WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member client
+const std::string castor::db::ora::OraStageFilChgRequestCnv::s_Request2IClientStatementString =
+"SELECT Child from rh_Request2IClient WHERE Parent = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -102,7 +122,12 @@ castor::db::ora::OraStageFilChgRequestCnv::OraStageFilChgRequestCnv() :
   m_deleteStatusStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_Request2SubRequestStatement(0) {}
+  m_insertRequest2SubRequestStatement(0),
+  m_deleteRequest2SubRequestStatement(0),
+  m_Request2SubRequestStatement(0),
+  m_insertRequest2IClientStatement(0),
+  m_deleteRequest2IClientStatement(0),
+  m_Request2IClientStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -126,7 +151,10 @@ void castor::db::ora::OraStageFilChgRequestCnv::reset() throw() {
     deleteStatement(m_deleteStatusStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertRequest2SubRequestStatement);
     deleteStatement(m_Request2SubRequestStatement);
+    deleteStatement(m_insertRequest2IClientStatement);
+    deleteStatement(m_Request2IClientStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -137,7 +165,12 @@ void castor::db::ora::OraStageFilChgRequestCnv::reset() throw() {
   m_deleteStatusStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertRequest2SubRequestStatement = 0;
+  m_deleteRequest2SubRequestStatement = 0;
   m_Request2SubRequestStatement = 0;
+  m_insertRequest2IClientStatement = 0;
+  m_deleteRequest2IClientStatement = 0;
+  m_Request2IClientStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -159,7 +192,8 @@ const unsigned int castor::db::ora::OraStageFilChgRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageFilChgRequestCnv::fillRep(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        unsigned int type)
+                                                        unsigned int type,
+                                                        bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageFilChgRequest* obj = 
     dynamic_cast<castor::stager::StageFilChgRequest*>(object);
@@ -176,6 +210,9 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRep(castor::IAddress* addres
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -203,6 +240,12 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepSubRequest(castor::stager
     std::set<int>::iterator item;
     if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
       cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertRequest2SubRequestStatement) {
+        m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
+      }
+      m_insertRequest2SubRequestStatement->setDouble(1, obj->id());
+      m_insertRequest2SubRequestStatement->setDouble(2, (*it)->id());
+      m_insertRequest2SubRequestStatement->executeUpdate();
     } else {
       subRequestsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -214,6 +257,12 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepSubRequest(castor::stager
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteRequest2SubRequestStatement) {
+      m_deleteRequest2SubRequestStatement = createStatement(s_deleteRequest2SubRequestStatementString);
+    }
+    m_deleteRequest2SubRequestStatement->setDouble(1, obj->id());
+    m_deleteRequest2SubRequestStatement->setDouble(2, *it);
+    m_deleteRequest2SubRequestStatement->executeUpdate();
   }
 }
 
@@ -244,11 +293,23 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepIClient(castor::stager::S
       obj->client()->id() != clientId) {
     cnvSvc()->deleteRepByAddress(&ad, false);
     clientId = 0;
+    if (0 == m_deleteRequest2IClientStatement) {
+      m_deleteRequest2IClientStatement = createStatement(s_deleteRequest2IClientStatementString);
+    }
+    m_deleteRequest2IClientStatement->setDouble(1, obj->id());
+    m_deleteRequest2IClientStatement->setDouble(2, obj->client()->id());
+    m_deleteRequest2IClientStatement->executeUpdate();
   }
   // Update object or create new one
   if (clientId == 0) {
     if (0 != obj->client()) {
       cnvSvc()->createRep(&ad, obj->client(), false);
+      if (0 == m_insertRequest2IClientStatement) {
+        m_insertRequest2IClientStatement = createStatement(s_insertRequest2IClientStatementString);
+      }
+      m_insertRequest2IClientStatement->setDouble(1, obj->id());
+      m_insertRequest2IClientStatement->setDouble(2, obj->client()->id());
+      m_insertRequest2IClientStatement->executeUpdate();
     }
   } else {
     cnvSvc()->updateRep(&ad, obj->client(), false);
@@ -347,7 +408,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillObjIClient(castor::stager::S
   u_signed64 clientId = (unsigned long long)rset->getDouble(8);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->client() &&
       (0 == clientId ||
        obj->client()->id() != clientId)) {

@@ -73,6 +73,18 @@ const std::string castor::db::ora::OraStreamCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraStreamCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member status
+const std::string castor::db::ora::OraStreamCnv::s_insertStream2StreamStatusCodesStatementString =
+"INSERT INTO rh_Stream2StreamStatusCodes (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member status
+const std::string castor::db::ora::OraStreamCnv::s_deleteStream2StreamStatusCodesStatementString =
+"DELETE FROM rh_Stream2StreamStatusCodes WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member status
+const std::string castor::db::ora::OraStreamCnv::s_Stream2StreamStatusCodesStatementString =
+"SELECT Child from rh_Stream2StreamStatusCodes WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -83,7 +95,10 @@ castor::db::ora::OraStreamCnv::OraStreamCnv() :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_insertStream2StreamStatusCodesStatement(0),
+  m_deleteStream2StreamStatusCodesStatement(0),
+  m_Stream2StreamStatusCodesStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -105,6 +120,8 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertStream2StreamStatusCodesStatement);
+    deleteStatement(m_Stream2StreamStatusCodesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -113,6 +130,9 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertStream2StreamStatusCodesStatement = 0;
+  m_deleteStream2StreamStatusCodesStatement = 0;
+  m_Stream2StreamStatusCodesStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -134,7 +154,8 @@ const unsigned int castor::db::ora::OraStreamCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::fillRep(castor::IAddress* address,
                                             castor::IObject* object,
-                                            unsigned int type)
+                                            unsigned int type,
+                                            bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Stream* obj = 
     dynamic_cast<castor::stager::Stream*>(object);
@@ -145,6 +166,9 @@ void castor::db::ora::OraStreamCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 

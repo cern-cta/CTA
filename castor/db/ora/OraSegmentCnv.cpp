@@ -93,6 +93,18 @@ const std::string castor::db::ora::OraSegmentCnv::s_insertTapeCopy2SegmentStatem
 const std::string castor::db::ora::OraSegmentCnv::s_deleteTapeCopy2SegmentStatementString =
 "DELETE FROM rh_TapeCopy2Segment WHERE Parent = :1 AND Child = :2";
 
+/// SQL insert statement for member status
+const std::string castor::db::ora::OraSegmentCnv::s_insertSegment2SegmentStatusCodesStatementString =
+"INSERT INTO rh_Segment2SegmentStatusCodes (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member status
+const std::string castor::db::ora::OraSegmentCnv::s_deleteSegment2SegmentStatusCodesStatementString =
+"DELETE FROM rh_Segment2SegmentStatusCodes WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member status
+const std::string castor::db::ora::OraSegmentCnv::s_Segment2SegmentStatusCodesStatementString =
+"SELECT Child from rh_Segment2SegmentStatusCodes WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -107,7 +119,10 @@ castor::db::ora::OraSegmentCnv::OraSegmentCnv() :
   m_insertTape2SegmentStatement(0),
   m_deleteTape2SegmentStatement(0),
   m_insertTapeCopy2SegmentStatement(0),
-  m_deleteTapeCopy2SegmentStatement(0) {}
+  m_deleteTapeCopy2SegmentStatement(0),
+  m_insertSegment2SegmentStatusCodesStatement(0),
+  m_deleteSegment2SegmentStatusCodesStatement(0),
+  m_Segment2SegmentStatusCodesStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -133,6 +148,8 @@ void castor::db::ora::OraSegmentCnv::reset() throw() {
     deleteStatement(m_deleteTape2SegmentStatement);
     deleteStatement(m_insertTapeCopy2SegmentStatement);
     deleteStatement(m_deleteTapeCopy2SegmentStatement);
+    deleteStatement(m_insertSegment2SegmentStatusCodesStatement);
+    deleteStatement(m_Segment2SegmentStatusCodesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -145,6 +162,9 @@ void castor::db::ora::OraSegmentCnv::reset() throw() {
   m_deleteTape2SegmentStatement = 0;
   m_insertTapeCopy2SegmentStatement = 0;
   m_deleteTapeCopy2SegmentStatement = 0;
+  m_insertSegment2SegmentStatusCodesStatement = 0;
+  m_deleteSegment2SegmentStatusCodesStatement = 0;
+  m_Segment2SegmentStatusCodesStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -166,7 +186,8 @@ const unsigned int castor::db::ora::OraSegmentCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillRep(castor::IAddress* address,
                                              castor::IObject* object,
-                                             unsigned int type)
+                                             unsigned int type,
+                                             bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
@@ -183,6 +204,9 @@ void castor::db::ora::OraSegmentCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -331,7 +355,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTape(castor::stager::Segment* obj)
   u_signed64 tapeId = (unsigned long long)rset->getDouble(11);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->tape() &&
       (0 == tapeId ||
        obj->tape()->id() != tapeId)) {
@@ -370,7 +394,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTapeCopy(castor::stager::Segment* ob
   u_signed64 copyId = (unsigned long long)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->copy() &&
       (0 == copyId ||
        obj->copy()->id() != copyId)) {
@@ -636,7 +660,7 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
     object->setId((unsigned long long)rset->getDouble(12));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(13));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

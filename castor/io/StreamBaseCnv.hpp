@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 16:44:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/12 14:44:51 $ $Author: sponcec3 $
  *
  * 
  *
@@ -117,11 +117,14 @@ namespace castor {
        * @param address the place where to find the foreign representation
        * @param object the original C++ object
        * @param type the type of the refered objects to store
+       * @param autocommit whether the changes to the database
+       * should be commited or not
        * @exception Exception throws an Exception in case of error
        */
       virtual void fillRep(castor::IAddress* address,
                            castor::IObject* object,
-                           unsigned int type)
+                           unsigned int type,
+                           bool autocommit)
         throw (castor::exception::Exception);
       
       /**

@@ -149,7 +149,8 @@ const unsigned int castor::db::ora::OraClientCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
                                             castor::IObject* object,
-                                            unsigned int type)
+                                            unsigned int type,
+                                            bool autocommit)
   throw (castor::exception::Exception) {
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);
@@ -163,6 +164,9 @@ void castor::db::ora::OraClientCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -258,7 +262,7 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
   u_signed64 requestId = (unsigned long long)rset->getDouble(2);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->request() &&
       (0 == requestId ||
        obj->request()->id() != requestId)) {

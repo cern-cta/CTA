@@ -66,7 +66,7 @@ int C_Services_service(struct C_Services_t* svcs,
  * the object
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
- * should be commited or not.
+ * should be commited or not. Default is not.
  * @return -1 in case of error, 0 if successful
  * A detailed error message can be retrieved by calling
  * C_Services_errorMsg
@@ -83,7 +83,7 @@ int C_Services_createRep(struct C_Services_t* svcs,
  * the object is stored
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
- * should be commited or not
+ * should be commited or not. Default is not.
  * @return -1 in case of error, 0 if successful
  * A detailed error message can be retrieved by calling
  * C_Services_errorMsg
@@ -100,7 +100,7 @@ int C_Services_updateRep(struct C_Services_t* svcs,
  * the object is stored
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
- * should be commited or not.
+ * should be commited or not. Default is not.
  * @return -1 in case of error, 0 if successful
  * A detailed error message can be retrieved by calling
  * C_Services_errorMsg
@@ -138,6 +138,41 @@ int C_Services_createObj(struct C_Services_t* svcs,
 int C_Services_updateObj(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
                          struct C_IObject_t* object);
+
+/**
+ * Fill the foreign representation with some of the objects
+ * refered by a given C++ object.
+ * @param svcs the services object to use
+ * @param address the place where to find the foreign representation
+ * @param object the original C++ object
+ * @param type the type of the refered objects to store
+ * @param autocommit whether the changes to the database
+ * should be commited or not. Default is not.
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_fillRep(struct C_Services_t* svcs,
+                       struct C_IAddress_t* address,
+                       struct C_IObject_t* object,
+                       unsigned int type,
+                       char autocommit);
+    
+/**
+ * Retrieve from the foreign representation some of the
+ * objects refered by a given C++ object.
+ * @param svcs the services object to use
+ * @param address the place where to find the foreign representation
+ * @param object the original object
+ * @param type the type of the refered objects to retrieve
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_fillObj(struct C_Services_t* svcs,
+                       struct C_IAddress_t* address,
+                       struct C_IObject_t* object,
+                       unsigned int type);
 
 /**
  * Forces the commit of the last changes in a given DB

@@ -77,9 +77,29 @@ const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member segments
+const std::string castor::db::ora::OraTapeCnv::s_insertTape2SegmentStatementString =
+"INSERT INTO rh_Tape2Segment (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member segments
+const std::string castor::db::ora::OraTapeCnv::s_deleteTape2SegmentStatementString =
+"DELETE FROM rh_Tape2Segment WHERE Parent = :1 AND Child = :2";
+
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_Tape2SegmentStatementString =
 "SELECT Child from rh_Tape2Segment WHERE Parent = :1";
+
+/// SQL insert statement for member status
+const std::string castor::db::ora::OraTapeCnv::s_insertTape2TapeStatusCodesStatementString =
+"INSERT INTO rh_Tape2TapeStatusCodes (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member status
+const std::string castor::db::ora::OraTapeCnv::s_deleteTape2TapeStatusCodesStatementString =
+"DELETE FROM rh_Tape2TapeStatusCodes WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member status
+const std::string castor::db::ora::OraTapeCnv::s_Tape2TapeStatusCodesStatementString =
+"SELECT Child from rh_Tape2TapeStatusCodes WHERE Parent = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -92,7 +112,12 @@ castor::db::ora::OraTapeCnv::OraTapeCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_Tape2SegmentStatement(0) {}
+  m_insertTape2SegmentStatement(0),
+  m_deleteTape2SegmentStatement(0),
+  m_Tape2SegmentStatement(0),
+  m_insertTape2TapeStatusCodesStatement(0),
+  m_deleteTape2TapeStatusCodesStatement(0),
+  m_Tape2TapeStatusCodesStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -114,7 +139,10 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertTape2SegmentStatement);
     deleteStatement(m_Tape2SegmentStatement);
+    deleteStatement(m_insertTape2TapeStatusCodesStatement);
+    deleteStatement(m_Tape2TapeStatusCodesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -123,7 +151,12 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertTape2SegmentStatement = 0;
+  m_deleteTape2SegmentStatement = 0;
   m_Tape2SegmentStatement = 0;
+  m_insertTape2TapeStatusCodesStatement = 0;
+  m_deleteTape2TapeStatusCodesStatement = 0;
+  m_Tape2TapeStatusCodesStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -145,7 +178,8 @@ const unsigned int castor::db::ora::OraTapeCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
                                           castor::IObject* object,
-                                          unsigned int type)
+                                          unsigned int type,
+                                          bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
@@ -159,6 +193,9 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -186,6 +223,12 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     std::set<int>::iterator item;
     if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
       cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertTape2SegmentStatement) {
+        m_insertTape2SegmentStatement = createStatement(s_insertTape2SegmentStatementString);
+      }
+      m_insertTape2SegmentStatement->setDouble(1, obj->id());
+      m_insertTape2SegmentStatement->setDouble(2, (*it)->id());
+      m_insertTape2SegmentStatement->executeUpdate();
     } else {
       segmentsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -197,6 +240,12 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteTape2SegmentStatement) {
+      m_deleteTape2SegmentStatement = createStatement(s_deleteTape2SegmentStatementString);
+    }
+    m_deleteTape2SegmentStatement->setDouble(1, obj->id());
+    m_deleteTape2SegmentStatement->setDouble(2, *it);
+    m_deleteTape2SegmentStatement->executeUpdate();
   }
 }
 
@@ -475,7 +524,7 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId((unsigned long long)rset->getDouble(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

@@ -77,9 +77,25 @@ const std::string castor::db::ora::OraCastorFileCnv::s_storeTypeStatementString 
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member diskFileCopies
+const std::string castor::db::ora::OraCastorFileCnv::s_insertCastorFile2DiskCopyStatementString =
+"INSERT INTO rh_CastorFile2DiskCopy (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member diskFileCopies
+const std::string castor::db::ora::OraCastorFileCnv::s_deleteCastorFile2DiskCopyStatementString =
+"DELETE FROM rh_CastorFile2DiskCopy WHERE Parent = :1 AND Child = :2";
+
 /// SQL select statement for member diskFileCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_CastorFile2DiskCopyStatementString =
 "SELECT Child from rh_CastorFile2DiskCopy WHERE Parent = :1";
+
+/// SQL insert statement for member copies
+const std::string castor::db::ora::OraCastorFileCnv::s_insertCastorFile2TapeCopyStatementString =
+"INSERT INTO rh_CastorFile2TapeCopy (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member copies
+const std::string castor::db::ora::OraCastorFileCnv::s_deleteCastorFile2TapeCopyStatementString =
+"DELETE FROM rh_CastorFile2TapeCopy WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member copies
 const std::string castor::db::ora::OraCastorFileCnv::s_CastorFile2TapeCopyStatementString =
@@ -96,7 +112,11 @@ castor::db::ora::OraCastorFileCnv::OraCastorFileCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_insertCastorFile2DiskCopyStatement(0),
+  m_deleteCastorFile2DiskCopyStatement(0),
   m_CastorFile2DiskCopyStatement(0),
+  m_insertCastorFile2TapeCopyStatement(0),
+  m_deleteCastorFile2TapeCopyStatement(0),
   m_CastorFile2TapeCopyStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -119,7 +139,9 @@ void castor::db::ora::OraCastorFileCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertCastorFile2DiskCopyStatement);
     deleteStatement(m_CastorFile2DiskCopyStatement);
+    deleteStatement(m_insertCastorFile2TapeCopyStatement);
     deleteStatement(m_CastorFile2TapeCopyStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -129,7 +151,11 @@ void castor::db::ora::OraCastorFileCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertCastorFile2DiskCopyStatement = 0;
+  m_deleteCastorFile2DiskCopyStatement = 0;
   m_CastorFile2DiskCopyStatement = 0;
+  m_insertCastorFile2TapeCopyStatement = 0;
+  m_deleteCastorFile2TapeCopyStatement = 0;
   m_CastorFile2TapeCopyStatement = 0;
 }
 
@@ -152,7 +178,8 @@ const unsigned int castor::db::ora::OraCastorFileCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                unsigned int type)
+                                                unsigned int type,
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
@@ -169,6 +196,9 @@ void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -196,6 +226,12 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
     std::set<int>::iterator item;
     if ((item = diskFileCopiesList.find((*it)->id())) == diskFileCopiesList.end()) {
       cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertCastorFile2DiskCopyStatement) {
+        m_insertCastorFile2DiskCopyStatement = createStatement(s_insertCastorFile2DiskCopyStatementString);
+      }
+      m_insertCastorFile2DiskCopyStatement->setDouble(1, obj->id());
+      m_insertCastorFile2DiskCopyStatement->setDouble(2, (*it)->id());
+      m_insertCastorFile2DiskCopyStatement->executeUpdate();
     } else {
       diskFileCopiesList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -207,6 +243,12 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteCastorFile2DiskCopyStatement) {
+      m_deleteCastorFile2DiskCopyStatement = createStatement(s_deleteCastorFile2DiskCopyStatementString);
+    }
+    m_deleteCastorFile2DiskCopyStatement->setDouble(1, obj->id());
+    m_deleteCastorFile2DiskCopyStatement->setDouble(2, *it);
+    m_deleteCastorFile2DiskCopyStatement->executeUpdate();
   }
 }
 
@@ -234,6 +276,12 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
     std::set<int>::iterator item;
     if ((item = copiesList.find((*it)->id())) == copiesList.end()) {
       cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertCastorFile2TapeCopyStatement) {
+        m_insertCastorFile2TapeCopyStatement = createStatement(s_insertCastorFile2TapeCopyStatementString);
+      }
+      m_insertCastorFile2TapeCopyStatement->setDouble(1, obj->id());
+      m_insertCastorFile2TapeCopyStatement->setDouble(2, (*it)->id());
+      m_insertCastorFile2TapeCopyStatement->executeUpdate();
     } else {
       copiesList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -245,6 +293,12 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteCastorFile2TapeCopyStatement) {
+      m_deleteCastorFile2TapeCopyStatement = createStatement(s_deleteCastorFile2TapeCopyStatementString);
+    }
+    m_deleteCastorFile2TapeCopyStatement->setDouble(1, obj->id());
+    m_deleteCastorFile2TapeCopyStatement->setDouble(2, *it);
+    m_deleteCastorFile2TapeCopyStatement->executeUpdate();
   }
 }
 

@@ -280,8 +280,44 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->first.first == MULT_N ||
+        as->first.second == COMPOS_PARENT ||
+        as->first.second == AGGREG_PARENT) {
       *m_stream << getIndent()
+                << "/// SQL insert statement for member "
+                << as->second.first
+                << endl << getIndent()
+                << "const std::string "
+                << m_classInfo->fullPackageName
+                << "Ora" << m_classInfo->className
+                << "Cnv::s_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "StatementString =" << endl << getIndent()
+                << "\"INSERT INTO rh_"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << " (Parent, Child) VALUES (:1, :2)\";"
+                << endl << endl << getIndent()
+                << "/// SQL delete statement for member "
+                << as->second.first
+                << endl << getIndent()
+                << "const std::string "
+                << m_classInfo->fullPackageName
+                << "Ora" << m_classInfo->className
+                << "Cnv::s_delete"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "StatementString =" << endl << getIndent()
+                << "\"DELETE FROM rh_"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << " WHERE Parent = :1 AND Child = :2\";"
+                << endl << endl << getIndent()
                 << "/// SQL select statement for member "
                 << as->second.first
                 << endl << getIndent()
@@ -431,8 +467,20 @@ void CppCppOraCnvWriter::writeConstructors() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->first.first == MULT_N  ||
+        as->first.second == COMPOS_PARENT ||
+        as->first.second == AGGREG_PARENT) {
       *m_stream << "," << endl << getIndent()
+                << "  m_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement(0)," << endl << getIndent()
+                << "  m_delete"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement(0)," << endl << getIndent()
                 << "  m_"
                 << capitalizeFirstLetter(as->second.third)
                 << "2"
@@ -506,8 +554,15 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->first.first == MULT_N ||
+        as->first.second == COMPOS_PARENT ||
+        as->first.second == AGGREG_PARENT) {
       *m_stream << getIndent()
+                << "deleteStatement(m_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_"
                 << capitalizeFirstLetter(as->second.third)
                 << "2"
@@ -556,8 +611,20 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->first.first == MULT_N ||
+        as->first.second == COMPOS_PARENT ||
+        as->first.second == AGGREG_PARENT) {
       *m_stream << getIndent()
+                << "m_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement = 0;" << endl << getIndent()
+                << "m_delete"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement = 0;" << endl << getIndent()
                 << "m_"
                 << capitalizeFirstLetter(as->second.third)
                 << "2"
@@ -601,7 +668,9 @@ void CppCppOraCnvWriter::writeFillRep() {
                                     "castor",
                                     "")
             << " object," << endl << getIndent()
-            << func << "unsigned int type)"
+            << func << "unsigned int type,"
+            << endl << getIndent()
+            << func << "bool autocommit)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -650,6 +719,12 @@ void CppCppOraCnvWriter::writeFillRep() {
             << "                << \". This is meaningless.\";"
             << endl << getIndent()
             << "throw ex;" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << getIndent()
+            << "if (autocommit) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+            << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
@@ -841,45 +916,60 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << "cnvSvc()->deleteRepByAddress(&ad, false);"
             << endl << getIndent()
             << as->second.first << "Id = 0;" << endl;
-  if (as->first.second == COMPOS_CHILD ||
-      as->first.second == AGGREG_CHILD) {
+  bool case1 = as->first.first == MULT_N ||
+    as->first.second == COMPOS_PARENT ||
+    as->first.second == AGGREG_PARENT;
+  bool case2 = as->first.second == COMPOS_CHILD ||
+    as->first.second == AGGREG_CHILD;
+  QString s1, s2, t1, t2;
+  if (case2) {
+    s1 = as->second.second;
+    s2 = as->second.third;
+    t2 = "obj->id()";
+    t1 = QString("obj->") + as->second.first + "()->id()";
+  } else {
+    s2 = as->second.second;
+    s1 = as->second.third;      
+    t1 = "obj->id()";
+    t2 = QString("obj->") + as->second.first + "()->id()";
+  }
+  if (case1 || case2) {
     *m_stream << getIndent()
               << "if (0 == m_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement = createStatement(s_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "StatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
-              << "Statement->setDouble(1, obj->"
-              << as->second.first << "()->id());"
+              << capitalizeFirstLetter(s2)
+              << "Statement->setDouble(1, " << t1 << ");"
               << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
-              << "Statement->setDouble(2, obj->id());"
+              << capitalizeFirstLetter(s2)
+              << "Statement->setDouble(2, " << t2 << ");"
               << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement->executeUpdate();"
               << endl;
   }
@@ -899,46 +989,44 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << "cnvSvc()->createRep(&ad, obj->"
             << as->second.first
             << "(), false);" << endl;
-  if (as->first.second == COMPOS_CHILD ||
-      as->first.second == AGGREG_CHILD) {
+  if (case1 || case2) {
     *m_stream << getIndent()
               << "if (0 == m_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement = createStatement(s_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "StatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl
               << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
-              << "Statement->setDouble(1, obj->"
-              << as->second.first << "()->id());"
+              << capitalizeFirstLetter(s2)
+              << "Statement->setDouble(1, " << t1 << ");"
               << endl << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
-              << "Statement->setDouble(2, obj->id());"
+              << capitalizeFirstLetter(s2)
+              << "Statement->setDouble(2, " << t2 << ");"
               << endl << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(s1)
               << "2"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(s2)
               << "Statement->executeUpdate();"
               << endl;
   }
@@ -1018,7 +1106,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << "m_selectStatement->closeResultSet(rset);"
             << endl;
   *m_stream << getIndent()
-            << "// Check whether something shoudl be deleted"
+            << "// Check whether something should be deleted"
             << endl << getIndent() <<"if (0 != obj->"
             << as->second.first << "() &&" << endl
             << getIndent()
@@ -1185,6 +1273,48 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   *m_stream << getIndent()
             << "cnvSvc()->createRep(0, *it, false);"
             << endl;
+  if (as->first.second == COMPOS_PARENT ||
+      as->first.second == AGGREG_PARENT) {
+    *m_stream << getIndent()
+              << "if (0 == m_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement = createStatement(s_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl
+              << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->setDouble(2, (*it)->id());"
+              << endl << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->executeUpdate();"
+              << endl;
+  }
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
@@ -1217,6 +1347,47 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << getIndent()
             << "cnvSvc()->deleteRepByAddress(&ad, false);"
             << endl;
+  if (as->first.second == COMPOS_PARENT ||
+      as->first.second == AGGREG_PARENT) {
+    *m_stream << getIndent()
+              << "if (0 == m_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement = createStatement(s_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->setDouble(2, *it);"
+              << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.third)
+              << "2"
+              << capitalizeFirstLetter(as->second.second)
+              << "Statement->executeUpdate();"
+              << endl;
+  }
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
@@ -1874,6 +2045,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
         isEnum(as->second.second)) {
       writeSingleGetFromSelect(as->second, n, false, true);
     }
+    n++;
   }
   // Close request
   *m_stream << getIndent()

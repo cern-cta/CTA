@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/11 13:43:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -199,6 +199,32 @@ void castor::Services::commit(castor::IAddress* address)
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->commit();
+}
+
+
+//------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::Services::fillRep(castor::IAddress* address,
+                               castor::IObject* object,
+                               unsigned int type,
+                               bool autocommit)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  cnvSvc->fillRep(address, object, type, autocommit);
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::Services::fillObj(castor::IAddress* address,
+                               castor::IObject* object,
+                               unsigned int type)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  cnvSvc->fillObj(address, object, type);
 }
 
 //------------------------------------------------------------------------------

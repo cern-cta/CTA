@@ -139,14 +139,19 @@ namespace castor {
         void reset() throw ();
 
         /**
-         * Fill the database with some of the objects refered by a given object.
-         * @param object the original object
+         * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
+         * @param address the place where to find the foreign representation
+         * @param object the original C++ object
          * @param type the type of the refered objects to store
+         * @param autocommit whether the changes to the database
+         * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**
@@ -197,6 +202,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member status
+        static const std::string s_insertStream2StreamStatusCodesStatementString;
+
+        /// SQL insert statement object for member status
+        oracle::occi::Statement *m_insertStream2StreamStatusCodesStatement;
+
+        /// SQL delete statement for member status
+        static const std::string s_deleteStream2StreamStatusCodesStatementString;
+
+        /// SQL delete statement object for member status
+        oracle::occi::Statement *m_deleteStream2StreamStatusCodesStatement;
+
+        /// SQL select statement for member status
+        static const std::string s_Stream2StreamStatusCodesStatementString;
+
+        /// SQL select statement object for member status
+        oracle::occi::Statement *m_Stream2StreamStatusCodesStatement;
 
       }; // end of class OraStreamCnv
 

@@ -139,14 +139,19 @@ namespace castor {
         void reset() throw ();
 
         /**
-         * Fill the database with some of the objects refered by a given object.
-         * @param object the original object
+         * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
+         * @param address the place where to find the foreign representation
+         * @param object the original C++ object
          * @param type the type of the refered objects to store
+         * @param autocommit whether the changes to the database
+         * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**

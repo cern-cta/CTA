@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 13:43:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -164,6 +164,33 @@ void castor::BaseCnvSvc::updateObj(castor::IObject* object)
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
   return conv->updateObj(object);
+}
+
+//------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::BaseCnvSvc::fillRep(castor::IAddress* address,
+                                 castor::IObject* object,
+                                 unsigned int type,
+                                 bool autocommit)
+  throw (castor::exception::Exception) {
+  // Look for an adapted converter
+  // The converter is always valid if no exception is thrown
+  castor::IConverter* conv = converter(object->type());
+  return conv->fillRep(address, object, type, autocommit);
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::BaseCnvSvc::fillObj(castor::IAddress* address,
+                                 castor::IObject* object,
+                                 unsigned int type)
+  throw (castor::exception::Exception) {
+  // Look for an adapted converter
+  // The converter is always valid if no exception is thrown
+  castor::IConverter* conv = converter(object->type());
+  return conv->fillObj(address, object, type);
 }
 
 // -----------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/11 13:43:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -147,14 +147,19 @@ namespace castor {
         void reset() throw ();
 
         /**
-         * Fill the database with some of the objects refered by a given object.
-         * @param object the original object
+         * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
+         * @param address the place where to find the foreign representation
+         * @param object the original C++ object
          * @param type the type of the refered objects to store
+         * @param autocommit whether the changes to the database
+         * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**

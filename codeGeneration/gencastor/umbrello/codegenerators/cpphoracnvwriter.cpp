@@ -37,10 +37,14 @@ bool CppHOraCnvWriter::init(UMLClassifier* c, QString fileName) {
 void CppHOraCnvWriter::writeFillRep() {
   // First write the main function, dispatching the requests
   writeDocumentation
-    ("Fill the database with some of the objects refered by a given object.",
+    (QString("Fill the foreign representation with some of the objects.") +
+     "refered by a given C++ object.",
      "",
-     QString("@param object the original object\n") +
+     QString("@param address the place where to find the foreign representation\n") +
+     "@param object the original C++ object\n" +
      "@param type the type of the refered objects to store\n" +
+     "@param autocommit whether the changes to the database\n" +
+     "should be commited or not\n" +
      "@exception Exception throws an Exception in case of error",
      *m_stream);
   *m_stream << getIndent()
@@ -54,7 +58,9 @@ void CppHOraCnvWriter::writeFillRep() {
                            "castor",
                            m_classInfo->packageName)
             << " object," << endl << getIndent()
-            << "                     unsigned int type)"
+            << "                     unsigned int type,"
+            << endl << getIndent()
+            << "                     bool autocommit)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -300,8 +306,46 @@ void CppHOraCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->first.first == MULT_N ||
+        as->first.second == COMPOS_PARENT ||
+        as->first.second == AGGREG_PARENT) {
       *m_stream << getIndent()
+                << "/// SQL insert statement for member "
+                << as->second.first
+                << endl << getIndent()
+                << "static const std::string s_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "StatementString;"
+                << endl << endl << getIndent()
+                << "/// SQL insert statement object for member "
+                << as->second.first
+                << endl << getIndent()
+                << "oracle::occi::Statement *m_insert"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement;"
+                << endl << endl << getIndent()
+                << "/// SQL delete statement for member "
+                << as->second.first
+                << endl << getIndent()
+                << "static const std::string s_delete"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "StatementString;"
+                << endl << endl << getIndent()
+                << "/// SQL delete statement object for member "
+                << as->second.first
+                << endl << getIndent()
+                << "oracle::occi::Statement *m_delete"
+                << capitalizeFirstLetter(as->second.third)
+                << "2"
+                << capitalizeFirstLetter(as->second.second)
+                << "Statement;"
+                << endl << endl << getIndent()
                 << "/// SQL select statement for member "
                 << as->second.first
                 << endl << getIndent()

@@ -77,9 +77,29 @@ const std::string castor::db::ora::OraDiskServerCnv::s_storeTypeStatementString 
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member fileSystems
+const std::string castor::db::ora::OraDiskServerCnv::s_insertDiskServer2FileSystemStatementString =
+"INSERT INTO rh_DiskServer2FileSystem (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member fileSystems
+const std::string castor::db::ora::OraDiskServerCnv::s_deleteDiskServer2FileSystemStatementString =
+"DELETE FROM rh_DiskServer2FileSystem WHERE Parent = :1 AND Child = :2";
+
 /// SQL select statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_DiskServer2FileSystemStatementString =
 "SELECT Child from rh_DiskServer2FileSystem WHERE Parent = :1";
+
+/// SQL insert statement for member status
+const std::string castor::db::ora::OraDiskServerCnv::s_insertDiskServer2DiskServerStatusCodeStatementString =
+"INSERT INTO rh_DiskServer2DiskServerStatusCode (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member status
+const std::string castor::db::ora::OraDiskServerCnv::s_deleteDiskServer2DiskServerStatusCodeStatementString =
+"DELETE FROM rh_DiskServer2DiskServerStatusCode WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member status
+const std::string castor::db::ora::OraDiskServerCnv::s_DiskServer2DiskServerStatusCodeStatementString =
+"SELECT Child from rh_DiskServer2DiskServerStatusCode WHERE Parent = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -92,7 +112,12 @@ castor::db::ora::OraDiskServerCnv::OraDiskServerCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_DiskServer2FileSystemStatement(0) {}
+  m_insertDiskServer2FileSystemStatement(0),
+  m_deleteDiskServer2FileSystemStatement(0),
+  m_DiskServer2FileSystemStatement(0),
+  m_insertDiskServer2DiskServerStatusCodeStatement(0),
+  m_deleteDiskServer2DiskServerStatusCodeStatement(0),
+  m_DiskServer2DiskServerStatusCodeStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -114,7 +139,10 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertDiskServer2FileSystemStatement);
     deleteStatement(m_DiskServer2FileSystemStatement);
+    deleteStatement(m_insertDiskServer2DiskServerStatusCodeStatement);
+    deleteStatement(m_DiskServer2DiskServerStatusCodeStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -123,7 +151,12 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertDiskServer2FileSystemStatement = 0;
+  m_deleteDiskServer2FileSystemStatement = 0;
   m_DiskServer2FileSystemStatement = 0;
+  m_insertDiskServer2DiskServerStatusCodeStatement = 0;
+  m_deleteDiskServer2DiskServerStatusCodeStatement = 0;
+  m_DiskServer2DiskServerStatusCodeStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -145,7 +178,8 @@ const unsigned int castor::db::ora::OraDiskServerCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraDiskServerCnv::fillRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                unsigned int type)
+                                                unsigned int type,
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::DiskServer* obj = 
     dynamic_cast<castor::stager::DiskServer*>(object);
@@ -159,6 +193,9 @@ void castor::db::ora::OraDiskServerCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -186,6 +223,12 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
     std::set<int>::iterator item;
     if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
       cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertDiskServer2FileSystemStatement) {
+        m_insertDiskServer2FileSystemStatement = createStatement(s_insertDiskServer2FileSystemStatementString);
+      }
+      m_insertDiskServer2FileSystemStatement->setDouble(1, obj->id());
+      m_insertDiskServer2FileSystemStatement->setDouble(2, (*it)->id());
+      m_insertDiskServer2FileSystemStatement->executeUpdate();
     } else {
       fileSystemsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -197,6 +240,12 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteDiskServer2FileSystemStatement) {
+      m_deleteDiskServer2FileSystemStatement = createStatement(s_deleteDiskServer2FileSystemStatementString);
+    }
+    m_deleteDiskServer2FileSystemStatement->setDouble(1, obj->id());
+    m_deleteDiskServer2FileSystemStatement->setDouble(2, *it);
+    m_deleteDiskServer2FileSystemStatement->executeUpdate();
   }
 }
 
@@ -446,7 +495,7 @@ castor::IObject* castor::db::ora::OraDiskServerCnv::createObj(castor::IAddress* 
     // Now retrieve and set members
     object->setName(rset->getString(1));
     object->setId((unsigned long long)rset->getDouble(2));
-    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
+    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(4));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

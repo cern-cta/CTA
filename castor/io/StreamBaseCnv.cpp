@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 16:44:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/12 14:44:51 $ $Author: sponcec3 $
  *
  *
  *
@@ -113,7 +113,8 @@ void castor::io::StreamBaseCnv::updateObj(castor::IObject* obj)
 //------------------------------------------------------------------------------
 void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
                                         castor::IObject* object,
-                                        unsigned int type)
+                                        unsigned int type,
+                                        bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "fillRep should never be called in case of streaming."

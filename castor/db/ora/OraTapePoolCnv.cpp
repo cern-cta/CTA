@@ -133,7 +133,8 @@ const unsigned int castor::db::ora::OraTapePoolCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapePoolCnv::fillRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              unsigned int type)
+                                              unsigned int type,
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapePool* obj = 
     dynamic_cast<castor::stager::TapePool*>(object);
@@ -144,6 +145,9 @@ void castor::db::ora::OraTapePoolCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 

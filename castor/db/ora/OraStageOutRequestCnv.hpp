@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/11 13:43:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -147,14 +147,19 @@ namespace castor {
         void reset() throw ();
 
         /**
-         * Fill the database with some of the objects refered by a given object.
-         * @param object the original object
+         * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
+         * @param address the place where to find the foreign representation
+         * @param object the original C++ object
          * @param type the type of the refered objects to store
+         * @param autocommit whether the changes to the database
+         * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**
@@ -250,11 +255,41 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL insert statement for member subRequests
+        static const std::string s_insertRequest2SubRequestStatementString;
+
+        /// SQL insert statement object for member subRequests
+        oracle::occi::Statement *m_insertRequest2SubRequestStatement;
+
+        /// SQL delete statement for member subRequests
+        static const std::string s_deleteRequest2SubRequestStatementString;
+
+        /// SQL delete statement object for member subRequests
+        oracle::occi::Statement *m_deleteRequest2SubRequestStatement;
+
         /// SQL select statement for member subRequests
         static const std::string s_Request2SubRequestStatementString;
 
         /// SQL select statement object for member subRequests
         oracle::occi::Statement *m_Request2SubRequestStatement;
+
+        /// SQL insert statement for member client
+        static const std::string s_insertRequest2IClientStatementString;
+
+        /// SQL insert statement object for member client
+        oracle::occi::Statement *m_insertRequest2IClientStatement;
+
+        /// SQL delete statement for member client
+        static const std::string s_deleteRequest2IClientStatementString;
+
+        /// SQL delete statement object for member client
+        oracle::occi::Statement *m_deleteRequest2IClientStatement;
+
+        /// SQL select statement for member client
+        static const std::string s_Request2IClientStatementString;
+
+        /// SQL select statement object for member client
+        oracle::occi::Statement *m_Request2IClientStatement;
 
       }; // end of class OraStageOutRequestCnv
 

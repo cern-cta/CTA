@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -149,7 +149,8 @@ const unsigned int castor::db::ora::OraReqIdCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
                                            castor::IObject* object,
-                                           unsigned int type)
+                                           unsigned int type,
+                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);
@@ -163,6 +164,9 @@ void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+  if (autocommit) {
+    cnvSvc()->getConnection()->commit();
   }
 }
 
@@ -258,7 +262,7 @@ void castor::db::ora::OraReqIdCnv::fillObjReqIdRequest(castor::stager::ReqId* ob
   u_signed64 requestId = (unsigned long long)rset->getDouble(1);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
-  // Check whether something shoudl be deleted
+  // Check whether something should be deleted
   if (0 != obj->request() &&
       (0 == requestId ||
        obj->request()->id() != requestId)) {
