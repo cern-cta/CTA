@@ -1,6 +1,9 @@
 /*
- * $Id: log.c,v 1.2 1999/07/23 16:05:48 obarring Exp $
+ * $Id: log.c,v 1.3 1999/07/26 11:27:03 obarring Exp $
  * $Log: log.c,v $
+ * Revision 1.3  1999/07/26 11:27:03  obarring
+ * Change call to localtime_r since HPUX is different
+ *
  * Revision 1.2  1999/07/23 16:05:48  obarring
  * Make MT safe. Add thread ID to log-line.
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: log.c,v 1.2 1999/07/23 16:05:48 obarring Exp $";
+static char cvsId[] = "$Id: log.c,v 1.3 1999/07/26 11:27:03 obarring Exp $";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -47,10 +50,6 @@ static char strftime_format[] = "%b %d %H:%M:%S";
 #else /* _WIN32 */
 static char strftime_format[] = "%b %e %H:%M:%S";
 #endif /* _WIN32 */
-
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-#define localtime(X) localtime_r(X,&tmstruc)
-#endif /* _REENTRANT || _THREAD_SAFE */
 
 static int pid;                 /* process identifier                   */
 static int logfd ;              /* logging file descriptor              */
@@ -147,11 +146,22 @@ void logit(int level, ...)
     if (loglevel >= level)  {
         format = va_arg(args, char *);
         (void) time(&clock);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+        (void)localtime_r(&clock,&tmstruc);
+        tp = &tmstruc;
+#else
         tp = localtime(&clock);
+#endif /* _REENTRANT || _THREAD_SAFE */
         (void) strftime(timestr,64,strftime_format,tp);
         pid = getpid();
         Cglobals_getTid(&Tid);
-        (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
+        if ( Tid < 0 ) 
+            /*
+             * Non-MT or main thread. Don't print thread ID.
+             */
+            (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
+        else
+            (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
         (void) vsprintf(line+strlen(line),format,args);
         if (strlen(logfilename)!=0) {
             if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
