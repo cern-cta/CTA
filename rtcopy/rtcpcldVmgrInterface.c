@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:04:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:48:36 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:04:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:48:36 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -95,6 +95,13 @@ int inChild;
 /** uuid's set by calling process (rtcpclientd:mainUuid, VidWorker:childUuid)
  */
 Cuuid_t childUuid, mainUuid;
+
+/** Global shared with rtcpcldNsInterface.c
+ *
+ * Specifies if we're going to support file segmentation or not. Ideally
+ * this should be specified through a fileclass attribute.
+ */
+int supportFileSegmentation = 1;
 
 static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
 
@@ -302,10 +309,15 @@ int rtcpcld_gettape(
                              );
     if ( rcGetTape != 0 ) {
       save_serrno = serrno;
-      if ( save_serrno != ENOSPC ) {
-        retryTimeENOSPC = 0;
-        retryTime = maxRetryTime;
-      } else {
+      switch (save_serrno) {
+      case ENOENT:
+      case EFAULT:
+      case EACCES:
+      case EINVAL:
+        retryTime = 0;
+        maxNbRetries = 0;
+        break;
+      case ENOSPC:
         /*
          * No space left in tape pool. Loop forever until somebody adds
          * some more tapes.
@@ -322,8 +334,12 @@ int rtcpcld_gettape(
           retryTimeENOSPC = maxRetryTimeENOSPC;
         }
         retryTime = retryTimeENOSPC;
-      }
-      
+        break;
+      default:
+        retryTimeENOSPC = 0;
+        retryTime = maxRetryTime;
+        break;
+      }      
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       DLF_LVL_ERROR,
@@ -552,26 +568,29 @@ int rtcpcld_tapeOK(
 }
 
 int rtcpcld_updateTape(
-                       tapereq,
+                       tape,
                        filereq,
                        endOfRequest,
                        rtcpc_serrno
                        )
-     rtcpTapeRequest_t *tapereq;
+     tape_list_t *tape;
      rtcpFileRequest_t *filereq;
      int endOfRequest, rtcpc_serrno;
 {
+  rtcpTapeRequest_t *tapereq;
   int rc, save_serrno, maxFseq;
   u_signed64 bytesWritten = 0;
   int compressionFactor = 0, filesWritten = 0, flags = 0;
   char *vmgrErrMsg = NULL, *statusStr = NULL;
   struct Cns_fileid *fileId = NULL;
 
-  if ( (tapereq == NULL) || (validTape(tapereq->vid, tapereq->side) == 0) ) {
+  if ( (tape == NULL) || 
+       (validTape(tape->tapereq.vid, tape->tapereq.side) == 0) ) {
     serrno = EINVAL;
     return(-1);
   }
   
+  tapereq = &(tape->tapereq);
   /**
    * \internal
    * No vmgr update needed when reading from tape
@@ -583,86 +602,105 @@ int rtcpcld_updateTape(
    */
   if ( endOfRequest == 0 ) {
     flags = TAPE_BUSY;
-  } else if ( rtcpc_serrno > 0 ) {
+  } else {
     /*
-     * Request finished. rtcpc_serrno should only be set if there was an error
+     * Make sure we don't override some important status already set
      */
-    switch (rtcpc_serrno) {
-    case ETWLBL:                          /* Wrong label type */
-    case ETWVSN:                          /* Wrong vsn */
-    case ETHELD:                          /* Volume held (TMS) */
-    case ETVUNKN:                         /* Volume unknown or absent (TMS) */
-    case ETOPAB:                          /* Operator cancel */
-    case ETNOSNS:                         /* No sense */
-      flags = DISABLED;
-      break;
-    case ETABSENT:                        /* Volume absent (TMS) */
-      flags = EXPORTED;
-      break;
-    case ETNXPD:                          /* File not expired */
-    case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
-      flags = TAPE_RDONLY;
-      break;
-    case ETARCH:                          /* Volume in inactive library */
-      flags = ARCHIVED;
-      break;
-    default:
-      break;
+    rc = rtcpcld_tapeOK(tape);
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+      return(-1);
+    }
+    flags = 0;
+    if ( rtcpc_serrno > 0 ) {
+      /*
+       * Request finished. rtcpc_serrno should only be set if there was an error
+       */
+      switch (rtcpc_serrno) {
+      case ETWLBL:                          /* Wrong label type */
+      case ETWVSN:                          /* Wrong vsn */
+      case ETHELD:                          /* Volume held (TMS) */
+      case ETVUNKN:                         /* Volume unknown or absent (TMS) */
+      case ETOPAB:                          /* Operator cancel */
+      case ETNOSNS:                         /* No sense */
+        flags = DISABLED;
+        break;
+      case ETABSENT:                        /* Volume absent (TMS) */
+        flags = EXPORTED;
+        break;
+      case ETNXPD:                          /* File not expired */
+      case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
+        flags = TAPE_RDONLY;
+        break;
+      case ETARCH:                          /* Volume in inactive library */
+        flags = ARCHIVED;
+        break;
+      default:
+        break;
+      }
     }
   }
 
   if ( filereq != NULL ) {
     (void)rtcpcld_getFileId(filereq,&fileId); /* Only for logging */
     /*
-     * Tape full?
+     * Only update the VMGR for this file if we are sure we're going to
+     * add the segment in the name server.
      */
-    if ( (filereq->cprc != 0) &&
-         ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
-         (filereq->err.errorcode == ENOSPC) ) {
-      flags = TAPE_FULL;
-    }
-
-    /*
-     * Exceeded number of tape fseq allowed by the label ?
-     */
-    maxFseq = maxTapeFseq(tapereq->label);
-    if ( (maxFseq > 0) && (filereq->tape_fseq >= maxFseq) ) {
-      flags = TAPE_RDONLY;
-    } else {
-      /**
-       * \internal
-       * Here follows some comments explaining from the old stager_castor.c:
-       *
-       * Note: by definition, here, bytes_in is > 0
-       * Please see [Bug #1723] of CASTOR. Here is a resume:
-       *
-       *  After checking with Olof;
-       *
-       *  It is confirmed that if
-       *  - no header label is writen, bytes_in > 0 (original size of disk file)
-       *    and host_bytes == 0
-       *  - header label ok but no data writen, bytes_in == 0 and host_bytes > 0
-       *  - header label ok and xxx (uncompressed way of speaking) bytes of data,
-       *    bytes_in is xxx, host_bytes is > 0 (should be > xxx btw)
-       *
-       *  A priori in the first case, bytes_in should be zero (then stager would
-       *  have never writen a fake segment in the name server tables), and this will
-       *  be probably fixed in a next version of CASTOR (major or minor, don't know).
-       *
-     *  Conclusion: we will write a segment only if both bytes_in and host_bytes
-     *  are > 0, segment (uncompressed) size if then bytes_in.
-     */
-      if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
-        bytesWritten = filereq->bytes_in;
-        if ( (filereq->bytes_out > 0) ) {
-          compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
-        }
-        filesWritten = 1;
+    if ( (tapereq->tprc == 0) &&
+         (((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
+          ((supportFileSegmentation == 1) && (filereq->cprc < 0) && 
+           ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
+           (filereq->err.errorcode == ENOSPC))) ) {
+      /*
+       * Tape full and we support file segmentation over multiple tapes?
+       */
+      if ( (supportFileSegmentation == 1) && 
+           (filereq->cprc != 0) &&
+           ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
+           (filereq->err.errorcode == ENOSPC) ) {
+        flags = TAPE_FULL;
       }
-    }
-    
-    if ( (endOfRequest == 1) && 
-         ((filereq->cprc != 0) || (tapereq->tprc != 0)) ) {
+      
+      /*
+       * Exceeded number of tape fseq allowed by the label ?
+       */
+      maxFseq = maxTapeFseq(tapereq->label);
+      if ( (maxFseq > 0) && (filereq->tape_fseq >= maxFseq) ) {
+        flags = TAPE_RDONLY;
+      } else {
+        /**
+         * \internal
+         * Here follows some comments explaining from the old stager_castor.c:
+         *
+         * Note: by definition, here, bytes_in is > 0
+         * Please see [Bug #1723] of CASTOR. Here is a resume:
+         *
+         *  After checking with Olof;
+         *
+         *  It is confirmed that if
+         *  - no header label is writen, bytes_in > 0 (original size of disk file)
+         *    and host_bytes == 0
+         *  - header label ok but no data writen, bytes_in == 0 and host_bytes > 0
+         *  - header label ok and xxx (uncompressed way of speaking) bytes of data,
+         *    bytes_in is xxx, host_bytes is > 0 (should be > xxx btw)
+         *
+         *  A priori in the first case, bytes_in should be zero (then stager would
+         *  have never writen a fake segment in the name server tables), and this will
+         *  be probably fixed in a next version of CASTOR (major or minor, don't know).
+         *
+         *  Conclusion: we will write a segment only if both bytes_in and host_bytes
+         *  are > 0, segment (uncompressed) size if then bytes_in.
+         */
+        if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
+          bytesWritten = filereq->bytes_in;
+          if ( (filereq->bytes_out > 0) ) {
+            compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
+          }
+          filesWritten = 1;
+        }
+      }
+    } else if ( (filereq->cprc != 0) || (tapereq->tprc != 0) ) {
       /**
        * \internal
        * Parity (recoverable and unrecoverable) and label errors may appear in
