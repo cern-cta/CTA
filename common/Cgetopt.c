@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.3 $ $Date: 2001/02/03 00:11:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.4 $ $Date: 2001/02/21 05:59:47 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -231,7 +231,6 @@ Cgetopt_long(nargc, nargv, options, long_options, index)
         return (BADARG);
       }
     } else { /* No matching argument */
-      Coptind--;
       if (options != NULL) {
         if ((Copterr) && (*options != ':'))
           (void)fprintf(stderr,
