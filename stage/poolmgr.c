@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.116 2001/03/22 10:59:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.117 2001/03/24 00:22:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.116 $ $Date: 2001/03/22 10:59:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.117 $ $Date: 2001/03/24 00:22:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2326,6 +2326,7 @@ int migpoolfiles(pool_p)
 
   for (i = 0; i < pool_p->migr->nfileclass; i++) {
     pool_p->migr->fileclass[i]->streams = 0;
+    pool_p->migr->fileclass[i]->orig_streams = 0;
   }
 
   sci = scs;
@@ -2503,6 +2504,7 @@ int migpoolfiles(pool_p)
           if (pool_p->migr->fileclass[ifileclass]->flag == 0) {
             /* This pool was not yet counted */
             pool_p->migr->fileclass[ifileclass]->streams++;
+            pool_p->migr->fileclass[ifileclass]->orig_streams++;
             pool_p->migr->fileclass[ifileclass]->flag = 1;
           }
         }
@@ -2616,24 +2618,25 @@ int migpoolfiles(pool_p)
       int nfree_stream;
       int has_fileclass_i;
       
-      if (pool_p->migr->fileclass[i]->streams <= 0) continue; /* This fileclass is not concerned */
+      if (pool_p->migr->fileclass[i]->orig_streams <= 0) continue; /* This fileclass is not concerned */
 
       /* We start with a number of virtual stream equal to the real number of streams */
       pool_p->migr->fileclass[i]->nfree_stream = 0;
 
-      /* We adapt the number of streams available v.s. number of stageout pools and current number of streams */
-      if ((nfree_stream = (pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives - pool_p->migr->fileclass[i]->streams)) <= 0) {
-        nfree_stream = 1;
-      } else {
-        nfree_stream++;             /* Because we will expand one of them - we count it also */
+      /* We adapt the number of streams available v.s. number of stageout pools and original number of streams for this fileclass */
+
+      /* First the following determines the total number of streams available for this fileclass */
+      nfree_stream = pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives / pool_p->migr->fileclass[i]->orig_streams;
+      if ((nfree_stream * pool_p->migr->fileclass[i]->orig_streams) != pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
+        /* We loose a bit precision when dividing, so the possible ++ below */
+        nfree_stream++;
+      }
+
+      /* We then take into account the fact that there can be multiple stageout pools */
+      if (npoolname_out > 1) {
+        /* npoolname > 1 : we loose a bit precision when dividing, so the possible ++ below */
         if ((nfree_stream /= npoolname_out) <= 0) {
           nfree_stream = 1;
-        } else {
-          if ((nfree_stream * npoolname_out) != (pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives - pool_p->migr->fileclass[i]->streams + 1)) {
-            if ((pool_p->migr->fileclass[i]->streams + nfree_stream) < pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
-              nfree_stream++;
-            }
-          }
         }
       }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.50 2001/03/21 16:22:19 jdurand Exp $
+ * $Id: stage.h,v 1.51 2001/03/24 00:22:20 jdurand Exp $
  */
 
 /*
@@ -381,6 +381,7 @@ struct fileclass {
 	char last_tppool_used[CA_MAXPOOLNAMELEN+1];
 	int  flag;                                      /* Flag preventing us to double count next member */
 	int  streams;                                   /* Number of streams using this fileclass while migrating */
+	int  orig_streams;                              /* Original number of streams using this fileclass while migrating */
 	int  nfree_stream;                              /* Nb of expanded streams while migrating */
 	int being_migr;                                 /* Number of files being migrated in this fileclass */
 	int  ifree_stream;                              /* Internal counter used to dispatch to new streams */
