@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/01 10:04:29 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/01 14:55:34 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.11 $
- * @date $Date: 2004/12/01 10:04:29 $
+ * @version $Revision: 1.12 $
+ * @date $Date: 2004/12/01 14:55:34 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.11 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.12 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1092,6 +1092,24 @@ EXTERN_C int DLL_DECL stage_open _PROTO ((const char *userTag,
                                           char **requestId,
                                           struct stage_options* opts));
 
+////////////////////////////////////////////////////////////
+//    stage_geturl                                        //
+////////////////////////////////////////////////////////////
+
+/**
+ * stage_geturl
+ * Parses the stage_io_response to return the URL accordingly
+ * \ingroup Functions
+ * 
+ * @param response   pointer to io response structure
+ *
+ * @returns The alloced URL, NULL otherwise
+ */
+EXTERN_C char* DLL_DECL stage_geturl _PROTO ((struct stage_io_fileresp *io));
+
+
+
+
 
 
 
@@ -1148,10 +1166,11 @@ EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
 
 ALLOC_STRUCT_LIST_DECL(prepareToGet_filereq)
 ALLOC_STRUCT_LIST_DECL(prepareToGet_fileresp)
-ALLOC_STRUCT_LIST_DECL(get_fileresp)
+ALLOC_STRUCT_LIST_DECL(io_fileresp)
 ALLOC_STRUCT_LIST_DECL(prepareToPut_filereq)
 ALLOC_STRUCT_LIST_DECL(prepareToPut_fileresp)
-ALLOC_STRUCT_LIST_DECL(put_fileresp)
+ALLOC_STRUCT_LIST_DECL(prepareToUpdate_filereq)
+ALLOC_STRUCT_LIST_DECL(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST_DECL(filereq)
 ALLOC_STRUCT_LIST_DECL(fileresp)
 ALLOC_STRUCT_LIST_DECL(updateFileStatus_filereq)
@@ -1164,10 +1183,11 @@ ALLOC_STRUCT_LIST_DECL(findrequest_resp)
 
 FREE_STRUCT_LIST_DECL(prepareToGet_filereq)
 FREE_STRUCT_LIST_DECL(prepareToGet_fileresp)
-FREE_STRUCT_LIST_DECL(get_fileresp)
+FREE_STRUCT_LIST_DECL(io_fileresp)
 FREE_STRUCT_LIST_DECL(prepareToPut_filereq)
 FREE_STRUCT_LIST_DECL(prepareToPut_fileresp)
-FREE_STRUCT_LIST_DECL(put_fileresp)
+FREE_STRUCT_LIST_DECL(prepareToUpdate_filereq)
+FREE_STRUCT_LIST_DECL(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST_DECL(filereq)
 FREE_STRUCT_LIST_DECL(fileresp)
 FREE_STRUCT_LIST_DECL(updateFileStatus_filereq)
@@ -1176,6 +1196,18 @@ FREE_STRUCT_LIST_DECL(filequery_resp)
 FREE_STRUCT_LIST_DECL(requestquery_resp)
 FREE_STRUCT_LIST_DECL(subrequestquery_resp)
 FREE_STRUCT_LIST_DECL(findrequest_resp)
+
+
+
+////////////////////////////////////////////////////////////
+//    Known MOVER protocols                               //
+////////////////////////////////////////////////////////////
+
+#define MOVER_PROTOCOL_RFIO "rfio"
+#define MOVER_PROTOCOL_ROOT "root"
+
+
+
 
 // XXX Add FindRequest
 /*\@}*/
