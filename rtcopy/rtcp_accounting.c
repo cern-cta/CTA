@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.16 $ $Date: 2002/05/30 12:52:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.17 $ $Date: 2002/06/26 13:47:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -210,10 +210,16 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     }
 
 #ifdef MONITOR
+
+    rtcp_log(LOG_DEBUG, "MONITOR - Before rtcopy status sent\n");
+
     Cmonit_send_rtcopy_status(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
                     stager_reqID,charcom,ifce,tapereq->vid,
                     KBytes,retry_nb,exitcode,client->clienthost,disksrv,
                     fseq,errmsgtxt, tapereq->unit);
+
+    rtcp_log(LOG_DEBUG, "MONITOR - After rtcopy status sent\n");
+
 #endif
 
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
