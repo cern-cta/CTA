@@ -2,10 +2,12 @@
 /* and is inserted at the beginning of the generated code           */
 
 /* SQL statements for object types */
-DROP INDEX I_ID2TYPE_FULL;
-DROP TABLE ID2TYPE;
-CREATE TABLE ID2TYPE (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_ID2TYPE_FULL on ID2TYPE (id, type);
+DROP INDEX I_Id2Type_type;
+DROP INDEX I_Id2Type_full;
+DROP TABLE Id2Type;
+CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
+CREATE INDEX I_Id2Type_full on Id2Type (id, type);
+CREATE INDEX main.I_Id2Type_type ON Id2Type(type);
 
 /* Sequence for indices */
 DROP SEQUENCE ids_seq;
