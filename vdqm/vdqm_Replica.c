@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.12 $ $Date: 2000/04/28 12:34:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.13 $ $Date: 2000/06/15 17:07:10 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -743,6 +743,8 @@ void *vdqm_ReplicationThread(void *arg) {
                 } CLIST_ITERATE_END(ReplicaList,rpl);
                 failed--;
                 (void)vdqm_CloseConn(&rpl->Replica.nw);
+                log(LOG_INFO,"vdqm_ReplicationThread() %s dropped out\n",
+                    rpl->Replica.host);
                 (void)DeleteReplica(&rpl->Replica);
             }
         }
