@@ -1,14 +1,14 @@
 /*
- * $Id: fclose.c,v 1.9 2001/06/20 09:59:57 baud Exp $
+ * $Id: fclose.c,v 1.10 2001/07/04 11:37:40 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.9 $ $Date: 2001/06/20 09:59:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.10 $ $Date: 2001/07/04 11:37:40 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -43,15 +43,16 @@ RFILE *fp;                      /* Remote file pointer                  */
     * Check if file is Hsm. For CASTOR HSM files, the file is
     * closed using normal RFIO (local or remote) close().
     */
-   HsmType = rfio_HsmIf_GetHsmType(fp->s,NULL);
-   if ( HsmType > 0 ) {
-       status = rfio_HsmIf_close(fp->s);
-       if ( HsmType != RFIO_HSM_CNS ) return(status);
-   }
    /*
     * The file is local : this is the only way to detect it !
     */
    if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
+      int fd = fileno((FILE *)fp);
+      HsmType = rfio_HsmIf_GetHsmType(fd,NULL);
+      if ( HsmType > 0 ) {
+          status = rfio_HsmIf_close(fd);
+          if ( HsmType != RFIO_HSM_CNS ) return(status);
+      }
       status= fclose((FILE *)fp) ;
       END_TRACE() ; 
       rfio_errno = 0;
@@ -61,6 +62,11 @@ RFILE *fp;                      /* Remote file pointer                  */
    /*
     * The file is remote
     */
+   HsmType = rfio_HsmIf_GetHsmType(fp->s,NULL);
+   if ( HsmType > 0 ) {
+       status = rfio_HsmIf_close(fp->s);
+       if ( HsmType != RFIO_HSM_CNS ) return(status);
+   }
    if ( fp->magic != RFIO_MAGIC ) {
       int fps = fp->s;
 
