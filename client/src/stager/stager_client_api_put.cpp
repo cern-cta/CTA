@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.7 2004/11/23 15:34:15 sponcec3 Exp $
+ * $Id: stager_client_api_put.cpp,v 1.8 2004/11/25 13:23:57 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.7 $ $Date: 2004/11/23 15:34:15 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.8 $ $Date: 2004/11/25 13:23:57 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -310,7 +310,12 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     // A vector. BEWARE, the responses must be de-allocated afterwards
     std::vector<castor::rh::Response *>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
-    client.sendRequest(&req, &rh);
+    std::string reqid = client.sendRequest(&req, &rh);
+
+    if (requestId != NULL) {
+      *requestId = strdup(reqid.c_str());
+    }
+    
 
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
