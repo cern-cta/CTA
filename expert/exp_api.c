@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.3 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.4 $ $Date: 2004/07/08 13:31:36 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -144,13 +144,7 @@ const char *buffer;
 int buf_length;
 {
         int n;
-	char func[32];
-	strcpy (func, "expert_send_data");
         if ((n = netwrite (exp_socket, (char *)buffer, buf_length)) <= 0) {
-		if (n == 0)
-		  exp_errmsg (func, EXP02, "send", sys_serrlist[SERRNO]);
-		else
-		  exp_errmsg (func, EXP02, "send", neterror());
 		(void) netclose (exp_socket);
 		serrno = SECOMERR;
 		return (-1);

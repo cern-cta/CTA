@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/06/30 16:37:45 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2004/07/08 13:31:36 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
 #include <Project.tmpl>
@@ -90,9 +90,8 @@ EXPERTD_OBJS	=	expertd.Osuf \
 			sendrep.Osuf \
 			explogit.Osuf
 EXPERTLIB_OBJS	=	send2expert.Osuf \
-			exp_errmsg.Osuf \
-			exp_api.Osuf \
-			exp_apiinit.Osuf
+			exp_api.Osuf
+
 
 all: $(CLIENT) $(PROGS_D)
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.3 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.4 $ $Date: 2004/07/08 13:31:36 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -76,7 +76,6 @@ int reql;
 		sin.sin_port = htons ((unsigned short)port);
 		if ((hp = Cgethostbyname (exphost)) == NULL) 
 		{
-		        exp_errmsg (func, EXP09, "Host unknown:", exphost);
 			serrno = SENOSHOST;
 			return (-1);
 		}
@@ -84,7 +83,6 @@ int reql;
 
 		if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) 
                 {
-		        exp_errmsg (func, EXP02, "socket", neterror());
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -95,12 +93,10 @@ int reql;
 #else
 			if (errno == ECONNREFUSED) {
 #endif
-			  	exp_errmsg (func, EXP00, exphost);
 				(void) netclose (s);
 				serrno = EEXPNACT;
 				return (-1);
 			} else {
-			  	exp_errmsg (func, EXP02, "connect", neterror());
 				(void) netclose (s);
 				serrno = SECOMERR;
 				return (-1);
@@ -113,10 +109,6 @@ int reql;
 
 	/* send request to the expert daemon */
 	if ((n = netwrite (s, reqp, reql)) <= 0) {
-		if (n == 0)
-		  exp_errmsg (func, EXP02, "send", sys_serrlist[SERRNO]);
-		else
-		  exp_errmsg (func, EXP02, "send", neterror());
 		(void) netclose (s);
 		serrno = SECOMERR;
 		return (-1);
@@ -140,17 +132,12 @@ int* reply_type;
 	int ecode;
         int n;
 	char *p;
-	char func[32];
 
-	strcpy(func, "getexpertrep");
+
 	/* get reply */
         s = socket;
 	/* read status */
 	if ((n = netread (s, repheader, 4 * LONGSIZE)) <= 0) {
-	  if (n == 0)
-	    exp_errmsg (func, EXP02, "recv", sys_serrlist[SERRNO]);
-	  else
-	    exp_errmsg (func, EXP02, "recv", neterror());
 	  (void) netclose (s);
 	  serrno = SECOMERR;
 	  return (-1);
