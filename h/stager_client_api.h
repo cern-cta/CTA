@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.16 $ $Release$ $Date: 2004/12/17 16:07:03 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/24 15:15:07 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.16 $
- * @date $Date: 2004/12/17 16:07:03 $
+ * @version $Revision: 1.17 $
+ * @date $Date: 2005/01/24 15:15:07 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.16 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.17 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -615,7 +615,7 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
 
 
 ////////////////////////////////////////////////////////////
-//    stage_putNext                                    //
+//    stage_putNext                                       //
 ////////////////////////////////////////////////////////////
 		       
 
@@ -688,6 +688,7 @@ struct stage_fileresp {
  * \ingroup Functions
  *
  * 
+ * @param putRequestId  ID of the related prepare to put request 
  * @param requests   Pointer to the list of file requests
  * @param nbreqs     Number of file requests in the list
  * @param responses  List of file responses, created by the call itself
@@ -700,58 +701,14 @@ struct stage_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq *requests,
+EXTERN_C int DLL_DECL stage_putDone _PROTO((char *putRequestId,
+					    struct stage_filereq *requests,
                                             int nbreqs,
                                             struct stage_fileresp **responses,
                                             int *nbresps,
                                             char **requestId,
                                             struct stage_options* opts));
 
-
-////////////////////////////////////////////////////////////
-//    stage_updateFileStatus                              //
-////////////////////////////////////////////////////////////
-
-
-/**
- * Request structure to update the status of a file in the CASTOR stager.
- */
-struct stage_updateFileStatus_filereq {
-  /**
-   * The name of the CASTOR file on which the put is done
-   */
-  char		*filename;
-
-  /**
-   * The desired status for the file
-   */
-  int    status;
-};
-
-/**
- * stage_updateFileStatus
- * Changes the status of the files to the one in the request,
- * (if the caller is authorized to do so).
- * \ingroup Functions
- * 
- * @param requests   Pointer to the list of file requests
- * @param nbreqs     Number of file requests in the list
- * @param responses  List of file responses, created by the call itself
- * @param nbresps    Number of file responses in the list
- * @param requestId  Reference number to be used by the client to look
- *                   up his request in the castor stager.
- * @param opts       CASTOR stager specific options 
- *
- * @returns 0 in case of success, -1 otherwise
- * @note requestId and responses are allocated by the call, and therefore
- *       should be freed by the client.
- */
-EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *requests,
-                                                     int nbreqs,
-                                                     struct stage_fileresp **responses,
-                                                     int *nbresps,
-                                                     char **requestId,
-                                                     struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -1180,7 +1137,6 @@ ALLOC_STRUCT_LIST_DECL(prepareToUpdate_filereq)
 ALLOC_STRUCT_LIST_DECL(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST_DECL(filereq)
 ALLOC_STRUCT_LIST_DECL(fileresp)
-ALLOC_STRUCT_LIST_DECL(updateFileStatus_filereq)
 ALLOC_STRUCT_LIST_DECL(query_req)
 ALLOC_STRUCT_LIST_DECL(filequery_resp)
 ALLOC_STRUCT_LIST_DECL(requestquery_resp)
@@ -1197,7 +1153,6 @@ FREE_STRUCT_LIST_DECL(prepareToUpdate_filereq)
 FREE_STRUCT_LIST_DECL(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST_DECL(filereq)
 FREE_STRUCT_LIST_DECL(fileresp)
-FREE_STRUCT_LIST_DECL(updateFileStatus_filereq)
 FREE_STRUCT_LIST_DECL(query_req)
 FREE_STRUCT_LIST_DECL(filequery_resp)
 FREE_STRUCT_LIST_DECL(requestquery_resp)
