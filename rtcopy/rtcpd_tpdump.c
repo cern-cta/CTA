@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.6 $ $Date: 2000/05/17 15:27:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.7 $ $Date: 2000/08/08 12:47:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -170,13 +170,8 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     CHECK_PROC_ERR(tape,NULL,"rtcpd_Mount() error");
 
     /*
-     * Position the volume
+     * We don't need to position the volume on dumptape
      */
-    TP_STATUS(RTCP_PS_POSITION);
-    rc = rtcpd_Position(tape,tape->file);
-    TP_STATUS(RTCP_PS_NOBLOCKING);
-    CHECK_PROC_ERR(tape,tape->file,"rtcpd_Position() error");
-
     TP_STATUS(RTCP_PS_POSITION);
     rc = rtcpd_Info(tape,tape->file);
     TP_STATUS(RTCP_PS_NOBLOCKING);
