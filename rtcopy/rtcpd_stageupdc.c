@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.55 $ $Date: 2004/08/02 10:37:11 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.56 $ $Date: 2004/08/02 10:41:44 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -412,6 +412,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             serrno = save_serrno;
             return(-1);
         }
+        /* only report empty path if stage_updc_tppos() was really called */
         if ( (tpPosCalled == 1) && 
              (*newpath == '\0') && (tapereq->mode == WRITE_DISABLE) &&
              (filereq->proc_status == RTCP_POSITIONED) &&
