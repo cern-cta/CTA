@@ -24,6 +24,15 @@ BEGIN
   UPDATE requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;
 END;
 
+ALTER TABLE SvcClass2TapePool
+  DROP CONSTRAINT fk_SvcClass2TapePool_Parent
+  DROP CONSTRAINT fk_SvcClass2TapePool_Child;
+ALTER TABLE DiskPool2SvcClass
+  DROP CONSTRAINT fk_DiskPool2SvcClass_Parent
+  DROP CONSTRAINT fk_DiskPool2SvcClass_Child;
+ALTER TABLE Stream2TapeCopy
+  DROP CONSTRAINT fk_Stream2TapeCopy_Parent
+  DROP CONSTRAINT fk_Stream2TapeCopy_Child;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY);
@@ -190,6 +199,15 @@ CREATE TABLE FileClass (name VARCHAR(2048), minFileSize INTEGER, maxFileSize INT
 DROP TABLE DiskServer;
 CREATE TABLE DiskServer (name VARCHAR(2048), id INTEGER PRIMARY KEY, status INTEGER);
 
+ALTER TABLE SvcClass2TapePool
+  ADD CONSTRAINT fk_SvcClass2TapePool_Parent FOREIGN KEY (Parent) REFERENCES SvcClass (id)
+  ADD CONSTRAINT fk_SvcClass2TapePool_Child FOREIGN KEY (Child) REFERENCES TapePool (id);
+ALTER TABLE DiskPool2SvcClass
+  ADD CONSTRAINT fk_DiskPool2SvcClass_Parent FOREIGN KEY (Parent) REFERENCES DiskPool (id)
+  ADD CONSTRAINT fk_DiskPool2SvcClass_Child FOREIGN KEY (Child) REFERENCES SvcClass (id);
+ALTER TABLE Stream2TapeCopy
+  ADD CONSTRAINT fk_Stream2TapeCopy_Parent FOREIGN KEY (Parent) REFERENCES Stream (id)
+  ADD CONSTRAINT fk_Stream2TapeCopy_Child FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code           */
 
@@ -204,6 +222,55 @@ CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
+
+/* Add unique constraint on castorFiles */
+ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
+
+/***************************************/
+/* Some triggers to prevent dead locks */
+/***************************************/
+
+/* Used to avoid LOCK TABLE TapeCopy whenever someone wants
+   to deal with the tapeCopies on a CastorFile.
+   Due to this trigger, locking the CastorFile is enough
+   to be safe */
+CREATE OR REPLACE TRIGGER tr_TapeCopy_CastorFile
+BEFORE INSERT OR UPDATE OF castorFile ON TapeCopy
+FOR EACH ROW WHEN (new.castorFile > 0)
+DECLARE
+  unused CastorFile%ROWTYPE;
+BEGIN
+  SELECT * INTO unused FROM CastorFile
+   WHERE id = :new.castorFile FOR UPDATE;
+END;
+
+/* Used to avoid LOCK TABLE TapeCopy whenever someone wants
+   to deal with the tapeCopies on a CastorFile.
+   Due to this trigger, locking the CastorFile is enough
+   to be safe */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
+BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
+FOR EACH ROW WHEN (new.castorFile > 0)
+DECLARE
+  unused CastorFile%ROWTYPE;
+BEGIN
+  SELECT * INTO unused FROM CastorFile
+   WHERE id = :new.castorFile FOR UPDATE;
+END;
+
+/* Used to avoid LOCK TABLE Stream2TapeCopy whenever someone wants
+   to deal with the TapeCopies of a Stream.
+   Due to this trigger, locking the Stream is enough
+   to be safe */
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Stream
+BEFORE INSERT ON Stream2TapeCopy
+FOR EACH ROW
+DECLARE
+  unused Stream%ROWTYPE;
+BEGIN
+  SELECT * INTO unused FROM Stream
+   WHERE id = :new.Parent FOR UPDATE;
+END;
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
@@ -371,6 +438,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   fid INTEGER;
   nh VARCHAR(2048);
   rFsWeight NUMBER;
+  unused CastorFile%ROWTYPE;
 BEGIN
  -- Get and uid, gid
  SELECT euid, egid INTO reuid, regid FROM SubRequest,
@@ -379,6 +447,11 @@ BEGIN
        SELECT id, euid, egid from StageUpdateRequest UNION
        SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- Take a lock on the CastorFile. Associated with triggers,
+ -- this guarantee we are the only ones dealing with its copies
+ SELECT CastorFile.* INTO unused FROM CastorFile, SubRequest
+  WHERE CastorFile.id = SubRequest.castorFile
+    AND SubRequest.id = srId FOR UPDATE;
  -- Try to find local DiskCopy
  dci := 0;
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
@@ -502,36 +575,35 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
                                                srId IN INTEGER,
                                                dcId OUT INTEGER) AS
   rpath VARCHAR(2048);
+  nbRes INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
+  unused CastorFile%ROWTYPE;
 BEGIN
- -- Lock the access to the TapeCopies and DiskCopies
- LOCK TABLE TapeCopy, DiskCopy, Id2Type IN exclusive mode;
- -- check if recreation is possible (exception if not)
- BEGIN
-   SELECT id INTO dcId FROM TapeCopy
-     WHERE status = 3 -- TAPECOPY_SELECTED
-     AND castorFile = cfId;
+ -- Lock the access to the CastorFile
+ -- This, together with triggers will avoid new TapeCopies
+ -- or DiskCopies to be added
+ SELECT * INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
+ -- check if recreation is possible for TapeCopies
+ SELECT count(*) INTO nbRes FROM TapeCopy
+   WHERE status = 3 -- TAPECOPY_SELECTED
+   AND castorFile = cfId;
+ IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    dcId := 0;
    COMMIT;
    RETURN;
- EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No data found means we can recreate
-   NULL;
- END;
- BEGIN
-   SELECT id INTO dcId FROM DiskCopy
-     WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
-     AND castorFile = cfId;
+ END IF;
+ -- check if recreation is possible for DiskCopies
+ SELECT count(*) INTO nbRes FROM DiskCopy
+   WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
+   AND castorFile = cfId;
+ IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    dcId := 0;
    COMMIT;
    RETURN;
- EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No data found means we can recreate
-   NULL;
- END;
+ END IF;
  -- delete all tapeCopies
  DELETE from TapeCopy WHERE castorFile = cfId;
  -- set DiskCopies to INVALID
@@ -563,7 +635,8 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
- -- update CastorFile
+ -- update CastorFile. This also takes a lock on it, insuring
+ -- with triggers that we are the only ones to deal with its copies
  UPDATE CastorFile set fileSize = fs WHERE id = cfId
   RETURNING fileId, nsHost INTO fId, nh;
  -- get uid, gid from Request
@@ -598,15 +671,11 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               fs IN INTEGER,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
-  -- try to find an existing file
-  SELECT id, fileSize INTO rid, rfs FROM CastorFile
-    WHERE fileId = fid AND nsHost = nh;
-EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
-    -- lock table to be atomic
-    LOCK TABLE CastorFile, Id2Type in exclusive mode;
-    -- retry the select in case a creation was done in between
+    -- try to find an existing file
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -616,24 +685,30 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  -- retry the select since a creation was done in between
+  SELECT id, fileSize INTO rid, rfs FROM CastorFile
+    WHERE fileId = fid AND nsHost = nh;
 END;
 
 /* PL/SQL method implementing resetStream */
 CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
-  fake NUMBER;
+  nbRes NUMBER;
+  unused Stream%ROWTYPE;
 BEGIN
-  -- needed to avoid dead locks. Anyway, this won't be
-  -- executed very often
-  LOCK TABLE Stream2TapeCopy, Stream IN exclusive mode;
-  SELECT Stream2TapeCopy.Child INTO fake
+  -- Used (together with a trigger) to avoid 
+  SELECT * INTO unused from Stream where id = sid FOR UPDATE;
+  SELECT count(*) INTO nbRes
     FROM Stream2TapeCopy, TapeCopy
     WHERE Stream2TapeCopy.Parent = sid
       AND Stream2TapeCopy.Child = TapeCopy.id
       AND status = 2 -- TAPECOPY_WAITINSTREAMS
       AND ROWNUM < 2;
-  UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  DELETE FROM Stream2TapeCopy WHERE Parent = sid;
-  DELETE FROM Stream WHERE id = sid;
-  UPDATE Tape SET Stream = 0 WHERE Stream = sid;
+  IF nbRes > 0 THEN
+    UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
+  ELSE
+    DELETE FROM Stream2TapeCopy WHERE Parent = sid;
+    DELETE FROM Stream WHERE id = sid;
+    UPDATE Tape SET Stream = 0 WHERE Stream = sid;
+  END IF;
 END;
