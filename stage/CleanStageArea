@@ -1,17 +1,36 @@
 #!/bin/sh
 #
-# $Id: CleanStageArea,v 1.1 2003/10/31 10:15:44 jdurand Exp $
+# $Id: CleanStageArea,v 1.2 2003/11/06 10:37:43 jdurand Exp $
 #
-# @(#)$RCSfile: CleanStageArea,v $ $Revision: 1.1 $ $Date: 2003/10/31 10:15:44 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: CleanStageArea,v $ $Revision: 1.2 $ $Date: 2003/11/06 10:37:43 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # Purge dataX stage directories
 #
 PATH=/bin:/usr/bin:/usr/bsd:/usr/etc:/usr/sbin:/usr/local/bin
+SYSCONFIGCLEANSTAGEAREA=/etc/sysconfig/CleanStageArea
 USAGE=">>> `basename $0` <valid-pool-name> [valid-host-name]."
 COUNT=1				# Number of files candidate for mandatory deletion
 NDAYS="+9 9 8 7 6 5 4 3 2"	# Number of days for retention
 NFSR=/shift			# Generic mount point
 TMPF=/tmp/purge			# Temporary prefix name
+REMOVE_FROM_HSM=    # empty by default
+
+if [ -r $SYSCONFIGCLEANSTAGEAREA ]; then
+    #
+    ## Source the configuration
+    #
+    . $SYSCONFIGCLEANSTAGEAREA
+    if [ "${RUN_CLEANSTAGEAREA}" != "yes" ]; then
+        echo "$SYSCONFIGCLEANSTAGEAREA says NO"
+        exit 1
+    fi
+    if [ "${REMOVE_FROM_HSM}" = "yes" ]; then
+        REMOVE_FROM_HSM=-remove_from_hsm
+    fi
+fi
+
+
+
 if [ -x /bin/gawk ]; then
   AWK=/bin/gawk
 elif [ -x /usr/bin/gawk ]; then
@@ -110,7 +129,7 @@ do
 	if [ -s ${TMPF}all_$$ ]; then
 #
 #			Clear appropriate entries
-		${FGREP} -v -f ${TMPF}keep_$$ ${TMPF}all_$$ 2>/dev/null | stageclr -c -i
+		${FGREP} -v -f ${TMPF}keep_$$ ${TMPF}all_$$ 2>/dev/null | stageclr -c -i ${REMOVE_FROM_HSM}
 		test $? -eq 0 && break
 	else
 		break
