@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.29 $ $Date: 2000/02/01 13:17:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.30 $ $Date: 2000/02/02 17:59:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1652,9 +1652,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() New indxp %d\n",indxp);
                     /*
                      * On tape read we always start with a brand
-                     * new buffer except if previous file was empty
+                     * new buffer except if previous file filled the last
+                     * buffer (in which case we start with a new buffer
+                     * anyway). 
                      */
-                    if ( prev_filesz != 0 ) indxp++;
+                    if ( (prev_filesz % (u_signed64)prev_bufsz) != 0 ) indxp++;
                     offset = 0;
                 }
                 if ( tapereq->mode == WRITE_ENABLE ) {
