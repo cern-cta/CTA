@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.47 2000/06/14 10:49:33 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.48 2000/06/16 14:38:38 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.47 $ $Date: 2000/06/14 10:49:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.48 $ $Date: 2000/06/16 14:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -470,7 +470,7 @@ main(argc,argv)
 #endif
 			stcp++;
 		} else if (stcp->status == (STAGEPUT | CAN_BE_MIGR)) {
-			stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This was a file for automatic migration */
 			update_migpool(stcp,1);
 #ifdef USECDB
@@ -480,7 +480,13 @@ main(argc,argv)
 #endif
 			stcp++;
 		} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This was a file for automatic migration */
+#ifdef USECDB
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
+#endif
 			update_migpool(stcp,1);
 			stcp++;
 		} else stcp++;
@@ -598,6 +604,9 @@ main(argc,argv)
 						break;
 					case STAGEMIGPOOL:
 						procmigpoolreq (req_data, clienthost);
+						break;
+					case STAGEFILCHG:
+						procfilchgreq (req_data, clienthost);
 						break;
 					default:
 						sendrep (rpfd, MSG_ERR, STG03, req_type);
@@ -1148,6 +1157,8 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
+						/* This was a file coming from automatic migration */
+						update_migpool(stcp,-1);
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
 					}
@@ -1719,6 +1730,60 @@ upd_stageout(req_type, upath, subreqid)
 #endif
 
  upd_stageout_return:
+	return (0);
+}
+
+upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
+		 int req_type;
+		 char *user;
+		 char *clienthost;
+		 uid_t uid;
+		 gid_t gid;
+		 char *upath;
+{
+	int found, c;
+	char *pool_user = "stage";
+	struct stat st;
+	struct stgcat_entry *stcp;
+	struct stgpath_entry *stpp;
+	struct waitf *wfp;
+	struct waitq *wqp = NULL;
+
+	found = 0;
+	/* first lets assume that internal and user path are different */
+	for (stpp = stps; stpp < stpe; stpp++) {
+		if (stpp->reqid == 0) break;
+		if (strcmp (upath, stpp->upath)) continue;
+		found = 1;
+		break;
+	}
+	if (found) {
+		for (stcp = stcs; stcp < stce; stcp++) {
+			if (stpp->reqid == stcp->reqid) break;
+		}
+	} else {
+		for (stcp = stcs; stcp < stce; stcp++) {
+			if (stcp->reqid == 0) break;
+			if (strcmp (upath, stcp->ipath)) continue;
+			found = 1;
+			break;
+		}
+	}
+	if (found == 0 || (stcp->status & 0xF0) != STAGED) {
+		sendrep (rpfd, MSG_ERR, STG22);
+		return (USERR);
+	}
+	stcp->status = STAGEOUT;
+	stcp->a_time = time (0);
+	stcp->nbaccesses++;
+	if (*upath && strcmp (stcp->ipath, upath))
+		create_link (stcp, upath);
+	savereqs();
+#ifdef USECDB
+	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+	}
+#endif
 	return (0);
 }
 
