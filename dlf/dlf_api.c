@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.12 $ $Date: 2004/07/05 10:04:56 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.13 $ $Date: 2004/07/08 09:30:33 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -95,6 +95,8 @@ const char *fac_name;
 	char *p;
 	int standalone;
 	int port;
+	int n;
+	dlf_log_dst_t *dst;
 	char dlfhost[CA_MAXHOSTNAMELEN + 1];
 	char dlfmsgfile[CA_MAXPATHLEN + 1];
 	char dlfupname[DLF_MAXFACNAMELEN + 1];
@@ -279,8 +281,13 @@ const char *fac_name;
 		return (-1);	
 	}	
 	g_dlf_fac_info.fac_no = fac_no;
-		
-	return(0);
+
+	n = 0;
+	for (dst = g_dlf_fac_info.dest_list.head; dst != NULL; dst = dst->next) {
+	        if (dst->severity_mask != 0) n++;
+	}
+	if (n == 0) return (1); /* No log destinations have been specified at all */
+	else return(0);
 }
 
 int DLL_DECL dlf_reinit(fac_name)
@@ -796,7 +803,13 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
 	static char time_fmt[] = "%04d%02d%02d%02d%02d%02d";
 	int n;
 	va_list ap;
-	
+
+	n = 0;
+	for (dst = g_dlf_fac_info.dest_list.head; dst != NULL; dst = dst->next) {
+	        if (dst->severity_mask & (1 << (severity-1))) n++;
+	}
+	if (n == 0) return (1); /* No log destinations have been specified for this severity */
+
 	if ((log_message = (dlf_log_message_t*)dlf_new_log_message()) == NULL)
 		return (-1);
 	
