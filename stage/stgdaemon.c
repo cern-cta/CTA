@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.144 2001/07/12 11:15:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.145 2001/07/12 17:32:14 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.144 $ $Date: 2001/07/12 11:15:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.145 $ $Date: 2001/07/12 17:32:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2628,7 +2628,7 @@ int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
 	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2];
-	char arg_key[6], arg_nbsubreqs[5], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
+	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	char arg_api_flag[2];
 	int c, i;
 	static int pfd[2];
@@ -3356,5 +3356,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Thursday 12 July, 2001 at 13:14:48 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 12 July, 2001 at 19:28:04 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
