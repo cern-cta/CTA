@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.13 2002/03/22 10:25:57 jdurand Exp $
+ * $Id: stager_castor.c,v 1.14 2002/04/03 13:25:24 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.13 $ $Date: 2002/03/22 10:25:57 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.14 $ $Date: 2002/04/03 13:25:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2394,6 +2394,7 @@ int stagewrt_castor_hsm_file() {
 
 void cleanup() {
 	/* Safety cleanup - executed ONLY in case of write-to-tape */
+	/* Note that the callback_forced_noretry flag is set only in... read-from-tape mode */
 	if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 		if ((vid[0] != '\0') && (side >= 0)) {
 #ifdef STAGER_DEBUG
