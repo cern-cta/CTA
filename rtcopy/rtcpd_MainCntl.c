@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.73 $ $Date: 2000/06/13 16:37:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.74 $ $Date: 2000/06/23 14:05:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -260,8 +260,10 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
     filereq = &tape->file->filereq;
     if ( *filereq->recfm != '\0' ) {
         LOGLINE_APPEND(" -F %s",filereq->recfm);
-        if ( filereq->convert > 0 &&
-             (filereq->convert & NOF77CW) != 0 ) LOGLINE_APPEND(",%s","-f77");
+        if ( filereq->convert > 0 && (filereq->convert & NOF77CW) != 0 ) {
+            if ( *filereq->recfm == 'F' ) LOGLINE_APPEND(",%s","-f77");
+            else if ( *filereq->recfm == 'U' ) LOGLINE_APPEND(",%s","bin");
+        }
     }
     if ( filereq->blocksize > 0 )
         LOGLINE_APPEND(" -b %d",filereq->blocksize);

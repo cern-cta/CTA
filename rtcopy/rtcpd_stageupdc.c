@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.40 $ $Date: 2000/06/14 10:14:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.41 $ $Date: 2000/06/23 14:05:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -99,6 +99,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
+    char recfm[10];   /* Record format (could include ,bin or ,-f77) */
     u_signed64 nb_bytes;
     int retry = 0;
 
@@ -121,6 +122,13 @@ int rtcpd_stageupdc(tape_list_t *tape,
                        (time_t)filereq->TEndPosition;
     if ( WaitTime < 0 ) WaitTime = 0;
     if ( TransferTime < 0 ) TransferTime = 0;
+
+    strcpy(recfm,filereq->recfm);
+    if ( (filereq->convert & NOF77CWD) != 0 ) {
+        if ( *filereq->recfm == 'U' ) strcat(recfm,",bin");
+        else if ( *filereq->recfm == 'F' ) strcat(recfm,",-f77");
+    }
+
 
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc(): fseq=%d, status=%d, concat=%d, err=%d\n",
              filereq->tape_fseq,filereq->proc_status,filereq->concat,filereq->err.errorcode);
@@ -151,7 +159,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      filereq->fid,
                      filereq->tape_fseq,
                      filereq->recordlength,
-                     filereq->recfm,
+                     recfm,
                      newpath);
 
             rc = stage_updc_tppos(filereq->stageID,
@@ -162,7 +170,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->fid,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
-                                  filereq->recfm,
+                                  recfm,
                                   newpath);
             save_serrno = serrno;
             if ( rc == -1 ) {
@@ -263,7 +271,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      filereq->fid,
                      filereq->tape_fseq,
                      filereq->recordlength,
-                     filereq->recfm,
+                     recfm,
                      newpath);
 
             rc = stage_updc_filcp(filereq->stageID,
@@ -278,7 +286,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->fid,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
-                                  filereq->recfm,
+                                  recfm,
                                   newpath);
             save_serrno = serrno;
 
