@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.9 $ $Date: 2000/06/13 14:50:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.10 $ $Date: 2001/05/28 12:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -31,7 +31,7 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[45];
+	char repbuf[52];
 	char *sbp;
 	struct vmgr_api_thread_info *thip;
 	char sendbuf[REQBUFSZ];
