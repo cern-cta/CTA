@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/13 12:58:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:48:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,6 @@
 #include "castor/rh/StageInRequest.h"
 #include "castor/rh/File.h"
 #include "castor/rh/Client.h"
-#include "castor/rh/Copy.h"
 #include "castor/Services.h"
 #include "castor/BaseAddress.h"
 #include "castor/db/DbAddress.h"
@@ -47,11 +46,7 @@ int main (int argc, char** argv) {
   struct Crh_Client_t *cl;
   struct C_IClient_t *clic;
   struct Crh_File_t* f1;
-  struct Crh_Copy_t* c1;
   struct Crh_File_t* f2;
-  struct Crh_Copy_t* c2;
-  struct Crh_Copy_t* c3;
-  struct Crh_Copy_t* c4;
   struct C_Services_t* svcs;
   struct C_BaseAddress_t *ad;
   struct C_IAddress_t *adia;
@@ -68,7 +63,6 @@ int main (int argc, char** argv) {
   frr  = Crh_FileRequest_getRequest(frfr);
   frio = Crh_Request_getIObject(frr);
   Crh_FileRequest_setDescription(frfr, "This is a test FileRequest");
-  Crh_FileRequest_setSuspended(frfr, 0);
     
   Crh_Client_create(&cl);
   clic = Crh_Client_getIClient(cl);
@@ -82,30 +76,10 @@ int main (int argc, char** argv) {
   Crh_FileRequest_addFiles(frfr, f1);
   Crh_File_setRequest(f1, frfr);
 
-  Crh_Copy_create(&c1);
-  Crh_Copy_setNum(c1, 45);
-  Crh_Copy_setParentFile(c1, f1);
-  Crh_File_addCopy(f1, c1);
-
   Crh_File_create(&f2);
   Crh_File_setName(f2, "2nd test File");
   Crh_FileRequest_addFiles(frfr, f2);
   Crh_File_setRequest(f2, frfr);
-
-  Crh_Copy_create(&c2);
-  Crh_Copy_setNum(c2, 46);
-  Crh_Copy_setParentFile(c2, f2);
-  Crh_File_addCopy(f2, c2);
-
-  Crh_Copy_create(&c3);
-  Crh_Copy_setNum(c3, 47);
-  Crh_Copy_setParentFile(c3, f2);
-  Crh_File_addCopy(f2, c3);
-
-  Crh_Copy_create(&c4);
-  Crh_Copy_setNum(c4, 48);
-  Crh_Copy_setParentFile(c4, f2);
-  Crh_File_addCopy(f2, c4);
 
   // Get a Services instance
   C_Services_create(&svcs);

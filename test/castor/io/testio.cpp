@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testio.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/13 12:58:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testio.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:48:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,7 +27,6 @@
 #include "castor/rh/StageInRequest.hpp"
 #include "castor/rh/File.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/rh/Copy.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
@@ -42,7 +41,6 @@ int main (int argc, char** argv) {
   // Prepare a request
   castor::rh::StageInRequest* fr = new castor::rh::StageInRequest();
   fr->setDescription("This is a test FileRequest");
-  fr->setSuspended(true);
   
   castor::rh::Client *cl = new castor::rh::Client();
   cl->setIpAddress(0606);
@@ -55,30 +53,10 @@ int main (int argc, char** argv) {
   fr->addFiles(f1);
   f1->setRequest(fr);
 
-  castor::rh::Copy* c1 = new castor::rh::Copy();
-  c1->setNum(45);
-  c1->setParentFile(f1);
-  f1->addCopy(c1);
-
   castor::rh::File* f2 = new castor::rh::File();
   f2->setName("2nd test File");
   fr->addFiles(f2);
   f2->setRequest(fr);
-
-  castor::rh::Copy* c2 = new castor::rh::Copy();
-  c2->setNum(46);
-  c2->setParentFile(f2);
-  f2->addCopy(c2);
-
-  castor::rh::Copy* c3 = new castor::rh::Copy();
-  c3->setNum(47);
-  c3->setParentFile(f2);
-  f2->addCopy(c3);
-
-  castor::rh::Copy* c4 = new castor::rh::Copy();
-  c4->setNum(48);
-  c4->setParentFile(f2);
-  f2->addCopy(c4);
 
   // Get a Services instance
   castor::Services* svcs = new castor::Services();
