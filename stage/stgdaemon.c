@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.44 2000/06/06 10:13:53 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.45 2000/06/06 13:02:51 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.44 $ $Date: 2000/06/06 10:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.45 $ $Date: 2000/06/06 13:02:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1202,12 +1202,14 @@ void create_link(stcp, upath)
 	char lpath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	struct stgpath_entry *newpath();
 	struct stgpath_entry *stpp;
+	int found_reqid;
 
 	found = 0;
 	for (stpp = stps; stpp < stpe; stpp++) {
 		if (stpp->reqid == 0) break;
 		if (strcmp (upath, stpp->upath)) continue;
 		found = 1;
+		found_reqid = stpp->reqid;
 		break;
 	}
 	if (! found) {
@@ -1230,12 +1232,11 @@ void create_link(stcp, upath)
 		if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
 			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 		}
-        /*
-	} else {
+	} else if (found_reqid != stcp->reqid) {
+		/* The link name is the same, but the reqid is not ! */
 		if (stgdb_upd_stgpath(&dbfd,stpp) != 0) {
 			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 		}
-        */
 	}
 #endif
 }
