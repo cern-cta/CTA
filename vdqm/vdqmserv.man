@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.1 $ $Date: 2001/12/03 10:52:49 $ CERN IT-ADC Olof Barring
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.2 $ $Date: 2001/12/04 12:17:43 $ CERN IT-ADC Olof Barring
 .\" Copyright (C) 2001 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMSERV 1 "$Date: 2001/12/03 10:52:49 $" CASTOR "VDQM server daemon"
+.TH VDQMSERV 1 "$Date: 2001/12/04 12:17:43 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserv \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -16,37 +16,46 @@ tape servers. The host name is normally configured in the clients at
 compile time through the \fBVdqmHost\fP
 macro in the "config/site.def" file in the CASTOR build directory.
 The host name can also be set through an entry \fBVDQM HOST\fP
-in the "/etc/shift.conf" file
-(that entry is mandatory on the server hosts when configuring a 
-VDQM replica, see below).
-Finally, it can be configured by setting the environment variable
-\fBVDQM_HOST\fP. The \fBvdqmserv\fP
+in the "/etc/shift.conf" file. While this is optional for VDQM
+client hosts, it is mandatory for the VDQM server hosts: the
+\fBvdqmserv\fP program will not start on a host where the \fBVDQM HOST\fP
+entry in "/etc/shift.conf" is missing or wrongly specified.
+.PP
+The \fBvdqmserv\fP
 listens to a well-known port number configured through the \fBvdqm\fP
 service (tcp) in the "/etc/services" file
 on all client and server hosts.
 .PP
 Because of its high importance for the functioning of the CASTOR tape
-services the
-.B vdqmserv
+services the \fBvdqmserv\fP
 service must be highly available. To reduce the impact of a crash of the
 central server node, VDQM therefore provides an inherent replication
 mechanism of the service. A VDQM
 .I replica
-is an instance of the
-.B vdqmserv
+is an instance of \fBvdqmserv\fP 
 running on a different host. There might be several replica instances.
 A VDQM replica is configured by adding the name of the host where the
 replica runs to the VDQM host configuration (see example below). The
 first host name in the list of hosts is always the primary server. 
-When configuring a VDQM replica the \fBVDQM HOST\fP entry in the
-"/etc/shift.conf" file (see above)
-.I must
-be added on both the primary server and replica hosts. Thus, when
-configuring a VDQM replica it is not enough to just set the
-\fBVdqmHost\fP macro when compiling the \fBvdqmserv\fP daemon.
-However, this is only the case for the VDQM server hosts while
-the VDQM clients (all hosts except the primary and replica hosts)
-can be configured at compile time.
+Since a VDQM replica is an instance of \fBvdqmserv\fP that is
+ready to take over in case the primary server goes down it has
+to be configured similarly to the primary server. This means that
+the name of the VDQM replica host must appear in the \fBVDQM HOST\fP 
+entry of the "/etc/shift.conf" file (see above) on both the primary
+and replica hosts.
+.PP
+The VDQM replica receives replication updates over a permanently
+open TCP connection to the primary server. If the TCP connection
+is dropped by the primary server, the replica will make a few
+retries to reconnect to the primary server. The number of retries
+is specified through the macro \fBVDQM_REPLICA_RETRIES\fP at compile
+time. In case the retries fail the replica will automatically enter
+production mode and begin to answer incoming client request. When the 
+primary server starts up it will connect to the first replica that
+replies and receive the full snapshot of the database. The contacted
+replica will thereafter re-enter replication mode (not responding to
+further incoming requests) while the primary server takes over the
+service.
 
 .PP
 The clients will always first try to
@@ -65,7 +74,7 @@ utility.
 
 .SH ENVIRONMENT
 The \fBvdqmserv\fP daemon does not take any arguments. Apart from the
-VDQM host list the \fBvdqmserv\fP daemon does not need any special 
+VDQM host list the \fBvdqmserv\fP daemon does normally not need any special 
 configuration. CASTOR tape server software uses the VDQM client API routine
 \fBvdqm_UnitStatus(3)\fP to publish existence of tape drives and their 
 status and CASTOR RTCOPY clients publish their requests through the
@@ -77,8 +86,24 @@ it can be started with debug logging level by setting the environment
 variable \fBLOG_PRIORITY\fP to \fB7\fP. This will cause intensive logging
 (producing huge log-files).
 
+.PP
+The following environment variables can be used to override existing
+defaults (mostly for debugging purpose):
+.TP
+.B VDQM_PORT
+override the default port number set in "/etc/services"
+.TP
+.B VDQM_THREAD_POOL
+set the VDQM thread pool size (default is 10 worker threads).
+.TP
+.B RTCP_PORT, RTCOPY_PORT, RTCOPYPORT
+override the default port number used by VDQM to contact the tape
+mover (RTCOPY server).
+.TP
+
 .SH FILES
 .TB 1.5i
+.TP
 .B /etc/shift.conf
 CASTOR configuration file
 .TP
