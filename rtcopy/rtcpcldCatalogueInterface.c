@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.70 $ $Release$ $Date: 2004/11/03 13:54:25 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.71 $ $Release$ $Date: 2004/11/03 14:40:23 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.70 $ $Release$ $Date: 2004/11/03 13:54:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.71 $ $Release$ $Date: 2004/11/03 14:40:23 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2179,7 +2179,9 @@ int rtcpcld_returnStream(
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Stream_t *stream = NULL;
   enum Cstager_TapeStatusCodes_t tpStatus;  
-  int rc = 0, save_serrno;
+  struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
+  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  int i, waitingFound = 0, rc = 0, save_serrno, nbTapeCopies = 0;
   ID_TYPE key = 0;
   int doCommit = 0;
 
@@ -2233,52 +2235,109 @@ int rtcpcld_returnStream(
       return(-1);
     }
 
+    /*
+     * We detach the stream from the tape. Delete the stream
+     * if there are no more tape copies waiting in stream, otherwise
+     * reset the stream status to pending so that a new tape
+     * can be selected.
+     */
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Stream_getIObject(stream);
-    Cstager_Stream_id(stream,&key);
-    Cstager_Stream_setStatus(stream,STREAM_PENDING);
-    Cstager_Stream_setTape(stream,NULL);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_RESETSTREAM),
-                    (struct Cns_fileid *)NULL,
-                    2,
-                    "",
-                    DLF_MSG_PARAM_TPVID,
-                    tape->tapereq.vid,
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT64,
-                    key
-                    );
-    doCommit = 0;
-    rc = C_Services_updateRep(
-                              *svcs,
-                              iAddr,
-                              iObj,
-                              doCommit
-                              );
-    if ( rc != -1 ) {
-      doCommit = 1;
-      rc = C_Services_fillRep(
-                              *svcs,
-                              iAddr,
-                              iObj,
-                              OBJ_Tape,
-                              doCommit
-                              );
-    }
+    rc = C_Services_fillObj(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_TapeCopy
+                            );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR((doCommit == 0 ? 
-                       "C_Services_updateRep()" :
-                       "C_Services_fillRep()"),
-                      C_Services_errorMsg(*svcs));
+      LOG_DBCALL_ERR("C_Services_updateObj()",
+                     C_Services_errorMsg(*svcs));
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
-    C_IAddress_delete(iAddr);
+    Cstager_Stream_tapeCopy(stream,&tapeCopyArray,&nbTapeCopies);     
+    Cstager_Stream_id(stream,&key);
+    for ( i=0; i<nbTapeCopies; i++ ) {
+      Cstager_TapeCopy_status(tapeCopyArray[i],&tapeCopyStatus);
+      if ( tapeCopyStatus == TAPECOPY_WAITINSTREAMS ) {
+        waitingFound = 1;
+        break;
+      }
+    }
+
+    Cstager_Stream_setTape(stream,NULL);
+    Cstager_Tape_setStream(tp,NULL);
+    doCommit = 0;
+    /*
+     * Detach the tape (we keep the tape in DB)
+     */
+    rc = C_Services_fillRep(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_Tape,
+                            doCommit
+                            );
+    if ( rc == 0 ) {
+      doCommit = 1;
+      if ( waitingFound == 1 ) {
+        Cstager_Stream_setStatus(stream,STREAM_PENDING);
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_RESETSTREAM),
+                        (struct Cns_fileid *)NULL,
+                        2,
+                        "",
+                        DLF_MSG_PARAM_TPVID,
+                        tape->tapereq.vid,
+                        "DBKEY",
+                        DLF_MSG_PARAM_INT64,
+                        key
+                        );
+        rc = C_Services_updateRep(
+                                  *svcs,
+                                  iAddr,
+                                  iObj,
+                                  doCommit
+                                  );
+      } else {
+        for ( i=0; i<nbTapeCopies; i++ ) {
+          Cstager_Stream_removeTapeCopy(stream,tapeCopyArray[i]);
+        }
+        rc = C_Services_fillRep(
+                                *svcs,
+                                iAddr,
+                                iObj,
+                                OBJ_TapeCopy,
+                                0
+                                );
+        if ( rc == 0 ) {
+          rc = C_Services_deleteRep(
+                                    *svcs,
+                                    iAddr,
+                                    iObj,
+                                    doCommit
+                                    );
+        }
+      }
+    }
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      LOG_DBCALL_ERR((doCommit == 0 ? 
+                      "C_Services_fillRep()" :
+                      (waitingFound == 1 ? 
+                       "C_Services_fillRep()" :
+                       "C_Services_deleteRep()")),
+                     C_Services_errorMsg(*svcs));
+      C_IAddress_delete(iAddr);
+      serrno = save_serrno;
+      return(-1);
+    }
   }
+  C_IAddress_delete(iAddr);
+
   return(0);
 }
 
