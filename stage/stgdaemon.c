@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.75 2000/11/11 08:45:22 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.76 2000/11/15 18:08:30 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.75 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.76 $ $Date: 2000/11/15 18:08:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1003,7 +1003,7 @@ build_ipath(upath, stcp, pool_user)
 			return (SYERR);
 		}
 	}
-	close (fd);
+	rfio_close (fd);
 	if (rfio_chown (stcp->ipath, stcp->uid, stcp->gid) < 0) {
 		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown",
 						 rfio_serror());
