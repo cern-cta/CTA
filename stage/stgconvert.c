@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.9 2000/01/09 10:27:32 jdurand Exp $
+ * $Id: stgconvert.c,v 1.10 2000/01/10 06:58:07 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,11 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.9 $ $Date: 2000/01/09 10:27:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.10 $ $Date: 2000/01/10 06:58:07 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
- * Conversion Program between SHIFT stager catalog and CASTOR/Cdb stager database
+ * Conversion Program between CASTOR/disk stager catalog and CASTOR/Cdb stager database
  */
 
 /* ============== */
@@ -35,7 +35,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.9 $ $Date: 20
 #include "osdep.h"
 #include "Cdb_api.h"                /* CASTOR Cdb Interface */
 #include "Cstage_db.h"              /* Generated STAGE/Cdb header */
-#include "stage.h"                  /* SHIFT's header */
+#include "stage.h"                  /* CASTOR's STAGE header */
 #include "serrno.h"                 /* CASTOR's serrno */
 #include "u64subr.h"
 
@@ -58,9 +58,9 @@ int warns = 1;
 #define FILE_MODE ( S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH )
 #endif
 
-#define CASTOR_TO_SHIFT -1
-#define SHIFT_CMP_CASTOR 0
-#define SHIFT_TO_CASTOR  1
+#define CASTOR_TO_CDB -1
+#define CDB_CMP_CASTOR 0
+#define CDB_TO_CASTOR  1
 
 #define CDB_USERNAME "Cdb_Stage_User"
 #define CDB_PASSWORD "Cdb_Stage_Password"
@@ -172,11 +172,11 @@ int main(argc,argv)
   extern int optind, opterr, optopt;
   int errflg = 0;
   int c;
-  int convert_direction = 0;         /* 1 : SHIFT -> CASTOR, -1 : CASTOR -> SHIFT */
+  int convert_direction = 0;         /* 1 : CDB -> CASTOR, -1 : CASTOR -> CDB */
   int help = 0;                      /* 1 : help wanted */
-  char *stgcat = NULL;               /* SHIFT's stager catalog path */
+  char *stgcat = NULL;               /* CASTOR's stager catalog path */
   int stgcat_fd = -1;
-  char *stgpath = NULL;              /* SHIFT's stager link catalog path */
+  char *stgpath = NULL;              /* CASTOR's stager link catalog path */
   int stgpath_fd = -1;
   struct stat stgcat_statbuff, stgpath_statbuff;
   char *Cdb_username = NULL;
@@ -279,11 +279,11 @@ int main(argc,argv)
     return(EXIT_SUCCESS);
   }
 
-  if (convert_direction != SHIFT_TO_CASTOR && 
-      convert_direction != CASTOR_TO_SHIFT &&
-      convert_direction != SHIFT_CMP_CASTOR) {
-    printf("?? -g option is REQUIRED and HAS to be either %d (SHIFT->CASTOR), %d (CASTOR->SHIFT) or %d (SHIFT cmp CASTOR), nothing else.\n",
-            SHIFT_TO_CASTOR,CASTOR_TO_SHIFT,SHIFT_CMP_CASTOR);
+  if (convert_direction != CDB_TO_CASTOR && 
+      convert_direction != CASTOR_TO_CDB &&
+      convert_direction != CDB_CMP_CASTOR) {
+    printf("?? -g option is REQUIRED and HAS to be either %d (CDB->CASTOR), %d (CASTOR->CDB) or %d (CDB cmp CASTOR), nothing else.\n",
+            CDB_TO_CASTOR,CASTOR_TO_CDB,CDB_CMP_CASTOR);
     stgconvert_usage();
     return(EXIT_FAILURE);
   }
@@ -297,7 +297,7 @@ int main(argc,argv)
   stgcat = argv[optind];
   stgpath = argv[optind+1];
 
-  if (convert_direction == CASTOR_TO_SHIFT) {
+  if (convert_direction == CASTOR_TO_CDB) {
     if (no_stgcat == 0) {
       if ((stgcat_fd = open(stgcat, FILE_OFLAG | O_RDWR | O_CREAT, FILE_MODE)) < 0) {
         printf("### open of %s error, %s\n",stgcat,strerror(errno));
@@ -348,16 +348,16 @@ int main(argc,argv)
     }
   }
 
-  /* If the user said CASTOR -> SHIFT conversion and one of those files is of length > 0   */
+  /* If the user said CASTOR -> CDB conversion and one of those files is of length > 0   */
   /* he will overwrite existing non-zero length files. We then check if that's really what */
   /* he wants to do.                                                                       */
-  if (convert_direction == CASTOR_TO_SHIFT) {
+  if (convert_direction == CASTOR_TO_CDB) {
     if (warns != 0) {
       if ((no_stgcat == 0  && stgcat_statbuff.st_size > 0) || 
           (no_stgpath == 0 && stgpath_statbuff.st_size > 0)) {
         int answer;
         
-        printf("### Warning : You are going to truncate a SHIFT catalog that is of non-zero length\n");
+        printf("### Warning : You are going to truncate a disk catalog that is of non-zero length\n");
         if (no_stgcat == 0) {
           printf("### Current %s length  : %s\n",stgcat,
                  u64tostr((u_signed64) stgcat_statbuff.st_size, tmpbuf, 0));
@@ -416,9 +416,9 @@ int main(argc,argv)
 
   Cdb_db_opened = -1;
 
-  if (convert_direction == SHIFT_TO_CASTOR) {
+  if (convert_direction == CDB_TO_CASTOR) {
     /* ========================== */
-    /* SHIFT -> CASTOR conversion */
+    /* CDB -> CASTOR conversion */
     /* ========================== */
     int i = 0;
     int nstcp = 0;
@@ -482,7 +482,7 @@ int main(argc,argv)
     if (no_stgcat == 0) {
       printf("\n*** CONVERTING stgcat CATALOG ***\n\n");
       
-      /* We loop on the SHIFT's stgcat catalog */
+      /* We loop on the stgcat catalog */
       /* ------------------------------------- */
       i = 0;
       for (stcp = stcs; stcp < stce; stcp++) {
@@ -569,7 +569,7 @@ int main(argc,argv)
     if (no_stgpath == 0) {
       printf("\n*** CONVERTING stgpath CATALOG ***\n\n");
 
-    /* We loop on the SHIFT's stgpath catalog */
+    /* We loop on the stgpath catalog */
     /* -------------------------------------- */
       i = 0;
       for (stpp = stps; stpp < stpe; stpp++) {
@@ -623,10 +623,10 @@ int main(argc,argv)
       }
     }
 
-  } else if (convert_direction == CASTOR_TO_SHIFT) {
+  } else if (convert_direction == CASTOR_TO_CDB) {
 
     /* ========================== */
-    /* CASTOR -> SHIFT conversion */
+    /* CASTOR -> CDB conversion */
     /* ========================== */
     
     int i = 0;
@@ -966,9 +966,9 @@ int main(argc,argv)
       }
     }
 
-  } else if (convert_direction == SHIFT_CMP_CASTOR) {
+  } else if (convert_direction == CDB_CMP_CASTOR) {
     /* =========================== */
-    /* SHIFT cmp CASTOR conversion */
+    /* CDB cmp CASTOR conversion */
     /* =========================== */
 
     int i = 0;
@@ -1029,7 +1029,7 @@ int main(argc,argv)
     }
 
     if (no_stgcat == 0) {
-      printf("\n*** COMPARING stgcat CATALOG for CASTOR and SHIFT ***\n\n");
+      printf("\n*** COMPARING stgcat CATALOG for CASTOR/disk and CASTOR/CDB ***\n\n");
 
       if (t_or_d != '\0' && t_or_d != 't') {
         goto no_tape_cmp;
@@ -1406,19 +1406,19 @@ void stgconvert_usage() {
          "\n"
          "Usage : stgconvert -g <number> [options] stgcat_path stgpath_path\n"
          "\n"
-         "  This program will convert from and to the SHIFT stager catalog\n"
+         "  This program will convert from and to the CASTOR/disk stager catalog\n"
          "and the CASTOR interfaced to Cdb database.\n"
          "\n"
          "Options are:\n"
          "  -h                Print this help and exit\n"
-         "  -b                Do a binary diff when doing SHIFT cmp CASTOR\n"
+         "  -b                Do a binary diff when doing CASTOR/Cdb cmp CASTOR/disk\n"
          "  -C                Do nothing about stgcat\n"
-         "  -c <number>       maximum number to convert from SHIFT to CASTOR for stgcat\n"
+         "  -c <number>       maximum number to convert from CASTOR/Cdb to/from CASTOR/disk for stgcat\n"
          "  -g <number>       Convert direction, where\n"
-         "                    -g %2d means: SHIFT -> CASTOR\n"
-         "                    -g %2d means: SHIFT cmp CASTOR\n"
-         "                    -g %2d means: CASTOR -> SHIFT\n"
-         "  -l <number>       maximum number to convert from SHIFT to CASTOR for stgpath\n"
+         "                    -g %2d means: CDB -> CASTOR\n"
+         "                    -g %2d means: CDB cmp CASTOR\n"
+         "                    -g %2d means: CASTOR -> CDB\n"
+         "  -l <number>       maximum number to convert from CDB to CASTOR for stgpath\n"
          "  -L                Do nothing about stgpath\n"
          "  -n                Output frequency. Default is every %d entries\n"
          "  -u                Cdb username. Defaults to \"%s\"\n"
@@ -1436,25 +1436,25 @@ void stgconvert_usage() {
          "       If this is not the case and if you don't know the Cdb username and/or password\n"
          "       either contact somebody who knows, either delete the Cdb password file, which\n"
          "       should be located at /usr/spool/db/Cdb.pwd\n"
-         "       If you specify SHIFT -> CASTOR conversion you are suggested to reset the\n"
+         "       If you specify CDB -> CASTOR conversion you are suggested to reset the\n"
          "       \"stage\" database inside Cdb. This is achieved by removing the directory\n"
          "       /usr/spool/db/stage/.\n"
          "\n"
-         " Example of SHIFT->CASTOR convertion:\n"
+         " Example of CDB->CASTOR convertion:\n"
          "  stgconvert -g %2d /usr/spool/stage/stgcat /usr/spool/stage/stgpath\n"
          "\n"
-         " Example of SHIFT/CASTOR comparison:\n"
+         " Example of CDB/CASTOR comparison:\n"
          "  stgconvert -g %2d /usr/spool/stage/stgcat /usr/spool/stage/stgpath\n"
          "\n"
-         " Example of CASTOR->SHIFT convertion:\n"
+         " Example of CASTOR->CDB convertion:\n"
          "  stgconvert -g %2d /usr/spool/stage/stgcat.new /usr/spool/stage/stgpath.new\n"
          "\n"
          "Comments to castor-support@listbox.cern.ch\n"
          "\n",
-         SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT,
+         CDB_TO_CASTOR,CDB_CMP_CASTOR,CASTOR_TO_CDB,
          FREQUENCY,
          CDB_USERNAME,CDB_PASSWORD,
-         SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT
+         CDB_TO_CASTOR,CDB_CMP_CASTOR,CASTOR_TO_CDB
          );
 }
 
