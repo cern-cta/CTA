@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.9 2000/09/20 14:48:59 obarring Exp $
+ * $Id: rfdir.c,v 1.10 2001/06/18 06:17:36 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.9 $ $Date: 2000/09/20 14:48:59 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.10 $ $Date: 2001/06/18 06:17:36 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -29,11 +29,13 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.9 $ $Date: 2000/0
 #include <grp.h>
 #include <rfio.h>
 
+#define SIXMONTHS (6*30*24*60*60)
 #ifndef PATH_MAX
 #include <Castor_limits.h>
 #define PATH_MAX CA_MAXPATHLEN + 1 /* == 1024 == PATH_MAX on IRIX */
 #endif
 
+time_t current_time;
 char ftype[7];
 int ftype_v[7];
 char fmode[9];
@@ -58,7 +60,7 @@ char *argv[];
   struct dirent *de;
   char modestr[11];
   char owner[20];
-  char t_creat[30];
+  char t_creat[14];
   struct passwd *pw;
   struct group *grp;
   struct tm *t_tm;
@@ -93,6 +95,7 @@ char *argv[];
       exit(2);
     }
   }
+  (void) time (&current_time);
 
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -127,9 +130,12 @@ char *argv[];
       if ( grp == NULL ) sprintf(gidstr,"%d",st.st_gid);
       else strcpy(gidstr,grp->gr_name);
       t_tm = localtime(&st.st_mtime);
-      strftime(t_creat,30,"%b %d %R",t_tm);
-      fprintf(stdout,"%s %3d %-8.8s %-8.8s %6d %s %s\n",modestr,st.st_nlink,uidstr,gidstr,
-	      (int)st.st_size,t_creat,dir);
+      if (st.st_mtime < current_time - SIXMONTHS || st.st_mtime > current_time + 60)
+         strftime(t_creat,13,"%b %d  %Y",t_tm);
+      else
+         strftime(t_creat,13,"%b %d %H:%M",t_tm);
+      fprintf(stdout,"%s %3d %-8.8s %-8.8s %8d %s %s\n",modestr,st.st_nlink,
+         uidstr,gidstr,(int)st.st_size,t_creat,dir);
     } else {
       list_dir(dir,recursively,multiple);
     }
@@ -193,7 +199,7 @@ int recursively,multiple;
   struct dirent *de;
   char modestr[11];
   char owner[20];
-  char t_creat[30];
+  char t_creat[14];
   struct passwd *pw;
   struct group *grp;
   struct tm *t_tm;
@@ -214,7 +220,7 @@ int recursively,multiple;
     if ( fd >= 0 ) rc = rfio_smstat(fd,filename,&st,reqtype);
     if ( rc < 0 && serrno == SEPROTONOTSUP ) 
       reqtype = RQST_MSTAT;
-    else close(fd);
+    else netclose(fd);
   } else {
     localdir = 1;
   }
@@ -267,9 +273,12 @@ int recursively,multiple;
       old_gid = st.st_gid;
     }
     t_tm = localtime(&st.st_mtime);
-    strftime(t_creat,30,"%b %d %R",t_tm);
-    fprintf(stdout,"%s %3d %-8.8s %-8.8s %6d %s %s\n",modestr,st.st_nlink,uidstr,gidstr,
-	    (int)st.st_size,t_creat,de->d_name);
+    if (st.st_mtime < current_time - SIXMONTHS || st.st_mtime > current_time + 60)
+         strftime(t_creat,13,"%b %d  %Y",t_tm);
+    else
+         strftime(t_creat,13,"%b %d %H:%M",t_tm);
+    fprintf(stdout,"%s %3d %-8.8s %-8.8s %8d %s %s\n",modestr,st.st_nlink,
+         uidstr,gidstr,(int)st.st_size,t_creat,de->d_name);
     if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") && 
 	 S_ISDIR(st.st_mode) && recursively ) rfio_pushdir(&ds,path);
   }
