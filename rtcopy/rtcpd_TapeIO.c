@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.25 $ $Date: 2000/06/15 16:19:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.26 $ $Date: 2000/08/01 13:07:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -163,7 +163,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
             break;
 #if defined(sun)
             /* 
-             * Should not happen :EACCES only occurs when the driver 
+             * Should not happen: EACCES only occurs when the driver 
              * gave a wrong information to tpmnt. 
              */
         case EACCES :
@@ -181,13 +181,13 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 
     if ( filereq != NULL ) {
         rtcpd_SetReqStatus(NULL,file,status,severity);
-        if ( (severity & RTCP_NORETRY) ) {
+        if ( (severity & RTCP_NORETRY) != 0 ) {
             /* 
              * If configured error action says noretry we
              * reset max_tpretry so that the client won't retry
              * on another server
              */
-            filereq->err.max_cpretry = -1;
+            filereq->err.max_cpretry = 0;
          } else {
             if ( (severity & RTCP_LOCAL_RETRY) || 
                  (severity & RTCP_RESELECT_SERV) )
@@ -222,8 +222,8 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     trec = file->trec;
     filereq = &file->filereq;
     status = errno;
-    skiponerr = (filereq->rtcp_err_action == SKIPBAD ? 1 : 0);
-    keepfile = (filereq->rtcp_err_action == KEEPFILE ? 1 : 0);
+    skiponerr = ((filereq->rtcp_err_action & SKIPBAD) != 0 ? 1 : 0);
+    keepfile = ((filereq->rtcp_err_action & KEEPFILE) != 0 ? 1 : 0);
 
     switch(errno) {
         case EIO:
@@ -238,12 +238,16 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
             if ( skiponerr == 0 || errcat != ETPARIT ) {
                 switch ( errcat ) { 
                 case ETPARIT:       /* Parity error              */
+                    if ( keepfile != 0 )
+                        severity = RTCP_RESELECT_SERV | RTCP_MNYPARY;
+                    else
+                        severity = RTCP_RESELECT_SERV | RTCP_USERR;
+
                     /*
                      * Check if there is any configured error action
                      * for this medium errors (like sending a mail to
                      * operator or raising an alarm).
                      */
-                    severity = RTCP_RESELECT_SERV | RTCP_USERR;
                     sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
                     if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
                         j = atoi(p);
@@ -257,8 +261,8 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
                     severity = RTCP_FAILED | RTCP_USERR;
                     break;
                 case ETUNREC:       /* Unrecoverable media error */ 
-                    if (trec && keepfile)
-                        severity = RTCP_RESELECT_SERV | RTCP_OK;
+                    if ( (trec > 0)  && (keepfile != 0) )
+                        severity = RTCP_FAILED | RTCP_MNYPARY;
                     else 
                         severity = RTCP_FAILED | RTCP_USERR;
                     break;  
@@ -284,7 +288,11 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
                 break;
             }
 
-            severity = RTCP_RESELECT_SERV | RTCP_USERR;
+            if ( keepfile != 0 )
+                severity = RTCP_RESELECT_SERV | RTCP_MNYPARY;
+            else
+                severity = RTCP_RESELECT_SERV | RTCP_USERR;
+
             /*
              * Check if there is any configured error action
              * for this medium errors (like sending a mail to
@@ -323,13 +331,13 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
 
     if ( filereq != NULL ) {
         rtcpd_SetReqStatus(NULL,file,status,severity);
-        if ( (severity & RTCP_NORETRY) ) {
+        if ( (severity & RTCP_NORETRY) != 0 ) {
             /* 
              * If configured error action says noretry we
              * reset max_tpretry so that the client won't retry
              * on another server
              */
-            filereq->err.max_cpretry = -1;
+            filereq->err.max_cpretry = 0;
          } else {
             if ( (severity & RTCP_LOCAL_RETRY) || 
                  (severity & RTCP_RESELECT_SERV) )
@@ -456,9 +464,9 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
         if ( tapereq->mode == WRITE_ENABLE && file->trec>0 ) {
             rtcp_log(LOG_DEBUG,"tclose(%d): write trailer label, tape path %s, flag %s, nb recs %d\n",
                 fd,filereq->tape_path,labelid[file->eovflag],file->trec);
-            if ( wrttrllbl(fd,filereq->tape_path,labelid[file->eovflag],
-                 file->trec) < 0 ) {
-                save_serrno = serrno;
+            if ( (rc = wrttrllbl(fd,filereq->tape_path,labelid[file->eovflag],
+                  file->trec)) < 0 ) {
+                save_serrno = -rc;
                 rc = -1;
 #if defined(_IBMR2)
                 if ( (errno == ENOSPC) || (errno == ENXIO) ) 
@@ -470,7 +478,8 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                 else {
                     errstr = rtcpd_CtapeErrMsg();
                     if ( errstr != NULL && *errstr != '\0' ) {
-                        (void)rtcpd_AppendClientMsg(NULL, file, errstr);
+                        (void)rtcpd_AppendClientMsg(NULL, file, RT126, 
+                            "CPDSKTP",errstr,file->trec+1);
                         if ( save_serrno > 0 )
                             rtcpd_SetReqStatus(NULL,file,save_serrno,
                                              RTCP_FAILED | RTCP_SYERR);
@@ -558,7 +567,8 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
  */
 int twrite(int fd,char *ptr,int len, 
            tape_list_t *tape, file_list_t *file) {
-    int     rc ;
+    int     rc, save_serrno ;
+    char *errstr;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -580,17 +590,33 @@ int twrite(int fd,char *ptr,int len,
                 fd,filereq->tape_path);
             errno = serrno = 0;
             if ( (rc = wrthdrlbl(fd,filereq->tape_path)) < 0 ) {
+                save_serrno = -rc;
 #if defined(_IBMR2)
                 if ( errno == ENOSPC || errno == ENXIO)
 #else
                 if ( errno == ENOSPC )
 #endif
                     serrno = ENOSPC;
-                else
-                    twerror(fd,tape,file) ;
+                else {
+                    errstr = rtcpd_CtapeErrMsg();
+                    if ( errstr != NULL && *errstr != '\0' ) {
+                        (void)rtcpd_AppendClientMsg(NULL, file, RT126,
+                            "CPDSKTP", errstr, file->trec+1);
+                        if ( save_serrno > 0 )
+                            rtcpd_SetReqStatus(NULL,file,save_serrno,
+                                             RTCP_FAILED | RTCP_SYERR);
+                        rtcp_log(LOG_ERR,"twrite(%d) wrthdrlbl(%s): %s\n",
+                                 fd,filereq->tape_path,errstr);
+                    }
+                }
+                rtcp_log(LOG_ERR,"twrite(%d) wrthdrlbl(%s): %s\n",
+                         fd,filereq->tape_path,sstrerror(save_serrno));
+
                 rtcp_log(LOG_DEBUG,
                "twrite(%d): wrthdrlbl(%d,%s) returns %d, errno=%d, serrno=%d\n",
                          fd,fd,filereq->tape_path,rc,errno,serrno);
+
+                serrno = save_serrno;
                 return(-1);
             }
         }
