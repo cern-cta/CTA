@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 09:59:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 12:02:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -36,6 +36,7 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.2 $ $Date: 1999
 #endif
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 #if defined(_WIN32)
 gettperror(tapefd, msgaddr)
 int tapefd;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:11:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 12:02:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.2 $ $Date: 1999
 #include <errno.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 readlbl(tapefd, path, lblbuf)
 int tapefd;
