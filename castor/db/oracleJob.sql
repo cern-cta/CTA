@@ -517,6 +517,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR2(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR2(2048), diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
+  TYPE GCLocalFileCore IS RECORD (fileName VARCHAR2(2048), diskCopyId INTEGER);
+  TYPE GCLocalFiles_Cur IS REF CURSOR RETURN GCLocalFileCore;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
 END castor;
