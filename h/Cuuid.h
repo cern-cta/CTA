@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.2 2003/09/24 14:52:31 sponcec3 Exp $
+ * $Id: Cuuid.h,v 1.3 2003/12/08 12:06:08 obarring Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.3 $ $Date: 2003/12/08 12:06:08 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -29,10 +29,10 @@ EXTERN_C void DLL_DECL Cuuid_create _PROTO((Cuuid_t *));
 EXTERN_C void DLL_DECL Cuuid_create_from_name _PROTO ((Cuuid_t *,
                                                        Cuuid_t, char *));
 EXTERN_C int  DLL_DECL Cuuid_compare _PROTO((Cuuid_t *, Cuuid_t *));
-EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, Cuuid_t));
-EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char** ptr, Cuuid_t uuid));
+EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, Cuuid_t *));
+EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char**, Cuuid_t *));
 
-#define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&ptr, uuid)
-#define  marshall_UUID(ptr,uuid)  _marshall_UUID(&ptr, uuid)
+#define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&ptr, &uuid)
+#define  marshall_UUID(ptr,uuid)  _marshall_UUID(&ptr, &uuid)
 
 #endif /* _CUUID_H */

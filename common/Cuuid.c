@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.3 2003/10/31 12:45:54 jdurand Exp $
+ * $Id: Cuuid.c,v 1.4 2003/12/08 12:06:22 obarring Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.3 $ $Date: 2003/10/31 12:45:54 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.4 $ $Date: 2003/12/08 12:06:22 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -445,15 +445,15 @@ int DLL_DECL Cuuid_compare(u1,u2)
 /* --------------- */
 void DLL_DECL _marshall_UUID (ptr, uuid)
      char **ptr;
-     Cuuid_t uuid;
+     Cuuid_t *uuid;
 {
   int i;
-  marshall_LONG(*ptr, uuid.time_low);
-  marshall_SHORT(*ptr, uuid.time_mid);
-  marshall_SHORT(*ptr, uuid.time_hi_and_version);
-  marshall_BYTE(*ptr, uuid.clock_seq_hi_and_reserved);
-  marshall_BYTE(*ptr, uuid.clock_seq_low);
-  for (i=0; i< 6; i++) marshall_BYTE(*ptr, uuid.node[i]);
+  marshall_LONG(*ptr, uuid->time_low);
+  marshall_SHORT(*ptr, uuid->time_mid);
+  marshall_SHORT(*ptr, uuid->time_hi_and_version);
+  marshall_BYTE(*ptr, uuid->clock_seq_hi_and_reserved);
+  marshall_BYTE(*ptr, uuid->clock_seq_low);
+  for (i=0; i< 6; i++) marshall_BYTE(*ptr, uuid->node[i]);
 }
 
 /* ---------------- */
@@ -461,15 +461,15 @@ void DLL_DECL _marshall_UUID (ptr, uuid)
 /* ---------------- */
 void DLL_DECL _unmarshall_UUID (ptr, uuid)
      char **ptr;
-     Cuuid_t uuid;
+     Cuuid_t *uuid;
 {
   int i;
-  unmarshall_LONG(*ptr, uuid.time_low);
-  unmarshall_SHORT(*ptr, uuid.time_mid);
-  unmarshall_SHORT(*ptr, uuid.time_hi_and_version);
-  unmarshall_BYTE(*ptr, uuid.clock_seq_hi_and_reserved);
-  unmarshall_BYTE(*ptr, uuid.clock_seq_low);
-  for (i=0; i< 6; i++) unmarshall_BYTE(*ptr, uuid.node[i]);
+  unmarshall_LONG(*ptr, uuid->time_low);
+  unmarshall_SHORT(*ptr, uuid->time_mid);
+  unmarshall_SHORT(*ptr, uuid->time_hi_and_version);
+  unmarshall_BYTE(*ptr, uuid->clock_seq_hi_and_reserved);
+  unmarshall_BYTE(*ptr, uuid->clock_seq_low);
+  for (i=0; i< 6; i++) unmarshall_BYTE(*ptr, uuid->node[i]);
 }
 
 
