@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.199 2002/10/19 08:16:19 jdurand Exp $
+ * $Id: procio.c,v 1.200 2002/10/30 16:20:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.199 $ $Date: 2002/10/19 08:16:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.200 $ $Date: 2002/10/30 16:20:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -204,7 +204,7 @@ int check_hsm_type_light _PROTO((char *, char *));
 #ifdef hpux
 int create_hsm_entry _PROTO(());
 #else
-int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
+int create_hsm_entry _PROTO((int *, struct stgcat_entry *, int, mode_t, int));
 #endif
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
@@ -219,7 +219,7 @@ extern int sendrep _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
-extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+extern void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern void delreq _PROTO((struct stgcat_entry *, int));
@@ -368,7 +368,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int isstaged_rc;
 	int isstaged_nomore = 0;
 	char this_tppool[CA_MAXPOOLNAMELEN+1];
-	
+	int save_rpfd = -1;
+
 	static struct Coptions longopts[] =
 	{
 		{"allocation_mode",    REQUIRED_ARGUMENT,  NULL,      'A'},
@@ -500,6 +501,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 		local_unmarshall_STRING(rbp, User);
 		if (User[0] != '\0') pool_user = User;
 		unmarshall_HYPER(rbp, flags);
+		/* We have to trap silent_flag right now */
+		if ((flags & STAGE_SILENT) == STAGE_SILENT) {
+			save_rpfd = rpfd;
+			rpfd = -1; /* From now on: silent mode */
+		}
 		if ((flags & STAGE_REQID) == STAGE_REQID) reqid_flag = 1;
 		unmarshall_LONG(rbp, openflags);
 		unmarshall_LONG(rbp, openmode);
@@ -1077,6 +1083,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if (noretry_flag != 0) {
 			/* Makes sure flags contains STAGE_NORETRY */
 			flags |= STAGE_NORETRY;
+		}
+		/* We have to trap silent_flag right now */
+		if (silent_flag != 0) {
+			save_rpfd = rpfd;
+			rpfd = -1; /* From now on: silent mode */
 		}
 	}
 
@@ -1781,9 +1792,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  wqp->noretry = noretry_flag;
 				  wqp->flags = flags;
 				  if (nowait_flag != 0) {
-					  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+					  /* User said --nowait - we force silent flag anyway and reset rpfd to N/A */
 					  wqp->silent = 1;
 					  wqp->rpfd = -1;
+				  } else if (save_rpfd >= 0) {
+					  /* User said only --silent : we prepare restore original rpfd */
+					  wqp->silent = 1;
+					  wqp->rpfd = -1;
+					  wqp->save_rpfd = save_rpfd;
 				  }
 			  }
 			  wfp->subreqid = stcp->reqid;
@@ -1880,9 +1896,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
-						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+						/* User said --nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
 						wqp->rpfd = -1;
+					} else if (save_rpfd >= 0) {
+						/* User said only --silent : we prepare restore original rpfd */
+						wqp->silent = 1;
+						wqp->rpfd = -1;
+						wqp->save_rpfd = save_rpfd;
 					}
 				}
 				wfp->subreqid = stcp->reqid;
@@ -1978,7 +1999,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 			if (api_out != 0) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 			if (copytape)
-				sendinfo2cptape (rpfd, stcp);
+				sendinfo2cptape (&rpfd, stcp);
 			if (*upath && strcmp (stcp->ipath, upath))
 				create_link (stcp, upath);
 			if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
@@ -2104,9 +2125,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  wqp->noretry = noretry_flag;
 					  wqp->flags = flags;
 					  if (nowait_flag != 0) {
-						  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+						  /* User said --nowait - we force silent flag anyway and reset rpfd to N/A */
 						  wqp->silent = 1;
 						  wqp->rpfd = -1;
+					  } else if (save_rpfd >= 0) {
+						  /* User said only --silent : we prepare restore original rpfd */
+						  wqp->silent = 1;
+						  wqp->rpfd = -1;
+						  wqp->save_rpfd = save_rpfd;
 					  }
 				  }
 				  wfp->subreqid = stcp->reqid;
@@ -2308,9 +2334,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
-						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+						/* User said --nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
 						wqp->rpfd = -1;
+					} else if (save_rpfd >= 0) {
+						/* User said only --silent : we prepare restore original rpfd */
+						wqp->silent = 1;
+						wqp->rpfd = -1;
+						wqp->save_rpfd = save_rpfd;
 					}
 				}
 				wfp->subreqid = stcp->reqid;
@@ -2330,7 +2361,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* Space successfully allocated - Try to get rid of WAITING_NS */
 				if (stcp->t_or_d == 'h') {
 					STAGE_TIME_START("create_hsm_entry");
-					c = create_hsm_entry((int) rpfd, (struct stgcat_entry *) stcp, (int) api_out, (mode_t) openmode, (int) 1);
+					c = create_hsm_entry(&rpfd, (struct stgcat_entry *) stcp, (int) api_out, (mode_t) openmode, (int) 1);
 					STAGE_TIME_END;
 					if (c != 0) goto reply;
 				}
@@ -2976,9 +3007,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
-						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+						/* User said --nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
 						wqp->rpfd = -1;
+					} else if (save_rpfd >= 0) {
+						/* User said only --silent : we prepare restore original rpfd */
+						wqp->silent = 1;
+						wqp->rpfd = -1;
+						wqp->save_rpfd = save_rpfd;
 					}
 				}
 				wfp->subreqid = stcp->reqid;
@@ -3128,6 +3164,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 	} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req) {
 		if ((c = fork_exec_stager (wqp)) != 0) goto reply;
 	}
+	if (save_rpfd >= 0) {
+		/* Next sendrep will be the STAGERC. This one is silent by default */
+		/* (from stgdaemon point of view). We have to restore now only */
+		/* the true rpfd in case user ran in --silent mode */
+		rpfd = save_rpfd;
+		save_rpfd = -1;
+	}
 	if (nowait_flag != 0) {
 		sendrep (&rpfd, STAGERC, req_type, magic, c);
 		rpfd = -1;
@@ -3151,6 +3194,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 			   reqid, req_type, 0, c, NULL, "", (char) 0);
 #endif
 	STAGE_TIME_END;
+	if (save_rpfd >= 0) {
+		/* Next sendrep will be the STAGERC. This one is silent by default */
+		/* (from stgdaemon point of view). We have to restore now only */
+		/* the true rpfd in case user ran in --silent mode */
+		rpfd = save_rpfd;
+		save_rpfd = -1;
+	}
 	STAGE_TIME_START("answer to client");
 	sendrep (&rpfd, STAGERC, req_type, magic, c);
 	STAGE_TIME_END;
@@ -4896,7 +4946,7 @@ int check_hsm_type_light(arg,t_or_d)
 }
 
 int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
-	int rpfd;
+	int *rpfd;
 	struct stgcat_entry *stcp;
 	int api_out;
 	mode_t openmode;
@@ -4920,10 +4970,10 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 		int save_serrno = serrno;
 		setegid(start_passwd.pw_gid);
 		seteuid(start_passwd.pw_uid);
-		sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
+		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
 		if (immediate_delete != 0) {
 			if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1, 0) < 0) {
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
 		serrno = save_serrno;
