@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_cmd.c,v 1.5 2001/11/07 13:23:44 jdurand Exp $
+ * $Id: send2stgd_cmd.c,v 1.6 2001/11/30 12:03:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.5 $ $Date: 2001/11/07 13:23:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.6 $ $Date: 2001/11/30 12:03:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -35,8 +35,8 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.5 $ $Date
 #include "serrno.h"
 #include "osdep.h"
 #include "Cnetdb.h"
-#include "stage.h"
-#include "stage_api.h"
+#include "stage_struct.h"
+#include "stage_messages.h"
 
 int nb_ovl;
 #ifndef _WIN32
@@ -44,7 +44,7 @@ struct sigaction sa;
 #endif
 
 extern int dosymlink _PROTO((char *, char *));
-void domunlink _PROTO((char *));
+extern void dounlink _PROTO((char *));
 #ifndef _WIN32
 void wait4child _PROTO(());
 #endif
@@ -171,7 +171,6 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 			else
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			rfio_unend(); /* See call to rfio_munlink() in domunlink() below */
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -193,7 +192,6 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 			else
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			rfio_unend(); /* See call to rfio_munlink() in domunlink() below */
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -223,13 +221,12 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 				link_rc = c;
 			break;
 		case RMSYMLINK:
-			domunlink (prtbuf);
+			dounlink (prtbuf);
 		}
 	}
 #if !defined(_WIN32)
 	while (nb_ovl > 0) sleep (1);
 #endif
-	rfio_unend(); /* See call to rfio_munlink() in domunlink() below */
 	return (c ? c : link_rc);
 }
 
@@ -243,43 +240,3 @@ void wait4child()
 		nb_ovl--;
 }
 #endif
-
-void domunlink (path)
-	char *path;
-{
-	char *filename;
-	char func[16];
-	char *host;
-#if !defined(_WIN32)
-	struct stat st;
-#endif
-	int remote;
-	
-	strcpy (func, "send2stgd");
-	remote = rfio_parseln (path, &host, &filename, NORDLINKS);
-	if (rfio_munlink (path)) {
-		if ((remote && rfio_errno == ENOENT) ||
-				(remote == 0 && errno == ENOENT)) return;
-#if !defined(_WIN32)
-		if (getuid() || (remote && rfio_errno != EACCES) ||
-				(remote == 0 && errno != EACCES) ||
-				strncmp (filename, "/afs/", 5) == 0) {
-#endif
-			stage_errmsg (func, STG02, path, "unlink", rfio_serror());
-			return;
-		}
-#if !defined(_WIN32)
-		if (rfio_lstat (path, &st) != 0) {
-			stage_errmsg (func, STG02, path, "unlink(lstat)", rfio_serror());
-			return;
-		}
-		setgid (st.st_gid);
-		setuid (st.st_uid);
-		/* We are in a new process - no need to to munlink() in here */
-		if (rfio_unlink (path)) {
-			stage_errmsg (func, STG02, path, "unlink", rfio_serror());
-			return;
-		}
-	}
-#endif
-}
