@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.6 2004/11/24 15:55:49 jdurand Exp $
+ * $Id: stager_constants.h,v 1.7 2004/11/25 11:02:20 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -9,6 +9,7 @@
 
 #define STAGER_DEFAULT_TIMEOUT      20                   /* Default send/recv timeout */
 #define STAGER_DEFAULT_FSUPDATE     30                   /* Default number of seconds between every fs update */
+#define STAGER_DEFAULT_FS_EXP_TIMEOUT 60                 /* Default timeout from expert system */
 #define STAGER_DEFAULT_SECURE_PORT 5515                  /* Default secure port number */
 #define STAGER_DEFAULT_PORT        5015                  /* Default port number */
 #define STAGER_DEFAULT_NOTIFY_PORT 55015                 /* Default notify port number */
