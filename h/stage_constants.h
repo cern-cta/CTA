@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.6 2001/05/31 12:08:36 jdurand Exp $
+ * $Id: stage_constants.h,v 1.7 2001/05/31 12:11:17 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -118,6 +118,7 @@
 #undef  WAITING_NS
 #endif
 #define	WAITING_NS    0x040000   /* file waiting for an entry in the HSM name server */
+#define	STAGE_RDONLY  0x100000   /* O_RDONLY file waiting for another being migrated */
 
 #ifdef  MSG_OUT
 #undef  MSG_OUT
@@ -144,7 +145,7 @@
 #define	SYERR 	  2	/* system error */
 
 #ifdef  UNERR
-#under  UNERR
+#undef  UNERR
 #endif
 #define	UNERR	  3	/* undefined error */
 
