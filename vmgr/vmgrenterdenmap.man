@@ -1,0 +1,59 @@
+.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.1 $ $Date: 2000/03/07 08:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERMODEL 1 "$Date: 2000/03/07 08:38:49 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrentermodel \- enter a new triplet model/media_letter/density in the CASTOR
+Volume Manager
+.SH SYNOPSIS
+.B vmgrentermodel
+.BI -d " density"
+.BI --ml " media_letter"
+.BI --mo " model"
+.SH DESCRIPTION
+.B vmgrentermodel
+enters a new triplet model/media_letter/density in the CASTOR Volume Manager.
+.TP
+.I density
+is alphanumeric. It must be at most CA_MAXDENLEN characters long.
+For example:
+.br
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
+),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrenterdenmap --mo 9840 --ml R -d 20GC
+vmgrenterdenmap --mo 8500 -d 8500C
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_enterdenmap(3)
