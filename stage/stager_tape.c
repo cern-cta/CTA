@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.9 2002/05/26 07:17:22 jdurand Exp $
+ * $Id: stager_tape.c,v 1.10 2002/06/03 13:03:58 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.9 $ $Date: 2002/05/26 07:17:22 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.10 $ $Date: 2002/06/03 13:03:58 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1118,17 +1118,27 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			fl[j_ok].filereq.retention = stcp->u1.t.retentd;
 		}
 		fl[j_ok].filereq.def_alloc = Aflag;
-		if ((stcp->u1.t.E_Tflags & SKIPBAD) == SKIPBAD) {
-			fl[j_ok].filereq.rtcp_err_action |= SKIPBAD;
+		if ((stcp->u1.t.E_Tflags & (SKIPBAD|KEEPFILE)) != 0) {
+			/* We overwrite the default that is -1 */
+			fl[j_ok].filereq.rtcp_err_action = 0;
+
+			if ((stcp->u1.t.E_Tflags & SKIPBAD) == SKIPBAD) {
+				fl[j_ok].filereq.rtcp_err_action |= SKIPBAD;
+			}
+			if ((stcp->u1.t.E_Tflags & KEEPFILE) == KEEPFILE) {
+				fl[j_ok].filereq.rtcp_err_action |= KEEPFILE;
+			}
 		}
-		if ((stcp->u1.t.E_Tflags & KEEPFILE) == KEEPFILE) {
-			fl[j_ok].filereq.rtcp_err_action |= KEEPFILE;
-		}
-		if ((stcp->u1.t.E_Tflags & IGNOREEOI) == IGNOREEOI) {
-			fl[j_ok].filereq.tp_err_action |= IGNOREEOI;
-		}
-		if ((stcp->u1.t.E_Tflags & NOTRLCHK) == NOTRLCHK) {
-			fl[j_ok].filereq.tp_err_action |= NOTRLCHK;
+		if ((stcp->u1.t.E_Tflags & (IGNOREEOI|NOTRLCHK)) != 0) {
+			/* We overwrite the default that is -1 */
+			fl[j_ok].filereq.tp_err_action = 0;
+
+			if ((stcp->u1.t.E_Tflags & IGNOREEOI) == IGNOREEOI) {
+				fl[j_ok].filereq.tp_err_action |= IGNOREEOI;
+			}
+			if ((stcp->u1.t.E_Tflags & NOTRLCHK) == NOTRLCHK) {
+				fl[j_ok].filereq.tp_err_action |= NOTRLCHK;
+			}
 		}
 		if (stcp->charconv > 0) {
 			fl[j_ok].filereq.convert = stcp->charconv;
