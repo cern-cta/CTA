@@ -47,7 +47,7 @@ SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf $(SEC
 
 CSEC_MECHLIST=CSEC_Mechlist
 CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
-LDFLAGS = SecLibsDir SecLibs
+LDFLAGS =  SecLibs
 
 COMM######################### DEPENDENCY LIBRARIES ###############
  
@@ -76,7 +76,7 @@ Csec_api_loader.Osuf: Csec_api_loader.c
 
 #if UseGSI
 SharedLibraryTargetName(Csec_plugin_GSI): $(SECLIB_UTIL_OBJS) Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf
-	ld  $(SHLIBLDFLAGS) -o $@ $?  SecLibsDirGSI SecLibsGSI -lshift
+	ld  $(SHLIBLDFLAGS) -o $@ $?   SecLibsGSI -lshift
 
 Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
 	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
@@ -87,7 +87,7 @@ Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
 
 #if UseKRB5
 SharedLibraryTargetName(Csec_plugin_KRB5): $(SECLIB_UTIL_OBJS) Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf
-	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsDirKRB5 SecLibsKRB5 -lshift
+	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsKRB5 -lshift
 
 Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
 	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
@@ -98,7 +98,7 @@ Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
 
 #if UseKRB4
 SharedLibraryTargetName(Csec_plugin_KRB4): $(SECLIB_UTIL_OBJS) Csec_plugin_KRB4.Osuf 
-	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsDirKRB4 SecLibsKRB4 -lshift
+	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsKRB4 -lshift
 
 Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c 
 	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_plugin_KRB4.c
