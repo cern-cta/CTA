@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.31 $ $Date: 2000/09/25 10:26:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.32 $ $Date: 2000/10/06 07:39:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -486,7 +486,7 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
                 sleep(60);
                 *req->tape->tapereq.unit = '\0';
                 retval = 0;
-            }
+            } else break;
         } else break;
     }
     (void) rtcp_SendRC(s,hdr,&retval,req);
