@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.31 2001/04/18 16:00:48 jdurand Exp $
+ * $Id: procclr.c,v 1.32 2001/06/21 09:40:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.31 $ $Date: 2001/04/18 16:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.32 $ $Date: 2001/06/21 09:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -18,6 +18,9 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.31 $ $Date: 200
 #include <sys/types.h>
 #include <grp.h>
 #include <string.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -35,6 +38,13 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.31 $ $Date: 200
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "rfio_api.h"
+
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 void procclrreq _PROTO((int, int, char *, char *));
 
@@ -101,6 +111,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	char *q;
 	char *rbp;
 	int rflag = 0;
+	int silentflag = 0;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	uid_t uid;
@@ -111,7 +122,11 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 	int t_or_d, nstcp_input, nstpp_input;
+	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+	int save_rpfd;
 
+	c = 0;
+	save_rpfd = rpfd;
 	poolname[0] = '\0';
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -134,7 +149,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		c = SYERR;
 		goto reply;
 	}
-	strcpy (group, gr->gr_name);
+	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
+	group[CA_MAXGRPNAMELEN] = '\0';
 
 	if (req_type > STAGE_00) {
 		u_signed64 flags;
@@ -230,17 +246,12 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if ((flags & STAGE_CONDITIONAL) == STAGE_CONDITIONAL) cflag = 1;
-		if ((flags & STAGE_FORCE) == STAGE_FORCE) {
-			if (uid != 0) {
-				/* The -F option is only valid from admin */
-				sendrep (rpfd, MSG_ERR, STG103);
-				c = USERR;
-				goto reply;
-			} else {
-				Fflag = 1;
-			}
-		}
+		if ((flags & STAGE_FORCE) == STAGE_FORCE) Fflag = 1;
 		if ((flags & STAGE_REMOVEHSM) == STAGE_REMOVEHSM) rflag = 1;
+		if ((flags & STAGE_SILENT) == STAGE_SILENT) {
+			silentflag = 1;
+			rpfd = -1;
+		}
 		/* Print the flags */
 		stglogflags(func,flags);
 	} else {
@@ -254,13 +265,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				cflag++;
 				break;
 			case 'F':
-				if (uid != 0) {
-					/* The -F option is only valid from admin */
-					sendrep (rpfd, MSG_ERR, STG103);
-					errflg++;
-				} else {
-					Fflag++;
-				}
+				Fflag++;
 				break;
 			case 'G':
 				break;
@@ -465,12 +470,46 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			stcp += i;
 		}
 		if (! found) {
-			sendrep (rpfd, MSG_ERR, STG33, (mfile ? mfile : (xfile ? xfile : "")), "file not found");
-			c = USERR;
+			if (mfile && rflag && Fflag) {
+				/* User wanted anyway to delete the HSM file */
+				/* RFIO is anyway already interfaced to the name server - we use immediately its interface */
+				setegid(gid);
+				seteuid(uid);
+				if (ISCASTOR(mfile)) {
+					if (Cns_unlink (mfile) == 0) {
+						stglogit (func, STG95, mfile, user);
+					} else {
+						sendrep (rpfd, MSG_ERR, STG02, mfile, "Cns_unlink", sstrerror(serrno));
+						if (req_type > STAGE_00) {
+							c = serrno;
+						} else {
+							c = ((serrno == EINVAL) || (serrno == EPERM) || (serrno == EACCES)) ? USERR : SYERR;
+						}
+					}
+				} else {
+					if (rfio_unlink (mfile) == 0) {
+						stglogit (func, STG95, mfile, user);
+					} else {
+						int save_serrno = rfio_serrno();
+						sendrep (rpfd, MSG_ERR, STG02, mfile, "rfio_unlink", rfio_serror());
+						if (req_type > STAGE_00) {
+							c = save_serrno;
+						} else {
+							c = ((save_serrno == EINVAL) || (save_serrno == EPERM) || (save_serrno == EACCES)) ? USERR : SYERR;
+						}
+					}
+				}
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
+			} else {
+				sendrep (rpfd, MSG_ERR, STG33, (mfile ? mfile : (xfile ? xfile : "")), "file not found");
+				c = USERR;
+			}
 		}
 	}
  reply:
 	if (argv != NULL) free (argv);
+	rpfd = save_rpfd;
 	sendrep (rpfd, STAGERC, STAGECLR, c);
 }
 
@@ -546,7 +585,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 				return (0);
 			}
 		}
-		if (Fflag) {
+		if (Fflag && ISROOT(uid,gid)) {
 			sendrep (rpfd, MSG_ERR,
 					 "Status=0x%x but req not in waitq - Deleting reqid %d\n",
 					 stcp->status, stcp->reqid);
