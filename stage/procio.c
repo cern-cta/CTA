@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.195 2002/09/20 12:25:35 jdurand Exp $
+ * $Id: procio.c,v 1.196 2002/09/23 10:59:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.195 $ $Date: 2002/09/20 12:25:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.196 $ $Date: 2002/09/23 10:59:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -5063,9 +5063,9 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed,yetdone_Cns_statx_flag,yetdon
 					 stcp->ipath);
 			return(-1);
 		}
-		/* We will have to create it */
+		/* We will have to create it unless we are said to not do so */
 		if (nohsmcreat_flag) {
-			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "", strerror(save_serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", strerror(save_serrno));
 			return(save_serrno);
 		}
 		forced_Cns_creatx = forced_Cns_setfsize = 1;
