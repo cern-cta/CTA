@@ -24,8 +24,8 @@
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_MESSAGEACK_H
-#define CASTOR_IO_MESSAGEACK_H
+#ifndef CASTOR_IO_MESSAGEACK_HPP
+#define CASTOR_IO_MESSAGEACK_HPP
 
 // Include Files
 #include "castor/Exception.hpp"
@@ -148,4 +148,4 @@ namespace castor {
 
 }; // end of namespace castor
 
-#endif // CASTOR_IO_MESSAGEACK_H
+#endif // CASTOR_IO_MESSAGEACK_HPP
