@@ -93,6 +93,11 @@ exportshr:
 	 ) ; done ; \
 	) ;
 
+deploy: FORCE 
+	@(cd deploy ; perl ./proto_deploy.pl)
+
+FORCE:
+
 #if defined(_WIN32)
 test: Makefiles
 	cd test & $(MAKE) all & cd ..
