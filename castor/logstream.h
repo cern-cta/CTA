@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/13 13:34:27 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -34,6 +34,8 @@
 #include <ostream>
 #include <iomanip>
 #include "osdep.h"
+#include "castor/ObjectSet.hpp"
+#include "castor/IObject.hpp"
 #include "castor/logbuf.h"
 
 #define OPERATOR(T)                               \
@@ -119,6 +121,14 @@ namespace castor {
     OPERATORINT(unsigned long);
 
     /**
+     * This operator deals with IObjects
+     */
+    logstream& operator<< (IObject& obj) {
+      ObjectSet set;
+      obj.print(*this, "", set);
+    }
+
+    /**
      * This operator deals with manipulators specific to
      * castor::logstream
      */
@@ -128,7 +138,7 @@ namespace castor {
 
     /**
      * This operator deals with manipulators specific to
-     * castor::logstream
+     * std::ostream
      */
     logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
       if (0 != m_logbuf) {
