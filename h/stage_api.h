@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.59 2002/09/13 08:16:25 jdurand Exp $
+ * $Id: stage_api.h,v 1.60 2002/09/17 15:34:59 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -89,6 +89,30 @@ EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type 
   stage_iowc(STAGE_CAT,'m',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 #define stagecat_castor(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
   stage_iowc(STAGE_CAT,'h',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+
+/* --------------------------------- */
+/* Generic STAGE_ALLOC/GET interface */
+/* --------------------------------- */
+#if (defined(hpux) || defined(sun))
+/* Why does hpux's cc complain on the following proyotype when */
+/* compiled with -Ae ? */
+/* On Sun old style declaration char promoted to int */
+EXTERN_C int DLL_DECL stage_alloc_or_get _PROTO(());
+#else /* hpux */
+EXTERN_C int DLL_DECL stage_alloc_or_get _PROTO((int,                       /* protocol */
+												 u_signed64,                /* flags */
+												 mode_t,                    /* openmode */
+												 char *,                    /* hostname */
+												 char *,                    /* pooluser */
+												 char *,                    /* external filename */
+												 u_signed64,                /* filesize */
+												 int *,                     /* nstcp_output */
+												 struct stgcat_entry **));  /* stpp_output */
+#endif /* hpux */
+#define stage_alloc(flags,openmode,hostname,pooluser,filename,filesize,nstcp_output,stcp_output) \
+  stage_alloc_or_get(STAGE_ALLOC,flags,openmode,hostname,pooluser,filename,filesize,nstcp_output,stcp_output)
+#define stage_get(flags,hostname,pooluser,filename,nstcp_output,stcp_output) \
+  stage_alloc_or_get(STAGE_GET,flags,(mode_t) 0,hostname,pooluser,filename,(u_signed64) 0,nstcp_output,stcp_output)
 
 /* ---------------------------- */
 /* Generic STAGE_KILL interface */
