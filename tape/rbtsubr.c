@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.2 $ $Date: 1999/11/27 14:34:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.3 $ $Date: 2000/01/07 13:35:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -123,7 +123,8 @@ char *loader;
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL)
-			usrmsg (func, TP041, action, cur_vid, cur_unm, buf);
+			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
+			    action, cur_vid, cur_unm, buf);
 		if (pclose (f)) {
 			RETURN (-EIO);
 		} else {
@@ -137,7 +138,8 @@ char *loader;
 		return (c);
 	}
 	ENTRY (rbtmount);
-	usrmsg (func, TP041, action, cur_vid, cur_unm, "invalid loader type");
+	usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action, cur_vid,
+	    cur_unm, "invalid loader type");
 	RETURN (RBT_CONF_DRV_DN);
 }
 
@@ -207,7 +209,8 @@ unsigned int force;
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL)
-			usrmsg (func, TP041, action, cur_vid, cur_unm, buf);
+			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
+			    action, cur_vid, cur_unm, buf);
 		if (pclose (f)) {
 			RETURN (-EIO);
 		} else {
@@ -221,7 +224,8 @@ unsigned int force;
 		return (c);
 	}
 	ENTRY (rbtdemount);
-	usrmsg (func, TP041, action, cur_vid, cur_unm, "invalid loader type");
+	usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action, cur_vid,
+	    cur_unm, "invalid loader type");
 	RETURN (RBT_CONF_DRV_DN);
 }
 
@@ -1062,16 +1066,18 @@ char *loader;
 	char *p;
 	struct smc_status smc_status;
 
-	ENTRY (opencmc);
+	ENTRY (opensmc);
 	sprintf (smc_ldr, "/dev/%s", loader);
 	if ((p = strchr (smc_ldr, ',')) == 0) {
-		usrmsg (func, TP041, action, cur_vid, cur_unm, "invalid loader");
+		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
+		    cur_vid, cur_unm, "invalid loader");
 		RETURN (RBT_NORETRY);
 	}
 	*p = '\0';
 	drvord = strtol (p + 1, &dp, 10);
 	if (*dp != '\0' || drvord < 0) {
-		usrmsg (func, TP041, action, cur_vid, cur_unm, "invalid loader");
+		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
+		    cur_vid, cur_unm, "invalid loader");
 		RETURN (RBT_NORETRY);
 	}
 #if defined(SOLARIS25) || defined(hpux)
@@ -1104,7 +1110,8 @@ char *loader;
 	}
 
 	if (drvord >= robot_info.device_count) {
-		usrmsg (func, TP041, action, cur_vid, cur_unm, "invalid loader");
+		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
+		    cur_vid, cur_unm, "invalid loader");
 		RETURN (RBT_NORETRY);
 	}
 	RETURN (0);
@@ -1133,21 +1140,25 @@ char *loader;
 		RETURN (c);
 	}
 	if (c == 0) {
-		usrmsg (func, TP041, "mount", vid, cur_unm, "volume not in library");
+		sprintf (msg, TP041, "mount", vid, cur_unm, "volume not in library");
+		usrmsg (func, "%s\n", msg);
 		RETURN (RBT_OMSG_NORTRY);
 	}
 	if (element_info.element_type != 2) {
-		usrmsg (func, TP041, "mount", vid, cur_unm, "volume in use");
+		sprintf (msg, TP041, "mount", vid, cur_unm, "volume in use");
+		usrmsg (func, "%s\n", msg);
 		RETURN (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
 	    robot_info.device_start+drvord)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s\n", msg);
-		else
-			usrmsg (func, TP041, "mount", vid, cur_unm,
+			usrmsg (func, "%s\n", msgaddr);
+		else {
+			sprintf (msg, TP041, "mount", vid, cur_unm,
 				strrchr (msgaddr, ':') + 2);
+			usrmsg (func, "%s\n", msg);
+		}
 		RETURN (c);
 	}
 	RETURN (0);
@@ -1185,10 +1196,12 @@ int force;
 	    robot_info.device_start+drvord, element_info.source_address)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s\n", msg);
-		else
-			usrmsg (func, TP041, "demount", vid, cur_unm,
+			usrmsg (func, "%s\n", msgaddr);
+		else {
+			sprintf (msg, TP041, "demount", vid, cur_unm,
 				strrchr (msgaddr, ':') + 2);
+			usrmsg (func, "%s\n", msg);
+		}
 		RETURN (c);
 	}
 	RETURN (0);
