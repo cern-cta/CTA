@@ -1,5 +1,5 @@
 Source: castor
-Build-Depends: stk-ssi, stk-ssi-devel
+Build-Depends: stk-ssi-devel
 Section: science
 Priority: optional
 Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
@@ -114,7 +114,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-rfio-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)*
+Description: castor (Cern Advanced STORage system)
  RFIO clients
 
 Package: castor-rfio-server
