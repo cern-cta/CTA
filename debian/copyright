@@ -1,0 +1,50 @@
+This package was debianized by Jean-Damien Durand <Jean-Damien.Durand@cern.ch> on
+Thu, 13 Jan 2005 18:03:22 +0100.
+
+It was downloaded from http://cern.ch/castor
+
+Copyright:
+
+Upstream Authors: Olof Barring, Benjamin Couturier, Jean-Damien Durand, Sebastien Ponce <Castor.Support@cern.ch>
+
+License:
+
+CERN CASTOR Distribution:        24 July 2002
+
+
+CERN allows free distribution of CERN owned software under the same
+conditions as the gnu public licence. The definitive version of this
+is to be found at http://www.gnu.org/copyleft/gpl.html
+
+Some of the software included in the tarball (currently db and imake) 
+is itself being redistributed under similar 'right to use and
+distribute' conditions.
+
+The CASTOR system is distributed as a tarball containing all the
+server components plus the interfaces to the devices (eg tape drives
+and robotics) currently in use at CERN. CERN will integrate interface
+code to other devices sent in by outside institutions as far as possible
+but cannot guarrantee correct working. Use of some devices may 
+require the user to purchase additional software licences from a
+third party. CERN cannot provide such software. 
+
+The source contains an overview README file, a version history and
+comments and installation instructions but correct installation and
+setting up at any site is the responsibility of the site. CERN is
+preparing a detailed installation guide as an aid and will answer
+technical questions sent to castor.support@cern.ch as far as possible.
+It is assumed that installation will be done by local staff with the
+correct level of computer system administration expertise and CERN 
+cannot provide such expertise should this not be the case.
+
+The tarball can be obtained from the CERN web site
+
+http://cern.ch/castor
+
+Users should use the 'Download' link then the link 'CERN or AUTHORISED
+people'. This will ask for a userid and password. Requestors should
+obtain these keys in advance from castor.support@cern.ch and they
+should not be revealed to a third party.
+
+                                        castor.support@cern.ch
+

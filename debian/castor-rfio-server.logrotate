@@ -1,0 +1,19 @@
+#
+# $Id: castor-rfio-server.logrotate,v 1.1 2005/01/19 21:57:32 jdurand Exp $
+#
+# @(#)$RCSfile: castor-rfio-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:32 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/rfiod {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/var/spool/rfio/rfiod.log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

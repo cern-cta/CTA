@@ -1,0 +1,5 @@
+debian/castor/usr/share/man/man1/msgd.1castor
+debian/castor/usr/share/man/man1/msgr.1castor
+debian/castor/usr/share/man/man1/oper.1castor
+debian/castor/usr/share/man/man1/rep.1castor
+debian/castor/usr/share/man/man1/tpmstat.1castor

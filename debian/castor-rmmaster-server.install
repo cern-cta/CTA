@@ -1,0 +1,5 @@
+usr/bin/rmadminnode
+usr/bin/rmmaster
+usr/bin/rmdeletejob
+usr/bin/rmenterjob
+usr/bin/rmkilljob

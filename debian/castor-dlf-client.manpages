@@ -1,0 +1,10 @@
+debian/castor/usr/share/man/man1/dlf.1castor
+debian/castor/usr/share/man/man1/dlfdeletefacility.1castor
+debian/castor/usr/share/man/man1/dlfdeletetext.1castor
+debian/castor/usr/share/man/man1/dlfenterfacility.1castor
+debian/castor/usr/share/man/man1/dlfentertext.1castor
+debian/castor/usr/share/man/man1/dlflistfacility.1castor
+debian/castor/usr/share/man/man1/dlflisttext.1castor
+debian/castor/usr/share/man/man1/dlflogstore.1castor
+debian/castor/usr/share/man/man1/dlfmodifyfacility.1castor
+debian/castor/usr/share/man/man1/dlfmodifytext.1castor

@@ -1,0 +1,7 @@
+debian/castor/usr/share/man/man1/rfcat.1castor
+debian/castor/usr/share/man/man1/rfchmod.1castor
+debian/castor/usr/share/man/man1/rfcp.1castor
+debian/castor/usr/share/man/man1/rfdir.1castor
+debian/castor/usr/share/man/man1/rfmkdir.1castor
+debian/castor/usr/share/man/man1/rfrename.1castor
+debian/castor/usr/share/man/man1/rfrm.1castor

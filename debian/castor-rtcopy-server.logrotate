@@ -1,0 +1,19 @@
+#
+# $Id: castor-rtcopy-server.logrotate,v 1.1 2005/01/19 21:57:33 jdurand Exp $
+#
+# @(#)$RCSfile: castor-rtcopy-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:33 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/rtcpd {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/var/spool/rtcopy/rtcopyd.log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

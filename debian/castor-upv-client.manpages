@@ -1,0 +1,5 @@
+debian/castor/usr/share/man/man1/Cupvadd.1castor
+debian/castor/usr/share/man/man1/Cupvcheck.1castor
+debian/castor/usr/share/man/man1/Cupvdelete.1castor
+debian/castor/usr/share/man/man1/Cupvlist.1castor
+debian/castor/usr/share/man/man1/Cupvmodify.1castor

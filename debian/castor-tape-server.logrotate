@@ -1,0 +1,19 @@
+#
+# $Id: castor-tape-server.logrotate,v 1.1 2005/01/19 21:57:34 jdurand Exp $
+#
+# @(#)$RCSfile: castor-tape-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:34 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/tpdaemon {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/var/spool/tape/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

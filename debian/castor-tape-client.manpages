@@ -1,0 +1,6 @@
+debian/castor/usr/share/man/man1/dumptape.1castor
+debian/castor/usr/share/man/man1/tpread.1castor
+debian/castor/usr/share/man/man1/tprstat.1castor
+debian/castor/usr/share/man/man1/tpstat.1castor
+debian/castor/usr/share/man/man1/tpusage.1castor
+debian/castor/usr/share/man/man1/tpwrite.1castor

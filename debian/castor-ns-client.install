@@ -1,0 +1,17 @@
+usr/bin/nschclass
+usr/bin/nschmod
+usr/bin/nschown
+usr/bin/nsdelcomment
+usr/bin/nsdeleteclass
+usr/bin/nsenterclass
+usr/bin/nsfind
+usr/bin/nslistclass
+usr/bin/nslisttape
+usr/bin/nsls
+usr/bin/nsmkdir
+usr/bin/nsmodifyclass
+usr/bin/nsrename
+usr/bin/nsrm
+usr/bin/nssetchecksum
+usr/bin/nssetcomment
+usr/bin/nstouch

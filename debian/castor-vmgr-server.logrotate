@@ -1,0 +1,19 @@
+#
+# $Id: castor-vmgr-server.logrotate,v 1.1 2005/01/19 21:57:35 jdurand Exp $
+#
+# @(#)$RCSfile: castor-vmgr-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:35 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/vmgrdaemon {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/var/spool/vmgr/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

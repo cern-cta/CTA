@@ -1,0 +1,19 @@
+#
+# stgdaemon.logrotate,v 1.1 2003/10/31 10:03:29 jdurand Exp
+#
+# @(#)$RCSfile: castor-rmnode-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:33 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/rmnode {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/var/spool/rmnode/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

@@ -1,0 +1,5 @@
+etc/sysconfig/castor
+etc/sysconfig/castor_compiler
+etc/sysconfig/castor_db
+etc/sysconfig/castor_env
+etc/sysconfig/castor_paths
