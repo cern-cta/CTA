@@ -141,6 +141,9 @@
 #ifdef HPUX10
 #define DEFAULT_CPP "/usr/ccs/lbin/cpp"
 #endif
+#ifdef __ia64__
+#define DEFAULT_CPP "/usr/local/bin/cpp"
+#endif
 
 /*
  * Step 5:  cpp_argv
