@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.54 $ $Release$ $Date: 2004/10/25 08:29:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/10/25 16:41:26 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.54 $ $Release$ $Date: 2004/10/25 08:29:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/10/25 16:41:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -300,6 +300,7 @@ static int updateTapeFromDB(
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   if ( (tp == NULL) && (key != 0) ) {
     rc = C_Services_createObj(*svcs,iAddr,&iObj);
+    if ( rc == 0 ) tp = Cstager_Tape_fromIObject(iObj);
   } else if ( tp != NULL ) { 
     iObj = Cstager_Tape_getIObject(tp);
     rc = C_Services_updateObj(*svcs,iAddr,iObj);
@@ -1281,6 +1282,7 @@ int procTapeCopiesForStream(
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_TapeCopy_t *tpCp = NULL;
   struct Cstager_Stream_t *stream = NULL;
+  struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
   struct Cstager_TapeCopyForMigration_t *nextMigrCandidate = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
@@ -1308,7 +1310,8 @@ int procTapeCopiesForStream(
   }
 
   rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL ) return(-1);
+  if ( rc != -1 ) getDbSvc(&svcs);
+  if ( rc == -1 || stgsvc == NULL || svcs == NULL || *svcs == NULL ) return(-1);
 
   rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
   if ( rc == -1 ) {
@@ -1397,12 +1400,53 @@ int procTapeCopiesForStream(
   filereq->proc_status = RTCP_WAITING;
 
   /*
-   * Now, we need to get the tape copy and create a Segment
+   * Now, we need to get the TapeCopy and create a Segment
    * associated with it. We never commit the Segment in the
    * DB unless there was an error when writing it to tape.
    */
   tpCp = Cstager_TapeCopyForMigration_getTapeCopy(nextMigrCandidate);
 
+  /*
+   * If there was previous retries there are already Segments
+   * associated with this TapeCopy. Let's get them so that
+   * we don't risk to remove them at next updc.
+   */
+  iObj = Cstager_TapeCopy_getIObject(tpCp);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Segment
+                          );
+  if ( rc == -1 ) {
+    char *_dbErr = NULL;
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_fillObj()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);      
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  /*
+   * Now add our own Segment
+   */
   Cstager_Segment_create(&segment);
   if ( segment == NULL ) {
     LOG_SYSCALL_ERR("Cstager_Segment_create()");
@@ -1410,7 +1454,9 @@ int procTapeCopiesForStream(
     return(-1);
   }
   Cstager_Segment_setTape(segment,tp);
+  Cstager_Tape_addSegments(tp,segment);
   Cstager_Segment_setCopy(segment,tpCp);
+  Cstager_TapeCopy_addSegments(tpCp,segment);
   file->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
   if ( file->dbRef == NULL ) {
     LOG_SYSCALL_ERR("calloc()");
@@ -1754,6 +1800,47 @@ int rtcpcld_updcMigrFailed(
     char *_dbErr = NULL;
     save_serrno = serrno;
     Cstager_TapeCopy_id(tapeCopy,&key);
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+4,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_fillRep()",
+                    "DB_KEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  /*
+   * Make sure that the tape link is also created (the
+   * memory objects were linked in tapeCopiesForStream)
+   */
+  iObj = Cstager_Segment_getIObject(segment);
+  rc = C_Services_fillRep(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Tape,
+                          1
+                          );
+  if ( rc == -1 ) {
+    char *_dbErr = NULL;
+    save_serrno = serrno;
+    Cstager_Segment_id(segment,&key);
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
