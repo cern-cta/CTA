@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.4 1999/12/10 18:32:53 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.5 1999/12/13 07:56:52 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.4 $ $Date: 1999/12/10 18:32:53 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.5 $ $Date: 1999/12/13 07:56:52 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -31,9 +31,46 @@ int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
 extern stglogit();
 extern char func[];
 
-int DLL_DECL Stgdb_login(username,password,dbfd,file,line)
-     char *username;
-     char *password;
+#ifdef STGDB_CONRETRY
+#undef STGDB_CONRETRY
+#endif
+#define STGDB_CONRETRY 6
+
+#ifdef STGDB_CONRETRYINT
+#undef STGDB_CONRETRYINT
+#endif
+#define STGDB_CONRETRYINT 6
+
+#ifdef RETURN
+#undef RETURN
+#endif
+
+#define RETURN(a) {                                                                         \
+  if (a != 0) {                                                                             \
+    if (serrno == EDB_A_SESSION || serrno == SECOMERR || serrno == SECONNDROP) {            \
+      int iretry;                                                                           \
+      stglogit("stgdb_Cdb_ifce","### Warning : Connection with Cdb is lost. "               \
+               "Retry to connect %d times (%d seconds between each retry).\n",              \
+               STGDB_CONRETRY,STGDB_CONRETRYINT);                                           \
+      for (iretry = 0; iretry < STGDB_CONRETRY; iretry++) {                                 \
+        if (stgdb_login(dbfd) == 0) {                                                       \
+          goto retry_ok;                                                                    \
+        }                                                                                   \
+        stglogit("stgdb_Cdb_ifce","### Warning : Cannot reconnect to Cdb at retry No %d\n", \
+                 iretry);                                                                   \
+      }                                                                                     \
+      stglogit("stgdb_Cdb_ifce","### Error : Cannot reconnect to Cdb. Exit.\n");            \
+      exit(1);                                                                              \
+    retry_ok:                                                                               \
+      if (stgdb_open(dbfd,"stage") != 0) {                                                  \
+        stglogit("stgdb_Cdb_ifce","### Error : Cannot reopen \"stage\" database. Exit.\n"); \
+        exit(1);                                                                            \
+      }                                                                                     \
+    }                                                                                       \
+  }                                                                                         \
+}
+
+int DLL_DECL Stgdb_login(dbfd,file,line)
      stgdb_fd_t *dbfd;
      char *file;
      int line;
@@ -41,7 +78,7 @@ int DLL_DECL Stgdb_login(username,password,dbfd,file,line)
 #ifdef USECDB
   /* stglogit(func, "In stgdb_login called at %s:%d\n",file,line); */
 
-  if (Cdb_login(username,password,&(dbfd->Cdb_sess)) != 0) {
+  if (Cdb_login(dbfd->username,dbfd->password,&(dbfd->Cdb_sess)) != 0) {
     return(-1);
   }
 #endif
