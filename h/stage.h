@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.65 2001/09/19 18:10:16 jdurand Exp $
+ * $Id: stage.h,v 1.66 2001/09/22 07:30:35 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,9 @@
 /* Limit under which we consider requestor is root */
 #define ROOTUIDLIMIT 100
 #define ROOTGIDLIMIT 100
-#define ISROOT(uid,gid) (((uid) < ROOTUIDLIMIT) || ((gid) < ROOTGIDLIMIT))
+#define ISUIDROOT(uid) ((uid) < ROOTUIDLIMIT)
+#define ISGIDROOT(gid) ((gid) < ROOTGIDLIMIT)
+#define ISROOT(uid,gid) (ISUIDROOT(uid) || ISGIDROOT(gid))
 
 /* Number of seconds in a day */
 #ifdef ONE_DAY
