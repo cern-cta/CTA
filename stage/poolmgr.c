@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.218 2002/09/20 12:21:42 jdurand Exp $
+ * $Id: poolmgr.c,v 1.219 2002/09/23 11:08:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.218 $ $Date: 2002/09/20 12:21:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.219 $ $Date: 2002/09/23 11:08:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -119,6 +119,7 @@ extern struct stgdb_fd dbfd;
 extern int savereqs _PROTO(());
 extern char *localhost; /* Fully qualified hostname */
 extern char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
+static int redomigpool_in_action = 0;
 
 struct files_per_stream {
 	struct stgcat_entry *stcp;
@@ -1920,8 +1921,10 @@ rwcountersfs(poolname, ipath, status, req_type)
 	char server[CA_MAXHOSTNAMELEN + 1];
 	int read_incr = 0;
 	int write_incr = 0;
+	extern time_t last_upd_fileclasses; /* == 0 only at the initial startup or when not wanted */
 
-	if ((poolname == NULL) || (*poolname == '\0') || (ipath == NULL) || (*ipath == '\0')) {
+	if ((poolname == NULL) || (*poolname == '\0') || (ipath == NULL) || (*ipath == '\0') ||
+	    ((last_upd_fileclasses == 0) && (redomigpool_in_action == 0))) {
 		return;
 	}
 
@@ -2000,25 +2003,27 @@ rwcountersfs(poolname, ipath, status, req_type)
 		}
 	if (j < pool_p->nbelem) {
 		if ((write_incr < 0) && (elemp->nbwriteaccess <= 0)) {
-			stglogit ("rwcountersfs", "### %s Warning, write_incr=-1 on nbwriteaccess <= 0. All reseted to 0.\n", path);
-			write_incr = 0;
-			elemp->nbwriteaccess = 0;
+		    stglogit ("rwcountersfs", "### %s Warning, write_incr=-1 on nbwriteaccess <= 0. All reseted to 0.\n", path);
+		    write_incr = 0;
+		    elemp->nbwriteaccess = 0;
 		}
 		if ((read_incr < 0) && (elemp->nbreadaccess <= 0)) {
-			stglogit ("rwcountersfs", "### %s Warning, read_incr=-1 on nbreadaccess <= 0. All reseted to 0.\n", path);
-			read_incr = 0;
-			elemp->nbreadaccess = 0;
+		    stglogit ("rwcountersfs", "### %s Warning, read_incr=-1 on nbreadaccess <= 0. All reseted to 0.\n", path);
+		    read_incr = 0;
+		    elemp->nbreadaccess = 0;
 		}
-		elemp->nbreadaccess += read_incr;
-		elemp->nbwriteaccess += write_incr;
-		stglogit ("rwcountersfs", "%s read[%s%d]/write[%s%d]=%2d/%2d\n",
-				  path,
-				  read_incr >= 0 ? "+" : "-",
-				  read_incr >= 0 ? read_incr : -read_incr,
-				  write_incr >= 0 ? "+" : "-",
-				  write_incr >= 0 ? write_incr : -write_incr,
-				  elemp->nbreadaccess,
-				  elemp->nbwriteaccess);
+		if (read_incr != 0 || write_incr != 0) {
+		  elemp->nbreadaccess += read_incr;
+		  elemp->nbwriteaccess += write_incr;
+		  stglogit ("rwcountersfs", "%s read[%s%d]/write[%s%d]=%2d/%2d\n",
+			    path,
+			    read_incr >= 0 ? "+" : "-",
+			    read_incr >= 0 ? read_incr : -read_incr,
+			    write_incr >= 0 ? "+" : "-",
+			    write_incr >= 0 ? write_incr : -write_incr,
+			    elemp->nbreadaccess,
+			    elemp->nbwriteaccess);
+		}
 	}
 }
 
@@ -2169,7 +2174,10 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					(pool_n->migr->global_predicates.space_delaymig    != 0) ||
 					(pool_n->migr->global_predicates.nbfiles_beingmig  != 0) ||
 					(pool_n->migr->global_predicates.space_beingmig    != 0)) {
-					migr_init = 1;
+					if (migr_init == 0) {
+					  sendrep(&rpfd, MSG_ERR, "STG02 - Forcing -X option\n");
+					  migr_init = 1;
+					}
 					break;
 				}
 				for (k = 0; k < pool_n->migr->nfileclass; k++) {
@@ -2179,7 +2187,10 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						(pool_n->migr->fileclass_predicates[k].space_delaymig   != 0) ||
 						(pool_n->migr->fileclass_predicates[k].nbfiles_beingmig != 0) ||
 						(pool_n->migr->fileclass_predicates[k].space_beingmig   != 0)) {
-						migr_init = 1;
+					  if (migr_init == 0) {
+					    sendrep(&rpfd, MSG_ERR, "STG02 - Forcing -X option\n");
+					    migr_init = 1;
+					  }
 						break;
 					}
 				}
@@ -2271,6 +2282,12 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				}
 			}
 			if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
+			  if (stcp->t_or_d == 'h') {
+			    if (migr_init == 0) {
+			      sendrep(&rpfd, MSG_ERR, "STG02 - Forcing -X option\n");
+			      migr_init = 1;
+			    }
+			  }
 				rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			}
 		}
@@ -2304,7 +2321,11 @@ void redomigpool()
 	struct stgcat_entry *stcp;
 	int j;
 	struct pool *pool_n;
+	extern time_t last_upd_fileclasses; /* == 0 only at the initial startup or when not wanted */
+	time_t save_last_upd_fileclasses;
   
+	redomigpool_in_action = 1;
+
 	/* Update the fileclasses */
 	upd_fileclasses();
 
@@ -2331,12 +2352,23 @@ void redomigpool()
 		if ((stcp->t_or_d == 'h') && (stcp->status == STAGEOUT)) {
 			/* Force a Cns_statx call for a STAGEOUT file */
 			/* upd_fileclass() will move to PUT_FAILED if necessary */
-			upd_fileclass(NULL,stcp,2,0,0);
+			save_last_upd_fileclasses = last_upd_fileclasses;
+			last_upd_fileclasses = 0;
+			if (upd_fileclass(NULL,stcp,2,0,0) < 0) {
+				/* Try to fetch fileclass only unless record was cleared */
+				if (serrno == ESTCLEARED) {
+					last_upd_fileclasses = save_last_upd_fileclasses;
+					continue;
+				}
+				upd_fileclass(NULL,stcp,4,0,0);
+			}
+			last_upd_fileclasses = save_last_upd_fileclasses;
 		}
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
 		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
 		insert_in_migpool(stcp);
 	}
+	redomigpool_in_action = 0;
 }
 
 int get_create_file_option(poolname)
@@ -4163,9 +4195,9 @@ void poolmgr_wait4child(signo)
 /*      in this case, if there is failure, a pure STAGEOUT record will be moved immediately to a */
 /*      STAGEOUT|CAN_BE_MIGR|PUT_FAILED entry */
 /*      eventual call to Cns_queryclass is not skipped */
-/*  3 : do never call Cns_statx() or Cns_queryclass : just check knowledge of fileclasses */
+/*  3 : do never call Cns_statx() or Cns_queryclass() : just check knowledge of fileclasses */
 /*  4 : do never call Cns_statx(), can call Cns_queryclass */
-/*  5 : Act completely regardless of stcp->status : if record is in the cache, return it, otherwite */
+/*  5 : Act completely regardless of stcp->status : if record is in the cache, return it, otherwise */
 /*      try to fetch */
 /* output can be: */
 /*  0 : ok */
@@ -4227,7 +4259,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 			serrno = ENOENT;
 			return(-1);
 		}
-		/* Fileclass > 0 in structure - make sure we do not call Cns_queryclass not Cns_statx  */
+		/* Fileclass > 0 in structure - make sure we do not call Cns_queryclass nor Cns_statx  */
 		forced_Cns_statx = 0;
 		if (forced_Cns_statx == 3) {
 			skip_Cns_queryclass = 1;
@@ -4254,20 +4286,21 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 						/* In the case of startup, the rwcounters on filesystem were not yet */
 						/* incremented for this stcp - so decrementing will cause an */
 						/* error */
-						stglogit ("upd_fileclass", "%s is ENOENT: moving from STAGEOUT to STAGEOUT|CAN_BE_MIGR|PUT_FAILED\n", stcp->u1.h.xfile);
-						if ((c = upd_stageout (STAGEUPDC, stcp->ipath, NULL, 0, stcp, 0, 0)) != 0) {
+						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", strerror(save_serrno));
+						if ((c = upd_stageout (STAGEUPDC, stcp->ipath, NULL, 0, stcp, 0, 1)) != 0) {
 							serrno = (c == CLEARED) ? ESTCLEARED : c;
-							return(-1);
-						}
-						/* File have been definitely deleted from the name server */
-						stcp->status = STAGEOUT|CAN_BE_MIGR|PUT_FAILED;
+							if (serrno != ENOENT) return(-1);
+							sendrep (&rpfd, MSG_ERR, "STG02 - %s is absent from name server but disk version is not empty: moving from STAGEOUT to STAGEOUT|CAN_BE_MIGR|PUT_FAILED\n", stcp->u1.h.xfile);
+							/* File have been definitely deleted from the name server */
+							stcp->status = STAGEOUT|CAN_BE_MIGR|PUT_FAILED;
 #ifdef USECDB
-						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-						}
+							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							  stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							}
 #endif
+							savereqs();
+						}
 					}
-					savereqs();
 				}
 			}
 			serrno = save_serrno;
@@ -4349,60 +4382,61 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 			goto upd_fileclass_add;
 		}
 
-		pi = Cnsfileclass.tppools;
-		i = 0;
-		while (*pi != '\0') {
-			pi += (CA_MAXPOOLNAMELEN+1);
-			if (++i >= Cnsfileclass.nbtppools) {
-				/* We already have count as many tape pools as the fileclass specifies */
-				break;
-			}
-		}
-		if (i != Cnsfileclass.nbtppools) {
-			sendrep (&rpfd, MSG_ERR, STG127, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, i);
-			Cnsfileclass.nbtppools = i;
-		}
-		/* We reduce eventual list of duplicate tape pool in tppools element */
-		nb_duplicate = 0;
-		new_nbtppools = Cnsfileclass.nbtppools;
-		while (1) {
+		if (Cnsfileclass.nbtppools > 0) {
 			pi = Cnsfileclass.tppools;
-			have_duplicate = 0;
-			for (i = 0; i < new_nbtppools; i++) {
-				pj = pi + (CA_MAXPOOLNAMELEN+1);
-				for (j = i + 1; j < new_nbtppools; j++) {
-					if (strcmp(pi,pj) == 0) {
-						sendrep (&rpfd, MSG_ERR, STG128, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, pi);
-						have_duplicate = j;
-						nb_duplicate++;
-						break;
-					}
-					pj += (CA_MAXPOOLNAMELEN+1);
-				}
-				if (have_duplicate > 0) {   /* Because it starts a j+1, i starting at zero */
-					pk = pj;
-					for (k = j + 1; j < new_nbtppools; j++) {
-						strcpy(pk - (CA_MAXPOOLNAMELEN+1), pk); 
-						pk += (CA_MAXPOOLNAMELEN+1);
-					}
-					new_nbtppools--;
+			i = 0;
+			while (*pi != '\0') {
+				pi += (CA_MAXPOOLNAMELEN+1);
+				if (++i >= Cnsfileclass.nbtppools) {
+					/* We already have count as many tape pools as the fileclass specifies */
 					break;
 				}
-				pi += (CA_MAXPOOLNAMELEN+1);
 			}
-			if (have_duplicate == 0) break;
+			if (i != Cnsfileclass.nbtppools) {
+				sendrep (&rpfd, MSG_ERR, STG127, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, i);
+				Cnsfileclass.nbtppools = i;
+			}
+			/* We reduce eventual list of duplicate tape pool in tppools element */
+			nb_duplicate = 0;
+			new_nbtppools = Cnsfileclass.nbtppools;
+			while (1) {
+				pi = Cnsfileclass.tppools;
+				have_duplicate = 0;
+				for (i = 0; i < new_nbtppools; i++) {
+					pj = pi + (CA_MAXPOOLNAMELEN+1);
+					for (j = i + 1; j < new_nbtppools; j++) {
+						if (strcmp(pi,pj) == 0) {
+							sendrep (&rpfd, MSG_ERR, STG128, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, pi);
+							have_duplicate = j;
+							nb_duplicate++;
+							break;
+						}
+						pj += (CA_MAXPOOLNAMELEN+1);
+					}
+					if (have_duplicate > 0) {   /* Because it starts a j+1, i starting at zero */
+						pk = pj;
+						for (k = j + 1; j < new_nbtppools; j++) {
+							strcpy(pk - (CA_MAXPOOLNAMELEN+1), pk); 
+							pk += (CA_MAXPOOLNAMELEN+1);
+						}
+						new_nbtppools--;
+						break;
+					}
+					pi += (CA_MAXPOOLNAMELEN+1);
+				}
+				if (have_duplicate == 0) break;
+			}
+			if (new_nbtppools != Cnsfileclass.nbtppools) {
+				/* We found duplicate(s) - so we rescan number of tape pools */
+				sendrep (&rpfd, MSG_ERR, STG129, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, new_nbtppools);
+				Cnsfileclass.nbtppools = new_nbtppools;
+			}
+			/* We check the number of copies vs. number of tape pools */
+			if (Cnsfileclass.nbcopies > Cnsfileclass.nbtppools) {
+				sendrep (&rpfd, MSG_ERR, STG130, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies, Cnsfileclass.nbtppools, Cnsfileclass.nbtppools);
+				Cnsfileclass.nbcopies = new_nbtppools;
+			}
 		}
-		if (new_nbtppools != Cnsfileclass.nbtppools) {
-			/* We found duplicate(s) - so we rescan number of tape pools */
-			sendrep (&rpfd, MSG_ERR, STG129, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, new_nbtppools);
-			Cnsfileclass.nbtppools = new_nbtppools;
-		}
-		/* We check the number of copies vs. number of tape pools */
-		if (Cnsfileclass.nbcopies > Cnsfileclass.nbtppools) {
-			sendrep (&rpfd, MSG_ERR, STG130, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies, Cnsfileclass.nbtppools, Cnsfileclass.nbtppools);
-			Cnsfileclass.nbcopies = new_nbtppools;
-		}
-
 	  upd_fileclass_add:
 		/* We add this fileclass to the list of known fileclasses */
 		if (nbfileclasses <= 0) {
@@ -4451,8 +4485,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 					  fileclasses[nbfileclasses].Cnsfileclass.name,
 					  fileclasses[nbfileclasses].server,
 					  fileclasses[nbfileclasses].Cnsfileclass.classid,
-					  nbfileclasses,
-					  fileclasses[nbfileclasses].Cnsfileclass.tppools);
+					  nbfileclasses);
 			stglogfileclass(&Cnsfileclass);
 		}
 		ifileclass = nbfileclasses++;
@@ -4895,23 +4928,25 @@ void stglogfileclass(Cnsfileclass)
 		break;
 	}
 	stglogit(func,"NBTPPOOLS      %d\n", Cnsfileclass->nbtppools);
-	if (*p != '\0') {
-		verif_nbtppools++;
-		stglogit(func,"TAPE POOL No %d %s\n", verif_nbtppools, p);
-		for (i = 1; i < Cnsfileclass->nbtppools; i++) {
-			p += (CA_MAXPOOLNAMELEN+1);
-			if (*p != '\0') {
-				verif_nbtppools++;
-				stglogit(func,"TAPE POOL No %d %s\n", verif_nbtppools, p);
-			} else {
-				break;
+	if (Cnsfileclass->nbtppools > 0) {
+		if (*p != '\0') {
+			verif_nbtppools++;
+			stglogit(func,"TAPE POOL No %d %s\n", verif_nbtppools, p);
+			for (i = 1; i < Cnsfileclass->nbtppools; i++) {
+				p += (CA_MAXPOOLNAMELEN+1);
+				if (*p != '\0') {
+					verif_nbtppools++;
+					stglogit(func,"TAPE POOL No %d %s\n", verif_nbtppools, p);
+				} else {
+					break;
+				}
 			}
 		}
-	}
-
-	if (verif_nbtppools != Cnsfileclass->nbtppools) {
-		stglogit(func,"### Warning : Found tape pools does not match fileclass - forced to %d\n", verif_nbtppools);
-		Cnsfileclass->nbtppools = verif_nbtppools;
+	} else {
+		if (verif_nbtppools != Cnsfileclass->nbtppools) {
+			stglogit(func,"### Warning : Found tape pools does not match fileclass - forced to %d\n", verif_nbtppools);
+			Cnsfileclass->nbtppools = verif_nbtppools;
+		}
 	}
 	if (Cnsfileclass->nbcopies > Cnsfileclass->nbtppools) {
 		stglogit(func,"### Warning : Found number of copies is higher than number of tape pools - forced to %d\n", Cnsfileclass->nbtppools);
