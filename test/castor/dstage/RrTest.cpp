@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RrTest.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/08/19 10:06:23 $ $Author: bcouturi $
+ * @(#)$RCSfile: RrTest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/09/17 09:09:07 $ $Author: bcouturi $
  *
  *
  *
@@ -71,7 +71,7 @@
 
 #define PORT 25177
 #define BSIZE 100
-#define NB_THREADS 50
+#define NB_THREADS 1
 
 void *procreq(void *param);
 
@@ -241,8 +241,12 @@ void *procreq(void *param) {
 
     castor::dstage::RequestReplier *rr =
       castor::dstage::RequestReplier::getInstance();
-    rr->replyToClient(cl, &response);
-    rr->replyToClient(cl, &response2);
+    for(int j=0; j<10; j++) {
+      rr->replyToClient(cl, &response);
+      sleep(1);
+    }
+
+    rr->replyToClient(cl, &response2, true);
     delete(cl);
   } catch (castor::exception::Exception e) {
     std::cerr << "Exception while replying : "
@@ -386,23 +390,24 @@ int test::RrTestClient::listen() {
 
   len = sizeof(struct sockaddr_in);    
 
-  for (;;) {
-    int csd;
+  int csd;
+  
+  //fprintf(stderr, "<%d> Waiting for new connections on Socket %d\n", getpid(), mSocket);
+  /* Listening for connections */
+  if ((csd = accept(mSocket, (struct sockaddr *)&serverAddress,
+		    (socklen_t *)&len)) < 0) {
+    fprintf(stderr, "ACCEPT error:%d/%d  %s\n", mSocket, csd,  strerror(errno));
+    return -1;
+  };
+  
+  //fprintf(stderr, "<%d> Accepted new connections\n", getpid());
+  //printf("<%d> Recontacted by server %s\n", getpid(), inet_ntoa(serverAddress.sin_addr));
+  //sleep(1);
 
-    //fprintf(stderr, "<%d> Waiting for new connections on Socket %d\n", getpid(), mSocket);
-    /* Listening for connections */
-    if ((csd = accept(mSocket, (struct sockaddr *)&serverAddress,
-		      (socklen_t *)&len)) < 0) {
-      fprintf(stderr, "ACCEPT error:%d/%d  %s\n", mSocket, csd,  strerror(errno));
-      return -1;
-    };
-    
-    //fprintf(stderr, "<%d> Accepted new connections\n", getpid());
-    //printf("<%d> Recontacted by server %s\n", getpid(), inet_ntoa(serverAddress.sin_addr));
-    //sleep(1);
+  castor::io::ClientSocket s(csd);
 
+  for(;;) {
     try {
-      castor::io::ClientSocket s(csd);
       castor::IObject* result = s.readObject();
 
       if (castor::OBJ_EndResponse == result->type()) {
@@ -429,10 +434,10 @@ int test::RrTestClient::listen() {
       std::cerr << "Exception while reading object : "
 		<< sstrerror(e.code()) << std::endl
 		<< e.getMessage().str() << std::endl;
+      exit(1);
     }
-
-    close(csd); /* Not needed, closed by the object */
-  } // end for(;;)
+  }
+  close(csd); /* Not needed, closed by the object */
   close(mSocket);
   return 0;
 }
@@ -449,30 +454,34 @@ void *clientProcreq(void *param) {
     std::cout << "NEWREQ" << std::endl; 
     test::RrTestClient rrtc((char *)param);
     rrtc.start();
-    //break;
+    break;
   }
 }
 
 int main(int argc, char *argv[]) {
 
   if (argc <= 1) {
-    test::RrTest rrt;
+    // We are in server mode
+   test::RrTest rrt;
     rrt.start();
   } else {
-    int nbthreads;
-    int poolid = Cpool_create(NB_THREADS, &nbthreads);
-    if (poolid < 0) {
-      fprintf(stderr, "POOL CREATION error: %s !\n", sstrerror(serrno));
-      return -1;    
-    }
-    std::cout << "Client pool created ok " << poolid << "/" << nbthreads <<  std::endl;
-    for(int i=0; i<NB_THREADS; i++) {
-      std::cout << "Assigning thread " << i  << " TO " << argv[1] << std::endl;
-      Cpool_assign(poolid, clientProcreq, argv[1], -1);    
-    }
-    for(;;) {
-      sleep(1000);
-    }
+//     // We are in cliden mode
+//     int nbthreads;
+//     int poolid = Cpool_create(NB_THREADS, &nbthreads);
+//     if (poolid < 0) {
+//       fprintf(stderr, "POOL CREATION error: %s !\n", sstrerror(serrno));
+//       return -1;    
+//     }
+//     std::cout << "Client pool created ok " << poolid << "/" << nbthreads <<  std::endl;
+//     for(int i=0; i<NB_THREADS; i++) {
+//       std::cout << "Assigning thread " << i  << " TO " << argv[1] << std::endl;
+//       Cpool_assign(poolid, clientProcreq, argv[1], -1);    
+//     }
+//     for(;;) {
+//       sleep(1000);
+//     }
+    clientProcreq(argv[1]);
+
   }
   return 0;
 
