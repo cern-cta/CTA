@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:05:54 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,10 @@ static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.1 $ $Date: 
 #include "dlf.h"
 #include "dlf_api.h"
 #include "Cnetdb.h"
+#include <ctype.h>
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 
 #define	  DLF_KEY_DATE   1
 #define	  DLF_KEY_HOST   2
@@ -76,26 +80,16 @@ extern struct _dlf_level g_dlf_levels[];
 extern	char	*optarg;
 extern	int	optind;
 
-main(argc, argv)
-int argc;
-char **argv;
+int main(argc, argv)
+     int argc;
+     char **argv;
 {
-	U_BYTE fac_no;
 	int errflg;
 	char c;
 	char file_name[CA_MAXPATHLEN + 1];
-	char fac_name[DLF_MAXFACNAMELEN + 1];
-	char msg_txt[DLF_MAXSTRVALLEN + 1];
-	int msg_no;
-	char *q;
-	char *sbp;
-	char sendbuf[DLF_REQBUFSZ];
 	uid_t uid;
 	gid_t gid;
-	dlf_log_dst_t *dst;
 	dlf_log_message_t log_message;
-	int socket;
-	int msglen;
 	FILE *in_file;
 	int rv;
 	int gp_rv;
@@ -105,15 +99,13 @@ char **argv;
 	int n;
 	int key;
 	int i;
-	char prtbuf[1024];
-	uuid_t sub_request_id;
+	Cuuid_t sub_request_id;
 	char *end_ptr;
 	HYPER i64val;
 	double dval;
 	dlf_log_dst_t dst_host;
 	int file_given = 0;
 	int host_given = 0;
-	char host_name[CA_MAXHOSTNAMELEN + 1];
 	int store_severity = -1;
 	int port_number = 0;
 	int new_line = 0;
@@ -201,7 +193,7 @@ char **argv;
 	  if ((p = getenv ("DLF_PORT")) || (p = getconfent ("DLF", "PORT", 0))) {
 	        port_number = atoi (p);
 	  }
-	  else if (sp = Cgetservbyname ("dlf", "tcp")) {
+	  else if ((sp = Cgetservbyname ("dlf", "tcp")) != NULL) {
 		port_number = ntohs(sp->s_port);
 	  }
 	  else {

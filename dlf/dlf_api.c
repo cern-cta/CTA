@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:39:11 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -24,10 +24,12 @@ Get log messages form the DLF server and stores them in memory.
 
 ----------------------------------------------------------------------
 
-int dlf_write (uuid_t request_id, int severity, int message_no, U_HYPER ns_invariant, int numparams, ...)
+int dlf_write (Cuuid_t request_id, int severity, int message_no,
+               U_HYPER ns_invariant, int numparams, ...)
 
 Writes log message to the destination according to the severity.
-Message parameters should be in trios: parameter name, parameter type, parameter value.
+Message parameters should be in trios: parameter name, parameter type,
+parameter value.
 
 ***********************************************************************/
 
@@ -36,7 +38,11 @@ Message parameters should be in trios: parameter name, parameter type, parameter
 #include <sys/file.h>
 #include <fcntl.h>
 #include <time.h>
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <Cglobals.h>
 #include <errno.h>
@@ -47,7 +53,12 @@ Message parameters should be in trios: parameter name, parameter type, parameter
 #include <netinet/in.h>
 #include <netdb.h>
 #include <Cnetdb.h>
-
+#ifndef _WIN32
+#include <sys/time.h>          /* For time_t */
+#else
+#include <time.h>              /* For time_t */
+#endif
+#include <ctype.h>
 
 dlf_facility_info_t g_dlf_fac_info;
 
@@ -96,7 +107,7 @@ const char *fac_name;
 	if ((p = getenv ("DLF_PORT")) || (p = getconfent ("DLF", "PORT", 0))) {
 			port = atoi (p);
 	}
-	else if (sp = Cgetservbyname ("dlf", "tcp")) {
+	else if ((sp = Cgetservbyname ("dlf", "tcp")) != NULL) {
 			port = ntohs(sp->s_port);
 	}
 	else {
@@ -112,7 +123,8 @@ const char *fac_name;
 #endif
 	
 	g_dlf_fac_info.default_port = port;
-	if (dlf_add_to_log_dst(DLF_DST_TCPHOST, port, dlfhost, DLF_LVL_SERVICE_ONLY, &g_dlf_fac_info.dest_list) < 0)
+	if (dlf_add_to_log_dst(DLF_DST_TCPHOST, port, dlfhost, DLF_LVL_SERVICE_ONLY,
+                         &g_dlf_fac_info.dest_list) < 0)
 	  return (-1);
 	
 	/* Check if it's the DLF control application */
@@ -122,38 +134,49 @@ const char *fac_name;
 
         /* Try to get log destinations from the configuration file */
 
-	if (p = getconfent(fac_name, "LOGALL", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_ALL, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGALL", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_ALL, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGEMERGENCY", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_EMERGENCY, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGEMERGENCY", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_EMERGENCY, &g_dlf_fac_info.dest_list) < 0)
             return (-1);
-	if (p = getconfent(fac_name, "LOGALERT", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_ALERT, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGALERT", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_ALERT, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGERROR", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_ERROR, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGERROR", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_ERROR, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGWARNING", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_WARNING, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGWARNING", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_WARNING, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGAUTH", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_AUTH, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGAUTH", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_AUTH, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGSECURITY", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_SECURITY, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGSECURITY", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_SECURITY, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGUSAGE", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_USAGE, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGUSAGE", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_USAGE, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGSYSTEM", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_SYSTEM, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGSYSTEM", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_SYSTEM, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGIMPORTANT", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_IMPORTANT, &g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGIMPORTANT", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_IMPORTANT, &g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
-	if (p = getconfent(fac_name, "LOGDEBUG", 1))
-	  if (dlf_store_log_destinations(p, DLF_LVL_DEBUG,&g_dlf_fac_info.dest_list) < 0)
+	if ((p = getconfent(fac_name, "LOGDEBUG", 1)) != NULL)
+	  if (dlf_store_log_destinations
+        (p, DLF_LVL_DEBUG,&g_dlf_fac_info.dest_list) < 0)
 	    return (-1);
 
         /* Read message texts from the DLF server and store them in memory */
@@ -438,9 +461,7 @@ const char *fac_name;
 unsigned int *fac_no;
 dlf_msg_text_slist_t *txt_list;
 {
-        U_BYTE fnum;
-        int c;
-	int errflg = 0;
+  U_BYTE fnum;
 	gid_t gid;
 	int msglen;
 	char *q;
@@ -448,7 +469,6 @@ dlf_msg_text_slist_t *txt_list;
 	char sendbuf[DLF_REQBUFSZ];
 	uid_t uid;
 	int status;
-	int flags;
 	char *reply;
 	int rep_size;
 	int rep_type;
@@ -587,8 +607,9 @@ const char *fmt;
   return (buf);
 }
 
-int DLL_DECL dlf_write (request_id, severity, message_no, ns_invariant, numparams)
-uuid_t request_id;
+int DLL_DECL dlf_write (request_id, severity, message_no,
+                        ns_invariant, numparams)
+Cuuid_t request_id;
 int severity;
 int message_no;
 U_HYPER ns_invariant;
@@ -600,6 +621,7 @@ int numparams;
   double par_double;
   char *par_name;
   char *par_string;
+  Cuuid_t par_uuid;
   int par_type;
   int rv;
   int saved_rv;
@@ -611,9 +633,10 @@ int numparams;
   int n;
   va_list ap;
 
-  if ((log_message = (dlf_log_message_t*)dlf_new_log_message()) == NULL) return (-1);
+  if ((log_message = (dlf_log_message_t*)dlf_new_log_message()) == NULL)
+    return (-1);
 
-  memcpy( log_message->request_id, request_id, sizeof(uuid_t) );
+  memcpy( &(log_message->request_id), &request_id, sizeof(Cuuid_t) );
   log_message->severity = severity;
   log_message->message_no = message_no;
   log_message->ns_invariant = ns_invariant;
@@ -663,8 +686,8 @@ int numparams;
 	  rv = dlf_add_tpvid_parameter ( log_message, par_string );
 	  break;
 	case DLF_MSG_PARAM_UUID:
-	  par_string = va_arg( ap, char* );
-	  rv = dlf_add_subreq_id ( log_message, par_string );
+	  par_uuid = va_arg( ap, Cuuid_t );
+	  rv = dlf_add_subreq_id ( log_message, par_uuid );
 	  break;
 	default:
 	  break;
@@ -695,7 +718,7 @@ int numparams;
 }
 
 char DLL_DECL * dlf_uuid2hex(uuid, buf, buf_size)
-const char *uuid;
+Cuuid_t uuid;
 char *buf;
 int buf_size;
 {
@@ -704,9 +727,9 @@ int buf_size;
   unsigned char x;
   int i;
 
-  if (buf_size < (2 * sizeof(uuid_t) + 1)) return NULL;
+  if (buf_size < (2 * sizeof(Cuuid_t) + 1)) return NULL;
 
-  for (i = 0, p = buf, u = (char*)uuid; i < sizeof(uuid_t); ++i, u++) {
+  for (i = 0, p = buf, u = (char*)(&uuid); i < sizeof(Cuuid_t); ++i, u++) {
       x = (*u & 0xF0) >> 4;
       *p++ = (x <= 9) ? x + '0' : x - 10 + 'a';
       x = *u & 0x0F;
@@ -734,21 +757,24 @@ dlf_log_message_t *msg;
      dlf_msg_param_t *p;
      int fd;
      int written;
-     char uuidhex[2 * sizeof(uuid_t) + 1];
+     char uuidhex[2 * sizeof(Cuuid_t) + 1];
 
      if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
        return (-1);
      /* Lock file */
      if (flock(fd, LOCK_EX) < 0)
        return (-1);
-     n = snprintf (prtbuf, sizeof(prtbuf), fmt1, 
-		   msg->time, msg->time_usec, msg->hostname,
-		   ((sev_name = dlf_get_severity_name(msg->severity)) != NULL) ? sev_name : "Unknown",
-		   g_dlf_fac_info.fac_no,
-		   g_dlf_fac_info.fac_name, msg->pid, msg->cid, 
-		   msg->message_no,
-		   ((txt = dlf_get_msg_text(msg->message_no)) != NULL) ? txt : "No text",
-		   dlf_uuid2hex(msg->request_id, uuidhex, sizeof(uuidhex)), msg->ns_invariant);
+     n = snprintf
+       (prtbuf, sizeof(prtbuf), fmt1, 
+        msg->time, msg->time_usec, msg->hostname,
+        ((sev_name =
+          dlf_get_severity_name(msg->severity)) != NULL) ? sev_name : "Unknown",
+        g_dlf_fac_info.fac_no,
+        g_dlf_fac_info.fac_name, msg->pid, msg->cid, 
+        msg->message_no,
+        ((txt = dlf_get_msg_text(msg->message_no)) != NULL) ? txt : "No text",
+        dlf_uuid2hex(msg->request_id, uuidhex, sizeof(uuidhex)),
+        msg->ns_invariant);
      
      written = write (fd, prtbuf, n);
      if (written < n)
@@ -766,7 +792,9 @@ dlf_log_message_t *msg;
 	      break;
 	    case DLF_MSG_PARAM_UUID:
 	      n = snprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, 
-			    dlf_uuid2hex(p->strval, uuidhex, sizeof(uuidhex)));
+                      dlf_uuid2hex(*((Cuuid_t*)p->strval),
+                                   uuidhex,
+                                   sizeof(uuidhex)));
 	      break;
 	    case DLF_MSG_PARAM_DOUBLE:
 	      n = snprintf (prtbuf, sizeof(prtbuf), fmt4, p->name, p->dval);
@@ -795,7 +823,7 @@ dlf_log_message_t *msg;
         size = sizeof(U_BYTE)
 	     + strlen(msg->time) + 1
 	     + sizeof(int)
-             + sizeof(uuid_t)
+             + sizeof(Cuuid_t)
              + strlen(msg->hostname) + 1
              + sizeof(pid_t)
              + sizeof(int)
@@ -827,7 +855,7 @@ dlf_log_message_t *msg;
 	      case DLF_MSG_PARAM_UUID:
 		size += sizeof(U_BYTE)
 		     + strlen(p->name) + 1
- 		     + sizeof (uuid_t);
+ 		     + sizeof (Cuuid_t);
 		break;
 	      default:
 		size = -1;
@@ -851,8 +879,6 @@ int last_message;
 	char *sbp;
 	char *sendbuf;
 	uid_t uid;	
-	uuid_t rq_id;
-	int i;
 	dlf_msg_param_t *p;
 	int socket;
 	int required_buf_size;
@@ -937,7 +963,7 @@ int last_message;
 	      case DLF_MSG_PARAM_UUID:
 		marshall_BYTE(sbp, p->type);
 		marshall_STRING(sbp, p->name);
-		marshall_UUID(sbp, p->strval);
+		marshall_UUID(sbp, *((Cuuid_t*)p->strval));
 		break;
 	      default:
 		serrno = SEINTERNAL;
@@ -994,27 +1020,6 @@ int DLL_DECL islittleendian()
   check.l = 1;
   return (check.c[0] == 1);
 }
-
-void DLL_DECL _marshall_UUID (ptr, uuid)
-char **ptr;
-uuid_t uuid;
-{
-  /* Consider UUID as a character string */
-  /* So conversion is not needed */
-  memcpy (*ptr, uuid, sizeof(uuid_t));
-  *ptr += sizeof(uuid_t);
-}
-
-void DLL_DECL _unmarshall_UUID (ptr, uuid)
-char **ptr;
-uuid_t uuid;
-{
-  /* Consider UUID as a character string */
-  /* So conversion is not needed */
-  memcpy (uuid, *ptr, sizeof(uuid_t));
-  *ptr += sizeof(uuid_t);
-}
-
 
 dlf_log_message_t DLL_DECL * dlf_new_log_message()
 {
@@ -1084,7 +1089,8 @@ const char *par_string;
     serrno = ENOMEM;
     return (-1);
   }
-  if (strlen(par_name) > DLF_MAXPARNAMELEN || strlen(par_string) > DLF_MAXSTRVALLEN) {
+  if (strlen(par_name) > DLF_MAXPARNAMELEN ||
+      strlen(par_string) > DLF_MAXSTRVALLEN) {
     serrno = EINVAL;
     return (-1);
   }
@@ -1164,7 +1170,7 @@ dlf_msg_param_t *param;
 
 int DLL_DECL dlf_add_subreq_id (log_message, uuid)
 dlf_log_message_t *log_message;
-uuid_t uuid;
+Cuuid_t uuid;
 {
   static char fmt[] = "DLF.SRQID%d";
   int i;
@@ -1178,7 +1184,7 @@ uuid_t uuid;
   }
   i = log_message->next_subreq_idx++;
   n = snprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
-  memcpy (param_p->strval, uuid, sizeof(uuid_t));
+  memcpy (param_p->strval, &uuid, sizeof(Cuuid_t));
   param_p->type = DLF_MSG_PARAM_UUID;
   dlf_add_to_param_list (&log_message->param_list, param_p);
   return(0);
@@ -1252,13 +1258,15 @@ const char *par_str_val;
 
 int  DLL_DECL dlf_hex2uuid( hex_str, uuid )
 const char *hex_str;
-uuid_t uuid;
+Cuuid_t uuid;
 {
   int i, x0, x1;
   char *p, *p1;
 
-  if (strlen(hex_str) != (2 * sizeof(uuid_t))) return (-1);
-  for (i = 0, p = (char *)hex_str, p1 = uuid; i < 2 * sizeof(uuid_t); i += 2) {
+  if (strlen(hex_str) != (2 * sizeof(Cuuid_t))) return (-1);
+  for (i = 0, p = (char *)hex_str, p1 = (char*)&uuid;
+       i < 2 * sizeof(Cuuid_t);
+       i += 2) {
     if ((x0 = dlf_hexto4bits(p[i])) < 0) return (-1);
     if ((x1 = dlf_hexto4bits(p[i + 1])) < 0) return (-1);
     *p1++ = (x0 << 4) | x1;

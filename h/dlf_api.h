@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:42:44 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -38,13 +38,6 @@
 #define DLF_LVL_ALL         -1
 #define DLF_LVL_SERVICE_ONLY 0
 
-EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, uuid_t));
-EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char** ptr, uuid_t uuid));
-
-#define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&ptr, uuid)
-#define  marshall_UUID(ptr,uuid)  _marshall_UUID(&ptr, uuid)
-
-
 /* Function prototypes */
 
 EXTERN_C int DLL_DECL dlf_init _PROTO((const char*));
@@ -60,8 +53,8 @@ EXTERN_C char DLL_DECL * dlf_get_msg_text _PROTO((int));
 EXTERN_C int DLL_DECL dlf_gettexts _PROTO((const char*, unsigned int*, dlf_msg_text_slist_t*));
 EXTERN_C int DLL_DECL dlf_add_to_text_list _PROTO((int, const char*, dlf_msg_text_slist_t*));
 EXTERN_C char DLL_DECL * dlf_format_str _PROTO((char*, int, const char*, ...));
-EXTERN_C int DLL_DECL dlf_write _PROTO((uuid_t, int, int, U_HYPER, int, ...));
-EXTERN_C char DLL_DECL * dlf_uuid2hex _PROTO((const char*, char*, int));
+EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t, int, int, U_HYPER, int, ...));
+EXTERN_C char DLL_DECL * dlf_uuid2hex _PROTO((const Cuuid_t, char*, int));
 EXTERN_C int DLL_DECL dlf_write_to_file _PROTO((dlf_log_dst_t*, dlf_log_message_t*));
 EXTERN_C int DLL_DECL dlf_calc_msg_size _PROTO((dlf_log_message_t*));
 EXTERN_C int DLL_DECL dlf_send_to_host _PROTO((dlf_log_dst_t*, dlf_log_message_t*, int, int));
@@ -75,13 +68,13 @@ EXTERN_C int DLL_DECL dlf_add_str_parameter _PROTO((dlf_log_message_t*, const ch
 EXTERN_C int DLL_DECL dlf_add_int_parameter _PROTO((dlf_log_message_t*, const char*, HYPER));
 EXTERN_C int DLL_DECL dlf_add_double_parameter _PROTO((dlf_log_message_t*, const char*, double));
 EXTERN_C int DLL_DECL dlf_add_to_param_list _PROTO((dlf_msg_param_list_t*, dlf_msg_param_t*));
-EXTERN_C int DLL_DECL dlf_add_subreq_id _PROTO((dlf_log_message_t*, uuid_t));
+EXTERN_C int DLL_DECL dlf_add_subreq_id _PROTO((dlf_log_message_t*, Cuuid_t));
 EXTERN_C int DLL_DECL dlf_add_tpvid_parameter _PROTO((dlf_log_message_t*, const char*));
 EXTERN_C int DLL_DECL getrep _PROTO((int, char**, int*, int*));
 EXTERN_C int DLL_DECL send2dlf _PROTO((int*, dlf_log_dst_t*, char*, int));
 EXTERN_C int DLL_DECL dlf_isinteger _PROTO((const char*));
 EXTERN_C int DLL_DECL dlf_isfloat _PROTO((const char*));
-EXTERN_C int DLL_DECL dlf_hex2uuid _PROTO((const char*, uuid_t));
+EXTERN_C int DLL_DECL dlf_hex2uuid _PROTO((const char*, Cuuid_t));
 EXTERN_C int DLL_DECL dlf_hexto4bits _PROTO((const char));
 EXTERN_C int DLL_DECL dlf_hex2u64 _PROTO((const char*, u_signed64*));
 

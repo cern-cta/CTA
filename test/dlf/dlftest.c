@@ -1,19 +1,20 @@
 /*
- * 
+ *
  * Copyright (C) 2003 by CERN/IT/ADC
  * All rights reserved
  *
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:11:58 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -26,134 +27,135 @@ static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.1 $ $Date: 2003
 #include "serrno.h"
 #include "dlf.h"
 #include <dlf_api.h>
-
+#include "Cuuid.h"
+#include "Cgetopt.h"
 
 #define NBTHREADS 6
 
-extern	char	*optarg;
-extern	int	optind;
+extern char *Coptarg;
+extern int Coptind;
 
 void *gen_log(void*);
 
-main(argc, argv)
-int argc;
-char **argv;
+int main(argc, argv)
+     int argc;
+     char **argv;
 {
-	uid_t uid;
-	gid_t gid;
-	int i;
-	char prtbuf[1024];
+  uid_t uid;
+  gid_t gid;
+  int i;
+  char prtbuf[1024];
 
-	int c;
-	int errflg;
+  int c;
+  int errflg;
 
-	char *endptr;
-	int msgs_set = 0;
-	int num_msgs = 0;
-	int cid[NBTHREADS]; /* Thread identifiers */
-	int *status;
+  char *endptr;
+  int msgs_set = 0;
+  int num_msgs = 0;
+  int cid[NBTHREADS]; /* Thread identifiers */
+  int *status;
 
-	uid = geteuid();
-	gid = getegid();
+  uid = geteuid();
+  gid = getegid();
 
 #if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		fprintf (stderr, DLF53);
-		exit (USERR);
-	}
+  if (uid < 0 || gid < 0) {
+    fprintf (stderr, DLF53);
+    exit (USERR);
+  }
 #endif
-	errflg = 0;
-        while ((c = getopt (argc, argv, "n:?")) != EOF) {
-                switch (c) {
-		case 'n':
-		        num_msgs = strtol(optarg, &endptr, 10);
-			if (*endptr != '\0' || num_msgs < 0 || num_msgs > 1000) {
-				fprintf (stderr, "%s\n", strerror(EINVAL));
-				errflg++;
-			}
-			else {
-			  msgs_set++;
-			}
-		        break;
-		case '?':
-                        errflg++;
-                        break;
-                default:
-		        errflg++;
-                        break;
-		}
-	}
-        if (optind < argc) {
-                errflg++;
-	}
-	if (!(msgs_set)) {
-	        fprintf (stderr, "Not all required parameters are given\n");
-	        errflg++;
-	}
-        if (errflg) {
-                fprintf (stderr, "usage: %s %s", argv[0],
-		    "-n number_of_messages_per_thread\n");
-                exit (USERR);
-	}
+  errflg = 0;
+  while ((c = Cgetopt (argc, argv, "n:?")) != EOF) {
+    switch (c) {
+    case 'n':
+      num_msgs = strtol(Coptarg, &endptr, 10);
+      if (*endptr != '\0' || num_msgs < 0 || num_msgs > 1000) {
+        fprintf (stderr, "%s\n", strerror(EINVAL));
+        errflg++;
+      }
+      else {
+        msgs_set++;
+      }
+      break;
+    case '?':
+      errflg++;
+      break;
+    default:
+      errflg++;
+      break;
+    }
+  }
+  if (Coptind < argc) {
+    errflg++;
+  }
+  if (!(msgs_set)) {
+    fprintf (stderr, "Not all required parameters are given\n");
+    errflg++;
+  }
+  if (errflg) {
+    fprintf (stderr, "usage: %s %s", argv[0],
+             "-n number_of_messages_per_thread\n");
+    exit (USERR);
+  }
 #if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, DLF52);
-		exit (SYERR);
-	}
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, DLF52);
+    exit (SYERR);
+  }
 #endif
-	if (dlf_init("DLF-CONTROL") < 0 ) {
-	    fprintf (stderr, "Error in initializing global structure.\n");
-	    exit (SYERR);
-	}
+  if (dlf_init("DLF-CONTROL") < 0 ) {
+    fprintf (stderr, "Error in initializing global structure.\n");
+    exit (SYERR);
+  }
 
-	/* 1) Insert dlftest into the database - facility number 255 */
-	
-	if (dlf_enterfacility("dlftest", 255) < 0) {
-	  if (serrno != EEXIST) {
-	     fprintf(stderr, "Error entering facility\n");
-	     exit (SYERR);
-	  }
-	}
+  /* 1) Insert dlftest into the database - facility number 255 */
 
-	/* 2) Insert message texts into the database "Dlftest message number 1 to 255 */
-	for (i = 1; i < 256; i++) {
-	  snprintf(prtbuf, sizeof(prtbuf), "DLFtest message number %d", i);
-	  if (dlf_entertext("dlftest", i, prtbuf) < 0) {
-	    if (serrno != EEXIST) {
-	      fprintf (stderr, "Error entering message text\n");
-	      exit (SYERR);
-	    }
-	  }
-	}
+  if (dlf_enterfacility("dlftest", 255) < 0) {
+    if (serrno != EEXIST) {
+      fprintf(stderr, "Error entering facility\n");
+      exit (SYERR);
+    }
+  }
+
+  /* 2) Insert message texts into the database
+     "Dlftest message number 1 to 255 */
+  for (i = 1; i < 256; i++) {
+    snprintf(prtbuf, sizeof(prtbuf), "DLFtest message number %d", i);
+    if (dlf_entertext("dlftest", i, prtbuf) < 0) {
+      if (serrno != EEXIST) {
+        fprintf (stderr, "Error entering message text\n");
+        exit (SYERR);
+      }
+    }
+  }
 
 
-	/* 3) Call dlf_reinit("dlftest") */
+  /* 3) Call dlf_reinit("dlftest") */
 
-	if (dlf_reinit("dlftest") < 0) {
-	    fprintf (stderr, "Error initializing global structure.\n");
-	    exit (SYERR);
-	}
+  if (dlf_reinit("dlftest") < 0) {
+    fprintf (stderr, "Error initializing global structure.\n");
+    exit (SYERR);
+  }
 
-	/* 4) Create threads which will be generating log messages */
+  /* 4) Create threads which will be generating log messages */
 
-	for (i = 0; i < NBTHREADS; i++) {
-	  cid[i] = Cthread_create(&gen_log, &num_msgs);
-	}
+  for (i = 0; i < NBTHREADS; i++) {
+    cid[i] = Cthread_create(&gen_log, &num_msgs);
+  }
 
-	/* 5) Wait for threads to finish */
-	for (i = 0; i < NBTHREADS; i++) {
-	  Cthread_join(cid[i], &status);
-	}
-	exit(0);
+  /* 5) Wait for threads to finish */
+  for (i = 0; i < NBTHREADS; i++) {
+    Cthread_join(cid[i], &status);
+  }
+  exit(0);
 }
 
 void *gen_log(arg)
-void *arg;
+     void *arg;
 {
-  uuid_t req_id;
-  uuid_t sreq_id;
+  Cuuid_t req_id;
+  Cuuid_t sreq_id;
   int n;
-  char prtbuf[128];
   struct timeval cur_time;
   int sev;
   int msgn;
@@ -167,42 +169,46 @@ void *arg;
   int rv;
   int num_msgs;
 
-  fprintf (stdout, "[%d] - Generating and writing log messages.\n", Cthread_self());
+  fprintf (stdout,
+           "[%d] - Generating and writing log messages.\n",
+           Cthread_self());
   /* Seed random number generator with microseconds */
   gettimeofday(&cur_time, NULL);
-  srandom(cur_time.tv_usec);
+  srand(cur_time.tv_usec);
 
   num_msgs = *(int *)arg;
   for (n = 0; n < num_msgs; n++) {
     /* Generate request id and subrequest id */
-    uuid_generate(req_id);
-    uuid_generate(sreq_id);
+    Cuuid_create(&req_id);
+    Cuuid_create(&sreq_id);
     /* Take random severity level and random message number */
-    sev = 1 + (int) (10.0 * random()/(RAND_MAX+1.0));
-    msgn = 1 + (int)(255.0 * random()/(RAND_MAX+1.0));
+    sev = 1 + (int) (10.0 * rand()/(RAND_MAX+1.0));
+    msgn = 1 + (int)(255.0 * rand()/(RAND_MAX+1.0));
     /* Generate tape name */
-    tpn = 1 + (int)(9999.0 * random()/(RAND_MAX+1.0));
+    tpn = 1 + (int)(9999.0 * rand()/(RAND_MAX+1.0));
     snprintf(tpname, sizeof(tpname), "TP%04d", tpn);
-    nsinv = 0XF123456789876543;
+    nsinv = (0XF1234567 * (2^32)) + 0X87654321;
     pari = 32768;
-    pari64 = (HYPER)12345678987654321;
+    pari64 = (HYPER) ((12345678 * (10^8)) + 987654321);
     parf = 32.768;
     pard = 65.535;
 
     rv = dlf_write (req_id, sev, msgn, nsinv, 7,
-		    "PINT", DLF_MSG_PARAM_INT, pari,
-		    "PSTR", DLF_MSG_PARAM_STR, "This_is_a_string",
-		    NULL,   DLF_MSG_PARAM_UUID, sreq_id,
-		    "PI64", DLF_MSG_PARAM_INT64, pari64,
-		    NULL,   DLF_MSG_PARAM_TPVID, tpname,
-		    "PDBL", DLF_MSG_PARAM_DOUBLE, pard,
-		    "PFLT", DLF_MSG_PARAM_FLOAT, parf);
+                    "PINT", DLF_MSG_PARAM_INT, pari,
+                    "PSTR", DLF_MSG_PARAM_STR, "This_is_a_string",
+                    NULL,   DLF_MSG_PARAM_UUID, sreq_id,
+                    "PI64", DLF_MSG_PARAM_INT64, pari64,
+                    NULL,   DLF_MSG_PARAM_TPVID, tpname,
+                    "PDBL", DLF_MSG_PARAM_DOUBLE, pard,
+                    "PFLT", DLF_MSG_PARAM_FLOAT, parf);
     if (rv < 0) {
       fprintf (stderr, "[%d] dlf_write() returns %d\n", Cthread_self(), rv);
       break;
     }
   }
-  fprintf (stdout, "[%d] %d log messages have been written\n", Cthread_self(), n);
+  fprintf (stdout,
+           "[%d] %d log messages have been written\n",
+           Cthread_self(), n);
   return(0);
 }
 

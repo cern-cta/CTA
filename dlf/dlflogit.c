@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 13:30:14 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.3 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,16 +14,19 @@ static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.2 $ $Date: 200
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include "Cglobals.h"
 #include "dlf.h"
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 
 extern int jid;
 
-dlflogit(const char *args, ...)
+int dlflogit(const char *args, ...)
 {
 	va_list ap;
-	char *func;
 	char *msg;
 	char prtbuf[LOGBUFSZ];
 	int save_errno;

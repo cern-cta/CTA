@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:59:53 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -84,7 +84,7 @@ char *logbuf;
 
 /*     dlf_srv_getmsgtexts - get texts for given facility */
 
-dlf_srv_getmsgtexts(magic, req_data, clienthost, thip)
+int dlf_srv_getmsgtexts(magic, req_data, clienthost, thip)
 int magic;
 char* req_data;
 char* clienthost;
@@ -98,11 +98,9 @@ struct dlf_srv_thread_info* thip;
 	char* sbp;
 	char outbuf[DLF_REPBUFSZ];
 	char facname[DLF_MAXFACNAMELEN + 1];
-	int i;
 	int msg_no;
 	char msg_text[DLF_MAXSTRVALLEN + 1];
 	int bol = 1;
-	int eol = 0;
 	int status = 0;
 	char* p;
 	int c;
@@ -167,7 +165,7 @@ struct dlf_srv_thread_info* thip;
 	RETURN (0);
 }
 
-dlf_srv_getfacilites(magic, req_data, clienthost, thip)
+int dlf_srv_getfacilites(magic, req_data, clienthost, thip)
 int magic;
 char* req_data;
 char* clienthost;
@@ -181,11 +179,7 @@ struct dlf_srv_thread_info* thip;
 	char* sbp;
 	char outbuf[DLF_REPBUFSZ];
 	char fac_name[DLF_MAXFACNAMELEN + 1];
-	int i;
-	int msg_no;
-	char msg_text[DLF_MAXSTRVALLEN + 1];
 	int bol = 1;
-	int eol = 0;
 	int status = 0;
 	char* p;
 	int c;
@@ -235,7 +229,7 @@ struct dlf_srv_thread_info* thip;
 	RETURN (0);
 }
 
-dlf_srv_enterfacility(magic, req_data, clienthost, thip)
+int dlf_srv_enterfacility(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -274,7 +268,7 @@ struct dlf_srv_thread_info *thip;
 
 }
 
-dlf_srv_entertext (magic, req_data, clienthost, thip)
+int dlf_srv_entertext (magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -316,7 +310,7 @@ struct dlf_srv_thread_info *thip;
 
 }
 
-dlf_srv_modfacility (magic, req_data, clienthost, thip)
+int dlf_srv_modfacility (magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -352,7 +346,7 @@ struct dlf_srv_thread_info *thip;
 	RETURN (0);
 }
 
-dlf_srv_delfacility (magic, req_data, clienthost, thip)
+int dlf_srv_delfacility (magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -386,7 +380,7 @@ struct dlf_srv_thread_info *thip;
 	RETURN (0);
 }
 
-dlf_srv_modtext (magic, req_data, clienthost, thip)
+int dlf_srv_modtext (magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -427,7 +421,7 @@ struct dlf_srv_thread_info *thip;
 	RETURN (0);
 }
 
-dlf_srv_deltext (magic, req_data, clienthost, thip)
+int dlf_srv_deltext (magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -467,7 +461,7 @@ struct dlf_srv_thread_info *thip;
 
 /*	dlf_srv_entermessage - enter a log message into the database */
 
-dlf_srv_entermessage(magic, req_data, req_data_length, clienthost, thip, last)
+int dlf_srv_entermessage(magic, req_data, req_data_length, clienthost, thip, last)
 int magic;
 char *req_data;
 int req_data_length;
@@ -480,7 +474,6 @@ int *last;
 	gid_t gid;
 	uid_t uid;
 	char *rbp;
-	int i;	
 	char* end_of_buf;
 	U_BYTE last_message;
 
@@ -539,7 +532,7 @@ int *last;
 		param->dval = atof(param->strval);
 		break;
 	      case DLF_MSG_PARAM_UUID:
-		unmarshall_UUID (rbp, param->strval);
+		unmarshall_UUID (rbp, *((Cuuid_t*)param->strval));
 		break;
 	      default:
 		dlf_delete_param_list (&log_message.param_list);
@@ -569,7 +562,7 @@ int *last;
 
 /*	dlf_srv_shutdown - shutdown the dlf server */
 
-dlf_srv_shutdown(magic, req_data, clienthost, thip)
+int dlf_srv_shutdown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;

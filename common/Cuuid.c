@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.1 2003/09/09 12:53:00 jdurand Exp $
+ * $Id: Cuuid.c,v 1.2 2003/09/24 14:52:27 sponcec3 Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.1 $ $Date: 2003/09/09 12:53:00 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:27 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.1 $ $Date: 2003/0
 #include <serrno.h>
 #include <osdep.h>
 #include <Cuuid.h>
+#include <marshall.h>
 #include <Cglobals.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -374,7 +375,8 @@ void DLL_DECL Cuuid_create_from_name(uuid,nsid,name)
     htons(net_nsid.time_hi_and_version);
 	
     _Cuuid_MD5Init(&c);
-    _Cuuid_MD5Update(&c, (unsigned char *) &net_nsid, (unsigned int) sizeof(Cuuid_t));
+    _Cuuid_MD5Update(&c, (unsigned char *) &net_nsid,
+                     (unsigned int) sizeof(Cuuid_t));
     _Cuuid_MD5Update(&c, (unsigned char *) name, (unsigned int) namelen);
     _Cuuid_MD5Final(&c);
 	
@@ -435,6 +437,39 @@ int DLL_DECL Cuuid_compare(u1,u2)
 		}
     return 0;
 }
+
+/* --------------- */
+/* _marshall_UUID  */
+/* --------------- */
+void DLL_DECL _marshall_UUID (ptr, uuid)
+     char **ptr;
+     Cuuid_t uuid;
+{
+  int i;
+  marshall_LONG(*ptr, uuid.time_low);
+  marshall_SHORT(*ptr, uuid.time_mid);
+  marshall_SHORT(*ptr, uuid.time_hi_and_version);
+  marshall_BYTE(*ptr, uuid.clock_seq_hi_and_reserved);
+  marshall_BYTE(*ptr, uuid.clock_seq_low);
+  for (i=0; i< 6; i++) marshall_BYTE(*ptr, uuid.node[i]);
+}
+
+/* ---------------- */
+/* _unmarshall_UUID */
+/* ---------------- */
+void DLL_DECL _unmarshall_UUID (ptr, uuid)
+     char **ptr;
+     Cuuid_t uuid;
+{
+  int i;
+  unmarshall_LONG(*ptr, uuid.time_low);
+  unmarshall_SHORT(*ptr, uuid.time_mid);
+  unmarshall_SHORT(*ptr, uuid.time_hi_and_version);
+  unmarshall_BYTE(*ptr, uuid.clock_seq_hi_and_reserved);
+  unmarshall_BYTE(*ptr, uuid.clock_seq_low);
+  for (i=0; i< 6; i++) unmarshall_BYTE(*ptr, uuid.node[i]);
+}
+
 
 /* The routine MD5Init initializes the message-digest context
    mdContext. All fields are set to zero.

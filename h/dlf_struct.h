@@ -3,14 +3,14 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:44:11 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC Vitaly Motyakov
  */
 
 
 #ifndef _DLFSTRUCT_H_
 #define _DLFSTRUCT_H_
 
-#include <uuid/uuid.h>
+#include "Cuuid.h"
 #include "osdep.h"
 #include "Castor_limits.h"
 
@@ -112,7 +112,7 @@ typedef struct _dlf_log_message
 {
   char time[DLF_TIMESTRLEN + 1]; /* Time string in the format YYYYMMDDHHMMSS */
   int time_usec;                 /* Time microseconds */
-  uuid_t request_id;
+  Cuuid_t request_id;
   char hostname[CA_MAXHOSTNAMELEN+1];
   pid_t pid;
   int cid;                                /* Cthread identifier */
