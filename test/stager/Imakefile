@@ -1,0 +1,31 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/10/25 09:57:17 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM
+COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "stager" directory
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(FileName(..,..),h)
+
+all:
+	@echo 'no test available yet for "stager" directory'
+
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+ 
