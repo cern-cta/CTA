@@ -57,7 +57,7 @@ namespace castor {
         /**
          * Destructor
          */
-        virtual ~OraBaseCnv();
+        virtual ~OraBaseCnv() throw();
 
         /**
          * gets the representation type, that is the type of

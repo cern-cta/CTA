@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/05 16:16:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -72,7 +72,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // ~OraStagerSvc
 // -----------------------------------------------------------------------
-castor::db::ora::OraStagerSvc::~OraStagerSvc() {
+castor::db::ora::OraStagerSvc::~OraStagerSvc() throw() {
   reset();
 }
 

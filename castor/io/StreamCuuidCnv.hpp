@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 16:31:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -57,7 +57,7 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~StreamCuuidCnv();
+      virtual ~StreamCuuidCnv() throw();
 
       /**
        * Gets the object type.

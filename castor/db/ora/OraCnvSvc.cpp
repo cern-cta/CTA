@@ -29,7 +29,6 @@
 #include "castor/IConverter.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/MsgSvc.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraBaseObj.hpp"
@@ -100,10 +99,12 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // ~OraCnvSvc
 // -----------------------------------------------------------------------
-castor::db::ora::OraCnvSvc::~OraCnvSvc() {
+castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
   dropConnection();
   if (0 != m_environment) {
-    oracle::occi::Environment::terminateEnvironment(m_environment);
+    try {
+      oracle::occi::Environment::terminateEnvironment(m_environment);
+    } catch (...) { }
   }
 }
 
@@ -150,9 +151,9 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   if (0 == m_connection) {
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    msgSvc()->stream() << " Created new Oracle connection : "
-                       << std::ios::hex << m_connection
-                       << std::ios::dec << std::endl;
+    clog() << " Created new Oracle connection : "
+           << std::ios::hex << m_connection
+           << std::ios::dec << std::endl;
     //oracle::occi::Statement* stmt = m_connection->createStatement
     //  ("alter session set events '10046 trace name context forever, level 8'");
     //stmt->executeUpdate();

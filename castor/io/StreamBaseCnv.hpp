@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/29 12:18:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -61,7 +61,7 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~StreamBaseCnv();
+      virtual ~StreamBaseCnv() throw();
 
       /**
        * gets the representation type, that is the type of

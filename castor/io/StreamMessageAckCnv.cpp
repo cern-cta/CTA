@@ -55,7 +55,7 @@ castor::io::StreamMessageAckCnv::StreamMessageAckCnv() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamMessageAckCnv::~StreamMessageAckCnv() {
+castor::io::StreamMessageAckCnv::~StreamMessageAckCnv() throw() {
 }
 
 //------------------------------------------------------------------------------

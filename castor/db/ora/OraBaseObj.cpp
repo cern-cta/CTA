@@ -54,7 +54,7 @@ castor::db::ora::OraBaseObj::OraBaseObj() :
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseObj::~OraBaseObj() {
+castor::db::ora::OraBaseObj::~OraBaseObj() throw() {
   m_cnvSvc->unregisterCnv(this);
   m_cnvSvc->release();
 }

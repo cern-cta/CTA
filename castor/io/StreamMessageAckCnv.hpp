@@ -57,7 +57,7 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~StreamMessageAckCnv();
+      virtual ~StreamMessageAckCnv() throw();
 
       /**
        * Gets the object type.

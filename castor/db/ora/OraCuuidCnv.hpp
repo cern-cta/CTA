@@ -33,7 +33,7 @@ namespace castor {
         /**
          * Destructor
          */
-        virtual ~OraCuuidCnv();
+        virtual ~OraCuuidCnv() throw();
 
         /**
          * Gets the object type.

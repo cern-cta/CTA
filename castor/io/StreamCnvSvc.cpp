@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -49,7 +49,7 @@ castor::io::StreamCnvSvc::StreamCnvSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // ~StreamCnvSvc
 // -----------------------------------------------------------------------
-castor::io::StreamCnvSvc::~StreamCnvSvc() {}
+castor::io::StreamCnvSvc::~StreamCnvSvc() throw() {}
   
 // -----------------------------------------------------------------------
 // id

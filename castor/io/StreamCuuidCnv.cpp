@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 16:31:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -57,7 +57,7 @@ castor::io::StreamCuuidCnv::StreamCuuidCnv() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamCuuidCnv::~StreamCuuidCnv() {
+castor::io::StreamCuuidCnv::~StreamCuuidCnv() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -93,8 +93,8 @@ void castor::io::StreamCuuidCnv::createRep(castor::IAddress* address,
   ad->stream() << content.clock_seq_hi_and_reserved;
   ad->stream() << content.clock_seq_low;
   ad->stream() << content.node[0] << content.node[1]
-	       << content.node[2] << content.node[3]
-	       << content.node[4] << content.node[5];
+               << content.node[2] << content.node[3]
+               << content.node[4] << content.node[5];
   ad->stream() << obj->id();
   // Mark object as done
   alreadyDone.insert(obj);

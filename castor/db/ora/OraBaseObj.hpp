@@ -59,7 +59,7 @@ namespace castor {
         /**
          * Destructor
          */
-        virtual ~OraBaseObj();
+        virtual ~OraBaseObj() throw();
 
         /**
          * Resets the converter. In particular any prepared

@@ -57,7 +57,7 @@ castor::io::StreamClientCnv::StreamClientCnv() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamClientCnv::~StreamClientCnv() {
+castor::io::StreamClientCnv::~StreamClientCnv() throw() {
 }
 
 //------------------------------------------------------------------------------

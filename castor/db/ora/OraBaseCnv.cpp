@@ -38,7 +38,7 @@ castor::db::ora::OraBaseCnv::OraBaseCnv() : OraBaseObj() {}
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseCnv::~OraBaseCnv() {}
+castor::db::ora::OraBaseCnv::~OraBaseCnv() throw() {}
 
 // -----------------------------------------------------------------------
 // RepType

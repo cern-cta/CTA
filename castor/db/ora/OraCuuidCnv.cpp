@@ -65,7 +65,7 @@ castor::db::ora::OraCuuidCnv::OraCuuidCnv() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraCuuidCnv::~OraCuuidCnv() {
+castor::db::ora::OraCuuidCnv::~OraCuuidCnv() throw() {
   reset();
 }
 

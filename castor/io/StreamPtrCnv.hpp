@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 16:31:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/05 16:14:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -59,7 +59,7 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~StreamPtrCnv();
+      virtual ~StreamPtrCnv() throw();
 
       /**
        * Gets the object type.
