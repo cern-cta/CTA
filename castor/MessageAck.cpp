@@ -52,8 +52,7 @@ castor::MessageAck::~MessageAck() throw() {
 //------------------------------------------------------------------------------
 void castor::MessageAck::print(std::ostream& stream,
                                std::string indent,
-                               castor::ObjectSet& alreadyPrinted) const
-  throw (){
+                               castor::ObjectSet& alreadyPrinted) const {
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -70,7 +69,7 @@ void castor::MessageAck::print(std::ostream& stream,
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::MessageAck::print() const throw() {
+void castor::MessageAck::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
