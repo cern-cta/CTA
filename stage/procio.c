@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.109 2001/03/16 11:59:07 jdurand Exp $
+ * $Id: procio.c,v 1.110 2001/03/19 13:44:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.109 $ $Date: 2001/03/16 11:59:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.110 $ $Date: 2001/03/19 13:44:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.109 $ $Date: 200
 #include "Cgrp.h"
 #include "rfio_api.h"
 #include "Cgetopt.h"
+#include "u64subr.h"
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -1378,8 +1379,17 @@ void procioreq(req_type, magic, req_data, clienthost)
 				else
 					stcp->reqid = reqid;
 				stcp->status = STAGEIN;
-				stcp->c_time = time(NULL);
-				stcp->a_time = stcp->c_time;
+				switch (stcp->t_or_d) {
+				case 'h':
+				case 'm':
+					stcp->c_time = hsmmtime; /* Already set before */
+					stcp->a_time = hsmmtime; /* Already set before */
+					break;
+				default:
+					stcp->c_time = time(NULL);
+					stcp->a_time = stcp->c_time;
+					break;
+				}
 				stcp->nbaccesses++;
 				stcp->status |= WAITING_REQ;
 #ifdef USECDB
@@ -1541,8 +1551,17 @@ void procioreq(req_type, magic, req_data, clienthost)
 				else
 					stcp->reqid = reqid;
 				stcp->status = STAGEIN;
-				stcp->c_time = time(NULL);
-				stcp->a_time = stcp->c_time;
+				switch (stcp->t_or_d) {
+				case 'h':
+				case 'm':
+					stcp->c_time = hsmmtime; /* Already set before */
+					stcp->a_time = hsmmtime; /* Already set before */
+					break;
+				default:
+					stcp->c_time = time(NULL);
+					stcp->a_time = stcp->c_time;
+					break;
+				}
 				stcp->nbaccesses++;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
@@ -1830,6 +1849,22 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto stagewrt_continue_loop;
 			}
+
+			if (have_save_stcp_for_Cns_creatx == 0) {
+				struct stgcat_entry *stclp;
+				/* We look if by chance there is an entry for the same disk file (case of automatic migration) */
+				for (stclp = stcs; stclp < stce; stclp++) {
+					if (stclp->reqid == 0) break;
+					if ((stclp->status & 0xF0) != STAGED) continue;
+					if (! (ISSTAGEIN(stclp) || ISSTAGEOUT(stclp) || ISSTAGEALLOC(stclp))) continue;
+					if (strcmp(stclp->ipath, upath) != 0) continue;
+					/* Got it */
+					have_save_stcp_for_Cns_creatx = 1;
+					save_stcp_for_Cns_creatx = *stclp;
+					break;
+				}
+			}
+
 			SET_CORRECT_EUID_EGID;
 			switch (stgreq.t_or_d) {
 			case 'h':
@@ -1860,40 +1895,82 @@ void procioreq(req_type, magic, req_data, clienthost)
 						c = USERR;
 						goto stagewrt_continue_loop;
 					}
-					correct_size = (u_signed64) filemig_stat.st_size;
-					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
-						/* If user specified a maxsize of bytes to transfer and if this */
-						/* maxsize is lower than physical file size, then the size of */
-						/* of the migrated file will be the minimum of the twos */
-						correct_size = (u_signed64) (stgreq.size * ONE_MB);
-					}
-					if (correct_size > 0 && correct_size == Cnsfilestat.filesize) {
-						/* Same size and > 0 : we assume user asks for a new copy */
-						strcpy(stgreq.u1.h.server,Cnsfileid.server);
-						stgreq.u1.h.fileid = Cnsfileid.fileid;
-						stgreq.u1.h.fileclass = Cnsfilestat.fileclass;
-					} else if (correct_size <= 0) {
+					/* If mtime of disk file is < mtime in nameserver : this is an obsolete version - no migration */
+					if (filemig_stat.st_mtime < Cnsfilestat.mtime) {
+						char tmpbuf1[21];
+						char tmpbuf2[21];
+
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR,
-									"STG98 - %s size is of zero size - not migrated\n",
-									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+									"STG98 - %s has mtime (%s) < %s mtime in nameserver (%s) - Considering disk file as obsolete - not migrated\n",
+									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath,
+									u64tostr((u_signed64) filemig_stat.st_mtime, tmpbuf1, 0),
+									hsmfiles[ihsmfiles],
+									u64tostr((u_signed64) Cnsfilestat.mtime, tmpbuf2, 0));
+
 						global_c_stagewrt++;
 						c = USERR;
 						goto stagewrt_continue_loop;
 					} else {
-						/* Not the same size or diskfile size is zero */
-						if (Cnsfilestat.filesize > 0) {
+						correct_size = (u_signed64) filemig_stat.st_size;
+						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+							/* If user specified a maxsize of bytes to transfer and if this */
+							/* maxsize is lower than physical file size, then the size of */
+							/* of the migrated file will be the minimum of the twos */
+							correct_size = (u_signed64) (stgreq.size * ONE_MB);
+						}
+						/* If mtime of disk file is > stcp->a_time : this is a new version */
+						/*
+						if ((have_save_stcp_for_Cns_creatx != 0) && (filemig_stat.st_mtime > save_stcp_for_Cns_creatx.a_time)) {
 							setegid(start_passwd.pw_gid);
 							seteuid(start_passwd.pw_uid);
 							sendrep (rpfd, MSG_ERR,
-										"STG98 - %s renewed (size differs vs. %s)\n",
-										hsmfiles[ihsmfiles],
+										"STG98 - %s has mtime > mtime known to stager - renewed\n",
 										(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 							setegid(stgreq.gid);
 							seteuid(stgreq.uid);
+							forced_Cns_creatx = 1;
+							save_stcp_for_Cns_creatx.a_time = filemig_stat.st_mtime;
+#ifdef USECDB
+							if (stgdb_upd_stgcat(&dbfd,&save_stcp_for_Cns_creatx) != 0) {
+								stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+							}
+#endif
+							savereqs();
+						} else {
+						*/
+							if (correct_size > 0 && correct_size == Cnsfilestat.filesize) {
+								/* Same size and > 0 : we assume user asks for a new copy */
+								strcpy(stgreq.u1.h.server,Cnsfileid.server);
+								stgreq.u1.h.fileid = Cnsfileid.fileid;
+								stgreq.u1.h.fileclass = Cnsfilestat.fileclass;
+							} else if (correct_size <= 0) {
+								setegid(start_passwd.pw_gid);
+								seteuid(start_passwd.pw_uid);
+								sendrep (rpfd, MSG_ERR,
+											"STG98 - %s size is of zero size - not migrated\n",
+											(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+								global_c_stagewrt++;
+								c = USERR;
+								goto stagewrt_continue_loop;
+							} else {
+								/* Not the same size or diskfile size is zero */
+								if (Cnsfilestat.filesize > 0) {
+									setegid(start_passwd.pw_gid);
+									seteuid(start_passwd.pw_uid);
+									sendrep (rpfd, MSG_ERR,
+												"STG98 - %s renewed (size differs vs. %s)\n",
+												hsmfiles[ihsmfiles],
+												(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+									setegid(stgreq.gid);
+									seteuid(stgreq.uid);
+								}
+								forced_Cns_creatx = 1;
+							}
+						/*
 						}
-						forced_Cns_creatx = 1;
+						*/
 					}
 				} else {
 					/* It is not point to try to migrated something of zero size */
@@ -1922,20 +1999,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (forced_Cns_creatx != 0) {
 					mode_t okmode;
 
-					if (have_save_stcp_for_Cns_creatx == 0) {
-						struct stgcat_entry *stclp;
-						/* We look if by chance there is an entry for the same disk file (case of automatic migration) */
-						for (stclp = stcs; stclp < stce; stclp++) {
-							if (stclp->reqid == 0) break;
-							if ((stclp->status & 0xF0) != STAGED) continue;
-							if (! (ISSTAGEIN(stclp) || ISSTAGEOUT(stclp) || ISSTAGEALLOC(stclp))) continue;
-							if (strcmp(stclp->ipath, upath) != 0) continue;
-							/* Got it */
-							have_save_stcp_for_Cns_creatx = 1;
-							save_stcp_for_Cns_creatx = *stclp;
-							break;
-						}
-					}
 					SET_CORRECT_OKMODE;
 					SET_CORRECT_EUID_EGID;
 					if (Cns_creatx(hsmfiles[ihsmfiles], okmode, &Cnsfileid) != 0) {
@@ -2724,7 +2787,24 @@ void procputreq(req_type, req_data, clienthost)
 #endif
 				}
 				/* We check if the file yet exist in the name server and if we have to recreate it */
-				if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid) != 0) continue;
+				if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid) != 0) {
+					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+						update_migpool(&(hsmfilesstcp[ihsmfiles]),-1,0);
+						if ((hsmfilesstcp[ihsmfiles]->status & STAGEWRT) == STAGEWRT) {
+							delreq(hsmfilesstcp[ihsmfiles],0);
+						} else {
+							hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+						}
+					} else {
+						hsmfilesstcp[ihsmfiles]->status = STAGEOUT|PUT_FAILED;
+					}
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
+						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+	                continue;
+                }
 				if (!wqp) {
 					wqp = add2wq (clienthost,
 									user, uid, gid,
@@ -2931,7 +3011,24 @@ void procputreq(req_type, req_data, clienthost)
 				}
 			} else {
 				/* We check if the file yet exist in the name server and if we have to recreate it */
-				if (stageput_check_hsm(hsmfilesstcp[i],uid,gid) != 0) continue;
+				if (stageput_check_hsm(hsmfilesstcp[i],uid,gid) != 0) {
+					if ((hsmfilesstcp[i]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+						update_migpool(&(hsmfilesstcp[i]),-1,0);
+						if ((hsmfilesstcp[i]->status & STAGEWRT) == STAGEWRT) {
+							delreq(hsmfilesstcp[i],0);
+						} else {
+							hsmfilesstcp[i]->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+						}
+					} else {
+						hsmfilesstcp[i]->status = STAGEOUT|PUT_FAILED;
+					}
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[i]) != 0) {
+						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					continue;
+				}
 				subreqid = hsmfilesstcp[i]->reqid;
 			}
 			if (!wqp) {
@@ -3537,9 +3634,9 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	return(0);
 }
 
-/* Return 0 if ok                  */
-/*       -1 if nothing to migrated */
-/*      > 0 if error               */
+/* Return 0 if ok                 */
+/*       -1 if nothing to migrate */
+/*      > 0 if error              */
 
 int stageput_check_hsm(stcp,uid,gid)
 	struct stgcat_entry *stcp;
@@ -3572,34 +3669,61 @@ int stageput_check_hsm(stcp,uid,gid)
 			return(USERR);
 		}
 		correct_size = (u_signed64) filemig_stat.st_size;
-		/* if ((hsmmtime <= stcp->a_time) && (correct_size > 0 && correct_size == Cnsfilestat.filesize)) { */
-			/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
-		if ((correct_size > 0) && (correct_size == Cnsfilestat.filesize)) {
-			/* Same size and > 0: we assume user asks for a new copy */
-			setegid(start_passwd.pw_gid);
-			seteuid(start_passwd.pw_uid);
-			return(0);
-		} else if (correct_size <= 0) {
+		/*
+		if ((hsmmtime <= stcp->a_time) && (correct_size > 0 && correct_size == Cnsfilestat.filesize)) {
+			char tmpbuf1[21];
+			char tmpbuf2[21];
 			setegid(start_passwd.pw_gid);
 			seteuid(start_passwd.pw_uid);
 			sendrep (rpfd, MSG_ERR,
-						"STG98 - %s size is of zero size - not migrated\n",
-						stcp->ipath);
+						"STG98 - %s has mtime (%s) < %s mtime in nameserver (%s) - Considering disk file as obsolete - not migrated\n",
+						stcp->ipath, u64tostr((u_signed64) filemig_stat.st_mtime, tmpbuf1, 0),
+						stcp->u1.h.xfile, u64tostr((u_signed64) Cnsfilestat.mtime, tmpbuf2, 0));
 			return(-1);
+		}
+		*/
+		/* If mtime of disk file is > stcp->a_time : this is a new version */
+		/*
+		if (filemig_stat.st_mtime > stcp->a_time) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR,
+						"STG98 - %s has mtime > mtime known to stager - renewed\n",
+						stcp->ipath);
+			setegid(gid);
+			seteuid(uid);
+			forced_Cns_creatx = 1;
 		} else {
-			/* Not the same size or diskfile size is zero*/
-			if (Cnsfilestat.filesize > 0) {
+		*/
+			if ((correct_size > 0) && (correct_size == Cnsfilestat.filesize)) {
+				/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
+				return(0);
+			} else if (correct_size <= 0) {
 				setegid(start_passwd.pw_gid);
 				seteuid(start_passwd.pw_uid);
 				sendrep (rpfd, MSG_ERR,
-							"STG98 - %s renewed (size differs vs. %s)\n",
-							stcp->u1.h.xfile,
+							"STG98 - %s size is of zero size - not migrated\n",
 							stcp->ipath);
-				setegid(gid);
-				seteuid(uid);
+				return(-1);
+			} else {
+				/* Not the same size or diskfile size is zero */
+				if (Cnsfilestat.filesize > 0) {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
+					sendrep (rpfd, MSG_ERR,
+								"STG98 - %s renewed (size differs vs. %s)\n",
+								stcp->u1.h.xfile,
+								stcp->ipath);
+					setegid(gid);
+					seteuid(uid);
+				}
+				forced_Cns_creatx = 1;
 			}
-			forced_Cns_creatx = 1;
+		/*
 		}
+		*/
 	} else {
 		/* It is not point to try to migrated something of zero size */
 		if (rfio_stat(stcp->ipath, &filemig_stat) < 0) {
