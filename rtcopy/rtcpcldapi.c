@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.54 $ $Release$ $Date: 2004/08/19 08:45:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/08/19 13:46:54 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.54 $ $Date: 2004/08/19 08:45:54 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.55 $ $Date: 2004/08/19 13:46:54 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1027,9 +1027,8 @@ static int getUpdates(
   struct Cstager_Tape_t *newTp = NULL;
   struct C_Services_t **svcs = NULL;
   struct Cstager_Segment_t **newSegmArray = NULL, *newSegment = NULL;
-  struct Cstager_Segment_t **oldSegmArray = NULL, *oldSegment = NULL;
   enum Cstager_TapeStatusCodes_t tpOldStatus, tpNewStatus;
-  enum Cstager_SegmentStatusCodes_t segmOldStatus, segmNewStatus;
+  enum Cstager_SegmentStatusCodes_t segmNewStatus;
   file_list_t *file;
   int rc, save_serrno, i;
   int callGetMoreInfo = 0, nbNewSegms = 0, nbOldSegms = 0;
@@ -1124,164 +1123,150 @@ static int getUpdates(
   
   if ( callGetMoreInfo != -1 ) callGetMoreInfo = 0;
   Cstager_Tape_segments(newTp,&newSegmArray,&nbNewSegms);
-  Cstager_Tape_segments(clientCntx->currentTp,&oldSegmArray,&nbOldSegms);
   for ( i=0; i<nbNewSegms; i++ ) {
     /*
      * Don't bother to find any updates for finished files
      */
     newSegment = newSegmArray[i];
-    rc = matchOldSegment(
-                         newSegment,
-                         oldSegmArray,
-                         nbOldSegms,
-                         i,
-                         &oldSegment
-                         );
+    
+    Cstager_Segment_status(newSegment,&segmNewStatus);
+    rc = rtcpcld_findFileFromSegment(
+                                     newSegment,
+                                     tape,
+                                     clientCntx->clientAddr,
+                                     &file
+                                     );
     if ( rc == 0 ) continue;
     if ( rc == -1 ) {
       save_serrno = serrno;
       break;
     }
+    /*
+     * Skip all finished segments
+     */
+    if ( file->filereq.proc_status == RTCP_FINISHED ) continue;
     
-    Cstager_Segment_status(newSegment,&segmNewStatus);
-    Cstager_Segment_status(oldSegment,&segmOldStatus);
-    if ( (segmOldStatus != segmNewStatus) || 
-         (segmNewStatus == SEGMENT_WAITFSEQ) ||
-         (segmNewStatus == SEGMENT_WAITPATH) ) {
-      rc = rtcpcld_findFileFromSegment(
-                                       newSegment,
-                                       tape,
-                                       clientCntx->clientAddr,
-                                       &file
-                                       );
-      if ( rc == 0 ) continue;
+    switch (segmNewStatus) {
+    case SEGMENT_FILECOPIED:
+      file->filereq.proc_status = RTCP_FINISHED;
+      file->filereq.TEndTransferTape = 
+        file->filereq.TEndTransferDisk = (int)time(NULL);
+      Cstager_Segment_bytes_in(
+                               newSegment,
+                               &file->filereq.bytes_in
+                               );
+      Cstager_Segment_bytes_out(
+                                newSegment,
+                                &file->filereq.bytes_out
+                                );
+      Cstager_Segment_host_bytes(
+                                 newSegment,
+                                 &file->filereq.host_bytes
+                                 );
+      segmCksumAlgorithm = NULL;
+      Cstager_Segment_segmCksumAlgorithm(
+                                         newSegment,
+                                         (CONST char **)&segmCksumAlgorithm
+                                         );
+      if ( segmCksumAlgorithm != NULL ) {
+        strncpy(
+                file->filereq.castorSegAttr.segmCksumAlgorithm,
+                segmCksumAlgorithm,
+                sizeof(file->filereq.castorSegAttr.segmCksumAlgorithm)-1
+                );
+      }
+      
+      Cstager_Segment_segmCksum(
+                                newSegment,
+                                &file->filereq.castorSegAttr.segmCksum
+                                );
+    case SEGMENT_COPYRUNNING:
+      if ( segmNewStatus == SEGMENT_COPYRUNNING ) {
+        /* 
+         * Check that we haven't already processed this tape position
+         */
+        if ( file->filereq.proc_status == RTCP_POSITIONED ) break;
+        file->filereq.proc_status = RTCP_POSITIONED;
+        file->filereq.TStartPosition = file->filereq.TEndPosition = 
+          file->filereq.TStartTransferTape = 
+          file->filereq.TStartTransferDisk = (int)time(NULL);
+      }
+      blockid = NULL;
+      Cstager_Segment_blockid(
+                              newSegment,
+                              (CONST unsigned char **)&blockid
+                              );
+      if ( blockid != NULL ) {
+        memcpy(
+               file->filereq.blockid,
+               blockid,
+               sizeof(file->filereq.blockid)
+               );                         
+      }
+      
+      Cstager_Segment_fseq(
+                           newSegment,
+                           &file->filereq.tape_fseq
+                           );
+      file->filereq.convert = ASCCONV;
+      (void)rtcpc_GiveInfo(tape,file,0);
+      rc = updateCaller(tape,file);
       if ( rc == -1 ) {
         save_serrno = serrno;
-        break;
+        rtcp_log(LOG_DEBUG,"updateCaller() returned %d, serrno=%d. Set VID FAILED\n",
+                 rc,save_serrno);
+        (void)rtcpcld_setVIDFailedStatus(tape);
       }
-
-      if ( segmOldStatus != segmNewStatus)
-        rtcp_log(LOG_DEBUG,"getUpdates() segment (%d,%s) status updated %d -> %d\n",
-                 file->filereq.tape_fseq,file->filereq.file_path,
-                 segmOldStatus,segmNewStatus);
-      switch (segmNewStatus) {
-      case SEGMENT_FILECOPIED:
-        file->filereq.proc_status = RTCP_FINISHED;
-        file->filereq.TEndTransferTape = 
-          file->filereq.TEndTransferDisk = (int)time(NULL);
-        Cstager_Segment_bytes_in(
-                                 newSegment,
-                                 &file->filereq.bytes_in
-                                 );
-        Cstager_Segment_bytes_out(
-                                  newSegment,
-                                  &file->filereq.bytes_out
-                                  );
-        Cstager_Segment_host_bytes(
-                                   newSegment,
-                                   &file->filereq.host_bytes
-                                   );
-        segmCksumAlgorithm = NULL;
-        Cstager_Segment_segmCksumAlgorithm(
-                                           newSegment,
-                                           (CONST char **)&segmCksumAlgorithm
-                                           );
-        if ( segmCksumAlgorithm != NULL ) {
-          strncpy(
-                  file->filereq.castorSegAttr.segmCksumAlgorithm,
-                  segmCksumAlgorithm,
-                  sizeof(file->filereq.castorSegAttr.segmCksumAlgorithm)-1
-                  );
-        }
-        
-        Cstager_Segment_segmCksum(
-                                  newSegment,
-                                  &file->filereq.castorSegAttr.segmCksum
-                                  );
-      case SEGMENT_COPYRUNNING:
-        if ( segmNewStatus == SEGMENT_COPYRUNNING ) {
-          file->filereq.proc_status = RTCP_POSITIONED;
-          file->filereq.TStartPosition = file->filereq.TEndPosition = 
-            file->filereq.TStartTransferTape = 
-            file->filereq.TStartTransferDisk = (int)time(NULL);
-        }
-        blockid = NULL;
-        Cstager_Segment_blockid(
+      /* Allow client to add more requests to keep the stream running */
+      if ( callGetMoreInfo == 0 ) callGetMoreInfo = 1;
+      break;
+    case SEGMENT_FAILED:
+      callGetMoreInfo = -1;
+      errmsgtxt = NULL;
+      Cstager_Segment_errMsgTxt(
                                 newSegment,
-                                (CONST unsigned char **)&blockid
+                                (CONST char **)&errmsgtxt
                                 );
-        if ( blockid != NULL ) {
-          memcpy(
-                 file->filereq.blockid,
-                 blockid,
-                 sizeof(file->filereq.blockid)
-                 );                         
-        }
-        
-        Cstager_Segment_fseq(
-                             newSegment,
-                             &file->filereq.tape_fseq
-                             );
-        file->filereq.convert = ASCCONV;
-        (void)rtcpc_GiveInfo(tape,file,0);
-        rc = updateCaller(tape,file);
-        if ( rc == -1 ) {
-          save_serrno = serrno;
-          rtcp_log(LOG_DEBUG,"updateCaller() returned %d, serrno=%d. Set VID FAILED\n",
-                   rc,save_serrno);
-          (void)rtcpcld_setVIDFailedStatus(tape);
-        }
-        /* Allow client to add more requests to keep the stream running */
-        if ( callGetMoreInfo == 0 ) callGetMoreInfo = 1;
-        break;
-      case SEGMENT_FAILED:
-        callGetMoreInfo = -1;
-        errmsgtxt = NULL;
-        Cstager_Segment_errMsgTxt(
-                                  newSegment,
-                                  (CONST char **)&errmsgtxt
-                                  );
-        if ( errmsgtxt != NULL ) {
-          strncpy(
-                  file->filereq.err.errmsgtxt,
-                  errmsgtxt,
-                  sizeof(file->filereq.err.errmsgtxt)-1
-                  );
-        }
-        
-        Cstager_Segment_errorCode(
-                                  newSegment,
-                                  &file->filereq.err.errorcode
-                                  );
-        Cstager_Segment_severity(
-                                 newSegment,
-                                 &file->filereq.err.severity
-                                 );
-        file->filereq.cprc = -1;
-        save_serrno = file->filereq.err.errorcode;
-        (void)rtcpc_GiveInfo(tape,file,0);
-        (void)updateCaller(tape,file);
-        rc = -1;
-        break;
-      case SEGMENT_WAITFSEQ:
-      case SEGMENT_WAITPATH:
-        if (callGetMoreInfo == 0 ) callGetMoreInfo = 1;
-        break;
-      case SEGMENT_UNKNOWN:
-        rtcp_log(
-                 LOG_ERR,
-                 "getUpdates(): UNKNOWN status found for fseq=%d, path=%s\n",
-                 (file != NULL ? file->filereq.tape_fseq : -1),
-                 (file != NULL ? file->filereq.file_path : "(null)")
-                 );
-        save_serrno = SEINTERNAL;
-        rc = -1;
-        break;
-      default:
-        break;
+      if ( errmsgtxt != NULL ) {
+        strncpy(
+                file->filereq.err.errmsgtxt,
+                errmsgtxt,
+                sizeof(file->filereq.err.errmsgtxt)-1
+                );
       }
-      if ( rc == -1 ) break;
+      
+      Cstager_Segment_errorCode(
+                                newSegment,
+                                &file->filereq.err.errorcode
+                                );
+      Cstager_Segment_severity(
+                               newSegment,
+                               &file->filereq.err.severity
+                               );
+      file->filereq.cprc = -1;
+      save_serrno = file->filereq.err.errorcode;
+      (void)rtcpc_GiveInfo(tape,file,0);
+      (void)updateCaller(tape,file);
+      rc = -1;
+      break;
+    case SEGMENT_WAITFSEQ:
+    case SEGMENT_WAITPATH:
+      if (callGetMoreInfo == 0 ) callGetMoreInfo = 1;
+      break;
+    case SEGMENT_UNKNOWN:
+      rtcp_log(
+               LOG_ERR,
+               "getUpdates(): UNKNOWN status found for fseq=%d, path=%s\n",
+               (file != NULL ? file->filereq.tape_fseq : -1),
+               (file != NULL ? file->filereq.file_path : "(null)")
+               );
+      save_serrno = SEINTERNAL;
+      rc = -1;
+      break;
+    default:
+      break;
     }
+    if ( rc == -1 ) break;
   }
   Cstager_Tape_delete(clientCntx->currentTp);
   clientCntx->currentTp = newTp;
