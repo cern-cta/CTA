@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.70 2001/11/30 11:21:23 jdurand Exp $
+ * $Id: stage.h,v 1.71 2002/05/30 12:42:58 bcouturi Exp $
  */
 
 /*
@@ -42,5 +42,12 @@
 			/* stage daemon internal tables */
 
 #include "stage_server_struct.h"
+
+#ifdef MONITOR
+
+/* Defining monitoring method prototype from Cmonit_stageclient.c */
+EXTERN_C int DLL_DECL Cmonit_send_stager_status _PROTO ((time_t));
+
+#endif
 
 #endif /* __stage_h */

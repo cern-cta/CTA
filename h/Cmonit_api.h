@@ -1,5 +1,5 @@
 /*
- * $Id: Cmonit_api.h,v 1.1 2002/05/29 13:20:06 bcouturi Exp $
+ * $Id: Cmonit_api.h,v 1.2 2002/05/30 12:42:57 bcouturi Exp $
  * Copyright (C) 2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -15,9 +15,6 @@
 #include <time.h>
 #include "Castor_limits.h"
 #include "osdep.h"
-#if !defined(_WIN32)
-#include "Ctape.h" 
-#endif
 #include "Cmonit_constants.h"
 
 
@@ -36,18 +33,7 @@ EXTERN_C int DLL_DECL Cmonit_get_monitor_address _PROTO ((char *));
 
 EXTERN_C int DLL_DECL Cmonit_send_disk_rec _PROTO ((int , int , 
 						    int , int));
-EXTERN_C int DLL_DECL Cmonit_send_stager_status _PROTO ((time_t));
 
-
-EXTERN_C int DLL_DECL Cmonit_send_transfer_info _PROTO((int, 
-							u_signed64, 
-							u_signed64,
-							u_signed64, 
-							int, int));
-#if !defined(_WIN32)
-EXTERN_C int DLL_DECL Cmonit_send_tape_status _PROTO((struct tptab *, 
-						      int));
-#endif
 
 #endif /*  _MONITOR_H_INCLUDED_ */
 

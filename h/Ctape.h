@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.37 2002/05/17 12:27:35 baud Exp $
+ * $Id: Ctape.h,v 1.38 2002/05/30 12:42:58 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.37 $ $Date: 2002/05/17 12:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.38 $ $Date: 2002/05/30 12:42:58 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -330,4 +330,13 @@ struct devlblinfo {
 	char	hdr2[81];	/* HDR2 label */
 	char	uhl1[81];	/* UHL1 label */
 };
+
+#ifdef MONITOR
+
+/* Prototype for Monitoring method, from Cmonit_tape_client.c */
+EXTERN_C int DLL_DECL Cmonit_send_tape_status _PROTO((struct tptab *, 
+						      int));
+
+#endif
+
 #endif

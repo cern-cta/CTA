@@ -38,6 +38,8 @@
 #define LOGFILE "/usr/spool/monitor/log"
 #endif
 
+#define     SYERR     2     /* system error */
+
 
 /* ---------------------------------------
  * Function declarations
