@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.67 $ $Date: 2000/04/04 10:04:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.68 $ $Date: 2000/04/04 15:12:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1609,6 +1609,8 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
                 rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
                 proc_cntl.diskIOfinished = 1;
+                (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 /* It's not our error */
                 return(0);
             }
@@ -1658,6 +1660,8 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
                     rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
                     proc_cntl.diskIOfinished = 1;
+                    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     /* It's not our error */
                     return(0);
                 }
