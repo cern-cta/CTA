@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.149 2001/12/19 17:25:19 jdurand Exp $
+ * $Id: procio.c,v 1.150 2002/01/15 08:33:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.149 $ $Date: 2001/12/19 17:25:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.150 $ $Date: 2002/01/15 08:33:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -152,7 +152,7 @@ extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, 
 extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern int nextreqid _PROTO(());
-int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *));
+int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *, int *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
@@ -322,6 +322,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int global_c_stagewrt = 0;
 	int global_c_stagewrt_SYERR = 0;
 	int global_c_stagewrt_last_serrno = 0;
+	int isstaged_rc;
+	int isstaged_nomore = 0;
 
 	static struct Coptions longopts[] =
 	{
@@ -1525,7 +1527,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		switch (req_type) {
 		case STAGEIN:
 		stagein_isstaged_retry:
-			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion)) {
+			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -1932,67 +1934,74 @@ void procioreq(req_type, magic, req_data, clienthost)
 					stgreq.u1.h.fileclass = Cnsfilestat.fileclass;
 				}
 			}
-			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion)) {
-			case ISSTAGEDBUSY:
-				c = EBUSY;
-				goto reply;
-			case ISSTAGEDSYERR:
-				c = SYERR;
-				goto reply;
-			case NOTSTAGED:
-				break;
-			case STAGEOUT|PUT_FAILED:
-			case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
-				/* We accept a STAGEOUT on a PUT_FAILED file only if it is a CASTOR HSM one and if the permissions are ok */
-				if (! ((ncastorfiles > 0) && (stcp->t_or_d == 'h') && (stgreq.uid == stcp->uid) && (stgreq.gid == stcp->gid))) {
+			isstaged_rc = -1;
+			while (isstaged_rc != NOTSTAGED) {
+				/* We have to loop up to when we will be sure that all copies are removed */
+				isstaged_nomore = -1;
+				switch ((isstaged_rc = isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore))) {
+				case ISSTAGEDBUSY:
+					c = EBUSY;
+					goto reply;
+				case ISSTAGEDSYERR:
+					c = SYERR;
+					goto reply;
+				case NOTSTAGED:
+					break;
+				case STAGEOUT|PUT_FAILED:
+				case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
+					/* We accept a STAGEOUT on a PUT_FAILED file only if it is a CASTOR HSM one and if the permissions are ok */
+					if (! ((ncastorfiles > 0) && (stcp->t_or_d == 'h') && (stgreq.uid == stcp->uid) && (stgreq.gid == stcp->gid))) {
+						sendrep (rpfd, MSG_ERR, STG37);
+						c = USERR;
+						goto reply;
+					}
+					/* Here the logic is the same as if it was a STAGED file */
+				case STAGED:
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+						int save_serrno = rfio_serrno();
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+						c = (api_out != 0) ? save_serrno : SYERR;
+						goto reply;
+					}
+					break;
+				case STAGEOUT:
+				case STAGEOUT|CAN_BE_MIGR:
+				case STAGEOUT|WAITING_SPC:
+				case STAGEOUT|WAITING_NS:
+					if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
+					if (strcmp (user, stcp->user)) {
+						sendrep (rpfd, MSG_ERR, STG37);
+						c = USERR;
+						goto reply;
+					}
+					if ((stcp->t_or_d == 'h') && (stcp->status == STAGEOUT)) {
+						/* We decrement the r/w counter on this file system */
+						rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+					}
+					if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+						int save_serrno = rfio_serrno();
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+						c = (api_out != 0) ? save_serrno : SYERR;
+						goto reply;
+					}
+					break;
+				case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+				case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
+				case STAGEWRT|CAN_BE_MIGR:
+				case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+				case STAGEPUT|CAN_BE_MIGR:
+					sendrep (rpfd, MSG_ERR, STG37);
+					c = EBUSY;
+					goto reply;
+				default:
 					sendrep (rpfd, MSG_ERR, STG37);
 					c = USERR;
 					goto reply;
 				}
-				/* Here the logic is the same as if it was a STAGED file */
-			case STAGED:
-				if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
-					int save_serrno = rfio_serrno();
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-					c = (api_out != 0) ? save_serrno : SYERR;
-					goto reply;
-				}
-				break;
-			case STAGEOUT:
-			case STAGEOUT|CAN_BE_MIGR:
-			case STAGEOUT|WAITING_SPC:
-			case STAGEOUT|WAITING_NS:
-				if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
-				if (strcmp (user, stcp->user)) {
-					sendrep (rpfd, MSG_ERR, STG37);
-					c = USERR;
-					goto reply;
-				}
-				if ((stcp->t_or_d == 'h') && (stcp->status == STAGEOUT)) {
-					/* We decrement the r/w counter on this file system */
-					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
-				}
-				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
-					int save_serrno = rfio_serrno();
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-					c = (api_out != 0) ? save_serrno : SYERR;
-					goto reply;
-				}
-				break;
-			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
-			case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
-			case STAGEWRT|CAN_BE_MIGR:
-			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
-			case STAGEPUT|CAN_BE_MIGR:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = EBUSY;
-				goto reply;
-			default:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = USERR;
-				goto reply;
+				/* We loop unless isstaged() has been kind enough to detect this isn't necessary */
+				if (isstaged_nomore) break;
 			}
 			stcp = newreq((int) stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -2098,7 +2107,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolname[0] = '\0';
 			}
 			stage_wrt_migration = 0;
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion)) {
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
 			case ISSTAGEDBUSY:
 				global_c_stagewrt++;
 				c = EBUSY;
@@ -2585,7 +2594,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolflag = -1;
 				actual_poolname[0] = '\0';
 			}
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion)) {
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -3503,13 +3512,14 @@ void procputreq(req_type, req_data, clienthost)
 }
 
 int
-isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion)
+isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore)
 		 struct stgcat_entry *cur;
 		 struct stgcat_entry **p;
 		 int poolflag;
 		 char *poolname;
 		 int rdonly;
 		 char *poolname_exclusion;
+		 int *isstaged_nomore;
 {
 	int found = 0;
 	int found_regardless_of_rdonly = 0;
@@ -3883,6 +3893,50 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion)
 		/* If user asked to a STAGEIN read-only and it if found, isstaged() will always return STAGED as for a normal */
 		/* STAGEIN, and this will increment the nbaccesses of the read-only entry in the catalog */
 		*p = ((stcp_rdonly != NULL) ? stcp_rdonly : stcp);
+		if (*isstaged_nomore < 0) {
+			/* Caller asks for a hint to know if a second entire loop is needed */
+			/* Unless we are already at the end of the catalog, we go through to check if there is at least */
+			/* one another entry matching same invariants than (*p) */
+			/* Note that this apply ONLY for CASTOR files */
+
+			/* Default is : no other loop */
+			*isstaged_nomore = 1;
+			if (*p < (stce - 1)) {
+				/* Look forward */
+				struct stgcat_entry *stclp;
+				for (stclp = (*p) + 1; stclp < stce; stclp++) {
+					if (stclp->reqid == 0) break;
+					if (stclp->reqid == (*p)->reqid) continue; /* Yet done */
+					if (stclp->t_or_d != 'h') continue; /* Not CASTOR file */
+					if (poolname_exclusion != NULL) {
+						/* We know by definition that (*p) that triggered this action is within pool (*p)->poolname */
+						if (strcmp(stclp->poolname,(*p)->poolname) != 0) continue;
+					} else {
+						/* if no pool specified, the file may reside in any pool */
+						if (poolflag == 0) {
+							if (stclp->poolname[0] == '\0') continue;
+						} else {
+							/* if a specific pool was requested, the file must be there */
+							if (poolflag > 0) {
+								if (strcmp (poolname, stclp->poolname)) continue;
+							} else {
+								/* if -p NOPOOL, the file should not reside in a pool */
+								if (poolflag < 0) {
+									if (stclp->poolname[0]) continue;
+								}
+							}
+						}
+					}
+					if ((stclp->u1.h.fileid == (*p)->u1.h.fileid) &&
+						(strcmp(stclp->u1.h.server,(*p)->u1.h.server) == 0) &&
+						(strcmp(stclp->u1.h.xfile,(*p)->u1.h.xfile) == 0)) {
+						/* Found another entry */
+						*isstaged_nomore = 0;
+						break;
+					}
+				}
+			}
+		}
 		if (((*p)->status & 0xF0) == STAGED) {
 			return (STAGED);
 		} else {
