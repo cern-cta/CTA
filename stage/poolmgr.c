@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.41 2000/10/17 14:21:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.42 2000/10/21 20:51:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.41 $ $Date: 2000/10/17 14:21:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.42 $ $Date: 2000/10/21 20:51:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -965,14 +965,14 @@ selectfs(poolname, size, path)
 	int found = 0;
 	int i;
 	struct pool *pool_p;
-	long reqsize;
+	u_signed64 reqsize;
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	if (*size == 0) *size = pool_p->defsize;
-	reqsize = *size * ONE_MB;	/* size in bytes */
+	reqsize = (u_signed64) (*size * ONE_MB);	/* size in bytes */
 	i = pool_p->next_pool_elem;
 	do {
 		elemp = pool_p->elemp + i;
