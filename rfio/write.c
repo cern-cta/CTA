@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.7 2000/05/31 07:32:30 obarring Exp $
+ * $Id: write.c,v 1.8 2000/06/16 15:31:31 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 07:32:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.8 $ $Date: 2000/06/16 15:31:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -48,6 +48,7 @@ char    *ptr;
 int     s, size;
 {
    int status ;	/* Return code of called func	*/
+   int HsmType, save_errno, written_to;
    char   * p ; 	/* Pointer to buffer		*/
    char * trp ; 	/* Pointer to a temp buffer	*/
    int temp=0 ;	/* Has it been allocated ? 	*/
@@ -62,11 +63,32 @@ int     s, size;
 #endif
 
    /*
+    * Check HSM type and if file has been written to. The CASTOR HSM
+    * uses normal RFIO (local or remote) to perform the I/O. Thus we 
+    * don't call rfio_HsmIf_write().
+    */
+   HsmType = rfio_HsmIf_GetHsmType(s,&written_to); 
+   if ( HsmType > 0 ) {
+       if ( written_to == 0 ) status = rfio_HsmIf_FirstWrite(s,ptr,size);
+       if ( status == -1 ) return(-1);
+       if ( HsmType != RFIO_HSM_CNS ) {
+           status = rfio_HsmIf_write(s,ptr,size);
+           if ( status == -1 ) rfio_HsmIf_IOError(s,errno);
+           return(status);
+       }
+   }
+
+   /*
     * The file is local.
     */
    if ( s<0 || s>= MAXRFD || rfilefdt[s] == NULL) {
       TRACE(2, "rfio", "rfio_write: using local write(%d, %x, %d)", s, ptr, size);
       status = write(s, ptr, size);
+      if ( HsmType == RFIO_HSM_CNS ) {
+          save_errno = errno;
+          rfio_HsmIf_IOError(s,errno);
+          errno = save_errno;
+      }
       END_TRACE();
       rfio_errno = 0;
       return(status);
@@ -153,6 +175,7 @@ int     s, size;
       switch(req) {
        case RQST_WRITE:
 	  rfio_errno = rcode;
+          if ( status < 0 ) rfio_HsmIf_IOError(s,rfio_errno);
 	  if ( status < 0 && rcode == 0 )
 	     serrno = SENORCODE ;
 	  rfilefdt[s]->offset += status ;

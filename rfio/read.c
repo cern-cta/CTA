@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.8 2000/05/31 07:32:30 obarring Exp $
+ * $Id: read.c,v 1.9 2000/06/16 15:31:31 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 07:32:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.9 $ $Date: 2000/06/16 15:31:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -57,6 +57,7 @@ char    *ptr;
 int     s, size;
 {
    int status ;		/* Status and return code from remote   */
+   int HsmType, save_errno;
    int nbytes ; 		/* Bytes still to read			*/
    int socset = 0 ;
 
@@ -74,13 +75,37 @@ int     s, size;
    rfio_logrd(s,size);
 #endif
 
+   /*
+    * Check HSM type. The CASTOR HSM uses normal RFIO (local or remote)
+    * to perform the I/O. Thus we don't call rfio_HsmIf_read().
+    */
+   HsmType = rfio_HsmIf_GetHsmType(s,NULL);
+   if ( HsmType > 0 ) {
+       if ( HsmType != RFIO_HSM_CNS ) {
+           status = rfio_HsmIf_read(s,ptr,size);
+           if ( status == -1 ) {
+               save_errno = errno;
+               rfio_HsmIf_IOError(s,errno);
+               errno = save_errno;
+           }
+           return(status);
+       }
+   }
+
    /* 
     * The file is local.
     */
    if ( s<0 || s >= MAXRFD || rfilefdt[s] == NULL) {
       TRACE(2,"rfio","rfio_read: using local read(%d, %x, %d)", s, ptr, nbytes);
       status = read(s, ptr, nbytes);
+
+      if ( HsmType == RFIO_HSM_CNS ) {
+          save_errno = errno;
+          rfio_HsmIf_IOError(s,errno);
+          errno = save_errno;
+      }
       END_TRACE();
+
       rfio_errno = 0;
       return(status);
    }
@@ -183,6 +208,8 @@ int     s, size;
        */
       if ( (status= rfio_filbuf(s,ptr,size)) < 0 ) { 
 	 rfilefdt[s]->readissued= 0 ; 
+         if ( HsmType == RFIO_HSM_CNS ) 
+              rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
 	 END_TRACE() ; 
 	 return status ;
       }	
@@ -238,6 +265,8 @@ int     s, size;
       status= rfio_filbuf(s,rfilefdt[s]->_iobuf.base,rfilefdt[s]->_iobuf.dsize) ; 
       if ( status < 0 ) {
 	 rfilefdt[s]->readissued= 0 ; 
+         if ( HsmType == RFIO_HSM_CNS ) 
+              rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
 	 END_TRACE() ; 
 	 return -1 ;
       }
