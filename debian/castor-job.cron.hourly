@@ -1,0 +1,19 @@
+#
+## Cleanup of job output files
+#
+if [ -r /etc/sysconfig/stagerJob ]; then
+  . /etc/sysconfig/stagerJob 2>&1 >> $OUTPUT
+fi
+if [ "${RUN_CLEANUP}" = "yes" ]; then
+  if [ "x${CLEANUP_MAX_SIZE_KB}" = "x" ]; then
+    #
+    ## Default cleanup size is 100M
+    #
+    CLEANUP_MAX_SIZE_KB=100000
+  fi
+  #
+  ## We multiply by 1024, i.e. the size of a block (option -k)
+  if [ -d /var/spool/job ]; then
+    ls -kts /var/spool/job | egrep '\.output$' | awk -vCLEANUP_MAX_SIZE_KB=${CLEANUP_MAX_SIZE_KB} '{t += $1} t > CLEANUP_MAX_SIZE_KB {system "rm -f " $2}'
+  fi
+fi
