@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.62 2000/09/27 17:53:55 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.63 2000/09/28 12:57:43 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.62 $ $Date: 2000/09/27 17:53:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.63 $ $Date: 2000/09/28 12:57:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -786,63 +786,94 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 	struct waitf *wfp_ok;
 	int found;
 	int save_reqid, save_nextreqid;
+	int rc = 0;
 
+	save_reqid = reqid;
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		if (wqp == wqp_orig) continue;
-		wfp = &(wqp->wf[wqp->nbdskf - 1]);
-		if (wfp->waiting_on_req != wfp_orig->subreqid) continue;
-		found = 0;
-		/* Note : by construction, consecutive entries are always in the same order in the catalog */
-		for (stcp = stcs; stcp < stce; stcp++) {
-			if (stcp->reqid == 0) break;
-			if (stcp->reqid == wfp->subreqid) {
-				found = 1;
-				break;
+		reqid = wqp->reqid;
+		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+			if (wfp->waiting_on_req != wfp_orig->subreqid) continue;
+			found = 0;
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (stcp->reqid == 0) break;
+				if (stcp->reqid == wfp->subreqid) {
+					found = 1;
+					break;
+				}
+			}
+			if (! found) {
+				sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
+				rc = -1;
+				goto add2otherwf_return;
+			}
+			if (wqp->concat_off_fseq > 0) {
+				/* If this request is also a "-c off", we extend it as it if */
+				/* were the original that has already been extended with add2wf */
+
+				/* Please note that a "-c off" request waiting on another "-c off" request impose that */
+				/* necessarly this found wfp is the last one of this waiting files. Otherwise it is a */
+				/* bug. */
+				if (wfp != &(wqp->wf[wqp->nbdskf - 1])) {
+					sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : your \"-c off\" request waits on another \"-c off\" one, but the found waiting element is not the last one\n");
+					rc = -1;
+					goto add2otherwf_return;
+				}
+				if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
+ 					sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+					rc = -1;
+					goto add2otherwf_return;
+				}
+				wqp->wf = wfp = newwaitf;
+				wqp->nbdskf++;
+				wqp->nb_subreqs++;
+				wqp->nb_waiting_on_req++;
+				stcp_ok = newreq();
+				save_nextreqid = nextreqid();
+				memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
+				stcp_ok->reqid = save_nextreqid;
+				/* Current stcp is "<X>-", new one is "<X+1>-" */
+				sprintf(stcp_ok->u1.t.fseq,"%d",atoi(stcp->u1.t.fseq) + 1);
+				strcat(stcp_ok->u1.t.fseq,"-");
+				/* And it is a deffered allocation */
+				stcp_ok->ipath[0] = '\0';
+				wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
+				memset((char *) wfp_ok,0,sizeof(struct waitf));
+				wfp_ok->subreqid = stcp_ok->reqid;
+				wfp_ok->waiting_on_req = wfp_new->subreqid;
+				/* Current stcp become "<X>" */
+				sprintf(stcp->u1.t.fseq,"%d",atoi(fseq_orig));
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+				if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
+					stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				savereqs ();
+#ifdef STAGER_DEBUG
+				sendrep(wqp->rpfd, MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+#else
+				stglogit(func, "[DEBUG] add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+#endif
+			} else {
+				/* This request is NOT a "-c off" one, but is neverthless waiting on another "-c off" one */
+				/* We will simply update the wfp->waiting_on_req to wfp_new->subreqid, only if the fseq */
+				/* given on the command is NOT the what we are waiting for. */
+				if (strcmp(stcp->u1.t.fseq, fseq_orig) == 0) continue;
+				wfp->waiting_on_req = wfp_new->subreqid;
+#ifdef STAGER_DEBUG
+				sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
+#else
+				stglogit(func, "[DEBUG] add2otherwf : Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
+#endif
 			}
 		}
-		if (! found) {
-			sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
-			return(-1);
-		}
-		if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
- 			sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
-			return(-1);
-		}
-		wqp->wf = wfp = newwaitf;
-		wqp->nbdskf++;
-		wqp->nb_subreqs++;
-		wqp->nb_waiting_on_req++;
-		stcp_ok = newreq();
-		save_nextreqid = nextreqid();
-		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
-		stcp_ok->reqid = save_nextreqid;
-		/* Current stcp is "<X>-", new one is "<X+1>-" */
-		sprintf(stcp_ok->u1.t.fseq,"%d",atoi(stcp->u1.t.fseq) + 1);
-		strcat(stcp_ok->u1.t.fseq,"-");
-		/* And it is a deffered allocation */
-		stcp_ok->ipath[0] = '\0';
-		wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
-		memset((char *) wfp_ok,0,sizeof(struct waitf));
-		wfp_ok->subreqid = stcp_ok->reqid;
-		wfp_ok->waiting_on_req = wfp_new->subreqid;
-		/* Current stcp become "<X>" */
-		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq_orig));
-#ifdef USECDB
-		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-		}
-		if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
-			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-		}
-#endif
-		savereqs ();
-		save_reqid = reqid;
-		reqid = wqp->reqid;
-		stglogit(func, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
-		reqid = wqp->reqid;
-		break;
 	}
-	return(0);
+ add2otherwf_return:
+	reqid = save_reqid;
+	return(rc);
 }
 
 struct waitf *
@@ -1080,7 +1111,7 @@ check_waiting_on_req(subreqid, state)
 	int i;
 	int savereqid;
 	int saverpfd;
-	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp, *stcp_check;
 	struct waitf *wfp;
 	struct waitq *wqp;
 
@@ -1099,6 +1130,21 @@ check_waiting_on_req(subreqid, state)
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (stcp->reqid == 0) break;
 					if (stcp->reqid == subreqid) break;
+				}
+				if (wqp->concat_off_fseq <= 0 && stcp->filler[0] == 'c') {
+					/* If this request is NOT a "-c off" one and if the request to which belongs */
+					/* this callback IS a "-c off", then we react to the callback ONLY if the */
+					/* fseq is exactly the same. */
+					for (stcp_check = stcs; stcp_check < stce; stcp_check++) {
+						if (stcp_check->reqid == 0) break;
+						if (stcp_check->reqid == wfp->subreqid) break;
+					}
+                    sendrep(rpfd, MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
+					if (strcmp(stcp->u1.t.fseq,stcp_check->u1.t.fseq) != 0) {
+						/* The file sequence of this "-c off" callback does not */
+						/* match the file sequence we are waiting for. */
+						continue;
+					}
 				}
 #if SACCT
 				stageacct (STGFILS, wqp->uid, wqp->gid, wqp->clienthost,
