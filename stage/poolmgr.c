@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.235 2002/12/11 08:38:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.236 2002/12/16 16:26:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.235 $ $Date: 2002/12/11 08:38:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.236 $ $Date: 2002/12/16 16:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -164,7 +164,7 @@ void killmigovl _PROTO((int));
 int isvalidpool _PROTO((char *));
 int max_setretenp _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
-char migpoolfiles_migrname[CA_MAXMIGRNAMELEN+1];
+char migpoolfiles_migrname[CA_MAXMIGRNAMELEN+1024+1];
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
@@ -4001,7 +4001,13 @@ int migpoolfiles(pool_p)
 			/* We are in the child */
 			int rc = 0;
 			char *myenv = "STAGE_STGMAGIC=0x13140704"; /* STGMAGIC4 explicit value - Note: size was reset to 0 */
-
+			char tmpbufpid[1024];
+			
+			/* We try to append pid onto migpoolfiles_migrname */
+			sprintf(tmpbufpid,"[%d/%d]",nstreams_forked+1, nstreams_to_fork);
+			if ((strlen(migpoolfiles_migrname) + strlen(tmpbufpid)) <= (CA_MAXMIGRNAMELEN+1024)) {
+				strcat(migpoolfiles_migrname,tmpbufpid);
+			}
 			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
 			if (putenv(myenv) != 0) {
