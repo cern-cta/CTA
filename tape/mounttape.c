@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.16 $ $Date: 2000/01/09 17:57:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.17 $ $Date: 2000/02/15 16:59:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -97,7 +97,7 @@ char	**argv;
 	struct timeval timeval;
 	int tplbl;
 	int tpmode;
-	char tpvsn[CA_MAXVIDLEN+1];
+	char tpvsn[CA_MAXVSNLEN+1];
 	int ux;
 	int vdqm_rc;
 	int vdqm_reqid;

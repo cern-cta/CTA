@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.2 $ $Date: 1999/12/24 10:06:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.3 $ $Date: 2000/02/15 16:59:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -126,7 +126,7 @@ char	**argv;
 			break;
 		case 'v':
 			if (! vsn[0]) {
-				if (strlen (optarg) <= CA_MAXVIDLEN) {
+				if (strlen (optarg) <= CA_MAXVSNLEN) {
 					strcpy (vsn, optarg);
 				} else {
 					fprintf (stderr, TP006, "-v");

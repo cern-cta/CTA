@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.14 $ $Date: 2000/02/13 10:36:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.15 $ $Date: 2000/02/15 16:59:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -79,7 +79,7 @@ char	**argv;
 	float tape_used;
 	int toblock = -1;
 	static char vid[CA_MAXVIDLEN+1] = "";
-	static char vsn[CA_MAXVIDLEN+1] = "";
+	static char vsn[CA_MAXVSNLEN+1] = "";
 
 	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
 		switch (c) {
@@ -205,7 +205,7 @@ char	**argv;
 			break;
 		case 'v':
 			if (vsn[0] == '\0') {
-				if (strlen(optarg) <= CA_MAXVIDLEN) {
+				if (strlen(optarg) <= CA_MAXVSNLEN) {
 					strcpy (vsn, optarg);
 				} else {
 					fprintf (stderr, TP006, "-v");
