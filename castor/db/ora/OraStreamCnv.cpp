@@ -268,17 +268,17 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
        it++) {
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
+    }
+    std::set<int>::iterator item;
+    if ((item = tapeCopyList.find((*it)->id())) != tapeCopyList.end()) {
+      tapeCopyList.erase(item);
+    } else {
       if (0 == m_insertTapeCopyStatement) {
         m_insertTapeCopyStatement = createStatement(s_insertTapeCopyStatementString);
       }
       m_insertTapeCopyStatement->setDouble(1, obj->id());
       m_insertTapeCopyStatement->setDouble(2, (*it)->id());
       m_insertTapeCopyStatement->executeUpdate();
-    } else {
-      std::set<int>::iterator item;
-      if ((item = tapeCopyList.find((*it)->id())) != tapeCopyList.end()) {
-        tapeCopyList.erase(item);
-      }
     }
   }
   // Delete old links

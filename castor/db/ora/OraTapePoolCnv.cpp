@@ -235,17 +235,17 @@ void castor::db::ora::OraTapePoolCnv::fillRepSvcClass(castor::stager::TapePool* 
        it++) {
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
+    }
+    std::set<int>::iterator item;
+    if ((item = svcClassesList.find((*it)->id())) != svcClassesList.end()) {
+      svcClassesList.erase(item);
+    } else {
       if (0 == m_insertSvcClassStatement) {
         m_insertSvcClassStatement = createStatement(s_insertSvcClassStatementString);
       }
       m_insertSvcClassStatement->setDouble(1, obj->id());
       m_insertSvcClassStatement->setDouble(2, (*it)->id());
       m_insertSvcClassStatement->executeUpdate();
-    } else {
-      std::set<int>::iterator item;
-      if ((item = svcClassesList.find((*it)->id())) != svcClassesList.end()) {
-        svcClassesList.erase(item);
-      }
     }
   }
   // Delete old links
