@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.13 2000/09/20 11:31:46 jdurand Exp $
+ * $Id: stageput.c,v 1.14 2000/09/27 08:11:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.13 $ $Date: 2000/09/20 11:31:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.14 $ $Date: 2000/09/27 08:11:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,6 +59,7 @@ int main(argc, argv)
 	char *hsm_host;
 	char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int Iflag = 0;
+	int migratorflag = 0;
 	int Mflag = 0;
 	int msglen;
 	int nargs;
@@ -88,7 +89,7 @@ int main(argc, argv)
 	}
 #endif
 	numvid = 0;
-	while ((c = getopt (argc, argv, "Gh:I:M:q:U:V:")) != EOF) {
+	while ((c = getopt (argc, argv, "Gh:I:mM:q:U:V:")) != EOF) {
 		switch (c) {
 		case 'G':
 			Gflag++;
@@ -113,6 +114,9 @@ int main(argc, argv)
 			break;
 		case 'I':
 			Iflag = 1;
+			break;
+		case 'm':
+			migratorflag = 1;
 			break;
 		case 'M':
 			Mflag = 1;
@@ -223,6 +227,11 @@ int main(argc, argv)
 	}
 	if (optind >= argc && fun == 0 && numvid == 0 && Iflag == 0 && Mflag == 0) {
 		fprintf (stderr, STG46);
+		errflg++;
+	}
+
+	if (migratorflag != 0) {
+		fprintf (stderr, "STG17 - option -m is not supported on the command-line\n");
 		errflg++;
 	}
 
