@@ -177,7 +177,10 @@ int rtcpcld_parseWorkerCmd _PROTO((
                                    ));
 int rtcpcld_workerFinished _PROTO((
                                    tape_list_t *,
-                                   int, 
+                                   int,
+                                   u_signed64,
+                                   int,
+                                   int,
                                    int
                                    ));
 int rtcpcld_initLocks _PROTO((
