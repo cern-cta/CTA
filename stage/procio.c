@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.79 2001/02/02 15:01:31 jdurand Exp $
+ * $Id: procio.c,v 1.80 2001/02/02 17:50:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.79 $ $Date: 2001/02/02 15:01:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.80 $ $Date: 2001/02/02 17:50:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -451,9 +451,12 @@ void procioreq(req_type, req_data, clienthost)
 		if ((flags & STAGE_UFUN)  == STAGE_UFUN) Uflag = 1;
 		if ((flags & STAGE_INFO)  == STAGE_INFO) copytape = 1;
 		if ((flags & STAGE_SILENT)  == STAGE_SILENT) silent_flag = 1;
-		if (((Aflag != 0) || (concat_off != 0)) && req_type != STAGE_IN) {
-			sendrep (rpfd, MSG_ERR, STG17, Aflag == 0 ? "-c off" : (concat_off == 0 ? "-A deferred" : "-c off -A deffered"),
-					 "stage_out/stage_wrt/stage_cat");
+		if ((concat_off != 0) && (req_type != STAGE_IN)) {
+			sendrep (rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
+			errflg++;
+ 		}
+		if ((Aflag != 0) && (req_type != STAGE_IN) && (req_type != STAGE_OUT)) {
+			sendrep (rpfd, MSG_ERR, STG17, "-A deferred", "any request but stage_in or stage_wrt");
 			errflg++;
  		}
 		if ((Uflag != 0) && (req_type == STAGE_CAT)) {
@@ -906,6 +909,10 @@ void procioreq(req_type, req_data, clienthost)
 		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is only valid without explicit disk files\n");
 		errflg++;
 	}
+	if ((concat_off != 0) && (req_type != STAGEIN)) {
+		sendrep (rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
+		errflg++;
+	}
 #endif
 	if (api_out == 0) {
 		/* Api checksum for this thing is done before */
@@ -1292,7 +1299,10 @@ void procioreq(req_type, req_data, clienthost)
 									user, save_group, stcp->uid, stcp->gid,
 									clientpid,
 									Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 1);
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+									(concat_off_fseq <= 0) ? 1 : 0);
+					/* Please note that we explicitely disabled async callbacks if */
+					/* option -c off is in action */
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 #ifdef CONCAT_OFF
@@ -1441,7 +1451,10 @@ void procioreq(req_type, req_data, clienthost)
 									user, stcp->uid, stcp->gid,
 									user, save_group, stcp->uid, stcp->gid,
 									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 1);
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+									(concat_off_fseq <= 0) ? 1 : 0);
+					/* Please note that we explicitely disabled async callbacks if */
+					/* option -c off is in action */
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 #ifdef CONCAT_OFF
