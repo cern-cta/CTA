@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.218 2002/08/29 06:16:46 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.219 2002/09/17 11:53:57 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.218 $ $Date: 2002/08/29 06:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.219 $ $Date: 2002/09/17 11:53:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1298,14 +1298,12 @@ int main(argc,argv)
 						netclose(rqfd);
 						goto endreq;
 					}
-					if ((req_type == STAGE_INIT) && (magic != STGMAGIC4)) {
-						/* The API of stage_init only exist with magic number version >= 4 */
-						stglogit(func, STG141, (unsigned long) magic);
-						netclose(rqfd);
-						goto endreq;
-					}
-					if ((req_type == STAGE_SHUTDOWN) && (magic != STGMAGIC4)) {
-						/* The API of stage_shutdown only exist with magic number version >= 4 */
+					if ((req_type == STAGE_INIT     ||
+						 req_type == STAGE_SHUTDOWN ||
+						 req_type == STAGE_ALLOC    ||
+						 req_type == STAGE_GET) && (magic != STGMAGIC4)) {
+						/* The API of stage_init/stage_shutdown/stage_alloc/stage_get only exist */
+						/* with magic number version >= 4 */
 						stglogit(func, STG141, (unsigned long) magic);
 						netclose(rqfd);
 						goto endreq;
@@ -1357,9 +1355,11 @@ int main(argc,argv)
 					case STAGEINIT:
 						procinireq (req_type, magic, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
+					case STAGE_ALLOC:
 					case STAGEALLOC:
 						procallocreq (req_type, magic, req_data, clienthost);
 						break;
+					case STAGE_GET:
 					case STAGEGET:
 						procgetreq (req_type, magic, req_data, clienthost);
 						break;
@@ -1505,7 +1505,7 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 	int c;
 	gid_t gid;
 	uid_t uid = -1;
-	int nargs;
+	int nargs = 0;
 	char *rbp;
 	char *user;
 	char *p;
@@ -1633,7 +1633,7 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 	int c;
 	uid_t uid = -1;
 	gid_t gid;
-	int nargs;
+	int nargs = 0;
 	char *rbp;
 	char *user;
 	char *stghost = NULL;
@@ -2087,12 +2087,14 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		STAGE_TIME_END;
 		*p_u = '/';
 		if (c) {
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
 			if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (&rpfd, MSG_ERR, STG11, pool_user);
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return ((errno == ENOENT) ? SEUSERUNKN : SESYSERR);
 		}
@@ -2102,6 +2104,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		STAGE_TIME_END;
 		*p_f = '/';
 		if (c) {
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (c);
 		}
@@ -2121,6 +2124,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 			/* We reset our internal path */
 			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
 							 rfio_serror());
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
 		}
@@ -2133,12 +2137,14 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		STAGE_TIME_END;
 		*p_u = '/';
 		if (c) {
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
 			if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (&rpfd, MSG_ERR, STG11, pool_user);
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
 		}
@@ -2148,6 +2154,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		STAGE_TIME_END;
 		*p_f = '/';
 		if (c) {
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (c);
         }
@@ -2160,6 +2167,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		STAGE_TIME_END;
 		if (fd < 0) {
 			sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			stcp->ipath[0] = '\0';
 			return (SESYSERR);
 		}
@@ -2179,6 +2187,7 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
         if (RFIO_UNLINK(stcp->ipath) != 0 && (errno != ENOENT && rfio_errno != ENOENT)) {
 			stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
         }
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 		stcp->ipath[0] = '\0';
 		return (SESYSERR);
 	}
