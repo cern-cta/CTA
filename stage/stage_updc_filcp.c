@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_filcp.c,v 1.9 2000/03/23 01:41:33 jdurand Exp $
+ * $Id: stage_updc_filcp.c,v 1.10 2000/05/08 10:11:42 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.10 $ $Date: 2000/05/08 10:11:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -20,10 +21,12 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.9 $ $D
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
 #include "serrno.h"
+#include "stage_api.h"
 #include "stage.h"
 #include "u64subr.h"
 
@@ -70,7 +73,6 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
 	gid_t gid;
 	int key;
 	int msglen;
-	int n;
 	int nargs;
 	int ntries = 0;
 	char *p;
