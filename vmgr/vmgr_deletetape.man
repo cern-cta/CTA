@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletetape.man,v $ $Revision: 1.5 $ $Date: 2002/08/23 12:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_deletetape.man,v $ $Revision: 1.6 $ $Date: 2002/10/16 12:00:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETETAPE 3 "$Date: 2002/08/23 12:43:02 $" CASTOR "vmgr Library Functions"
+.TH VMGR_DELETETAPE 3 "$Date: 2002/10/16 12:00:55 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletetape \- remove a tape from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -37,6 +37,9 @@ pool this tape belongs to and the requestor is not super-user.
 .B EFAULT
 .I vid
 is a NULL pointer.
+.TP
+.B EEXIST
+The named volume still contains files.
 .TP
 .B EINVAL
 The length of
