@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.190 2002/04/09 07:36:46 jdurand Exp $
+ * $Id: poolmgr.c,v 1.191 2002/04/11 10:05:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.190 $ $Date: 2002/04/09 07:36:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.191 $ $Date: 2002/04/11 10:05:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -244,7 +244,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	strcpy (func, "getpoolconf");
 	if ((s = fopen (STGCONFIG, "r")) == NULL) {
 		stglogit (func, STG23, STGCONFIG);
-		return (CONFERR);
+		return (ESTCONF);
 	}
 	
 	/* 1st pass: count number of pools and migrators  */
@@ -789,7 +789,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			free (pools);
 		}
 		if (migrators != NULL) free (migrators);
-		return (CONFERR);
+		return (ESTCONF);
 	} else {
 		/* This pointer will maintain a list of pools on which a gc have finished since last call */
 		poolc = (char **) calloc (nbpool, sizeof(char *));
@@ -893,7 +893,7 @@ int cleanpool(poolname)
 	if (pid < 0) {
 		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
 		pool_p->ovl_pid = 0;
-		return (SYERR);
+		return (SESYSERR);
 	} else if (pid == 0) {  /* we are in the child */
 		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
@@ -902,7 +902,7 @@ int cleanpool(poolname)
 		stglogit (func, "execing cleaner, pid=%d\n", getpid());
 		execl (progfullpath, "cleaner", pool_p->gc, poolname, hostname, 0);
 		stglogit (func, STG02, "cleaner", "execl", sys_errlist[errno]);
-		exit (SYERR);
+		exit (SYERR); /* Warning: this is an exit code of a process, not a return code */
 	} else {
 		pool_p->cleanreqtime = time(NULL);
 	}
@@ -1394,7 +1394,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			sendrep (rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
 			sendrep (rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
 			sendrep (rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
-			sendrep (rpfd, MSG_OUT, "status                   0x%lx\n", (unsigned long) wqp->status);
+			sendrep (rpfd, MSG_OUT, "status                   %d\n", wqp->status);
 			sendrep (rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
 			sendrep (rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
 			sendrep (rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
@@ -2806,16 +2806,17 @@ int migrate_files(pool_p)
 	if (pid < 0) {
 		reqid = 0;
 		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
+		/* We do not retry here because we would have to sleep and stop service until sleep is over */
 		pool_p->migr->mig_pid = 0;
 		reqid = save_reqid;
-		return (SYERR);
+		return (SESYSERR);
 	} else if (pid == 0) {  /* we are in the child */
 		/* @@@@ EXCEPTIONNAL @@@@ */
 		/* exit(2); */
 		/* @@@@ END OF EXCEPTIONNAL @@@@ */
 		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
-		exit(migpoolfiles(pool_p));
+		exit(rc_castor2shift(migpoolfiles(pool_p)));
 	} else {  /* we are in the parent */
 		struct pool *pool_n;
 		int okpoolname;
@@ -2958,7 +2959,7 @@ int migpoolfiles(pool_p)
 
 	if (stage_setlog((void (*) _PROTO((int, char *))) &migpoolfiles_log_callback) != 0) {
 		stglogit(func, "### stage_setlog error (%s)\n",sstrerror(serrno));
-		return(SYERR);
+		return(SESYSERR);
 	}
 
 #ifndef __INSURE__
@@ -2976,21 +2977,21 @@ int migpoolfiles(pool_p)
 	/* Protect ourself agains something impossible unless a problem in the counters */
 	if ((pool_p == NULL) || (pool_p->migr == NULL)) {
 		stglogit(func, "### (pool_p == NULL) || (pool_p->migr == NULL)\n");
-		return(SYERR);
+		return(SESYSERR);
 	}
 	if ((found_nbfiles_max = (pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig)) <= 0) {
 		stglogit(func, "### pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig = %d - %d = %d\n",
 				 pool_p->migr->global_predicates.nbfiles_canbemig,
 				 pool_p->migr->global_predicates.nbfiles_beingmig,
 				 pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig);
-		return(SYERR);
+		return(SESYSERR);
 	}
 
 	/* build a sorted list of stage catalog entries for the specified pool */
 	scf = NULL;
 	if ((scs = (struct sorted_ent *) calloc (found_nbfiles_max, sizeof(struct sorted_ent))) == NULL) {
 		stglogit(func, "### calloc error (%s)\n",strerror(errno));
-		return(SYERR);
+		return(SESYSERR);
 	}
 
 	for (i = 0; i < pool_p->migr->nfileclass; i++) {
@@ -3101,7 +3102,7 @@ int migpoolfiles(pool_p)
 				if ((tppool_vs_stcp = (struct files_per_stream *) malloc(sizeof(struct files_per_stream))) == NULL) {
 					stglogit(func, "### malloc error (%s)\n",strerror(errno));
 					free(scs);
-					return(SYERR);
+					return(SESYSERR);
 				}
 			} else {
 				struct files_per_stream *dummy;
@@ -3114,7 +3115,7 @@ int migpoolfiles(pool_p)
 						if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
 					}
 					free(tppool_vs_stcp);
-					return(SYERR);
+					return(SESYSERR);
 				}
 				tppool_vs_stcp = dummy;
 			}
@@ -3140,7 +3141,7 @@ int migpoolfiles(pool_p)
 				if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
 			}
 			free(tppool_vs_stcp);
-			return(SYERR);
+			return(SESYSERR);
 		}
 		if (tppool_vs_stcp[found_tppool].egid == 0) {      /* No gid filter */
 			tppool_vs_stcp[found_tppool].egid = stage_passwd.pw_gid; /* Put default gid */
@@ -3188,7 +3189,7 @@ int migpoolfiles(pool_p)
 				if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
 			}
 			free(tppool_vs_stcp);
-			return(SYERR);
+			return(SESYSERR);
 		}
 		tppool_vs_stcp[found_tppool].nstcp = nfiles_per_tppool;
 		/* We store them in this area */
@@ -3536,20 +3537,20 @@ int migpoolfiles(pool_p)
 	/* We fork and execute the stagewrt request(s) */
 	for (j = 0; j < ntppool_vs_stcp; j++) {
 		if ((tppool_vs_stcp[j].nb_substreams > 0) && (tppool_vs_stcp[j].size <= 0)) continue;
-		if ((fork_pid= fork()) < 0) {
+	  migpoolfiles_retry_fork:
+		if ((fork_pid = fork()) < 0) {
 			stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
+			if (errno == EAGAIN) {
+				stglogit (func, "### errno == EAGAIN : keep on retrying in 60 seconds\n");
+				stage_sleep(60);
+				goto migpoolfiles_retry_fork;
+			}
 		} else if (fork_pid == 0) {
 			/* We are in the child */
 			int rc;
-			char *myenv = "STAGE_STGMAGIC=0x13140703"; /* STGMAGIC3 explicit value */
 
 			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
-			if (putenv(myenv) != 0) {
-				stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
-			} else {
-				stglogit(func, "Setted environment variable %s\n", myenv);
-			}
 
 #ifdef STAGER_DEBUG
 			stglogit(func, "### stagewrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
@@ -3643,6 +3644,7 @@ int migpoolfiles(pool_p)
 								   (serrno == EINVAL)     ||
 								   (serrno == ESTKILLED)  ||
 								   (serrno == ESTCLEARED) ||
+								   (serrno == EBUSY)      ||
 								   ISTAPESERRNO(serrno)   ||
 								   ISVDQMSERRNO(serrno)
 							) {
@@ -3671,7 +3673,7 @@ int migpoolfiles(pool_p)
 				stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
 			}
 #endif
-			exit((rc != 0) ? SYERR : 0);
+			exit((rc != 0) ? SYERR : 0); /* Exit code of a process, not a return code */
 		} else {
 			/* We are in the parent */
 			nstreams_forked++;
@@ -3708,7 +3710,7 @@ int migpoolfiles(pool_p)
 	}
 
 	/* Return v.s. if we have forked all the streams we wanted */
-	return((nstreams_to_fork == nstreams_forked) ? 0 : SYERR);
+	return((nstreams_to_fork == nstreams_forked) ? 0 : SESYSERR);
 }
 
 void migpoolfiles_log_callback(level,message)
