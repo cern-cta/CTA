@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/25 14:12:02 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/28 14:40:52 $ $Author: sponcec3 $
 #
 # Make Castor DB example
 #
@@ -39,7 +39,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift -lcastorCommonOra
 
-RHBIN_OBJ = testdb.Osuf
+TEST_OBJ = testdb.Osuf
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,shift) \
          DepSharedLibraryTargetName(../../castor/db/ora,castorCommonOra)
@@ -49,7 +49,7 @@ LD = g++
 
 all: ProgramTargetName(testdb)
 
-NormalProgramTarget(testdb,$(RHBIN_OBJ),$(DEPLIB),$(LIBS))
+NormalProgramTarget(testdb,$(TEST_OBJ),$(DEPLIB),$(LIBS))
 
 Makefiles:
 
