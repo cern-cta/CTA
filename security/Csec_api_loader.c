@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Csec_api_loader.c,v 1.9 2004/08/27 14:36:39 motiakov Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -48,7 +48,9 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 #include <Csec.h>
 
 /* Macro to initialize one symbol in the context structure */
-#define DLSETFUNC(CTX, HDL, SYM) if ((CTX->SYM = dlsym(HDL, #SYM "_impl")) == NULL) { \
+#define DLSETFUNC(CTX, HDL, SYM) strcpy(symname, #SYM "_"); \
+    strcat(symname, CTX->protocols[CTX->current_protocol].id); \
+    if ((CTX->SYM = dlsym(HDL, symname)) == NULL) { \
     serrno =  ESEC_NO_SECMECH;                                  \
     Csec_errmsg(func, "Error finding symbol %s: %s\n",		\
 		#SYM, dlerror());					\
@@ -87,6 +89,7 @@ void Csec_unload_shlib(Csec_context_t *ctx) {
  */
 void *Csec_get_shlib(Csec_context_t *ctx) {
   char filename[CA_MAXNAMELEN];
+  char symname[256];
   void *handle;
   char *func = "Csec_get_shlib";
  
