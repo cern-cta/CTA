@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rstatus.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 06:49:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rstatus - get resource reservation status */
@@ -71,7 +71,7 @@ int nbdgp;
 			return (-1);
 		}
 		unmarshall_WORD (rbp, rsv_status[i].uid);
-		unmarshall_WORD (rbp, rsv_status[i].jid);
+		unmarshall_LONG (rbp, rsv_status[i].jid);
 		unmarshall_WORD (rbp, rsv_status[i].count);
 		for (j = 0; j < rsv_status[i].count; j++) {
 			if (j >= nbdgp) {
