@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.14 $ $Date: 1999/12/08 10:49:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.15 $ $Date: 2000/01/04 08:39:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1026,9 +1026,9 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     /*
      * Reset Device Group Name context
      */
-    log(LOG_INFO,"vdqm_NewVolReq() (%d,%d)@%s:%d requests %s in DGN %s (%s@%s)\n",
+    log(LOG_INFO,"vdqm_NewVolReq() (%d,%d)@%s:%d requests %s, mode=%d in DGN %s (%s@%s)\n",
         VolReq->clientUID,VolReq->clientGID,VolReq->client_host,
-        VolReq->client_port,VolReq->volid,VolReq->dgn,
+        VolReq->client_port,VolReq->volid,VolReq->mode,VolReq->dgn,
         (*VolReq->drive == '\0' ? "***" : VolReq->drive),
         (*VolReq->server == '\0' ? "***" : VolReq->server));
     rc = SetDgnContext(&dgn_context,VolReq->dgn);
@@ -1464,7 +1464,8 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                      vdqm_SetError(EBUSY);
                      return(-1);
                  }
-            }
+                 drvrec->drv.mode = -1; /* Mode is unknown */
+            } else drvrec->drv.mode = drvrec->vol->vol.mode;
             strcpy(drvrec->drv.volid,DrvReq->volid);
             drvrec->drv.status |= VDQM_UNIT_BUSY;
             /*
@@ -1474,6 +1475,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         }
         if ( (DrvReq->status & VDQM_VOL_UNMOUNT) ) {
             *drvrec->drv.volid = '\0';
+            drvrec->drv.mode = -1;
             /*
              * Volume has been unmounted. Reset release status (if set).
              */
@@ -1505,7 +1507,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             drvrec->drv.jobID = 0;
             /*
              * Delete from queue and free memory allocated for 
-             * previous volume request on this drive
+             * previous volume request on this drive. 
              */
             if ( drvrec->vol != NULL ) {
                 rc = DelVolRecord(dgn_context,drvrec->vol);
@@ -1531,10 +1533,12 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 if ( *DrvReq->volid == '\0' ) strcpy(DrvReq->volid,drvrec->drv.volid);
                 /*
                  * If a volume is mounted but current job ended: check if there
-                 * are any other valid request for the same volume.
+                 * are any other valid request for the same volume. The volume
+                 * can only be re-used on this unit if the modes are the same.
                  */
                 rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-                if ( rc == -1 || volrec == NULL ) {
+                if ( rc == -1 || volrec == NULL || 
+                     volrec->vol.mode != drvrec->drv.mode ) {
                     if ( rc == -1 ) 
                         log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
                     /*
@@ -1542,6 +1546,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                      * drive to unmount the volume
                      */
                     DrvReq->status  = VDQM_VOL_UNMOUNT;
+                    volrec = NULL;
                 } else {
                     volrec->drv = drvrec;
                     drvrec->vol = volrec;

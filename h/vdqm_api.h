@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_api.h,v 1.6 1999/12/09 13:46:27 jdurand Exp $
+ * $Id: vdqm_api.h,v 1.7 2000/01/04 08:41:34 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:46:27 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.7 $ $Date: 2000/01/04 08:41:34 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -26,7 +26,7 @@ EXTERN_C int DLL_DECL vdqm_admin _PROTO((vdqmnw_t *, int));
 EXTERN_C int DLL_DECL vdqm_PingServer _PROTO((vdqmnw_t *,int));
 EXTERN_C int DLL_DECL vdqm_Connect _PROTO((vdqmnw_t **));
 EXTERN_C int DLL_DECL vdqm_Disconnect _PROTO((vdqmnw_t **));
-EXTERN_C int DLL_DECL vdqm_SendVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int));
+EXTERN_C int DLL_DECL vdqm_SendVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int, int));
 EXTERN_C int DLL_DECL vdqm_UnitStatus _PROTO((vdqmnw_t *, char *, char *, char *, char *, int *, int *, int));
 EXTERN_C int DLL_DECL vdqm_DelVolumeReq _PROTO((vdqmnw_t *, int, char *, char *, char *, char *, int));
 EXTERN_C int DLL_DECL vdqm_DelDrive _PROTO((vdqmnw_t *, char *, char *, char *));
