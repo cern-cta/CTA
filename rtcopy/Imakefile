@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2004/12/21 22:34:31 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2005/03/10 10:53:38 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -59,8 +59,6 @@ CCOPTIM =
 #else
 CCOPTIM = -g
 #endif
-
-#DBLIBS = -L../dlf -ldlf -L../castor/db/ora -lcastorCommonOra
 
 #if defined(SONYRAW)
 SONYRFLG = -DSONYRAW
@@ -186,31 +184,14 @@ EPROGS_RTSTAT = FileName($(EXPORTBIN),rtstat)
 MANPAGES_RTSTAT = FileName($(MANDIR),rtstat.$(MANSUFFIX))
 EMANPAGES_RTSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtstat.$(MANSUFFIX)))
 #endif
-DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
-GLOBLIB += -L../shlib -lcastorCommonOra
 PROGS_C = ProgramTargetName(tpread) \
 	  ProgramTargetName(tpwrite) \
-	  ProgramTargetName(rtcpcldCleanupDB) \
-	  ProgramTargetName(MigHunter) \
 	  ProgramTargetName(dumptape) $(PROGS_RTSTAT)
 IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
 	   FileName($(BIN),ProgramTargetName(tpwrite)) \
-	   FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
-	   FileName($(BIN),ProgramTargetName(MigHunter)) \
 	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
-PROGS_D += ProgramTargetName(rtcpclientd) \
-	   ProgramTargetName(recaller) \
-	   ProgramTargetName(migrator)
-IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
-	    FileName($(BIN),ProgramTargetName(recaller)) \
-	    FileName($(BIN),ProgramTargetName(migrator))
 EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
 	   FileName($(EXPORTBIN),dumptape) \
-	   FileName($(EXPORTBIN),rtcpcldCleanupDB) \
-	   FileName($(EXPORTBIN),MigHunter) \
-	   FileName($(EXPORTBIN),rtcpclientd) \
-	   FileName($(EXPORTBIN),recaller) \
-	   FileName($(EXPORTBIN),migrator) \
 	   $(EPROGS_RTSTAT)
 MANPAGES_C = FileName($(MANDIR),tpread.$(MANSUFFIX)) \
 	     FileName($(MANDIR),tpwrite.$(MANSUFFIX)) \
@@ -231,6 +212,28 @@ MANPAGES_S = FileName($(MANDIR),rtcpd.$(MANSUFFIX)) \
 	     FileName($(MANDIR),killjid.$(MANSUFFIX))
 EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),killjid.$(MANSUFFIX))) 
+#endif
+
+#if BuildRtcpclientd
+DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
+DBLIB = -L../shlib -lcastorCommonOra
+PROGS_C = ProgramTargetName(rtcpcldCleanupDB) \
+	  ProgramTargetName(MigHunter)
+IPROGS_C = FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
+	   FileName($(BIN),ProgramTargetName(MigHunter))
+PROGS_D += ProgramTargetName(rtcpclientd) \
+	   ProgramTargetName(recaller) \
+	   ProgramTargetName(migrator)
+IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
+	    FileName($(BIN),ProgramTargetName(recaller)) \
+	    FileName($(BIN),ProgramTargetName(migrator))
+EPROGS_C = FileName($(EXPORTBIN),rtcpcldCleanupDB) \
+	   FileName($(EXPORTBIN),MigHunter) \
+	   FileName($(EXPORTBIN),rtcpclientd) \
+	   FileName($(EXPORTBIN),recaller) \
+	   FileName($(EXPORTBIN),migrator)
+MANPAGES_C = FileName($(MANDIR),rtcpclientd.$(MANSUFFIX))
+EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX)))
 #endif
 
 #if BuildMonitorLibrary
@@ -307,15 +310,15 @@ rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
 
 NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
-NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
-NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
