@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.66 2000/05/18 15:04:33 jdurand Exp $
+ * $Id: stager.c,v 1.67 2000/05/18 16:41:56 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.66 $ $Date: 2000/05/18 15:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.67 $ $Date: 2000/05/18 16:41:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <grp.h>
@@ -265,6 +265,25 @@ int main(argc, argv)
 	close (0);
 #endif
 
+	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
+
+    /* Add hostname to all ipath'es if needed */
+    {
+      char *host;
+      char *filename;
+      char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+
+      for (stcp = stcs; stcp < stce; stcp++) {
+        rfio_parseln (stcp->ipath, &host, &filename, NORDLINKS);
+        if (host == NULL) {
+          strcpy(ipath,hostname);
+          strcat(ipath,":");
+          strcat(ipath,stcp->ipath);
+          strcpy(stcp->ipath,ipath);
+        }
+      }
+    }
+
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 1);
 		sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
@@ -347,8 +366,6 @@ int main(argc, argv)
 	signal (SIGINT, stagekilled);        /* If client died */
 	signal (SIGTERM, stagekilled);       /* If killed from administrator */
 	if (nretry) sleep (RETRYI);
-
-	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
     /* -------- DISK TO DISK OR HPSS MIGRATION ----------- */
 
