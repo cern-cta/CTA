@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.12 2000/01/09 10:26:06 jdurand Exp $
+ * $Id: procupd.c,v 1.13 2000/01/26 14:04:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.13 $ $Date: 2000/01/26 14:04:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -232,6 +232,7 @@ char *clienthost;
 		goto reply;
 	}
 	if ( rc < 0) {	/* -R not specified, i.e. tape mounted and positionned */
+      int has_been_modified = 0;
 		if (stcp->ipath[0] == '\0') {	/* deferred allocation */
 			c = build_ipath (wfp->upath, stcp, wqp->pool_user);
 			if (c > 0) goto reply;
@@ -248,26 +249,25 @@ char *clienthost;
 				if (c = cleanpool (stcp->poolname)) goto reply;
 				return;
 			}
-#ifdef USECDB
-			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
-#endif
+            has_been_modified = 1;
 		}
-		if (fseq) {
+		if (fseq && stcp->t_or_d == 't') {
 			if (*stcp->poolname &&
 			     stcp->u1.t.fseq[0] == 'u') {
 				p = strrchr (stcp->ipath, '/') + 1;
 				sprintf (p, "%s.%s.%s",
 				    stcp->u1.t.vid[0], fseq, stcp->u1.t.lbl);
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                }
-#endif
+                has_been_modified = 1;
 				savereqs ();
 			}
 		}
+        if (has_been_modified != 0) {
+#ifdef USECDB
+          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+            sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+          }
+#endif
+        }
 		sendrep (rpfd, MSG_OUT, stcp->ipath);
 		goto reply;
 	}
@@ -378,7 +378,7 @@ char *clienthost;
 		if (c = cleanpool (stcp->poolname)) goto reply;
 		return;
 	}
-	{
+	if (stcp->t_or_d != 'm') {
 		int has_been_updated = 0;
 
 		if (blksize > 0) {
