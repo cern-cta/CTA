@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.11 2003/04/28 17:02:50 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.12 2003/05/12 12:18:24 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -102,8 +102,10 @@ struct pool {
 	time_t	cleanreqtime;
 	time_t	cleanreqtime_previous;
 	time_t	cleanreqtime_previous_end;
+	time_t last_allocation; /* last known allocation timestamp */
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
 	char	migr_name[CA_MAXMIGRNAMELEN+1];
+	char	metapool[CA_MAXPOOLNAMELEN+1];
 	struct migrator *migr;
 	int	mig_start_thresh;
 	int	mig_stop_thresh;
