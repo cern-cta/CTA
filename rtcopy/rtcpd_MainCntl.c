@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.68 $ $Date: 2000/04/26 13:26:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.69 $ $Date: 2000/05/04 08:34:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1742,7 +1742,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( rc == -1 ) {
         (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to allocate buffers\n");
-        (void)rtcpd_AppendClientMsg(tape,NULL,RT105,sstrerror(serrno));
+        (void)rtcpd_AppendClientMsg(tape,NULL,RT105,cmd,sstrerror(serrno));
         (void)tellClient(client_socket,tape,NULL,-1);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
