@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/25 14:03:02 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/05 14:13:33 $ $Author: jdurand $
 #
 # Make Castor DB libraries
 #
@@ -34,12 +34,12 @@ DEBUG  = -g
 #endif
 #endif
 
-DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
+DEPLIB = DepSharedLibraryTargetName(FileName(FileName(..,..),shlib),shift)
 
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../../..,)
+INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -L FileName(../../..,shlib) -lshift
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -L FileName(FileName(FileName(..,..),..),shlib) -lshift
 
 ORALIB_SRCS = OraBaseObj.cpp \
               OraBaseCnv.cpp \
@@ -65,13 +65,13 @@ ORALIB_SRCS = OraBaseObj.cpp \
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
-COMMONLIB = LibraryTargetName(castorCommonOra) SharedLibraryTargetName(castorCommonOra)
-LDFLAGS = -L ../..
+COMMONLIB = LibraryTargetName(castorCommonOra)
 LD = g++
 
-all: $(COMMONLIB)
+all: $(DEPLIB) $(COMMONLIB)
 
-SharedLibraryTarget(castorCommonOra,$(ORALIB_OBJS),$(DEPLIB),$(LIBS))
+MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
+
 NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
 
 Makefiles:
@@ -91,3 +91,6 @@ clean:
 clobber:	clean
 	@echo clobbering in CurDir
 	-@RemoveFiles($(COMMONLIB))
+
+FORCE:
+
