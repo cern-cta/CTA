@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.1 2004/07/28 12:16:00 motiakov Exp $
+ * $Id: tpdaemon.c,v 1.2 2004/08/12 16:27:35 motiakov Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.1 $ $Date: 2004/07/28 12:16:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -152,6 +152,15 @@ struct main_args *main_args;
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
+#ifdef CSEC
+	if ((p = getenv ("STAPE_PORT")) || (p = getconfent ("STAPE", "PORT", 0))) {
+		sin.sin_port = htons ((unsigned short)atoi (p));
+	} else if (sp = getservbyname ("stape", "tcp")) {
+		sin.sin_port = sp->s_port;
+	} else {
+		sin.sin_port = htons ((unsigned short)STAPE_PORT);
+	}
+#else
 	if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else if (sp = getservbyname ("tape", "tcp")) {
@@ -159,6 +168,7 @@ struct main_args *main_args;
 	} else {
 		sin.sin_port = htons ((unsigned short)TAPE_PORT);
 	}
+#endif
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		tplogit (func, TP002, "setsockopt", neterror());
