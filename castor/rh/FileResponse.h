@@ -193,14 +193,4 @@ int Crh_FileResponse_subreqId(struct Crh_FileResponse_t* instance, const char** 
  */
 int Crh_FileResponse_setSubreqId(struct Crh_FileResponse_t* instance, const char* new_var);
 
-/**
- * Get the value of protocol
- */
-int Crh_FileResponse_protocol(struct Crh_FileResponse_t* instance, const char** var);
-
-/**
- * Set the value of protocol
- */
-int Crh_FileResponse_setProtocol(struct Crh_FileResponse_t* instance, const char* new_var);
-
 #endif // CASTOR_RH_FILERESPONSE_H

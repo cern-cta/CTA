@@ -242,21 +242,4 @@ extern "C" {
     return 0;
   }
 
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_protocol
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_protocol(castor::rh::FileResponse* instance, const char** var) {
-    *var = instance->protocol().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setProtocol
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setProtocol(castor::rh::FileResponse* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setProtocol(snew_var);
-    return 0;
-  }
-
 } // End of extern "C"

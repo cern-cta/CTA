@@ -46,7 +46,6 @@ castor::rh::FileResponse::FileResponse() throw() :
   m_errorMessage(""),
   m_fileId(),
   m_subreqId(""),
-  m_protocol(""),
   m_id() {
 };
 
@@ -78,7 +77,6 @@ void castor::rh::FileResponse::print(std::ostream& stream,
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "subreqId : " << m_subreqId << std::endl;
-  stream << indent << "protocol : " << m_protocol << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
