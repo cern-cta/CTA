@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.6 1999/12/19 09:47:11 baud Exp $
+ * $Id: Ctape_api.h,v 1.7 2000/01/09 17:52:07 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
-static char sccsid[] = "@(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.6 $ $Date: 1999/12/19 09:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.7 $ $Date: 2000/01/09 17:52:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H

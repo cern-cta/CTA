@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.17 2000/01/09 14:36:49 baud Exp $
+ * $Id: Ctape.h,v 1.18 2000/01/09 17:52:07 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * $RCSfile: Ctape.h,v $ $Revision: 1.17 $ $Date: 2000/01/09 14:36:49 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.18 $ $Date: 2000/01/09 17:52:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
