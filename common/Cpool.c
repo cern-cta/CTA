@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.23 $ $Date: 2004/03/16 14:50:33 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.24 $ $Date: 2004/03/16 15:59:33 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -465,7 +465,7 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 				memcpy(dummy,&current,sizeof(struct Cpool_t *));
 				dummy += sizeof(struct Cpool_t *);
 				memcpy(dummy,&i,sizeof(int));
-				/* And we don't forget to initialize the state of this thread to be zero... */
+				/* And we don't forget to initialize the state of this thread to be STARTED... */
 				Cthread_mutex_lock_ext(current->state_cthread_structure[i]);
 				current->state[i] = -1;
 				if ((current->cid[i] = Cthread_create(_Cpool_starter,cpool_arg)) < 0) {
@@ -2023,7 +2023,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d] current->start = 0x%lx, i = %d, stored at 0x%lx\n",
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] current->start = 0x%lx, i = %d, stored at 0x%lx\n",
 							_Cpool_self(),_Cthread_self(),
 							(unsigned long) current->start,i,
 							(unsigned long) (current->start + (i * sizeof(void *))));
