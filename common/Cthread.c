@@ -1,8 +1,11 @@
 /*
- * $Id: Cthread.c,v 1.12 1999/09/08 16:19:49 jdurand Exp $
+ * $Id: Cthread.c,v 1.13 1999/09/10 15:49:42 jdurand Exp $
  *
  * $Log: Cthread.c,v $
- * Revision 1.12  1999/09/08 16:19:49  jdurand
+ * Revision 1.13  1999/09/10 15:49:42  jdurand
+ * Made non __STDC__ compliant
+ *
+ * Revision 1.12  1999-09-08 18:19:49+02  jdurand
  * Bug fixes (missing return value for some timeouted routines)
  *
  * Revision 1.11  1999-09-07 15:46:48+02  jdurand
@@ -135,7 +138,7 @@
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.12 $ $Date: 1999/09/08 16:19:49 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.13 $ $Date: 1999/09/10 15:49:42 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -3034,7 +3037,9 @@ void _Cthread_once() {
 /* 28-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-void _Cthread_keydestructor(void *addr) {
+void _Cthread_keydestructor(addr)
+     void *addr;
+{
   /* Release the Thread-Specific key */
 #ifdef CTHREAD_DEBUG
   fprintf(stderr,"[Cthread    [%2d]] In _Cthread_keydestructor(0x%x)\n",_Cthread_self(),(unsigned long) addr);
