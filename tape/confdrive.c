@@ -4,11 +4,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.1 $ $Date: 1999/11/03 15:30:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.2 $ $Date: 1999/11/18 12:15:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_AIX) && defined(RS6000PCTA)
 #include <sys/ioctl.h>
@@ -20,6 +21,11 @@ static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.1 $ $Date: 19
 #include "Ctape.h"
 #if SACCT
 #include "sacct.h"
+#include "serrno.h"
+#endif
+#if VDQM
+#include "net.h"
+#include "vdqm_api.h"
 #endif
 int jid;
 main(argc, argv)
@@ -38,6 +44,8 @@ char	**argv;
 	int status;
 	int tapefd;
 	uid_t uid;
+	int vdqm_rc;
+	int vdqm_status;
 
 	ENTRY (confdrive);
 
@@ -53,7 +61,7 @@ char	**argv;
 	reason = atoi (argv[10]);
 
 	c = 0;
-	if (status == TPCONFUP) {
+	if (status == CONF_UP) {
 		tapefd = open (dvn, O_RDONLY|O_NDELAY);
 		if (tapefd < 0 &&
 		    (errno == ENOENT || errno == ENXIO || errno == EBUSY ||
@@ -97,6 +105,16 @@ char	**argv;
 		tapeacct (TPCONFDN, 0, 0, jid, dgn, drive, "", 0, reason);
 #endif
 	}
+#if VDQM
+	if (c == 0) {
+		vdqm_status = (status == CONF_UP) ? VDQM_UNIT_UP : VDQM_UNIT_DOWN;
+		tplogit (func, "calling vdqm_UnitStatus\n");
+		vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive,
+			&vdqm_status, NULL);
+		tplogit (func, "vdqm_UnitStatus returned %s\n",
+			vdqm_rc ? sstrerror(serrno) : "ok");
+	}
+#endif
 	if (rpfd >= 0)
 		sendrep (rpfd, TAPERC, c);
 	exit (c);
