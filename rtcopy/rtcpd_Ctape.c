@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.3 $ $Date: 1999/12/17 13:05:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.4 $ $Date: 1999/12/28 15:51:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -377,10 +377,9 @@ int rtcpd_Position(tape_list_t *tape,
         }
     }
 
-
     rtcp_log(LOG_DEBUG,"rtcpd_Position(%s) vid=%s, fseq=%d, fsec=%d\n",
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
-        filereq->tape_fsec);
+        file->tape_fsec);
 
     flags = filereq->tp_err_action;
     /*
@@ -435,7 +434,7 @@ int rtcpd_Position(tape_list_t *tape,
         rc = Ctape_position(filereq->tape_path,
                             filereq->position_method,
                             filereq->tape_fseq,
-                            filereq->tape_fsec,
+                            file->tape_fsec,
                             (unsigned int)filereq->blockid,
                             tapereq->start_file,
                             tapereq->end_file,
@@ -613,7 +612,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) vid=%s, fseq=%d, fsec=%d\n",
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
-        filereq->tape_fsec);
+        file->tape_fsec);
 
     rc = Ctape_info( filereq->tape_path,
                     &filereq->blocksize,

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 12:47:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.7 $ $Date: 1999/12/28 15:51:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -957,7 +957,8 @@ void *tapeIOthread(void *arg) {
         /*
          * Mount the volume
          */
-        if ( tape->local_retry == 0 ) {
+        if ( (nexttape->local_retry == 0) && 
+             ((nexttape == tape) || (nextfile->eovflag == 1)) ) {
             TP_STATUS(RTCP_PS_MOUNT);
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -966,6 +967,24 @@ void *tapeIOthread(void *arg) {
         }
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
+            /*
+             * Handle file section number for multivolume requests. The
+             * file section number is 1 for all files on first volume. Only
+             * the last file can span over several volumes and in this case
+             * its file section number is incremented for each new volume.
+             */
+            if ( nexttape == tape ) nextfile->tape_fsec = 1;
+            else {
+                nextfile->tape_fsec = nexttape->prev->file->tape_fsec + 1;
+                if ( nexttape->prev->file->eovflag != 1 ) {
+                    /* 
+                     * More volumes than needed have been specified. This
+                     * not an error so we just mark the request as ended.
+                     */
+                    nextfile->filereq.proc_status = RTCP_FINISHED;
+                    nextfile->filereq.cprc = nexttape->prev->file->filereq.cprc;
+                }
+            }
             /*
              * If we are concatenating to tape all involved file
              * requests are done in a single iteration. This has to

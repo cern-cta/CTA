@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 15:12:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.4 $ $Date: 1999/12/28 15:51:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -274,11 +274,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( mode == WRITE_ENABLE ) filereq->check_fid = NEW_FILE;
         else filereq->check_fid = CHECK_FILE;
     }
-
-    /*
-     *  File section number. Just set a default (1) if not set.
-     */
-    if ( filereq->tape_fsec <= 0 ) filereq->tape_fsec = 1;
 
     /*
      * File sizes, etc...
