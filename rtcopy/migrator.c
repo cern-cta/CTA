@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/01 11:36:45 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/02 15:15:22 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/01 11:36:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/02 15:15:22 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -119,12 +119,23 @@ int migratorCallbackFileCopied(
     return(-1);
   }
 
+  if ( rtcpcld_lockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_lockTape()");
+    return(-1);
+  }
+  
   rc = rtcpcld_findFile(tape,filereq,&file);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_findFile()");
     return(-1);
   }
   file->filereq = *filereq;
+
+  if ( rtcpcld_unlockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+    return(-1);
+  }
+
   
   (void)rtcpcld_getFileId(file,&castorFileId);
   blkid = rtcp_voidToString(
@@ -221,7 +232,15 @@ int migratorCallbackFileCopied(
       return(-1);
     }
 
+    if ( rtcpcld_lockTape() == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_lockTape()");
+      return(-1);
+    }
     rtcpcld_cleanupFile(file);
+    if ( rtcpcld_unlockTape() == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+      return(-1);
+    }
   } else {
     /*
      * Segment failed
@@ -262,6 +281,10 @@ int migratorCallbackMoreWork(
     return(0);
   }
 
+  if ( rtcpcld_lockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_lockTape()");
+    return(-1);
+  }
   rc = rtcpcld_getSegmentsToDo(tape);  
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -279,6 +302,7 @@ int migratorCallbackMoreWork(
                       0
                       );
       filereq->proc_status = RTCP_FINISHED;
+      (void)rtcpcld_unlockTape();
       return(0);
     } else {
       (void)dlf_write(
@@ -296,6 +320,7 @@ int migratorCallbackMoreWork(
                       RTCPCLD_LOG_WHERE
                       );
       serrno = save_serrno;
+      (void)rtcpcld_unlockTape();
       return(-1);
     }
   }
@@ -308,6 +333,7 @@ int migratorCallbackMoreWork(
     /*
      * Shouldn't happen
      */
+    (void)rtcpcld_unlockTape();
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -316,6 +342,10 @@ int migratorCallbackMoreWork(
   diskFseq++;
   filereq->disk_fseq = diskFseq;
   moreWorkDone = 1;
+  if ( rtcpcld_unlockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+    return(-1);
+  }
   
   return(rc);
 }
@@ -348,10 +378,22 @@ int migratorCallback(
     return(-1);
   }
 
+  if ( rtcpcld_lockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_lockTape()");
+    return(-1);
+  }
+
   rc = rtcpcld_findFile(tape,filereq,&file);
   if ( (rc != -1) && (file != NULL) ) {
     (void)rtcpcld_getFileId(file,&castorFileId);
   }
+
+  if ( rtcpcld_unlockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+    return(-1);
+  }
+
+
   blkid = rtcp_voidToString(
                             (void *)filereq->blockid,
                             sizeof(filereq->blockid)
@@ -411,15 +453,15 @@ int migratorCallback(
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
                       "BLKID",
                       DLF_MSG_PARAM_STR,
                       (blkid != NULL ? blkid : "unknown"),
+                      "PATH",
+                      DLF_MSG_PARAM_STR,
+                      filereq->file_path,
                       "STATUS",
                       DLF_MSG_PARAM_INT,
                       filereq->proc_status
