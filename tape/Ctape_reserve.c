@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.10 $ $Date: 2000/01/14 16:07:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.11 $ $Date: 2000/10/03 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_reserve - reserve tape resources */
@@ -48,7 +48,7 @@ struct dgn_rsv dgn_rsv[];
 		return (-1);
 	}
 #endif
-	jid = getpgrp();
+	jid = findpgrp();
  
         /* Build request header */
  

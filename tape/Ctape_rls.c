@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.10 $ $Date: 1999/12/24 07:29:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.11 $ $Date: 2000/10/03 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rls - unload tape and release reservations */
@@ -51,7 +51,7 @@ int flags;
 		return (-1);
 	}
 #endif
-	jid = getpgrp();
+	jid = findpgrp();
 
 	/* path */
 
