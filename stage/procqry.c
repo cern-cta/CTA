@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.95 2002/08/27 08:40:35 jdurand Exp $
+ * $Id: procqry.c,v 1.96 2002/08/28 10:29:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.95 $ $Date: 2002/08/27 08:40:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.96 $ $Date: 2002/08/28 10:29:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -718,7 +718,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			return;
 		} else {
 #ifdef STAGER_DEBUG
-			sendrep (rpfd, MSG_OUT, "Please do gdb /usr/local/bin/stgdaemon %d\n", (int) getpid());
+			sendrep (&rpfd, MSG_OUT, "Please do gdb /usr/local/bin/stgdaemon %d\n", (int) getpid());
 			sleep(10);
 #endif
 			/* We are in the child : we open a new connection to the Database Server so that   */
