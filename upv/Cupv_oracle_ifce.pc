@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2002/06/06 15:34:33 $ CERN IT-PDP/DM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2002/07/27 10:08:24 $ CERN IT-PDP/DM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -217,6 +217,7 @@ Cupv_insert_privilege_entry(dbfd, priv_entry)
     break;
   case -1631:
   case -1632:
+  case -1654:
     serrno = ENOSPC;
     break;
   default:
@@ -286,6 +287,7 @@ struct Cupv_userpriv *priv_entry;
     return(0);
   case -1631:
   case -1632:
+  case -1654:
     serrno = ENOSPC;
     break;
   case 1403:
@@ -428,6 +430,7 @@ int priv;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -501,6 +504,7 @@ int priv;
      return(0);
    case -1631:
    case -1632:
+   case -1654:
      serrno = ENOSPC;
      break;
    case 1403:
