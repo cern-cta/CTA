@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.7 $ $Date: 1999/12/26 15:54:24 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.8 $ $Date: 1999/12/28 15:52:49 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -69,7 +69,6 @@ typedef struct rtcpFileRequest {
                                         * the current disk file in the
                                         * request. 
                                         */
-    int tape_fsec;                     /* Tape file section number */
 
     int blocksize;                     /* Tape blocksize (bytes)*/
     int recordlength;                  /* Tape record length (bytes)*/
@@ -136,7 +135,7 @@ typedef struct rtcpFileRequest {
 
 } rtcpFileRequest_t;
 
-#define RTCP_FILEREQLEN(X) (26*LONGSIZE + 8*QUADSIZE + \
+#define RTCP_FILEREQLEN(X) (25*LONGSIZE + 8*QUADSIZE + \
         strlen(X->file_path) + strlen(X->tape_path) + \
         strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
         strlen(X->stageID) + strlen(X->vmsopt) + 7)
@@ -201,6 +200,10 @@ typedef struct file_list {
      * For end of volume processing. 
      */
     int eovflag ;
+    /*
+     * Tape file section number
+     */
+    int tape_fsec ;
     /*
      * Flags specific to SONY raw devices. Declare them in 
      * all cases to reduce the number of ifdefs
