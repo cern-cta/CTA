@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.1 $ $Date: 2000/04/11 05:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listtape - list all existing tapes */
@@ -30,6 +30,7 @@ vmgr_listtape(int flags, vmgr_list *listp)
 	int c;
 	char func[14];
 	gid_t gid;
+	int listentsz = sizeof(struct vmgr_tape_info);
 	struct vmgr_tape_info *lp;
 	int msglen;
 	int nbentries;
@@ -92,6 +93,7 @@ vmgr_listtape(int flags, vmgr_list *listp)
 	 
 		marshall_LONG (sbp, uid);
 		marshall_LONG (sbp, gid);
+		marshall_WORD (sbp, listentsz);
 		marshall_WORD (sbp, bol);
 	 
 		msglen = sbp - sendbuf;
@@ -131,8 +133,8 @@ vmgr_listtape(int flags, vmgr_list *listp)
 			unmarshall_LONG (rbp, lp->nbfiles);
 			unmarshall_LONG (rbp, lp->rcount);
 			unmarshall_LONG (rbp, lp->wcount);
-			unmarshall_LONG (rbp, lp->rtime);
-			unmarshall_LONG (rbp, lp->wtime);
+			unmarshall_TIME_T (rbp, lp->rtime);
+			unmarshall_TIME_T (rbp, lp->wtime);
 			unmarshall_LONG (rbp, lp->status);
 			lp++;
 		}

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listpool.c,v $ $Revision: 1.1 $ $Date: 2000/04/11 05:42:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listpool.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listpool - list tape pool entries */
@@ -30,6 +30,7 @@ vmgr_listpool(int flags, vmgr_list *listp)
 	int c;
 	char func[14];
 	gid_t gid;
+	int listentsz = sizeof(struct vmgr_tape_pool);
 	struct vmgr_tape_pool *lp;
 	int msglen;
 	int nbentries;
@@ -92,6 +93,7 @@ vmgr_listpool(int flags, vmgr_list *listp)
 	 
 		marshall_LONG (sbp, uid);
 		marshall_LONG (sbp, gid);
+		marshall_WORD (sbp, listentsz);
 		marshall_WORD (sbp, bol);
 	 
 		msglen = sbp - sendbuf;
