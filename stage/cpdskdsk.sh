@@ -72,7 +72,16 @@ then
 	fi
 	BINDIR/stageupdc -R $rfcprc -s $bsent -T $ttime -Z $stagerid
 else
-	BINDIR/stageupdc -R $rfcprc -Z $stagerid
+	#
+	## Stat outfile
+	#
+	checkrc=`BINDIR/rfdir $ofile 2>&1`
+	if [ $? -eq 0 ]; then
+	    finalsize=`echo $checkrc | cut -f5 -d' '`
+	else
+	    finalsize=0
+	fi
+	BINDIR/stageupdc -R $rfcprc -s $finalsize -Z $stagerid
 fi
 stagrc=$?
 if [ $stagrc -ne 0 ]
