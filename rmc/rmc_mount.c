@@ -4,13 +4,19 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_mount.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:48 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_mount.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:45:28 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      rmc_mount - mount a cartridge on a drive */
 
 #include <stdlib.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#include <netinet/in.h>
+#endif
 #include "marshall.h"
 #include "rmc.h"
 #include "rmc_api.h"
