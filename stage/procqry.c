@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.68 2001/12/05 10:05:58 jdurand Exp $
+ * $Id: procqry.c,v 1.69 2001/12/10 16:19:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.68 $ $Date: 2001/12/05 10:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.69 $ $Date: 2001/12/10 16:19:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -83,7 +83,7 @@ extern int savereqs _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern int mintime_beforemigr _PROTO((int));
@@ -316,7 +316,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "");
+						 reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
@@ -891,7 +891,9 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				strcpy( p_stat, "BEING_MIGR");
 			else if (ISCASTORWAITINGMIG(stcp))
 				strcpy( p_stat, "WAITING_MIGR");
-			else if ((ifileclass >= 0) && ((stcp->a_time + thismintime_beforemigr) > this_time))
+			/* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
+			/* That's why I typecase everything to u_signed64 */
+			else if ((ifileclass >= 0) && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) this_time))
 				strcpy (p_stat, "DELAY_MIGR");
 			else
 				strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
