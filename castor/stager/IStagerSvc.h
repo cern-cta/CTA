@@ -34,6 +34,7 @@ struct Cstager_Tape_t;
 struct Cstager_Stream_t;
 struct Cstager_Segment_t;
 struct Cstager_TapeCopyForMigration_t;
+struct Cstager_DiskCopyForRecall_t;
 
 /**
  * Dynamic cast from IService
