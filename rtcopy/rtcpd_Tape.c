@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.67 $ $Date: 2000/07/07 09:44:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.68 $ $Date: 2000/08/09 06:56:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1441,11 +1441,7 @@ void *tapeIOthread(void *arg) {
                     if ( nexttape->next == tape ) {
                         /*
                          * There are no more volumes specified!
-                         * This is not an error for reading NL tapes, since we
-                         * can't distinguish between a physical EOV and
-                         * a double tape mark.
                          */
-                        serrno = ETEOV;
                         tmpfile = nextfile;
                         if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
                             /*
@@ -1457,12 +1453,12 @@ void *tapeIOthread(void *arg) {
                             if ( tmpfile == NULL ) tmpfile = nextfile;
                             else *tmpfile = *nextfile;
                             tmpfile->filereq.bytes_in = tmpfile->tapebytes_sofar;
-                            severity = RTCP_FAILED | RTCP_USERR;
+                            serrno = ENOSPC;
                         } else {
-                            severity = RTCP_FAILED | RTCP_ENDVOL;
+                            serrno = ETEOV;
                         }
-                        if ( (severity & RTCP_FAILED) != 0 )
-                            rtcpd_AppendClientMsg(NULL,tmpfile,RT124,
+                        severity = RTCP_FAILED | RTCP_ENDVOL;
+                        rtcpd_AppendClientMsg(NULL,tmpfile,RT124,
                                 (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
                         rtcpd_SetReqStatus(NULL,tmpfile,serrno,severity);
                         rtcpd_BroadcastException();
