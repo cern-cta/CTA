@@ -354,6 +354,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
+  rFsWeight NUMBER;
 BEGIN
  -- Get IClient and uid, gid
  SELECT client, euid, egid INTO rclient, reuid, regid FROM SubRequest,
@@ -388,7 +389,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
    AND FileSystem.id = DiskCopy.fileSystem;
- FETCH sources INTO dci, rpath, rstatus, rDiskCopyId;
+ FETCH sources INTO dci, rpath, rstatus, rDiskCopyId, rFsWeight;
  IF sources%NOTFOUND THEN
    -- No DiskCopy, create one for recall
    getId(1, dci);
