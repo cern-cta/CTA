@@ -167,18 +167,7 @@ namespace castor {
          */
         castor::IObject* getObjFromId (u_signed64 id)
           throw (castor::exception::Exception);
-
-        /**
-         * Removes a link from a parent to a child in the
-         * corresponding ORACLE table
-         * @param parent the parent
-         * @param child the child
-         * @exception Exception throws an Exception in case of error
-         */
-        void unlinkChild(const castor::IObject* parent,
-                         const castor::IObject* child)
-          throw (castor::exception::Exception);
-
+        
       public:
 
         /**
