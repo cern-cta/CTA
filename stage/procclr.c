@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.45 2002/01/22 07:36:36 jdurand Exp $
+ * $Id: procclr.c,v 1.46 2002/01/23 10:08:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.45 $ $Date: 2002/01/22 07:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.46 $ $Date: 2002/01/23 10:08:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -654,7 +654,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	 */
 
     /* Special case of intermediate state or CASTOR-migration state (original record + stream) */
-	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)))) &&
+	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) &&
 		(uid != 0)) {
 		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
 		return (EBUSY);
