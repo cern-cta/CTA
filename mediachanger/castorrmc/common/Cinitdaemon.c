@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.6 $ $Date: 2001/06/21 11:41:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.7 $ $Date: 2003/10/31 12:48:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.6 $ $Date: 
 
 #if ! defined(_WIN32)
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <signal.h> 
 #include <errno.h>
