@@ -82,16 +82,16 @@ int DLL_DECL Cmonit_send_rtcopy_status(int   subtype,
   marshall_LONG (sbp, jid);
   marshall_LONG (sbp, stgreqid);
   marshall_BYTE (sbp, reqtype);
-  marshall_STRING (sbp, ifce);
-  marshall_STRING (sbp, vid);
+  marshall_STRING (sbp, ifce != NULL ? ifce : "");
+  marshall_STRING (sbp, vid != NULL ? vid : "");
   marshall_LONG (sbp, size);
   marshall_LONG (sbp, retryn);
   marshall_LONG (sbp, exitcode);
-  marshall_STRING (sbp, clienthost);
-  marshall_STRING (sbp, dsksrvr);
-  marshall_STRING (sbp, drive);
+  marshall_STRING (sbp, clienthost != NULL ? clienthost : "");
+  marshall_STRING (sbp, dsksrvr != NULL ? dsksrvr : "");
+  marshall_STRING (sbp, drive != NULL ? drive : "");
   marshall_LONG (sbp, fseq);
-  marshall_STRING (sbp, errmsgtxt);
+  marshall_STRING (sbp, errmsgtxt != NULL ? errmsgtxt :"");
 
 
   /* Writing the message length */
