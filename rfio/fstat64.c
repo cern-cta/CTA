@@ -1,14 +1,14 @@
 /*
- * $Id: fstat64.c,v 1.2 2002/11/27 10:34:58 baud Exp $
+ * $Id: fstat64.c,v 1.3 2003/01/22 10:18:18 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat64.c,v $ $Revision: 1.2 $ $Date: 2002/11/27 10:34:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: fstat64.c,v $ $Revision: 1.3 $ $Date: 2003/01/22 10:18:18 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
 #endif /* not lint */
 
 /* fstat64.c      Remote File I/O - get file status                       */
@@ -62,15 +62,6 @@ struct stat64  *statbuf;
       (void) close(s) ;
       END_TRACE();
       return(-1);
-   }
-   /*
-    * Verify if we are in 64 bits
-    */
-   if (rfilefdt[s_index]->mode64 == 0) {
-      TRACE(1,"rfio","rfio_fstat64: file is not opened in 64bits mode");
-      errno = EBADF;
-      END_TRACE();
-      return -1;
    }
    /*
     * Sending request.
