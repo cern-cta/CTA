@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 09:53:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.8 $ $Date: 2000/01/10 08:16:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -49,19 +49,10 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.7 $ $Date:
 #include <rtcp.h>
 #include <rtcp_server.h>
 
-#if defined(__STDC__)
-char *getconfent(char *, char *, int);
-int gettperror(int, char **);
-static int read_sony(int, char *, int);
-static int write_sony(int, char *, int);
-#else /* __STDC__ */
-char *getconfent();
-int gettperror();
-static int read_sony();
-static int write_sony();
-#endif /* __STDC__ */
-
-char *devtype;            /* Extern needed by Ctape */
+char *getconfent _PROTO((char *, char *, int));
+int gettperror _PROTO((int, char *, char **));
+static int read_sony _PROTO((int, char *, int));
+static int write_sony _PROTO((int, char *, int));
 
 #if defined(_AIX) && defined(_IBMR2)
 static char driver_name[7];
@@ -82,15 +73,18 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
+    if ( tape == NULL || file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
     severity = RTCP_OK;
 
-    if ( tape != NULL ) tapereq = &tape->tapereq;
+    tapereq = &tape->tapereq;
 
-    if ( file != NULL ) {
-        filereq = &file->filereq;
-        trec = file->trec;
-        status = errno;
-    }
+    filereq = &file->filereq;
+    trec = file->trec;
+    status = errno;
 
     switch(errno) {
         case ENXIO:  /* Drive not operational */
@@ -98,7 +92,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
             severity = RTCP_RESELECT_SERV | RTCP_SYERR;
             break;
         case EIO:    /* I/O error */
-            errcat = gettperror (fd, &msgaddr);
+            errcat = gettperror (fd, filereq->tape_path, &msgaddr);
             rtcpd_AppendClientMsg(NULL, file,RT126,"CPDSKTP", msgaddr, trec+1);
             switch (errcat) {
                 case ETHWERR:       /* Device malfunctioning.    */
@@ -209,23 +203,23 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
+    if ( tape == NULL || file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
     severity = RTCP_OK;
 
-    if ( tape != NULL ) {
-        tapereq = &tape->tapereq;
-    }
+    tapereq = &tape->tapereq;
 
-    if ( file != NULL ) {
-        trec = file->trec;
-        filereq = &file->filereq;
-        status = errno;
-        skiponerr = (filereq->rtcp_err_action == SKIPBAD ? 1 : 0);
-        keepfile = (filereq->rtcp_err_action == KEEPFILE ? 1 : 0);
-    }
+    trec = file->trec;
+    filereq = &file->filereq;
+    status = errno;
+    skiponerr = (filereq->rtcp_err_action == SKIPBAD ? 1 : 0);
+    keepfile = (filereq->rtcp_err_action == KEEPFILE ? 1 : 0);
 
     switch(errno) {
         case EIO:
-            errcat = gettperror (fd, &msgaddr);
+            errcat = gettperror (fd, filereq->tape_path, &msgaddr);
             rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", 
                                   msgaddr, trec+1);
 
@@ -365,10 +359,6 @@ int topen(tape_list_t *tape, file_list_t *file) {
 #endif /* SONYRAW */
     file->negotiate = 0;
     file->eovflag = 0 ;
-    /*
-     * Needed by tperror() in Ctape
-     */
-    devtype = tapereq->devtype;
 
     if ( tapereq->mode == WRITE_ENABLE ) tmode = O_RDWR | binmode;
     else {
@@ -672,7 +662,7 @@ int tread(int fd,char *ptr,int len,
         if ( rc == 0 ) {
             char *msgaddr;
 
-            if (gettperror (fd, &msgaddr) == ETBLANK) {
+            if (gettperror (fd, filereq->tape_path, &msgaddr) == ETBLANK) {
                 rtcpd_AppendClientMsg(NULL, file, RT118,"CPTPDSK",
                     file->trec);
                 if (file->trec && filereq->rtcp_err_action == KEEPFILE ) {
