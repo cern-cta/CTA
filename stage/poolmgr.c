@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.176 2002/01/27 08:52:50 jdurand Exp $
+ * $Id: poolmgr.c,v 1.177 2002/01/28 18:42:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.176 $ $Date: 2002/01/27 08:52:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.177 $ $Date: 2002/01/28 18:42:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3320,7 +3320,7 @@ int migpoolfiles(pool_p)
       ideal_minsize = minsize;
     }
 
-    stglogit(func, "ideal minsize per stream for tape pool %s is %s, splitted in %d streams\n",
+    stglogit(func, "ideal minsize per stream for tape pool %s is %s, split could go up to %d streams\n",
              tppool_vs_stcp[j].tppool,
              u64tostr((u_signed64) minsize, tmpbuf, 0),
              nideal_minsize
