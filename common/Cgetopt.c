@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.7 $ $Date: 2004/04/28 14:24:44 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.8 $ $Date: 2004/04/28 15:09:05 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -100,7 +100,6 @@ _Cgetopt_internal(nargc, nargv, ostr)
     return(-1);
 
   }
-  place = EMSG;
 
   if (Coptreset || !*place) {		/* update scanning pointer */
     Coptreset = 0;
@@ -280,10 +279,25 @@ Cgetopt_long(nargc, nargv, options, long_options, index)
 static char **C__place() {
 	char **var;
 	/* Call Cglobals_get */
-	Cglobals_get(&my_place,
-				 (void **) &var,
-				 sizeof(char *)
-		);
+	if (Cglobals_get(&my_place,
+					 (void **) &var,
+					 sizeof(char *)) > 0) {
+		/* First time : init value is EMSG */
+		/* Reminder: **C_place is used like that: */
+		/* place is (*C__place()), e.g. place is a */
+		/* (char *), but place is always used as */
+		/* pointer to a char, not a real string. */
+		/* In the un-thread-safe version of Cgetopt */
+		/* e;g. prior to revision 1.6, place was */
+		/* declared like that: static char *place = EMSG */
+		/* Since now we are a true variable, we must point */
+		/* to something instead of having that static */
+		/* declaration. It is harmless to use my_place_static */
+		/* as an initializer. The only important thing is that */
+		/* var itself is not the same between threads */
+		*var = my_place_static;
+	}
+
 	/* If error, var will be NULL */
 	if (var == NULL)
 	{
