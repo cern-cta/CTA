@@ -1,9 +1,10 @@
 /*
- * $Id: stage_util.c,v 1.5 2001/07/12 11:00:38 jdurand Exp $
+ * $Id: stage_util.c,v 1.6 2001/09/18 21:12:48 jdurand Exp $
  */
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <limits.h>                     /* For INT_MIN and INT_MAX */
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -18,6 +19,7 @@
 #include "stage_api.h"
 #include "osdep.h"
 #include "u64subr.h"
+#include "serrno.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -49,6 +51,8 @@
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
+
+char *forced_endptr_error = "Z";
 
 void DLL_DECL stage_sleep(nsec)
      int nsec;
@@ -183,6 +187,8 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_U64(rpfd,stcp,u1.h.fileid);
 		DUMP_VAL(rpfd,stcp,u1.h.fileclass);
 		DUMP_STRING(rpfd,stcp,u1.h.tppool);
+		DUMP_VAL(rpfd,stcp,u1.h.retenp_on_disk);
+		DUMP_VAL(rpfd,stcp,u1.h.mintime_beforemigr);
 		break;
 	}
 }
@@ -260,5 +266,50 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_STRING(stcp,u1.h.tppool);
 		break;
 	}
+}
+
+/* Idem than strtol() but returns 0 if OK, -1 if error, result in &ouput */
+int DLL_DECL stage_strtoi(output,nptr,endptr,base)
+	int *output;
+	char *nptr;
+	char **endptr;
+	int base;
+{
+	long thislong;
+
+	thislong = strtol (nptr, endptr, base);
+	if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
+		if (thislong <= INT_MIN) {
+			*output = INT_MIN;
+			serrno = errno = ERANGE;
+		} else if (thislong >= INT_MAX) {
+			*output = INT_MAX;
+			serrno = errno = ERANGE;
+		} else {
+			serrno = errno = EINVAL;
+		}
+		if (**endptr == '\0') {
+			/* We force the caller to have an error anyway, just checking **endptr */
+			*endptr = forced_endptr_error;
+		}
+		return(-1);
+	} else {
+		if ((thislong <= INT_MIN) || (thislong >= INT_MAX)) {
+			if (thislong <= INT_MIN) {
+				*output = INT_MIN;
+			} else if (thislong >= INT_MAX) {
+				*output = INT_MAX;
+			}
+			if (**endptr == '\0') {
+				/* We force the caller to have an error anyway, just checking **endptr */
+				*endptr = forced_endptr_error;
+			}
+			serrno = errno = ERANGE;
+			return(-1);
+		} else {
+			*output = (int) thislong;
+		}
+	}
+	return(0);
 }
 
