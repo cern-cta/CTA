@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.9 $ $Date: 2000/04/13 10:51:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.10 $ $Date: 2000/04/27 16:17:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -35,7 +35,7 @@ int rtcp_wacct(int   subtype,
                char  *dsksrvr,
                int   fseq,
                char  *errmsgtxt) {
-    int acctreclen;
+    int acctreclen,len;
     struct acctrtcp acctrtcp;
     char *getconfent();
     char *p;
@@ -49,15 +49,15 @@ int rtcp_wacct(int   subtype,
     acctrtcp.jid = jid;
     acctrtcp.stgreqid = stgreqid;
     acctrtcp.reqtype = reqtype;
-    if ( ifce != NULL ) strcpy (acctrtcp.ifce, ifce);
-    if ( vid != NULL ) strcpy (acctrtcp.vid, vid);
+    if ( ifce != NULL ) strncpy (acctrtcp.ifce, ifce,sizeof(acctrtcp.ifce));
+    if ( vid != NULL ) strncpy (acctrtcp.vid, vid,sizeof(acctrtcp.vid));
     acctrtcp.size = size;
     acctrtcp.retryn = retryn;
     acctrtcp.exitcode = exitcode;
     acctrtcp.fseq = fseq;
-    if ( clienthost != NULL ) strcpy (acctrtcp.clienthost, clienthost);
-    if ( dsksrvr != NULL )  strcpy (acctrtcp.dsksrvr, dsksrvr);
-    if ( errmsgtxt != NULL ) strcpy (acctrtcp.errmsgtxt, errmsgtxt);
+    if ( clienthost != NULL ) strncpy (acctrtcp.clienthost, clienthost,sizeof(acctrtcp.clienthost));
+    if ( dsksrvr != NULL )  strncpy (acctrtcp.dsksrvr, dsksrvr,sizeof(acctrtcp.dsksrvr));
+    if ( errmsgtxt != NULL ) strncpy (acctrtcp.errmsgtxt, errmsgtxt,sizeof(acctrtcp.errmsgtxt));
     acctreclen = ((char *) acctrtcp.errmsgtxt - (char *) &acctrtcp) +
                  strlen(errmsgtxt)+ 1;
 
@@ -175,10 +175,8 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         if ( retry_nb < 0 ) retry_nb = 0;
 
         strcpy(file_path,filereq->file_path);
-        if ( (p = strstr(file_path,":")) != NULL ) {
-            *p = '\0';
-            disksrv = file_path;
-        } else disksrv = client->clienthost;
+        (void)rfio_parse(file_path,&disksrv,&p); 
+        if ( disksrv == NULL ) disksrv = client->clienthost;  
 
         errmsgtxt = filereq->err.errmsgtxt;
     }
