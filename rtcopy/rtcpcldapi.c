@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/04 08:35:32 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/04 08:42:43 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.35 $ $Date: 2004/08/04 08:35:32 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.36 $ $Date: 2004/08/04 08:42:43 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1132,8 +1132,6 @@ static int getUpdates(
                                           segmIterator->segment,
                                           &file->filereq.castorSegAttr.segmCksum
                                           );
-                /* Allow client to add more requests to keep the stream running */
-                callGetMoreInfo = 1;
               case SEGMENT_COPYRUNNING:
                 if ( segmNewStatus == SEGMENT_COPYRUNNING ) {
                   file->filereq.proc_status = RTCP_POSITIONED;
@@ -1166,6 +1164,8 @@ static int getUpdates(
                            rc,save_serrno);
                   (void)rtcpcld_setVIDFailedStatus(tape);
                 }
+                /* Allow client to add more requests to keep the stream running */
+                callGetMoreInfo = 1;
                 break;
               case SEGMENT_FAILED:
                 Cstager_Segment_errMsgTxt(
