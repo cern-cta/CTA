@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.7 2001/05/31 12:11:17 jdurand Exp $
+ * $Id: stage_constants.h,v 1.8 2001/09/18 20:14:15 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -153,6 +153,11 @@
 #undef  CONFERR
 #endif
 #define	CONFERR	  4	/* configuration error */
+
+#ifdef  ETHELDERR
+#undef  ETHELDERR
+#endif
+#define	ETHELDERR	188	/* Tape is held */
 
 #ifdef  LNKNSUP
 #undef  LNKNSUP
