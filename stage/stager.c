@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.109 2000/12/18 16:00:30 jdurand Exp $
+ * $Id: stager.c,v 1.110 2000/12/19 15:45:55 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.109 $ $Date: 2000/12/18 16:00:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.110 $ $Date: 2000/12/19 15:45:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1790,7 +1790,7 @@ int filecopy(stcp, key, hostname)
 #endif
 		if (stage_updc_filcp (
 								stageid,                 /* Stage ID      */
-								0,                       /* subreqid      */
+								use_subreqid != 0 ? get_subreqid(stcp) : -1, /* subreqid      */
 								-1,                      /* Copy rc       */
 								NULL,                    /* Interface     */
 								0,                       /* Size          */
@@ -3140,6 +3140,6 @@ int get_subreqid(stcp)
 
 
 /*
- * Last Update: "Monday 18 December, 2000 at 14:08:16 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 19 December, 2000 at 16:45:35 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
