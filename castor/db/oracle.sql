@@ -429,10 +429,8 @@ CREATE OR REPLACE PROCEDURE putStart
 BEGIN
  -- Get IClient
  SELECT client, diskCopy INTO rclient, rdcId FROM SubRequest,
-      (SELECT client, id from StageGetRequest UNION
-       SELECT client, id from StagePrepareToGetRequest UNION
-       SELECT client, id from StageUpdateRequest UNION
-       SELECT client, id from StagePrepareToUpdateRequest) Request
+      (SELECT client, id from StagePutRequest UNION
+       SELECT client, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- link DiskCopy and FileSystem and update DiskCopyStatus
  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
@@ -440,6 +438,8 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path, diskcopyId
   INTO rdcStatus, rdcPath, rdcDiskCopyId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
+  rclient := 0;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
