@@ -241,7 +241,7 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
   m_selectStreamStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectStreamStatement->executeQuery();
   if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    u_signed64 streamId = (u_signed64)rset->getDouble(9);
+    u_signed64 streamId = (u_signed64)rset->getDouble(1);
     if (0 != streamId &&
         0 == obj->stream() ||
         obj->stream()->id() != streamId) {
