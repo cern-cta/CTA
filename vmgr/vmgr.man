@@ -1,0 +1,111 @@
+.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.1 $ $Date: 2000/02/01 07:42:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR l "$Date: 2000/02/01 07:42:40 $"
+.SH NAME
+vmgr \- start the volume manager
+.SH SYNOPSIS
+.B vmgr
+.SH DESCRIPTION
+.LP
+The
+.B vmgr
+command starts the volume manager.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the volume manager configuration file,
+create a pool of threads and look for requests.
+Each of them is processed in a thread which opens a connection to the
+database server if necessary.
+When a request has been completed, the thread becomes idle until it is allocated
+to another request.
+The connection to the database server is kept open between 2 requests.
+If the volume manager is being shutdown or not active, the requests are
+automatically retried by the client API.
+.LP
+All error messages and statistical information are kept in a log.
+.LP
+The volume manager listen port number must be defined on all client hosts
+(stagers) and on the machine where the volume manager runs in either of the
+following ways:
+.RS
+.LP
+setting an environment variable VMGR_PORT
+.RS
+.HP
+setenv VMGR_PORT 5013
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+like:
+.RS
+.HP
+VMGR	PORT	5013
+.RE
+.LP
+an entry in
+.B /etc/services
+like:
+.RS
+.HP
+vmgr           5013/tcp                        # CASTOR volume manager
+.RE
+.LP
+.RE
+.LP
+The volume manager host name must be defined on all client hosts
+in either of the following ways:
+.RS
+.LP
+setting an environment variable VMGR_HOST, for example:
+.RS
+.HP
+setenv VMGR_HOST castor5
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+for example:
+.RS
+.HP
+VMGR	HOST	castor5
+.RE
+.RE
+.LP
+The volume manager database keeps the information about tapes like vid, vsn,
+device group, density and status.
+.LP
+The volume manager configuration file contains password information for the
+database and must be readable/writable only by root.
+.LP
+In the log each entry has a timestamp.
+All entries corresponding to one request have the same request id.
+For each user command there is one message VMG92 giving information about
+the requestor (hostname, uid, gid) and one message VMG98 giving the command
+itself.
+The completion code of the command is also logged.
+.SH FILES
+.TP 1.5i
+.B /etc/VMGRCONFIG
+configuration file
+.TP
+.B /usr/spool/vmgr/log
+.SH EXAMPLES
+.TP
+Here is a small log:
+.nf
+01/27 09:25:25  2237 vmgr_serv: started
+01/27 09:25:42  2237,0 vmgr_srv_entermodel: VMG92 - entermodel request by 395,1028 from castor5
+01/27 09:25:42  2237,0 vmgr_srv_entermodel: VMG98 - entermodel SD3 C
+01/27 09:25:42  2237,0 vmgr_srv_entermodel: returns 0
+01/27 09:29:18  2237,0 vmgr_srv_entertape: VMG92 - entertape request by 395,1028 from castor5
+01/27 09:29:18  2237,0 vmgr_srv_entertape: VMG98 - entertape Y31001
+01/27 09:29:18  2237,0 vmgr_srv_entertape: returns 0
+01/27 14:58:24  2237,0 vmgr_srv_modifytape: VMG92 - modifytape request by 395,1028 from castor5
+01/27 14:58:24  2237,0 vmgr_srv_modifytape: VMG98 - modifytape Y31001
+01/27 14:58:24  2237,0 vmgr_srv_modifytape: returns 0
+.fi
+.SH SEE ALSO
+.B vmgrshutdown(l)
