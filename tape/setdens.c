@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.1 $ $Date: 2000/02/22 15:09:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.2 $ $Date: 2000/02/23 07:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
@@ -65,12 +65,14 @@ int den;
 		}
 	}
 
+printf("mode sense ok\n");
 	/* change cdb to issue a mode select */
 
 	cdb[0] = 0x15;
-	cdb[1] = 0x10;		/* PF bit */
+	cdb[1] = comppage ? 0x10 : 0;	/* PF bit */
 	cdb[2] = 0;
 	cdb[3] = 0;
+	if (comppage == 0) cdb[4] = 0x0C;
 	mscmd[0] = 0;
 	if (dencode) {
 		mscmd[4] = dencode;
