@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.9 $ $Date: 2000/02/16 08:45:54 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.10 $ $Date: 2000/02/16 17:12:13 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -110,14 +110,14 @@ typedef struct rtcpFileRequest {
      * Compression statistics (actual transfer size)
      */
     u_signed64 offset;                 /* Start offset in disk file */
-    u_signed64 bytes_in;               /* Bytes from host (write) or
+    u_signed64 bytes_in;               /* Bytes from disk (write) or
                                         * bytes from tape (read)
                                         */
     u_signed64 bytes_out;              /* Bytes to tape (write) or
-                                        * bytes to host (read)
+                                        * bytes to disk (read)
                                         */
-    u_signed64 bytes_from_host;        /* Bytes written to tape including
-                                        * the label.
+    u_signed64 host_bytes;             /* Tape bytes read/written including 
+                                        * the labels.
                                         */
     u_signed64 nbrecs;                 /* Number of records copied */
 
