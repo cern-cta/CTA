@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.4 2000/03/23 17:42:40 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.5 2000/03/23 17:57:39 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -87,14 +87,14 @@ int main(argc,argv)
 	Cdb_sess_t Cdb_session;
 	int Cdb_session_opened = 0;
 	int Cdb_db_opened = 0;
-	char *db[5] = {
+	char *db[] = {
 		"stgcat_tape",
 		"stgcat_disk",
 		"stgcat_hsm",
 		"stgcat_alloc",
 		"stgcat_link",
 	};
-	char *key[5] = {
+	char *key[] = {
 		"stgcat_tape_per_reqid",
 		"stgcat_disk_per_reqid",
 		"stgcat_hsm_per_reqid",
