@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STGDAEMON server daemon
 #
-# $Id: stgdaemon.scripts,v 1.1 2003/10/31 07:43:19 jdurand Exp $
+# $Id: stgdaemon.scripts,v 1.2 2003/11/04 04:58:07 jdurand Exp $
 #
-# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.1 $ $Date: 2003/10/31 07:43:19 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.2 $ $Date: 2003/11/04 04:58:07 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -93,8 +93,8 @@ case "$1" in
                     [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGSTGDAEMON says NO: "
                     RETVAL=1
                 fi
-                if [ -n "ULIMIT_N" ]; then
-                    ulimit -n $MAX_NB_FD
+                if [ -n "${ULIMIT_N}" ]; then
+                    ulimit -n ${ULIMIT_N}
                 fi
             fi
             if [ $RETVAL -eq 0 ]; then
