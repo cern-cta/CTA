@@ -1,6 +1,9 @@
 /*
- * $Id: getacctent.c,v 1.2 1999/07/21 16:26:06 obarring Exp $
+ * $Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp $
  * $Log: getacctent.c,v $
+ * Revision 1.3  1999/07/21 16:58:07  jdurand
+ * *** empty log message ***
+ *
  * Revision 1.2  1999/07/21 16:26:06  obarring
  * Make MT safe. Static buffers were not needed anyway...?
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$Id: getacctent.c,v 1.2 1999/07/21 16:26:06 obarring Exp $";
+static char sccsid[] = "$Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp $";
 #endif /* not lint */
 
 
@@ -27,7 +30,9 @@ static char sccsid[] = "$Id: getacctent.c,v 1.2 1999/07/21 16:26:06 obarring Exp
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POXIS release
  */
+#if defined(_REENTRANT)
 #define strtok(X,Y) strtok_r(X,Y,&last)
+#endif
 #endif /* !_WIN32 */
 
 
