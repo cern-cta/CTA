@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.17 2001/12/20 11:40:03 jdurand Exp $
+ * $Id: stagestat.c,v 1.18 2002/01/28 13:00:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.17 $ $Date: 2001/12/20 11:40:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.18 $ $Date: 2002/01/28 13:00:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -581,7 +581,7 @@ void enter_filc_details (rp, accthdr)
       }
 	} else if (frecord->t_or_d == 'h') {
       if ((strcmp (rp->u2.s.u1.h.xfile, frecord->u1.h.xfile) == 0) &&
-          (rp->u2.s.u1.h.fileid, frecord->u1.h.fileid) &&
+          (rp->u2.s.u1.h.fileid == frecord->u1.h.fileid) &&
           (strcmp (rp->u2.s.poolname, frecord->poolname) == 0)) {
         found = 1;
         break;
@@ -694,7 +694,7 @@ void enter_filw_details (rp, accthdr)
      struct accthdr accthdr;
 {
   int found = 0;			/* record found flag */
-  int match = 0;			/* stg_inf record match flag */
+  /* int match = 0; */			/* stg_inf record match flag */
   struct file_inf *frecord;		/* pointer to file_inf record */
 
   /* search file list for matching file and pool */
