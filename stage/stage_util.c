@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.10 2001/12/05 10:14:19 jdurand Exp $
+ * $Id: stage_util.c,v 1.11 2001/12/20 11:45:39 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -118,6 +118,10 @@ int DLL_DECL stage_stgmagic()
       return(STGMAGIC2);
     case STGMAGIC3:
       return(STGMAGIC3);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+    case STGMAGIC4:
+      return(STGMAGIC4);
+#endif
     default:
       stage_errmsg(func, STG02, "Magic Number", "Configuration", "Using default magic number " STGMAGIC_DEFAULT_STRING);
       return(STGMAGIC_DEFAULT);
@@ -136,7 +140,7 @@ void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
 	int (*funcrep) _PROTO(());
 #endif
 {
-	if (funcrep == NULL) return;
+	if ((funcrep == NULL) || (stpp == NULL)) return;
 
 	funcrep(rpfd, MSG_OUT, "----------------------------------\n");
 	funcrep(rpfd, MSG_OUT, "Path entry  -   dump of reqid %d\n", stpp->reqid);
@@ -156,7 +160,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 {
 	int i;
 
-	if (funcrep == NULL) return;
+	if ((funcrep == NULL) || (stcp == NULL)) return;
 
 	funcrep(rpfd, MSG_OUT, "-------------------------------------\n");
 	funcrep(rpfd, MSG_OUT, "Catalog entry - dump of reqid %d\n", stcp->reqid);
@@ -192,6 +196,9 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_STRING(rpfd,stcp,u1.t.fseq);
 		DUMP_STRING(rpfd,stcp,u1.t.lbl);
 		DUMP_VAL(rpfd,stcp,u1.t.retentd);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		DUMP_VAL(rpfd,stcp,u1.t.side);
+#endif
 		DUMP_STRING(rpfd,stcp,u1.t.tapesrvr);
 		DUMP_CHAR(rpfd,stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
@@ -223,6 +230,8 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 void DLL_DECL print_stpp(stpp)
 	struct stgpath_entry *stpp;
 {
+	if (stpp == NULL) return;
+
 	fprintf(stdout, "----------------------------------\n");
 	fprintf(stdout, "Path entry  -   dump of reqid %d\n", stpp->reqid);
 	fprintf(stdout, "----------------------------------\n");
@@ -234,6 +243,8 @@ void DLL_DECL print_stcp(stcp)
 	struct stgcat_entry *stcp;
 {
 	int i;
+
+	if (stcp == NULL) return;
 
 	fprintf(stdout, "-------------------------------------\n");
 	fprintf(stdout, "Catalog entry - dump of reqid %d\n", stcp->reqid);
@@ -269,6 +280,9 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_STRING(stcp,u1.t.fseq);
 		PRINT_STRING(stcp,u1.t.lbl);
 		PRINT_VAL(stcp,u1.t.retentd);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		PRINT_VAL(stcp,u1.t.side);
+#endif
 		PRINT_STRING(stcp,u1.t.tapesrvr);
 		PRINT_CHAR(stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
@@ -290,6 +304,8 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_U64(stcp,u1.h.fileid);
 		PRINT_VAL(stcp,u1.h.fileclass);
 		PRINT_STRING(stcp,u1.h.tppool);
+		PRINT_VAL(stcp,u1.h.retenp_on_disk);
+		PRINT_VAL(stcp,u1.h.mintime_beforemigr);
 		break;
 	}
 }
