@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id";
+static char sccsid[] = "$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 11:46:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
