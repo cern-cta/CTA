@@ -1646,6 +1646,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					serrno = SEINTERNAL;
 					return(-1);
 				}
+				memset((void *) dummy, 0, sizeof(file_list_t));
 				(*rtcpcreqs_in)[i]->file = dummy;
 
                 /* We makes sure it is a circular list and correctly initialized */
