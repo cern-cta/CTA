@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.36 2001/09/18 21:16:26 jdurand Exp $
+ * $Id: stagein.c,v 1.37 2001/11/09 09:45:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.36 $ $Date: 2001/09/18 21:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.37 $ $Date: 2001/11/09 09:45:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -803,7 +803,6 @@ int main(argc, argv)
 		}
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
-        break;
 	}
 #if defined(_WIN32)
 	WSACleanup();
