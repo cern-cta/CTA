@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.19 $ $Date: 2000/03/13 11:38:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.20 $ $Date: 2000/03/28 10:18:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -364,7 +364,7 @@ int rtcpd_CleanUpSHIFT(shift_client_t **req, char **buf, int status) {
 
 
 int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
-    int rc, retval, status, CLThId;
+    int rc, retval, status, namelen, CLThId;
     shift_client_t *req = NULL;
     tape_list_t *tl;
     file_list_t *fl;
@@ -447,6 +447,8 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
          */
         CLThId = rtcpd_ClientListen(*s);
         if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+        namelen = sizeof(req->tape->tapereq.server)-1;
+        gethostname(req->tape->tapereq.server,namelen);
  
         rc = rtcpc(req->tape);
     }
