@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.81 2001/02/08 23:54:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.82 2001/02/09 00:16:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.81 $ $Date: 2001/02/08 23:54:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.82 $ $Date: 2001/02/09 00:16:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -868,13 +868,21 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
     if (*poolname && strcmp (poolname, pool_p->name)) continue;
     if (*poolname) pool_p_migr = pool_p->migr;
-    sendrep (rpfd, MSG_OUT, "POOL %s DEFSIZE %d GC_STOP_THRESH %d GC %s%s%s\n",
+    sendrep (rpfd, MSG_OUT, "POOL %s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s\n",
              pool_p->name,
+             pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
              pool_p->defsize,
+             pool_p->gc_start_thresh,
              pool_p->gc_stop_thresh,
              pool_p->gc,
-             pool_p->migr_name[0] != '\0' ? " MIGRATOR " : "",
-             pool_p->migr_name[0] != '\0' ? pool_p->migr_name : ""
+             (pool_p->migr_name[0] != '\0') ? " MIGRATOR " : "",
+             (pool_p->migr_name[0] != '\0') ? pool_p->migr_name : "",
+             (pool_p->migr_name[0] != '\0') ? " MIG_START_THRESH " : "",
+             (pool_p->migr_name[0] != '\0') ? u64tostr(pool_p->mig_start_thresh, tmpbuf1, 0) : "",
+             (pool_p->migr_name[0] != '\0') ? " MIG_STOP_THRESH " : "",
+             (pool_p->migr_name[0] != '\0') ? u64tostr(pool_p->mig_stop_thresh, tmpbuf2, 0) : "",
+             (pool_p->migr_name[0] != '\0') ? " MIG_DATA_THRESH " : "",
+             (pool_p->migr_name[0] != '\0') ? u64tostru(pool_p->mig_data_thresh, tmpbuf3, 0) : ""
              );
     if (pool_p->cleanreqtime > 0) {
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
