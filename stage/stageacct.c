@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.14 2002/09/06 07:05:28 jdurand Exp $
+ * $Id: stageacct.c,v 1.15 2002/11/22 08:54:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.14 $ $Date: 2002/09/06 07:05:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.15 $ $Date: 2002/11/22 08:54:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,13 +44,13 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
 #endif
 {
   int acctreclen = 0;
-  struct acctstage2 acctstage;
+  struct acctstage64 acctstage;
   char *getconfent();
   char *p;
   
   if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
       (strcmp (p, "YES") && strcmp (p, "yes"))) return;
-  memset ((char *) &acctstage, 0, sizeof(struct acctstage2));
+  memset ((char *) &acctstage, 0, sizeof(struct acctstage64));
   acctstage.subtype = subtype;
   acctstage.uid = uid;
   acctstage.gid = gid;
@@ -101,5 +101,5 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
     acctreclen = ((char *) acctstage.u2.clienthost
                   - (char *) &acctstage) + strlen (acctstage.u2.clienthost) + 1;
   }
-  if (acctreclen) wsacct (ACCTSTAGE2, (char *) &acctstage, acctreclen);
+  if (acctreclen) wsacct (ACCTSTAGE64, (char *) &acctstage, acctreclen);
 }
