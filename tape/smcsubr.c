@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.6 $ $Date: 2002/07/24 07:31:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.7 $ $Date: 2003/10/23 07:13:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -44,6 +44,34 @@ char *msgaddr;
 		smc_status.ascq = 0;
 		smc_status.sensekey = 0;
 	}
+}
+
+static int
+vmatch (char *pattern, char *vid)
+{
+	char *p;
+	char *v;
+
+	for (p = pattern, v = vid; *p; p++, v++) {
+		if (*v == 0 && *p != '*')
+			return (1);
+		switch (*p) {
+		case '?':	/* match any single character */
+			continue;
+		case '*':
+			if (*(++p) == 0)
+				return (0); /* trailing * matches the rest */
+			while (vmatch (p, v)) {
+				if (*(++v) == 0)
+					return (1);
+			}
+			return (0);
+		default:
+			if (*p != *v)
+				return (1);
+		}
+	}
+	return (*v != 0);
 }
 
 static int
@@ -235,6 +263,7 @@ struct smc_element_info element_info[];
 	int i;
 	struct smc_element_info *inventory_info; 
 	char *msgaddr;
+	int pm = 0;
 	struct robot_info robot_info;
 	int tot_nbelem;
 
@@ -262,12 +291,24 @@ struct smc_element_info element_info[];
 		return (c);
 	}
 	found = 0;	
+	if (strchr (template, '*') || strchr (template, '?'))	/* pattern matching */
+		pm++;
 	for (i = 0 ; i < tot_nbelem ; i++)
-		if (strncmp (inventory_info[i].name, template, CA_MAXVIDLEN) == 0) {
-			memcpy (element_info, &inventory_info[i],
-				sizeof(struct smc_element_info));
-			found = 1;
-			break;
+		if (inventory_info[i].state & 0x1) {
+			if (! pm) {
+				if (strcmp (template, inventory_info[i].name) == 0) {
+					memcpy (element_info, &inventory_info[i],
+						sizeof(struct smc_element_info));
+					found++;
+					break;
+				}
+			} else {
+				if (vmatch (template, inventory_info[i].name) == 0) {
+					memcpy (&element_info[found], &inventory_info[i],
+						sizeof(struct smc_element_info));
+					found++;
+				}
+			}
 		}
 	free (inventory_info);
 	RETURN (found);
