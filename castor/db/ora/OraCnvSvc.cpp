@@ -158,7 +158,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     oracle::occi::Statement* stmt = 0;
     try {
       oracle::occi::Statement* stmt = m_connection->createStatement
-        ("SELECT version FROM CastorVersion;");
+        ("SELECT version FROM CastorVersion");
       oracle::occi::ResultSet *rset = stmt->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
         DBVersion = rset->getString(1);
@@ -171,12 +171,13 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
                        << codeVersion << "\"";
         throw e;
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (oracle::occi::SQLException ex) {
       // No CastorVersion table ?? This means bad version
       if (0 != stmt) m_connection->terminateStatement(stmt);
       castor::exception::BadVersion e;
-      e.getMessage() << "Not able to find the version of castor in the database";
-      throw e;
+      ex.getMessage() << "Not able to find the version of castor in the database"
+                      << "\n Original error was " << e.what();
+      throw ex;
     }
     
     // Uncomment this to unable tracing of the DB
