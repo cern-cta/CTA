@@ -7,8 +7,8 @@
  * All rights reserved
  */
 
-typedef long gid_t;
-typedef long uid_t;
+#include <osdep.h>
+
 struct passwd
 {
 	char* pw_name;
