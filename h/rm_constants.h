@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.6 2004/12/06 09:38:13 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.7 2005/01/10 12:32:22 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -335,9 +335,5 @@
 
 /* Number of seconds between nodes survey iteration */
 #define NODES_SURVEY_INTERVAL 30
-
-/* Number of seconds between subdirs survey iteration */
-#define SUBDIRS_SURVEY_INTERVAL 60
-#define SUBDIRS_SURVEY_COMMAND "rmcreatdirs.sh"
 
 #endif /* __rm_constants_h */
