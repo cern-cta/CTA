@@ -172,7 +172,7 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR,
-         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur
+         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
