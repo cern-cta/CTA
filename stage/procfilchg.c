@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.8 2001/06/21 16:52:03 jdurand Exp $
+ * $Id: procfilchg.c,v 1.9 2001/07/12 07:38:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.8 $ $Date: 2001/06/21 16:52:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.9 $ $Date: 2001/07/12 07:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -70,6 +70,7 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern void rwcountersfs _PROTO((char *, char *, int, int));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -284,6 +285,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 						/* We simulate a stageout followed by a stageupdc */
 						stcp->status = STAGEOUT;
+						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp)) != 0) {
 							if (c != CLEARED) {
 								goto reply;
