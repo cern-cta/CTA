@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.119 2002/10/19 08:22:32 jdurand Exp $
+ * $Id: procupd.c,v 1.120 2002/10/30 10:29:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.119 $ $Date: 2002/10/19 08:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.120 $ $Date: 2002/10/30 10:29:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1142,8 +1142,25 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* Instead of asking immediately for a garbage collector, we give it another immediate try */
 		/* by asking for another filesystem */
 		if (c == 0) {
+			int has_trailing;
 			/* This is how we distinguish from a first pass and a goto */
+
+			has_trailing = 0;
+			if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
+				/* We remove the trailing '-' */
+				/* It can happen that the tppos on the first file is for a waitf */
+				/* that does not have a trailing when the request is splitted because */
+				/* of previous one(s) on the same VID */
+				if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
+					has_trailing = 1;
+					stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
+				}
+			}
 			c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0, 0, (mode_t) 0);
+			if (has_trailing != 0) {
+				/* We restore the trailing '-' */
+				strcat(stcp->u1.t.fseq,"-");
+			}
 		}
 		if (c < 0) {
 			wqp->status = 0;
