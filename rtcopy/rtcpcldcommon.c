@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/11 12:03:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/09/21 11:07:57 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/11 12:03:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/09/21 11:07:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -122,11 +122,14 @@ int rtcpcld_initLogging(
   
   i=-1;
   while ( *rtcpcldMessages[++i].messageTxt != '\0' ) {
-    if ( dlf_add_to_text_list(rtcpcldMessages[i].msgNo,
-                              rtcpcldMessages[i].messageTxt,
-                              &g_dlf_fac_info.text_list) ) {
-      continue;
-    } 
+    (void)dlf_add_to_text_list(rtcpcldMessages[i].msgNo,
+                               rtcpcldMessages[i].messageTxt,
+                               &g_dlf_fac_info.text_list);
+    (void)dlf_entertext(
+                        facilityName,
+                        rtcpcldMessages[i].msgNo,
+                        rtcpcldMessages[i].messageTxt
+                        );
   }
   rtcp_log = rtcpcld_extlog;
   return(0);
