@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.8 $ $Date: 2002/09/20 10:04:37 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.9 $ $Date: 2003/10/13 12:34:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYTAPE 1 "$Date: 2002/09/20 10:04:37 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYTAPE 1 "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -49,7 +49,7 @@ for IBM 3590 cartridges,
 .B 40G
 or
 .B 40GC
-for IBM 3590K cartridges,
+for IBM 3590E cartridges,
 .B 20G
 or
 .B 20GC

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.14 $ $Date: 2002/09/20 10:04:37 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.15 $ $Date: 2003/10/13 12:34:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2002/09/20 10:04:37 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE 3 "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -57,7 +57,7 @@ for IBM 3590 cartridges,
 .B 40G
 or
 .B 40GC
-for IBM 3590K cartridges,
+for IBM 3590E cartridges,
 .B 20G
 or
 .B 20GC
