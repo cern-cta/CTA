@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.1 $ $Date: 1999/12/15 10:02:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 11:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querytape - query about a tape volume */
@@ -22,12 +22,13 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.1 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype)
+vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int *free_space, int *nbfiles, int *status)
 {
 	int c;
 	char func[15];
 	gid_t gid;
 	int msglen;
+	int n;
 	char *q;
 	char *rbp;
 	char repbuf[26];
@@ -88,6 +89,30 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 		unmarshall_STRING (rbp, tmpbuf);
 		if (lbltype)
 			strcpy (lbltype, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (model)
+			strcpy (model, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (media_letter)
+			strcpy (media_letter, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (manufacturer)
+			strcpy (manufacturer, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (sn)
+			strcpy (sn, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (poolname)
+			strcpy (poolname, tmpbuf);
+		unmarshall_LONG (rbp, n);
+		if (free_space)
+			*free_space = n;
+		unmarshall_LONG (rbp, n);
+		if (nbfiles)
+			*nbfiles = n;
+		unmarshall_LONG (rbp, n);
+		if (status)
+			*status = n;
 	}
 	return (c);
 }
