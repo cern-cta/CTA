@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.58 2000/12/21 13:55:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.59 2000/12/21 15:20:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.58 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.59 $ $Date: 2000/12/21 15:20:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1491,6 +1491,10 @@ int migrate_files(migr_p)
                 u64tostru(migr_p->space_beingmig, tmpbuf, 0),
                 pid);
       migr_p->migreqtime = time (0);
+      if ((migr_p->nbfiles_beingmig == 0) || (migr_p->space_beingmig == 0)) {
+        stglogit (func, "### Executing recovery procedure - migrator should not have been executed\n");
+        redomigpool();
+      }
 	}
     return (0);
 }
