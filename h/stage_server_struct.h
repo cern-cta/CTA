@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.5 2002/02/20 15:40:49 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.6 2002/04/30 12:17:31 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -85,7 +85,7 @@ struct waitq {
 struct pool {
 	char	name[CA_MAXPOOLNAMELEN+1];
 	struct pool_element *elemp;
-	int	defsize;
+	u_signed64	defsize;
 	int	gc_start_thresh;
 	int	gc_stop_thresh;
 	char	gc[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* garbage collector */
