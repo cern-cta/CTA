@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/06/22 15:08:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2004/06/22 15:11:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -50,7 +50,7 @@ libcastorCommonOra.so: $(LIBRARIES2)
 	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
 
-libcastorProto.so: $(LIBRARIES2)
+libcastorProto.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
