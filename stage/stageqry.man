@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.20 $ $Date: 2002/06/05 04:34:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.21 $ $Date: 2002/09/27 06:21:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2002/06/05 04:34:33 $"
+.TH STAGEQRY l "$Date: 2002/09/27 06:21:53 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -36,9 +36,23 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI \-\-dump
 ] [
+.BI \-\-format " formatstring"
+] [
 .BI \-\-mintime
 ] [
-.BI \-\-reqid " reqid "
+.BI \-\-noheader
+] [
+.BI \-\-output " filename"
+] [
+.BI \-\-reqid " reqid"
+] [
+.BI \-\-withna
+] [
+.BI \-\-withunit
+] [
+.BI \-\-withstatusnumber
+] [
+.BI \-\-withtimenumber
 ] [
 .BI \-\-retenp
 .\" ] [
@@ -73,9 +87,23 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI \-\-dump
 ] [
+.BI \-\-format " formatstring"
+] [
 .BI \-\-mintime
 ] [
-.BI \-\-reqid " reqid "
+.BI \-\-noheader
+] [
+.BI \-\-output " filename"
+] [
+.BI \-\-reqid " reqid"
+] [
+.BI \-\-withna
+] [
+.BI \-\-withunit
+] [
+.BI \-\-withstatusnumber
+] [
+.BI \-\-withtimenumber
 ] [
 .BI \-\-retenp
 ]
@@ -106,11 +134,25 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI \-\-dump
 ] [
+.BI \-\-format " formatstring"
+] [
 .BI \-\-mintime
+] [
+.BI \-\-noheader
 ] [
 .BI \-\-noregexp
 ] [
-.BI \-\-reqid " reqid "
+.BI \-\-output " filename"
+] [
+.BI \-\-reqid " reqid"
+] [
+.BI \-\-withna
+] [
+.BI \-\-withunit
+] [
+.BI \-\-withstatusnumber
+] [
+.BI \-\-withtimenumber
 ] [
 .BI \-\-retenp
 ]
@@ -141,11 +183,23 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI \-\-dump
 ] [
+.BI \-\-format " formatstring"
+] [
 .BI \-\-mintime
 ] [
-.BI \-\-noregexp
+.BI \-\-noheader
 ] [
-.BI \-\-reqid " reqid "
+.BI \-\-output " filename"
+] [
+.BI \-\-reqid " reqid"
+] [
+.BI \-\-withna
+] [
+.BI \-\-withunit
+] [
+.BI \-\-withstatusnumber
+] [
+.BI \-\-withtimenumber
 ] [
 .BI \-\-retenp
 ]
@@ -324,6 +378,126 @@ gives CASTOR's read/write counters for stageout pools. Those counters are used t
 .BI \-\-dump
 dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of \-L option.
 .TP
+.BI \-\-format
+will switch off the default output in favour to a user defined
+.I formatstring
+, that is a comma separated list of structure members. If you don't specify the 
+.BI \-L
+option, the format string can be composed of
+.BI blksize ,
+.BI charconv ,
+.BI keep ,
+.BI lrecl ,
+.BI nread ,
+.BI poolname ,
+.BI recfm ,
+.BI size ,
+.BI ipath ,
+.BI t_or_d ,
+.BI group ,
+.BI user ,
+.BI uid ,
+.BI gid ,
+.BI mask ,
+.BI reqid ,
+.BI status ,
+.BI actual_size ,
+.BI c_time ,
+.BI a_time ,
+.BI nbaccesses ,
+.BI den ,
+.BI dgn ,
+.BI fid ,
+.BI filstat ,
+.BI fseq ,
+.BI lbl ,
+.BI retentd ,
+.BI side ,
+.BI tapesrvr ,
+.BI E_Tflags ,
+.BI vid ,
+.BI vsn ,
+.BI xfile ,
+.BI server ,
+.BI fileid ,
+.BI fileclass ,
+.BI tppool ,
+.BI retenp_on_disk
+and
+.BI mintime_beforemigr .
+With -L, it can composed of
+.BI reqid
+and
+.BI upath
+only.
+.TP
+.BI \-\-noheader
+If you use the
+.BI \-\-format
+mode, this option will prevent the default header, that is taking all the arguments in the format string as input, to be printed.
+.TP
+.BI \-\-output
+If you use the
+.BI \-\-format
+mode, this option will redirect all the output (including errors) to a given
+.I filename.
+.TP
+.BI \-\-withna
+If you use the
+.BI \-\-format
+mode, this option will print
+.B N/A
+instead of blanks, in case you want to parse the output and you depend on an exact number of columns.
+.TP
+.BI \-\-withunit
+If you use the
+.BI \-\-format
+mode, this option will print the
+.BI size
+and
+.BI actual_size
+with an unit instead of the default, which is without unit, e.g. in bytes. Units can be
+.I k
+for kilo\-bytes,
+.I M
+for mega\-bytes,
+.I G
+for giga\-bytes,
+.I T
+for tera\-bytes and
+.I P
+for peta\-bytes.
+.TP
+.BI \-\-withstatusnumber
+If you use the
+.BI \-\-format
+mode, this option will print
+.I status
+with an user-friendly string, instead of the default, that is its raw value. These strings can be
+.I STAGEALLOC,
+.I STAGEIN,
+.I STAGEOUT,
+.I STAGEWRT,
+.I STAGEPUT,
+.I STAGED_LSZ,
+.I STAGED_TPE,
+.I CAN_BE_MIGR,
+.I WAITING_MIGR,
+.I WAITING_NS,
+.I WAITING_SPC,
+.I WAITING_REQ
+and
+.I STAGED.
+.TP
+.BI \-\-withtimenumber
+If you use the
+.BI \-\-format
+mode, this option will print
+.I c_time
+and
+.I a_time
+in a formatted string status instead of the default, that is its raw value (elapsed seconds since the Epoch (00:00:00 UTC, January 1, 1970).
+.TP
 .BI \-\-migrator
 gives statistics on migration rules. Used only if \-s option is set.
 .TP
@@ -350,6 +524,15 @@ option. Please see the NOTES section.
 .\" .BI \-\-display_side
 .\" Forces 'tape' files with a side number greater than zero to follow the multi-sided format as quoted in the NOTES section below. Please see the NOTES section.
 .SH EXAMPLES
+.TP
+.nf
+.cs R 18
+stageqry -V P07000 --format user,group,vid,vsn,den,dgn,lbl,reqid     
+user           group vid    vsn    den      dgn    lbl reqid
+cscct          c3    P07000 P07000 60GC     9940R  al  495049
+cscct          c3    P07000 P07000 60GC     9940R  al  495050
+.cs R
+.fi
 .TP
 stageqry
 .nf
