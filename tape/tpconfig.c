@@ -4,14 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.2 $ $Date: 1999/11/12 11:01:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.3 $ $Date: 1999/11/12 13:57:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
+#include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
+#include "serrno.h"
 #if SACCT
 #include "sacct.h"
 struct confrsn {
@@ -81,8 +83,13 @@ char	**argv;
 		}
 	}
 #endif
-	c = Ctape_config (argv[1], status, reason);
-	exit (c);
+	if (Ctape_config (argv[1], status, reason) < 0) {
+		if (serrno == EINVAL || serrno == ETIDN)
+			exit (USERR);
+		else
+			exit (SYERR);
+	} else
+		exit (0);
 }
 
 usage(cmd)
