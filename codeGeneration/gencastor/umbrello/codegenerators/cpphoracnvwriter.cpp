@@ -267,21 +267,13 @@ void CppHOraCnvWriter::writeMembers() {
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
   if (m_classInfo->allSuperclasses.contains(concept)) {
     *m_stream << getIndent()
-              << "/// SQL statement for request status insertion"
+              << "/// SQL statement for new request insertion"
               << endl << getIndent()
-              << "static const std::string s_insertStatusStatementString;"
+              << "static const std::string s_insertNewReqStatementString;"
               << endl << endl << getIndent()
               << "/// SQL statement object for request status insertion"
               << endl << getIndent()
-              << "oracle::occi::Statement *m_insertStatusStatement;"
-              << endl << endl << getIndent()
-              << "/// SQL statement for status deletion"
-              << endl << getIndent()
-              << "static const std::string s_deleteStatusStatementString;"
-              << endl << endl << getIndent()
-              << "/// SQL statement object for request status deletion"
-              << endl << getIndent()
-              << "oracle::occi::Statement *m_deleteStatusStatement;"
+              << "oracle::occi::Statement *m_insertNewReqStatement;"
               << endl << endl;
   }
   // Dealing with type identification (storage and deletion)

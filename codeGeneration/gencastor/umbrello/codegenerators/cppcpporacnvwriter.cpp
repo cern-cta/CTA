@@ -224,6 +224,10 @@ void CppCppOraCnvWriter::writeConstants() {
     first = false;
     if (mem->name == "id") {
       *m_stream << "ids_seq.nextval";
+    } else if (mem->name == "nbAccesses") {
+      *m_stream << "0";
+    } else if (mem->name == "lastAccessTime") {
+      *m_stream << "NULL";
     } else {
       *m_stream << ":" << n;
       n++;
@@ -293,12 +297,16 @@ void CppCppOraCnvWriter::writeConstants() {
             << "\"UPDATE " << m_classInfo->className
             << " SET ";
   n = 0;
+  first = true;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->name == "id") continue;
-    if (n > 0) *m_stream << ", ";
+    if (mem->name == "id" ||
+        mem->name == "creationTime" ||
+        mem->name == "lastAccessTime" ||
+        mem->name == "nbAccesses") continue;
+    if (!first) *m_stream << ", "; else first = false;
     n++;
     *m_stream << mem->name << " = :" << n;
   }
@@ -340,19 +348,10 @@ void CppCppOraCnvWriter::writeConstants() {
               << "const std::string "
               << m_classInfo->fullPackageName
               << "Ora" << m_classInfo->className
-              << "Cnv::s_insertStatusStatementString =" << endl
+              << "Cnv::s_insertNewReqStatementString =" << endl
               << getIndent()
-              << "\"INSERT INTO requestsStatus (id, status, creation, lastChange)"
-              << " VALUES (:1, 'NEW', SYSDATE, SYSDATE)\";"
-              << endl << endl << getIndent()
-              << "/// SQL statement for request status deletion"
-              << endl << getIndent()
-              << "const std::string "
-              << m_classInfo->fullPackageName
-              << "Ora" << m_classInfo->className
-              << "Cnv::s_deleteStatusStatementString =" << endl
-              << getIndent()
-              << "\"DELETE FROM requestsStatus WHERE id = :1\";"
+              << "\"INSERT INTO newRequests (id, type, creation)"
+              << " VALUES (:1, :2, SYSDATE)\";"
               << endl << endl;
   }
   // Associations dedicated statements
@@ -510,7 +509,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << m_classInfo->className
                   << " SET " << as->remotePart.name
-                  << " = : 1 WHERE id = :2\";" << endl << endl;
+                  << " = :1 WHERE id = :2\";" << endl << endl;
       }
     }
   }
@@ -693,8 +692,7 @@ void CppCppOraCnvWriter::writeConstructors() {
             << getIndent() << "  m_selectStatement(0)," << endl
             << getIndent() << "  m_updateStatement(0)," << endl;
   if (isRequest()) {
-    *m_stream << getIndent() << "  m_insertStatusStatement(0)," << endl
-              << getIndent() << "  m_deleteStatusStatement(0)," << endl;
+    *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
   }
   *m_stream << getIndent() << "  m_storeTypeStatement(0)," << endl
             << getIndent() << "  m_deleteTypeStatement(0)";
@@ -790,9 +788,7 @@ void CppCppOraCnvWriter::writeReset() {
             << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "deleteStatement(m_insertStatusStatement);"
-              << endl << getIndent()
-              << "deleteStatement(m_deleteStatusStatement);"
+              << "deleteStatement(m_insertNewReqStatement);"
               << endl;
   }
   *m_stream << getIndent() << "deleteStatement(m_storeTypeStatement);"
@@ -868,9 +864,7 @@ void CppCppOraCnvWriter::writeReset() {
             << "m_updateStatement = 0;" << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "m_insertStatusStatement = 0;"
-              << endl << getIndent()
-              << "m_deleteStatusStatement = 0;"
+              << "m_insertNewReqStatement = 0;"
               << endl;
   }
   *m_stream << getIndent()
@@ -1119,7 +1113,7 @@ void CppCppOraCnvWriter::writeFillObj() {
   m_indent--;
   *m_stream << getIndent() << "}" << endl << endl;
 
-  // Now write the dedicated fillRep Methods
+  // Now write the dedicated fillObj Methods
   MemberList members = createMembersList();
   unsigned int n = members.count();
   for (Assoc* as = assocs.first();
@@ -1982,7 +1976,16 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   // Go through the members and assoc to find the number for id
   MemberList members = createMembersList();
   AssocList assocs = createAssocsList();
-  int n = members.count(); // start from 0 but count id
+  int n = 1;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (mem->name != "id" &&
+        mem->name != "nbAccesses" &&
+        mem->name != "lastAccessTime") {
+      n++;
+    }
+  }
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
@@ -2001,10 +2004,10 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent() << "}" << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "if (0 == m_insertStatusStatement) {" << endl;
+              << "if (0 == m_insertNewReqStatement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
-              << "m_insertStatusStatement = createStatement(s_insertStatusStatementString);"
+              << "m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
@@ -2027,8 +2030,18 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->name != "id") {
+    if (mem->name != "id" &&
+        mem->name != "nbAccesses" &&
+        mem->name != "creationTime" &&
+        mem->name != "lastModificationTime" &&
+        mem->name != "lastAccessTime") {
       writeSingleSetIntoStatement("insert", *mem, n);
+      n++;
+    } else if (mem->name == "creationTime" ||
+               mem->name == "lastModificationTime") {
+      *m_stream << getIndent()
+                << "m_insertStatement->setInt("
+                << n << ", time(0));" << endl;
       n++;
     }
   }
@@ -2069,9 +2082,11 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "m_insertStatusStatement->setDouble(1, obj->id());"
+              << "m_insertNewReqStatement->setDouble(1, obj->id());"
               << endl << getIndent()
-              << "m_insertStatusStatement->executeUpdate();"
+              << "m_insertNewReqStatement->setInt(2, obj->type());"
+              << endl << getIndent()
+              << "m_insertNewReqStatement->executeUpdate();"
               << endl;
   }
   // Commit if needed
@@ -2139,7 +2154,17 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
       idMem = mem;
       continue;
     }
-    writeSingleSetIntoStatement("update", *mem, n);
+    if (mem->name == "id" ||
+        mem->name == "creationTime" ||
+        mem->name == "lastAccessTime" ||
+        mem->name == "nbAccesses") continue;
+    if (mem->name == "lastModificationTime") {
+      *m_stream << getIndent()
+                << "m_updateStatement->setInt("
+                << n << ", time(0));" << endl;      
+    } else {
+      writeSingleSetIntoStatement("update", *mem, n);
+    }
     n++;
   }
   // Go through dependant objects
@@ -2213,16 +2238,6 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  if (isRequest()) {
-    *m_stream << getIndent()
-              << "if (0 == m_deleteStatusStatement) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "m_deleteStatusStatement = createStatement(s_deleteStatusStatementString);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
   *m_stream << getIndent()
             << "if (0 == m_deleteTypeStatement) {" << endl;
   m_indent++;
@@ -2243,13 +2258,6 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
             << endl << getIndent()
             << "m_deleteStatement->executeUpdate();"
             << endl;
-  if (isRequest()) {
-    *m_stream << getIndent()
-              << "m_deleteStatusStatement->setDouble(1, obj->id());"
-              << endl << getIndent()
-              << "m_deleteStatusStatement->executeUpdate();"
-              << endl;
-  }
   // create a list of associations
   AssocList assocs = createAssocsList();
   // Go through dependant objects
