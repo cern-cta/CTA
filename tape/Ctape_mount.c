@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.22 $ $Date: 2002/09/16 09:11:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.23 $ $Date: 2004/01/28 13:56:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -161,9 +161,14 @@ int vdqm_reqid;
 		if (c != ETVUNKN)
 #endif
 		{
+#if !defined(VDQM)
+            /* Only return an error in case the tape cannot
+               be accessed when VDQM isn't used. The mountape process does the
+               check anyway and unloads the drive if necessary (BC)*/
 			Ctape_errmsg ("vmgrcheck", "%s\n", sstrerror(c));
 			serrno = c;
 			return (-1);
+#endif
 		}
 #endif
 #if TMS
