@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.21 2000/12/05 09:57:27 jdurand Exp $
+ * $Id: stagein.c,v 1.22 2000/12/11 08:27:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.21 $ $Date: 2000/12/05 09:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.22 $ $Date: 2000/12/11 08:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -106,7 +106,6 @@ int main(argc, argv)
 	char xvsn[7*MAXVSN];
 	char **hsmfiles = NULL;
 	int nhsmfiles = 0;
-	int ihsmfiles;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
