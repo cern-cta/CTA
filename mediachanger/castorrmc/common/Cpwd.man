@@ -1,6 +1,6 @@
-.\"   $Id: Cpwd.man,v 1.3 2000/10/27 13:39:27 jdurand Exp $
+.\"   $Id: Cpwd.man,v 1.4 2001/09/26 09:13:48 jdurand Exp $
 .\"
-.TH CPWD "3" "$Date: 2000/10/27 13:39:27 $" "CASTOR" "Common Library Functions"
+.TH CPWD "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCpwd\fP \- \fBCASTOR\fP \fBP\fPass\fBw\fPor\fBd\fP file Thread-Safe inferface
 .SH SYNOPSIS
@@ -24,4 +24,4 @@ or
 \fBserrno\fP, \fBgetpwnam\fP, \fBgetpwuid\fP
 
 .SH AUTHOR
-\fBOlof Barring\fP (Olof.Barring@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>

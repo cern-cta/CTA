@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.8 2001/06/12 06:37:20 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.9 2001/09/26 09:13:48 jdurand Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2001/06/12 06:37:20 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -311,4 +311,4 @@ For these two last functions, \fBCthread\fP will garbage itself its eventual lis
 \fBpthread\fP, \fBDCE\fP, \fBLinuxThreads\fP, \fBWin32\fP
 
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+\fBCASTOR\fP Team <castor.support@cern.ch>

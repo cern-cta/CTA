@@ -1,6 +1,6 @@
-.\"   $Id: Cgrp.man,v 1.1 2000/10/27 13:56:25 jdurand Exp $
+.\"   $Id: Cgrp.man,v 1.2 2001/09/26 09:13:48 jdurand Exp $
 .\"
-.TH CGRP "3" "$Date: 2000/10/27 13:56:25 $" "CASTOR" "Common Library Functions"
+.TH CGRP "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCgrp\fP \- \fBCASTOR\fP \fBGr\fPou\fBp\fP file Thread-Safe inferface
 .SH SYNOPSIS
@@ -24,4 +24,4 @@ or
 \fBserrno\fP, \fBgetgrnam\fP, \fBgetgrgid\fP
 
 .SH AUTHOR
-\fBJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
+\fBCASTOR\fP Team <castor.support@cern.ch>
