@@ -1,4 +1,4 @@
-.\"   $Id: Csched.man,v 1.1 2000/06/19 09:48:32 jdurand Exp $
+.\"   $Id: Csched.man,v 1.2 2000/06/19 09:58:31 jdurand Exp $
 .\"
 .\"   Man page for the CASTOR's Scheduling Interface (Csched)
 .\"
@@ -23,9 +23,9 @@ Beyond the errno value, \fBCsched\fP is setting the serrno value to generic valu
 
 .SH DESCRIPTION
 
-\fBCthread\fP is a common API interface for scheduling of multithreaded programs.
+\fBCsched\fP is a common API interface for scheduling of multithreaded programs.
 .P
-\fBCsched_getschedparam\fP retrieves the current scheduling policy and priority of the Cthread referenced with id
+\fBCsched_getschedparam\fP retrieves the current scheduling policy and priority of the thread referenced with Cthread's id
 .I cid.
 The
 .I policy
@@ -43,7 +43,7 @@ section.
 .P
 Return value is 0 on success, or -1 on error.
 .P
-\fBCsched_setschedparam\fP sets the scheduling policy and priority of the Cthread referenced with id
+\fBCsched_setschedparam\fP sets the scheduling policy and priority of the thread referenced with Cthread's id
 .I cid.
 The
 .I policy
@@ -90,7 +90,7 @@ section.
 .P
 Return value is != -1 on success, or -1 on error.
 .SH NOTES
-About scheduling, the Cthread interface defines
+About scheduling, the Csched interface defines
 .I CSCHED_OTHER, CSCHED_FIFO, CSCHED_RR, CSCHED_FG_NP
 and
 .I CSCHED_BG_NP
