@@ -1,5 +1,5 @@
 /*
- * $Id: tuxid.c,v 1.3 2001/05/22 11:41:13 jdurand Exp $
+ * $Id: tuxid.c,v 1.4 2001/05/23 11:16:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tuxid.c,v $ $Revision: 1.3 $ $Date: 2001/05/22 11:41:13 $ CERN IT-PDP/DM Jean-Philippe Baud, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: tuxid.c,v $ $Revision: 1.4 $ $Date: 2001/05/23 11:16:21 $ CERN IT-PDP/DM Jean-Philippe Baud, Jean-Damien Durand";
 #endif /* not lint */
 
 #define _POSIX_
@@ -71,7 +71,7 @@ main(argc,argv)
 
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt_long (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z", longopts, NULL)) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != -1) {
 		switch (c) {
 		case 0:
 			if (help_flag) {
