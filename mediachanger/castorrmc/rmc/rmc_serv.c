@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:32:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.3 $ $Date: 2002/12/03 10:42:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,9 +41,8 @@ int maxfds;
 struct extended_robot_info extended_robot_info;
 int rpfd;
 
-main(argc, argv)
-int argc;
-char **argv;
+rmc_main(main_args)
+struct main_args *main_args;
 {
 	int c;
 	unsigned char cdb[12];
@@ -68,8 +67,6 @@ char **argv;
 	struct servent *sp;
 	struct timeval timeval;
 
-	if ((maxfds = Cinitdaemon ("rmc_serv", NULL)) < 0)
-		exit (SYERR);
 	jid = getpid();
 	strcpy (func, "rmc_serv");
 	rmclogit (func, "started\n");
@@ -83,11 +80,11 @@ char **argv;
 		strcat (localhost, domainname);
 	}
 
-	if (argc != 2) {
+	if (main_args->argc != 2) {
 		rmclogit (func, RMC01);
 		exit (USERR);
 	}
-	robot = argv[1];
+	robot = main_args->argv[1];
 	if (*robot == '\0' ||
 	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
 		rmclogit (func, RMC06, "robot");
@@ -189,6 +186,27 @@ char **argv;
 		}
 	}
 }
+
+#if ! defined(_WIN32)
+main(argc, argv)
+int argc;
+char **argv;
+{
+	struct main_args main_args;
+
+	main_args.argc = argc;
+	main_args.argv = argv;
+	if ((maxfds = Cinitdaemon ("rmc_serv", NULL)) < 0)
+		exit (SYERR);
+	exit (rmc_main (&main_args));
+}
+#else
+main()
+{
+	if (Cinitservice ("rmc_serv", &rmc_main))
+		exit (SYERR);
+}
+#endif
 
 void
 doit(rqfd)
