@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.97 $ $Release$ $Date: 2005/01/03 17:35:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.98 $ $Release$ $Date: 2005/01/04 12:18:10 $ $Author: jdurand $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -120,7 +120,7 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
