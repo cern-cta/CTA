@@ -1,5 +1,5 @@
 /*
- * $Id: uxid.c,v 1.3 2000/06/15 14:21:15 jdurand Exp $
+ * $Id: uxid.c,v 1.4 2000/09/21 16:03:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.3 $ $Date: 2000/06/15 14:21:15 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.4 $ $Date: 2000/09/21 16:03:33 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.3 $ $Date: 2000/06
 //#include <windows.h>
 #include "grp.h"
 #include "pwd.h"
+#include "Castor_limits.h"
 
 #ifndef UXGRPFILE
 #define UXGRPFILE "%SystemRoot%\\system32\\drivers\\etc\\group"
@@ -199,6 +200,10 @@ char *buf;
 	pw->pw_shell = ++p;
 	return (pw);
 }
+
+/* For conform to standard, saying that getgid() NEVER fails */
+/* we return the maximum gid instead of -1. */
+
 gid_t DLL_DECL
 getgid()
 {
@@ -207,37 +212,41 @@ getgid()
     uid_t *winux_uid;
 
     if (Cthread_getspecific(&winux_gid_key,(void **) &winux_gid) != 0) {
-      return(-1);
+      return(CA_MAXGID);
     }
     if (winux_gid == NULL) {
       if ((winux_gid = (gid_t *) malloc(sizeof(gid_t))) == NULL) {
-        return(-1);
+        return(CA_MAXGID);
       }
-      *winux_gid = -1;
+      *winux_gid = CA_MAXGID;
       if (Cthread_setspecific(&winux_gid_key,winux_gid) != 0) {
-        return(-1);
+        return(CA_MAXGID);
       }
     }
 
     if (Cthread_getspecific(&winux_uid_key,(void **) &winux_uid) != 0) {
-      return(-1);
+      return(CA_MAXGID);
     }
     if (winux_uid == NULL) {
       if ((winux_uid = (uid_t *) malloc(sizeof(uid_t))) == NULL) {
-        return(-1);
+        return(CA_MAXGID);
       }
-      *winux_uid = -1;
+      *winux_uid = CA_MAXUID;
       if (Cthread_setspecific(&winux_uid_key,winux_uid) != 0) {
-        return(-1);
+        return(CA_MAXGID);
       }
     }
 
-	if (*winux_gid >= 0)
+	if (*winux_gid >= 0 && *winux_gid < CA_MAXGID)
 		return (*winux_gid);
 	if ((pw = getpwnam (cuserid (NULL))) == NULL)
-		return (-1);
+		return (CA_MAXGID);
 	*winux_gid = pw->pw_gid;
-	if (*winux_uid < 0) *winux_uid = pw->pw_uid;
+	if (*winux_gid < 0 || *winux_gid > CA_MAXGID)
+		*winux_gid = CA_MAXGID;
+	if (*winux_uid < 0 || *winux_uid >= CA_MAXUID) *winux_uid = pw->pw_uid;
+	if (*winux_uid < 0 || *winux_uid > CA_MAXUID)
+		*winux_uid = CA_MAXUID;
 	return (*winux_gid);
 }
 
@@ -391,6 +400,9 @@ uid_t uid;
 	return (fillpwent (getpwbuf));
 }
 
+/* For conform to standard, saying that getuid() NEVER fails */
+/* we return the maximum uid instead of -1. */
+
 uid_t
 getuid()
 {
@@ -399,37 +411,41 @@ getuid()
     uid_t *winux_uid;
 
     if (Cthread_getspecific(&winux_gid_key,(void **) &winux_gid) != 0) {
-      return(-1);
+      return(CA_MAXUID);
     }
     if (winux_gid == NULL) {
       if ((winux_gid = (gid_t *) malloc(sizeof(gid_t))) == NULL) {
-        return(-1);
+        return(CA_MAXUID);
       }
-      *winux_gid = -1;
+      *winux_gid = CA_MAXGID;
       if (Cthread_setspecific(&winux_gid_key,winux_gid) != 0) {
-        return(-1);
+        return(CA_MAXUID);
       }
     }
 
     if (Cthread_getspecific(&winux_uid_key,(void **) &winux_uid) != 0) {
-      return(-1);
+      return(CA_MAXUID);
     }
     if (winux_uid == NULL) {
       if ((winux_uid = (uid_t *) malloc(sizeof(uid_t))) == NULL) {
-        return(-1);
+        return(CA_MAXUID);
       }
-      *winux_uid = -1;
+      *winux_uid = CA_MAXUID;
       if (Cthread_setspecific(&winux_uid_key,winux_uid) != 0) {
-        return(-1);
+        return(CA_MAXUID);
       }
     }
 
-	if (*winux_uid >= 0)
+	if (*winux_uid >= 0 && *winux_uid < CA_MAXUID)
 		return (*winux_uid);
 	if ((pw = getpwnam (cuserid (NULL))) == NULL)
-		return (-1);
-	if (*winux_gid < 0) *winux_gid = pw->pw_gid;
+		return (CA_MAXUID);
 	*winux_uid = pw->pw_uid;
+	if (*winux_uid < 0 || *winux_uid > CA_MAXUID)
+		*winux_uid = CA_MAXUID;
+	if (*winux_gid < 0 || *winux_gid >= CA_MAXGID) *winux_gid = pw->pw_gid;
+	if (*winux_gid < 0 || *winux_gid > CA_MAXGID)
+		*winux_gid = CA_MAXGID;
 	return (*winux_uid);
 }
 
