@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.8 2004/11/25 09:39:55 jdurand Exp $
+ * $Id: Cuuid.c,v 1.9 2005/04/05 14:25:08 sponcec3 Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.8 $ $Date: 2004/11/25 09:39:55 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.9 $ $Date: 2005/04/05 14:25:08 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,12 @@ struct nlist nl[] = {
 /* Set the following to a call to acquire a system wide global lock */
 #define LOCK
 #define UNLOCK
+
+/**
+ * Declaration of a usefull cuuid : the null one.
+ * No need to do a memset, it will be set to 0 by default
+ */
+Cuuid_t nullCuuid;
 
 /* Private MD5 */
 /*
