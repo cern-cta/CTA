@@ -1,0 +1,280 @@
+// Include files
+#include <qregexp.h>
+
+// local
+#include "cpphbasecnvwriter.h"
+
+//-----------------------------------------------------------------------------
+// Implementation file for class : CppHBaseCnvWriter
+//
+// 2004-01-13 : Sebastien Ponce
+//-----------------------------------------------------------------------------
+
+//=============================================================================
+// Standard constructor, initializes variables
+//=============================================================================
+CppHBaseCnvWriter::CppHBaseCnvWriter(UMLDoc *parent, const char *name) :
+  CppHWriter(parent, name) {}
+
+//=============================================================================
+// writeMethods
+//=============================================================================
+void CppHBaseCnvWriter::writeMethods () {
+  // Constructor and Destructor
+  writeDocumentation("", "Constructor", "", *m_stream);
+  *m_stream << getIndent() << m_prefix << m_classInfo->className
+            << "Cnv();" << endl << endl;
+  writeDocumentation("", "Destructor", "", *m_stream);
+  *m_stream << getIndent() << "virtual " << "~" << m_prefix
+            << m_classInfo->className << "Cnv() throw();" << endl
+            << endl;
+  // Methods concerning object type
+  writeDocumentation
+    ("Gets the object type.",
+     "That is the type of object this converter can convert",
+     "", *m_stream);
+  *m_stream << getIndent() << "static const unsigned int ObjType();"
+            << endl << endl;
+  writeDocumentation
+    ("Gets the object type.",
+     "That is the type of object this converter can convert",
+     "", *m_stream);
+  *m_stream << getIndent() << "virtual const unsigned int objType() const;"
+            << endl << endl;
+  // Conversion methods
+  writeDocumentation
+    ("Creates foreign representation from a C++ Object.",
+     "",
+     QString("@param address where to store the representation of\n") +
+     "the object\n" +
+     "@param object the object to deal with\n" +
+     "@param alreadyDone the set of objects which representation\n" +
+     "was already created. This is needed to avoid looping in case\n" +
+     "of circular dependencies\n" +
+     "@param autocommit whether the changes to the database\n" +
+     "should be commited or not\n" +
+     "@param recursive if set to true, the objects refered\n" +
+     "by object will be created/updated too and recursively\n" +
+     "If it's set to false, the objects refered will not be touched\n" +
+     "But an exception will be thrown if one is missing that is needed\n" +
+     "@exception Exception throws an Exception in cas of error",
+     *m_stream);
+  // Force inclusion of ObjectSet
+  addInclude("\"castor/ObjectSet.hpp\"");
+  *m_stream << getIndent()
+            << "virtual void createRep("
+            << fixTypeName("IAddress*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " address,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("ObjectSet&",
+                           "castor",
+                           m_classInfo->packageName)
+            << " alreadyDone,"
+            << endl
+            << getIndent()
+            << "                       bool autocommit,"
+            << endl
+            << getIndent()
+            << "                       bool recursive)"
+            << endl
+            << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+  writeDocumentation
+    ("Updates foreign representation from a C++ Object.",
+     "",
+     QString("@param address where the representation of\n") +
+     "the object is stored\n" +
+     "@param object the object to deal with\n" +
+     "@param alreadyDone the set of objects which representation\n" +
+     "was already updated. This is needed to avoid looping in case\n" +
+     "of circular dependencies\n" +
+     "@param autocommit whether the changes to the database\n" +
+     "should be commited or not\n" +
+     "@param recursive if set to true, the objects refered\n" +
+     "by object will be updated too and recursively\n" +
+     "@exception Exception throws an Exception in cas of error",
+     *m_stream);
+  // Force inclusion of ObjectSet
+  addInclude("\"castor/ObjectSet.hpp\"");
+  *m_stream << getIndent()
+            << "virtual void updateRep("
+            << fixTypeName("IAddress*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " address,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("ObjectSet&",
+                           "castor",
+                           m_classInfo->packageName)
+            << " alreadyDone,"
+            << endl
+            << getIndent()
+            << "                       bool autocommit,"
+            << endl
+            << getIndent()
+            << "                       bool recursive)"
+            << endl
+            << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+  writeDocumentation
+    ("Deletes foreign representation of a C++ Object.",
+     "",
+     QString("@param address where the representation of\n") +
+     "the object is stored\n" +
+     "@param object the object to deal with\n" +
+     "@param alreadyDone the set of objects which representation\n" +
+     "was already deleted. This is needed to avoid looping in case\n" +
+     "of circular dependencies\n" +
+     "@param autocommit whether the changes to the database\n" +
+     "should be commited or not\n" +
+     "@exception Exception throws an Exception in cas of error",
+     *m_stream);
+  // Force inclusion of ObjectSet
+  addInclude("\"castor/ObjectSet.hpp\"");
+  *m_stream << getIndent()
+            << "virtual void deleteRep("
+            << fixTypeName("IAddress*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " address,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("ObjectSet&",
+                           "castor",
+                           m_classInfo->packageName)
+            << " alreadyDone,"
+            << endl
+            << getIndent()
+            << "                       bool autocommit)"
+            << endl
+            << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+  writeDocumentation
+    ("Creates C++ object from foreign representation",
+     "",
+     QString("@param address the place where to find the foreign\n") +
+     "representation\n" +
+     "@param newlyCreated a map of object that were created as part of the\n" +
+     "last user call to createObj, indexed by id. If a reference to one if\n" +
+     "these id is found, the existing associated object should be used.\n" +
+     "This trick basically allows circular dependencies.\n" +
+     "@return the C++ object created from its reprensentation\n" +
+     "or 0 if unsuccessful. Note that the caller is responsible\n" +
+     "for the deallocation of the newly created object\n" +
+     "@exception Exception throws an Exception in cas of error",
+     *m_stream);
+  // Force inclusion of ObjectCatalog
+  addInclude("\"castor/ObjectCatalog.hpp\"");
+  *m_stream << getIndent()
+            << "virtual castor::IObject* createObj("
+            << fixTypeName("IAddress",
+                           "castor",
+                           m_classInfo->packageName)
+            << "* address," << endl << getIndent()
+            << "                                   "
+            << fixTypeName("ObjectCatalog&",
+                           "castor",
+                           m_classInfo->packageName)
+            << " newlyCreated)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+  writeDocumentation
+    ("Updates C++ object from its foreign representation.",
+     "",
+     QString("@param obj the object to deal with\n") +
+     "@param alreadyDone the set of objects already updated.\n" +
+     "This is needed to avoid looping in case of circular dependencies\n" +
+     "@exception Exception throws an Exception in cas of error",
+     *m_stream);
+  // Force inclusion of ObjectSet
+  addInclude("\"castor/ObjectSet.hpp\"");
+  *m_stream << getIndent()
+            << "virtual void updateObj("
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " obj,"
+            << endl
+            << getIndent()
+            << "                       "
+            << fixTypeName("ObjectCatalog&",
+                           "castor",
+                           m_classInfo->packageName)
+            << " alreadyDone)"
+            << endl
+            << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+}
+
+//=============================================================================
+// writeClassDecl
+//=============================================================================
+void CppHBaseCnvWriter::writeClassDecl(const QString& doc) {
+  // write documentation for class
+  *m_stream << getIndent() << "/**"<<endl
+            << getIndent() <<" * class " << m_prefix
+            << m_classInfo->className << "Cnv" << endl
+            << formatDoc (doc, getIndent() + " * ")
+            << getIndent()<<" */" << endl
+            << getIndent() << "class " << m_prefix << m_classInfo->className
+            << "Cnv : public " << m_prefix
+            << "BaseCnv {" << endl << endl;
+  m_indent++;
+  // Take care to include the base class declaration
+  fixTypeName(m_prefix + "BaseCnv",
+              m_classInfo->packageName,
+              m_classInfo->packageName);
+}
+

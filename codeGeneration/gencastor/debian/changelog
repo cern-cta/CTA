@@ -1,0 +1,7 @@
+gencastor (2.0-1) unstable; urgency=low
+
+  * Initial Release.
+  * Incorporated the code generation
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 24 Sep 2004 16:08:26 +0200
+
