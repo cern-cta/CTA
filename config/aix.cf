@@ -1,0 +1,42 @@
+#undef aix
+COMM       @(#)aix.cf,v 1.7 2003/05/13 10:12:31 CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM  Default rules for Make          AIX (RS6000)
+
+#define aix 1
+RM = rm -f
+MTCCFLAGS = -DCHTREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+MTLDLIBS = -lpthreads
+MTLDFLAGS =
+SHLIBLDFLAGS = -G -b expall -b noentry
+SHLIBREQLIBS = -lc -lstdc++
+#if OSMajorVersion >= 5 && OSMinorVersion >= 1
+CC = cc -Dunix -DAIX42 -DAIX51
+#else
+#if OSMajorVersion >= 4 && OSMinorVersion >= 2
+CC = cc -Dunix -DAIX42
+#else
+CC = cc -Dunix
+#endif
+#endif
+
+#define HasRanlib	YES
+CPPUFL= -DEXTNAME
+FPPUFL= -qextname
+
+.SUFFIXES: .F .a .F .o
+
+.F.a:
+	/lib/cpp -P -D_AIX  $< $*.f
+	$(FC) $(FFLAGS) -c $*.f
+	$(AR) rv $@ $%
+	$(RM) $%
+
+.F.o:
+	/lib/cpp -P -D_AIX $< $*.f
+	$(FC) $(FFLAGS) -c $*.f
+

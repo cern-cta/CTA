@@ -1,0 +1,26 @@
+COMM       @(#)alpha_osf.cf,v 1.7 2000/07/21 16:13:46 IT-PDP/DM Felix Hassine     
+COMM
+COMM  Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+ 
+COMM  Default rules for Make         Alpha/OSF 1
+
+#if OSMajorVersion >= 4
+MTCCFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+MTLDLIBS =
+MTLDFLAGS = -pthread
+#else
+MTCCFLAGS = -threads -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+MTLDLIBS =
+MTLDFLAGS = -threads
+#endif
+SHLIBLDFLAGS = -shared -no_archive
+SHLIBREQLIBS = -lc -lpthread -lrt -lstdc++
+#if OSMajorVersion >= 4
+CC = cc -DDUXV4
+#else
+CC = cc
+#endif
+#define HasRanlib	YES
+ARFLAGS = rv
