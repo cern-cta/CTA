@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/28 09:41:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 15:53:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -66,11 +66,13 @@ int  castor::BaseServer::serverMain () {
   if (!m_singleThreaded) {
     m_threadPoolId = Cpool_create(nbThreads, &actualNbThreads);
     if (m_threadPoolId < 0) {
-      clog() << "Thread pool creation error:" << m_threadPoolId
+      clog() << FATAL << "Thread pool creation error : "
+             << m_threadPoolId
              << std::endl;
       return -1;
     } else {
-      clog() << "Thread pool created:"  << m_threadPoolId << ", "
+      clog() << DEBUG << "Thread pool created : "
+             << m_threadPoolId << ", "
              << actualNbThreads << std::endl;
       m_threadNumber = actualNbThreads;
     }
