@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.8 $ $Date: 2000/06/13 14:28:38 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.9 $ $Date: 2000/09/03 07:28:50 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */
@@ -13,7 +13,9 @@
 #define _LOG_H_INCLUDED_
 
 #define LOG_NOLOG       -1      /* Don't log                            */
+#ifndef _SHIFT_H_INCLUDED_
 #include <osdep.h>
+#endif
 
 EXTERN_C void DLL_DECL (*logfunc) _PROTO((int, char *, ...));  
                                 /* logging function to use */
