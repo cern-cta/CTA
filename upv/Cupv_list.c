@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.2 $ $Date: 2002/05/28 17:30:55 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.3 $ $Date: 2002/06/07 15:58:46 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 /*      Cupv_list - list privileges */
@@ -128,8 +128,8 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
 		while (nbentries--) {
 			unmarshall_LONG (rbp, lp->uid);
 			unmarshall_LONG (rbp, lp->gid);
-			unmarshall_STRINGN (rbp, lp->srchost, MAXREGEXPLEN);
-			unmarshall_STRINGN (rbp, lp->tgthost, MAXREGEXPLEN);
+			unmarshall_STRINGN (rbp, lp->srchost, CA_MAXREGEXPLEN);
+			unmarshall_STRINGN (rbp, lp->tgthost, CA_MAXREGEXPLEN);
 			unmarshall_LONG (rbp, lp->privcat);
 			lp++;
 		}
