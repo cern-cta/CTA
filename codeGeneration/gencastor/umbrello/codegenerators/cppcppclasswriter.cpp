@@ -272,7 +272,7 @@ void CppCppClassWriter::writeDeleteInDestructor(QString name,
                                                 bool fulldelete) {
   switch (multi) {
   case MULT_N :
-    if (backName != "") {
+    if (backName != "" || (backMulti == MULT_ONE && fulldelete)) {
       *m_stream << getIndent()
                 << "for (unsigned int i = 0; i < m_"
                 << name << "Vector.size(); i++) {" << endl;
@@ -285,10 +285,12 @@ void CppCppClassWriter::writeDeleteInDestructor(QString name,
                   << "(this);" << endl;
         break;
       case MULT_ONE :
-        *m_stream << getIndent() << "m_" << name
-                  << "Vector[i]->set"
-                  << capitalizeFirstLetter(backName)
-                  << "(0);" << endl;
+        if (backName != "") {
+          *m_stream << getIndent() << "m_" << name
+                    << "Vector[i]->set"
+                    << capitalizeFirstLetter(backName)
+                    << "(0);" << endl;
+        }
         if (fulldelete) {
           *m_stream << getIndent()
                     << "delete m_" << name
