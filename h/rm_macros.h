@@ -113,6 +113,7 @@
 	marshall_HYPER(p, (rmnode)->n_rdwr);                                 \
 	marshall_HYPER(p, (rmnode)->maxtask);                                 \
 	marshall_STRING(p, (rmnode)->partition);                              \
+	marshall_STRING(p, (rmnode)->feature);                                \
 }
 
 #define unmarshall_RMNODE(p, rmnode) {                                     \
@@ -181,6 +182,7 @@
 	unmarshall_HYPER(p, (rmnode)->n_rdwr);                                 \
 	unmarshall_HYPER(p, (rmnode)->maxtask);                                 \
 	unmarshall_STRING(p, (rmnode)->partition);                              \
+	unmarshall_STRING(p, (rmnode)->feature);                                \
 }
 
 #define marshall_RMJOB(p, rmjob) {                      \
@@ -411,6 +413,7 @@
     if ((in)->n_rdwr > 0) (out)->n_rdwr = (in)->n_rdwr;                              \
     if ((in)->maxtask > 0) (out)->maxtask = (in)->maxtask;                           \
     if ((in)->partition[0] != '\0') strcpy((out)->partition,(in)->partition);        \
+    if ((in)->feature[0] != '\0') strcpy((out)->feature,(in)->feature);        \
 }
 
 /* NOTE: IFCE and FS are not supported in this method */
@@ -440,6 +443,7 @@
     if ((filter)->n_rdwr > 0 && (ref)->n_rdwr != (filter)->n_rdwr)                              status++;  \
     if ((filter)->maxtask > 0 && (ref)->maxtask != (filter)->maxtask)                           status++;  \
     if ((filter)->partition[0] != '\0' && strcmp((ref)->partition,(filter)->partition) != 0)    status++;  \
+    if ((filter)->feature[0] != '\0' && strcmp((ref)->feature,(filter)->feature) != 0)          status++;  \
 }
 
 #define RM_ENTER() {                              \
