@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.7 $ $Date: 2000/01/13 10:08:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.8 $ $Date: 2000/01/14 08:35:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char errtxt[1024];
-    int rc, retval;
+    int rc, retval, dont_change_srv;
 
     rtcp_InitLog(errtxt,NULL,stderr,NULL);
     initlog(argv[0],LOG_INFO,"");
@@ -75,6 +75,13 @@ int main(int argc, char *argv[]) {
         rtcp_log(LOG_ERR,"%s rtcpc_BuildReq(): %s\n",argv[0],sstrerror(serrno));
         return(1);
     }
+    /*
+     * If user specified a tape server we cannot override that in the
+     * retry loop.
+     */ 
+    dont_change_srv = 0;
+    if ( *tape->tapereq.server != '\0' ) dont_change_srv = 1;
+
     signal(SIGINT,(void (*)(int))CntlC_handler);
 
     /*
@@ -85,7 +92,14 @@ int main(int argc, char *argv[]) {
         if ( AbortFlag != 0 ) break;
         if ( rc == -1 ) {
             if ( CheckRetry(tape) == TRUE ) {
-                rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
+                if ( dont_change_srv == 0 ) 
+                    rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
+                else rtcp_log(LOG_INFO,"Re-select another tape drive on %s\n",
+                              tape->tapereq.server);
+                CLIST_ITERATE_BEGIN(tape,tl) {
+                    *tl->tapereq.unit = '\0';
+                    if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
+                } CLIST_ITERATE_END(tape,tl);
                 continue;
             } else {
                 rtcp_log(LOG_DEBUG,"%s rtcpc(): %s\n",argv[0],sstrerror(serrno));
