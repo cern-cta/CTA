@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/01 18:02:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/01 18:33:11 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/01 18:02:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/01 18:33:11 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1627,7 +1627,7 @@ int nextSegmentToMigrate(
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
-                      (struct Cns_fileid *)&castorFileId,
+                      (struct Cns_fileid *)castorFileId,
                       2,
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
