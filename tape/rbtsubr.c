@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.12 $ $Date: 2003/01/24 13:41:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.13 $ $Date: 2003/09/15 08:42:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -37,13 +37,11 @@ static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.12 $ $Date: 200
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* arpa internet routines               */
 #include "dmc.h"
+#include "net.h"
 #include "rmc_api.h"
 #include "smc.h"
 #include "Ctape.h"
 extern char msg[];
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 
 static char action[8];
 static char cur_unm[9];
@@ -121,7 +119,7 @@ char *loader;
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s %s 2>&1", vid, loader);
 		tplogit (func, "%s\n", buf);
 		if ((f = popen (buf, "r")) == NULL) {
-			usrmsg (func, TP042, "", "popen", sys_errlist[errno]);
+			usrmsg (func, TP042, "", "popen", strerror(errno));
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL)
@@ -207,7 +205,7 @@ unsigned int force;
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s 2>&1", vid);
 		tplogit (func, "%s\n", buf);
 		if ((f = popen (buf, "r")) == NULL) {
-			usrmsg (func, TP042, "", "popen", sys_errlist[errno]);
+			usrmsg (func, TP042, "", "popen", strerror(errno));
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL)
@@ -250,14 +248,14 @@ char *loader;
 
 	ENTRY (openlmcp);
 	if ((tapefd = open (drive, O_RDONLY|O_NDELAY)) < 0) {
-		usrmsg (func, TP042, drive, "open", sys_errlist[errno]);
+		usrmsg (func, TP042, drive, "open", strerror(errno));
 		RETURN (-errno);
 	}
 	ioctl (tapefd, MTDEVICE, &device);
 	close (tapefd);
 	sprintf (ldr, "/dev/%s", loader);
 	if ((lmcpfd = open (ldr, O_RDWR)) < 0) {
-		usrmsg (func, TP042, ldr, "open", sys_errlist[errno]);
+		usrmsg (func, TP042, ldr, "open", strerror(errno));
 		RETURN (-errno);
 	}
 	RETURN (lmcpfd);
@@ -523,7 +521,7 @@ char sense_bytes[];
 	char *msgaddr;
 
 	if (errno != EIO) {
-		usrmsg (func, TP042, ldr, "ioctl", sys_errlist[errno]);
+		usrmsg (func, TP042, ldr, "ioctl", strerror(errno));
 		return (-errno);
 	} else {
 		if (cc == MTCC_IO_FAILED) {
@@ -967,7 +965,7 @@ DMCrequest_t *req;
 #if SERVICESDB
 	else {
 		if ( (sp = getservbyname(DMC_NAME,DMC_PROTO)) == NULL ) {
-			tplogit(func,"getservbyname: %s\n",sys_errlist[errno]);
+			tplogit(func,"getservbyname: %s\n",neterror());
 			RETURN(RBT_FAST_RETRY);
 		}
 		dmc_port = ntohs(sp->s_port);
@@ -975,19 +973,19 @@ DMCrequest_t *req;
 #endif
 	sin.sin_family = AF_INET;
 	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
-		tplogit(func,"gethostbyname: %s\n",sys_errlist[errno]);
+		tplogit(func,"gethostbyname: %s\n",neterror());
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 	sin.sin_port = htons(dmc_port);
 	if ((s = socket(AF_INET,SOCK_STREAM,0)) == -1) {
-		tplogit(func,"socket: %s\n",sys_errlist[errno]);
+		tplogit(func,"socket: %s\n",neterror());
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
 	if ( connect(s,(struct sockaddr *)&sin,sizeof(struct sockaddr_in)) == -1 ){
-		tplogit(func,"connect: %s\n",sys_errlist[errno]);
+		tplogit(func,"connect: %s\n",neterror());
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -999,7 +997,7 @@ DMCrequest_t *req;
 	req->cartridge_side = htons(req->cartridge_side);
 	j = sizeof(DMCrequest_t);
 	if ( send(s,(char *)req,j,0) != j ) {
-		tplogit(func,"send: %s\n",sys_errlist[errno]);
+		tplogit(func,"send: %s\n",neterror());
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -1020,7 +1018,7 @@ DMCreply_t *rep;
 
 	ENTRY(fromdmc);
 	if ( (j = recv(s,(char *)rep,sizeof(DMCreply_t),0)) != sizeof(DMCreply_t) ) {
-		tplogit(func,"recv: %s\n",sys_errlist[errno]);
+		tplogit(func,"recv: %s\n",neterror());
 		shutdown(s,2);
 		close(s);
 		RETURN(RBT_FAST_RETRY);
@@ -1034,7 +1032,7 @@ DMCreply_t *rep;
 		ntot = 0;
 		do {
 			if ( (j = recv(s,(char *)&rep->log_info[ntot],rep->log_info_l-ntot,0)) < 0 ) {
-	tplogit(func,"recv: %s\n",sys_errlist[errno]);
+	tplogit(func,"recv: %s\n",neterror());
 	free(rep->log_info);
 	shutdown(s,2);
 	close(s);
@@ -1102,7 +1100,7 @@ char *loader;
 			c = RBT_FAST_RETRY;
 		else
 			c = RBT_NORETRY;
-                usrmsg (func, TP042, smc_ldr, "open", sys_errlist[errno]);
+                usrmsg (func, TP042, smc_ldr, "open", strerror(errno));
 		RETURN (c);
         }
 #endif
