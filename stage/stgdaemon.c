@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.199 2002/05/30 14:03:48 bcouturi Exp $
+ * $Id: stgdaemon.c,v 1.200 2002/05/31 08:18:13 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.199 $ $Date: 2002/05/30 14:03:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.200 $ $Date: 2002/05/31 08:18:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -97,6 +97,7 @@ struct winsize {
 #include "osdep.h"
 #include "Cnetdb.h"
 #include "Cns_api.h"
+#include "Cupv_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
@@ -173,6 +174,7 @@ int force_shutdown = 0;
 int migr_init = 0;
 char func[16];
 int initreq_reqid = 0;
+int initreq_req_type = 0;
 int initreq_rpfd = 0;
 int shutdownreq_reqid = 0;
 int shutdownreq_rpfd = 0;
@@ -213,6 +215,7 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
+char cupv_error_buffer[512];         /* Upv error buffer */
 char *stgconfigfile = STGCONFIG;    /* Stager configuration file */
 
 /* For monitoring */
@@ -222,8 +225,8 @@ time_t monitormsg_int = 0;
 
 
 void prockilreq _PROTO((int, char *, char *));
-void procinireq _PROTO((int, unsigned long, char *, char *));
-void procshutdownreq _PROTO((char *, char *));
+void procinireq _PROTO((int, int, unsigned long, char *, char *));
+void procshutdownreq _PROTO((int, int, unsigned long, char *, char *));
 void check_upd_fileclasses _PROTO(());
 void checkpoolstatus _PROTO(());
 void checkwaitingspc _PROTO(());
@@ -685,6 +688,13 @@ int main(argc,argv)
  		exit (SYERR);
 	}
 
+	/* Set Upv error buffer */
+	if (Cupv_seterrbuf(cupv_error_buffer,sizeof(cupv_error_buffer)) != 0) {
+		stglogit(func, "### Cupv_seterrbuf error (%s)\n", sstrerror(serrno));
+		stglogit (func, "Exit.\n");
+ 		exit (SYERR);
+	}
+
 	/* Open request socket */
 	if ((stg_s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		stglogit (func, STG02, "", "socket", sys_errlist[errno]);
@@ -1085,7 +1095,7 @@ int main(argc,argv)
 			  last_init_time = time(NULL);
 			  stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
-			sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, c);
+			sendrep (rpfd, STAGERC, initreq_req_type, STGMAGIC, c);
 			force_init = migr_init = 0;
 			initreq_reqid = 0;
 		}
@@ -1183,6 +1193,18 @@ int main(argc,argv)
 						close(rqfd);
 						goto endreq;
 					}
+					if ((req_type == STAGE_INIT) && (magic != STGMAGIC4)) {
+						/* The API of stage_init only exist with magic number version >= 4 */
+						stglogit(func, STG141, (unsigned long) magic);
+						close(rqfd);
+						goto endreq;
+					}
+					if ((req_type == STAGE_SHUTDOWN) && (magic != STGMAGIC4)) {
+						/* The API of stage_shutdown only exist with magic number version >= 4 */
+						stglogit(func, STG141, (unsigned long) magic);
+						close(rqfd);
+						goto endreq;
+					}
 
 					if (req_type > STAGE_00) {
 						if (magic == STGMAGIC) {
@@ -1226,8 +1248,9 @@ int main(argc,argv)
 					case STAGEUPDC:
 						procupdreq (req_type, magic, req_data, clienthost);
 						break;
+					case STAGE_INIT:
 					case STAGEINIT:
-						procinireq (req_type, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
+						procinireq (req_type, magic, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
 					case STAGEALLOC:
 						procallocreq (req_type, magic, req_data, clienthost);
@@ -1239,8 +1262,9 @@ int main(argc,argv)
 					case STAGEFILCHG:
 						procfilchgreq (req_type, magic, req_data, clienthost);
 						break;
+					case STAGE_SHUTDOWN:
 					case STAGESHUTDOWN:
-						procshutdownreq (req_data, clienthost);
+						procshutdownreq (req_type, magic, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
 					default:
 						sendrep (rpfd, MSG_ERR, STG03, req_type);
@@ -1365,43 +1389,74 @@ void prockilreq(req_type, req_data, clienthost)
 	}
 }
 
-void procinireq(req_type, ipaddr, req_data, clienthost)
+void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 		 int req_type;
+		 int magic_client;
 		 unsigned long ipaddr;
 		 char *req_data;
 		 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c;
 	gid_t gid;
+	uid_t uid = -1;
 	int nargs;
 	char *rbp;
 	char *user;
 	char *p;
 	int errflg = 0;
-	char *func = "stageinit";
+	char *func0 = "stageinit";
+	char *func1 = "stage_init";
+	char *func;
+	struct passwd *this_passwd;             /* password structure pointer */
+	u_signed64 flags = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
-	unmarshall_WORD (rbp, gid);
-	stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", "stageinit", user, gid, clienthost);
-	nargs = req2argv (rbp, &argv);
+	if (req_type > STAGE_00) {
+		func = func1;
+		unmarshall_LONG (rbp, uid);
+		unmarshall_LONG (rbp, gid);
+		unmarshall_HYPER(rbp, flags);
+		stglogit (func, "STG92 - %s request by %s (%d,%d) from %s\n", func, user, uid, gid, clienthost);
+		stglogflags(func,LOGFILE,(u_signed64) flags);
+	} else {
+		func = func0;
+		unmarshall_WORD (rbp, gid);
+		stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", func, user, gid, clienthost);
+		nargs = req2argv (rbp, &argv);
+	}
 #if SACCT
-	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, STAGEINIT, 0, 0, NULL, "", (char) 0);
+	stageacct (STGCMDR, uid, gid, clienthost, reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	if (initreq_reqid != 0) {
-		free (argv);
+		if (argv != NULL) free (argv);
 		sendrep (rpfd, MSG_ERR, STG39);
-		sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
+		sendrep (rpfd, STAGERC, req_type, magic_client, EINVAL);
 		return;
 	}
-	/* Do some check */
-	/* - is it coming for a root account ? */
-	if (! ISGIDROOT(gid)) {
-		free (argv);
-		sendrep (rpfd, MSG_ERR, STG02, "", "stageinit", strerror(EACCES));
-		sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
+	if (uid == -1) {
+		/* Old protocol without uid - Known user ? */
+		if ((this_passwd = Cgetpwnam(user)) == NULL) {
+			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
+			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
+			serrno = SEUSERUNKN;
+			sendrep (rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+			return;
+		}
+		uid = this_passwd->pw_uid;
+		/* Shall I log this ? */
+		/*
+		  if (this_passwd->pw_gid != gid) {
+		  stglogit(func, "### User \"%s\"'s gid is %d != %d from the protocol ?\n",user, this_passwd->pw_gid, gid);
+		  }
+		*/
+	}
+	/* Allowed to do so ? */
+	if (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN) != 0) {
+		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
+		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
 		return;
 	}
 	/* - Do we want to force it to come from local host ? */
@@ -1415,51 +1470,63 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 					unsigned char *s_client = (unsigned char *) &ipaddr;
 					unsigned char *s_local  = (unsigned char *) &ipaddrlocal;
 
-					free (argv);
+					if (argv != NULL) free (argv);
 					stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
-					sendrep (rpfd, MSG_ERR, STG02, clienthost, "stageinit", strerror(EACCES));
-					sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
+					serrno = EACCES;
+					sendrep (rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
 					return;
 				}
 			}
 		}
 	}
-	Coptind = 1;
-	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "Fh:X")) != -1) {
-		switch (c) {
-		case 'F':
-			force_init = 1;
-			break;
-		case 'h':
-			break;
-		case 'X':
-			migr_init = 1;
-			break;
-		case '?':
-			errflg++;
-			break;
-		default:
-			errflg++;
-			break;
+	if (req_type < STAGE_00) {
+		Coptind = 1;
+		Copterr = 0;
+		while ((c = Cgetopt (nargs, argv, "Fh:X")) != -1) {
+			switch (c) {
+			case 'F':
+				force_init = 1;
+				break;
+			case 'h':
+				break;
+			case 'X':
+				migr_init = 1;
+				break;
+			case '?':
+				errflg++;
+				break;
+			default:
+				errflg++;
+				break;
+			}
 		}
-	}
-	if (! errflg) {
+		if (! errflg) {
+			initreq_reqid = reqid;
+			initreq_rpfd = rpfd;
+		} else {
+			sendrep (rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
+			sendrep (rpfd, STAGERC, req_type, STGMAGIC, EINVAL);
+		}
+		if (argv != NULL) free (argv);
+	} else {
+		if ((flags & STAGE_FORCE) == STAGE_FORCE) force_init = 1;
+		if ((flags & STAGE_MIGRINIT) == STAGE_MIGRINIT) migr_init = 1;
 		initreq_reqid = reqid;
 		initreq_rpfd = rpfd;
-	} else {
-		sendrep (rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
-		sendrep (rpfd, STAGERC, req_type, STGMAGIC, EINVAL);
-    }
-	free (argv);
+	}
 }
 
-void procshutdownreq(req_data, clienthost)
-		 char *req_data;
-		 char *clienthost;
+void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
+	int req_type;
+	int magic_client;
+	unsigned long ipaddr;
+	char *req_data;
+	char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int c;
+	uid_t uid = -1;
 	gid_t gid;
 	int nargs;
 	char *rbp;
@@ -1467,55 +1534,122 @@ void procshutdownreq(req_data, clienthost)
 	char *stghost = NULL;
 	int errflg = 0;
 	int force_shutdown = 0;
+	char *func0 = "stageshutdown";
+	char *func1 = "stage_shutdown";
+	char *func;
+	char *p;
+	struct passwd *this_passwd;             /* password structure pointer */
+	u_signed64 flags = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
-	unmarshall_WORD (rbp, gid);
-	nargs = req2argv (rbp, &argv);
+	if (req_type > STAGE_00) {
+		func = func1;
+		unmarshall_LONG (rbp, uid);
+		unmarshall_LONG (rbp, gid);
+		unmarshall_HYPER(rbp, flags);
+		stglogit (func, "STG92 - %s request by %s (%d,%d) from %s\n", func, user, uid, gid, clienthost);
+		stglogflags(func,LOGFILE,(u_signed64) flags);
+	} else {
+		func = func0;
+		unmarshall_WORD (rbp, gid);
+		stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", func, user, gid, clienthost);
+		nargs = req2argv (rbp, &argv);
+	}
 #if SACCT
-	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, STAGESHUTDOWN, 0, 0, NULL, "", (char) 0);
+	stageacct (STGCMDR, uid, gid, clienthost, reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	if (shutdownreq_reqid != 0) {
-		free (argv);
+		if (argv != NULL) free (argv);
 		sendrep (rpfd, MSG_ERR, STG58);
-		sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
+		sendrep (rpfd, STAGERC, req_type, magic_client, EINVAL);
 		return;
 	}
+	if (uid == -1) {
+		/* Old protocol without uid - Known user ? */
+		if ((this_passwd = Cgetpwnam(user)) == NULL) {
+			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
+			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
+			serrno = SEUSERUNKN;
+			sendrep (rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+			return;
+		}
+		uid = this_passwd->pw_uid;
+		/* Shall I log this ? */
+		/*
+		  if (this_passwd->pw_gid != gid) {
+		  stglogit(func, "### User \"%s\"'s gid is %d != %d from the protocol ?\n",user, this_passwd->pw_gid, gid);
+		  }
+		*/
+	}
+	/* Allowed to do so ? */
+	if (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN) != 0) {
+		sendrep (rpfd, MSG_ERR, STG02, "", func, sstrerror(serrno));
+		sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+		return;
+	}
+	/* - Do we want to force it to come from local host ? */
+	if ((p = getconfent("STG", "STAGESHUTDOWN_FROM_LOCALHOST", 0)) != NULL) {
+		if (atoi(p) != 0) {
+			if (! have_ipaddrlocal) {
+				stglogit (func, "[STAGESHUTDOWN_FROM_LOCALHOST] Localhost's %s IP address unavailable\n", localhost);
+			} else {
+				/* Verify remote IP address */
+				if (ipaddr != ipaddrlocal) {
+					unsigned char *s_client = (unsigned char *) &ipaddr;
+					unsigned char *s_local  = (unsigned char *) &ipaddrlocal;
 
-	Coptind = 1;
-	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "Fh:")) != -1) {
-		switch (c) {
-		case 'F':
-			force_shutdown = 1;
-			break;
-		case 'h':
-			stghost = Coptarg;
-			break;
-		case '?':
-			errflg++;
-			break;
-		default:
-			errflg++;
-			break;
+					if (argv != NULL) free (argv);
+					stglogit (func, "[STAGESHUTDOWN_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
+					serrno = EACCES;
+					sendrep (rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (rpfd, STAGERC, req_type, magic_client, serrno);
+					return;
+				}
+			}
 		}
 	}
-	/* We force -h parameter to appear in the parameters */
-	if (stghost == NULL) {
-		errflg++;
-	}
 
-	if (errflg != 0) {
-		free (argv);
-		sendrep (rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
-		sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
-		return;
-	}
+	if (req_type < STAGE_00) {
+		Coptind = 1;
+		Copterr = 0;
+		while ((c = Cgetopt (nargs, argv, "Fh:")) != -1) {
+			switch (c) {
+			case 'F':
+				force_shutdown = 1;
+				break;
+			case 'h':
+				stghost = Coptarg;
+				break;
+			case '?':
+				errflg++;
+				break;
+			default:
+				errflg++;
+				break;
+			}
+		}
+		/* We force -h parameter to appear in the parameters */
+		if (stghost == NULL) {
+			errflg++;
+		}
 
-	shutdownreq_reqid = reqid;
-	shutdownreq_rpfd = rpfd;
-	free (argv);
+		if (errflg != 0) {
+			free (argv);
+			sendrep (rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
+			sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
+			return;
+		}
+
+		shutdownreq_reqid = reqid;
+		shutdownreq_rpfd = rpfd;
+		if (argv != NULL) free (argv);
+	} else {
+		if ((flags & STAGE_FORCE) == STAGE_FORCE) force_shutdown = 1;
+		shutdownreq_reqid = reqid;
+		shutdownreq_rpfd = rpfd;
+	}
 }
 
 struct waitq *
