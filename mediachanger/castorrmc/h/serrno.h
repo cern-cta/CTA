@@ -34,7 +34,8 @@
 #define EMONBASEOFF     2300            /* Monitoring Error base offset */
 #define EUPBASEOFF      2400            /* UPV error base offset        */
 #define EDLFBASEOFF     2500            /* DLF error base offset        */
-#define ESECBASEOFF     2700            /* Security error base offset */
+#define ESECBASEOFF     2700            /* Security error base offset   */
+#define EEXPBASEOFF     2900            /* Expert system error base offset */
 
 #define SENOERR         SEBASEOFF       /* No error                     */
 #define SENOSHOST       SEBASEOFF+1     /* Host unknown                 */
@@ -344,6 +345,20 @@
 #define EDLFNOTFOUND    EDLFBASEOFF+4   /* Row was not found in the database */
 #define EDLFLOGFORMAT   EDLFBASEOFF+5   /* Log file format error */
 #define EDLFMAXERR      EDLFBASEOFF+5
+
+/*
+ *------------------------------------------------------------------------
+ * Expert service errors
+ *------------------------------------------------------------------------
+ */
+#define EEXPNACT        EEXPBASEOFF+1   /* Service not active */
+#define EEXPILLREQ      EEXPBASEOFF+2   /* Illegal request */
+#define EEXPNOCONFIG    EEXPBASEOFF+3   /* Can't open the configuration file */
+#define EEXPRQNOTFOUND  EEXPBASEOFF+4   /* Request wasn't found in the configuration file */
+#define EEXPCONFERR     EEXPBASEOFF+5   /* Configuration file format error */
+#define EEXPEXECV       EEXPBASEOFF+6   /* Can't launch execv() */
+#define EEXPCDWDIR      EEXPBASEOFF+7   /* Can't change to working directory */
+#define EEXPMAXERR      EEXPBASEOFF+7
 
 /*
  *------------------------------------------------------------------------
