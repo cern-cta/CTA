@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.27 2002/04/30 12:32:55 jdurand Exp $
+ * $Id: procfilchg.c,v 1.28 2002/05/31 10:08:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.27 $ $Date: 2002/04/30 12:32:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.28 $ $Date: 2002/05/31 10:08:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -577,7 +577,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							stcp->u1.h.tppool[0] = '\0';
 						}
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
-							if (c != CLEARED) {
+							if ((c != CLEARED) && (c != ESTCLEARED)) {
 								stcp->status = save_stcp_status;
 #ifdef USECDB
 								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {

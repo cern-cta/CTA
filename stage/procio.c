@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.180 2002/05/23 10:22:32 jdurand Exp $
+ * $Id: procio.c,v 1.181 2002/05/31 10:08:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.180 $ $Date: 2002/05/23 10:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.181 $ $Date: 2002/05/31 10:08:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2446,7 +2446,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					);
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 				if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
-					if (c != CLEARED) {
+					if ((c != CLEARED) && (c != ESTCLEARED)) {
 						/* Restore original status */
 						stcp->status = save_stcp_status;
 #ifdef USECDB
@@ -3592,7 +3592,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 					hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
 					rwcountersfs(hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath, STAGEOUT, STAGEOUT);
 					if ((c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, NULL, 0)) != 0) {
-						if (c != CLEARED) {
+						if ((c != CLEARED) && (c != ESTCLEARED)) {
 							hsmfilesstcp[ihsmfiles]->status = save_status;
 						} else {
 							/* Entry has been deleted - user asks to put on tape zero-length file !? */
@@ -3815,7 +3815,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 					hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
 					rwcountersfs(hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath, STAGEOUT, STAGEOUT);
 					if ((c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, hsmfilesstcp[ihsmfiles], 0)) != 0) {
-						if (c != CLEARED) {
+						if ((c != CLEARED) && (c != ESTCLEARED)) {
 							hsmfilesstcp[ihsmfiles]->status = save_status;
 						} else {
 							/* Entry has been deleted - user asks to put on tape zero-length file !? */
@@ -3838,7 +3838,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 			if (ncastorfiles <= 0) {
 				/* We call upd_stageout as normal for all files except CASTOR HSM ones */
 				if ((c = upd_stageout (STAGEPUT, upath, &subreqid, 0, NULL, 0)) != 0) {
-					if (c == CLEARED) {
+					if ((c == CLEARED) || (c == ESTCLEARED)) {
 						/* Entry has been deleted - user asks to put on tape zero-length file !? */
 						c = EINVAL;
 					}

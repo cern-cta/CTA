@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.106 2002/05/31 08:08:17 jdurand Exp $
+ * $Id: procupd.c,v 1.107 2002/05/31 10:08:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.106 $ $Date: 2002/05/31 08:08:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.107 $ $Date: 2002/05/31 10:08:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -612,7 +612,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 			} else {
 				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0)) != 0) {
-					if (c != CLEARED) {
+					if ((c != CLEARED) && (c != ESTCLEARED)) {
 						goto reply;
 					} else {
 						/* This is not formally an error to do an updc on a zero-length file */
