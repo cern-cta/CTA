@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/08/20 13:20:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.58 $ $Release$ $Date: 2004/08/20 13:53:32 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.57 $ $Date: 2004/08/20 13:20:40 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.58 $ $Date: 2004/08/20 13:53:32 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -782,42 +782,42 @@ static int addNewSegmentsToDB(
     return(-1);
   }
 
-  rc = rtcpcld_getStgDbSvc(&stgSvc);
-  if ( rc == -1 || stgSvc == NULL ) {
-    save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_getStgDbSvc()","");
-    stgSvc = NULL;
-    C_IAddress_delete(iAddr);
-    serrno = save_serrno;
-    return(-1);
-  }
-  rc = Cstager_IStagerSvc_selectTape(
-                                     stgSvc,
-                                     &tp,
-                                     tapereq->vid,
-                                     tapereq->side,
-                                     tapereq->mode
-                                     );
-  if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()",
-                    C_Services_errorMsg(*dbSvc));
-    if ( serrno == 0 ) serrno = errno;
-    save_serrno = serrno;
-    rtcp_log(LOG_ERR,"Cstager_IStagerSvc_selectTape(%s,%d,%d) DB error: %s\n",
-             tapereq->vid,
-             tapereq->side,
-             tapereq->mode,
-             Cstager_IStagerSvc_errorMsg(stgSvc));
-    strncpy(tapereq->err.errmsgtxt,
-            Cstager_IStagerSvc_errorMsg(stgSvc),
-            sizeof(tapereq->err.errmsgtxt)-1);
-    tapereq->err.errorcode = save_serrno;
-    tapereq->err.severity = RTCP_FAILED|RTCP_SYERR;
-    (void)C_Services_rollback(*dbSvc,iAddr);
-    C_IAddress_delete(iAddr);
-    serrno = save_serrno;
-    return(-1);
-  }
+/*   rc = rtcpcld_getStgDbSvc(&stgSvc); */
+/*   if ( rc == -1 || stgSvc == NULL ) { */
+/*     save_serrno = serrno; */
+/*     LOG_FAILED_CALL("rtcpcld_getStgDbSvc()",""); */
+/*     stgSvc = NULL; */
+/*     C_IAddress_delete(iAddr); */
+/*     serrno = save_serrno; */
+/*     return(-1); */
+/*   } */
+/*   rc = Cstager_IStagerSvc_selectTape( */
+/*                                      stgSvc, */
+/*                                      &tp, */
+/*                                      tapereq->vid, */
+/*                                      tapereq->side, */
+/*                                      tapereq->mode */
+/*                                      ); */
+/*   if ( rc == -1 ) { */
+/*     LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()", */
+/*                     C_Services_errorMsg(*dbSvc)); */
+/*     if ( serrno == 0 ) serrno = errno; */
+/*     save_serrno = serrno; */
+/*     rtcp_log(LOG_ERR,"Cstager_IStagerSvc_selectTape(%s,%d,%d) DB error: %s\n", */
+/*              tapereq->vid, */
+/*              tapereq->side, */
+/*              tapereq->mode, */
+/*              Cstager_IStagerSvc_errorMsg(stgSvc)); */
+/*     strncpy(tapereq->err.errmsgtxt, */
+/*             Cstager_IStagerSvc_errorMsg(stgSvc), */
+/*             sizeof(tapereq->err.errmsgtxt)-1); */
+/*     tapereq->err.errorcode = save_serrno; */
+/*     tapereq->err.severity = RTCP_FAILED|RTCP_SYERR; */
+/*     (void)C_Services_rollback(*dbSvc,iAddr); */
+/*     C_IAddress_delete(iAddr); */
+/*     serrno = save_serrno; */
+/*     return(-1); */
+/*   } */
 
   /*
    * Move the new segments one by one to the newly created Tape.
@@ -826,31 +826,44 @@ static int addNewSegmentsToDB(
    * tape. Safest is probably to update the array at every iteration
    * (although a bit expensive)...
    */
-  keyNew = 0;
-  rc = 0;
-  while ( keyNew == 0 ) {
-    newSegms = NULL;
-    Cstager_Tape_segments(clientCntx->currentTp,&newSegms,&nbNew);
-    for (i = 0; i<nbNew; i++) {
-      Cstager_Segment_id(newSegms[i],&keyNew);
-      if ( keyNew == 0 ) {
-        /*
-         * Make segment point to newly created Tape instance
-         */
-        Cstager_Tape_removeSegments(clientCntx->currentTp,newSegms[i]);
-        Cstager_Tape_addSegments(tp,newSegms[i]);
-        Cstager_Segment_setTape(newSegms[i],tp);
-        iObj = Cstager_Segment_getIObject(newSegms[i]);
-        rc = C_Services_createRepNoRec(*dbSvc,iAddr,iObj,0);
-        if ( rc == -1 ) {
-          save_serrno = serrno;
-          break;
-        }
-        free(newSegms);
+/*   keyNew = 0; */
+/*   rc = 0; */
+/*   while ( keyNew == 0 ) { */
+/*     newSegms = NULL; */
+/*     Cstager_Tape_segments(clientCntx->currentTp,&newSegms,&nbNew); */
+/*     for (i = 0; i<nbNew; i++) { */
+/*       Cstager_Segment_id(newSegms[i],&keyNew); */
+/*       if ( keyNew == 0 ) { */
+/*         /\* */
+/*          * Make segment point to newly created Tape instance */
+/*          *\/ */
+/*         Cstager_Tape_removeSegments(clientCntx->currentTp,newSegms[i]); */
+/*         Cstager_Tape_addSegments(tp,newSegms[i]); */
+/*         Cstager_Segment_setTape(newSegms[i],tp); */
+/*         iObj = Cstager_Segment_getIObject(newSegms[i]); */
+/*         rc = C_Services_createRepNoRec(*dbSvc,iAddr,iObj,0); */
+/*         if ( rc == -1 ) { */
+/*           save_serrno = serrno; */
+/*           break; */
+/*         } */
+/*         free(newSegms); */
+/*         break; */
+/*       } */
+/*     } */
+/*     if ( rc == -1 ) break; */
+/*   } */
+
+  Cstager_Tape_segments(clientCntx->currentTp,&newSegms,&nbNew);
+  for ( i=0; i<nbNew; i++ ) {
+    Cstager_Segment_id(newSegms[i],&keyNew);
+    if ( keyNew == 0 ) {
+      iObj = Cstager_Segment_getIObject(newSegms[i]);
+      rc = C_Services_createRepNoRec(*dbSvc,iAddr,iObj,0);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
         break;
       }
     }
-    if ( rc == -1 ) break;
   }
   
   if ( newSegms != NULL ) free(newSegms);
