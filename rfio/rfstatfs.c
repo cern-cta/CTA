@@ -1,14 +1,14 @@
 /*
- * $Id: rfstatfs.c,v 1.4 2000/05/29 16:42:05 obarring Exp $
+ * $Id: rfstatfs.c,v 1.5 2001/06/24 05:36:09 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:05 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.5 $ $Date: 2001/06/24 05:36:09 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -133,7 +133,7 @@ struct rfstatfs *statfsbuf ;
            statfsbuf->freenods = (long)fsbuffer.f_ffree ;
 #endif
 #if defined(SOLARIS)
-           statfsbuf->freeblks = (long)fsbuffer.f_bfree;
+           statfsbuf->freeblks = (long)fsbuffer.f_bavail;
            statfsbuf->bsize = (long)fsbuffer.f_frsize ;
            statfsbuf->totblks = (long)fsbuffer.f_blocks;
            statfsbuf->totnods = (long)fsbuffer.f_files ;
