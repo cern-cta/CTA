@@ -21,7 +21,7 @@
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_STAGER_DISKPOOL_HPP

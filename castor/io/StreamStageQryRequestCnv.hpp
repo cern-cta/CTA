@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageQryRequestCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/29 10:03:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageQryRequestCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/04 10:26:07 $ $Author: sponcec3 $
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_IO_STAGEQRYREQUEST_HPP

@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQryRequest.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQryRequest.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/04 10:26:16 $ $Author: sponcec3 $
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_STAGER_STAGEQRYREQUEST_HPP

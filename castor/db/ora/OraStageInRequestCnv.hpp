@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageInRequestCnv.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/01 15:19:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageInRequestCnv.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/04 10:26:03 $ $Author: sponcec3 $
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_DB_ORA_STAGEINREQUEST_HPP
