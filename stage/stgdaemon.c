@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.135 2001/05/31 13:24:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.136 2001/06/07 07:25:43 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.135 $ $Date: 2001/05/31 13:24:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.136 $ $Date: 2001/06/07 07:25:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2111,7 +2111,7 @@ void checkwaitq()
 				if (wqp->clnreq_waitingreqid == stcp->reqid)
 					break;
 			}
-			sendrep (rpfd, MSG_OUT, stcp->ipath);
+			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
 			sendrep (rpfd, STAGERC, STAGEUPDC, wqp->status);
 			wqp->status = 0;
 			wqp->clnreq_waitingreqid = 0;
