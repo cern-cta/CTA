@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.1 $ $Date: 2002/03/14 11:18:42 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.2 $ $Date: 2002/03/14 11:38:45 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,12 +43,13 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 		while (fgets (line, sizeof(line), fd) != NULL) {
 			if ((strncmp (line, "domain", 6) == 0 ||
 			    strncmp (line, "search", 6) == 0) && line[6] == ' ') {
+				fclose (fd);
 				p = line + 6;
 				while (*p == ' ')
 					p++;
 				if (*p)
 					*(p + strlen (p) - 1) = '\0';
-				if (sizeof (p) > namelen) {
+				if (strlen (p) > namelen) {
 					serrno = EINVAL;
 					return (-1);
 				}
@@ -56,7 +57,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 				return (0);
 			}
 		}
-		fclose(fd);
+		fclose (fd);
 	}
 #endif
 
@@ -95,7 +96,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 				if (p = strchr (hp2->h_name, '.')) {
 					free (haddrarray);
 					p++;
-					if (sizeof (p) > namelen) {
+					if (strlen (p) > namelen) {
 						serrno = EINVAL;
 						return (-1);
 					}
@@ -110,7 +111,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 					if (p = strchr (*hal, '.')) {
 						free (haddrarray);
 						p++;
-						if (sizeof (p) > namelen) {
+						if (strlen (p) > namelen) {
 							serrno = EINVAL;
 							return (-1);
 						}
@@ -119,7 +120,6 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 					}
 					hal++;
 				}
-				printf("end of list\n");
 			}
 		}
 		free (haddrarray);
