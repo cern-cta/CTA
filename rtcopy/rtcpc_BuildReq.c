@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.14 $ $Date: 2000/01/25 10:02:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.15 $ $Date: 2000/01/28 11:15:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -219,7 +219,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     filereq->err.max_cpretry = -1;
 
     /*
-     * Insert at end of tape request
+     * Insert at end of file request list
      */
     CLIST_INSERT((*tape)->file,fl);
 
@@ -1429,8 +1429,9 @@ static int rtcpc_T_opt(int mode,
 static int rtcpc_v_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
+    int rc, last_tape_fseq;
     tape_list_t *tl;
+    file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     char *local_value, *p, *q;
 
@@ -1459,9 +1460,24 @@ static int rtcpc_v_opt(int mode,
             if ( tl->file == NULL ) {
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
-                    if ( tl != *tape && tl->prev->file != NULL ) 
-                        tl->file->filereq = tl->prev->file->filereq;
-                    tl->file->filereq.tape_fseq = 0;
+                    /*
+                     * Last tape file may spann over several volumes
+                     */
+                    if ( tl != *tape && tl->prev->file != NULL ) {
+                        last_tape_fseq = tl->prev->file->prev->filereq.tape_fseq;
+                        CLIST_ITERATE_BEGIN(tl->prev->file,fl) {
+                            if ( fl->filereq.tape_fseq == last_tape_fseq ) { 
+                                tl->file->prev->filereq.tape_fseq = 
+                                    last_tape_fseq;
+                                /*
+                                 * We did already create a first element
+                                 * above.
+                                 */
+                                if ( fl != tl->prev->file->prev )
+                                    rc = newFileList(&tl,NULL,mode);
+                            }
+                        } CLIST_ITERATE_END(tl->prev->file,fl);
+                    }
                 }
             }
             tapereq = &tl->tapereq;
@@ -1496,11 +1512,11 @@ static int rtcpc_v_opt(int mode,
 static int rtcpc_V_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
+    int rc, last_tape_fseq;
     tape_list_t *tl;
+    file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     char *local_value, *p, *q;
-
 
     if ( value == NULL ) {
         serrno = EINVAL;
@@ -1527,9 +1543,24 @@ static int rtcpc_V_opt(int mode,
             if ( tl->file == NULL ) {
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
-                    if ( tl != *tape && tl->prev->file != NULL )
-                        tl->file->filereq = tl->prev->file->filereq;
-                    tl->file->filereq.tape_fseq = 0;
+                    /*
+                     * Last tape file may spann over several volumes
+                     */
+                    if ( tl != *tape && tl->prev->file != NULL ) {
+                        last_tape_fseq = tl->prev->file->prev->filereq.tape_fseq;
+                        CLIST_ITERATE_BEGIN(tl->prev->file,fl) {
+                            if ( fl->filereq.tape_fseq == last_tape_fseq ) { 
+                                tl->file->prev->filereq.tape_fseq = 
+                                    last_tape_fseq;
+                                /*
+                                 * We did already create a first element
+                                 * above.
+                                 */
+                                if ( fl != tl->prev->file->prev ) 
+                                    rc = newFileList(&tl,NULL,mode);
+                            }
+                        } CLIST_ITERATE_END(tl->prev->file,fl);
+                    }
                 }
             }
             tapereq = &tl->tapereq;
@@ -1675,7 +1706,7 @@ static int rtcpc_diskfiles(int mode,
                            tape_list_t **tape) {
     int rc, toomany, disk_fseq;
     tape_list_t *tl;
-    file_list_t *fl;
+    file_list_t *fl, *fl1;
     rtcpFileRequest_t *filereq;
     char *last_filename;
 
@@ -1837,20 +1868,23 @@ static int rtcpc_diskfiles(int mode,
             }
             filereq->disk_fseq = disk_fseq;
         } CLIST_ITERATE_END(tl->file,fl);
-    }
-    /*
-     * If multi-volume, copy last file element of first volume to the
-     * other volumes. This makes sense since it is the same tape file.
-     */
-    CLIST_ITERATE_BEGIN(*tape,tl) {
-        if ( tl != *tape ) {
-            if ( tl->file == NULL ) {
-                rc = newFileList(&tl,NULL,mode);
-                if ( rc == -1 ) return(rc);
+        /*
+         * If multi-volume, copy file elements for the last tape file from
+         * first volume to the other volumes.
+         */
+        CLIST_ITERATE_BEGIN(*tape,tl) {
+            if ( tl != *tape ) {
+                fl1 = tl->file;
+                CLIST_ITERATE_BEGIN((*tape)->file,fl) {
+                    if ( fl->filereq.tape_fseq == fl1->filereq.tape_fseq ) {
+                        fl->filereq.concat |= VOLUME_SPANNING;
+                        fl1->filereq = fl->filereq;
+                        fl1 = fl1->next;
+                    }
+                } CLIST_ITERATE_END((*tape)->file,fl);
             }
-            tl->file->filereq = (*tape)->file->filereq;
-        }
-    } CLIST_ITERATE_END(*tape,tl);
+        } CLIST_ITERATE_END(*tape,tl);
+    }
 
     return(rc);
 }
