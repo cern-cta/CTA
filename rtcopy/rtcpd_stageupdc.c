@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.29 $ $Date: 2000/03/20 13:05:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.30 $ $Date: 2000/03/22 08:13:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -127,6 +127,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
                        (time_t)filereq->TEndTransferTape) -
                        (time_t)filereq->TEndPosition;
 
+    rtcp_log(LOG_DEBUG,"rtcpd_stageupdc(): fseq=%d, status=%d, concat=%d, err=%d\n",
+             filereq->tape_fseq,filereq->proc_status,filereq->concat,filereq->err.errorcode);
 
 #if !defined(USE_STAGECMD)
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
@@ -135,8 +137,9 @@ int rtcpd_stageupdc(tape_list_t *tape,
               (((filereq->concat & (CONCAT|CONCAT_TO_EOD)) == 0) ||
                (((filereq->concat & CONCAT_TO_EOD) != 0) && (file==tape->file ||
                  ((file->prev->filereq.concat & CONCAT_TO_EOD) == 0))))) ||
-             ((filereq->concat & CONCAT_TO_EOD) == 0 && (status == ETFSQ ||
-               status == ETEOV)) ) {
+             ((filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD)) != 0 && 
+               (status == ETFSQ || status == ETEOV)) ) {
+
             if ( status != ETFSQ && status != ETEOV ) status = -1;
             else (void)rtcpd_LockForTpPos(0);
 
@@ -186,8 +189,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             } 
         } 
         if ( (status != ETFSQ && status != ETEOV) &&
-              (filereq->cprc != 0 || 
-               filereq->err.errorcode == ENOSPC ||
+              (filereq->err.errorcode == ENOSPC ||
                (filereq->proc_status == RTCP_FINISHED && 
                 (((file->next->filereq.concat & CONCAT) == 0 &&
                   (filereq->concat & (CONCAT|CONCAT_TO_EOD)) == 0) ||
