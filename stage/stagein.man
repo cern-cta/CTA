@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.8 $ $Date: 2001/02/02 14:34:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.9 $ $Date: 2001/02/02 14:39:47 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2001/02/02 14:34:00 $"
+.TH STAGEIN l "$Date: 2001/02/02 14:39:47 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -137,7 +137,7 @@ is not specified or the largest multiple of
 below 262144.
 .TP
 .BI \-c " off"
-Stages \fBall\fP the file sequences of a tape onto separate disk files, given that you specify the starting file sequence through option -q followed by the file sequence number itself, followed again by a '-' character. This option is useless is not used in a tape request context. For example: 'stagein -V AB1234 -c off -q 17-' will stage all the file sequences on tape AB1234 from file sequence 17, up to the last one, into as many separate disk files.
+Stages \fBall\fP the file sequences of a tape onto separate disk files, given that you specify the starting file sequence through option -q followed by the file sequence number itself, followed again by a '-' character. This option is useless if not used in a tape request context. For example: 'stagein -V AB1234 -c off -q 17-' will stage all the file sequences on tape AB1234 from file sequence 17, up to the last one, into as many separate disk files.
 .TP
 .BI \-C " charconv"
 The data is converted from this character set when doing the copy.
