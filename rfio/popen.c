@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.4 1999/12/09 13:47:00 jdurand Exp $
+ * $Id: popen.c,v 1.5 2000/01/06 07:03:28 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:00 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.5 $ $Date: 2000/01/06 07:03:28 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -29,7 +29,7 @@ extern RFILE *rfilefdt[MAXRFD] ;
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
 #endif
-#if (defined(_AIX) && defined(_IBMESA)) || (defined(__osf__) && defined(__alpha)) || defined(_WIN32)
+#if (defined(_AIX) && defined(_IBMESA)) || (defined(__osf__) && defined(__alpha)) || defined(_WIN32) || defined(linux)
 extern char *cuserid();
 #endif
 
