@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.4 $ $Date: 2001/05/04 05:38:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.5 $ $Date: 2001/07/27 14:11:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2001/05/04 05:38:02 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2001/07/27 14:11:51 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -86,8 +86,12 @@ if the IBM 3494/3495 robot is driven directly from an RS 6000,
 for an STK robot driven by ACSLS,
 .BI R x
 for a SONY DMS-24 or
+.BI smc x,d
+for a SCSI robot (
 .BI smc x
-for a SCSI robot.
+as defined in /dev,
+.I n
+is the drive ordinal).
 .TP
 device type
 for IBM
@@ -113,8 +117,30 @@ connected to AIX or Linux platforms, fast tape positionning is used.
 .RE
 .LP
 If a tape drive supports several densities, there must be one line per density.
+.LP
+The tape daemon sends operational messages to the message daemon.
+The host where
+.B msgdaemon
+is running must be defined in one of the following ways:
+.RS
+.LP
+setting an environment variable MSGHOST
+.LP
+an entry in
+.B /etc/shift.conf
+like:
+.RS
+.HP
+MSG     HOST    coremsg
+.RE
+.RE
+.LP
+If none of these methods is used, the default host name is taken from the
+definition of MsgdaemonHost in site.def.
 .SH FILES
 .TP 1.5i
+.B /etc/shift.conf
+.TP
 .B /etc/TPCONFIG
 configuration file
 .TP
@@ -135,3 +161,8 @@ cart1     CART		/dev/nrmt1	0		up	manual	3480
 exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
 .ft
 .fi
+.SH SEE ALSO
+.BR msgd(1) ,
+.BR msgdaemon(1) ,
+.BR oper(1) ,
+.B rep(1)
