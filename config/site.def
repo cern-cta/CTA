@@ -192,7 +192,7 @@
 #define BuildNameServerClient	NO
 #define BuildNameServerDaemon	NO
 #define BuildNameServerLibrary	NO
-#define BuildRfioClient		NO
+#define BuildRfioClient		YES
 #define BuildRfioServer		NO
 #define BuildRfioLibrary	NO
 /* To be added when there will be end-user RMC client(s) */
@@ -230,7 +230,7 @@
 #define BuildExpertDaemon	NO
 #define BuildExpertLibrary	NO
 #define BuildSchedPlugin	NO
-#define BuildRHCpp              NO
+#define BuildRHCpp              YES
 #define BuildOraCpp             NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO

@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/09 09:49:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/01/07 13:39:43 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/StagePutRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
@@ -37,118 +37,60 @@
 #include <iostream>
 
 int main (int argc, char** argv) {
+
+  if (2 != argc) {
+    std::cout << "usage : " << argv[0] << " file" << std::endl;
+    exit(0);
+  }   
+
   // initalizes log
   castor::BaseObject::initLog("MsgSvc", castor::SVC_STDMSG);
 
-  // Build a castorFile
-  castor::stager::CastorFile* cf = new castor::stager::CastorFile();
-  cf->setNsHost("TestNameServer");
+  // Build a StagePutRequest
+  castor::stager::StagePutRequest* req = new castor::stager::StagePutRequest();
+  req->setUserTag(argv[1]);
 
-  // Build a diskCopy
-  castor::stager::DiskCopy* dc1 = new castor::stager::DiskCopy();
-  dc1->setPath("/my/disk/copy1.dat");
-  dc1->setCastorFile(cf);
-  cf->addDiskCopies(dc1);
-  
-  // Build a second diskCopy
-  castor::stager::DiskCopy* dc2 = new castor::stager::DiskCopy();
-  dc2->setPath("/my/disk/copy2.dat");
-  dc2->setCastorFile(cf);
-  cf->addDiskCopies(dc2);
+  // Build client
+  castor::rh::Client* cl = new castor::rh::Client();
+  cl->setPort(9999);
+  cl->setIpAddress(1);
+  req->setClient(cl);
+
+  // Build a SubRequest
+  castor::stager::SubRequest* sr = new castor::stager::SubRequest();
+  sr->setFileName("/my/disk/copy2.dat");
+  sr->setModeBits(448);
+  req->addSubRequests(sr);
+  sr->setRequest(req);
   
   // Get a Services instance
   castor::Services* svcs = castor::BaseObject::services();
 
-  // Stores the castorFile and DiskCopies
+  // Build an address
   castor::BaseAddress ad;
   ad.setCnvSvcName("OraCnvSvc");
   ad.setCnvSvcType(castor::SVC_ORACNV);
+
   try {
-    svcs->createRep(&ad, cf, false);
-    svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
+    svcs->createRep(&ad, req, false);
+    svcs->fillRep(&ad, req, castor::OBJ_SubRequest, false);
+    svcs->createRep(&ad, req->client(), false);
+    svcs->fillRep(&ad, req, castor::OBJ_IClient, false);
+    svcs->commit(&ad);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     // release the memory
     delete svcs;
-    delete cf;
+    delete sr;
+    delete req;
     return 1;
   }
-
-  // Retrieves everything in a separate objects
-  castor::BaseAddress ad2;
-  ad2.setId(cf->id());
-  ad2.setCnvSvcName("OraCnvSvc");
-  ad2.setCnvSvcType(castor::SVC_ORACNV);
-  castor::stager::CastorFile* cf2;
-  try{
-    castor::IObject* cf2Obj = svcs->createObj(&ad2);
-    svcs->fillObj(&ad2, cf2Obj, castor::OBJ_DiskCopy);
-    cf2 = dynamic_cast<castor::stager::CastorFile*>(cf2Obj);
-  } catch (castor::exception::Exception e) {
-    std::cout << "Error caught in createObj : "
-              << sstrerror(e.code()) << std::endl
-              << e.getMessage().str() << std::endl;
-    delete svcs;
-    delete cf;
-    return 1;
-  }
-  
-  // Display both objects for comparison
-  std::cout << "Originally :" << std::endl;
-  castor::ObjectSet alreadyPrinted;
-  cf->print(std::cout, "  ", alreadyPrinted);
-  castor::ObjectSet alreadyPrinted2;
-  std::cout << "Finally :" << std::endl;
-  cf2->print(std::cout, "  ", alreadyPrinted2);
-  
-  // Now modify the first object
-  cf->removeDiskCopies(dc2);
-  castor::stager::DiskCopy* dc3 = new castor::stager::DiskCopy();
-  dc3->setPath("/my/disk/copy3.dat");
-  cf->addDiskCopies(dc3);
-  dc3->setCastorFile(cf);
-
-  // update the database
-  try {
-    svcs->updateRep(&ad, cf, false);
-    svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
-  } catch (castor::exception::Exception e) {
-    std::cout << "Error caught in updateRep : "
-              << sstrerror(e.code()) << std::endl
-              << e.getMessage().str() << std::endl;
-    delete svcs;
-    delete cf;
-    delete cf2;
-    return 1;
-  }
-
-  // And update the second representation of the object
-  try {
-    svcs->updateObj(&ad, cf2);
-    svcs->fillObj(&ad, cf2, castor::OBJ_DiskCopy);
-  } catch (castor::exception::Exception e) {
-    std::cout << "Error caught in updateObj : "
-              << sstrerror(e.code()) << std::endl
-              << e.getMessage().str() << std::endl;
-    delete svcs;
-    delete cf;
-    delete cf2;
-    return 1;
-  }
-  
-  // Finally display the two modified objects to check
-  std::cout << "Originally modified :" << std::endl;
-  castor::ObjectSet alreadyPrinted3;
-  cf->print(std::cout, "  ", alreadyPrinted3);
-  castor::ObjectSet alreadyPrinted4;
-  std::cout << "Finally modified :" << std::endl;
-  cf2->print(std::cout, "  ", alreadyPrinted4);
 
   delete svcs;
-  delete cf;
-  delete cf2;
+  delete sr;
+  delete req;
   return 0;
 }
 

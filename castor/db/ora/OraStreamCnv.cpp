@@ -89,6 +89,8 @@ const std::string castor::db::ora::OraStreamCnv::s_deleteTapeCopyStatementString
 "DELETE FROM Stream2TapeCopy WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member tapeCopy
+// The FOR UPDATE is needed in order to avoid deletion
+// of a segment after listing and before update/remove
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
 "SELECT Child from Stream2TapeCopy WHERE Parent = :1 FOR UPDATE";
 

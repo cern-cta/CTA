@@ -401,6 +401,10 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "/// SQL select statement for member "
                 << as->remotePart.name
                 << endl << getIndent()
+                << "// The FOR UPDATE is needed in order to avoid deletion"
+                << endl << getIndent()
+                << "// of a segment after listing and before update/remove"
+                << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
