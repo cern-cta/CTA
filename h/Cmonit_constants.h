@@ -37,7 +37,7 @@
 #define CA_MAXUDPPLEN 8000
 
 #define CMONIT_TAPE_SENDMSG_PERIOD  10 /* In seconds */
-#define CMONIT_FTRANSFER_SENDMSG_PERIOD 3 /* In seconds */
+/*  #define CMONIT_FTRANSFER_SENDMSG_PERIOD 3 */
 
 
 #define CMONIT_CLIENT_POOL_SIZE 5  /* Nb of threads in the pool processing client requests */
@@ -45,7 +45,7 @@
 
 /* Period with which to scan the stagers to detect put failed amongst others */
 #define CMONIT_STAGER_SCAN_PERIOD 1800  /* In seconds */
-#define CMONIT_STAGER_SEND_PERIOD 30 /* In seconds */
+/*  #define CMONIT_STAGER_SEND_PERIOD 30 */ /* In seconds */
 
 /* ---------------------------------------
  * CONSTANTS FOR MESSAGES DAEMON -> CMONIT

@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.71 2002/05/30 12:42:58 bcouturi Exp $
+ * $Id: stage.h,v 1.72 2002/05/30 15:46:03 bcouturi Exp $
  */
 
 /*
@@ -44,6 +44,8 @@
 #include "stage_server_struct.h"
 
 #ifdef MONITOR
+
+#define CMONIT_STAGER_SEND_PERIOD 30 /* In seconds */
 
 /* Defining monitoring method prototype from Cmonit_stageclient.c */
 EXTERN_C int DLL_DECL Cmonit_send_stager_status _PROTO ((time_t));
