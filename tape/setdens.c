@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.2 $ $Date: 2000/02/23 07:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.3 $ $Date: 2000/02/23 07:29:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
@@ -65,7 +65,6 @@ int den;
 		}
 	}
 
-printf("mode sense ok\n");
 	/* change cdb to issue a mode select */
 
 	cdb[0] = 0x15;
