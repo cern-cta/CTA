@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrmodifytape.c,v $ $Revision: 1.1 $ $Date: 2000/04/09 08:37:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrmodifytape.c,v $ $Revision: 1.2 $ $Date: 2000/09/04 09:53:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrmodifytape - modify an existing tape volume */
@@ -38,7 +38,7 @@ char **argv;
 	char *model = NULL;
 	char *pool_name = NULL;
 	char *sn = NULL;
-	int status = 0;
+	int status = -1;
 	char *vid = NULL;
 	char *vsn = NULL;
 
