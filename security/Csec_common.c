@@ -374,3 +374,13 @@ int check_ctx(Csec_context_t *ctx, char *func) {
   return 0;
 }
 
+/**
+ * Checks whether we have a client context or a server context
+ */
+int Csec_context_is_client(Csec_context_t *ctx) {
+  if (ctx->magic & CSEC_CONTEXT_MAGIC_CLIENT_MASK) {
+    return 1;
+  } else {
+    return 0;
+  }
+}

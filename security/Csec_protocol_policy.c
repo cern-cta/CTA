@@ -111,6 +111,10 @@ int Csec_server_lookup_protocols(long client_address,
   char *func = "Csec_server_lookup_protocols";
   struct in_addr a;
 
+  /* The client parameter is not currently used, but has been added for a later version
+     In any case, a client_address of 0 should then load ALL the protocols
+     available, independently of the address */
+
   a.s_addr = client_address;
   Csec_trace(func, "Looking for allowed security protocols for %s\n", inet_ntoa (a));
 	     
@@ -507,4 +511,40 @@ int Csec_client_negociate_protocol(int socket, int timeout, Csec_context_t *ctx)
   return 0;
 
 } /* Csec_client_negociate_protocols */
+
+
+/**
+ * Initializes the protocols in the context from a list rather than
+ * from the environment variables.
+ */
+int Csec_initialize_protocols_from_list(Csec_context_t *ctx,
+					Csec_protocol *protocol) {
+  int rc, i;
+  Csec_protocol *p = protocol;
+  char *func = "Csec_initialize_protocols_from_list";
+
+  if (ctx == NULL || protocol == NULL) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "NULL parameter ctx:%p protocols:%p\n",
+		ctx, protocol);
+    return -1;
+  }
+  
+  for (i = 0; p[i].id[0] != '\0'; i++);
+  /* BEWARE, empty loop */
+  
+  ctx->nb_protocols = i;
+  ctx->protocols = (Csec_protocol *)malloc(ctx->nb_protocols * sizeof(Csec_protocol));
+  if (ctx->protocols == NULL) {
+    serrno = ESEC_NO_SECPROT;
+    Csec_errmsg(func, "Error allocating buffer of size %d\n",
+		ctx->nb_protocols * sizeof(Csec_protocol));
+      return -1;
+  }
+  memcpy(ctx->protocols, protocol, ctx->nb_protocols * sizeof(Csec_protocol));
+  ctx->current_protocol = 0;
+  ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
+  
+  return 0;
+} /* Csec_initialize_protocols_from_list */
 

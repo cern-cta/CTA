@@ -86,6 +86,9 @@ int Csec_client_init_context(Csec_context_t *ctx,
 
   char *func="Csec_client_init_context_ext";
 
+  Csec_trace(func, "Initializing client plugin for service type %d\n",
+	     service_type);
+
   memset(ctx, 0, sizeof(Csec_context_t));
   ctx->magic = CSEC_CONTEXT_MAGIC_CLIENT_1;
   ctx->server_service_type = service_type;
@@ -94,32 +97,15 @@ int Csec_client_init_context(Csec_context_t *ctx,
 
   /* Setting the list of protocols from what was passed */
   if (protocol != NULL) {
-    int rc, i;
-    Csec_protocol *p = protocol;
-
-    Csec_trace(func, "Protocols specified at init\n");
-    
-    for (i = 0; p[i].id[0] != '\0'; i++);
-    /* BEWARE, empty loop */
-
-    ctx->nb_protocols = i;
-    ctx->protocols = (Csec_protocol *)malloc(ctx->nb_protocols * sizeof(Csec_protocol));
-    if (ctx->protocols == NULL) {
-      serrno = ESEC_NO_SECPROT;
-      Csec_errmsg(func, "Error allocating buffer of size %d\n",
-		  ctx->nb_protocols * sizeof(Csec_protocol));
-      return -1;
+    return Csec_initialize_protocols_from_list(ctx, protocol);
+  } else {
+    int rc;
+    rc = Csec_client_lookup_protocols(&(ctx->protocols), &(ctx->nb_protocols));
+    if (rc == 0) {
+      ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
     }
-    memcpy(ctx->protocols, protocol, ctx->nb_protocols * sizeof(Csec_protocol));
-    ctx->current_protocol = 0;
-    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
-    
-    /* Now loading the correspong shared library */
-    if (Csec_get_shlib(ctx) == NULL) {  
-       return -1; 
-    } 
+    return rc;
   }
-
   return 0;
 }
 
@@ -129,6 +115,9 @@ int Csec_client_init_context(Csec_context_t *ctx,
  */
 int *Csec_check_creds(Csec_context_t *ctx) {
   int i, current_protocol_save;
+  char *func = "Csec_check_creds";
+
+  Csec_trace(func, "Checking credentials\n");
 
   current_protocol_save = ctx->current_protocol;
   int *result;
@@ -139,6 +128,8 @@ int *Csec_check_creds(Csec_context_t *ctx) {
 	
   for (i=0; i<ctx->nb_protocols; i++) {
     ctx->current_protocol = i;
+    Csec_trace(func, "Checking credentials for <%s>\n",
+	       ctx->protocols[ctx->current_protocol].id);
     if (Csec_get_shlib(ctx) == NULL) {  
       result[i] |= CSEC_PROT_NOSHLIB;
       continue;
@@ -164,7 +155,6 @@ int *Csec_check_creds(Csec_context_t *ctx) {
     Csec_unload_shlib(ctx);
   } /* for */
   ctx->current_protocol =  current_protocol_save;
-  Csec_get_shlib(ctx);
   return result;
 }
 
@@ -176,6 +166,9 @@ int Csec_server_init_context(Csec_context_t *ctx,
 			     Csec_protocol *protocol) {
   char *func="Csec_server_init_context_ext";
 
+  Csec_trace(func, "Initializing server plugin for service type %d\n",
+	     service_type);
+
   memset(ctx, 0, sizeof(Csec_context_t));
   ctx->magic = CSEC_CONTEXT_MAGIC_SERVER_1;
   ctx->server_service_type = service_type;
@@ -183,31 +176,15 @@ int Csec_server_init_context(Csec_context_t *ctx,
 
   /* Setting the list of protocols from what was passed */
   if (protocol != NULL) {
-    int rc, i;
-    Csec_protocol *p = protocol;
-
-    Csec_trace(func, "Protocols specified at init\n");
-    
-    for (i = 0; p[i].id[0] != '\0'; i++);
-    /* BEWARE, empty loop */
-
-    ctx->nb_protocols = i;
-    ctx->protocols = (Csec_protocol *)malloc(ctx->nb_protocols * sizeof(Csec_protocol));
-    if (ctx->protocols == NULL) {
-      serrno = ESEC_NO_SECPROT;
-      Csec_errmsg(func, "Error allocating buffer of size %d\n",
-		  ctx->nb_protocols * sizeof(Csec_protocol));
-      return -1;
+    return Csec_initialize_protocols_from_list(ctx, protocol);
+  }  else {
+    int rc;
+    rc = Csec_server_lookup_protocols(0, &(ctx->protocols), &(ctx->nb_protocols));
+    if (rc == 0) {
+      ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
     }
-    memcpy(ctx->protocols, protocol, ctx->nb_protocols * sizeof(Csec_protocol));
-    ctx->current_protocol = 0;
-    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
-    
-    /* Now loading the correspong shared library */
-    if (Csec_get_shlib(ctx) == NULL) {  
-       return -1; 
-    } 
-  }
+    return rc;
+  } 
 
   return 0;
 }
@@ -322,12 +299,26 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
 {
   char *func = "Csec_server_establish_context_ext";
 
+  Csec_trace(func, "Client establishing context\n");
+
+  /* Checking the status of the context */
+  if (ctx == NULL) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "Context is NULL\n");
+    return -1;
+  }
+    
+  if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
+    serrno = ESEC_CTX_NOT_INITIALIZED;
+    return -1;
+  }
+  
   if (!(ctx->flags & CSEC_CTX_SERVICE_TYPE_SET)) {
     Csec_errmsg(func, "Service type not set");
     serrno  = ESEC_NO_SVC_TYPE;
     return -1;
   }
-    
+  
   if (Csec_server_receive_protocol(s, CSEC_NET_TIMEOUT, ctx, buf, len) < 0) {
     Csec_errmsg(func, "Could not initialize protocol: %s\n", sstrerror(serrno));
     return -1;
@@ -349,6 +340,8 @@ int Csec_client_establish_context(ctx, s)
      int s;
 {
   char *func="Csec_client_establish_context";
+
+  Csec_trace(func, "Client establishing context\n");
 
   /* Checking ths status of the context */
   if (ctx == NULL) {
@@ -376,15 +369,18 @@ int Csec_client_establish_context(ctx, s)
       /* Csec_client_lookup_protocols already sets the serrno etc... */
       return rc;
     }
-    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
-    
+    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;    
+  }
+ 
+  /* Checking whther the shared lib is already loaded ! */
+  if (!(ctx->flags & CSEC_CTX_SHLIB_LOADED)) {
     if (Csec_get_shlib(ctx) == NULL) {
       return -1;
     }
   }
- 
-  /* Loading up the server service name */
 
+
+  /* Loading up the server service name */
   if (!(ctx->flags & CSEC_CTX_SERVICE_NAME_SET)) {
     if (Csec_client_set_service_name(ctx, s) != 0) {
       /* Error already set in Csec_client_set_service_name */
@@ -793,13 +789,3 @@ Csec_context_t *Csec_get_default_context() {
   return &(thip->default_context);
 }
 
-/**
- * Checks whether we have a client context or a server context
- */
-int Csec_context_is_client(Csec_context_t *ctx) {
-  if (ctx->magic & CSEC_CONTEXT_MAGIC_CLIENT_MASK) {
-    return 1;
-  } else {
-    return 0;
-  }
-}

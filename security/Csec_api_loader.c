@@ -59,15 +59,17 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 void Csec_unload_shlib(Csec_context_t *ctx) {
   char *func = "Csec_unload_shlib";
 
-  Csec_trace(func, "Starting\n");
+  Csec_trace(func, "Unloading plugin\n");
 
   if (ctx->shhandle != NULL) {
     dlclose(ctx->shhandle);
+    ctx->shhandle = NULL;
   }
 
-  ctx->flags &= ~CSEC_CTX_CREDENTIALS_LOADED;
-  ctx->flags &= ~CSEC_CTX_SERVICE_NAME_SET;
-  ctx->flags &= ~CSEC_CTX_SHLIB_LOADED;
+  /* Just keep the 3 initial flags */
+  ctx->flags &= (CSEC_CTX_INITIALIZED
+		 |CSEC_CTX_SERVICE_TYPE_SET
+		 |CSEC_CTX_PROTOCOL_LOADED);
   ctx->Csec_init_context = NULL;
   ctx->Csec_reinit_context = NULL;
   ctx->Csec_delete_connection_context = NULL;
@@ -88,7 +90,9 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
   void *handle;
   char *func = "Csec_get_shlib";
  
- /* Checking input */
+  Csec_trace(func, "Loading plugin\n");
+
+  /* Checking input */
   if (ctx == NULL) {
     serrno = EINVAL;
     Csec_errmsg(func, "Context is NULL !");
@@ -98,7 +102,7 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
   /* Checking that a shared library isn't already loaded,
      and closing in case ! */
   if (ctx->shhandle != NULL) {
-    Csec_trace(func, "Foring unload of shlib\n");
+    Csec_trace(func, "Forcing unload of shlib\n");
     Csec_unload_shlib(ctx);
   }
 

@@ -137,5 +137,6 @@ int DLL_DECL  Csec_delete_creds _PROTO ((Csec_context_t *));
 int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context_t *));
 int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context_t *, 
 						   int));
+int DLL_DECL Csec_context_is_client _PROTO ((Csec_context_t *ctx));
 
 #endif /* _CSEC_COMMON_H */
