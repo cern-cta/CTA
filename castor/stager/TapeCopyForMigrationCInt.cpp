@@ -26,8 +26,14 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/Segment.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
+#include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -96,6 +102,139 @@ extern "C" {
   int Cstager_TapeCopyForMigration_type(castor::stager::TapeCopyForMigration* instance,
                                         int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_copyNb
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_copyNb(castor::stager::TapeCopyForMigration* instance, unsigned int* var) {
+    *var = instance->copyNb();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setCopyNb
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setCopyNb(castor::stager::TapeCopyForMigration* instance, unsigned int new_var) {
+    instance->setCopyNb(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_addStream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_addStream(castor::stager::TapeCopyForMigration* instance, castor::stager::Stream* obj) {
+    instance->addStream(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_removeStream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_removeStream(castor::stager::TapeCopyForMigration* instance, castor::stager::Stream* obj) {
+    instance->removeStream(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_stream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_stream(castor::stager::TapeCopyForMigration* instance, castor::stager::Stream*** var, int* len) {
+    std::vector<castor::stager::Stream*>& result = instance->stream();
+    *len = result.size();
+    *var = (castor::stager::Stream**) malloc((*len) * sizeof(castor::stager::Stream*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_addSegments
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_addSegments(castor::stager::TapeCopyForMigration* instance, castor::stager::Segment* obj) {
+    instance->addSegments(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_removeSegments
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_removeSegments(castor::stager::TapeCopyForMigration* instance, castor::stager::Segment* obj) {
+    instance->removeSegments(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_segments
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_segments(castor::stager::TapeCopyForMigration* instance, castor::stager::Segment*** var, int* len) {
+    std::vector<castor::stager::Segment*>& result = instance->segments();
+    *len = result.size();
+    *var = (castor::stager::Segment**) malloc((*len) * sizeof(castor::stager::Segment*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_castorFile
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_castorFile(castor::stager::TapeCopyForMigration* instance, castor::stager::CastorFile** var) {
+    *var = instance->castorFile();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setCastorFile
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setCastorFile(castor::stager::TapeCopyForMigration* instance, castor::stager::CastorFile* new_var) {
+    instance->setCastorFile(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_status
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_status(castor::stager::TapeCopyForMigration* instance, castor::stager::TapeCopyStatusCodes* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setStatus(castor::stager::TapeCopyForMigration* instance, castor::stager::TapeCopyStatusCodes new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setId(castor::stager::TapeCopyForMigration* instance,
+                                         u_signed64 id) {
+    instance->setId(id);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_id
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_id(castor::stager::TapeCopyForMigration* instance,
+                                      u_signed64* ret) {
+    *ret = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_clone
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_clone(castor::stager::TapeCopyForMigration* instance,
+                                         castor::IObject** ret) {
+    *ret = instance->clone();
     return 0;
   }
 

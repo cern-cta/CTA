@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/23 14:59:56 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -444,15 +444,17 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
   writeOperations(*opl, stream, alreadyGenerated);
 
   // Then the implemented interfaces methods
-  for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
+  for (UMLClassifier *interface = m_classInfo->allSuperclasses.first();
        interface != 0;
-       interface = m_classInfo->implementedAbstracts.next()) {
+       interface = m_classInfo->allSuperclasses.next()) {
     bool noTitle = true;
     QString com = " of " + interface->getName();
     if (m_classInfo->isInterface)
       com += " interface";
-    else
+    else if (interface->getAbstract())
       com += " abstract class";
+    else
+      com += " class";
     if (!c->getAbstract()) {
       opl = interface->getFilteredOperationsList(Uml::Public, true);
       if (opl->count()) {

@@ -26,8 +26,12 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -96,6 +100,115 @@ extern "C" {
   int Cstager_DiskCopyForRecall_type(castor::stager::DiskCopyForRecall* instance,
                                      int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_path
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_path(castor::stager::DiskCopyForRecall* instance, const char** var) {
+    *var = instance->path().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setPath
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setPath(castor::stager::DiskCopyForRecall* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setPath(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_diskcopyId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_diskcopyId(castor::stager::DiskCopyForRecall* instance, const char** var) {
+    *var = instance->diskcopyId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setDiskcopyId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setDiskcopyId(castor::stager::DiskCopyForRecall* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDiskcopyId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_fileSystem
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_fileSystem(castor::stager::DiskCopyForRecall* instance, castor::stager::FileSystem** var) {
+    *var = instance->fileSystem();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setFileSystem
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setFileSystem(castor::stager::DiskCopyForRecall* instance, castor::stager::FileSystem* new_var) {
+    instance->setFileSystem(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_castorFile
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_castorFile(castor::stager::DiskCopyForRecall* instance, castor::stager::CastorFile** var) {
+    *var = instance->castorFile();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setCastorFile
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setCastorFile(castor::stager::DiskCopyForRecall* instance, castor::stager::CastorFile* new_var) {
+    instance->setCastorFile(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_status
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_status(castor::stager::DiskCopyForRecall* instance, castor::stager::DiskCopyStatusCodes* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setStatus(castor::stager::DiskCopyForRecall* instance, castor::stager::DiskCopyStatusCodes new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setId(castor::stager::DiskCopyForRecall* instance,
+                                      u_signed64 id) {
+    instance->setId(id);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_id
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance,
+                                   u_signed64* ret) {
+    *ret = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_clone
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_clone(castor::stager::DiskCopyForRecall* instance,
+                                      castor::IObject** ret) {
+    *ret = instance->clone();
     return 0;
   }
 

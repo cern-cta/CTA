@@ -29,6 +29,7 @@
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -111,6 +112,148 @@ extern "C" {
   int Crh_IOResponse_type(castor::rh::IOResponse* instance,
                           int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_status
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_status(castor::rh::IOResponse* instance, unsigned int* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setStatus
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setStatus(castor::rh::IOResponse* instance, unsigned int new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_castorFileName
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_castorFileName(castor::rh::IOResponse* instance, const char** var) {
+    *var = instance->castorFileName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setCastorFileName
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setCastorFileName(castor::rh::IOResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setCastorFileName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_fileSize
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_fileSize(castor::rh::IOResponse* instance, u_signed64* var) {
+    *var = instance->fileSize();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setFileSize
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setFileSize(castor::rh::IOResponse* instance, u_signed64 new_var) {
+    instance->setFileSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_errorCode(castor::rh::IOResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setErrorCode(castor::rh::IOResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_errorMessage(castor::rh::IOResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setErrorMessage(castor::rh::IOResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_fileId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_fileId(castor::rh::IOResponse* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setFileId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setFileId(castor::rh::IOResponse* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_subreqId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_subreqId(castor::rh::IOResponse* instance, const char** var) {
+    *var = instance->subreqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setSubreqId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setSubreqId(castor::rh::IOResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSubreqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setId(castor::rh::IOResponse* instance,
+                           u_signed64 id) {
+    instance->setId(id);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_id(castor::rh::IOResponse* instance,
+                        u_signed64* ret) {
+    *ret = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_clone(castor::rh::IOResponse* instance,
+                           castor::IObject** ret) {
+    *ret = instance->clone();
     return 0;
   }
 

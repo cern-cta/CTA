@@ -53,6 +53,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 		isInterface = true;
 	else
 		isInterface = false;
+  isAbstract = c->getAbstract();
 
 	// set id
 	m_nID = c->getID();

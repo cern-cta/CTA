@@ -89,6 +89,7 @@ public:
 	 * Various conditional information about our classifier.
 	 */
 	bool isInterface; // Whether or not this classifier is an interface.
+	bool isAbstract; // Whether or not this classifier is abstract.
 	bool hasAssociations;
   std::map<Uml::Scope, bool> hasAttributes;
   std::map<Uml::Scope, bool> hasStaticAttributes;

@@ -28,9 +28,13 @@
 #define CASTOR_STAGER_DISKCOPYFORRECALL_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/stager/DiskCopyStatusCodes.h"
+#include "osdep.h"
 struct C_IObject_t;
+struct Cstager_CastorFile_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
+struct Cstager_FileSystem_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -83,6 +87,86 @@ int Cstager_DiskCopyForRecall_TYPE(int* ret);
  */
 int Cstager_DiskCopyForRecall_type(struct Cstager_DiskCopyForRecall_t* instance,
                                    int* ret);
+
+/************************************/
+/* Implementation of DiskCopy class */
+/************************************/
+
+/**
+ * Get the value of path
+ * path of this copy in the filesystem
+ */
+int Cstager_DiskCopyForRecall_path(struct Cstager_DiskCopyForRecall_t* instance, const char** var);
+
+/**
+ * Set the value of path
+ * path of this copy in the filesystem
+ */
+int Cstager_DiskCopyForRecall_setPath(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
+
+/**
+ * Get the value of diskcopyId
+ * The Cuuid identifying the DiskCopy, stored as a human readable string
+ */
+int Cstager_DiskCopyForRecall_diskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char** var);
+
+/**
+ * Set the value of diskcopyId
+ * The Cuuid identifying the DiskCopy, stored as a human readable string
+ */
+int Cstager_DiskCopyForRecall_setDiskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileSystem
+ */
+int Cstager_DiskCopyForRecall_fileSystem(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_FileSystem_t** var);
+
+/**
+ * Set the value of fileSystem
+ */
+int Cstager_DiskCopyForRecall_setFileSystem(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_FileSystem_t* new_var);
+
+/**
+ * Get the value of castorFile
+ */
+int Cstager_DiskCopyForRecall_castorFile(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_CastorFile_t** var);
+
+/**
+ * Set the value of castorFile
+ */
+int Cstager_DiskCopyForRecall_setCastorFile(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_CastorFile_t* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cstager_DiskCopyForRecall_status(struct Cstager_DiskCopyForRecall_t* instance, enum Cstager_DiskCopyStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_DiskCopyForRecall_setStatus(struct Cstager_DiskCopyForRecall_t* instance, enum Cstager_DiskCopyStatusCodes_t new_var);
+
+/********************************************/
+/* Implementation of IObject abstract class */
+/********************************************/
+
+/**
+ * Sets the id of the object
+ */
+int Cstager_DiskCopyForRecall_setId(struct Cstager_DiskCopyForRecall_t* instance,
+                                    u_signed64 id);
+
+/**
+ * gets the id of the object
+ */
+int Cstager_DiskCopyForRecall_id(struct Cstager_DiskCopyForRecall_t* instance,
+                                 u_signed64* ret);
+
+/**
+ * virtual method to clone any object
+ */
+int Cstager_DiskCopyForRecall_clone(struct Cstager_DiskCopyForRecall_t* instance,
+                                    struct C_IObject_t* ret);
 
 /**
  * Get the value of mountPoint

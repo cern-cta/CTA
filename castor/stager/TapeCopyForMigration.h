@@ -28,7 +28,12 @@
 #define CASTOR_STAGER_TAPECOPYFORMIGRATION_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/stager/TapeCopyStatusCodes.h"
+#include "osdep.h"
 struct C_IObject_t;
+struct Cstager_CastorFile_t;
+struct Cstager_Segment_t;
+struct Cstager_Stream_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_TapeCopy_t;
 
@@ -84,6 +89,94 @@ int Cstager_TapeCopyForMigration_TYPE(int* ret);
  */
 int Cstager_TapeCopyForMigration_type(struct Cstager_TapeCopyForMigration_t* instance,
                                       int* ret);
+
+/************************************/
+/* Implementation of TapeCopy class */
+/************************************/
+
+/**
+ * Get the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single file
+ */
+int Cstager_TapeCopyForMigration_copyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int* var);
+
+/**
+ * Set the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single file
+ */
+int Cstager_TapeCopyForMigration_setCopyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int new_var);
+
+/**
+ * Add a struct Cstager_Stream_t* object to the stream list
+ */
+int Cstager_TapeCopyForMigration_addStream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t* obj);
+
+/**
+ * Remove a struct Cstager_Stream_t* object from stream
+ */
+int Cstager_TapeCopyForMigration_removeStream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t* obj);
+
+/**
+ * Get the list of struct Cstager_Stream_t* objects held by stream
+ */
+int Cstager_TapeCopyForMigration_stream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t*** var, int* len);
+
+/**
+ * Add a struct Cstager_Segment_t* object to the segments list
+ */
+int Cstager_TapeCopyForMigration_addSegments(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Segment_t* obj);
+
+/**
+ * Remove a struct Cstager_Segment_t* object from segments
+ */
+int Cstager_TapeCopyForMigration_removeSegments(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Segment_t* obj);
+
+/**
+ * Get the list of struct Cstager_Segment_t* objects held by segments
+ */
+int Cstager_TapeCopyForMigration_segments(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Segment_t*** var, int* len);
+
+/**
+ * Get the value of castorFile
+ */
+int Cstager_TapeCopyForMigration_castorFile(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_CastorFile_t** var);
+
+/**
+ * Set the value of castorFile
+ */
+int Cstager_TapeCopyForMigration_setCastorFile(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_CastorFile_t* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cstager_TapeCopyForMigration_status(struct Cstager_TapeCopyForMigration_t* instance, enum Cstager_TapeCopyStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_TapeCopyForMigration_setStatus(struct Cstager_TapeCopyForMigration_t* instance, enum Cstager_TapeCopyStatusCodes_t new_var);
+
+/********************************************/
+/* Implementation of IObject abstract class */
+/********************************************/
+
+/**
+ * Sets the id of the object
+ */
+int Cstager_TapeCopyForMigration_setId(struct Cstager_TapeCopyForMigration_t* instance,
+                                       u_signed64 id);
+
+/**
+ * gets the id of the object
+ */
+int Cstager_TapeCopyForMigration_id(struct Cstager_TapeCopyForMigration_t* instance,
+                                    u_signed64* ret);
+
+/**
+ * virtual method to clone any object
+ */
+int Cstager_TapeCopyForMigration_clone(struct Cstager_TapeCopyForMigration_t* instance,
+                                       struct C_IObject_t* ret);
 
 /**
  * Get the value of diskServer

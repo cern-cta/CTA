@@ -28,6 +28,7 @@
 #define CASTOR_RH_IORESPONSE_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
 struct Crh_FileResponse_t;
 struct Crh_IOResponse_t;
@@ -94,6 +95,118 @@ int Crh_IOResponse_TYPE(int* ret);
  */
 int Crh_IOResponse_type(struct Crh_IOResponse_t* instance,
                         int* ret);
+
+/****************************************/
+/* Implementation of FileResponse class */
+/****************************************/
+
+/**
+ * Get the value of status
+ * The status a the file we are considering
+ */
+int Crh_IOResponse_status(struct Crh_IOResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of status
+ * The status a the file we are considering
+ */
+int Crh_IOResponse_setStatus(struct Crh_IOResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of castorFileName
+ * The name of the file considered
+ */
+int Crh_IOResponse_castorFileName(struct Crh_IOResponse_t* instance, const char** var);
+
+/**
+ * Set the value of castorFileName
+ * The name of the file considered
+ */
+int Crh_IOResponse_setCastorFileName(struct Crh_IOResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileSize
+ * The size of the file considered
+ */
+int Crh_IOResponse_fileSize(struct Crh_IOResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileSize
+ * The size of the file considered
+ */
+int Crh_IOResponse_setFileSize(struct Crh_IOResponse_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_IOResponse_errorCode(struct Crh_IOResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_IOResponse_setErrorCode(struct Crh_IOResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_IOResponse_errorMessage(struct Crh_IOResponse_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_IOResponse_setErrorMessage(struct Crh_IOResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileId
+ * The castor file id identifying the file considered
+ */
+int Crh_IOResponse_fileId(struct Crh_IOResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ * The castor file id identifying the file considered
+ */
+int Crh_IOResponse_setFileId(struct Crh_IOResponse_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of subreqId
+ * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
+ */
+int Crh_IOResponse_subreqId(struct Crh_IOResponse_t* instance, const char** var);
+
+/**
+ * Set the value of subreqId
+ * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
+ */
+int Crh_IOResponse_setSubreqId(struct Crh_IOResponse_t* instance, const char* new_var);
+
+/********************************************/
+/* Implementation of IObject abstract class */
+/********************************************/
+
+/**
+ * Sets the id of the object
+ */
+int Crh_IOResponse_setId(struct Crh_IOResponse_t* instance,
+                         u_signed64 id);
+
+/**
+ * gets the id of the object
+ */
+int Crh_IOResponse_id(struct Crh_IOResponse_t* instance,
+                      u_signed64* ret);
+
+/**
+ * virtual method to clone any object
+ */
+int Crh_IOResponse_clone(struct Crh_IOResponse_t* instance,
+                         struct C_IObject_t* ret);
 
 /**
  * Get the value of fileName
