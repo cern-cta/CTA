@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.14 2000/05/12 13:37:44 jdurand Exp $
+ * $Id: poolmgr.c,v 1.15 2000/05/15 09:20:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.14 $ $Date: 2000/05/12 13:37:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.15 $ $Date: 2000/05/15 09:20:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,9 +41,9 @@ extern char *rfio_serror();
 extern char defpoolname[];
 extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
-struct stgcat_entry *stce;	/* end of stage catalog */
-struct stgcat_entry *stcs;	/* start of stage catalog */
-int stg_s;
+extern struct stgcat_entry *stce;	/* end of stage catalog */
+extern struct stgcat_entry *stcs;	/* start of stage catalog */
+extern int stg_s; /* listening socket that we close in forked migration */
 
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
@@ -58,7 +58,7 @@ static char *nfsroot;
 static char **poolc;
 static struct pool *pools;
 #ifndef _WIN32
-struct sigaction sa;
+struct sigaction sa_poolmgr;
 #endif
 
 void cvtdbl2str _PROTO((double, char *));
@@ -1150,10 +1150,10 @@ int migpoolfiles(pool_p)
     close(stg_s);
     close(rpfd);
 #ifndef _WIN32
-	sa.sa_handler = poolmgr_wait4child;
-	sa.sa_flags = SA_RESTART;
-	sigaction (SIGCHLD, &sa, NULL);
-	sigaction (SIGALRM, &sa, NULL); /* because of sleep */
+	sa_poolmgr.sa_handler = poolmgr_wait4child;
+	sa_poolmgr.sa_flags = SA_RESTART;
+	sigaction (SIGCHLD, &sa_poolmgr, NULL);
+	sigaction (SIGALRM, &sa_poolmgr, NULL); /* because of sleep */
 #endif
 
 	/* build a sorted list of stage catalog entries for the specified pool */
