@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.11 $ $Date: 2000/03/13 11:17:50 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.12 $ $Date: 2000/08/25 08:03:44 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -25,24 +25,27 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.11 $ $Date: 20
 #endif /* VDQMSERV */
 
 #include <Castor_limits.h>
+#include <osdep.h>
 #include <serrno.h>
 #include <log.h>
-#include <osdep.h>
 #include <net.h>
+#include <Cinit.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
 
 void initlog(char *, int, char *);
 int vdqm_shutdown, vdqm_restart;
 
-int main() {
+int vdqm_main(struct main_args *main_args) {
     vdqmnw_t *nw, *nwtable;
     int rc, poolID;
 
     vdqm_shutdown = vdqm_restart = 0;
-    (void) Cinitdaemon("vdqm",NULL);
 
+#if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
+#endif /* _WIN32 */
+
     initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
 #if defined(__DATE__) && defined (__TIME__)
     log(LOG_INFO,"******* VDQM server generated at %s %s.\n",
@@ -99,4 +102,14 @@ int main() {
     }
     log(LOG_INFO,"main:\n\n ******* VDQM SERVER EXIT ******\n\n");
     return(vdqm_CleanUp(nw,1));
+}
+
+int main() {
+
+#if defined(_WIN32)
+    if ( Cinitservice("vdqm",vdqm_main) == -1 ) exit(1);
+#else /* _WIN32 */
+    if ( Cinitdaemon("vdqm",NULL) == -1 ) exit(1);
+    exit(vdqm_main(NULL));
+#endif /* _WIN32 */
 }
