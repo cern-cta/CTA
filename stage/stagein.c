@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.8 2000/01/09 10:26:08 jdurand Exp $
+ * $Id: stagein.c,v 1.9 2000/02/11 11:06:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -104,12 +104,12 @@ char	**argv;
 	nargs = argc;
 #if !defined(vms)
 #if defined(_WIN32)
-	if (p = strrchr (argv[0], '\\'))
+	if ((p = strrchr (argv[0], '\\')) != NULL)
 #else
-	if (p = strrchr (argv[0], '/'))
+	if ((p = strrchr (argv[0], '/')) != NULL)
 #endif
 #else
-	if (p = strrchr (argv[0], ']'))
+	if ((p = strrchr (argv[0], ']')) != NULL)
 #endif
 		p++;
 	else
@@ -641,7 +641,7 @@ char *path;
 	int rc;
 	char sav;
 
-	if (q = strchr (path, ':'))
+	if ((q = strchr (path, ':')) != NULL)
 		q++;
 	else
 		q = path;

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.12 2000/01/09 10:26:05 jdurand Exp $
+ * $Id: procio.c,v 1.13 2000/02/11 11:06:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.13 $ $Date: 2000/02/11 11:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -169,7 +169,7 @@ char *clienthost;
 			break;
 		case 'C':	/* character conversion */
 			p = strtok (optarg,",") ;
-			while (p) {
+			while (p != NULL) {
 				if (strcmp (p, "ebcdic") == 0) {
 					stgreq.charconv |= EBCCONV;
 				} else if (strcmp (p, "block") == 0) {
@@ -179,7 +179,7 @@ char *clienthost;
 					errflg++;
 					break;
 				}
-				if (p = strtok (NULL, ",")) *(p - 1) = ',';
+				if ((p = strtok (NULL, ",")) != NULL) *(p - 1) = ',';
 			}
 			break;
 		case 'c':	/* concatenation */
@@ -260,13 +260,13 @@ char *clienthost;
 		case 'N':
 			nread = optarg;
 			p = strtok (nread, ":");
-			while (p) {
+			while (p != NULL) {
 				j = strtol (p, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-N");
 					errflg++;
 				}
-				if (p = strtok (NULL, ":")) *(p - 1) = ':';
+				if ((p = strtok (NULL, ":")) != NULL) *(p - 1) = ':';
 			}
 			break;
 		case 'n':
@@ -293,13 +293,13 @@ char *clienthost;
 		case 's':
 			size = optarg;
 			p = strtok (size, ":");
-			while (p) {
+			while (p != NULL) {
 				j = strtol (p, &dp, 10);
 				if (*dp != '\0' || j > 2047) {
 					sendrep (rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
 				}
-				if (p = strtok (NULL, ":")) *(p - 1) = ':';
+				if ((p = strtok (NULL, ":")) != NULL) *(p - 1) = ':';
 			}
 			break;
 		case 'T':
@@ -325,7 +325,7 @@ char *clienthost;
 		case 'V':
 			stgreq.t_or_d = 't';
 			q = strtok (optarg, ":");
-			while (q) {
+			while (q != NULL) {
 				strcpy (stgreq.u1.t.vid[numvid], q);
 				UPPER (stgreq.u1.t.vid[numvid]);
 				numvid++;
@@ -335,7 +335,7 @@ char *clienthost;
 		case 'v':
 			stgreq.t_or_d = 't';
 			q = strtok (optarg, ":");
-			while (q) {
+			while (q != NULL) {
 				strcpy (stgreq.u1.t.vsn[numvsn], q);
 				UPPER (stgreq.u1.t.vsn[numvsn]);
 				numvsn++;
@@ -471,10 +471,10 @@ char *clienthost;
 		if (Uflag && i > 0) break;
 		if (stgreq.t_or_d == 't') {
 			if (fid) {
-				if (p = strchr (fid, ':')) *p = '\0';
+				if ((p = strchr (fid, ':')) != NULL) *p = '\0';
 				if ((j = strlen (fid) - 17) > 0) fid += j;
 				strcpy (stgreq.u1.t.fid, fid);
-				if (p) {
+				if (p != NULL) {
 					*p = ':';
 					fid = p + 1;
 				}
@@ -488,17 +488,17 @@ char *clienthost;
 			}
 		}
 		if (nread) {
-			if (p = strchr (nread, ':')) *p = '\0';
+			if ((p = strchr (nread, ':')) != NULL) *p = '\0';
 			stgreq.nread = strtol (nread, &dp, 10);
-			if (p) {
+			if (p != NULL) {
 				*p = ':';
 				nread = p + 1;
 			}
 		}
 		if (size) {
-			if (p = strchr (size, ':')) *p = '\0';
+			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stgreq.size = strtol (size, &dp, 10);
-			if (p) {
+			if (p != NULL) {
 				*p = ':';
 				size = p + 1;
 			}
@@ -966,7 +966,7 @@ char *clienthost;
 			Mflag = 1;
 			break;
                 case 'q':       /* file sequence number(s) */
-			if (q = strchr (optarg, '-')) {
+			if ((q = strchr (optarg, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
@@ -1242,8 +1242,8 @@ fseq_elem **fseq_list;
 	default:
 		nbtpf = 0;
 		p = strtok (fseq, ",");
-		while (p) {
-			if (q = strchr (p, '-')) {
+		while (p != NULL) {
+			if (q = strchr (p, '-') != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
@@ -1269,13 +1269,13 @@ fseq_elem **fseq_list;
 				return (0);
 			}
 			nbtpf += n2 - n1 + 1;
-			if (p = strtok (NULL, ",")) *(p - 1) = ',';
+			if ((p = strtok (NULL, ",")) != NULL) *(p - 1) = ',';
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		nbtpf = 0;
 		p = strtok (fseq, ",");
-		while (p) {
-			if (q = strchr (p, '-')) {
+		while (p != NULL) {
+			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				n1 = strtol (p, &dp, 10);

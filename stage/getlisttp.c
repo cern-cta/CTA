@@ -1,5 +1,5 @@
 /*
- * $Id: getlisttp.c,v 1.6 1999/12/09 13:47:26 jdurand Exp $
+ * $Id: getlisttp.c,v 1.7 2000/02/11 11:06:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.7 $ $Date: 2000/02/11 11:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ int *num;
 
 	if (*num == 0) {
 		p = strtok (optarg, ":");
-		while (p) {
+		while (p != NULL) {
 			if (*num >= MAXVSN) {
 				fprintf (stderr, STG14);
 				errflg++;
@@ -41,7 +41,7 @@ int *num;
 				errflg++;
 			}
 			(*num)++;
-			if (p = strtok (NULL, ":")) *(p - 1) = ':';
+			if ((p = strtok (NULL, ":")) != NULL) *(p - 1) = ':';
 		}
 	} else {
 		fprintf (stderr, STG13, opt);

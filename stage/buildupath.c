@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.7 2000/01/09 10:26:02 jdurand Exp $
+ * $Id: buildupath.c,v 1.8 2000/02/11 11:06:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 10:26:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.8 $ $Date: 2000/02/11 11:06:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #if !defined(vms)
@@ -70,7 +70,7 @@ int req_type;
 	char linkbuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *p, *q;
 
-	if (p = strstr (argvi, ":/")) {
+	if ((p = strstr (argvi, ":/")) != NULL) {
 		strncpy (dsksrvr, argvi, p - argvi);
 		dsksrvr[p - argvi] = '\0';
 		dir = ++p;
@@ -89,7 +89,7 @@ int req_type;
 	q = dir + strlen(nfsroot);
 	if (*nfsroot &&
 	    strncmp (dir, nfsroot, strlen (nfsroot)) == 0 && *q == '/' &&
-	    (p = strchr (q + 1, '/'))) {
+	    (p = strchr (q + 1, '/')) != NULL) {
 		/* /shift syntax */
 		strncpy (dsksrvr, q + 1, p - q - 1);
 		dsksrvr[p - q - 1] = '\0';
@@ -168,9 +168,13 @@ int req_type;
 				sprintf (path, "%s/%s", cwd, argvi);
 	} else {
 		strcpy (buf, argvi);
-		p = strrchr (buf, '/');
-		*p = '\0';
-		if (resolvelinks (buf, path, size - strlen (p+1) - 1, req_type) < 0) {
+		if ((p = strrchr (buf, '/')) != NULL) {
+			*p = '\0';
+			if (resolvelinks (buf, path, size - strlen (p+1) - 1, req_type) < 0) {
+				fprintf (stderr, STG08, argvi);
+				return (USERR);
+			}
+		} else {
 			fprintf (stderr, STG08, argvi);
 			return (USERR);
 		}

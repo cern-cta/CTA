@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.15 2000/01/09 10:26:06 jdurand Exp $
+ * $Id: procqry.c,v 1.16 2000/02/11 11:06:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.15 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.16 $ $Date: 2000/02/11 11:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -223,7 +223,7 @@ char *clienthost;
 			break;
 		case 'V':	/* visual identifier(s) */
 			q = strtok (optarg, ":");
-			while (q) {
+			while (q != NULL) {
 				strcpy (vid[numvid], q);
 				UPPER (vid[numvid]);
 				numvid++;

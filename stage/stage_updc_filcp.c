@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_filcp.c,v 1.1 2000/01/26 08:34:36 jdurand Exp $
+ * $Id: stage_updc_filcp.c,v 1.2 2000/02/11 11:06:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.1 $ $Date: 2000/01/26 08:34:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.2 $ $Date: 2000/02/11 11:06:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -82,17 +82,20 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
 
   if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
     strcpy (Zparm, stageid);
-    p = strtok (Zparm, ".");
-    reqid = strtol (p, &dp, 10);
-    if (*dp != '\0' || reqid <= 0 ||
-        (p = strtok (NULL, "@")) == NULL) {
-      errflg++;
-    } else {
-      key = strtol (p, &dp, 10);
-      if (*dp != '\0' ||
-          (stghost = strtok (NULL, " ")) == NULL) {
+    if ((p = strtok (Zparm, ".")) != NULL) {
+      reqid = strtol (p, &dp, 10);
+      if (*dp != '\0' || reqid <= 0 ||
+          (p = strtok (NULL, "@")) == NULL) {
         errflg++;
+      } else {
+        key = strtol (p, &dp, 10);
+        if (*dp != '\0' ||
+            (stghost = strtok (NULL, " ")) == NULL) {
+          errflg++;
+        }
       }
+    } else {
+      errflg++;
     }
   } else
     errflg++;

@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.8 2000/01/09 10:26:07 jdurand Exp $
+ * $Id: stageclr.c,v 1.9 2000/02/11 11:06:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -250,7 +250,7 @@ char	**argv;
 		marshall_STRING (sbp, "-P");
 		sbpp = sbp;
 		while (fgets (ibuf, sizeof(ibuf), stdin) != NULL) {
-			if (p = strchr (ibuf, '\n')) *p = '\0';
+			if ((p = strchr (ibuf, '\n')) != NULL) *p = '\0';
 			if ((c = build_linkname (ibuf, path, sizeof(path), STAGECLR)) == SYERR) {
 #if defined(_WIN32)
 				WSACleanup();

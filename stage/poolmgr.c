@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.8 2000/01/09 10:26:04 jdurand Exp $
+ * $Id: poolmgr.c,v 1.9 2000/02/11 11:06:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -372,7 +372,7 @@ char *path;
 	struct pool *pool_p;
 	char server[CA_MAXHOSTNAMELEN + 1];
 
-        if (p = strchr (path, ':')) {
+        if ((p = strchr (path, ':')) != NULL) {
                 strncpy (server, path, p - path);
                 server[p - path] = '\0';
 	}
@@ -565,7 +565,7 @@ int incr;
 
 	if (*poolname == '\0')
 		return (0);
-	if (p = strchr (ipath, ':')) {
+	if ((p = strchr (ipath, ':')) != NULL) {
 		strncpy (server, ipath, p - ipath);
 		*(server + (p - ipath)) = '\0';
 	}

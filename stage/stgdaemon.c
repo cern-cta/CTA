@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.18 2000/02/10 13:57:19 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.19 2000/02/11 11:07:00 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.18 $ $Date: 2000/02/10 13:57:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.19 $ $Date: 2000/02/11 11:07:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -311,8 +311,8 @@ main(argc,argv)
       p_p  = Default_db_pwd;
     } else {
       if (fgets (cfbuf, sizeof(cfbuf), configfd) &&
-          strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n")) &&
-          (p_p = strtok (NULL, "@\n"))) {
+          strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n")) != NULL &&
+          (p_p = strtok (NULL, "@\n")) != NULL) {
       } else {
         stglogit(func, "Error reading Db Configuration file %s\n",STGDBCONFIG);
         exit (CONFERR);

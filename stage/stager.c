@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.8 2000/01/09 10:26:08 jdurand Exp $
+ * $Id: stager.c,v 1.9 2000/02/11 11:06:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -285,8 +285,8 @@ char **argv;
 					*q = '\0';
 				nbtpf = stce - stcs - 1;
 				p = strtok ((stce-1)->u1.t.fseq, ",");
-				while (p) {
-					if (q = strchr (p, '-')) {
+				while (p != NULL) {
+					if ((q = strchr (p, '-')) != NULL) {
 						*q = '\0';
 						n2 = atoi (q + 1);
 						n1 = atoi (p);
@@ -296,7 +296,7 @@ char **argv;
 						n2 = n1;
 					}
 					nbtpf += n2 - n1 + 1;
-					if (p = strtok (NULL, ","))
+					if ((p = strtok (NULL, ",")) != NULL)
 						*(p - 1) = ',';
 				}
 				fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
@@ -304,8 +304,8 @@ char **argv;
 				for (stcp = stcs; stcp < stce-1; stcp++, nbtpf++)
 					strcpy ((char *)(fseq_list + nbtpf), stcp->u1.t.fseq);
 				p = strtok ((stce-1)->u1.t.fseq, ",");
-				while (p) {
-					if (q = strchr (p, '-')) {
+				while (p != NULL) {
+					if ((q = strchr (p, '-')) != NULL) {
 						*q = '\0';
 						n2 = atoi (q + 1);
 						n1 = atoi (p);

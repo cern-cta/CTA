@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.7 2000/01/09 10:26:03 jdurand Exp $
+ * $Id: cleaner.c,v 1.8 2000/02/11 11:06:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 10:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.8 $ $Date: 2000/02/11 11:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,7 +58,7 @@ char **argv;
 		p = buf;
 		if (saveflag) {
 			q = strchr (p, '\n');
-			if (! q) {	/* line is still incomplete */
+			if (q == NULL) {	/* line is still incomplete */
 				strcat (savebuf, p);
 				continue;
 			}
@@ -68,7 +68,7 @@ char **argv;
 			saveflag = 0;
 			p = q + 1;
 		}
-		while (q = strchr (p, '\n')) {
+		while ((q = strchr (p, '\n')) != NULL) {
 			*q = '\0';
 			stglogit (func, "%s\n", p);
 			p = q + 1;

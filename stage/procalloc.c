@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.12 2000/01/09 10:26:04 jdurand Exp $
+ * $Id: procalloc.c,v 1.13 2000/02/11 11:06:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.13 $ $Date: 2000/02/11 11:06:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -330,15 +330,17 @@ char *clienthost;
 		else
 			p++;
 		if (strcmp (p, basename)) continue;
-		p = strrchr (stcp->ipath, '/');
-		*p = '\0';
-		q = strrchr (stcp->ipath, '/');
-		if (strcmp (q+1, pool_user) == 0) {
+		if ((p = strrchr (stcp->ipath, '/')) != NULL) {
+			*p = '\0';
+			if ((q = strrchr (stcp->ipath, '/')) != NULL) {
+				if (strcmp (q+1, pool_user) == 0) {
+					*p = '/';
+					found = 1;
+					break;
+				}
+            }
 			*p = '/';
-			found = 1;
-			break;
-		}
-		*p = '/';
+        }
 	}
 	if (found == 0 ||
 	    stcp->status != (STAGEALLOC|STAGED)) {

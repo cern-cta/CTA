@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.8 1999/12/09 13:47:31 jdurand Exp $
+ * $Id: sendrep.c,v 1.9 2000/02/11 11:06:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:47:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,8 +58,7 @@ sendrep(va_alist) va_dcl
 		if (rep_type == RTCOPY_OUT) {
 			p = prtbuf;
 			if (saveflag) {
-				q = strchr (p, '\n');
-				if (! q) {	/* line is still incomplete */
+				if ((q = strchr (p, '\n')) == NULL) {	/* line is still incomplete */
 					strcat (savebuf, p);
 					goto sndmsg;
 				}
@@ -77,7 +76,7 @@ sendrep(va_alist) va_dcl
 				saveflag = 0;
 				p = q + 1;
 			}
-			while (q = strchr (p, '\n')) {
+			while ((q = strchr (p, '\n')) != NULL) {
 				*q = '\0';
 				switch (iserrmsg (p)) {
 				case 0:

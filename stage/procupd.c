@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.13 2000/01/26 14:04:06 jdurand Exp $
+ * $Id: procupd.c,v 1.14 2000/02/11 11:06:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.13 $ $Date: 2000/01/26 14:04:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.14 $ $Date: 2000/02/11 11:06:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -176,10 +176,12 @@ char *clienthost;
 			break;
 		case 'Z':
 			Zflag++;
-			p = strtok (optarg, ".");
-			reqid = strtol (p, &dp, 10);
-			p = strtok (NULL, "@");
-			key = strtol (p, &dp, 10);
+			if ((p = strtok (optarg, ".")) != NULL) {
+				reqid = strtol (p, &dp, 10);
+				if ((p = strtok (NULL, "@")) != NULL) {
+                  key = strtol (p, &dp, 10);
+				}
+            }
 			break;
 		}
 	}
@@ -271,7 +273,7 @@ char *clienthost;
 		sendrep (rpfd, MSG_OUT, stcp->ipath);
 		goto reply;
 	}
-	if (p = strchr (stcp->ipath, ':')) {
+	if ((p = strchr (stcp->ipath, ':')) != NULL) {
 		q = stcp->ipath;
 	} else {
 		q = strchr (stcp->ipath + 1, '/') + 1;
