@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.28 2002/04/11 10:31:18 jdurand Exp $
+ * $Id: stagealloc.c,v 1.29 2002/04/30 13:06:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.28 $ $Date: 2002/04/11 10:31:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.29 $ $Date: 2002/04/30 13:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -80,7 +80,7 @@ int main(argc, argv)
 #endif
 
 	nargs = argc;
-	uid = getuid();
+	uid = Guid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.32 2002/04/11 10:36:09 jdurand Exp $
+ * $Id: stageput.c,v 1.33 2002/04/30 13:08:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.32 $ $Date: 2002/04/11 10:36:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.33 $ $Date: 2002/04/30 13:08:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -101,7 +101,7 @@ int main(argc, argv)
 	};
 
 	nargs = argc;
-	uid = getuid();
+	uid = Guid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
