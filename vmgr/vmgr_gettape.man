@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.6 $ $Date: 2000/03/31 13:23:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.7 $ $Date: 2000/04/12 06:25:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2000/03/31 13:23:27 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE 3 "$Date: 2000/04/12 06:25:23 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -18,7 +18,8 @@ vmgr_gettape \- get a tape volume to store a given amount of data
 .BI "char *" dgn ,
 .BI "char *" density ,
 .BI "char *" lbltype ,
-.BI "int *" fseq )
+.BI "int *" fseq ,
+.BI "u_signed64 *" estimated_free_space )
 .SH DESCRIPTION
 .B vmgr_gettape
 gets a tape volume to store a given amount of data.
@@ -56,6 +57,11 @@ The buffer must be at least CA_MAXDENLEN+1 characters long.
 .I lbltype
 points at a buffer to receive the label type corresponding to the tape.
 The buffer must be at least 3 characters long.
+.TP
+.I estimated_free_space
+receives the estimated free space on this volume. It can be smaller than
+.I Size
+if no tape has enough free space.
 .LP
 Only
 .I vid
