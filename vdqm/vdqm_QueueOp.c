@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.18 $ $Date: 2000/01/12 15:58:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.19 $ $Date: 2000/01/18 09:11:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1232,13 +1232,16 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             return(-1);
         }
         /*
-         * Move back running request (if any) to top of VolReq queue.
+         * Remove running request (if any). Client will normally retry
          */
         if ( drvrec->drv.status & VDQM_UNIT_BUSY ) {
             volrec = drvrec->vol;
             if ( volrec != NULL ) {
+                log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\
+n",
+                    volrec->vol.VolReqID);
                 volrec->drv = NULL;
-                AddVolRecord(dgn_context,volrec);
+                DelVolRecord(dgn_context,volrec);
             }
             drvrec->vol = NULL;
             *drvrec->drv.volid = '\0';
@@ -1262,11 +1265,34 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     } else if ( DrvReq->status & VDQM_UNIT_UP ) {
         /*
          * Unit configured up. Make sure that "down" status is reset.
-         * Also, if there is no job and no volume on the unit, set it FREE.
+         * We also mark drive free if input request doesn't specify
+         * otherwise.
+         * If the input request is a plain config up and the unit was not 
+         * down there is a job assigned it probably  means that the tape 
+         * server has been rebooted. It does then not make sense
+         * to keep the job because client has lost connection long ago and
+         * has normally issued a retry. We can therefore remove the 
+         * job from queue.
          */
-        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
-        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
-        if ( drvrec->vol == NULL && *drvrec->drv.volid == '\0' )
+        if ( (DrvReq->status == VDQM_UNIT_UP ||
+              DrvReq->status == (VDQM_UNIT_UP | VDQM_UNIT_FREE)) &&
+            !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
+            if ( drvrec->vol != NULL || *drvrec->drv.volid != '\0' ) {
+                volrec = drvrec->vol;
+                if ( volrec != NULL ) {
+                    log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\n",
+                        volrec->vol.VolReqID);
+                    DelVolRecord(dgn_context,volrec);
+                    drvrec->vol = NULL;
+                }
+                *drvrec->drv.volid = '\0';
+                drvrec->drv.VolReqID = 0;
+                drvrec->drv.jobID = 0;
+            } 
+            drvrec->drv.status = VDQM_UNIT_UP | VDQM_UNIT_FREE;
+        }
+
+        if ( DrvReq->status == VDQM_UNIT_UP )
             drvrec->drv.status |= VDQM_UNIT_FREE;
         drvrec->drv.status |= DrvReq->status;
     } else {
