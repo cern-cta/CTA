@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_lseek.man,v 1.4 2002/11/21 17:09:54 bcouturi Exp $
+.\" $Id: rfio_lseek.man,v 1.5 2003/11/12 15:45:34 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_lseek.man,v $ $Revision: 1.4 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_lseek.man,v $ $Revision: 1.5 $ $Date: 2003/11/12 15:45:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_LSEEK 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_LSEEK 3 "$Date: 2003/11/12 15:45:34 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_lseek \- positions/repositions a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_lseek \- positions/repositions a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_lseek (int " s ", off_t " offset ", int " how ");"
+.BI "off_t rfio_lseek (int " s ", off_t " offset ", int " how ");"
 .br
 .sp 
 Under Linux, for large files:
@@ -25,7 +25,7 @@ Under Linux, for large files:
 \fB#include "rfio_api.h"\fR
 .br
 .sp
-.BI "int rfio_lseek64 (int " s ", off64_t " offset ", int " how ");"
+.BI "off64_t rfio_lseek64 (int " s ", off64_t " offset ", int " how ");"
 .br
 .sp
 For large files, under other systems:
@@ -34,7 +34,7 @@ For large files, under other systems:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_lseek64 (int " s ", off64_t " offset ", int " how ");"
+.BI "off64_t rfio_lseek64 (int " s ", off64_t " offset ", int " how ");"
 .SH DESCRIPTION
 .B rfio_lseek
 positions/repositions to
