@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/11 16:35:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/12 06:53:29 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/11 16:35:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/12 06:53:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1272,6 +1272,7 @@ static int procReqsForVID(
                       );
       if ( _dbErr != NULL ) free(_dbErr);      
     }
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -1309,6 +1310,7 @@ static int procReqsForVID(
       if ( _dbErr != NULL ) free(_dbErr);      
     }
     C_Services_rollback(*svcs,iAddr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -1316,6 +1318,7 @@ static int procReqsForVID(
 
   if ( nbItems == 0 ) {
     C_Services_rollback(*svcs,iAddr);
+    C_IAddress_delete(iAddr);
     serrno = ENOENT;
     return(-1);
   }
@@ -1406,8 +1409,9 @@ static int procReqsForVID(
                               RTCPCLD_LOG_WHERE
                               );
             }
-            serrno = save_serrno;
             C_Services_rollback(*svcs,iAddr);
+            C_IAddress_delete(iAddr);
+            serrno = save_serrno;
             return(-1);
           }
           if ( dontLog == 0 ) {
@@ -1493,7 +1497,7 @@ static int procReqsForVID(
         ID_TYPE _key = 0;
         Cstager_Segment_id(segmArray[i],&_key);
         iObj = Cstager_Segment_getIObject(segmArray[i]);
-        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,0);
+        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
         if ( rc == -1 ) {
           save_serrno = serrno;
           if ( dontLog == 0 ) {
@@ -1518,9 +1522,9 @@ static int procReqsForVID(
                             RTCPCLD_LOG_WHERE
                             );
           }
+          C_Services_rollback(*svcs,iAddr);
           C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
-          C_Services_rollback(*svcs,iAddr);
           serrno = save_serrno;
           return(-1);
         }
@@ -1528,46 +1532,51 @@ static int procReqsForVID(
 
     }
   }
+
   /*
-   * Needed until a non-recursive version of updateRep() exists for
-   * updating the segments individually
+   * BEGIN Hack: always rollback since we haven't modified the Tape.
+   */
+  C_Services_rollback(*svcs,iAddr);
+  /*
+   * END Hack: always rollback since we haven't modified the Tape.
    */
   
-  if ( updated == 1 ) {
-    rc = C_Services_commit(*svcs,iAddr);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      C_IAddress_delete(iAddr);
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+3,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "C_Services_commit()",
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
-      }
-      if ( segmArray != NULL ) free(segmArray);
-      C_Services_rollback(*svcs,iAddr);
-      serrno = save_serrno;
-      return(-1);
-    }
-  } else C_Services_rollback(*svcs,iAddr);
+/*   if ( updated == 1 ) { */
+/*     rc = C_Services_commit(*svcs,iAddr); */
+/*     if ( rc == -1 ) { */
+/*       save_serrno = serrno; */
+/*       C_IAddress_delete(iAddr); */
+/*       if ( dontLog == 0 ) { */
+/*         char *_dbErr = NULL; */
+/*         (void)dlf_write( */
+/*                         (inChild == 0 ? mainUuid : childUuid), */
+/*                         DLF_LVL_ERROR, */
+/*                         RTCPCLD_MSG_DBSVC, */
+/*                         (struct Cns_fileid *)NULL, */
+/*                         RTCPCLD_NB_PARAMS+3, */
+/*                         "DBSVCCALL", */
+/*                         DLF_MSG_PARAM_STR, */
+/*                         "C_Services_commit()", */
+/*                         "ERROR_STR", */
+/*                         DLF_MSG_PARAM_STR, */
+/*                         sstrerror(serrno), */
+/*                         "DB_ERROR", */
+/*                         DLF_MSG_PARAM_STR, */
+/*                         (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))), */
+/*                         RTCPCLD_LOG_WHERE */
+/*                         ); */
+/*         if ( _dbErr != NULL ) free(_dbErr); */
+/*       } */
+/*       if ( segmArray != NULL ) free(segmArray); */
+/*       C_Services_rollback(*svcs,iAddr); */
+/*       serrno = save_serrno; */
+/*       return(-1); */
+/*     } */
+/*   } else C_Services_rollback(*svcs,iAddr); */
+
+  C_IAddress_delete(iAddr);
   
   if ( segmArray != NULL ) free(segmArray);
-  C_IAddress_delete(iAddr);
   rtcp_log(LOG_DEBUG,"procReqsForVID() updated=%d, newFileReqs=%d, segmUpdated=%d\n",
            updated,newFileReqs,segmUpdated);
   if ( (updated == 1) || (incompleteSegments == 1) ) (void)notifyTape(currentTape);
@@ -2325,6 +2334,14 @@ int rtcpcld_setFileStatus(
     rc = getDbSvc(&svcs);
     if ( rc != -1 && svcs != NULL && *svcs != NULL ) 
       rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+    save_serrno = serrno;
+    /*
+     * BEGIN Hack: always rollback since we haven't modified the Tape.
+     */
+    if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
+    /*
+     * END Hack: always rollback since we haven't modified the Tape.
+     */
     if ( rc == -1 ) {
       save_serrno = serrno;
       if ( dontLog == 0 ) {
@@ -2355,7 +2372,6 @@ int rtcpcld_setFileStatus(
                         );
         if ( _dbErr != NULL ) free(_dbErr);
       }
-      if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
