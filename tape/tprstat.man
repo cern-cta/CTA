@@ -1,0 +1,31 @@
+.\" @(#)$RCSfile: tprstat.man,v $ $Revision: 1.1 $ $Date: 2000/10/10 09:40:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPRSTAT 1 "$Date: 2000/10/10 09:40:11 $" CASTOR "Ctape User Commands"
+.SH NAME
+tprstat \- give the device group reservations for all tape users on a given server
+.SH SYNOPSIS
+.B tprstat
+.SH DESCRIPTION
+.B tprstat
+gives the device group reservations for all tape users on a given server in
+tabular form: one line per device group per user.
+.HP
+userid	user login name. The tpdaemon entry gives a summary
+for the complete system.
+.HP
+jid	process id of the user login shell. It is equal to the
+process group id for the Bourne shell.
+.HP
+dgn	device group name.
+.HP
+rsvd	number of units reserved in this device group. The
+tpdaemon entry gives the number of units configured.
+.HP
+used	number of units allocated in this device group.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Ctape_rstatus(3)
