@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/13 11:52:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/13 12:10:15 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.38 $ $Release$ $Date: 2004/08/13 11:52:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/13 12:10:15 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1326,7 +1326,7 @@ static int procReqsForVID(
     serrno = save_serrno;
     return(-1);
   }
-  Cstager_Tape_delete(dummpTp);
+  Cstager_Tape_delete(dummyTp);
   /*
    * END Hack until client can use a createRepNoRec() to add segments
    */
@@ -2394,7 +2394,7 @@ int rtcpcld_setFileStatus(
      * BEGIN Hack: always rollback since we haven't modified the Tape.
      */
     if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
-    Cstager_Tape_delete(dummpTp);
+    Cstager_Tape_delete(dummyTp);
     /*
      * END Hack: always rollback since we haven't modified the Tape.
      */
