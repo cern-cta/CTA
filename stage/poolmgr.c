@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.111 2001/03/13 08:05:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.112 2001/03/13 08:06:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.111 $ $Date: 2001/03/13 08:05:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.112 $ $Date: 2001/03/13 08:06:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3030,7 +3030,7 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* @@@@ EXCEPTIONNAL @@@@ */
-    Cnsfileclass.migr_time_interval = 1;
+    /* Cnsfileclass.migr_time_interval = 1; */
     /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
