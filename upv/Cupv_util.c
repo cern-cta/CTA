@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_util.c,v 1.2 2002/06/07 13:10:52 bcouturi Exp $
+ * $Id: Cupv_util.c,v 1.3 2002/06/12 08:17:11 bcouturi Exp $
  */
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
 
-char *forced_endptr_error = "Z";
+char *Cupv_forced_endptr_error = "Z";
 
 struct flag2name {
 	u_signed64 flag;
@@ -134,7 +134,7 @@ int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
 		}
 		if (**endptr == '\0') {
 			/* We force the caller to have an error anyway, just checking **endptr */
-			*endptr = forced_endptr_error;
+			*endptr = Cupv_forced_endptr_error;
 		}
 		rc = -1;
 	} else {
@@ -148,7 +148,7 @@ int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
             }
 			if (**endptr == '\0') {
 				/* We force the caller to have an error anyway, just checking **endptr */
-				*endptr = forced_endptr_error;
+				*endptr = Cupv_forced_endptr_error;
 			}
 			serrno = errno = ERANGE;
 			rc = -1;

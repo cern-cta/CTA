@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:17:11 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 /*      Cupvlist - list privilege entries */
@@ -60,18 +60,16 @@ main(argc, argv)
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
 
+/*    char tmpbuf[8]; */
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
+
 
   usr[0] = 0;
   grp[0] = 0;
   src[0]=0;
   tgt[0]=0;
-
-
-/*    char tmpbuf[8]; */
-
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
   Copterr = 1;
   Coptind = 1;
