@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.12 2001/09/18 20:38:40 jdurand Exp $
+ * $Id: procfilchg.c,v 1.13 2001/09/25 07:53:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.12 $ $Date: 2001/09/18 20:38:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.13 $ $Date: 2001/09/25 07:53:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -214,7 +214,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				doneretenp_on_disk = 1;
 			}
 			if ((status_flag != 0) && (! donestatus)) {
-				if (stage_strtoi(&thisstatus, Coptarg, &dp, 10) != 0) {
+				if (stage_strtoi(&thisstatus, Coptarg, &dp, 0) != 0) {
 					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--status" : "--status (out of range)");
 					errflg++;
 				}
