@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrenterpool.c,v $ $Revision: 1.2 $ $Date: 2000/03/02 13:53:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrenterpool.c,v $ $Revision: 1.3 $ $Date: 2000/03/02 14:55:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrenterpool - define a new tape pool */
@@ -40,7 +40,7 @@ char **argv;
 			if ((pool_gid = strtol (Coptarg, &dp, 10)) < 0 ||
 			    *dp != '\0') {
 				fprintf (stderr,
-				    "invalid pool_gid for pool %s\n", pool_name);
+				    "invalid pool_gid %s\n", Coptarg);
 				errflg++;
 			}
 			break;
@@ -48,7 +48,7 @@ char **argv;
 			if ((pool_uid = strtol (Coptarg, &dp, 10)) < 0 ||
 			    *dp != '\0') {
 				fprintf (stderr,
-				    "invalid pool_uid for pool %s\n", pool_name);
+				    "invalid pool_uid %s\n", Coptarg);
 				errflg++;
 			}
 			break;
