@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/29 16:59:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,71 +40,20 @@
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageUpdc::buildRequest()
   throw (castor::exception::Exception) {
+  // First reject some flags parsed by BaseCmdLineClient
+  std::vector<std::string> rejected;
+  rejected.push_back("p");
+  rejected.push_back("K");
+  rejected.push_back("A");
+  rejected.push_back("s");
+  rejected.push_back("silent");
+  rejected.push_back("nowait");
+  rejected.push_back("noretry");
+  rejected.push_back("rdonly");
+  rejectFlags(rejected, "stageqry");
+  // uses some other flags
   setRhHost();
   setRhPort();
-  if (m_inputFlags.find("p") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-p option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // -K option (parsed by BaseClient)
-  if (m_inputFlags.find("K") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-K option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;
-  }
-  // Allocation policy
-  if (m_inputFlags.find("A") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-A option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // Size
-  if (m_inputFlags.find("s") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-A option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // Silent
-  if (m_inputFlags.find("silent") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--silent option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // NoWait
-  if (m_inputFlags.find("nowait") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--nowait option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // NoRetry
-  if (m_inputFlags.find("noretry") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--noretry option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
-  // RdOnly
-  if (m_inputFlags.find("rdonly") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--rdonly option is not valid in the stageupdc command."
-      << std::endl;
-    throw e;    
-  }
   // Build request
   castor::rh::StageUpdcRequest* req =
     new castor::rh::StageUpdcRequest();

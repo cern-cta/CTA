@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,19 +40,16 @@
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageIn::buildRequest()
   throw (castor::exception::Exception) {
+  // First reject some flags parsed by BaseCmdLineClient
+  std::vector<std::string> rejected;
+  rejected.push_back("K");
+  rejectFlags(rejected, "stagein");
+  // uses some other flags
   u_signed64 flags = 0;
   int openflags = 0;
   setRhHost();
   setRhPort();
   std::string poolName = getPoolName();
-  // -K option (parsed by BaseClient)
-  if (m_inputFlags.find("K") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-K option is not valid in the stagein command."
-      << std::endl;
-    throw e;    
-  }
   // Allocation policy
   if (m_inputFlags.find("A") != m_inputFlags.end()) {
     if (m_inputFlags["A"] == "deferred") {

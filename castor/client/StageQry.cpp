@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageQryRequest.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/client/StageQryResponseHandler.hpp"
 #include "stage_constants.h"
 
 // Local Files
@@ -41,61 +42,21 @@
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageQry::buildRequest()
   throw (castor::exception::Exception) {
+  // First reject some flags parsed by BaseCmdLineClient
+  std::vector<std::string> rejected;
+  rejected.push_back("K");
+  rejected.push_back("A");
+  rejected.push_back("silent");
+  rejected.push_back("nowait");
+  rejected.push_back("rdonly");
+  rejectFlags(rejected, "stageqry");
+  // uses some other flags
   u_signed64 flags = 0;
   setRhHost();
   setRhPort();
   std::string poolName = getPoolName();
-  // -K option (parsed by BaseClient)
-  if (m_inputFlags.find("K") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-K option is not valid in the stageqry command."
-      << std::endl;
-    throw e;
-  }
-  // Allocation policy
-  if (m_inputFlags.find("A") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-A option is not valid in the stageqry command."
-      << std::endl;
-    throw e;    
-  }
-  // Size
-  if (m_inputFlags.find("s") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-A option is not valid in the stageqry command."
-      << std::endl;
-    throw e;    
-  }
-  // Silent
-  if (m_inputFlags.find("silent") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--silent option is not valid in the stageqry command."
-      << std::endl;
-    throw e;    
-  }
-  // NoWait
-  if (m_inputFlags.find("nowait") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--nowait option is not valid in the stageqry command."
-      << std::endl;
-    throw e;    
-  }
-  // NoRetry
   if (m_inputFlags.find("noretry") != m_inputFlags.end()) {
     flags |= STAGE_NORETRY;
-  }
-  // RdOnly
-  if (m_inputFlags.find("rdonly") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--rdonly option is not valid in the stageqry command."
-      << std::endl;
-    throw e;    
   }
   // Build request
   castor::rh::StageQryRequest* req =
@@ -114,6 +75,14 @@ castor::rh::Request* castor::client::StageQry::buildRequest()
     f->setRequest(req);
   }
   return req;
+}
+
+//------------------------------------------------------------------------------
+// responseHandler
+//------------------------------------------------------------------------------
+castor::client::IResponseHandler*
+castor::client::StageQry::responseHandler() throw() {
+  return new StageQryResponseHandler();
 }
 
 //------------------------------------------------------------------------------

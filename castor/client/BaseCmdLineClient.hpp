@@ -87,6 +87,15 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
+       * creates a responseHandler to be used for the requests.
+       * A default implementation is given here.
+       * It can be overwritten in the end clients in order
+       * to specialize the output
+       */
+      virtual castor::client::IResponseHandler* responseHandler()
+        throw();
+
+      /**
        * Display an error message and
        * show usage of the executable.
        * Has to be reimplemented in each client.
@@ -119,6 +128,17 @@ namespace castor {
        */
       std::vector<u_signed64> getSizes()
         throw (castor::exception::Exception);
+
+      /**
+       * rejects a given list of flags by sending an
+       * exception if one of them was set
+       * @param flags the flags to reject
+       * @param cmdName the name of the command (for logging purposes)
+       * @exception Exception in case of of the flags was set
+       */
+      void rejectFlags(std::vector<std::string> &flags,
+                       std::string cmdName)
+        throw(castor::exception::Exception);
 
     protected:
 

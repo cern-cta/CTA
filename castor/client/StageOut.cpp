@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,51 +40,26 @@
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageOut::buildRequest()
   throw (castor::exception::Exception) {
+  // First reject some flags parsed by BaseCmdLineClient
+  std::vector<std::string> rejected;
+  rejected.push_back("A");
+  rejected.push_back("silent");
+  rejected.push_back("nowait");
+  rejected.push_back("rdonly");
+  rejectFlags(rejected, "stageout");
+  // uses some other flags
   u_signed64 flags = 0;
   setRhHost();
   setRhPort();
   std::string poolName = getPoolName();
-  // -K option (parsed by BaseClient)
   if (m_inputFlags.find("K") != m_inputFlags.end()) {
     flags |= STAGE_KEEP;
   }
-  // Allocation policy
-  if (m_inputFlags.find("A") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "-A option is not valid in the stageout command."
-      << std::endl;
-    throw e;    
-  }
   // Size
   std::vector<u_signed64> sizes = getSizes();
-  // Silent
-  if (m_inputFlags.find("silent") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--silent option is not valid in the stageout command."
-      << std::endl;
-    throw e;    
-  }
-  // NoWait
-  if (m_inputFlags.find("nowait") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--nowait option is not valid in the stageout command."
-      << std::endl;
-    throw e;    
-  }
   // NoRetry
   if (m_inputFlags.find("noretry") != m_inputFlags.end()) {
     flags |= STAGE_NORETRY;
-  }
-  // RdOnly
-  if (m_inputFlags.find("rdonly") != m_inputFlags.end()) {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "--rdonly option is not valid in the stageout command."
-      << std::endl;
-    throw e;    
   }
   // Build request
   castor::rh::StageOutRequest* req =

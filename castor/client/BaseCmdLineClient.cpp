@@ -77,7 +77,7 @@ void castor::client::BaseCmdLineClient::run(int argc, char** argv)
       return;
     }
     // build a ResponseHandler
-    IResponseHandler* rh = new CmdLineResponseHandler();
+    IResponseHandler* rh = responseHandler();
     // send it
     sendRequest(req, rh);
     // free memory
@@ -154,6 +154,14 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   }
   // Successful completion
   return true;
+}
+
+//------------------------------------------------------------------------------
+// responseHandler
+//------------------------------------------------------------------------------
+castor::client::IResponseHandler*
+castor::client::BaseCmdLineClient::responseHandler() throw() {
+  return new CmdLineResponseHandler();
 }
 
 //------------------------------------------------------------------------------
@@ -261,4 +269,24 @@ std::vector<u_signed64> castor::client::BaseCmdLineClient::getSizes()
     free(size);
   }
   return sizes;
+}
+
+//------------------------------------------------------------------------------
+// rejectFlags
+//------------------------------------------------------------------------------
+void castor::client::BaseCmdLineClient::rejectFlags(std::vector<std::string> &flags,
+                                                    std::string cmdName)
+  throw (castor::exception::Exception) {
+  for (std::vector<std::string>::const_iterator it =
+         flags.begin();
+       it != flags.end();
+       it++) {
+    if (m_inputFlags.find(*it) != m_inputFlags.end()) {
+      castor::exception::Exception e(ETPRM);
+      e.getMessage()
+        << *it << " option is not valid in the "
+        << cmdName << " command.";
+      throw e;    
+    }
+  }
 }
