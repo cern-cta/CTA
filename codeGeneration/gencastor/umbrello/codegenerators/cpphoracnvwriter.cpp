@@ -262,20 +262,35 @@ void CppHOraCnvWriter::writeMembers() {
             << endl << getIndent()
             << "oracle::occi::Statement *m_updateStatement;"
             << endl << endl;
-  // Dealing with object status if we have a request
+  // Dealing with request needed to be stored in newRequests table
   UMLObject* obj = getClassifier(QString("Request"));
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-  if (m_classInfo->allSuperclasses.contains(concept)) {
+  UMLObject* obj2 = getClassifier(QString("SubRequest"));
+  const UMLClassifier *concept2 = dynamic_cast<UMLClassifier*>(obj2);
+  if (m_classInfo->allSuperclasses.contains(concept) &&
+      !m_classInfo->allSuperclasses.contains(concept2)) {
     *m_stream << getIndent()
-              << "/// SQL statement for new request insertion"
+              << "/// SQL statement for request insertion into newRequests table"
               << endl << getIndent()
               << "static const std::string s_insertNewReqStatementString;"
               << endl << endl << getIndent()
-              << "/// SQL statement object for request status insertion"
+              << "/// SQL statement object for request status insertion into newRequests table"
               << endl << getIndent()
               << "oracle::occi::Statement *m_insertNewReqStatement;"
               << endl << endl;
   }
+//   // Dealing with SubRequest needed to be stored in newSubRequests table
+//   if (m_classInfo->className == "SubRequest") {
+//     *m_stream << getIndent()
+//               << "/// SQL statement for request insertion into newSubRequests table"
+//               << endl << getIndent()
+//               << "static const std::string s_insertNewSubReqStatementString;"
+//               << endl << endl << getIndent()
+//               << "/// SQL statement object for request status insertion into newSubRequests table"
+//               << endl << getIndent()
+//               << "oracle::occi::Statement *m_insertNewSubReqStatement;"
+//               << endl << endl;
+//   }
   // Dealing with type identification (storage and deletion)
   *m_stream << getIndent()
             << "/// SQL statement for type storage "

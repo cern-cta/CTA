@@ -341,9 +341,9 @@ void CppCppOraCnvWriter::writeConstants() {
             << "\"DELETE FROM Id2Type WHERE id = :1\";"
             << endl << endl;
   // Status dedicated statements
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent()
-              << "/// SQL statement for request status insertion"
+              << "/// SQL statement for request insertion into newRequests table"
               << endl << getIndent()
               << "const std::string "
               << m_classInfo->fullPackageName
@@ -352,6 +352,19 @@ void CppCppOraCnvWriter::writeConstants() {
               << getIndent()
               << "\"INSERT INTO newRequests (id, type, creation)"
               << " VALUES (:1, :2, SYSDATE)\";"
+              << endl << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent()
+              << "/// SQL statement for subrequest insertion into newSubRequests table"
+              << endl << getIndent()
+              << "const std::string "
+              << m_classInfo->fullPackageName
+              << "Ora" << m_classInfo->className
+              << "Cnv::s_insertNewSubReqStatementString =" << endl
+              << getIndent()
+              << "\"INSERT INTO newSubRequests (id, creation)"
+              << " VALUES (:1, SYSDATE)\";"
               << endl << endl;
   }
   // Associations dedicated statements
@@ -691,8 +704,11 @@ void CppCppOraCnvWriter::writeConstructors() {
             << getIndent() << "  m_deleteStatement(0)," << endl
             << getIndent() << "  m_selectStatement(0)," << endl
             << getIndent() << "  m_updateStatement(0)," << endl;
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent() << "  m_insertNewSubReqStatement(0)," << endl;
   }
   *m_stream << getIndent() << "  m_storeTypeStatement(0)," << endl
             << getIndent() << "  m_deleteTypeStatement(0)";
@@ -786,9 +802,14 @@ void CppCppOraCnvWriter::writeReset() {
             << endl << getIndent()
             << "deleteStatement(m_updateStatement);"
             << endl;
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent()
               << "deleteStatement(m_insertNewReqStatement);"
+              << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent()
+              << "deleteStatement(m_insertNewSubReqStatement);"
               << endl;
   }
   *m_stream << getIndent() << "deleteStatement(m_storeTypeStatement);"
@@ -862,9 +883,14 @@ void CppCppOraCnvWriter::writeReset() {
             << "m_selectStatement = 0;"
             << endl << getIndent()
             << "m_updateStatement = 0;" << endl;
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent()
               << "m_insertNewReqStatement = 0;"
+              << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent()
+              << "m_insertNewSubReqStatement = 0;"
               << endl;
   }
   *m_stream << getIndent()
@@ -2002,12 +2028,22 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << ", oracle::occi::OCCIDOUBLE);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent()
               << "if (0 == m_insertNewReqStatement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent()
+              << "if (0 == m_insertNewSubReqStatement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_insertNewSubReqStatement = createStatement(s_insertNewSubReqStatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
@@ -2080,13 +2116,20 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl << getIndent()
             << "m_storeTypeStatement->executeUpdate();"
             << endl;
-  if (isRequest()) {
+  if (isNewRequest()) {
     *m_stream << getIndent()
               << "m_insertNewReqStatement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "m_insertNewReqStatement->setInt(2, obj->type());"
               << endl << getIndent()
               << "m_insertNewReqStatement->executeUpdate();"
+              << endl;
+  }
+  if (isNewSubRequest()) {
+    *m_stream << getIndent()
+              << "m_insertNewSubReqStatement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_insertNewSubReqStatement->executeUpdate();"
               << endl;
   }
   // Commit if needed
@@ -2794,10 +2837,21 @@ void CppCppOraCnvWriter::printSQLError(QString name,
 }
 
 //=============================================================================
-// isRequest
+// isNewRequest
 //=============================================================================
-bool CppCppOraCnvWriter::isRequest() {
+bool CppCppOraCnvWriter::isNewRequest() {
   UMLObject* obj = getClassifier(QString("Request"));
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-  return m_classInfo->allSuperclasses.contains(concept);
+  UMLObject* obj2 = getClassifier(QString("FileRequest"));
+  const UMLClassifier *concept2 = dynamic_cast<UMLClassifier*>(obj2);
+  return m_classInfo->allSuperclasses.contains(concept) &&
+    !m_classInfo->allSuperclasses.contains(concept2);
+}
+
+//=============================================================================
+// isNewSubRequest
+//=============================================================================
+bool CppCppOraCnvWriter::isNewSubRequest() {
+  //return m_classInfo->className == "SubRequest";
+  return false;
 }

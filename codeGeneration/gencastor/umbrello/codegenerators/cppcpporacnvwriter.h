@@ -132,9 +132,16 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
                      AssocList& assocs);
 
   /**
-   * Says whether the current object is a request
+   * Says whether the current object is a request that
+   * needs storage in the newRequests table
    */
-  bool isRequest();
+  bool isNewRequest();
+
+  /**
+   * Says whether the current object is a subrequest that
+   * needs storage in the newSubRequests table
+   */
+  bool isNewSubRequest();
 
   /**
    * creates file oracle.sql and write beginning of it
