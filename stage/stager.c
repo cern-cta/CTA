@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.31 2000/03/31 15:27:33 jdurand Exp $
+ * $Id: stager.c,v 1.32 2000/04/03 16:11:50 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.31 $ $Date: 2000/03/31 15:27:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.32 $ $Date: 2000/04/03 16:11:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -376,6 +376,7 @@ int stagein_castor_hsm_file() {
 	char tmpbuf2[21];
 #endif
 	unsigned char blockid[4];
+	char fseg_status;
 
 	/* We allocate as many size arrays */
 	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))        == NULL ||
@@ -455,7 +456,8 @@ int stagein_castor_hsm_file() {
 								&(hsm_fsegsize[i]), /* segment size */
 								vid,                /* segment vid */
 								&(hsm_fseq[i]),     /* segment fseq */
-								blockid             /* segment blockid */
+								blockid,            /* segment blockid */
+								&fseg_status        /* segment status */
 								)) {
 				strcpy(vid,"");
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_getsegattrs",
