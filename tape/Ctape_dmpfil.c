@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.17 $ $Date: 2002/06/25 11:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.18 $ $Date: 2002/11/06 10:16:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -134,6 +134,8 @@ int flags;
 	case D60GC:
 	case D100G:
 	case D100GC:
+	case D110G:
+	case D110GC:
 	case D200G:
 	case D200GC:
 	case DDS:
@@ -254,6 +256,7 @@ u_signed64 *Size;
 			if (strcmp (dmpparm.devtype, "SD3") == 0 ||
 			    strcmp (dmpparm.devtype, "9840") == 0 ||
 			    strcmp (dmpparm.devtype, "9940") == 0 ||
+			    strcmp (dmpparm.devtype, "SDLT") == 0 ||
 			    strcmp (dmpparm.devtype, "LTO") == 0)
 				tape_used = tape_used + (float) nbytes;
 			else if (strncmp (dmpparm.devtype, "DLT", 3) == 0)
@@ -602,6 +605,10 @@ u_signed64 *Size;
 	} else if (den == D100G || den == D100GC) {
 		perc = tape_used / 1000000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
+			perc);
+	} else if (den == D110G || den == D110GC) {
+		perc = tape_used / 1100000000;
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN SDLT CARTRIDGE (110GB) *****\n",
 			perc);
 	} else if (den == D200G || den == D200GC) {
 		perc = tape_used / 2000000000;
