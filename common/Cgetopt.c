@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.5 $ $Date: 2001/09/18 19:49:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.6 $ $Date: 2004/04/22 16:42:51 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -44,6 +44,7 @@ static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.5 $ $Date: 2001
 /* ============= */
 /* Local headers */
 /* ============= */
+#include <Cglobals.h>
 #include <Cgetopt.h>        /* Our decls, especially TSD's */
 #include <Castor_limits.h>  /* For CA_MAXLINELEN */
 
@@ -52,6 +53,10 @@ static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.5 $ $Date: 2001
 /* =================== */
 static char * _Cgetopt_progname _PROTO ((char *));
 int _Cgetopt_internal _PROTO ((int, char * CONST *, CONST char *));
+static char **C__place _PROTO(());
+static int my_place = -1; /* If Cglobals_get error in order not to crash */
+#define place (*C__place())
+static char *my_place_static = "";
 
 static char * _Cgetopt_progname(nargv0)
      char * nargv0;
@@ -75,7 +80,6 @@ _Cgetopt_internal(nargc, nargv, ostr)
      char * CONST *nargv;
      CONST char *ostr;
 {
-  static char *place = EMSG;		/* option letter processing */
   char *oli;				/* option letter list index */
   
   if (nargv == NULL) {
@@ -272,3 +276,17 @@ Cgetopt_long(nargc, nargv, options, long_options, index)
   return(retval);
 }
 
+static char **C__place() {
+	char **var;
+	/* Call Cglobals_get */
+	Cglobals_get(&my_place,
+				 (void **) &var,
+				 sizeof(char *)
+		);
+	/* If error, var will be NULL */
+	if (var == NULL)
+	{
+		return(&my_place_static);
+	}
+	return(var);
+}
