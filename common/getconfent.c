@@ -1,6 +1,10 @@
 /*
- * $Id: getconfent.c,v 1.4 1999/07/20 15:11:39 obarring Exp $
+ * $Id: getconfent.c,v 1.5 1999/07/21 12:42:20 jdurand Exp $
  * $Log: getconfent.c,v $
+ * Revision 1.5  1999/07/21 12:42:20  jdurand
+ * HP-UX's cc [without options] don't like function prototypes. Changed it
+ * to old C style.
+ *
  * Revision 1.4  1999/07/20 15:11:39  obarring
  * Add CVS log directive
  *
@@ -19,11 +23,25 @@
 #endif
 #endif /* PATH_CONFIG */
 
-const char char_set[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+|~`\\=-{}[]:;''\",./<>?";
+#ifdef CONST
+#undef CONST
+#endif
+#if defined(__STDC__)
+#define CONST const
+#else
+#define CONST
+#endif
+
+CONST char char_set[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+|~`\\=-{}[]:;''\",./<>?";
 
 
-char *getconfent_r(char *category, char *name, int flags,
-		   char *buffer, int bufsiz) {
+char *getconfent_r(category, name, flags, buffer, bufsiz)
+     char *category;
+     char *name;
+     int flags;
+     char *buffer;
+     int bufsiz;
+{
 	char    *filename=PATH_CONFIG;
 	FILE    *fp;
 	char    *p, *cp, *ep;
@@ -94,10 +112,14 @@ char *getconfent_r(char *category, char *name, int flags,
 
 static int value_key = -1;
 
-char *getconfent(char *category, char *name, int flags) {
+char *getconfent(category, name, flags)
+     char *category;
+     char *name;
+     int flags;
+{
 	char *value = NULL;
 
-	Cglobals_get(&value_key,&value,BUFSIZ+1);
+	Cglobals_get(&value_key,(void **) &value,BUFSIZ+1);
 	if ( value == NULL ) {
 		return(NULL);
 	}
