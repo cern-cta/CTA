@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.31 $ $Date: 2003/08/28 10:16:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.32 $ $Date: 2003/10/13 07:39:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -34,6 +34,7 @@ void tpdump_usrmsg(int msg_type, char *msg, ...)
 		fflush (stdout);
 		vfprintf (stderr, msg, args);
 	}
+	va_end (args);
 }
 
 main(argc, argv)
