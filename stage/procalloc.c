@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.42 2002/04/11 10:06:18 jdurand Exp $
+ * $Id: procalloc.c,v 1.43 2002/04/30 12:31:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.42 $ $Date: 2002/04/11 10:06:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.43 $ $Date: 2002/04/30 12:31:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.42 $ $Date: 2
 #include "osdep.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "u64subr.h"
 
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
@@ -82,7 +83,6 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	char **argv;
 	int c, i;
 	int clientpid;
-	char *dp;
 	int errflg = 0;
 	struct group *gr;
 	char *name;
@@ -98,7 +98,8 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitq *wqp = NULL;
+	int checkrc;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -123,7 +124,6 @@ void procallocreq(req_type, magic, req_data, clienthost)
 						 reqid, STAGEALLOC, 0, 0, NULL, "", (char) 0);
 #endif
 
-	wqp = NULL;
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
@@ -152,10 +152,17 @@ void procallocreq(req_type, magic, req_data, clienthost)
 			}
 			break;
 		case 's':
-			stage_strtoi(&(stgreq.size), Coptarg, &dp, 10);
-			if (*dp != '\0' || stgreq.size <= 0) {
+			if ((checkrc = stage_util_check_for_strutou64(Coptarg)) < 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
+			} else {
+				stgreq.size = strutou64(Coptarg);
+				if (stgreq.size <= 0) {
+					sendrep (rpfd, MSG_ERR, STG06, "-s");
+					errflg++;
+				} else {
+					if (checkrc == 0) stgreq.size *= ONE_MB; /* Not unit : default MB */
+				}
 			}
 			break;
 		case 'u':
@@ -215,8 +222,6 @@ void procallocreq(req_type, magic, req_data, clienthost)
 		wqp->nb_clnreq++;
 		cleanpool (stcp->poolname);
 	} else if (c) {
-		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-									(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 		delreq (stcp,1);
 		goto reply;
 	} else {
@@ -254,8 +259,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 					break;
 			}
 			if (! wfp->waiting_on_req)
-				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-											(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
