@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.11 $ $Date: 2001/01/30 13:31:18 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.12 $ $Date: 2001/01/31 12:52:58 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -36,6 +36,7 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.11 $ $Date: 2001/
 #include <Castor_limits.h>
 #include <log.h> 
 #include <net.h>
+#include <common.h>
 #include <serrno.h>
 #include <Cnetdb.h>
 
@@ -111,7 +112,6 @@ char *host_name ;
     char *rthfile = RTHOSTSFILE;
 #endif
    
-    extern char *getconfent();
 
     if ( (p=getconfent("SIMULATION","REMOTE",1))!=NULL &&
         (p=(char *)strtok(p," \t"))!=NULL && !strcmp(p,"YES")) {
@@ -303,7 +303,7 @@ int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
     char tmphost[CA_MAXHOSTNAMELEN+1], *p;
     struct sockaddr_in from;
     struct hostent *hp;
-    int i;
+    int i, save_errno;
     int fromlen = sizeof(from);
 
     if ( s == INVALID_SOCKET ) {
@@ -311,42 +311,50 @@ int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
         return(-1);
     }
     if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == SOCKET_ERROR ) {
+        save_errno = errno;
         log(LOG_ERR, "CDoubleDnsLookup() getpeername(): %s\n",neterror());
-        serrno = SECOMERR;
+        errno = save_errno;
         return(-1);
     }
 
     if ( (hp = Cgethostbyaddr((void *)&from.sin_addr,sizeof(struct in_addr),from.sin_family)) == NULL ) {
+        save_errno = (serrno > 0 ? serrno : errno);
         log(LOG_ERR,"CDoubleDnsLookup() Cgethostbyaddr(): h_errno=%d, %s\n",
             h_errno,neterror());
-        serrno = SECOMERR;
+        serrno = save_errno;
         return(-1);
     }
     strcpy(tmphost,hp->h_name);
 
     /*
-     * Only allow for on-site authorised hosts
+     * Remove domain from on-site hosts
      */
-    if ( (i = isremote(from.sin_addr,tmphost)) != 0 ) {
-        if ( i == -1 ) return(-1);
-        if ( i == 1 ) return(0);
+    if ( (i = isremote(from.sin_addr,tmphost)) == -1 ) {
+        save_errno = errno;
+        log(LOG_ERR,"CDoubleDnsLookup() isremote(): %s\n",neterror());
+        errno = save_errno;
+        return(-1);
     } 
 
-    if ( (p = strchr(tmphost,'.')) != NULL ) *p = '\0';
+    if ( (i==0) && (p = strchr(tmphost,'.')) != NULL ) *p = '\0';
     if ( host != NULL ) strcpy(host,tmphost);
+
     if ( (hp = Cgethostbyname(tmphost)) == NULL ) {
+        save_errno = (serrno > 0 ? serrno : errno);
         log(LOG_ERR,"CDoubleDnsLookup() Cgethostbyname(): h_errno=%d, %s\n",
             h_errno,neterror());
-        serrno = SECOMERR;
+        if ( h_errno == HOST_NOT_FOUND ) serrno = SENOSHOST;
+        else serrno = save_errno;
         return(-1);
     }
     i = 0;
     while (hp->h_addr_list[i] != NULL) {
         log(LOG_DEBUG,"CDoubleDnsLookup() comparing %s with %s\n",
             inet_ntoa(*(struct in_addr *)(hp->h_addr_list[i])),inet_ntoa(from.sin_addr));
-        if ( ((struct in_addr *)(hp->h_addr_list[i++]))->s_addr == from.sin_addr.s_addr ) return(1);
+        if ( ((struct in_addr *)(hp->h_addr_list[i++]))->s_addr == from.sin_addr.s_addr ) return(0);
     }
-    return(0);
+    serrno = SENOSHOST;
+    return(-1);
 }
 
 int DLL_DECL isadminhost(SOCKET s, char *peerhost) {
@@ -357,7 +365,7 @@ int DLL_DECL isadminhost(SOCKET s, char *peerhost) {
     char *admin_hosts, *admin_host;
 
     rc = CDoubleDnsLookup(s,peerhost);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) return(rc);
 
     admin_host = admin_hosts = NULL;
     if ( admin_hosts == NULL ) admin_hosts = getenv("ADMIN_HOSTS");
@@ -369,10 +377,15 @@ int DLL_DECL isadminhost(SOCKET s, char *peerhost) {
     if ( (admin_hosts != NULL) && 
          ((admin_host = strstr(admin_hosts,peerhost)) != NULL) ) {
         i = strlen(peerhost);
-        if ( admin_host[i] == '\0' ||
-             admin_host[i] == ' ' ||
-             admin_host[i] == '\t' ||
-             admin_host[i] == ',' ) return(1);
+        if ( (admin_host[i] == '\0' ||
+              admin_host[i] == ' ' ||
+              admin_host[i] == '\t' ||
+              admin_host[i] == ',' ) &&
+             (admin_host == admin_hosts ||
+              admin_host[-1] == ' ' ||
+              admin_host[-1] == '\t' ||
+              admin_host[-1] == ',') ) return(0);
     }
-    return(0);
+    serrno = SENOTADMIN;
+    return(-1);
 }
