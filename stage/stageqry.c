@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.38 2003/11/17 12:55:27 jdurand Exp $
+ * $Id: stageqry.c,v 1.39 2003/11/17 13:11:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.38 $ $Date: 2003/11/17 12:55:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.39 $ $Date: 2003/11/17 13:11:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -212,7 +212,6 @@ int main(argc, argv)
 				stcp.t_or_d = 't';
 				strncpy(stcp.u1.t.fseq, Coptarg, CA_MAXFSEQLEN);
 			}
-			break;
 			break;
 		case 'S':
 			flags |= STAGE_SORTED;
