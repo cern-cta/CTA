@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/11 12:19:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/11 16:35:18 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/11 12:19:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/11 16:35:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1202,6 +1202,7 @@ static int procReqsForVID(
                           )
      tape_list_t *tape;
 {
+  struct Cstager_Tape_t *dummyTp = NULL;
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -1228,6 +1229,55 @@ static int procReqsForVID(
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
+
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    return(-1);
+  }
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+
+  /*
+   * BEGIN Hack until client can use a createRepNoRec() to add segments
+   */
+  rc = Cstager_IStagerSvc_selectTape(
+                                     stgsvc,
+                                     &dummyTp,
+                                     tape->tapereq.vid,
+                                     tape->tapereq.side,
+                                     tape->tapereq.mode
+                                     );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    if ( dontLog == 0 ) {
+      char *_dbErr = NULL;
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cstager_IStagerSvc_selectTape()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);      
+    }
+    serrno = save_serrno;
+    return(-1);
+  }
+  /*
+   * END Hack until client can use a createRepNoRec() to add segments
+   */
 
   rc = Cstager_IStagerSvc_segmentsForTape(
                                           stgsvc,
@@ -1258,12 +1308,14 @@ static int procReqsForVID(
                       );
       if ( _dbErr != NULL ) free(_dbErr);      
     }
+    C_Services_rollback(*svcs,iAddr);
     serrno = save_serrno;
     return(-1);
   }
   rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   if ( nbItems == 0 ) {
+    C_Services_rollback(*svcs,iAddr);
     serrno = ENOENT;
     return(-1);
   }
@@ -1274,14 +1326,6 @@ static int procReqsForVID(
         sizeof(struct Cstager_Segment_t *),
         compareSegments
         );
-
-  rc = getDbSvc(&svcs);
-  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
@@ -1363,6 +1407,7 @@ static int procReqsForVID(
                               );
             }
             serrno = save_serrno;
+            C_Services_rollback(*svcs,iAddr);
             return(-1);
           }
           if ( dontLog == 0 ) {
@@ -1423,10 +1468,10 @@ static int procReqsForVID(
                                  segmArray[i],
                                  &(fl->filereq.stgReqId)
                                  );
-        if ( cmpStatus != SEGMENT_WAITCOPY ) {
+        if ( cmpStatus != SEGMENT_COPYRUNNING ) {
           updated = 1;
           segmUpdated = 1;
-          Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITCOPY);
+          Cstager_Segment_setStatus(segmArray[i],SEGMENT_COPYRUNNING);
         }
       } else if ( validPosition(segmArray[i]) == 1 ) {
         incompleteSegments = 1;
@@ -1448,7 +1493,7 @@ static int procReqsForVID(
         ID_TYPE _key = 0;
         Cstager_Segment_id(segmArray[i],&_key);
         iObj = Cstager_Segment_getIObject(segmArray[i]);
-        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+        rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,0);
         if ( rc == -1 ) {
           save_serrno = serrno;
           if ( dontLog == 0 ) {
@@ -1475,6 +1520,7 @@ static int procReqsForVID(
           }
           C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
+          C_Services_rollback(*svcs,iAddr);
           serrno = save_serrno;
           return(-1);
         }
@@ -1487,43 +1533,38 @@ static int procReqsForVID(
    * updating the segments individually
    */
   
-/*   if ( updated == 1 ) { */
-/*     ID_TYPE _key = 0; */
-/*     Cstager_Tape_id(currentTape,&_key); */
-/*     iObj = Cstager_Tape_getIObject(currentTape); */
-/*     rc = C_Services_updateRep(*svcs,iAddr,iObj,1); */
-/*     if ( rc == -1 ) { */
-/*       save_serrno = serrno; */
-/*       C_IAddress_delete(iAddr); */
-/*       if ( dontLog == 0 ) { */
-/*         char *_dbErr = NULL; */
-/*         (void)dlf_write( */
-/*                         (inChild == 0 ? mainUuid : childUuid), */
-/*                         DLF_LVL_ERROR, */
-/*                         RTCPCLD_MSG_DBSVC, */
-/*                         (struct Cns_fileid *)NULL, */
-/*                         RTCPCLD_NB_PARAMS+4, */
-/*                         "DBSVCCALL", */
-/*                         DLF_MSG_PARAM_STR, */
-/*                         "C_Services_updateObj()", */
-/*                         "DBKEY", */
-/*                         DLF_MSG_PARAM_INT, */
-/*                         (int)_key, */
-/*                         "ERROR_STR", */
-/*                         DLF_MSG_PARAM_STR, */
-/*                         sstrerror(serrno), */
-/*                         "DB_ERROR", */
-/*                         DLF_MSG_PARAM_STR, */
-/*                         (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))), */
-/*                         RTCPCLD_LOG_WHERE */
-/*                         ); */
-/*         if ( _dbErr != NULL ) free(_dbErr); */
-/*       } */
-/*       if ( segmArray != NULL ) free(segmArray); */
-/*       serrno = save_serrno; */
-/*       return(-1); */
-/*     } */
-/*   } */
+  if ( updated == 1 ) {
+    rc = C_Services_commit(*svcs,iAddr);
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      C_IAddress_delete(iAddr);
+      if ( dontLog == 0 ) {
+        char *_dbErr = NULL;
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_DBSVC,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+3,
+                        "DBSVCCALL",
+                        DLF_MSG_PARAM_STR,
+                        "C_Services_commit()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        "DB_ERROR",
+                        DLF_MSG_PARAM_STR,
+                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                        RTCPCLD_LOG_WHERE
+                        );
+        if ( _dbErr != NULL ) free(_dbErr);
+      }
+      if ( segmArray != NULL ) free(segmArray);
+      C_Services_rollback(*svcs,iAddr);
+      serrno = save_serrno;
+      return(-1);
+    }
+  } else C_Services_rollback(*svcs,iAddr);
   
   if ( segmArray != NULL ) free(segmArray);
   C_IAddress_delete(iAddr);
@@ -1687,7 +1728,7 @@ int rtcpcld_updateVIDStatus(
         Cstager_Tape_setSeverity(tapeItem,tape->tapereq.err.severity);
     }
     
-    rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
+    rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
     if ( rc == -1 ) {
       save_serrno = serrno;
       C_IAddress_delete(iAddr);
@@ -1704,7 +1745,7 @@ int rtcpcld_updateVIDStatus(
                         "DBKEY",
                         DLF_MSG_PARAM_INT,
                         (int)_key,
-                        "C_Services_updateRep()",
+                        "C_Services_updateRepNoRec()",
                         "ERROR_STR",
                         DLF_MSG_PARAM_STR,
                         sstrerror(serrno),
@@ -1819,7 +1860,7 @@ int rtcpcld_setVidWorkerAddress(
   }
   Cstager_Tape_setVwAddress(tapeItem,vwAddress);
   Cstager_Tape_id(tapeItem,&_key);
-  rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
+  rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
@@ -2095,7 +2136,7 @@ int rtcpcld_setFileStatus(
     return(-1);
   }
 
- rc = findSegment(filereq,&segmItem);
+  rc = findSegment(filereq,&segmItem);
   if ( rc == -1 ) return(-1);
   if ( rc == 0 || segmItem == NULL ) {
     (void)updateTapeFromDB(NULL);
@@ -2222,11 +2263,62 @@ int rtcpcld_setFileStatus(
   }
   
   if ( updated == 1 ) {
+    struct Cstager_Tape_t *dummyTp = NULL;
+    struct Cstager_IStagerSvc_t *stgsvc = NULL;
+    char *vid;
+    int mode, side;
     ID_TYPE _key = 0;
     rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
     if ( rc == -1 ) return(-1);
 
     iAddr = C_BaseAddress_getIAddress(baseAddr);
+    /*
+     * BEGIN Hack until client can use a createRepNoRec() to add segments
+     */
+    if ( currentTape != NULL ) {
+      Cstager_Tape_vid(currentTape,(CONST char **)&vid);
+      Cstager_Tape_tpmode(currentTape,&mode);
+      Cstager_Tape_side(currentTape,&side);
+      
+      rc = getStgSvc(&stgsvc);
+      if ( rc == -1 || stgsvc == NULL ) return(-1);
+      rc = Cstager_IStagerSvc_selectTape(
+                                         stgsvc,
+                                         &dummyTp,
+                                         vid,
+                                         side,
+                                         mode
+                                         );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        if ( dontLog == 0 ) {
+          char *_dbErr = NULL;
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_DBSVC,
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+3,
+                          "DBSVCCALL",
+                          DLF_MSG_PARAM_STR,
+                          "Cstager_IStagerSvc_selectTape()",
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "DB_ERROR",
+                          DLF_MSG_PARAM_STR,
+                          (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                          RTCPCLD_LOG_WHERE
+                          );
+          if ( _dbErr != NULL ) free(_dbErr);      
+        }
+        serrno = save_serrno;
+        return(-1);
+      }
+    }
+    /*
+     * END Hack until client can use a createRepNoRec() to add segments
+     */
     iObj = Cstager_Segment_getIObject(segmItem);
     Cstager_Segment_id(segmItem,&_key);
     svcs = NULL;
@@ -2235,7 +2327,6 @@ int rtcpcld_setFileStatus(
       rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
     if ( rc == -1 ) {
       save_serrno = serrno;
-      C_IAddress_delete(iAddr);
       if ( dontLog == 0 ) {
         char *_dbErr = NULL;
         (void)dlf_write(
@@ -2264,6 +2355,8 @@ int rtcpcld_setFileStatus(
                         );
         if ( _dbErr != NULL ) free(_dbErr);
       }
+      if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
