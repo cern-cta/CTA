@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.211 2003/09/08 15:47:43 jdurand Exp $
+ * $Id: procio.c,v 1.212 2003/11/17 10:20:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.211 $ $Date: 2003/09/08 15:47:43 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.212 $ $Date: 2003/11/17 10:20:50 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -679,12 +679,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 		nargs = req2argv (rbp, &argv);
 	}
 
-	if (Cgetpwuid (stgreq.uid) == NULL) {
+	if (stage_util_validuser(NULL,(uid_t) stgreq.uid,(gid_t) stgreq.gid) != 0) {
 		char uidstr[8];
-		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", stgreq.uid);
 		sendrep (&rpfd, MSG_ERR, STG11, uidstr);
-		c = (api_out != 0) ? SEUSERUNKN : SESYSERR;
+		c = (api_out != 0) ? serrno : SESYSERR;
 		goto reply;
 	}
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
@@ -3549,9 +3548,8 @@ void procputreq(req_type, magic, req_data, clienthost)
 	unmarshall_WORD (rbp, gid);
 	unmarshall_WORD (rbp, clientpid);
 
-	if (Cgetpwuid (uid) == NULL) {
+	if (stage_util_validuser(NULL,(uid_t) uid, (gid_t) gid) != 0) {
 		char uidstr[8];
-		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", uid);
 		sendrep (&rpfd, MSG_ERR, STG11, uidstr);
 		c = SESYSERR;

@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.247 $ $Date: 2003/10/31 10:15:32 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.248 $ $Date: 2003/11/17 10:20:51 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -102,6 +102,7 @@ struct winsize {
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "u64subr.h"
+#include "stage_api.h"
 #include "Castor_limits.h"
 #ifndef CA_MAXDOMAINNAMELEN
 #define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
@@ -4452,6 +4453,11 @@ int verif_euid_egid(euid,egid,username,group)
 	struct passwd *this_passwd;             /* password structure pointer */
 	struct group *this_gr;
 
+	if (stage_util_validuser(NULL,euid, egid) != 0) {
+		stglogit(func, "### stage_util_validuser(NULL,%d,%d) error, %s\n",(int) euid, (int) egid, sstrerror(serrno));
+ 		return(-1);
+	}
+
 	if ((this_passwd = Cgetpwuid(euid)) == NULL) {
 		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) euid, strerror(errno));
 		stglogit(func, "### Please check existence of uid %d in password file\n", (int) euid);
@@ -4459,13 +4465,6 @@ int verif_euid_egid(euid,egid,username,group)
  		return(-1);
 	}
 
-	/* We verify that the found gid matches the parameter on the stack */
-	if (egid != this_passwd->pw_gid) {
-		stglogit(func, "### Gid %d does not match uid %d (primary gid is %d)\n", (int) egid, (int) euid, (int) this_passwd->pw_gid);
-		stglogit(func, "### Please check existence of pair [uid,gid]=[%d,%d] in password file\n", (int) euid, (int) egid);
-		serrno = EINVAL;
- 		return(-1);
-	}
 	/* We get group name */
 	if ((this_gr = Cgetgrgid(egid)) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",egid,strerror(errno));
