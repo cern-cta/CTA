@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.14 2001/09/19 09:54:58 baud Exp $
+ * $Id: osdep.h,v 1.15 2002/03/06 13:49:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.14 $ $Date: 2001/09/19 09:54:58 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.15 $ $Date: 2002/03/06 13:49:30 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -102,6 +102,13 @@ typedef U_HYPER TIME_T;
 #else
 #define CONST
 #define _PROTO(a) ()
+#endif
+
+/* Macros for 64-bits constants definition */
+#ifdef _WIN32
+#define CONSTLL(a) (a##i64)
+#else
+#define CONSTLL(a) (a##LL)
 #endif
 
 /* Macros for externalization (UNIX) (J.-D.Durand) */
