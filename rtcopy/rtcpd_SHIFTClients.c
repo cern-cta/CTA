@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.5 $ $Date: 1999/12/20 15:28:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:14:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -36,6 +36,7 @@ extern char *geterr();
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
+#include <Cnetdb.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
@@ -64,6 +65,9 @@ static int rtcp_GetOldCMsg(SOCKET *s,
     char **argv = NULL;
     char *p;
     char *msgbuf = NULL;
+    struct sockaddr_in from;
+    struct hostent *hp;
+    int fromlen; 
     static char commands[][20]={"tpread","tpwrite","dumptape"};
 
     if ( s == NULL || *s == INVALID_SOCKET || 
@@ -91,6 +95,22 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             *req = NULL;
             return(-1);
         }
+
+        fromlen = sizeof(from);
+        rc = getpeername(*s,(struct sockaddr *)&from,&fromlen);
+        if ( rc == SOCKET_ERROR ) {
+            rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() getpeername(): %s\n",
+                     neterror());
+            return(-1);
+        }
+        hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
+                            from.sin_family);
+        if ( hp == NULL ) {
+            rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() Cgethostbyaddr(): h_errno=%d, %s\n",
+                     h_errno,neterror());
+            return(-1);
+        }
+        strcpy((*req)->clienthost,hp->h_name);
 
         rc = netread(*s,msgbuf,hdr->len);
         switch (rc) {
@@ -151,7 +171,7 @@ static int rtcp_GetOldCinfo(shift_client_t *req) {
     vdqmnw_t *nw = NULL;
     char server[CA_MAXHOSTNAMELEN+1];
     int namelen = CA_MAXHOSTNAMELEN;
-    int nb_queued, nb_running, nb_drv, rc;
+    int nb_queued, nb_used, nb_units, rc;
 
 
     if ( req == NULL ) {
@@ -174,6 +194,8 @@ static int rtcp_GetOldCinfo(shift_client_t *req) {
     strcpy(VolReq.dgn,req->dgn);
     strcpy(DrvReq.dgn,req->dgn);
 
+    nb_queued = nb_used = nb_units = 0;
+
     while ( (rc = vdqm_NextVol(&nw,&VolReq)) != -1 ) {
         if ( *VolReq.volid == '\0' ) continue;
         nb_queued++;
@@ -182,15 +204,83 @@ static int rtcp_GetOldCinfo(shift_client_t *req) {
     nw = NULL;
     while ( (rc = vdqm_NextDrive(&nw,&DrvReq)) != -1 ) {
         if ( *DrvReq.drive == '\0' ) continue;
-        if ( DrvReq.VolReqID > 0 ) nb_running++;
-        nb_drv++;
+        if ( DrvReq.VolReqID > 0 ) nb_used++;
+        if ( (DrvReq.status & VDQM_UNIT_UP) != 0 ) nb_units++;
     }
 
     req->info.status = AVAILABLE;
-    req->info.queue = nb_queued;
-    req->info.nb_units = nb_drv;
+    req->info.nb_queued = nb_queued;
+    req->info.nb_units = nb_units;
+    req->info.nb_used = nb_used;
     return(0);
 }
+
+static int rtcp_SendRC(SOCKET *s,
+                        rtcpHdr_t *hdr,
+                        int *status,
+                        shift_client_t *req) {
+    tape_list_t *tl;
+    file_list_t *fl;
+    rtcpErrMsg_t *err;
+    int retval, rc;
+    char msgbuf[4*LONGSIZE], *p;
+
+    if ( s == NULL || *s == INVALID_SOCKET || hdr == NULL || 
+         status == NULL || req == NULL ) {
+        serrno = EINVAL;
+        return;
+    }
+
+    err = NULL;
+    CLIST_ITERATE_BEGIN(req->tape,tl) {
+        if ( tl->tapereq.tprc != 0 ) {
+            err = &(tl->tapereq.err);
+            break;
+        }
+        CLIST_ITERATE_BEGIN(tl->file,fl) {
+            if ( fl->filereq.cprc != 0 ) {
+                err = &(fl->filereq.err);
+                break;
+            }
+        } CLIST_ITERATE_END(tl->file,fl);
+        if ( fl->filereq.cprc != 0 ) break;
+    } CLIST_ITERATE_END(req->tape,tl);
+
+    if ( err != NULL ) {
+        if ( (err->severity & RTCP_FAILED) != 0 ) {
+            if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval == RSLCT;
+            else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
+            else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
+            else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
+            else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
+            else retval = UNERR;
+        } else {
+            if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
+            else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
+            else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
+            else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
+            else retval = 0;
+        } 
+    } else retval = 0;
+
+    *status = retval;
+    p = msgbuf;
+    marshall_LONG(p,hdr->magic);
+    marshall_LONG(p,GIVE_RESU);
+    marshall_LONG(p,LONGSIZE);
+    marshall_LONG(p,retval);
+    rc = netwrite(*s, msgbuf, 4*LONGSIZE);
+    switch (rc) {
+    case -1:
+        rtcp_log(LOG_ERR,"rtcp_SendRC() netwrite(): %s\n",neterror());
+        return(-1);
+    case 0:
+        rtcp_log(LOG_ERR,"rtcp_SendRC() netwrite(): connection dropped\n");
+        return(-1);
+    }
+    return(0);
+}
+    
 
 int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     int rc, CLThId;
@@ -206,8 +296,6 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         return(-1);
     }
 
-    rtcp_InitLog(client_msg_buf,NULL,NULL,s);
-
     rc = rtcp_GetOldCMsg(s,hdr,&req);
     if ( rc == -1 ) return(-1);
 
@@ -215,8 +303,12 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     if ( rc == -1 ) return(-1);
 
     if ( hdr->reqtype == RQST_INFO ) {
+        rtcp_log(LOG_INFO,"info request by user %s (%d,%d) from %s\n",
+                 req->name,req->uid,req->gid,req->clienthost);
+
         rc = rtcp_GetOldCinfo(req);
         if ( rc == -1 ) return(-1);
+        rtcp_log(LOG_INFO,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
         if ( rc == -1 ) return(-1);
@@ -229,15 +321,29 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     CLThId = rtcpd_ClientListen(*s);
     if ( CLThId == -1 ) return(-1);
 
-    CLIST_ITERATE_BEGIN(req->tape,tl) {
-        tapereq = &tl->tapereq;
-        dumpTapeReq(tl);
-        CLIST_ITERATE_BEGIN(tl->file,fl) {
-            filereq = &fl->filereq;
-            dumpFileReq(fl);
-        } CLIST_ITERATE_END(tl->file,fl);
-    } CLIST_ITERATE_END(req->tape,tl);
+    /*
+     * Start the request
+     */
 
-    return(0);
+#if !defined(_WIN32)
+    if ( setgid(req->gid) == -1 ) {
+        rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
+        return(-1);
+    }
+    if ( setuid(req->uid) == -1 ) {
+        rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
+        return(-1);
+    }
+#endif /* !_WIN32 */
+
+    /*
+     * Redirect logging to client socket
+     */
+    rtcp_InitLog(client_msg_buf,NULL,NULL,s);
+
+    rc = rtcpc(req->tape);
+    (void) rtcp_SendRC(s,hdr,&rc,req); 
+
+    return(rc);
 }
 
