@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 15:16:45 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -34,11 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.8 $ $Date: 200
 #include <string.h>                     /* For strlen                   */
 #include <Cglobals.h>                   /* Cglobals prototypes          */
 
-#if !defined(linux)
-extern char     *sys_errlist[];         /* External error list          */
-#endif /* linux */
-
-#include <net.h>                       /* Networking specifics          */
+#include <net.h>                        /* Networking specifics         */
 
 static int ifname_key = -1;             /* Key to interface name global */
 
@@ -78,14 +74,14 @@ size_t  ifnamelen;
     addrlen = sizeof(struct sockaddr_in);
     if (getsockname(s, (struct  sockaddr *)&addr, &addrlen) == SOCKET_ERROR ) {
         TRACE(2,"getifnam_r", "getsockname returned %d", errno);
-        log(LOG_ERR, "getsockname: %s\n",sys_errlist[errno]);
+        log(LOG_ERR, "getsockname: %s\n",strerror(errno));
         END_TRACE();
         return(NULL);
     } else {
         binaddr = addr.sin_addr.s_addr;
     }
     if ((s_s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET ) {
-        log(LOG_ERR, "socket: %s\n",sys_errlist[errno]);
+        log(LOG_ERR, "socket: %s\n",strerror(errno));
         return(NULL);
     }
 
@@ -94,7 +90,7 @@ size_t  ifnamelen;
     ifr = ifc.ifc_req;
     if ((n = ioctlsocket(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
         TRACE(2,"getifnam_r", "netioctl returned %d", errno);
-        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",sys_errlist[errno]);
+        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
         (void) netclose(s_s);
         END_TRACE();
         return(NULL);
