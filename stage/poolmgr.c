@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.215 2002/08/27 08:38:02 jdurand Exp $
+ * $Id: poolmgr.c,v 1.216 2002/08/29 08:00:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.215 $ $Date: 2002/08/27 08:38:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.216 $ $Date: 2002/08/29 08:00:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4826,7 +4826,7 @@ void printfileclass(rpfd,fileclass)
 	char sav_uidstr[CA_MAXUSRNAMELEN+1];
 	int verif_nbtppools = 0;
 
-	if (rpfd < 0) return;
+	if (*rpfd < 0) return;
 
 	if (fileclass->Cnsfileclass.uid != sav_uid) {
 		sav_uid = fileclass->Cnsfileclass.uid;
