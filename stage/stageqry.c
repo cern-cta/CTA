@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.9 2000/03/24 10:10:08 jdurand Exp $
+ * $Id: stageqry.c,v 1.10 2000/06/09 10:59:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.9 $ $Date: 2000/03/24 10:10:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.10 $ $Date: 2000/06/09 10:59:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,9 +32,6 @@ extern	int	optind;
 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
-#ifdef TESTCALLBACK
-void callbackfunction _PROTO((int, char*));
-#endif
 
 int main(argc, argv)
 		 int	argc;
@@ -62,13 +59,6 @@ int main(argc, argv)
 	WSADATA wsadata;
 #endif
 
-#ifdef TESTCALLBACK
-	if (stage_setlogbuf(&callbackfunction) != 0) {
-		fprintf(stderr,"Initialization error (%s)\n",sstrerror(serrno));
-		exit(1);
-	}
-#endif
-
 	uid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
@@ -78,7 +68,7 @@ int main(argc, argv)
 	}
 #endif
 	numvid = 0;
-	while ((c = getopt (argc, argv, "A:afGh:I:LlM:Pp:q:SsTuV:x")) != EOF) {
+	while ((c = getopt (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != EOF) {
 		switch (c) {
 		case 'A':
 			Aflag = 1;
@@ -194,31 +184,12 @@ void cleanup(sig)
 	exit (USERR);
 }
 
-#ifdef TESTCALLBACK
-void callbackfunction(flag,msg)
-		 int flag;
-		 char *msg;
-{
-	if (msg == NULL) {
-		return;
-	}
-	switch (flag) {
-	case MSG_OUT:
-		fprintf(stdout,"%s",msg);
-		break;
-	default:
-		fprintf(stderr,"%s",msg);
-		break;
-	}
-}
-#endif
-
 void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
-					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-S] [-s] [-T]\n",
+					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range] [-S] [-s] [-T]\n",
 					 "[-u] [-V visual_identifier(s)] [-x]\n");
 }

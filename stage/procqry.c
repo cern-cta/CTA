@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.23 2000/05/29 07:56:26 jdurand Exp $
+ * $Id: procqry.c,v 1.24 2000/06/09 10:58:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.23 $ $Date: 2000/05/29 07:56:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.24 $ $Date: 2000/06/09 10:58:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,8 +46,10 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.23 $ $Date: 200
 #include "osdep.h"
 
 void procqryreq _PROTO((char *, char *));
-void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, char *, char *, char *));
-void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *));
+void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
+int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
+void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *));
+extern unpackfseq _PROTO((char *, int, char *, fseq_elem **));
 
 extern char *optarg;
 extern int optind;
@@ -77,6 +79,8 @@ extern struct stgdb_fd dbfd;
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
 #endif
+
+int nbtpf;
 
 void procqryreq(req_data, clienthost)
 		 char *req_data;
@@ -129,6 +133,9 @@ void procqryreq(req_data, clienthost)
 	static char x_stat[7][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED"};
 	char *xfile = NULL;
 	int xflag = 0;
+	char trailing;
+	fseq_elem *fseq_list = NULL;
+	int inbtpf;
 
 	poolname[0] = '\0';
 	rbp = req_data;
@@ -154,7 +161,7 @@ void procqryreq(req_data, clienthost)
 #else
 	optind = 1;
 #endif
-	while ((c = getopt (nargs, argv, "A:afGh:I:LlM:Pp:q:SsTuV:x")) != EOF) {
+	while ((c = getopt (nargs, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != EOF) {
 		switch (c) {
 		case 'A':
 			afile = optarg;
@@ -217,6 +224,11 @@ void procqryreq(req_data, clienthost)
 		case 'q':	/* file sequence number(s) */
 			fseq = optarg;
 			break;
+		case 'Q':	/* file sequence range */
+			/* compute number of tape files */
+			if ((nbtpf = unpackfseq (optarg, STAGEQRY, &trailing, &fseq_list)) == 0)
+				errflg++;
+			break;
 		case 'S':	/* sort requests for cleaner */
 			Sflag++;
 			break;
@@ -243,6 +255,10 @@ void procqryreq(req_data, clienthost)
 			break;
 		}
 	}
+	if (fseq != NULL && fseq_list != NULL) {
+		sendrep (rpfd, MSG_ERR, STG35, "-q", "-Q");
+		errflg++;
+    }
 	if (sflag && strcmp (poolname, "NOPOOL") == 0) {
 		sendrep (rpfd, MSG_ERR, STG17, "-s", "-p NOPOOL");
 		errflg++;
@@ -306,7 +322,7 @@ void procqryreq(req_data, clienthost)
 
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
-										 numvid, vid, fseq, xfile, afile, mfile);
+										 numvid, vid, fseq, fseq_list, xfile, afile, mfile);
 		goto reply;
 	}
 	if (sflag) {
@@ -315,13 +331,13 @@ void procqryreq(req_data, clienthost)
 	}
 	if (Sflag) {
 		if (print_sorted_list (poolname, aflag, group, uflag, user,
-													 numvid, vid, fseq, xfile, afile, mfile) < 0)
+													 numvid, vid, fseq, fseq_list, xfile, afile, mfile) < 0)
 			c = SYERR;
 		goto reply;
 	}
 	if (Tflag) {
 		print_tape_info (poolname, aflag, group, uflag, user,
-										 numvid, vid, fseq);
+										 numvid, vid, fseq, fseq_list);
 		goto reply;
 	}
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -341,6 +357,11 @@ void procqryreq(req_data, clienthost)
 		if (fseq) {
 			if (stcp->t_or_d != 't') continue;
 			if (strcmp (fseq, stcp->u1.t.fseq)) continue;
+		}
+		if (fseq_list) {
+			for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+				if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+			if (inbtpf == nbtpf) continue;
 		}
 		if (xfile) {
 			if (stcp->t_or_d != 'd') continue;
@@ -568,7 +589,7 @@ void procqryreq(req_data, clienthost)
 	}
 }
 
-void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
+void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile)
 		 char *poolname;
 		 int aflag;
 		 char *group;
@@ -577,6 +598,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfi
 		 int numvid;
 		 char vid[MAXVSN][7];
 		 char *fseq;
+		 fseq_elem *fseq_list;
 		 char *xfile;
 		 char *afile;
 		 char *mfile;
@@ -586,10 +608,11 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfi
 	int poolflag = 0;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
+	int inbtpf;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
-	if (numvid == 0 && fseq == NULL && afile == NULL && mfile == NULL && xfile == NULL) {
+	if (numvid == 0 && fseq == NULL && fseq_list == NULL && afile == NULL && mfile == NULL && xfile == NULL) {
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
@@ -613,6 +636,11 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfi
 		if (fseq) {
 			if (stcp->t_or_d != 't') continue;
 			if (strcmp (fseq, stcp->u1.t.fseq)) continue;
+		}
+		if (fseq_list) {
+			for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+				if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+			if (inbtpf == nbtpf) continue;
 		}
 		if (xfile) {
 			if (stcp->t_or_d != 'd') continue;
@@ -647,7 +675,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfi
 	}
 }
 
-print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
+int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile)
 		 char *poolname;
 		 int aflag;
 		 char *group;
@@ -656,6 +684,7 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 		 int numvid;
 		 char vid[MAXVSN][7];
 		 char *fseq;
+		 fseq_elem *fseq_list;
 		 char *xfile;
 		 char *afile;
 		 char *mfile;
@@ -671,6 +700,7 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	struct tm *tm;
+	int inbtpf;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
@@ -696,6 +726,11 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 		if (fseq) {
 			if (stcp->t_or_d != 't') continue;
 			if (strcmp (fseq, stcp->u1.t.fseq)) continue;
+		}
+		if (fseq_list) {
+			for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+				if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+			if (inbtpf == nbtpf) continue;
 		}
 		if (xfile) {
 			if (stcp->t_or_d != 'd') continue;
@@ -800,7 +835,7 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 	return (0);
 }
 
-void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
+void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list)
 		 char *poolname;
 		 int aflag;
 		 char *group;
@@ -809,10 +844,12 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
 		 int numvid;
 		 char vid[MAXVSN][7];
 		 char *fseq;
+		 fseq_elem *fseq_list;
 {
 	int j;
 	int poolflag = 0;
 	struct stgcat_entry *stcp;
+	int inbtpf;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
@@ -830,6 +867,11 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
 				if (strcmp (stcp->u1.t.vid[0], vid[j]) == 0) break;
 			if (j == numvid) continue;
 			if (fseq && strcmp (fseq, stcp->u1.t.fseq)) continue;
+			if (fseq_list) {
+				for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+					if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+				if (inbtpf == nbtpf) continue;
+			}
 		}
 		if (strcmp (stcp->u1.t.lbl, "al") &&
 				strcmp (stcp->u1.t.lbl, "sl")) continue;
