@@ -1,8 +1,8 @@
-.\" @(#)newacct.man	1.2		CERN-SW/DC	Antoine Trannoy		03/05/99
-.\" Copyright (C) 1990-1999 by CERN/CN/SW/DC
+.\" @(#)$RCSfile: newacct.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:37:48 $ CERN IT-PDP/DC	Antoine Trannoy
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH NEWACCT l "03/05/99"
+.TH NEWACCT 1 "$Date: 2000/02/04 14:37:48 $" CASTOR "User Commands"
 .SH NAME
 newacct \- log in to a new account 
 .SH SYNOPSIS
@@ -73,7 +73,7 @@ close (NEWACCT);
 .SH FILES
 .B /etc/account
 .SH SEE ALSO
-.BR account (l), 
-.BR getacct (l)
+.BR account (4), 
+.BR getacct (3)
 .SH AUTHOR
 Antoine Trannoy, CERN-CN Division CH-1211 Geneva 23, Switzerland
