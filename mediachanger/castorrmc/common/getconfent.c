@@ -1,5 +1,9 @@
 /*
- * $Id: getconfent.c,v 1.3 1999/07/20 14:01:29 obarring Exp $
+ * $Id: getconfent.c,v 1.4 1999/07/20 15:11:39 obarring Exp $
+ * $Log: getconfent.c,v $
+ * Revision 1.4  1999/07/20 15:11:39  obarring
+ * Add CVS log directive
+ *
  */
 
 #include <stdio.h>
