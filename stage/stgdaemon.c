@@ -3679,6 +3679,7 @@ int fork_exec_stager(wqp)
 			lying_stcp.mask = stcp->mask;
 			lying_stcp.uid = stcp->uid;
 			lying_stcp.gid = stcp->gid;
+			lying_stcp.reqid = stcp->reqid;
 			strcpy(lying_stcp.ipath, stcp->ipath);
 			fwrite (&lying_stcp, sizeof(struct stgcat_entry), 1, f);
 		} else {
@@ -3849,6 +3850,7 @@ int fork_exec_stager(wqp)
 				lying_stcp.mask = stcp->mask;
 				lying_stcp.uid = stcp->uid;
 				lying_stcp.gid = stcp->gid;
+				lying_stcp.reqid = stcp->reqid;
 				strcpy(lying_stcp.ipath, stcp->ipath);
 				write (pfd[1], (char *) &lying_stcp, sizeof(struct stgcat_entry));
 			} else {
