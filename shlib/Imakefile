@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2004/07/30 10:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.26 $ $Date: 2004/08/23 14:58:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -20,9 +20,9 @@ SYMTABNAM = __.SYMDEF
 COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB)
 LIBRARIES1 = $(RHORALIB)
-SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L . -lshift
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
 LIBRARIES2 = $(RHPROTOLIB)
-SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L. -lshift
+SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L.. -lshift
 
 ALL0=SharedLibraryTargetName(shift)
 #if BuildOraCpp
