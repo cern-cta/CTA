@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpusage.man,v $ $Revision: 1.5 $ $Date: 2002/09/19 06:54:52 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: tpusage.man,v $ $Revision: 1.6 $ $Date: 2002/09/19 07:05:53 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1995-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPUSAGE 1 "$Date: 2002/09/19 06:54:52 $" CASTOR "Ctape User Commands"
+.TH TPUSAGE 1 "$Date: 2002/09/19 07:05:53 $" CASTOR "Ctape User Commands"
 .SH NAME
 tpusage \- give local or global statistics on device group utilisation, number
 of mount requests, physical mounts, time to mount, mounted volume details and
@@ -239,14 +239,14 @@ vv         41       0       5       0      34     103
 zh         21       6       3       0      94      33
 xv          0     119       0       0       1      75
 ws          0      57      62       0    2344      97
-xu          0     113      39       0      75     108
-xm          0      82      81       0       0       0
-xx          0      37      33       0     244     120
 .ft
 .fi
 .bp
 .nf
 .ft CW
+xu          0     113      39       0      75     108
+xm          0      82      81       0       0       0
+xx          0      37      33       0     244     120
 wf          0      24      37       0       0      54
 zp          0      16       7       0     113      48
 xi          0      11       2       0      44      26
@@ -300,9 +300,6 @@ During time interval     (03/02/1997 00:02:55  -  04/02/1997 15:37:12)
 03/02/1997 08:40          4         ****
 03/02/1997 09:20          3         ***
 03/02/1997 10:00          1         *
-03/02/1997 10:40          0         
-03/02/1997 11:20          7         *******
-03/02/1997 12:00          8         ********
  ...
 04/02/1997 15:20          10        **********
  
