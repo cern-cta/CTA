@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.36 2003/10/31 06:58:06 jdurand Exp $
+ * $Id: stageclr.c,v 1.37 2004/11/17 13:05:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.36 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.37 $ $Date: 2004/11/17 13:05:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.36 $ $Date: 20
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "serrno.h"
+#include "rfio_api.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
@@ -44,6 +45,7 @@ void usage _PROTO((char *));
 int reqid_flag = 0;
 int side_flag = 0;
 int nodisk_flag = 0;
+int dounlink_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -100,6 +102,7 @@ int main(argc, argv)
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
 		{"nodisk",             NO_ARGUMENT,      &nodisk_flag,  1},
+		{"dounlink",           NO_ARGUMENT,    &dounlink_flag,  1},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
 		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
@@ -266,6 +269,11 @@ int main(argc, argv)
 		exit (1);
 	}
 
+	/* If --dounlink, force --nodisk */
+	if (dounlink_flag && ! nodisk_flag) {
+	  nodisk_flag = 1;
+	}
+
 	/* Build request header */
 
 	sbp = sendbuf;
@@ -308,8 +316,12 @@ int main(argc, argv)
 	if (iflag) {
 		int rc = 0;
 		marshall_WORD (sbp, argc+2);
-		for (i = 0; i < argc; i++)
-			marshall_STRING (sbp, argv[i]);
+		for (i = 0; i < argc; i++) {
+		  if (strcmp(argv[i],"--dounlink") != 0) {
+		    /* Ignore --dounlink */
+		    marshall_STRING (sbp, argv[i]);
+		  }
+		}
 		marshall_STRING (sbp, "-P");
 		sbpp = sbp;
 		while (fgets (ibuf, sizeof(ibuf), stdin) != NULL) {
@@ -327,8 +339,18 @@ int main(argc, argv)
 				fprintf (stderr, STG38);
 				if (! rc) rc = USERR;
 				continue;
-			} else
-				marshall_STRING (sbp, path);
+			} else {
+			  if (dounlink_flag) {
+			    /* We clear ourself the file */
+			    serrno = rfio_errno = 0;
+			    if ((rfio_munlink(path) == 0) || (rfio_serrno() == ENOENT)) {
+			      /* Deletion was successful or file absent */
+			      marshall_STRING (sbp, path);
+			    }
+			  } else {
+			    marshall_STRING (sbp, path);
+			  }
+			}
 
 			msglen = sbp - sendbuf;
 			sbp = q;
@@ -357,7 +379,9 @@ int main(argc, argv)
 			if ((Pflag && i == Pflag) || (Lflag && i == Lflag)) {
 				marshall_STRING (sbp, path);
 			} else {
-				marshall_STRING (sbp, argv[i]);
+			  if (strcmp(argv[i],"--dounlink") != 0) {
+			    marshall_STRING (sbp, argv[i]);
+			  }
 			}
 
 		msglen = sbp - sendbuf;
@@ -401,6 +425,6 @@ void usage(cmd)
 			 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n"
 			 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n"
 			 "[-q file_sequence_number] [-Q file_sequence_range]\n"
-			 "[--nodisk]\n"
+			 "[--nodisk] [--dounlink]\n"
 			 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)] [--side sidenumber]\n");
 }

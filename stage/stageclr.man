@@ -1,10 +1,10 @@
-.\" $Id: stageclr.man,v 1.18 2003/06/30 11:31:05 jdurand Exp $
+.\" $Id: stageclr.man,v 1.19 2004/11/17 13:05:57 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.18 $ $Date: 2003/06/30 11:31:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.19 $ $Date: 2004/11/17 13:05:57 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECLR "1" "$Date: 2003/06/30 11:31:05 $" "CASTOR" "Stage User Commands"
+.TH STAGECLR "1" "$Date: 2004/11/17 13:05:57 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -38,6 +38,8 @@ stageclr \- remove staged files
 ] [
 .BI \-m " minfree"
 ] [
+.BI \-\-dounlink
+] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
@@ -54,6 +56,8 @@ stageclr \- remove staged files
 ] [
 .BI \-m " minfree"
 ] [
+.BI \-\-dounlink
+] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
@@ -65,6 +69,8 @@ stageclr \- remove staged files
 .BI \-h " host"
 ] [
 .BI \-F
+] [
+.BI \-\-dounlink
 ] [
 .BI \-\-nodisk
 ] [
@@ -125,8 +131,11 @@ either full internal name or user link name.
 .BI \-p " poolname"
 restricts the action to a given pool.
 .TP
+.BI \-\-dounlink
+The stageclr application will itself try to unlink the file. If this is successful, or if the file has yet disappeared, then stageclr will say to the stager daemon that the file has been unlinked, or it absent \- and only in these two cases. Note that \fB\-\-dounlink\fP implies \fB\-\-nodisk\fP.
+.TP
 .BI \-\-nodisk
-Prevent stager daemon to do disk access. The entry is removed from the main catalog in case of a file in stager filesystems, and from the link catalog in a case of a link name (\-L option). Stager will not try to remove physically the file. In case of an entry in stager filesystem, space knowledge of the corresponding filesystem is unchanged.
+Prevent stager daemon to do disk access. The entry is removed from the main catalog in case of a file in stager filesystems, and from the link catalog in a case of a link name (\-L option). Stager will not try to remove physically the file. In case of an entry in stager filesystem, space knowledge will be updated using previous state of the file as known by the master daemon, without trying to refresh the actual size of the file (\fB\-\-nodisk\fP, you said).
 .TP
 .BI \-remove_from_hsm
 to remove the file from the Hierarchical Storage Management System as well.
