@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.98 2001/02/04 22:52:26 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.99 2001/02/08 17:46:18 jdurand Exp $
  */
 
 /*
@@ -13,10 +13,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.98 $ $Date: 2001/02/04 22:52:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.99 $ $Date: 2001/02/08 17:46:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
-#define MAX_NETDATA_SIZE 20000
+#define MAX_NETDATA_SIZE 200000
 
 #include <unistd.h>
 #include <errno.h>
@@ -279,7 +279,6 @@ int main(argc,argv)
 	struct passwd root_passwd;
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1];
 	char *upd_fileclasses_int_p;
-	int upd_fileclasses_int_from_config = 0;
 
 	Coptind = 1;
 	Copterr = 0;
@@ -665,7 +664,6 @@ int main(argc,argv)
 			upd_fileclasses_int = upd_fileclasses_int_default;
 		} else {
 			stglogit(func, STG33, "upd_fileclasses_int init value from config", upd_fileclasses_int_p);
-			upd_fileclasses_int_from_config = 1;
 		}
 	} else {
 		stglogit(func, STG33, "upd_fileclasses_int init value from default", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
