@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.14 2000/02/04 14:02:37 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.15 2000/02/16 18:18:49 jdurand Exp $
  */
 
 /*
@@ -24,7 +24,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.14 $ $Date: 2000/02/04 14:02:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.15 $ $Date: 2000/02/16 18:18:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -484,9 +484,11 @@ int stgdb_stcpcmp(p1,p2)
     } else if (stcp1->reqid > stcp2->reqid) {
       return(1);
     } else {
+      /*
       stglogit("stgdb_stcpcmp",
                "### Warning[%s:%d] : two elements in stgcat have same c_time (%d) and reqid (%d)\n",
                __FILE__,__LINE__,(int) stcp1->c_time, (int) stcp1->reqid);
+      */
       return(0);
     }
   }
@@ -508,6 +510,7 @@ int stgdb_stppcmp(p1,p2)
   } else if (stpp1->reqid > stpp2->reqid) {
     return(1);
   } else {
+    /*
     stglogit("stgdb_stppcmp",
              "### Warning[%s:%d] : two elements (at 0x%lx and 0x%lx) in stgpath have same reqid (%d)\n",
              __FILE__,__LINE__,(unsigned long) stpp1,(unsigned long) stpp2,(int) stpp1->reqid);
@@ -516,6 +519,7 @@ int stgdb_stppcmp(p1,p2)
              __FILE__,__LINE__,
              (unsigned long) stpp1,stpp1->reqid,stpp1->upath,
              (unsigned long) stpp2,stpp2->reqid,stpp2->upath);
+    */
     return(0);
   }
 #else
