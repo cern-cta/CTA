@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.31 2000/10/26 15:22:03 baud Exp $
+ * $Id: Ctape.h,v 1.32 2000/12/12 12:37:53 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.31 $ $Date: 2000/10/26 15:22:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.32 $ $Date: 2000/12/12 12:37:53 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -199,6 +199,7 @@
 #define	TP043	"TP043 - configuration line too long: %s\n"
 #define TP044	"TP044 - fid mismatch: request %s, tape fid for file %d is %s\n"
 #define TP045	"TP045 - cannot write file %d (only %d files are on tape)\n"
+#define TP046	"TP046 - request too large (max. %d)\n"
 #define	TP047	"TP047 - reselect server requested by operator\n"
 #define	TP048	"TP048 - config postponed: %s currently assigned\n"
 #define	TP049	"TP049 - option IGNOREEOI is not valid for label type al or sl\n"
