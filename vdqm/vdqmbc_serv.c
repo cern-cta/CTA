@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.3 $ $Date: 2002/10/25 13:06:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.4 $ $Date: 2003/02/18 14:01:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -298,6 +298,10 @@ int vdqmbc_main() {
 #define BCSERVER_LOGFILE "vdqmbc.log"
 #endif /* BCSERVER_LOGFILE */
     initlog("vdqmbc",LOG_INFO,BCSERVER_LOGFILE);
+    /* Setting the drives file to an empty name
+     * using this, the vdqmbc_serv will NOT write its drive list to a file
+     */
+    vdqm_init_drive_file("");
 #if defined(__DATE__) && defined (__TIME__)
     log(LOG_INFO,"******* VDQM replication broadcast server generated at %s %s.\n",
              __DATE__,__TIME__);
@@ -346,7 +350,7 @@ int main() {
 #if defined(_WIN32)
     if ( Cinitservice("vdqmbc",vdqmbc_main) == -1 ) exit(1);
 #else /* _WIN32 */
-    if ( Cinitdaemon("vdqmbc",NULL) == -1 ) exit(1);
+   /*   if ( Cinitdaemon("vdqmbc",NULL) == -1 ) exit(1); */
     exit(vdqmbc_main(NULL));
 #endif /* _WIN32 */
 }

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.48 $ $Date: 2002/10/25 13:02:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.49 $ $Date: 2003/02/18 14:01:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -13,6 +13,8 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.48 $ $Date
 
 #include <stdlib.h>
 #include <time.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <osdep.h>
 #include <net.h>
 #include <log.h>
@@ -27,6 +29,8 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.48 $ $Date
 dgn_element_t *dgn_queues = NULL;
 int nb_dgn = 0;
 void *queue_lock;
+static char drives_filename[CA_MAXPATHLEN+1] = "";
+
 
 static int vdqm_maxtimediff = VDQM_MAXTIMEDIFF;
 static int vdqm_retrydrvtime = VDQM_RETRYDRVTIM;
@@ -1512,6 +1516,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     vdqm_drvrec_t *drvrec;
     int rc,unknown;
     char status_string[256];
+    int new_drive_added = 0;
     
     if ( hdr == NULL || DrvReq == NULL ) return(-1);
     rc = 0;
@@ -1599,6 +1604,9 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             FreeDgnContext(&dgn_context);
             return(-1);
         }
+
+        new_drive_added  = 1;
+        
     }
     /*
      * Update dynamic drive info.
@@ -2199,7 +2207,16 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             return(-1);
         }
     }
-    FreeDgnContext(&dgn_context);
+    FreeDgnContext(&dgn_context);    
+    
+    /* At this point, backup the comple queue to a file */
+    if (new_drive_added) {
+         log(LOG_DEBUG,"vdqm_NewDrvReq(): Update drive config file\n");
+         if (vdqm_save_queue() < 0) {
+             log(LOG_ERR, "Could not save drive list\n");
+         }         
+    }
+
     return(0);
 }
 
@@ -2411,4 +2428,270 @@ int vdqm_GetDrvQueue(char *dgn, vdqmDrvReq_t *DrvReq,
         FreeDgnContext(&dgn_context);
     }
     return(0);
+}
+
+
+/**
+ * Function that add drives to the VDQM internal structures.
+ */
+static int vdqm_add_drive(vdqmDrvReq_t *DrvReq) {
+
+    dgn_element_t *dgn_context = NULL;
+    vdqm_drvrec_t *drvrec;
+    int rc;
+
+    log(LOG_DEBUG, "Entering vdqm_add_drive\n");
+    
+    rc = SetDgnContext(&dgn_context,DrvReq->dgn);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_add_drive() cannot set Dgn context for %s\n", DrvReq->dgn);
+        return(-1);
+    }
+    
+    /* 
+     * Check whether the drive record already exists
+     */
+    drvrec = NULL;
+    rc = GetDrvRecord(dgn_context, DrvReq, &drvrec);
+
+    if ( rc < 0 || drvrec == NULL ) {
+        /*
+         * Drive record did not exist, create it!
+         */
+        log(LOG_INFO,"vdqm_add_drive() add new drive %s@%s\n",
+            DrvReq->drive,DrvReq->server);
+        rc = NewDrvRecord(&drvrec);
+        if ( rc < 0 || drvrec == NULL ) {
+            log(LOG_ERR,"vdqm_NewDrvReq(): NewDrvRecord() returned error\n");
+            FreeDgnContext(&dgn_context);
+            return(-1);
+        }
+        drvrec->drv = *DrvReq;
+        /*
+         * Make sure it is either up or down. If neither, we put it in
+         * UNKNOWN status until further status information is received.
+         */
+        if ( (drvrec->drv.status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 )
+            drvrec->drv.status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
+        /*
+         * Make sure it doesn't come up with some non-persistent status
+         * becasue of a previous VDQM server crash.
+         */
+        drvrec->drv.status = drvrec->drv.status & ( ~VDQM_VOL_MOUNT &
+            ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
+        /*
+         * Add drive record to drive queue
+         */
+        rc = AddDrvRecord(dgn_context,drvrec);
+        if ( rc < 0 ) {
+            log(LOG_ERR,"vdqm_NewDrvReq(): AddDrvRecord() returned error\n");
+            FreeDgnContext(&dgn_context);
+            return(-1);
+        }
+    }
+
+    FreeDgnContext(&dgn_context);
+    return 0;
+    
+}
+
+
+/**
+ * Function that writes a vdqmDrvReq_t to a file descriptor.
+ */
+static int vdqm_write_drv(int fd, vdqmDrvReq_t *drv) {
+
+    char buf[CA_MAXLINELEN+1];
+    int rc;
+    
+    if (drv == NULL) {
+        log(LOG_ERR,"vdqm_write_drv: drv is NULL\n");
+        return -1;
+    }
+
+    /* Writing the server information on one line */
+    memset(buf, sizeof(buf), '\0');
+    if (strlen(drv->dgn) == 0
+        || strlen(drv->server) == 0
+        || strlen(drv->drive) == 0) {
+        log(LOG_ERR,"vdqm_write_drv: Tried to write empty record\n");
+        /* This is not fatal, just do nothing in this case */
+        return 0;
+    }
+
+    rc = snprintf(buf, CA_MAXLINELEN, "%s %s %s\n", drv->dgn, drv->server, drv->drive);   
+    if (rc <= 0) {
+        log(LOG_ERR,"vdqm_write_drv: Could not write to buffer\n");
+        return -1;
+    }
+    
+    rc = write(fd, buf, strlen(buf));
+    if (rc <= 0) {
+        log(LOG_ERR,"vdqm_write_drv: Could not write to file\n");
+        return -1;
+    }
+
+    /* Writing the dedication on another line */
+    memset(buf, sizeof(buf), '\0');
+    rc = snprintf(buf, CA_MAXLINELEN, "%s\n", drv->dedicate);   
+    if (rc <= 0) {
+        log(LOG_ERR,"vdqm_write_drv: Could not write to buffer\n");
+        return -1;
+    }
+    
+    rc = write(fd, buf, strlen(buf));
+    if (rc <= 0) {
+        log(LOG_ERR,"vdqm_write_drv: Could not write to file\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/**
+ * Function that writes the vdqn DGN queues to a file.
+ */
+int vdqm_save_queue() {
+
+    int fd;
+    int rc = 0;
+    dgn_element_t *queue = NULL;
+    vdqm_drvrec_t *drvrec = NULL;
+
+    if (strlen(drives_filename) == 0) {
+         log(LOG_DEBUG,"vdqm_load_queue: drives filename not set\n");
+         return 0;
+    }
+    
+    log(LOG_DEBUG,"vdqm_save_queue: SAVING DRIVES TO FILE: %s\n", drives_filename);
+    
+    fd = open(drives_filename, O_WRONLY | O_CREAT | O_TRUNC, 00666);
+    if (fd < 0) {
+        log(LOG_ERR,"vdqm_save_queue: Could not open: %s\n", drives_filename);
+        return -1;
+    }
+
+    if(vdqm_LockAllQueues() != 0) {
+        log(LOG_ERR,"vdqm_save_queue: Could not lock all queues\n");
+        return -1;
+    }
+    
+    CLIST_ITERATE_BEGIN(dgn_queues,queue) {
+        CLIST_ITERATE_BEGIN(queue->drv_queue, drvrec) {
+            rc = vdqm_write_drv(fd, &(drvrec->drv));
+            if (rc < 0) {
+                goto end_loops;
+            }
+        } CLIST_ITERATE_END(queue->drv_queue, drvrec);
+    } CLIST_ITERATE_END(dgn_queues,queue);
+
+  end_loops:
+    close(fd);
+    if(vdqm_UnlockAllQueues() != 0) {
+        log(LOG_ERR,"vdqm_save_queue: Could not unlock all queues\n");
+        return -1;
+    }
+    return(rc);
+}
+
+/**
+ * Function that loads the vdqn DGN queues from a file.
+ */
+int vdqm_load_queue() {
+
+    FILE *f;
+    int end;
+    char *rs;
+    char buf[CA_MAXLINELEN+1];
+    vdqmDrvReq_t drv;
+
+    if (strlen(drives_filename) == 0) {
+         log(LOG_DEBUG,"vdqm_load_queue: drives filename not set\n");
+         return 0;
+    }
+
+    
+    log(LOG_DEBUG,"vdqm_load_queue: LOADING DRIVES FROM FILE: %s\n", drives_filename);
+    
+    f = fopen(drives_filename, "r");
+    if (f == NULL) {
+        log(LOG_ERR,"vdqm_load_queue: Could not open: %s\n", drives_filename);
+        return -1;
+    }
+    
+    end = 0;
+    while(!end) {
+        char *rs, *ded;
+
+        { /* Reading the line identifying the drive */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+            char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+            
+            memset(&buf, '\0', sizeof(buf));
+            rs = fgets(buf, CA_MAXLINELEN, f);
+            if (rs == NULL)
+                break;
+            
+            /* First reading the drive */ 
+            memset(&drv, '\0', sizeof(vdqmDrvReq_t));
+            
+            /* Reading the DGN */
+            rs = strtok(buf, " \t\n");
+            if (rs == NULL)
+                break;
+            strncpy(drv.dgn, rs, CA_MAXDGNLEN);
+            
+            /* reading the server name */
+            rs = strtok(NULL, " \t\n");
+            if (rs == NULL)
+                break;
+            strncpy(drv.server, rs, CA_MAXHOSTNAMELEN);
+
+            /* reading the drive name */
+            rs = strtok(NULL, " \t\n");
+            if (rs == NULL)
+                break;
+            strncpy(drv.drive, rs, CA_MAXUNMLEN);
+            
+            log(LOG_DEBUG, "vdqm_load_queue(): FOUND <%s> <%s> <%s>\n", drv.dgn, drv.server, drv.drive);
+            vdqm_add_drive(&drv);
+        }
+
+        { /* Reading the dedication line */
+            
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+            char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+            rs = fgets(buf, CA_MAXLINELEN, f);
+            if (rs == NULL)
+                break;
+
+            /* Removing the trailing \n read from the file ! */
+            
+            ded = strtok(buf, "\n");
+            if (ded != NULL) {
+                if (strlen(rs) > 0) {
+                    strncpy(drv.dedicate, rs, CA_MAXLINELEN);
+                    log(LOG_DEBUG, "vdqm_load_queue(): DEDICATED TO <%s>\n", drv.dedicate);
+                    vdqm_DedicateDrv(&drv);
+                }
+            }
+        }
+    }
+    
+    fclose(f);
+    return 0;
+}
+
+/*
+ * Inits the drive_filename variable used to save the drives list.
+ */
+void vdqm_init_drive_file(char *filename) {
+
+    memset(drives_filename, 0, sizeof(drives_filename)); 
+    strncpy(drives_filename, filename, CA_MAXPATHLEN);
+    
+    log(LOG_INFO, "vdqm_init_drive_file(): Will save drives to file: %s\n", drives_filename);
 }

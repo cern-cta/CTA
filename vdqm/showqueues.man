@@ -1,12 +1,12 @@
-.\" @(#)$RCSfile: showqueues.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: showqueues.man,v $ $Revision: 1.5 $ $Date: 2003/02/18 14:01:18 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH SHOWQUEUES 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Show tape queues"
+.TH SHOWQUEUES 1 "$Date: 2003/02/18 14:01:18 $" CASTOR "Show tape queues"
 .SH NAME
 showqueues \- show tape queues and running requests
 .SH SYNOPSIS
-.BI "showqueues [ -j ] [ -g <" device\ group "> ] [ -S < " tape\ server ">]"
+.BI "showqueues [ -j ] [ -g <" device\ group "> ] [ -S < " tape\ server ">] [ -x  ] "
 
 .SH DESCRIPTION
 .B showqueues
@@ -22,6 +22,9 @@ running request. For queued request the volume request ID is always shown.
 .PP
 .BI "-S <" tape\ server ">"
 \- show the queues and running requests on the given tape server.
+.PP
+.BI "-x
+\- Extended output.
 
 .SH EXAMPLE
 .nf

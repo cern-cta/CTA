@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.18 $ $Date: 2002/10/25 12:32:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.19 $ $Date: 2003/02/18 14:01:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -227,9 +227,23 @@ void *vdqm_ProcReq(void *arg) {
                 break;
             case VDQM_DEL_DRVREQ:
                 rc = vdqm_DelDrvReq(&driveRequest);
+                /* Dumping the list of drives to file */
+                if (rc == 0) {
+                    log(LOG_DEBUG, "vdqm_ProcReq - NOW SAVING THE REDUCED LIST OF DRIVES TO FILE\n");
+                    if (vdqm_save_queue() < 0) {
+                        log(LOG_ERR, "Could not save drive list\n");
+                    }
+                }
                 break;
             case VDQM_DEDICATE_DRV:
                 rc = vdqm_DedicateDrv(&driveRequest);
+                /* Dumping the list of drives to file */
+                if (rc == 0) {
+                    log(LOG_DEBUG, "vdqm_ProcReq - NOW SAVING THE LIST OF DRIVES WITH NEW DEDICATION TO FILE\n");
+                    if (vdqm_save_queue() < 0) {
+                        log(LOG_ERR, "Could not save drive list\n");
+                    }
+                }
                 break;
             case VDQM_REPLICA:
                 /*

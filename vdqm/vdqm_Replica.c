@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.20 $ $Date: 2002/10/25 12:37:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.21 $ $Date: 2003/02/18 14:01:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -320,7 +320,9 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
     vdqm_drvrec_t *drvrec = NULL;
     vdqm_volrec_t *volrec = NULL;
     dgn_element_t *dgn_context = NULL;
-
+    int new_drive_added = 0;
+    int dedication_changed = 0;
+    
     if ( hdr == NULL || drv == NULL ) return(-1);
     (void) vdqm_NewDrvReqID(&drv->DrvReqID);
     rc = R_SetDgnContext(&dgn_context, drv->dgn);
@@ -351,6 +353,14 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
         }
 		vdqm_ResetDedicate(drvrec); /* If any */
 		free(drvrec);
+
+        log(LOG_DEBUG, "Saving queue from vdqm_ReplDrvReq (1)\n");
+
+        /* Now that the drive has been removed from the list, we rewrite the
+           file containg the list of drives */
+        if (vdqm_save_queue() < 0) {
+            log(LOG_ERR, "Could not save drive list\n");
+        }
         return(0);
     }
 
@@ -364,17 +374,35 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
         log(LOG_DEBUG,"vdqm_ReplDrvReq() Add new drive record (DrvReqID: %d)\n",
             drv->DrvReqID);
         CLIST_INSERT(dgn_context->drv_queue,drvrec);
+
+        /* Set this flag. It will allow writing the drives list file only when a new drive is created ! */
+        new_drive_added = 1;
+        
     } else log(LOG_DEBUG,"vdqm_ReplDrvReq() Update existing drive record (DrvReqID: %d)\n",
                drv->DrvReqID);
 
 #if DEBUG
 	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug Before [1]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drvrec->drv.drive, drvrec->drv.server, drvrec->drv.is_uid, drvrec->drv.uid, drvrec->drv.is_gid, drvrec->drv.gid, drvrec->drv.is_name);
 	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug Before [2]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drv->drive, drv->server, drv->is_uid, drv->uid, drv->is_gid, drv->gid, drv->is_name);
-#endif
-	vdqm_ResetDedicate(drvrec);
+#endif      
+
+    if (strcmp(drv->dedicate,drvrec->drv.dedicate) != 0) {
+        dedication_changed = 1; 
+    }
+        
+    vdqm_ResetDedicate(drvrec);
     drvrec->drv = *drv;
-	vdqm_SetDedicate(drvrec);
-	/*
+    vdqm_SetDedicate(drvrec);
+    
+    if (dedication_changed || new_drive_added) {
+        log(LOG_DEBUG, "Saving queue from vdqm_ReplDrvReq (2)\n");
+        /* Dumping the list of drives in a file */
+        if (vdqm_save_queue() < 0) {
+            log(LOG_ERR, "Could not save drive list\n");
+        }
+    }
+    
+    /*
     if ( strcmp(drv->dedicate,drvrec->drv.dedicate) != 0 ) {
         if ( drv->dedicate == '\0' ) {
             rc = vdqm_ResetDedicate(drvrec);
@@ -969,6 +997,13 @@ void *vdqm_ReplicaListenThread(void *arg) {
     if ( nw != NULL ) free(nw);
     replication_ON = 0;
     hold = 0;
+    /* BC - In this case, we can reload the drives from the file, as we know 
+       that the main server is NOT present */
+    if (vdqm_load_queue()<0) {
+        log(LOG_ERR,"vdqm_ReplicaListenThread(): Could not load drive list\n");
+    } else {
+        log(LOG_INFO,"vdqm_ReplicaListenThread(): Loaded drive list\n");
+    }
     (void)Cthread_mutex_lock(&running);
     running = 0;
     (void)Cthread_mutex_unlock(&running);
@@ -1235,3 +1270,5 @@ int vdqm_DumpQueues(vdqmnw_t *nw) {
     log(LOG_DEBUG,"vdqm_DumpQueues() finished\n");
     return(0);
 }
+
+
