@@ -1,7 +1,10 @@
 /*
- * $Id: symlink.c,v 1.2 1999/07/20 12:48:33 jdurand Exp $
+ * $Id: symlink.c,v 1.3 1999/12/09 09:42:00 baran Exp $
  *
  * $Log: symlink.c,v $
+ * Revision 1.3  1999/12/09 09:42:00  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:33  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -23,7 +26,6 @@ static char sccsid[] = "@(#)symlink.c	1.7 5/6/98  CERN CN-SW/DC F. Hassine";
 #include <pwd.h>
 #include "rfio.h"
 
-static  char buf[256];
 #ifndef linux
 extern char *sys_errlist[];     /* system error list */
 #endif
@@ -50,7 +52,7 @@ char *n2 ;
 	int gid ;
 	int un ; 	/* UNlink or SYMlink ? */
 	struct passwd *pw ;
-
+	static  char buf[256];
         /*
          * The file is local.
          */

@@ -1,7 +1,10 @@
 /*
- * $Id: rmdir.c,v 1.2 1999/07/20 12:48:21 jdurand Exp $
+ * $Id: rmdir.c,v 1.3 1999/12/09 09:39:44 baran Exp $
  *
  * $Log: rmdir.c,v $
+ * Revision 1.3  1999/12/09 09:39:44  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:21  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -24,11 +27,11 @@ static char sccsid[] = "@(#)rmdir.c	1.1 24 Nov 1998 CERN IT-PDP/DM Olof Barring"
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-static char     buf[256];       /* General input/output buffer          */
 
 int  rfio_rmdir(dirpath)           /* Remote rmdir	                */
 char		*dirpath;          /* remote directory path             */
 {
+	static char     buf[256];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote rmdir() status        */
 	int     	len;
