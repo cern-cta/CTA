@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.12 $ $Date: 2000/08/25 08:38:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.13 $ $Date: 2000/09/25 10:07:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -166,8 +166,11 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         ifce = filereq->ifce;
         fseq = filereq->tape_fseq;
 
-        if ( subtype == RTCPCMDC ) rc = rtcp_RetvalSHIFT(tape,NULL,&exitcode);
-        else rc = rtcp_RetvalSHIFT(tape,file,&exitcode);
+        if ( subtype == RTCPCMDC ) {
+            if ( AbortFlag == 0 ) rc = rtcp_RetvalSHIFT(tape,NULL,&exitcode);
+            if ( AbortFlag == 1 ) exitcode = USERR;
+            if ( AbortFlag == 2 ) exitcode = SYERR;
+        } else rc = rtcp_RetvalSHIFT(tape,file,&exitcode);
 
         retry_nb = MAX_CPRETRY - filereq->err.max_cpretry;
         if ( retry_nb <= 0 ) retry_nb = MAX_TPRETRY - filereq->err.max_tpretry;
@@ -188,10 +191,13 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
             rtcp_log(LOG_ERR,"%s\n","rtcp_WriteAccountRecord(RTCPEMSG) without msg txt");
             return(-1);
         } else {
-            if ( AbortFlag == 1 ) sprintf(errmsgtxt,"%s\n",
-                                          "request aborted by user");
-            if ( AbortFlag == 2 ) sprintf(errmsgtxt,"%s\n",
-                                          "request aborted by operator");
+            if ( AbortFlag == 1 ) {
+                exitcode = USERR;
+                sprintf(errmsgtxt,"%s\n","request aborted by user");
+            } else if ( AbortFlag == 2 ) {
+                exitcode = SYERR;
+                sprintf(errmsgtxt,"%s\n","request aborted by operator");
+            }
         }
     }
 

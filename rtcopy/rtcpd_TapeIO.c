@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.27 $ $Date: 2000/08/04 10:25:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.28 $ $Date: 2000/09/25 10:07:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -48,6 +48,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.27 $ $Date
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
+
+extern int AbortFlag;
 
 char *getconfent _PROTO((char *, char *, int));
 int gettperror _PROTO((int, char *, char **));
@@ -552,7 +554,8 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
         if ( file->trec > 0 ) rtcp_log(LOG_INFO,"tcloserr(%d) delete tape file, tape path %s\n",
             fd,filereq->tape_path);
         if ( file->trec>0 && (rc = deltpfil(fd,filereq->tape_path)) < 0 ) {
-            rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_SYERR);
+            if ( AbortFlag == 0 ) 
+                rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_SYERR);
             rtcpd_AppendClientMsg(NULL,file, RT141, "CPDSKTP");
             rtcp_log(LOG_ERR,RT141,"CPDSKTP");
         }
