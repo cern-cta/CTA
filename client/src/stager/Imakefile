@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2004/11/24 14:10:31 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2004/11/24 15:49:25 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -58,6 +58,10 @@ LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
 #endif
 #endif
 
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+#endif
+
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(SECURITYFLAG) $(THREADFLAGS) $(STAGEFLAGS) $(STAGEHOST)
 CPPFLAGS=$(CFLAGS) -I..
 
@@ -84,15 +88,41 @@ GLOBLIB += -L../shlib -lcastorCommonOra
 #endif
 
 #if BuildSecurity
-SECURITYFLAG=-DCSEC
 GLOBLIB += -ldl
 #endif
 
-STAGER_OBJS = stager.Osuf stager_messages.Osuf stager_db_service.Osuf stager_job_service.Osuf stager_query_service.Osuf stager_update_service.Osuf stager_getnext_service.Osuf stager_service_run.Osuf stager_catalogInterface.Osuf stager_uuid.Osuf stager_util.Osuf
+STAGER_OBJS = \
+		stager.Osuf \
+		stager_catalogInterface.Osuf \
+		stager_db_service.Osuf \
+		stager_fs_service.Osuf \
+		stager_getnext_service.Osuf \
+		stager_job_service.Osuf \
+		stager_messages.Osuf \
+		stager_query_service.Osuf \
+		stager_service_run.Osuf \
+		stager_update_service.Osuf \
+		stager_util.Osuf \
+		stager_uuid.Osuf
 STAGERADMIN_OBJS = stageradmin.Osuf
-OBSOLETE_OBJS = stage_updc.Osuf stage_errmsg.Osuf stage_util.Osuf stage_api.Osuf buildupath.Osuf send2stgd_api.Osuf send2stgd_compat.Osuf
+OBSOLETE_OBJS = \
+		buildupath.Osuf \
+		send2stgd_api.Osuf \
+		send2stgd_compat.Osuf \
+		stage_api.Osuf \
+		stage_errmsg.Osuf \
+		stage_updc.Osuf \
+		stage_util.Osuf
 
-STAGERLIB_OBJS = stager_admin_api.Osuf stager_errmsg.Osuf  stager_service.Osuf stager_client_api_common.Osuf stager_client_api_get.Osuf stager_client_api_put.Osuf stager_client_api_query.Osuf $(OBSOLETE_OBJS)
+STAGERLIB_OBJS = \
+		stager_admin_api.Osuf \
+		stager_client_api_common.Osuf \
+		stager_client_api_get.Osuf \
+		stager_client_api_put.Osuf \
+		stager_client_api_query.Osuf \
+		stager_errmsg.Osuf \
+		stager_service.Osuf \
+		$(OBSOLETE_OBJS)
 
 all: LibraryTargetName(stager) $(PROGS_STAGER)
 
