@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.19 $ $Date: 2003/11/19 14:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.20 $ $Date: 2004/01/26 14:25:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -228,6 +228,7 @@ char *recfm;
 u_signed64 *Size;
 {
 	int avg_block_length;
+	unsigned char blockid[4];
 	int errcat = 0;
 	u_signed64 filesize;
 	int goodrec = 0;
@@ -249,6 +250,12 @@ u_signed64 *Size;
 	char tmpbuf[21];
 
 	filesize = 0;
+	if (read_pos (infd, path, blockid) == 0) {
+		Ctape_dmpmsg (MSG_OUT, " BLOCKID:                    %02x%02x%02x%02x\n",
+                      blockid[0], blockid[1], blockid[2], blockid[3]);
+    } else {
+        Ctape_dmpmsg(MSG_OUT, " BLOCKID: Retrieve error\n");
+    }
 	while (1) {
 		nbytes = read (infd, buffer, dmpparm.maxblksize);
 		if (nbytes > 0) {		/* record found */
