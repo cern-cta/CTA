@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.17 2002/04/30 13:05:11 jdurand Exp $
+ * $Id: stage_util.c,v 1.18 2002/05/06 16:14:24 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -106,8 +106,8 @@ void DLL_DECL stage_sleep(nsec)
 
 /* This function will return the preferred magic number used by the client */
 
-#define STGMAGIC_DEFAULT STGMAGIC4
-#define STGMAGIC_DEFAULT_STRING "STGMAGIC4"
+#define STGMAGIC_DEFAULT STGMAGIC3
+#define STGMAGIC_DEFAULT_STRING "STGMAGIC3"
 
 int DLL_DECL stage_stgmagic()
 {
