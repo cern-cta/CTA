@@ -50,9 +50,14 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_WAITTIMEOUT,
     RTCPCLD_MSG_SEGMCNTS,
     RTCPCLD_MSG_OUTOFSEQ,
-    RTCPCLD_MSG_RESERVED33,
-    RTCPCLD_MSG_RESERVED34,
-    RTCPCLD_MSG_RESERVED35
+    RTCPCLD_MSG_MAXFSEQ,
+    RTCPCLD_MSG_GOTTAPE,
+    RTCPCLD_MSG_MAXRETRY,
+    RTCPCLD_MSG_TAPEUNAVAILABLE,
+    RTCPCLD_MSG_UPDATETAPE,
+    RTCPCLD_MSG_RESERVED38,
+    RTCPCLD_MSG_RESERVED39,
+    RTCPCLD_MSG_RESERVED40
 };
 
 struct RtcpcldMessages {
@@ -96,9 +101,14 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_WAITTIMEOUT, DLF_LVL_SYSTEM, "Waiting for new/incomplete segments timeout"},
     { RTCPCLD_MSG_SEGMCNTS, DLF_LVL_DEBUG,"Segment counts"},
     { RTCPCLD_MSG_OUTOFSEQ, DLF_LVL_SYSTEM,"Tape files not in sequence on write"},
-    { RTCPCLD_MSG_RESERVED33, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED34, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED35, DLF_LVL_DEBUG,""}
+    { RTCPCLD_MSG_MAXFSEQ, DLF_LVL_ERROR,"FSEQ exceeds maximum allowed for label type"},
+    { RTCPCLD_MSG_GOTTAPE, DLF_LVL_SYSTEM,"Got tape from VMGR"},
+    { RTCPCLD_MSG_MAXRETRY, DLF_LVL_ERROR,"Retry limit exceeded"},
+    { RTCPCLD_MSG_TAPEUNAVAILABLE, DLF_LVL_ERROR,"Tape unavailable"},
+    { RTCPCLD_MSG_UPDATETAPE, DLF_LVL_SYSTEM,"Updated tape info in VMGR"},
+    { RTCPCLD_MSG_RESERVED38, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED39, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED40, DLF_LVL_DEBUG,""}
 };
 #else /* RTCPCLD_COMMON */
 extern struct RtcpcldMessages rtcpcldMessages;
