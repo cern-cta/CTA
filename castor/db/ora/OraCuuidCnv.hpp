@@ -129,6 +129,11 @@ namespace castor {
                                castor::ObjectCatalog& alreadyDone)
           throw (castor::exception::Exception);
 
+        /**
+         * Reset the converter statements.
+         */
+        void reset() throw ();
+
       private:
 
         /// SQL statement for request insertion

@@ -50,12 +50,14 @@ castor::db::ora::OraBaseCnv::OraBaseCnv() :
     ex.getMessage() << "No OraCnvSvc available";
     throw ex;
   }
+  m_cnvSvc->registerCnv(this);
 }
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
 castor::db::ora::OraBaseCnv::~OraBaseCnv() {
+  m_cnvSvc->unregisterCnv(this);
   m_cnvSvc->release();
 }
 
@@ -100,7 +102,9 @@ castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
 // -----------------------------------------------------------------------
 void castor::db::ora::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
   throw (oracle::occi::SQLException) {
-  cnvSvc()->getConnection()->terminateStatement(stmt);
+  if (0 != stmt) {
+    cnvSvc()->getConnection()->terminateStatement(stmt);
+  }
 }
 
 // -----------------------------------------------------------------------

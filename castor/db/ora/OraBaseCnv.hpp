@@ -62,6 +62,12 @@ namespace castor {
          * Destructor
          */
         virtual ~OraBaseCnv();
+
+        /**
+         * Resets the converter. In particular any prepared
+         * statements are destroyed
+         */
+        virtual void reset() throw() = 0;
         
         /**
          * gets the representation type, that is the type of

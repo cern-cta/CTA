@@ -32,6 +32,7 @@
 #include "castor/BaseCnvSvc.hpp"
 #include "castor/IRequestHandler.hpp"
 #include "castor/exception/Exception.hpp"
+#include <set>
 
 namespace castor {
 
@@ -42,6 +43,9 @@ namespace castor {
   namespace db {
 
     namespace ora {
+
+      // Forward Declarations
+      class OraBaseCnv;
 
       /**
        * Conversion service for Oracle Database
@@ -86,16 +90,9 @@ namespace castor {
           throw (oracle::occi::SQLException);
 
         /**
-         * deletes an existing connection to the database
+         * deletes the connection to the database
          */
-        void deleteConnection(oracle::occi::Connection* connection)
-          throw();
-
-        /**
-         * deletes an existing connection to the database
-         */
-        void dropConnection(oracle::occi::Connection* connection)
-          throw();
+        void dropConnection() throw();
 
         /**
          * create C++ object from foreign representation.
@@ -125,7 +122,7 @@ namespace castor {
          * occured
          */
         const unsigned long getIds(const unsigned int nids)
-          throw (oracle::occi::SQLException);
+          throw (castor::exception::Exception);
 
         /**
          * returns an address to the next request to handle.
@@ -158,6 +155,22 @@ namespace castor {
                                        ObjectCatalog& newlyCreated)
           throw (castor::exception::Exception);        
 
+      public:
+
+        /**
+         * registration of Oracle converters.
+         * This allows converters to be aware of a reset
+         * of the Oracle connection
+         */
+        void registerCnv(castor::db::ora::OraBaseCnv* cnv)
+          throw() { m_registeredCnvs.insert(cnv); }
+        
+        /**
+         * unregistration of Oracle converters.
+         */
+        void unregisterCnv(castor::db::ora::OraBaseCnv* cnv)
+          throw() { m_registeredCnvs.erase(cnv); }
+
       protected:
 
         /**
@@ -176,6 +189,9 @@ namespace castor {
 
         /// Oracle database name
         std::string m_dbName;
+
+        /// List of registered converters
+        std::set<castor::db::ora::OraBaseCnv*> m_registeredCnvs;
 
         /**
          * The ORACLE environment for this service

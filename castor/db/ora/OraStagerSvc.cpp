@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/10 14:04:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/24 15:47:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -146,6 +146,17 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       m_tapesToDoStatement->setSQL(s_tapesToDoStatementString);
       m_tapesToDoStatement->setInt(1, castor::stager::TAPE_PENDING);
     } catch (oracle::occi::SQLException e) {
+      try {
+        // Always try to rollback
+        getConnection()->rollback();
+        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+          // We've obviously lost the ORACLE connection here
+          dropConnection();
+        }
+      } catch (oracle::occi::SQLException e) {
+        // rollback failed, let's drop the connection for security
+        dropConnection();
+      }
       m_tapesToDoStatement = 0;
       castor::exception::Internal ex;
       ex.getMessage()
@@ -176,6 +187,17 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       result.push_back(tape);
     }
   } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      dropConnection();
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in tapesToDo while retrieving list of tapes."

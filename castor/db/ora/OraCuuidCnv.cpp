@@ -66,12 +66,30 @@ castor::db::ora::OraCuuidCnv::OraCuuidCnv() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::db::ora::OraCuuidCnv::~OraCuuidCnv() {
-  deleteStatement(m_insertStatement);
-  deleteStatement(m_deleteStatement);
-  deleteStatement(m_selectStatement);
-  deleteStatement(m_updateStatement);
-  deleteStatement(m_storeTypeStatement);
-  deleteStatement(m_deleteTypeStatement);
+  reset();
+}
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCuuidCnv::reset() throw() {
+  //Here we attempt to delete the statements correctly
+  // If something goes wrong, we just ignore it
+  try {
+    deleteStatement(m_insertStatement);
+    deleteStatement(m_deleteStatement);
+    deleteStatement(m_selectStatement);
+    deleteStatement(m_updateStatement);
+    deleteStatement(m_storeTypeStatement);
+    deleteStatement(m_deleteTypeStatement);
+  } catch (oracle::occi::SQLException e) {};
+  // Now reset all pointers to 0
+  m_insertStatement = 0;
+  m_deleteStatement = 0;
+  m_selectStatement = 0;
+  m_updateStatement = 0;
+  m_storeTypeStatement = 0;
+  m_deleteTypeStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -132,7 +150,17 @@ void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
       cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->getConnection()->rollback();
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.what() << std::endl
@@ -176,7 +204,17 @@ void castor::db::ora::OraCuuidCnv::updateRep(castor::IAddress* address,
       cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->getConnection()->rollback();
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.what() << std::endl
@@ -217,7 +255,17 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
       cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->getConnection()->rollback();
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.what() << std::endl
@@ -270,7 +318,17 @@ castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* addre
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->getConnection()->rollback();
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.what() << std::endl
@@ -320,7 +378,17 @@ void castor::db::ora::OraCuuidCnv::updateObj(castor::IObject* obj,
     alreadyDone[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->getConnection()->rollback();
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
     castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
     ex.getMessage() << "Error in update object :"
                     << std::endl << e.what() << std::endl
