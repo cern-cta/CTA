@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:32:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 08:44:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -401,6 +401,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     int buf_done, nb_bytes;
     register int Uformat;
     register int debug = Debug;
+    register int convert;
+    char *convert_buffer = NULL;
     u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
@@ -420,6 +422,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     diskIOstatus->disk_fseq = filereq->disk_fseq;
     blksiz = lrecl = -1;
     Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
+    convert = filereq->convert;
 
     /*
      * Main write loop. End with EOF on tape file or error condition
@@ -440,6 +443,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_mutex_lock_ext(): %s\n",
                 sstrerror(serrno));
+            if ( convert_buffer != NULL ) free(convert_buffer);
             return(-1);
         }
         /*
@@ -454,11 +458,13 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                if ( convert_buffer != NULL ) free(convert_buffer);
                 return(-1);
             }
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                if ( convert_buffer != NULL ) free(convert_buffer);
                 return(-1);
             }
             /*
@@ -473,7 +479,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 blksiz = filereq->blocksize;
                 lrecl = filereq->recordlength;
                 if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
-                else lrecl = 0;
+                else if (Uformat == TRUE) lrecl = 0;
                 filereq->TStartTransferDisk = (int)time(NULL);
             }
         }
@@ -488,7 +494,25 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED);
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
             (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+            if ( convert_buffer != NULL ) free(convert_buffer);
             return(-1);
+        }
+        /*
+         * Allocate conversion buffer if necessary
+         */
+        if ( ((convert & FIXVAR) != 0) && (convert_buffer == NULL) ) {
+            convert_buffer = (char *)malloc(databufs[i]->length +
+                (databufs[i]->length + lrecl -1)/lrecl);
+            if ( convert_buffer == NULL ) {
+                (void)rtcpd_SetReqStatus(NULL,file,errno,
+                                         RTCP_RESELECT_SERV);
+                (void)rtcpd_AppendClientMsg(NULL,file,RT105,sstrerror(errno));
+                rtcp_log(LOG_ERR,"MemoryToDisk() malloc(): %s\n",
+                    sstrerror(errno));
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                return(-1);
+            }
         }
         /*
          * Check if this is the last buffer of the tape file
@@ -513,11 +537,18 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
             }
             if ( nb_bytes > 0 ) {
+                if ( (convert & EBCCONV) != 0 ) 
+                    ebc2asc(databufs[i]->buffer,nb_bytes);
                 /*
                  * >>>>>>>>>>> write to disk <<<<<<<<<<<<<
                  */
                 if ( Uformat == FALSE ) {
                     bufp = databufs[i]->buffer;
+                    if ( (convert & FIXVAR) != 0 ) {
+                        nb_bytes = rtcpd_FixToVar(bufp,
+                            convert_buffer,nb_bytes,lrecl);
+                        bufp = convert_buffer;
+                    }
                     DK_STATUS(RTCP_PS_WRITE);
                     rc = rfio_write(disk_fd,bufp,nb_bytes);
                     DK_STATUS(RTCP_PS_NOBLOCKING);
@@ -554,6 +585,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
                         (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                         (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                        if ( convert_buffer != NULL ) free(convert_buffer);
                         return(-1);
                     }
                 }
@@ -595,12 +627,14 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_broadcast_ext(): %s\n",
                 sstrerror(serrno));
+            if ( convert_buffer != NULL ) free(convert_buffer);
             return(-1);
         }
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthreda_mutex_unlock_ext(): %s\n",
                 sstrerror(serrno));
+            if ( convert_buffer != NULL ) free(convert_buffer);
             return(-1);
         }
 
@@ -628,8 +662,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",
                             rfio_serror());
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
-                        return(-1);
                     }
+                    if ( convert_buffer != NULL ) free(convert_buffer);
                     return(-1);
                 }
             }
@@ -645,6 +679,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( rtcpd_CheckProcError() & RTCP_FAILED ) break;
     } /* for (;;) */
     
+    if ( convert_buffer != NULL ) free(convert_buffer);
     return(0);
 }
 static int DiskToMemory(int disk_fd, int pool_index,
@@ -676,7 +711,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     lrecl = filereq->recordlength;
     Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
     if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
-    else lrecl = 0;
+    else if ( Uformat == TRUE ) lrecl = 0;
     
     /*
      * Calculate new actual buffer length
