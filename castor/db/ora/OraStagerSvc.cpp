@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.108 $ $Release$ $Date: 2005/01/20 15:56:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/21 10:02:23 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2014,8 +2014,8 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
         (5, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
-    setVector(m_bestFileSystemForJobStatement, 1, fileSystems, "STRLIST");
-    setVector(m_bestFileSystemForJobStatement, 2, machines, "STRLIST");
+    setVector(m_bestFileSystemForJobStatement, 1, fileSystems, "strList");
+    setVector(m_bestFileSystemForJobStatement, 2, machines, "strList");
     m_bestFileSystemForJobStatement->setDouble(3, minFree);
     unsigned int nb = m_bestFileSystemForJobStatement->executeUpdate();
     if (0 == nb) {
