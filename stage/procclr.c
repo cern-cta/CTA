@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.69 2003/06/30 11:27:35 jdurand Exp $
+ * $Id: procclr.c,v 1.70 2003/09/08 15:49:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.69 $ $Date: 2003/06/30 11:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.70 $ $Date: 2003/09/08 15:49:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -96,12 +96,8 @@ extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern int isvalidpool _PROTO((char *));
 extern int ismetapoolpool _PROTO((char *));
 extern void dellink _PROTO((struct stgpath_entry *, int));
@@ -115,6 +111,8 @@ extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern char *findpoolname _PROTO((char *));
 extern int check_waiting_on_req _PROTO((int, int));
+extern int ismetapool _PROTO((char *));
+extern int havemetapool _PROTO((char *, char *));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int, int, char *));
 
