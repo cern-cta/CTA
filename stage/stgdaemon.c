@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.140 2001/06/21 11:30:19 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.141 2001/06/24 22:13:42 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.140 $ $Date: 2001/06/21 11:30:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.141 $ $Date: 2001/06/24 22:13:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -178,6 +178,7 @@ void checkwaitq _PROTO(());
 void create_link _PROTO((struct stgcat_entry *, char *));
 void dellink _PROTO((struct stgpath_entry *));
 void delreq _PROTO((struct stgcat_entry *, int));
+void delreqid _PROTO((int, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
@@ -2595,6 +2596,28 @@ void delreq(stcp,nodb_delete_flag)
 	savereqs ();
 }
 
+/* If nodb_delete_flag is != 0 then only update in memory is performed */
+void delreqid(thisreqid,nodb_delete_flag)
+		 int thisreqid;
+		 int nodb_delete_flag;
+{
+	struct stgcat_entry *stcp;
+	int n;
+	int found = 0;
+	char *p1, *p2;
+
+	for (stcp = stcs; stcp < stce; stcp++) {
+		if (stcp->reqid == 0) break;
+		if (stcp->reqid == thisreqid) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (! found) return;
+	delreq(stcp,nodb_delete_flag);
+}
+
 int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
@@ -3317,5 +3340,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Thursday 21 June, 2001 at 13:30:05 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 24 June, 2001 at 23:45:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
