@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/02/03 15:28:27 $ $Author: bcouturi $
  *
  *
  *
@@ -318,7 +318,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
   const int TIMEOUT = 60;
   std::stack<int> toremove;
   char *func = "RequestReplier::garbageCollect ";
-
+  
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
       iter != m_connections->end();
       iter++) {
@@ -547,33 +547,49 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
 
   char *func = "RequestReplier::readFromClientQueue ";
 
-  int val;
-  int rc = read(*m_pipeRead, &val, sizeof(val));
-  if (rc < 0) {
-    clog() << ERROR << func << "Error reading !" << std::endl;
-  }
-
   clog() << VERBOSE << func << "Taking lock on queue !" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << VERBOSE << func << "Getting client from queue" << std::endl;
+  clog() << VERBOSE << func 
+         << "*** Before processing - Client Queue size:"  << m_clientQueue->size()  
+         << " Connection Queue size:"  << m_connections->size()  
+         << std::endl;
 
   if (m_clientQueue->size() == 0) {
-    clog() << VERBOSE << func << "No client in queue, removing lock" << std::endl;
+    clog() << VERBOSE << func << "No client in queue, removing lock" 
+           << std::endl;
     Cthread_mutex_unlock(&m_clientQueue);
-    return; // XXX Throw exception ?
+    return;
   }
 
-  ClientResponse cr = m_clientQueue->front();
-  m_clientQueue->pop();
+  int clients_in_queue = m_clientQueue->size();
 
-  clog() << VERBOSE << func << "Client2 is "
-         << castor::ip << cr.client.ipAddress() << ":"
-         << cr.client.port() << std::endl;
+  for(int i=0; i<clients_in_queue; i++) {
+    ClientResponse cr = m_clientQueue->front();
+    m_clientQueue->pop();
 
-  clog() << DEBUG << func << "Creating connection to client" << std::endl;
-  createNewClientConnection(cr);
+    clog() << VERBOSE << func << "Client is "
+           << castor::ip << cr.client.ipAddress() << ":"
+           << cr.client.port() << std::endl;
+    
+    clog() << DEBUG << func << "Creating connection to client" << std::endl;
+    createNewClientConnection(cr);
 
+    clog() << DEBUG << func << "Reading entry from pipe" << std::endl;
+    int val;
+    int rc = read(*m_pipeRead, &val, sizeof(val));
+    if (rc < 0) {
+      clog() << ERROR << func << "Error reading !" << std::endl;
+    }
+    
+  }
+  clog() << VERBOSE << func 
+         << "*** After processing - Client Queue size:"  << m_clientQueue->size()  
+         << " Connection Queue size:"  << m_connections->size()  
+         << std::endl;
+
+ 
+  
   clog() << VERBOSE << func << "Removing lock on queue !" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
 
