@@ -743,11 +743,26 @@ procupdreq(req_type, magic, req_data, clienthost)
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
 
+	if (oflag || cflag || Oflag || Cflag) {
+		if ((callback_index >= 0)) {
+			/* This is an asynchroneous callback : we can receive two notifications */
+			/* of opening for different indexes */
+			if (wqp->last_rwcounterfs_index != callback_index) {
+				wqp->last_rwcounterfs_index = callback_index;
+				if (oflag) goto forced_rwcounters_oflag;
+				if (cflag) goto forced_rwcounters_cflag;
+				if (Oflag) goto forced_rwcounters_Oflag;
+				if (Cflag) goto forced_rwcounters_Cflag;
+			}
+		}
+	}
+	
 	/* Here stcp points to the found entry */
 	/* and index_found points to the index starting at stcs */
 	if (oflag) {
 		/* The processing of oflag is an end point doing nothing else but updating r/w counters */
 		if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
+		  forced_rwcounters_oflag:
 			/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
 			rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
 			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
@@ -760,6 +775,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* The processing of cflag is an end point doing nothing else but updating r/w counters */
 		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
 			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+		  forced_rwcounters_cflag:
 			rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEUPDC);
 			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
 		}
@@ -771,6 +787,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* The processing of Oflag is an end point doing nothing else but updating r/w counters */
 		if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
 			/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
+		  forced_rwcounters_Oflag:
 			rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT); /* Could be STAGEALLOC */
 			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
 		}
@@ -782,6 +799,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* The processing of Cflag is an end point doing nothing else but updating r/w counters */
 		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
 			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+		  forced_rwcounters_Cflag:
 			rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEUPDC);
 			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
 		}
@@ -915,18 +933,36 @@ procupdreq(req_type, magic, req_data, clienthost)
 #endif
 		}
 		sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
+		if ((callback_index >= 0)) {
+			/* This is an asynchroneous callback : we can receive two notifications */
+			/* of opening for different indexes */
+			if (wqp->last_rwcounterfs_index != callback_index) {
+				wqp->last_rwcounterfs_index = callback_index;
+				goto forced_rwcounters_tppos;
+			}
+		}
 		if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
 			if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
 				/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
+			  forced_rwcounters_tppos:
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
 				wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
 			}
 		}
 		goto reply;
 	}
+	if ((callback_index >= 0)) {
+		/* This is an asynchroneous callback : we can receive two notifications */
+		/* of opening for different indexes */
+		if (wqp->last_rwcounterfs_index != callback_index) {
+			wqp->last_rwcounterfs_index = callback_index;
+			goto forced_rwcounters_filcp;
+		}
+	}
 	if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
 		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
 			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+		  forced_rwcounters_filcp:
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
 		}

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.244 2003/05/13 09:34:42 jdurand Exp $
+ * $Id: poolmgr.c,v 1.245 2003/05/14 09:13:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.244 $ $Date: 2003/05/13 09:34:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.245 $ $Date: 2003/05/14 09:13:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2031,6 +2031,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 				}
 			}
 			sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
+			sendrep (rpfd, MSG_OUT, "last_rwcounterfs_index    %d\n", wqp->last_rwcounterfs_index);
 			for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid) {
@@ -2629,6 +2630,11 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					if (stcp->reqid == 0) break;
 					if (stcp->reqid == wfp->subreqid) {
 						if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+							/* We can loose some opening notifications doing so */
+							/* Progressively situation will come back to normal */
+							/* because rwcountersfs(), when decreasing counters */
+							/* will say there is internal error and let numbers */
+							/* to zero */
 							rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
 						}
 						break;

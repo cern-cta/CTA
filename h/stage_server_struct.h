@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.12 2003/05/12 12:18:24 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.13 2003/05/14 09:12:55 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -80,6 +80,7 @@ struct waitq {
 	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
 	int save_nbsubreqid; /* Save original number of entries */
 	int last_rwcounterfs_vs_R; /* Last -R option value that triggered the rwcountersfs call */
+	int last_rwcounterfs_index; /* Last -i option value that triggered the rwcountersfs call */
 	int nb_waiting_spc; /* See routine checkwaitingspc() in stgdaemon.c */
 	int nb_found_spc; /* See routine checkwaitingspc() in stgdaemon.c */
 	u_signed64 flags; /* API flags */

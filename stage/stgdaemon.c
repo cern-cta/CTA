@@ -1902,6 +1902,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
 	wqp->last_rwcounterfs_vs_R = 0;
+	wqp->last_rwcounterfs_index = -1;
 	wqp->flags = (u_signed64) 0;
 	if (wqp->use_subreqid != 0) {
 		if ((wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int))) == NULL) {
