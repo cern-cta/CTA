@@ -1,14 +1,14 @@
 /*
- * $Id: fseek.c,v 1.7 2000/11/20 15:01:18 jdurand Exp $
+ * $Id: fseek.c,v 1.8 2002/06/06 07:40:27 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.7 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Fabien Collin";
+static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.8 $ $Date: 2002/06/06 07:40:27 $ CERN/IT/PDP/DM Fabien Collin";
 #endif /* not lint */
 
 /* fseek.c      Remote File I/O - fseek library call */
@@ -85,15 +85,6 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
       break;
   default:
     rc = 0;
-#ifdef linux
-    ((RFILE *)fp)->eof |= _IO_EOF_SEEN; 
-#else
-#ifdef __Lynx__
-    ((RFILE *)fp)->eof |= _EOF; 
-#else
-    ((RFILE *)fp)->eof |= _IOEOF; 
-#endif
-#endif
     break; 
   }
   END_TRACE();
