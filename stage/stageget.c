@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.21 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stageget.c,v 1.22 2002/04/11 10:33:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.21 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.22 $ $Date: 2002/04/11 10:33:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -136,7 +136,7 @@ int main(argc, argv)
 		marshall_STRING (sbp, "-u");
 		marshall_STRING (sbp, pool_user);
 	}
-	if ((c = build_linkname (argv[i], path, sizeof(path), STAGEGET)) == SYERR)
+	if ((c = build_linkname (argv[i], path, sizeof(path), STAGEGET)) == SESYSERR)
 		exit (SYERR);
 	if (c) {
 		errflg++;

@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.28 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stageclr.c,v 1.29 2002/04/11 10:32:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.28 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.29 $ $Date: 2002/04/11 10:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -167,7 +167,7 @@ int main(argc, argv)
 			Lflag = Coptind - 1;
 			if ((n = Coptarg - argv[Lflag]) != 0)
 				strncpy (path, argv[Lflag], n);
-			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
+			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SESYSERR) {
 #if defined(_WIN32)
 				WSACleanup();
 #endif
@@ -221,7 +221,7 @@ int main(argc, argv)
 			Pflag = Coptind - 1;
 			if ((n = Coptarg - argv[Pflag]) != 0)
 				strncpy (path, argv[Pflag], n);
-			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
+			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SESYSERR) {
 #if defined(_WIN32)
 				WSACleanup();
 #endif
@@ -315,7 +315,7 @@ int main(argc, argv)
 		sbpp = sbp;
 		while (fgets (ibuf, sizeof(ibuf), stdin) != NULL) {
 			if ((p = strchr (ibuf, '\n')) != NULL) *p = '\0';
-			if ((c = build_linkname (ibuf, path, sizeof(path), STAGECLR)) == SYERR) {
+			if ((c = build_linkname (ibuf, path, sizeof(path), STAGECLR)) == SESYSERR) {
 #if defined(_WIN32)
 				WSACleanup();
 #endif
