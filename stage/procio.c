@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.48 2000/10/30 11:25:11 jdurand Exp $
+ * $Id: procio.c,v 1.49 2000/11/03 06:09:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.48 $ $Date: 2000/10/30 11:25:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.49 $ $Date: 2000/11/03 06:09:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -649,8 +649,21 @@ void procioreq(req_type, req_data, clienthost)
 				setegid(0);
 				seteuid(0);
 				break;
-			case STAGEWRT:
 			case STAGEOUT:
+				/* Special case for CASTOR's HSM files : We check in advance if the file is not "busy" */
+				if (stgreq.t_or_d == 'h') {
+					switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
+						case STAGEOUT|CAN_BE_MIGR:
+						case STAGEPUT|CAN_BE_MIGR:
+							sendrep (rpfd, MSG_ERR, STG37);
+							c = EBUSY;
+							goto reply;
+						default:
+							break;
+					}
+				}
+				/* There is intentionnaly no 'break' here */
+			case STAGEWRT:
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
 				switch (stgreq.t_or_d) {
@@ -988,11 +1001,6 @@ void procioreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 				break;
-			case STAGEOUT|CAN_BE_MIGR:
-			case STAGEPUT|CAN_BE_MIGR:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = EBUSY;
-				goto reply;
 			default:
 				sendrep (rpfd, MSG_ERR, STG37);
 				c = USERR;
