@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.115 2001/03/21 12:03:18 jdurand Exp $
+ * $Id: procio.c,v 1.116 2001/03/21 17:32:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.115 $ $Date: 2001/03/21 12:03:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.116 $ $Date: 2001/03/21 17:32:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -64,27 +64,27 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.115 $ $Date: 200
 		if ((save_stcp_for_Cns_creatx.uid != stage_passwd.pw_uid) || \
 			(save_stcp_for_Cns_creatx.gid != stage_passwd.pw_gid)) { \
 			if ((stgreq.uid == stage_passwd.pw_uid) && (stgreq.gid == stage_passwd.pw_gid)) { \
-				if (api_out == 0) { \
+				if ((api_out == 0) || (openmode == 0)) { \
 					okmode = ( 0777 & ~ save_stcp_for_Cns_creatx.mask); \
 				} else { \
 					okmode = (07777 & (openmode & ~ save_stcp_for_Cns_creatx.mask)); \
 				} \
 			} else { \
-				if (api_out == 0) { \
+				if ((api_out == 0) || (openmode == 0)) { \
 					okmode = ( 0777 & ~ stgreq.mask); \
 				} else { \
 					okmode = (07777 & (openmode & ~ stgreq.mask)); \
 				} \
 			} \
 		} else { \
-			if (api_out == 0) { \
+			if ((api_out == 0) || (openmode == 0)) { \
 				okmode = ( 0777 & ~ stgreq.mask); \
 			} else { \
 				okmode = (07777 & (openmode & ~ stgreq.mask)); \
 			} \
 		} \
 	} else { \
-		if (api_out == 0) { \
+		if ((api_out == 0) || (openmode == 0)) { \
 			okmode = ( 0777 & ~ stgreq.mask); \
 		} else { \
 			okmode = (07777 & (openmode & ~ stgreq.mask)); \
@@ -1223,6 +1223,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		int stage_wrt_migration;
 		struct stgcat_entry save_stcp_for_Cns_creatx;
 		int have_save_stcp_for_Cns_creatx = 0;
+		mode_t stagewrt_Cns_creatx_mode;
 
 		global_c_stagewrt = 0;
 		global_c_stagewrt_SYERR = 0;
@@ -1937,6 +1938,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 										(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 							setegid(stgreq.gid);
 							seteuid(stgreq.uid);
+							stagewrt_Cns_creatx_mode = (07777 & filemig_stat.st_mode);
 							forced_Cns_creatx = 1;
 							save_stcp_for_Cns_creatx.a_time = filemig_stat.st_mtime;
 #ifdef USECDB
@@ -1973,6 +1975,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 									setegid(stgreq.gid);
 									seteuid(stgreq.uid);
 								}
+								stagewrt_Cns_creatx_mode = (07777 & filemig_stat.st_mode);
 								forced_Cns_creatx = 1;
 							}
 						/*
@@ -2002,15 +2005,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 						goto stagewrt_continue_loop;
 					}
 					/* We will have to create it */
+					stagewrt_Cns_creatx_mode = (07777 & filemig_stat.st_mode);
 					forced_Cns_creatx = 1;
 					forced_rfio_stat = 1;
 				}
 				if (forced_Cns_creatx != 0) {
 					mode_t okmode;
 
-					SET_CORRECT_OKMODE;
+					/* SET_CORRECT_OKMODE; */
 					SET_CORRECT_EUID_EGID;
-					if (Cns_creatx(hsmfiles[ihsmfiles], okmode, &Cnsfileid) != 0) {
+					if (Cns_creatx(hsmfiles[ihsmfiles], stagewrt_Cns_creatx_mode, &Cnsfileid) != 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
@@ -3621,7 +3625,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 	setegid(stcp->gid);
 	seteuid(stcp->uid);
-	if (api_out == 0) {
+	if ((api_out == 0) || (openmode == 0)) {
 		okmode = ( 0777 & ~ stcp->mask);
 	} else {
 		okmode = (07777 & (openmode & ~ stcp->mask));
