@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_SendVolReq.man,v $ $Revision: 1.2 $ $Date: 2000/06/26 13:15:56 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_SendVolReq.man,v $ $Revision: 1.3 $ $Date: 2000/08/09 09:56:34 $ CERN IT-PDP/DM O.Barring
 .\"
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_SENDVOLREQ l "$Date: 2000/06/26 13:15:56 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_SENDVOLREQ l "$Date: 2000/08/09 09:56:34 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_SendVolReq \- queue a volume request in VDQM
@@ -38,13 +38,13 @@ vdqm_SendVolReq \- queue a volume request in VDQM
 .I nw
 \- points to a structure containing internal VDQM API network information returned
 by a prior call to 
-.B vdqm_Connect(l).
+.B vdqm_Connect(3).
 If this parameter is NULL, which is the recommended usage,
 .B vdqm_SendVolReq
 will internally call 
-.B vdqm_Connect(l)
+.B vdqm_Connect(3)
 and
-.B vdqm_Disconnect(l)
+.B vdqm_Disconnect(3)
 to open and close the connection with the VDQM server.
 .PP
 .I reqID
@@ -220,5 +220,5 @@ to VDQM server maintenance. Client should retry after a short delay.
 
 
 .SH SEE ALSO
-vdqm_Connect(l), vdqm_Disconnect(l)
+vdqm_Connect(3), vdqm_Disconnect(3)
 
