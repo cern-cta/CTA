@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.4 $ $Date: 2000/02/16 10:04:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.5 $ $Date: 2000/02/16 10:48:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,8 @@ int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
     }
 
     err = NULL;
+    tl = NULL;
+    fl = NULL;
     CLIST_ITERATE_BEGIN(tape,tl) {
         if ( tl->tapereq.tprc != 0 ) {
             err = &(tl->tapereq.err);
@@ -66,7 +68,7 @@ int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
             fl = file;
             err = &(fl->filereq.err);
         }
-        if ( fl->filereq.cprc != 0 ) break;
+        if ( fl != NULL && fl->filereq.cprc != 0 ) break;
     } CLIST_ITERATE_END(tape,tl);
 
     if ( err != NULL ) {
