@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.11 $ $Date: 2000/01/14 08:50:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.12 $ $Date: 2000/01/24 16:38:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -474,12 +474,12 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                 filereq->bytes_from_host = ((u_signed64)compstats.from_host) * 1024;
                 filereq->bytes_out = ((u_signed64)compstats.to_tape) * 1024;
             } else {
-                rtcp_log(LOG_ERR,"compression: to_host %d, from_tape %d\n",
+                rtcp_log(LOG_DEBUG,"compression: to_host %d, from_tape %d\n",
                     compstats.to_host,compstats.from_tape);
                 if ( compstats.to_host != 0 &&
                      compstats.to_host != 
                      (unsigned long)(file->tapebytes_sofar / 1024) ) {
-                    rtcp_log(LOG_ERR,"tclose() inconsistent nb bytes to host %ld<->%ld\n",
+                    rtcp_log(LOG_DEBUG,"tclose() inconsistent nb bytes to host %ld<->%ld\n",
                         compstats.to_host,
                         (unsigned long)(file->tapebytes_sofar / 1024));
                 }
