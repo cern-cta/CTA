@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_rls.man,v $ $Revision: 1.6 $ $Date: 2000/02/03 10:44:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_rls.man,v $ $Revision: 1.7 $ $Date: 2000/02/03 11:26:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RLS 3 "$Date: 2000/02/03 10:44:40 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_RLS 3 "$Date: 2000/02/03 11:26:22 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_rls \- release tape resources
 .SH SYNOPSIS
@@ -20,7 +20,7 @@ and decrements the corresponding device group(s) reservation.
 .TP
 .I path
 specifies the pathname relative to the current directory or the full pathname
-which be used by the application program in the
+which is used by the application program in the
 .B open
 statement.
 .I path
