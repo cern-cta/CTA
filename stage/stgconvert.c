@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.24 2000/05/29 07:56:28 jdurand Exp $
+ * $Id: stgconvert.c,v 1.25 2000/06/05 11:57:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.24 $ $Date: 2000/05/29 07:56:28 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.25 $ $Date: 2000/06/05 11:57:03 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -52,6 +52,7 @@ int warns = 1;
 int Cdb_debug = 0;                      /* To satisfy external : Server debug level */
 char Cdb_server_pwd[CA_MAXNAMELEN+1];   /* To satisfy external : Server password file */
 int Cdb_server_hashsize = 127;          /* To satisfy external : Server hashsize */
+int Cdb_server_freehashsize = 127;      /* To satisfy external : Server free hashsize */
 int Cdb_server_hole_idx;                /* To satisfy external : Server Hole Policy in index files */
 int Cdb_server_hole_dat;                /* To satisfy external : Server Hole Policy in data files */
 char *CallerFile = NULL;
@@ -465,6 +466,11 @@ int main(argc,argv)
 		}
 		if (Cdb_config_hashsize(&Cdb_server_hashsize) != 0) {
 			printf("### Cdb_config_hashsize error (%s)\n",sstrerror(serrno));
+			rc = EXIT_FAILURE;
+			goto stgconvert_return;
+		}
+		if (Cdb_config_freehashsize(&Cdb_server_freehashsize) != 0) {
+			printf("### Cdb_config_freehashsize error (%s)\n",sstrerror(serrno));
 			rc = EXIT_FAILURE;
 			goto stgconvert_return;
 		}
