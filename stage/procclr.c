@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.37 2001/11/30 11:47:25 jdurand Exp $
+ * $Id: procclr.c,v 1.38 2001/12/04 10:27:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.37 $ $Date: 2001/11/30 11:47:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.38 $ $Date: 2001/12/04 10:27:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -579,15 +579,15 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	 *		>0	in case of error
 	 */
 
+    /* Special case of intermediate state or CASTOR-migration state (original record + stream) */
+	if (ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)))) {
+		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
+		return (EBUSY);
+	}
+
 	if (strcmp (group, STGGRP) && strcmp (group, stcp->group) && (uid != 0)) {
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
 		return (USERR);
-	}
-
-    /* Special case of intermediate state */
-	if (ISCASTORWAITINGMIG(stcp)) {
-		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
-		return (EBUSY);
 	}
 
 	if ((stcp->status & 0xF0) == STAGED ||
@@ -655,5 +655,5 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 }
 
 /*
- * Last Update: "Sunday 11 November, 2001 at 09:04:23 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 04 December, 2001 at 10:58:54 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
