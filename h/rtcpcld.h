@@ -172,16 +172,16 @@ int rtcpcld_myDispatch _PROTO((
 int rtcpcld_initThreadPool _PROTO((
                                    int
                                    ));
-int rtcpcld_cleanupTape _PROTO((
+void rtcpcld_cleanupTape _PROTO((
                                 tape_list_t *
                                 ));
 void rtcpcld_cleanupFile _PROTO((
                                  file_list_t *
                                  ));
-void rtcpcld_getTapesToDo _PROTO((
-                                  tape_list_t ***,
-                                  int *
-                                  ));
+int rtcpcld_getTapesToDo _PROTO((
+                                 tape_list_t ***,
+                                 int *
+                                 ));
 int rtcpcld_getSegmentsToDo _PROTO((
                                     tape_list_t *
                                     ));
