@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.4 1999/12/14 14:41:01 jdurand Exp $
+ * $Id: rfdir.c,v 1.5 2000/05/03 13:46:32 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.4 $ $Date: 1999/12/14 14:41:01 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.5 $ $Date: 2000/05/03 13:46:32 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -205,7 +205,9 @@ int recursively,multiple;
     if ( rc < 0 && serrno == SEPROTONOTSUP ) 
       reqtype = RQST_MSTAT;
     else close(fd);
-  } else localdir = 1;
+  } else {
+    localdir = 1;
+  }
   
   dirp = rfio_opendir(dir);
   if ( dirp == NULL ) {
@@ -222,9 +224,10 @@ int recursively,multiple;
   rootpathlen = strlen(path);
   path[rootpathlen] = '/';
   while ( ( de = rfio_readdir(dirp) ) != NULL ) {
+    rc = 0;
     path[rootpathlen+1] = '\0';
     strcat(path,de->d_name);
-    if (!rfio_parseln(path,&host,&filename,RDLINKS)) {
+    if (!rfio_parseln(path,&host,&filename,RDLINKS) && host == NULL ) {
       /* The file is local */
       rc = stat(filename,&st) ;
     } else {
@@ -245,11 +248,13 @@ int recursively,multiple;
       pw = getpwuid(st.st_uid);
       if ( pw == NULL ) sprintf(uidstr,"%d",st.st_uid);
       else strcpy(uidstr,pw->pw_name);
+      old_uid = st.st_uid;
     }
     if ( st.st_gid != old_gid ) {
       grp = getgrgid(st.st_gid);
       if ( grp == NULL ) sprintf(gidstr,"%d",st.st_gid);
       else strcpy(gidstr,grp->gr_name);
+      old_gid = st.st_gid;
     }
     t_tm = localtime(&st.st_mtime);
     strftime(t_creat,30,"%b %d %R",t_tm);
