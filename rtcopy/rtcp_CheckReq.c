@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.22 $ $Date: 2000/03/09 15:49:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.23 $ $Date: 2000/03/10 12:34:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -55,6 +55,8 @@ extern char *geterr();
     rtcpd_AppendClientMsg(tape,file,errmsgtxt); \
     if ( ((X)->err.severity & RTCP_FAILED) ) rc = -1;}
 
+#define CMD(X) ((X)==WRITE_ENABLE ? "CPDSKTP":"CPTPDSK")
+
 static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
@@ -94,7 +96,7 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
      */
     if ( *tapereq->vid == '\0' && *tapereq->vsn == '\0' ) {
         serrno = EINVAL;
-        sprintf(errmsgtxt,"vsn or vid must be specified\n");
+        sprintf(errmsgtxt,RT144,CMD(tapereq->mode));
         SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -270,7 +272,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          (filereq->position_method == TPPOSIT_FSEQ) &&
         (file->prev->filereq.tape_fseq != filereq->tape_fseq - 1) ) {
         serrno = EINVAL;
-        sprintf(errmsgtxt,RT151,"CPDSKTP");
+        sprintf(errmsgtxt,RT151,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_SYERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -314,7 +316,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          strcmp(filereq->recfm,"FS") != 0 &&
          strcmp(filereq->recfm,"U") != 0 ) {
         serrno = EINVAL;
-        sprintf(errmsgtxt,"INVALID FORMAT SPECIFIED\n");
+        sprintf(errmsgtxt,RT130,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -336,7 +338,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      */
     if ( filereq->blocksize == 0 ) {
         serrno = EINVAL;
-        sprintf(errmsgtxt,"Block size cannot be equal to zero\n");
+        sprintf(errmsgtxt,RT104,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -349,7 +351,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( filereq->blocksize > 0 && filereq->recordlength > 0 ) {
         if ( filereq->recordlength > filereq->blocksize ) {
             serrno = EINVAL;
-            sprintf(errmsgtxt,"record length (%d) can't be greater than block size (%d)\n",
+            sprintf(errmsgtxt,RT138,CMD(mode),
                 filereq->recordlength,filereq->blocksize);
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
@@ -371,9 +373,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( *filereq->file_path == '\0' ) {
         serrno = EINVAL;
         if ( *file->prev->filereq.file_path == '\0' )
-            sprintf(errmsgtxt,"disk file pathnames must be specified\n");
+            sprintf(errmsgtxt,RT107,CMD(mode));
         else
-            sprintf(errmsgtxt,"incorrect number of filenames specified\n");
+            sprintf(errmsgtxt,RT127,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -400,7 +402,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
-            sprintf(errmsgtxt,RT110,"CPDSKTP",sstrerror(serrno));
+            sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
         }
@@ -408,15 +410,15 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Is it a director?
          */
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
-            sprintf(errmsgtxt,"File %s is a directory !\n",filereq->file_path);
             serrno = EISDIR;
+            sprintf(errmsgtxt,RT110,CMD(mode),sstrerror_serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
         /*
          * Zero size?
          */
         if ( st.st_size == 0 ) {
-            sprintf(errmsgtxt,"File %s is empty !\n",filereq->file_path);
+            sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
@@ -465,7 +467,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             } 
         } else {
             if ( strstr(filereq->file_path,":/afs") != NULL ) {
-                sprintf(errmsgtxt,RT145,"CPTPDSK");
+                sprintf(errmsgtxt,RT145,CMD(mode));
                 serrno = EACCES;
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                 if ( rc == -1 ) return(rc);
@@ -474,7 +476,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             rc = rfio_mstat(filereq->file_path,&st);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 serrno = EISDIR;
-                sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
+                sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             }
             /*
@@ -492,7 +494,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;
-                    sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
+                    sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                     if ( rc == -1 ) return(rc);
@@ -502,7 +504,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                  */
                 if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                     serrno = ENOTDIR;
-                    sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
+                    sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                     if ( rc == -1 ) return(rc);
