@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/01 11:57:00 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/01 11:57:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -580,21 +580,53 @@ int rtcpcld_nextFileToProcess(
      tape_list_t *tape;
      file_list_t **file;
 {
-  file_list_t *fl = NULL;
+  file_list_t *fl = NULL, *firstFound = NULL;
   rtcpFileRequest_t *filereq;
-  int found = 0;
+  int found = 0, lastFseqInProcess = -1;
+
+  if ( tape->tapereq.mode == WRITE_DISABLE ) {
+    /*
+     * The segments (and hence the filereqs) are normally sorted in
+     * tape fseq order everytime segmentsForTape() is called. However,
+     * between two calls there is no sorting but we can attempt to
+     * return the filereq in ascending tape_fseq anyway since we already
+     * know (by the path) which filereqs have been submitted to the
+     * mover.
+     */
+    CLIST_ITERATE_BEGIN(tape->file,fl) 
+      {
+        filereq = &(fl->filereq);
+        if ( ((filereq->proc_status == RTCP_WAITING) ||
+              (filereq->proc_status == RTCP_POSITIONED)) && 
+             (rtcpcld_validPath(filereq->file_path) == 1) ) {
+          if ( filereq->tape_fseq > lastFseqInProcess ) {
+            lastFseqInProcess = filereq->tape_fseq;
+          }
+        }
+      }
+    CLIST_ITERATE_END(tape->file,fl);
+  }
   
   CLIST_ITERATE_BEGIN(tape->file,fl) 
     {
       filereq = &(fl->filereq);
       if ( (rtcpcld_validPosition(filereq->tape_fseq,filereq->blockid) == 1) &&
            (rtcpcld_validPath(filereq->file_path) == 0) ) {
+        if ( found == 0 ) firstFound = fl;
         found = 1;
-        break;
+        if ( lastFseqInProcess == -1 ) break;
+        if ( filereq->tape_fseq == (lastFseqInProcess+1) ) {
+          /*
+           * We found a consecutive candidate. We pick it since
+           * it might imply no repositioning on tape if we're lucky
+           */
+          firstFound = fl;
+          break;
+        }
       }
     }
   CLIST_ITERATE_END(tape->file,fl);
-  if ( (found == 1) && (file != NULL) ) *file = fl;
+  if ( (found == 1) && (file != NULL) ) *file = firstFound;
   return(found);
 } 
 
