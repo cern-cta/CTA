@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.23 2001/06/21 11:21:53 jdurand Exp $
+ * $Id: stglogit.c,v 1.24 2001/06/22 16:50:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.23 $ $Date: 2001/06/21 11:21:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.24 $ $Date: 2001/06/22 16:50:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -280,6 +280,8 @@ int stglogopenflags(va_alist) va_dcl
 	something_to_print = 0;
     while (1) {
 		if (flag2names[++i].name == NULL) break;
+		/* We distinguish the case when flag2names[i].flag == 0 v.s. the others */
+		if ((flag2names[i].flag == 0) && (flags != 0)) continue;
 		if ((flags & flag2names[i].flag) == flag2names[i].flag) {
 			if (strlen(prtbuf) > (PRTBUFSZ - 3)) break;
 			if (*thisp != '\0') {
