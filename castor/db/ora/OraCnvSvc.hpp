@@ -30,7 +30,6 @@
 // Include Files
 #include "occi.h"
 #include "castor/BaseCnvSvc.hpp"
-#include "castor/IRequestHandler.hpp"
 #include "castor/exception/Exception.hpp"
 #include <set>
 
