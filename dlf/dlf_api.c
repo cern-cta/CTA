@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.19 $ $Date: 2005/02/11 09:49:17 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.20 $ $Date: 2005/02/11 12:34:58 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -48,27 +48,26 @@ static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.19 $ $Date: 200
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "Cglobals.h"
+#include <Cglobals.h>
 #include <errno.h>
-#include "serrno.h"
-#include "dlf.h"
-#include "dlf_api.h"
-#include "marshall.h"
+#include <serrno.h>
+#include <dlf.h>
+#include <dlf_api.h>
+#include <marshall.h>
 #if !defined(_WIN32)
 #include <netinet/in.h>
 #include <netdb.h>
 #else
 #include <winsock2.h>
 #endif
-#include "Cnetdb.h"
-#include "Csnprintf.h"
+#include <Cnetdb.h>
+#include <Csnprintf.h>
 #ifndef _WIN32
 #include <sys/time.h>          /* For time_t */
 #else
 #include <time.h>              /* For time_t */
 #endif
 #include <ctype.h>
-#include "Cuuid.h"
 
 dlf_facility_info_t g_dlf_fac_info;
 
@@ -920,16 +919,26 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
 }
 
 char DLL_DECL * dlf_uuid2hex(uuid, buf, buf_size)
-Cuuid_t uuid;
+const Cuuid_t uuid;
 char *buf;
 int buf_size;
 {
-  if (Cuuid2string(buf,(size_t) buf_size, &uuid) != 0) {
-    return(NULL);
-  }
-  /* Just in case */
-  buf[buf_size] = '\0';
-  return(buf);
+	char *p;
+	char *u;
+	unsigned char x;
+	int i;
+	
+	if (buf_size < (2 * sizeof(Cuuid_t) + 1)) return NULL;
+	
+	for (i = 0, p = buf, u = (char*)(&uuid); i < sizeof(Cuuid_t); ++i, u++) {
+		x = (*u & 0xF0) >> 4;
+		*p++ = (x <= 9) ? x + '0' : x - 10 + 'a';
+		x = *u & 0x0F;
+		*p++ = (x <= 9) ? x + '0' : x - 10 + 'a';
+	}
+	/* Terminate string */
+	*p = '\0';
+	return(buf);
 }
 
 int DLL_DECL dlf_write_to_file(dst, msg)
@@ -955,7 +964,7 @@ dlf_log_message_t *msg;
 	int fd;
 	int write_to_stdout = 0;
 	int written;
-	char uuidhex[CUUID_STRING_LEN + 1];
+	char uuidhex[2 * sizeof(Cuuid_t) + 1];
 	
 	if (strcmp("stdout", dst->name) == 0) {
 	        write_to_stdout = 1;
