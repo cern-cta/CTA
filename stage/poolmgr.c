@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.182 2002/02/14 12:34:21 jdurand Exp $
+ * $Id: poolmgr.c,v 1.183 2002/02/14 13:06:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.182 $ $Date: 2002/02/14 12:34:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.183 $ $Date: 2002/02/14 13:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1851,41 +1851,43 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     /* And restore rw counters + check poolname definition */
     for (stcp = stcs; stcp < stce; stcp++) {
       if (stcp->reqid == 0) break;
-      if ((stcp->poolname[0] != '\0') && (stcp->ipath[0] != '\0')) {
-        char *p;
+      if (stcp->ipath[0] != '\0') {
+        if (stcp->poolname[0] != '\0') {
+          char *p;
 
-        /* Check that poolname from catalog match current configuration */
-        p = findpoolname(stcp->ipath);
-        if ((p != NULL) && (strcmp(p, stcp->poolname) != 0)) {
-          stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
-          strcpy(stcp->poolname, p);
+          /* Check that poolname from catalog match current configuration */
+          p = findpoolname(stcp->ipath);
+          if ((p != NULL) && (strcmp(p, stcp->poolname) != 0)) {
+            stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
+            strcpy(stcp->poolname, p);
 #ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
+            if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
 #endif
-        } else if (p == NULL) {
-          stglogit (func, STG164, stcp->ipath, stcp->poolname, "");
-          stcp->poolname[0] = '\0';
+          } else if (p == NULL) {
+            stglogit (func, STG164, stcp->ipath, stcp->poolname, "");
+            stcp->poolname[0] = '\0';
 #ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
+            if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
 #endif
-        }
-      } else {
-        char *p;
+          }
+        } else {
+          char *p;
 
-        /* Would it possible that this filesystem is 'back' to stager configuration ? */
-        p = findpoolname(stcp->ipath);
-        if (p != NULL) {
-          stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
-          strcpy(stcp->poolname, p);
+          /* Would it possible that this filesystem is 'back' to stager configuration ? */
+          p = findpoolname(stcp->ipath);
+          if (p != NULL) {
+            stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
+            strcpy(stcp->poolname, p);
 #ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
+            if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+              stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+            }
 #endif
+          }
         }
       }
       if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
