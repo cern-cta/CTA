@@ -235,6 +235,9 @@ int rtcpcld_returnStream _PROTO((
 int rtcpcld_restoreSelectedTapeCopies _PROTO((
                                               tape_list_t *
                                               ));
+int rtcpcld_restoreSelectedSegments _PROTO((
+                                            tape_list_t *
+                                            ));
 int rtcpcld_setVidWorkerAddress _PROTO((
                                         tape_list_t *,
                                         int
