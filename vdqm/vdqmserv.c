@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:46:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 14:05:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -37,6 +37,11 @@ int main() {
     rc = vdqm_InitNW(&nw);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_InitNw(): %s\n",neterror());
+        return(vdqm_CleanUp(nw,1));
+    }
+    rc = vdqm_StartRollbackThread();
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_StartRollbackThread(): %s\n",sstrerror(serrno));
         return(vdqm_CleanUp(nw,1));
     }
     rc = vdqm_InitPool(&nwtable);
