@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.140 2001/06/21 11:31:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.141 2001/06/21 11:32:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.140 $ $Date: 2001/06/21 11:31:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.141 $ $Date: 2001/06/21 11:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3856,7 +3856,7 @@ void check_lifetime_on_disk() {
 		if ((stcp->status & (STAGEOUT|STAGED)) == (STAGEOUT|STAGED)) {
 			/* We grab retention period on disk */
 			if (stcp->keep) continue;               /* Has -K option */
-			if ((thisretenp = stcp->u1.h.retenp_on_disk) < 0) thisretenp = retenp_on_disk(ifileclass);
+			thisretenp = retenp_on_disk(ifileclass);
 			if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
 			if (((int) (thistime - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
 				/* Candidate for garbage */
