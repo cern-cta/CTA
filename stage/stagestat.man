@@ -1,10 +1,10 @@
-.\" $Id: stagestat.man,v 1.18 2002/12/13 15:31:25 jdurand Exp $
+.\" $Id: stagestat.man,v 1.19 2003/08/28 13:11:38 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.18 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.19 $ $Date: 2003/08/28 13:11:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESTAT "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stager User Commands"
+.TH STAGESTAT "1" "$Date: 2003/08/28 13:11:38 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -20,6 +20,8 @@ each file staged in
 .BI \-e " end_time"
 ] [
 .BI \-f " accounting_file"
+] [
+.BI \-g
 ] [
 .BI \-H " min,max,bins"
 ] [
@@ -95,6 +97,9 @@ used together with
 .BI \-w " 0234"
 will attempt to open
 .I /tmp/sacct.0234
+.TP
+.BI \-g
+Prints only global statistic \- For very fast analysis not interested in deep details about forked processes nor pools, but on the number of different calls accounted by the stager daemon
 .TP
 .BI \-H " min,max,bins"
 will produce an histogram of the average lifetime, with

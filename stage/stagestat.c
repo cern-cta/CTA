@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.45 2003/04/28 10:03:57 jdurand Exp $
+ * $Id: stagestat.c,v 1.46 2003/08/28 13:11:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.45 $ $Date: 2003/04/28 10:03:57 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.46 $ $Date: 2003/08/28 13:11:38 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -203,6 +203,7 @@ char *Mflag = NULL;
 int Hflag = 0;
 int wflag = 0;		/* If set week number given */
 int fflag = 0;
+int gflag = 0;      /* Global statistics only */
 char *week1 = NULL;
 char *week2 = NULL;
 int all_stageclrs = 0;
@@ -265,7 +266,7 @@ int main(argc, argv)
 	
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "adD:e:f:H:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
+	while ((c = Cgetopt (argc, argv, "adD:e:f:gH:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
 		switch (c) {
 		case 'a':
 			all_stageclrs++;
@@ -288,6 +289,9 @@ int main(argc, argv)
 			}
 			strcpy (acctfile, Coptarg);
 			++fflag;
+			break;
+		case 'g':
+			++gflag;
 			break;
 		case 'H':
 			if (((sep = strchr(Coptarg,',')) != NULL) && (sep > Coptarg)){
@@ -485,7 +489,9 @@ int main(argc, argv)
 		hostname[CA_MAXHOSTNAMELEN] = '\0';
 	}
 
-	printf ("\nYou have requested accounting data for the stager %s\n", hostname);
+	if (! fflag) {
+		printf ("\nYou have requested accounting data for the stager %s\n", hostname);
+	}
 
 	k_per_acct = k_total = 0;
 
@@ -679,7 +685,9 @@ int main(argc, argv)
 			}
 			/* Every API call has a command-line equivalent - we will use the nb_apireq to know the proportion between API and command-line */
 			nb_req[rp.req_type]++;
-			if (rp.req_type == 1) create_stglist (&rp);
+			if (! gflag) {
+				if (rp.req_type == 1) create_stglist (&rp);
+			}
 			nrecok++;
 		} else if (rp.subtype == STGCMDS) {
 			num_fork_exec_stager++;
@@ -742,23 +750,29 @@ int main(argc, argv)
 				nrecfiltered++;
 				continue;
 			}
-			enter_fils_details (&rp, accthdr);
-			enter_pool_details (&rp);
+			if (! gflag) {
+				enter_fils_details (&rp, accthdr);
+				enter_pool_details (&rp);
+			}
 			nrecok++;
 		} else if (rp.subtype == STGFILS && ((rp.req_type == STAGEWRT) || (rp.req_type == STAGEPUT))) {
 			if (pflag && strcmp (poolname, rp.u2.s.poolname) != 0) {
 				nrecfiltered++;
 				continue;
 			}
-			enter_filw_details (&rp, accthdr);
-			enter_pool_details (&rp);
+			if (! gflag) {
+				enter_filw_details (&rp, accthdr);
+				enter_pool_details (&rp);
+			}
 			nrecok++;
 		} else if (rp.subtype == STGFILC) {	/* file cleared */
 			if (pflag && strcmp (poolname, rp.u2.s.poolname) != 0) {
 				nrecfiltered++;
 				continue;
 			}
-			enter_filc_details (&rp, accthdr);	
+			if (! gflag) {
+				enter_filc_details (&rp, accthdr);
+			}
 			nrecok++;
 		} else if (rp.subtype == STGCMDC) {  /* command completed */
 			if (rp.exitcode < 5) {
@@ -1627,12 +1641,14 @@ void print_globstat (starttime, endtime, num_multireqs)
 		}
 		printf("\n");
 	}
-	printf ("\tNumber of tape remount requests (write mode)\t\t\t:\t%5d\n", num_wrt_remount_requests);
-	printf ("\tNumber of tape remount requests (read  mode)\t\t\t:\t%5d\n", num_in_remount_requests);
-	num_pos_requests_avoided = rc[1][0] - num_fork_exec_stager;
-	if (num_pos_requests_avoided < 0 ) num_pos_requests_avoided = 0;
-	printf ("\tNb of read tape requests avoided by stager  \t\t\t:\t%5d\n", num_pos_requests_avoided);
-	printf ("\tNumber of multifile requests                \t\t\t:\t%5d\n", num_multireqs);
+	if (! gflag) {
+		printf ("\tNumber of tape remount requests (write mode)\t\t\t:\t%5d\n", num_wrt_remount_requests);
+		printf ("\tNumber of tape remount requests (read  mode)\t\t\t:\t%5d\n", num_in_remount_requests);
+		num_pos_requests_avoided = rc[1][0] - num_fork_exec_stager;
+		if (num_pos_requests_avoided < 0 ) num_pos_requests_avoided = 0;
+		printf ("\tNb of read tape requests avoided by stager  \t\t\t:\t%5d\n", num_pos_requests_avoided);
+		printf ("\tNumber of multifile requests                \t\t\t:\t%5d\n", num_multireqs);
+	}
 }
 
 /* Function to print out the time interval */
@@ -2322,7 +2338,7 @@ void usage (cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr,
-			 "[-a][-d][-e end_time][-f accounting_file][-H  min,max,bins]\n"
+			 "[-a][-d][-e end_time][-f accounting_file][-g][-H  min,max,bins]\n"
 			 "[-h hostname][-n number_records][-s start_time][-p pool_name][-S <a or t>][-v]\n"
 			 "[-D diskfile][-M hsmfile][-T vid]\n"
 			 "\n"
@@ -2331,6 +2347,7 @@ void usage (cmd)
 			 "      -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
 			 "      -e end_time        Limits analysis up to mmddhhmm[yy]\n"
 			 "      -f accounting_file For using \"accounting_file\" (rfio syntax)\n"
+			 "      -g                 Prints only global statistic - For very fast analysis not interested in forked processes nor pool details\n"
 			 "      -H min,max,bins    Plots a histogram of the garbage collected file lifetimes. The syntax is min,max,nbins where min and max are the histogram range, and nbins is the number of bins with nbins (must be between 2 and 1000)\n"
 			 "      -h hostname        Read accouting records for hostname stager\n"
 			 "      -M hsmfile         is for searching and dumping accounting for HSM entries matching \"hsmfile\"\n"
