@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 13:30:14 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.3 $ $Date: 2003/09/14 06:55:40 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,9 +32,6 @@ static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.2 $ $Date: 20
 #include "serrno.h"
 #include "dlf.h"
 #include "dlf_server.h"
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 
 #define MAXSTRLENGTH 33
 int being_shutdown;
@@ -315,10 +312,7 @@ getreq(s, magic, req_type, req_data, data_len, clienthost)
     if (l > 0)
       dlflogit (func, DLF04, l);
     else if (l < 0) {
-      dlflogit (func, DLF02, "netread", sstrerror(serrno));
-#if !defined(linux)
-      dlflogit (func, DLF02, "netread", sys_errlist[errno]);
-#endif
+      dlflogit (func, DLF02, "netread", strerror(errno));
     }
     return (SEINTERNAL);
   }
