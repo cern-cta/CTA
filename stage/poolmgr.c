@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.255 2004/05/25 13:39:39 jdurand Exp $
+ * $Id: poolmgr.c,v 1.256 2004/09/16 19:07:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.255 $ $Date: 2004/05/25 13:39:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.256 $ $Date: 2004/09/16 19:07:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3389,7 +3389,7 @@ int insert_in_migpool(stcp)
 		/* Makes sure it is flagged as non-delayed */
 		stcp->filler[0] = 'm';
 	}
-	if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+	if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || ((stcp->status & WAITING_MIGR) == WAITING_MIGR)) {
 		pool_p->migr->global_predicates.nbfiles_beingmig++;
 		pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
 	}
@@ -3401,7 +3401,7 @@ int insert_in_migpool(stcp)
 			pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
 			pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
 		}
-		if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+		if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || ((stcp->status & WAITING_MIGR) == WAITING_MIGR)) {
 			pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
 			pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
 		}
