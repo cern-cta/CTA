@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.2 2000/03/23 01:42:08 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.3 2000/05/10 17:03:07 jdurand Exp $
  */
 
 /* ============== */
@@ -22,6 +22,7 @@
 #include "stage.h"
 #include "stgdb_Cdb_ifce.h"
 #include "serrno.h"           /* See CASTOR/h            */
+#include "Cdb_api.h"
 
 /* ====== */
 /* Macros */
@@ -70,6 +71,8 @@ int main(argc,argv)
 						"\n"
 						"Nota: Cdb server and port is setted via the environment variables\n"
 						"      $CDB_HOST and $CDB_SERV, respectively.\n"
+						"\n"
+                        "### Please use the stgpath_Cdbtest.des file for DB definition !!!\n"
 						"\n"
 						"Author: Jean-Damien.Durand@cern.ch\n"
 						);
@@ -155,12 +158,27 @@ int main(argc,argv)
 									fprintf(stdout,"[%s] DELETE %10d %s\n",argv[i],reqid,p);
 									stpp.reqid = reqid;
 									strcpy(stpp.upath,p);
-									if (stgdb_del_stgpath(&dbfd,&stpp) != 0) {
+                                    /* We use the secondary key to find where is this record */
+                                    if (Cdb_pkeyfind_fetch(&(dbfd.Cdb_db),
+                                                           "stgcat_link",
+                                                           "stgcat_link_per_upath",
+                                                           1,
+                                                           NULL,
+                                                           &stpp,
+                                                           NULL,
+                                                           NULL) != 0) {
+                                      fprintf(stderr,"--> [%s] Cdb_pkeyfind_fetch error (%s)\n",argv[i],sstrerror(serrno));
+                                      if (serrno == EDB_D_CORRUPT) {
+                                        exit(EXIT_FAILURE);
+                                      }
+                                    } else {
+                                      if (stgdb_del_stgpath(&dbfd,&stpp) != 0) {
 										fprintf(stderr,"--> [%s] DELETE ERROR (%s)\n",argv[i],sstrerror(serrno));
 										if (serrno == EDB_D_CORRUPT) {
-											exit(EXIT_FAILURE);
+                                          exit(EXIT_FAILURE);
 										}
-									}
+                                      }
+                                    }
 									break;
 								default:
 									fprintf(stderr,"### Unknown last_command = %d\n",last_command);
