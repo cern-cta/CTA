@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.6 2002/03/27 08:08:51 jdurand Exp $
+ * $Id: stage_struct.h,v 1.7 2002/04/30 12:18:16 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -28,7 +28,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	int	nread;		/* number of blocks/records to be copied */
 	char	poolname[CA_MAXPOOLNAMELEN+1];
 	char	recfm[CA_MAXRECFMLEN+1];	/* record format */
-	int	size;		/* size in Mbytes of data to be staged */
+	u_signed64	size;		/* size in bytes of data to be staged */
 	char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
 	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk , 'm' for non-CASTOR HSM, 'h' for CASTOR HSM */
 	char	group[CA_MAXGRPNAMELEN+1];
@@ -42,7 +42,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 #endif
 	int	reqid;
 	int	status;
-	off_t	actual_size;
+	u_signed64	actual_size;
 	time_t	c_time;
 	time_t	a_time;
 	int	nbaccesses;
@@ -55,9 +55,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 			char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
 			char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
 			int		retentd;	/* retention period in days */
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			int		side;	/* size (for deviced like DVD accessed as if it was a tape request) */
-#endif
 			char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
 			char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
 			char	vid[MAXVSN][CA_MAXVIDLEN+1];
