@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.122 2001/03/20 13:12:10 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.123 2001/03/21 08:55:31 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.122 $ $Date: 2001/03/20 13:12:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.123 $ $Date: 2001/03/21 08:55:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2047,6 +2047,16 @@ void checkwaitq()
 							 wqp->status != REQKILD && wqp->nretry < MAXRETRY) {
 			if (wqp->nretry)
 				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
+			if (wqp->use_subreqid != 0) {
+				int isubreqid;
+				/* This waiting queue is supporting the async callback */
+				/* By construction we already had allocated enough space */
+				/* in wqp->save_subreqid (an automatic retry cannot be done with more than previous try) */
+				for (isubreqid = 0, wfp = wqp->wf; isubreqid < wqp->nbdskf; isubreqid++, wfp++) {
+					wqp->save_subreqid[isubreqid] = wfp->subreqid;
+				}
+				wqp->save_nbsubreqid = wqp->nbdskf;
+			}
 			fork_exec_stager (wqp);
 			wqp = wqp->next;
 		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
