@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.64 $ $Date: 2000/03/29 16:46:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.65 $ $Date: 2000/03/31 15:31:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -308,6 +308,8 @@ static int DiskFileOpen(int pool_index,
     if ( (tapereq->mode == WRITE_DISABLE) && 
          ( (file->next->filereq.concat & CONCAT) != 0 ||
            (filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) ) {
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
+        if ( (severity & RTCP_EOD) != 0 ) return(-1);
         log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
             filereq->file_path);
         rc = LockForAppend(1);
@@ -316,8 +318,6 @@ static int DiskFileOpen(int pool_index,
                      filereq->file_path,sstrerror(serrno));
             return(-1);
         }
-        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
-        if ( (severity & RTCP_EOD) != 0 ) return(-1);
     }
 
     /*
@@ -1020,7 +1020,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
               (u_signed64)nb_bytes > filereq->maxsize) ) {
             nb_bytes = (int)(filereq->maxsize - file->diskbytes_sofar);
             end_of_dkfile = TRUE;
-            rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
         }
         /*
          * If true U-format, re-allocate the lrecl_table[] if needed.
@@ -1323,18 +1322,19 @@ void *diskIOthread(void *arg) {
     DK_STATUS(RTCP_PS_NOBLOCKING);
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
 
-    if ( mode == WRITE_DISABLE ) {
-        DK_STATUS(RTCP_PS_STAGEUPDC);
-        rc = rtcpd_stageupdc(tape,file);
-        DK_STATUS(RTCP_PS_NOBLOCKING);
-        CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
-    }
     if ( (severity & RTCP_EOD) == 0 ) {
-    rc = DiskFileOpen(pool_index,tape,file);
-    disk_fd = rc;
-    CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
         if ( mode == WRITE_DISABLE ) {
-    if ( (severity & RTCP_EOD) == 0 ) {
+            DK_STATUS(RTCP_PS_STAGEUPDC);
+            rc = rtcpd_stageupdc(tape,file);
+            DK_STATUS(RTCP_PS_NOBLOCKING);
+            CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
+            if ( ENOSPC_occurred == TRUE ) {
+
+        rc = DiskFileOpen(pool_index,tape,file);
+        disk_fd = rc;
+        CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
+
+        if ( mode == WRITE_DISABLE ) {
             rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
             if ( rc == 0 ) disk_fd = -1;
