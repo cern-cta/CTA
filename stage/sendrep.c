@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.14 2001/02/01 18:09:28 jdurand Exp $
+ * $Id: sendrep.c,v 1.15 2001/02/04 22:21:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.15 $ $Date: 2001/02/04 22:21:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -156,7 +156,7 @@ int sendrep(va_alist) va_dcl
 		marshall_HYPER (rbp, uniqueid);
 		break;
 	default:
- 		break;
+		va_end (args);
 		stglogit (func, "STG02 - unknown rep_type (%d)\n", rep_type);
 		if (rpfd >= 0) close (rpfd);
 		return (-1);
