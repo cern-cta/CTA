@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.40 2002/09/26 08:59:11 jdurand Exp $
+ * $Id: stglogit.c,v 1.41 2002/09/30 16:55:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.40 $ $Date: 2002/09/26 08:59:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.41 $ $Date: 2002/09/30 16:55:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -164,6 +164,7 @@ char *stglogflags(func,logfile,flags)
  		{ STAGE_REQID       , "STAGE_REQID"               },
  		{ STAGE_HSM_ENOENT_OK , "STAGE_HSM_ENOENT_OK"     },
  		{ STAGE_NOLINKCHECK , "STAGE_NOLINKCHECK"         },
+ 		{ STAGE_MIGLOG      , "STAGE_MIGLOG"              },
   		{ STAGE_NORETRY     , "STAGE_NORETRY"             },
   		{ STAGE_VOLATILE_TPPOOL , "STAGE_VOLATILE_TPPOOL" },
   		{ STAGE_NODISK     , "STAGE_NODISK"               },
