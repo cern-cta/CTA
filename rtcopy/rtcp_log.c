@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:34:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 15:48:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -71,7 +71,7 @@ void rtcpc_SetErrTxt(int level, const char *format, ...) {
 int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err) {
     char *p = NULL;
     char **msgbuf_p = NULL;
-    int loglevel = LOG_DEBUG;
+    int loglevel = LOG_INFO;
 #if !defined(RTCP_SERVER)
     FILE **out_p, **err_p;
 #endif /* RTCP_SERVER */
