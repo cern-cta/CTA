@@ -1,5 +1,5 @@
 /*
- * $Id: Csched_test.c,v 1.2 2000/06/13 15:27:39 jdurand Exp $
+ * $Id: Csched_test.c,v 1.3 2000/06/19 09:52:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.2 $ $Date: 2000/06/13 15:27:39 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.3 $ $Date: 2000/06/19 09:52:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*******************************************************************************
@@ -48,6 +48,7 @@ static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.2 $ $Date: 2
  *******************************************************************************/
 
 #include "Cthread_api.h"        /* Thread interface */
+#include "Csched_api.h"         /* Scheduling interface */
 #include "Cnetdb.h"             /* For h_errno external pb */
 #include "osdep.h"              /* Castor's OS dependencies */
 #include <stdio.h>
