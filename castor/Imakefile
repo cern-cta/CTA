@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/25 16:12:31 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/27 10:15:02 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -126,6 +126,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamStageUpdcRequestCnv.cpp \
               io/StreamStageQryRequestCnv.cpp \
               io/StreamStageClrRequestCnv.cpp \
+              io/StreamStageFilChgRequestCnv.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamTapePoolCnv.cpp \
               io/StreamTapeRequestCnv.cpp \
@@ -150,6 +151,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/StageQryRequestCInt.cpp \
               rh/StageClrRequest.cpp \
               rh/StageClrRequestCInt.cpp \
+              rh/StageFilChgRequest.cpp \
+              rh/StageFilChgRequestCInt.cpp \
               rh/Response.cpp \
               rh/ResponseCInt.cpp \
               rh/StringResponse.cpp \
@@ -202,16 +205,18 @@ STAGEIN_SRCS = client/StageIn.cpp client/StageInMain.cpp client/BaseCmdLineClien
 STAGEOUT_SRCS = client/StageOut.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 STAGEUPDC_SRCS = client/StageUpdc.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 STAGEQRY_SRCS = client/StageQry.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp client/StageQryResponseHandler.cpp
+STAGECLR_SRCS = client/StageClr.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 MTTEST_SRCS = client/Mttest.cpp client/StageIn.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(STAGEQRY_SRCS) $(MTTEST_SRCS)
 STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
 STAGEOUT_OBJS = $(STAGEOUT_SRCS:.cpp=.Osuf)
 STAGEUPDC_OBJS = $(STAGEUPDC_SRCS:.cpp=.Osuf)
 STAGEQRY_OBJS = $(STAGEQRY_SRCS:.cpp=.Osuf)
+STAGECLR_OBJS = $(STAGECLR_SRCS:.cpp=.Osuf)
 MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
 CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
 
-PROGS_S = stagein stageout stageupdc stageqry mttest
+PROGS_S = stagein stageout stageupdc stageqry stageclr mttest
 PROGS_C = $(patsubst %,ProgramTargetName(%),$(PROGS_S))
 
 COMMONLIB = LibraryTargetName(castorClient)
@@ -228,6 +233,7 @@ NormalProgramTarget(stagein,  $(STAGEIN_OBJS),  $(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageqry, $(STAGEQRY_OBJS) ,$(GLOBLIB),$(LIBS))
+NormalProgramTarget(stageclr, $(STAGECLR_OBJS), $(GLOBLIB),$(LIBS))
 NormalProgramTarget(mttest,   $(MTTEST_OBJS),   $(GLOBLIB),$(LIBS))
 
 MakeSubdirs(all,$(SUBDIRS))
@@ -288,7 +294,7 @@ InstallProgram(stagein,$(BIN),root,bin,755)
 InstallProgram(stageout,$(BIN),root,bin,755)
 InstallProgram(stageupdc,$(BIN),root,bin,755)
 InstallProgram(stageqry,$(BIN),root,bin,755)
-InstallProgram(mttest,$(BIN),root,bin,755)
+InstallProgram(stageclr,$(BIN),root,bin,755)
 
 exportman:
 
