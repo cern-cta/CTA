@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 12:28:19 $ $Author: bcouturi $
+ * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/21 10:43:43 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -119,6 +119,13 @@ namespace castor {
        */
       void bind(sockaddr_in saddr)
         throw (castor::exception::Exception);
+
+    private:
+
+      /**
+       * Tells whether listen was already called
+       */
+      bool m_listening;
       
     };
 

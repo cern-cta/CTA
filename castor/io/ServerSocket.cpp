@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 12:28:19 $ $Author: bcouturi $
+ * @(#)$RCSfile: ServerSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/21 10:43:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -54,7 +54,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::ServerSocket::ServerSocket(int socket) throw () {
+castor::io::ServerSocket::ServerSocket(int socket) throw () :
+  m_listening(false) {
   m_socket = socket;
 }
 
@@ -63,8 +64,9 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () {
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
-				       const bool reusable)
-  throw (castor::exception::Exception) {
+                                       const bool reusable)
+  throw (castor::exception::Exception) :
+  m_listening(false) {
   m_socket =0;
   createSocket();
   if (reusable) this->reusable();
@@ -72,14 +74,14 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   bind(m_saddr);
 }
 
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
 				       const std::string host, 
 				       const bool reusable)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) :
+  m_listening(false) {
   m_socket = 0;
   createSocket();
   if (reusable) this->reusable();
@@ -93,7 +95,8 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
 				       const unsigned long ip,
 				       const bool reusable)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) :
+  m_listening(false) {
   m_socket = 0;
   createSocket();
   if (reusable) this->reusable();
@@ -137,6 +140,7 @@ void castor::io::ServerSocket::listen()
     m_socket = 0;
     throw ex;
   }
+  m_listening = true;
 }
 
 //------------------------------------------------------------------------------
@@ -144,9 +148,14 @@ void castor::io::ServerSocket::listen()
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::ServerSocket::accept()
   throw(castor::exception::Exception) {
+  // Check if listen was called, if not, call it
+  if (!m_listening) {
+    listen();
+  }
   // loop until we really get something
   for (;;) {
     struct sockaddr_in saddr;
+    memset(&saddr, 0, sizeof(saddr));
     int fromlen = sizeof(saddr);
     int fdc = ::accept(m_socket,
                        (struct sockaddr *) &saddr,
