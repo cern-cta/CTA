@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.94 2002/07/27 07:19:16 jdurand Exp $
+ * $Id: procqry.c,v 1.95 2002/08/27 08:40:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.94 $ $Date: 2002/07/27 07:19:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.95 $ $Date: 2002/08/27 08:40:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -60,6 +60,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.94 $ $Date: 200
 #include "Cgetopt.h"
 #include "Castor_limits.h"
 #include "u64subr.h"
+#include "net.h"
 
 void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int));
@@ -74,7 +75,7 @@ int get_mintime _PROTO((struct stgcat_entry *, char *));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -337,8 +338,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
-		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
-		sendrep (rpfd, MSG_ERR, STG36, gid);
+		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG36, gid);
 		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
@@ -349,7 +350,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (req_type > STAGE_00) {
 		/* This is coming from the API */
 		if (nstcp_input != 1) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
+			sendrep(&rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
 			c = EINVAL;
 			goto reply;
 		}
@@ -361,7 +362,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			stcp_input.reqid = -1;
 			unmarshall_STAGE_CAT(magic,STGDAEMON_LEVEL,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 			if (struct_status != 0) {
-				sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
 				c = SEINTERNAL;
 				goto reply;
 			}
@@ -390,14 +391,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if ((flags & STAGE_ALLOCED) == STAGE_ALLOCED) {
 			if ((t_or_d != 'a') && (t_or_d != 'd')) {
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = EINVAL;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -411,7 +412,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 					)
 				{
-					sendrep (rpfd, MSG_ERR, STG06, "STAGE_ALLOCED");
+					sendrep (&rpfd, MSG_ERR, STG06, "STAGE_ALLOCED");
 					errflg++;
 				}
 			}
@@ -424,14 +425,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
         }
 		if ((flags & STAGE_EXTERNAL) == STAGE_EXTERNAL) {
 			if ((t_or_d != 'a') && (t_or_d != 'd')) {
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = EINVAL;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -454,7 +455,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
 					) {
-					sendrep (rpfd, MSG_ERR, STG06, "HSM Filename not a valid regexp");
+					sendrep (&rpfd, MSG_ERR, STG06, "HSM Filename not a valid regexp");
 					errflg++;
 				}
 			}
@@ -468,13 +469,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				isvalidpool (stcp_input.poolname)) {
 				strcpy (poolname, stcp_input.poolname);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, stcp_input.poolname);
+				sendrep (&rpfd, MSG_ERR, STG32, stcp_input.poolname);
 				errflg++;
 			}
 		}
 		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 			if (t_or_d != 't') {
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -482,7 +483,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
         if ((t_or_d == 't') && stcp_input.u1.t.fseq[0] != '\0') {
 			if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 				if ((nbtpf = unpackfseq (stcp_input.u1.t.fseq, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0) {
-					sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
+					sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
 					c = EINVAL;
 					goto reply;
 				}
@@ -540,13 +541,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			side_flag++;
 			if (stcp_input.t_or_d == 't') {
 				if ((side = stcp_input.u1.t.side) < 0) {
-					sendrep (rpfd, MSG_ERR, STG06, "u1.t.side (STAGE_SIDE in the flags)");
+					sendrep (&rpfd, MSG_ERR, STG06, "u1.t.side (STAGE_SIDE in the flags)");
 					c = EINVAL;
 					goto reply;
 				}
 			} else {
 				/* Hmmm.... STAGE_SIDE flag and not a 't' request might indicate something more wrong than expected */
-				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_SIDE flag is valid only for t_or_d == 't'\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_SIDE flag is valid only for t_or_d == 't'\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -591,7 +592,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					isvalidpool (Coptarg)) {
 					strcpy (poolname, Coptarg);
 				} else {
-					sendrep (rpfd, MSG_ERR, STG32, Coptarg);
+					sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
 					errflg++;
 				}
 				break;
@@ -638,7 +639,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if ((side_flag != 0) && (! have_parsed_side)) {  /* Not yet done */
 					stage_strtoi(&side, Coptarg, &dp, 10);
 					if ((*dp != '\0') || (side < 0)) {
-						sendrep (rpfd, MSG_ERR, STG06, "--side");
+						sendrep (&rpfd, MSG_ERR, STG06, "--side");
 						errflg++;
 					}
 					have_parsed_side = 1;
@@ -662,7 +663,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 					)
 				{
-					sendrep (rpfd, MSG_ERR, STG06, "-A");
+					sendrep (&rpfd, MSG_ERR, STG06, "-A");
 					errflg++;
 				}
 			}
@@ -674,7 +675,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
 					) {
-					sendrep (rpfd, MSG_ERR, STG06, "-M");
+					sendrep (&rpfd, MSG_ERR, STG06, "-M");
 					errflg++;
 				}
 			}
@@ -682,11 +683,11 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 
 	if ((fseq != NULL) && (fseq_list != NULL)) {
-		sendrep (rpfd, MSG_ERR, STG35, "-q", "-Q");
+		sendrep (&rpfd, MSG_ERR, STG35, "-q", "-Q");
 		errflg++;
     }
 	if (sflag && strcmp (poolname, "NOPOOL") == 0) {
-		sendrep (rpfd, MSG_ERR, STG17, "-s", "-p NOPOOL");
+		sendrep (&rpfd, MSG_ERR, STG17, "-s", "-p NOPOOL");
 		errflg++;
 	}
 	if (errflg != 0) {
@@ -700,7 +701,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #ifndef STAGEQRY_IN_MAIN
 		/* We run this procqry requests in a forked child */
 		if ((pid = fork ()) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+			sendrep (&rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
 			c = SESYSERR;
 			goto reply;
 		}
@@ -712,7 +713,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (! noregexp_flag) regfree (&preg);
 #endif
 			if (argv != NULL) free (argv);
-			close (rpfd);
+			netclose (rpfd); /* Child will continue the dial with client */
 			if (fseq_list != NULL) free(fseq_list);
 			return;
 		} else {
@@ -839,82 +840,82 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if (Pflag) {
-			sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
-			if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-			if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
+			sendrep (&rpfd, MSG_OUT, "%s\n", stcp->ipath);
+			if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+			if (dump_flag != 0) dump_stcp(&rpfd, stcp, &sendrep);
 			continue;
 		}
-		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
+		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 		if (hdrprinted++ == 0) {
 			if (xfile)
 				if (class_flag != 0)
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_IFLM);
+							sendrep (&rpfd, MSG_OUT, title_IFLM);
 						else
-							sendrep (rpfd, MSG_OUT, title_IFL);
+							sendrep (&rpfd, MSG_OUT, title_IFL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_IFM);
+							sendrep (&rpfd, MSG_OUT, title_IFM);
 						else
-							sendrep (rpfd, MSG_OUT, title_IF);
+							sendrep (&rpfd, MSG_OUT, title_IF);
 				else
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_ILM);
+							sendrep (&rpfd, MSG_OUT, title_ILM);
 						else
-							sendrep (rpfd, MSG_OUT, title_IL);
+							sendrep (&rpfd, MSG_OUT, title_IL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_IM);
+							sendrep (&rpfd, MSG_OUT, title_IM);
 						else
-							sendrep (rpfd, MSG_OUT, title_I);
+							sendrep (&rpfd, MSG_OUT, title_I);
 			else if (afile || mfile)
 				if (class_flag != 0)
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_AFLM);
+							sendrep (&rpfd, MSG_OUT, title_AFLM);
 						else
-							sendrep (rpfd, MSG_OUT, title_AFL);
+							sendrep (&rpfd, MSG_OUT, title_AFL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_AFM);
+							sendrep (&rpfd, MSG_OUT, title_AFM);
 						else
-							sendrep (rpfd, MSG_OUT, title_AF);
+							sendrep (&rpfd, MSG_OUT, title_AF);
 				else
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_ALM);
+							sendrep (&rpfd, MSG_OUT, title_ALM);
 						else
-							sendrep (rpfd, MSG_OUT, title_AL);
+							sendrep (&rpfd, MSG_OUT, title_AL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, title_AM);
+							sendrep (&rpfd, MSG_OUT, title_AM);
 						else
-							sendrep (rpfd, MSG_OUT, title_A);
+							sendrep (&rpfd, MSG_OUT, title_A);
 			else
 				if (class_flag != 0)
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, titleFLM);
+							sendrep (&rpfd, MSG_OUT, titleFLM);
 						else
-							sendrep (rpfd, MSG_OUT, titleFL);
+							sendrep (&rpfd, MSG_OUT, titleFL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, titleFM);
+							sendrep (&rpfd, MSG_OUT, titleFM);
 						else
-							sendrep (rpfd, MSG_OUT, titleF);
+							sendrep (&rpfd, MSG_OUT, titleF);
 				else
 					if (retenp_flag != 0)
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, titleLM);
+							sendrep (&rpfd, MSG_OUT, titleLM);
 						else
-							sendrep (rpfd, MSG_OUT, titleL);
+							sendrep (&rpfd, MSG_OUT, titleL);
 					else
 						if (mintime_flag != 0)
-							sendrep (rpfd, MSG_OUT, titleM);
+							sendrep (&rpfd, MSG_OUT, titleM);
 						else
-							sendrep (rpfd, MSG_OUT, title);
+							sendrep (&rpfd, MSG_OUT, title);
 		}
 		if ((stcp->t_or_d == 'h') && (! ISWAITING(stcp))) {
 			if (class_flag) {
@@ -1030,7 +1031,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (xflag) {
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
@@ -1046,7 +1047,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							goto reply;
 						}
 					} else {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
@@ -1063,7 +1064,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					}
 				} else {
 					if (mintime_flag != 0) {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
@@ -1078,7 +1079,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							goto reply;
 						}
 					} else {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
@@ -1096,7 +1097,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			} else {
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n",
@@ -1111,7 +1112,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							goto reply;
 						}
 					} else {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1126,7 +1127,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					}
 				} else {
 					if (mintime_flag != 0) {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1140,7 +1141,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							goto reply;
 						}
 					} else {
-						if (sendrep (rpfd, MSG_OUT,
+						if (sendrep (&rpfd, MSG_OUT,
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n" :
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
@@ -1164,7 +1165,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1173,7 +1174,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1187,7 +1188,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1195,7 +1196,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_retenp(stcp,timestr) == 0 ? timestr : "",
 									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1210,7 +1211,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1218,7 +1219,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1231,14 +1232,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  stcp->poolname,
 									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1254,7 +1255,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1262,7 +1263,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_retenp(stcp,timestr) == 0 ? timestr : "",
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1275,14 +1276,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  stcp->poolname,
 									  get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-14s %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1296,14 +1297,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  stcp->poolname,
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %-18s %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1314,13 +1315,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
 									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  stcp->poolname) < 0) ||
 							(stcp->t_or_d == 'a' &&
-							 sendrep (rpfd, MSG_OUT,
+							 sendrep (&rpfd, MSG_OUT,
 									  "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1344,7 +1345,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (ifileclass >= 0) {
 					if (retenp_flag != 0) {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %*s%*s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1361,7 +1362,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %*s%*s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1379,7 +1380,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %*s%*s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1395,7 +1396,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %*s%*s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1414,7 +1415,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (retenp_flag != 0) {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1426,7 +1427,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1439,7 +1440,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1450,7 +1451,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1465,7 +1466,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (ifileclass >= 0) {
 					if (retenp_flag != 0) {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %*s%s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1480,7 +1481,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %*s%s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1496,7 +1497,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %*s%s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1510,7 +1511,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %*s%s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1527,7 +1528,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (retenp_flag != 0) {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1538,7 +1539,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1550,7 +1551,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (mintime_flag != 0) {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %-14s %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1560,7 +1561,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 								goto reply;
 							}
 						} else {
-							if (sendrep (rpfd, MSG_OUT,
+							if (sendrep (&rpfd, MSG_OUT,
 										 "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1575,19 +1576,19 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if (fflag) {
 			if ((stcp->t_or_d == 'a') || (stcp->t_or_d == 'd')) {
-				if (sendrep (rpfd, MSG_OUT, " %s\n",
+				if (sendrep (&rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.d.xfile) < 0) {
 					c = SESYSERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'm') {
-				if (sendrep (rpfd, MSG_OUT, " %s\n",
+				if (sendrep (&rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.m.xfile) < 0) {
 					c = SESYSERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'h') {
-				if (sendrep (rpfd, MSG_OUT, " %s\n",
+				if (sendrep (&rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.h.xfile) < 0) {
 					c = SESYSERR;
 					goto reply;
@@ -1596,7 +1597,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if (lflag) {
 			tm = localtime (&stcp->c_time);
-			if (sendrep (rpfd, MSG_OUT,
+			if (sendrep (&rpfd, MSG_OUT,
 						 "\t\t\tcreated by  %-8.8s  %s  %04d/%02d/%02d %02d:%02d:%02d\n",
 						 stcp->user, stcp->group,
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
@@ -1605,7 +1606,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 			tm = localtime (&stcp->a_time);
-			if (sendrep (rpfd, MSG_OUT,
+			if (sendrep (&rpfd, MSG_OUT,
 						 "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 						 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
@@ -1613,7 +1614,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 		}
-		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
+		if (dump_flag != 0) dump_stcp(&rpfd, stcp, &sendrep);
 	}
   reply:
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
@@ -1622,7 +1623,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 	if (fseq_list != NULL) free(fseq_list);
 	if (argv != NULL) free (argv);
-	sendrep (rpfd, STAGERC, STAGEQRY, magic, c);
+	sendrep (&rpfd, STAGERC, STAGEQRY, magic, c);
 	if (pid == 0) {	/* we are in the child */
 		rfio_end();
 #ifdef USECDB
@@ -1678,9 +1679,9 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if ((this_reqid > 0) && (stpp->reqid != this_reqid)) continue;
-			sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
-			if (req_type > STAGE_00) sendrep(rpfd, API_STPP_OUT, stpp);
-			if (dump_flag != 0) dump_stpp(rpfd, stpp, &sendrep);
+			sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
+			if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
+			if (dump_flag != 0) dump_stpp(&rpfd, stpp, &sendrep);
 		}
 		return;
 	}
@@ -1749,9 +1750,9 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if (stcp->reqid == stpp->reqid) {
-				sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
-				if (req_type > STAGE_00) sendrep(rpfd, API_STPP_OUT, stpp);
-				if (dump_flag != 0) dump_stpp(rpfd, stpp, &sendrep);
+				sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
+				if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
+				if (dump_flag != 0) dump_stpp(&rpfd, stpp, &sendrep);
 			}
 		}
 	}
@@ -1987,7 +1988,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		if ((class_flag != 0) && (scc->stcp->t_or_d == 'h')) ifileclass = upd_fileclass(NULL,scc->stcp,0,1,1);
 		rpfd = save_rpfd;
 		if (ifileclass >= 0) {
-			if (sendrep (rpfd, MSG_OUT,
+			if (sendrep (&rpfd, MSG_OUT,
 						 "%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s %*s%s\n",
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 						 tm->tm_hour, tm->tm_min, tm->tm_sec,
@@ -2002,7 +2003,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 				return (-1);
 			}
 		} else {
-			if (sendrep (rpfd, MSG_OUT,
+			if (sendrep (&rpfd, MSG_OUT,
 						 "%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s\n",
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 						 tm->tm_hour, tm->tm_min, tm->tm_sec,
@@ -2013,8 +2014,8 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 				return (-1);
 			}
 		}
-		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-		if (dump_flag != 0) dump_stcp(rpfd, scc->stcp, &sendrep);
+		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+		if (dump_flag != 0) dump_stcp(&rpfd, scc->stcp, &sendrep);
 	}
 	free (scs);
 	return (0);
@@ -2069,10 +2070,10 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		}
 		if (strcmp (stcp->u1.t.lbl, "al") &&
 			strcmp (stcp->u1.t.lbl, "sl")) continue;
-		sendrep (rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
+		sendrep (&rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
 				 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
-		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
+		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+		if (dump_flag != 0) dump_stcp(&rpfd, stcp, &sendrep);
 	}
 }
 
