@@ -1,12 +1,10 @@
 /*
- * $Id: vdqm_api.h,v 1.2 1999/08/30 12:39:31 obarring Exp $
- * $Log: vdqm_api.h,v $
- * Revision 1.2  1999/08/30 12:39:31  obarring
- * Add UID, GID and VolReqID in vdqm_GetClientAddr() call.
- *
- * Revision 1.1  1999/07/27 08:51:21  obarring
- * First version.
- *
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.3 $ $Date: 1999/09/27 15:49:28 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
