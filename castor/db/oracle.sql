@@ -689,38 +689,65 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
                                                      rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
                                                      dci OUT INTEGER) AS
  fileSystemId NUMBER;
+ castorFileId NUMBER;
  deviation NUMBER;
  fsDiskServer NUMBER;
  fileSize NUMBER;
- CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id, SubRequest.xsize
-   FROM DiskServer, FileSystem, DiskPool2SvcClass,
-      (SELECT id, svcClass from StageGetRequest UNION
-       SELECT id, svcClass from StagePrepareToGetRequest UNION
-       SELECT id, svcClass from StageGetNextRequest UNION
-       SELECT id, svcClass from StageUpdateRequest UNION
-       SELECT id, svcClass from StagePrepareToUpdateRequest UNION
-       SELECT id, svcClass from StageUpdateNextRequest) Request,
-      SubRequest, TapeCopy, Segment, DiskCopy, CastorFile
+BEGIN
+ -- First get the DiskCopy and see whether it already has a fileSystem
+ -- associated (case of a multi segment file)
+ SELECT DiskCopy.fileSystem, DiskCopy.path, DiskCopy.id, DiskCopy.CastorFile
+   INTO fileSystemId, rpath, dci, castorFileId
+   FROM TapeCopy, Segment, DiskCopy
     WHERE Segment.id = segmentId
      AND Segment.copy = TapeCopy.id
-     AND SubRequest.castorfile = TapeCopy.castorfile
-     AND DiskCopy.castorfile = TapeCopy.castorfile
-     AND Castorfile.id = TapeCopy.castorfile
-     AND Request.id = SubRequest.request
-     AND Request.svcclass = DiskPool2SvcClass.child
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace > CastorFile.fileSize
-     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-     AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-            FileSystem.fsDeviation ASC;
-BEGIN
- OPEN c1;
- FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, rpath, dci, fileSize;
- CLOSE c1;
- UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
- updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
+     AND DiskCopy.castorfile = TapeCopy.castorfile;
+ -- Check if the DiskCopy had a FileSystem associated
+ IF fileSystemId > 0 THEN
+   BEGIN
+     -- it had one, force filesystem selection, unless it was disabled.
+     SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint, FileSystem.fsDeviation
+     INTO diskServerName, fsDiskServer, rmountPoint, deviation
+     FROM DiskServer, FileSystem
+      WHERE FileSystem.id = fileSystemId
+       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+       AND DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
+     updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+     -- Error, the filesystem or the machine was probably disabled in between
+     raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
+   END;
+ ELSE
+   DECLARE
+     CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+                       FileSystem.fsDeviation, FileSystem.diskserver, SubRequest.xsize
+                    FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                         (SELECT id, svcClass from StageGetRequest UNION
+                          SELECT id, svcClass from StagePrepareToGetRequest UNION
+                          SELECT id, svcClass from StageGetNextRequest UNION
+                          SELECT id, svcClass from StageUpdateRequest UNION
+                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+                          SELECT id, svcClass from StageUpdateNextRequest) Request,
+                         SubRequest, CastorFile
+                   WHERE CastorFile.id = castorfileId
+                     AND SubRequest.castorfile = castorfileId
+                     AND Request.id = SubRequest.request
+                     AND Request.svcclass = DiskPool2SvcClass.child
+                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace > CastorFile.fileSize
+                     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+                     AND DiskServer.id = FileSystem.diskServer
+                     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+                   ORDER BY FileSystem.weight + FileSystem.deltaWeight DESC, FileSystem.fsDeviation ASC;
+    BEGIN
+      OPEN c1;
+      FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
+      CLOSE c1;
+      UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
+      updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
+    END;
+  END IF;
 END;
 
 /* PL/SQL method implementing fileRecalled */
