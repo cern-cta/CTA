@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.9 $ $Date: 2004/04/05 05:15:49 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.10 $ $Date: 2004/06/07 16:35:30 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -93,8 +93,11 @@ const char *fac_name;
 {
 	unsigned int fac_no;
 	char *p;
+	int standalone;
 	int port;
 	char dlfhost[CA_MAXHOSTNAMELEN + 1];
+	char dlfmsgfile[CA_MAXPATHLEN + 1];
+	char dlfenvname[DLF_MAXFACNAMELEN + 2 + 16];
 	struct servent *sp;
     
 	/* Initialize global structure */
@@ -110,36 +113,56 @@ const char *fac_name;
     
 	g_dlf_fac_info.text_list.head = NULL;
 	g_dlf_fac_info.text_list.head = NULL;
+
+	standalone = 0;
+	strcpy (dlfenvname, fac_name);
+	for (p = dlfenvname; *p != '\0'; p++) *p = toupper(*p);
+	strcat (dlfenvname, "_LOGMODE");
+	if ((p = getenv (dlfenvname)) || (p = getconfent (fac_name, "LOGMODE", 0))) {
+		if (strcmp (p, "STANDALONE") == 0)
+		       standalone = 1;
+	}
+
+	/* We don't need the server when in standalone mode */
+
+	if (!standalone) {
     
-	/* Get the default server */
+	  /* Get the default server */
     
-	if ((p = getenv ("DLF_PORT")) || (p = getconfent ("DLF", "PORT", 0))) {
+	  if ((p = getenv ("DLF_PORT")) || (p = getconfent ("DLF", "PORT", 0))) {
 		port = atoi (p);
-	}
-	else if ((sp = Cgetservbyname ("dlf", "tcp")) != NULL) {
+	  }
+	  else if ((sp = Cgetservbyname ("dlf", "tcp")) != NULL) {
 		port = ntohs(sp->s_port);
-	}
-	else {
+	  }
+	  else {
 		port = DLF_PORT;
-	}
-	if ((p = getenv ("DLF_HOST")) || (p = getconfent ("DLF", "HOST", 0)))
+	  }
+	  if ((p = getenv ("DLF_HOST")) || (p = getconfent ("DLF", "HOST", 0)))
 		strncpy (dlfhost, p, CA_MAXHOSTNAMELEN);
-	else
+	  else
 #if defined(DLF_HOST)
 		strncpy (dlfhost, DLF_HOST, CA_MAXHOSTNAMELEN);
 #else
-	gethostname (dlfhost, sizeof(dlfhost));
+	  gethostname (dlfhost, sizeof(dlfhost));
 #endif
 	
-	g_dlf_fac_info.default_port = port;
-	if (dlf_add_to_log_dst(DLF_DST_TCPHOST, port, dlfhost, DLF_LVL_SERVICE_ONLY,
+	  g_dlf_fac_info.default_port = port;
+	  if (dlf_add_to_log_dst(DLF_DST_TCPHOST, port, dlfhost, DLF_LVL_SERVICE_ONLY,
 		&g_dlf_fac_info.dest_list) < 0)
 		return (-1);
-	
+	}
 	/* Check if it's the DLF control application */
+	/* It can not run in standalone mode         */
     
-	if (strcmp(fac_name, "DLF-CONTROL") == 0)
-		return (0);
+	if (strcmp(fac_name, "DLF-CONTROL") == 0) {
+	  if (standalone) {
+	    serrno = EINVAL;
+	    return (-1);
+	  }
+	  else
+	    return (0);
+	}
     
 	/* Try to get log destinations from the configuration file */
     
@@ -186,13 +209,36 @@ const char *fac_name;
 	if ((p = getconfent(fac_name, "LOGDEBUG", 1)) != NULL)
 		if (dlf_store_log_destinations
 		(p, DLF_LVL_DEBUG,&g_dlf_fac_info.dest_list) < 0)
-		return (-1);
-		
-	/* Read message texts from the DLF server and store them in memory */
-		
-	if (dlf_gettexts(fac_name, &fac_no, &g_dlf_fac_info.text_list) < 0)
+		        return (-1);
+	
+	if (standalone) {
+	  /* Read message texts from the supplied file.               */
+	  /* The file structure:                                      */
+	  /* The first line:                                          */
+	  /* <facility_name><spaces><facility_number>                 */
+          /* Other lines:                                             */
+	  /* <message_number><spaces><message text until end of line> */
+
+	  strcpy (dlfenvname, fac_name);
+	  for (p = dlfenvname; *p != '\0'; p++) *p = toupper(*p);
+	  strcat (dlfenvname, "_TXTFILE");
+	  if ((p = getenv (dlfenvname)) || (p = getconfent (fac_name, "TXTFILE", 0)))
+		strncpy (dlfmsgfile, p, CA_MAXPATHLEN);
+	  else
+	        return (-1); /* No file given */
+
+	  if (dlf_gettexts_from_file(dlfmsgfile, &fac_no, &g_dlf_fac_info.text_list) < 0)
 		return (-1);	
+	  
+
+	}
+	else {
+
+	  /* Read message texts from the DLF server and store them in memory */
 		
+	  if (dlf_gettexts(fac_name, &fac_no, &g_dlf_fac_info.text_list) < 0)
+		return (-1);	
+	}	
 	g_dlf_fac_info.fac_no = fac_no;
 		
 	return(0);
@@ -571,6 +617,82 @@ dlf_msg_text_slist_t *txt_list;
 		}
 	}
 	return (0);
+}
+
+int DLL_DECL dlf_gettexts_from_file(filename, fac_no, txt_list)
+const char *filename;
+unsigned int *fac_no;
+dlf_msg_text_slist_t *txt_list;
+{
+        FILE *in_file;
+	int i;
+	int c;
+	char *p;
+	int msg_no;
+	char fac_name[DLF_MAXFACNAMELEN + 1];
+	char fac_number[16];
+	char msg_number[16];
+	char msg_text[DLF_MAXSTRVALLEN + 1];
+
+	in_file = fopen(filename, "r");
+	if (in_file == NULL) return (-1);
+	
+	/* Skip spaces */
+	while ((c = fgetc (in_file)) == ' ' || c == '\t' || c == '\n');
+	if (c == EOF) CLOSE_RETURN (-1); /* End of file or error */
+	
+	/* Get facility name */
+	ungetc (c, in_file);
+	for (i = 0, p = fac_name; (c = fgetc (in_file)) != ' ' && c!= '\t' && c != '\n' && c != EOF && i < DLF_MAXFACNAMELEN; i++) p[i] = c;
+	p[i] = '\0'; /* Terminate string */
+	if (c != ' ' && c != '\t') CLOSE_RETURN (-1); /* Parse error */
+
+	/* Skip spaces */
+	while ((c = fgetc (in_file)) == ' ' || c == '\t');
+	if (c == EOF || c == '\n') CLOSE_RETURN (-1); /* End of file or error */
+
+	/* Get facility number */
+	ungetc (c, in_file);
+	for (i = 0, p = fac_number; (c = fgetc (in_file)) != ' ' && c!= '\t' && c != '\n' && c != EOF && i < 4; i++) p[i] = c;
+	p[i] = '\0'; /* Terminate string */
+	if (!dlf_isinteger(fac_number)) CLOSE_RETURN (-1);
+	*fac_no = atoi(fac_number);
+	if (c == EOF ) CLOSE_RETURN (-1); /* file format error */
+	ungetc (c, in_file);
+
+	/* Skip until end of line */
+	while ((c = fgetc (in_file)) != '\n' && c != EOF);
+	if (c == EOF) CLOSE_RETURN (0); /* End of file reached */
+
+	while (1) {
+	  /* Skip spaces */
+	  while ((c = fgetc (in_file)) == ' ' || c == '\t' || c == '\n');
+	  if (c == EOF) CLOSE_RETURN (0); /* End of file reached */
+
+	  /* Get message number */
+	  ungetc (c, in_file);
+	  for (i = 0, p = msg_number; (c = fgetc (in_file)) != ' ' && c!= '\t' && c != '\n' && c != EOF && i < 10; i++) p[i] = c;
+	  p[i] = '\0'; /* Terminate string */
+	  if (!dlf_isinteger(msg_number)) CLOSE_RETURN (-1);
+	  if (c == EOF || c == '\n') CLOSE_RETURN (-1); /* file format error */
+	  msg_no = atoi(msg_number);
+
+	  /* Get message text until end of line */
+	  /* Skip spaces */
+	  while ((c = fgetc (in_file)) == ' ' || c == '\t');
+	  if (c == EOF) CLOSE_RETURN (-1); /* End of file or error */
+
+	  ungetc (c, in_file);
+	  for (i = 0, p = msg_text; (c = fgetc (in_file)) != '\n' && c != EOF && i < DLF_MAXSTRVALLEN; i++) p[i] = c;
+	  p[i] = '\0'; /* Terminate string */
+	  if (c != '\n' && c != EOF) CLOSE_RETURN (-1); /* String is too long */
+
+	  if (dlf_add_to_text_list(msg_no, msg_text, txt_list) < 0) {
+		 serrno = ENOMEM;
+		 CLOSE_RETURN (-1);
+	  }
+	  if (c == EOF) CLOSE_RETURN (0); /* End of file reached */
+	}
 }
 
 int DLL_DECL dlf_add_to_text_list (msg_no, msg_text, txt_list)
