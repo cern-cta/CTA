@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.44 2003/03/06 17:45:24 jdurand Exp $
+ * $Id: stagestat.c,v 1.45 2003/04/28 10:03:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.44 $ $Date: 2003/03/06 17:45:24 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.45 $ $Date: 2003/04/28 10:03:57 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -794,7 +794,7 @@ int main(argc, argv)
 					   (rp.exitcode == LIMBYSZ) || (rp.exitcode == ERTLIMBYSZ)) {
 				rc[rp.req_type][7]++;
 				nrecok++;
-			} else if (rp.exitcode == ESTNACT) {
+			} else if (rp.exitcode == ESTNACT || rp.exitcode == SHIFT_ESTNACT) {
 				rc[rp.req_type][9]++; /* Should never be accounted */
 				nrecok++;
 			} else if ((rp.exitcode == ETHELD) || (rp.exitcode == ETHELDERR)) {
