@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.41 2002/04/09 07:36:46 jdurand Exp $
+ * $Id: procalloc.c,v 1.42 2002/04/11 10:06:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.41 $ $Date: 2002/04/09 07:36:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.42 $ $Date: 2002/04/11 10:06:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,8 +51,8 @@ extern struct stgcat_entry *newreq _PROTO((int));
 extern struct stgdb_fd dbfd;
 #endif
 
-void procallocreq _PROTO((char *, char *));
-void procgetreq _PROTO((char *, char *));
+void procallocreq _PROTO((int, int, char *, char *));
+void procgetreq _PROTO((int, int, char *, char *));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -73,11 +73,11 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 
-void procallocreq _PROTO((char *, char *));
-
-void procallocreq(req_data, clienthost)
-		 char *req_data;
-		 char *clienthost;
+void procallocreq(req_type, magic, req_data, clienthost)
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	char **argv;
 	int c, i;
@@ -106,7 +106,7 @@ void procallocreq(req_data, clienthost)
 	if (strlen(user) > CA_MAXUSRNAMELEN) {
 		serrno = SENAMETOOLONG;
 		sendrep (rpfd, MSG_ERR, STG33, "user name", sstrerror(serrno));
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 	strcpy (stgreq.user, user);
@@ -127,7 +127,7 @@ void procallocreq(req_data, clienthost)
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
-		c = SYERR;
+		c = (errno == ENOENT) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 	strncpy (stgreq.group, gr->gr_name, CA_MAXGRPNAMELEN);
@@ -167,7 +167,7 @@ void procallocreq(req_data, clienthost)
 		}
 	}
 	if (errflg) {
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
@@ -246,7 +246,7 @@ void procallocreq(req_data, clienthost)
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, STAGEALLOC, 0, c, NULL, "", (char) 0);
 #endif
-	sendrep (rpfd, STAGERC, STAGEALLOC, c);
+	sendrep (rpfd, STAGERC, STAGEALLOC, magic, c);
 	if (c && wqp) {
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
@@ -262,9 +262,11 @@ void procallocreq(req_data, clienthost)
 	}
 }
 
-void procgetreq(req_data, clienthost)
-		 char *req_data;
-		 char *clienthost;
+void procgetreq(req_type, magic, req_data, clienthost)
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	char **argv;
 	char *basename;
@@ -302,7 +304,7 @@ void procgetreq(req_data, clienthost)
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
-		c = SYERR;
+		c = (errno == ENOENT) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 	Coptind = 1;
@@ -333,7 +335,7 @@ void procgetreq(req_data, clienthost)
 		}
 	}
 	if (errflg) {
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
@@ -372,10 +374,9 @@ void procgetreq(req_data, clienthost)
 			*p = '/';
 		}
 	}
-	if (found == 0 ||
-			stcp->status != (STAGEALLOC|STAGED)) {
+	if ((found == 0) || (stcp->status != (STAGEALLOC|STAGED))) {
 		sendrep (rpfd, MSG_ERR, STG22);
-		c = USERR;
+		c = ENOENT;
 		goto reply;
 	}
 	stcp->a_time = time(NULL);
@@ -400,5 +401,5 @@ void procgetreq(req_data, clienthost)
 	stageacct (STGCMDC, uid, gid, clienthost,
 						 reqid, STAGEGET, 0, c, NULL, "", (char) 0);
 #endif
-	sendrep (rpfd, STAGERC, STAGEGET, c);
+	sendrep (rpfd, STAGERC, STAGEGET, magic, c);
 }
