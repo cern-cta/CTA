@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.5 $ $Date: 1999/09/08 12:59:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.6 $ $Date: 1999/09/08 13:04:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -50,7 +50,7 @@ int reason;
 
 	if (p = strchr (unm, '@')) {
 		if ((p - unm) > CA_MAXUNMLEN)
-			return (ETPRM);
+			return (EINVAL);
 		strncpy (drive, unm, p - unm);
 		drive[p-unm] = '\0';
 		host = p + 1;
