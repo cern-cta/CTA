@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.26 2001/03/05 12:07:23 jdurand Exp $
+ * $Id: procclr.c,v 1.27 2001/03/19 12:39:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.26 $ $Date: 2001/03/05 12:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.27 $ $Date: 2001/03/19 12:39:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -253,8 +253,12 @@ void procclrreq(req_data, clienthost)
 				goto reply;
 			}
 		} else {
+		stageclr_redo:
 			for (stcp = stcs; stcp < stce; stcp++) {
+				int thisnextreqid;
 				if (stcp->reqid == 0) break;
+                /* We keep in mind what would be the next reqid */
+				thisnextreqid = (stcp+1)->reqid;
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
@@ -272,6 +276,21 @@ void procclrreq(req_data, clienthost)
 						goto reply;
 					}
 				}
+				if (thisnextreqid == (stcp+1)->reqid) {
+					/* The catalog has not been shifted - we can continue unless end of the catalog */
+					if (thisnextreqid == 0) break;
+					continue;
+				}
+				if (thisnextreqid == stcp->reqid) {
+					/* The catalog has been shifted by one - we lye to the for() loop unless end of the catalog */
+					if (thisnextreqid == 0) break;
+					stcp--;
+					/* And we continue */
+					continue;
+                }
+				/* Here the catalog has been shifted by more than one, this is a bit too much */
+				/* for us so we restart the whole loop */
+				goto stageclr_redo;
 			}
 		}
 		if (! found) {
