@@ -17,7 +17,7 @@ INSERT INTO INDICES (name, value) VALUES ('next_id', 1);
 /* SQL statements for requests status */
 DROP INDEX I_REQUESTSSTATUS_FULL;
 DROP TABLE REQUESTSSTATUS;
-CREATE TABLE REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);
+CREATE TABLE REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(20), creation DATE, lastChange DATE);
 CREATE INDEX I_REQUESTSSTATUS_FULL on REQUESTSSTATUS (id, status);
 
 /* PL/SQL procedure for id retrieval */
