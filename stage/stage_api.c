@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.54 2002/09/17 11:48:29 jdurand Exp $
+ * $Id: stage_api.c,v 1.55 2002/10/01 07:37:12 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.54 $ $Date: 2002/09/17 11:48:29 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.55 $ $Date: 2002/10/01 07:37:12 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -1374,7 +1374,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 		}
 		break;
 	}
-    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
