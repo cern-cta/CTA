@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.17 $ $Date: 2000/02/29 15:16:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 18:03:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -129,8 +129,10 @@ int rtcpd_Assign(tape_list_t *tape) {
  */
 int rtcpd_Deassign(int VolReqID,
                    rtcpTapeRequest_t *tapereq) {
-    int rc, status, jobID, value;
+    int rc, status, jobID, value, save_serrno, save_errno;
 
+    save_serrno = serrno;
+    save_errno = errno;
     if ( tapereq == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_Deassign() called with NULL tapereq\n");
         serrno = EINVAL;
@@ -152,7 +154,7 @@ int rtcpd_Deassign(int VolReqID,
         rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
             &status,&value,jobID);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
+            rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
                 sstrerror(serrno));
         }
     } else jobID = tapereq->jobID;
@@ -162,9 +164,11 @@ int rtcpd_Deassign(int VolReqID,
     rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
         &status,NULL,jobID);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_RELEASE) %s\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_RELEASE) %s\n",
             sstrerror(serrno));
     }
+    serrno = save_serrno;
+    errno = save_errno;
     return(rc);
 }
 

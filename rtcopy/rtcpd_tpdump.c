@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.1 $ $Date: 2000/02/29 15:13:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.2 $ $Date: 2000/02/29 18:03:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -48,6 +48,7 @@ extern char *geterr();
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 extern processing_status_t proc_stat;
+extern int AbortFlag;
 
 int dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     va_list args;
@@ -68,6 +69,7 @@ int dmp_usrmsg(int dmpmsg_level, char *format, ...) {
 #define CHECK_PROC_ERR(X,Y,Z) { \
     save_errno = errno; \
     save_serrno = serrno; \
+    if ( AbortFlag != 0 ) rtcp_InitLog(NULL,NULL,NULL,NULL); \
     if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
         rtcp_log(LOG_ERR,"rtcpd_tpdump() %s, errno=%d, serrno=%d\n",(Z), \
                  save_errno,save_serrno); \
