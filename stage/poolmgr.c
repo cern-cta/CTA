@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.229 2002/10/18 09:25:04 jdurand Exp $
+ * $Id: poolmgr.c,v 1.230 2002/10/24 08:34:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.229 $ $Date: 2002/10/18 09:25:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.230 $ $Date: 2002/10/24 08:34:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3135,13 +3135,13 @@ void checkfile2mig()
 		if (pool_p->migr->mig_pid != 0)	/* migration already running */
 			continue;
 
-		if ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig) <= 0)	/* No point anyway */
+		if ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig - pool_p->migr->global_predicates.nbfiles_delaymig) <= 0)	/* No point anyway */
 			continue;
 
 		/* (Note that because of explicit migration there can be files in BEING_MIGR without going through this routine) */
 
 		/* We check global predicates that are the sum of every fileclasses predicates */
-		if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig) >= pool_p->mig_data_thresh)) ||
+		if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig - pool_p->migr->global_predicates.space_delaymig) >= pool_p->mig_data_thresh)) ||
 			((pool_p->mig_start_thresh > 0) && ((pool_p->free * 100) <= (pool_p->capacity * pool_p->mig_start_thresh)))) {
 			global_or = 1;
 		}
@@ -3150,18 +3150,20 @@ void checkfile2mig()
 			char tmpbuf2[21];
 			char tmpbuf3[21];
 			char tmpbuf4[21];
+			char tmpbuf5[21];
 			int save_reqid = reqid;
 
 			reqid = 0;
 			stglogit("checkfile2mig", "STG98 - Migrator %s@%s - Global Predicate returns true:\n",
 					 pool_p->migr->name,
 					 pool_p->name);
-			stglogit("checkfile2mig", "STG98 - 1) (%s) (space_canbemig=%s - space_beingmig=%s)=%s > data_mig_threshold=%s ?\n",
+			stglogit("checkfile2mig", "STG98 - 1) (%s) (space_canbemig=%s - space_beingmig=%s - space_delaymig=%s)=%s > data_mig_threshold=%s ?\n",
 					 pool_p->mig_data_thresh > 0 ? "ON" : "OFF",
 					 u64tostru(pool_p->migr->global_predicates.space_canbemig, tmpbuf1, 0),
 					 u64tostru(pool_p->migr->global_predicates.space_beingmig, tmpbuf2, 0),
-					 u64tostru(pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig, tmpbuf3, 0),
-					 u64tostru(pool_p->mig_data_thresh, tmpbuf4, 0)
+					 u64tostru(pool_p->migr->global_predicates.space_delaymig, tmpbuf3, 0),
+					 u64tostru(pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig - pool_p->migr->global_predicates.space_delaymig, tmpbuf4, 0),
+					 u64tostru(pool_p->mig_data_thresh, tmpbuf5, 0)
 				);
 			stglogit("checkfile2mig", "STG98 - 2) (%s) free=%s < (capacity=%s * mig_start_thresh=%d%%)=%s ?\n",
 					 pool_p->mig_start_thresh > 0 ? "ON" : "OFF",
@@ -3178,7 +3180,7 @@ void checkfile2mig()
 			/* Global predicate is not enough - we go through each fileclass predicate */
       
 			for (j = 0; j < pool_p->migr->nfileclass; j++) {
-				if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig) <= 0)	/* No point anyway */
+				if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig - pool_p->migr->fileclass_predicates[j].nbfiles_delaymig) <= 0)	/* No point anyway */
 					continue;
 				/* Preventive action in case of timing problem : the last startup time of a migration stream could not */
 				/* be higher than current time */
@@ -3186,7 +3188,7 @@ void checkfile2mig()
 					stglogit("checkfile2mig", "### pool_p->migr->migreqtime_last_start > time(NULL) - Reset to zero\n");
 					pool_p->migr->migreqtime_last_start = 0;
 				}
-				if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig) >= pool_p->mig_data_thresh)) ||
+				if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig - pool_p->migr->fileclass_predicates[j].space_delaymig) >= pool_p->mig_data_thresh)) ||
 					((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_start) >= pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))) {
 					global_or = 1;
 				}
@@ -3195,6 +3197,7 @@ void checkfile2mig()
 					char tmpbuf2[21];
 					char tmpbuf3[21];
 					char tmpbuf4[21];
+					char tmpbuf5[21];
 					int save_reqid = reqid;
 
 					reqid = 0;
@@ -3206,12 +3209,13 @@ void checkfile2mig()
 							 pool_p->migr->fileclass[j]->Cnsfileclass.classid,
 							 pool_p->migr->fileclass[j]->Cnsfileclass.nbcopies,
 							 pool_p->migr->fileclass[j]->Cnsfileclass.nbcopies > 1 ? "ies" : "y");
-					stglogit("checkfile2mig", "STG98 - 1) (%s) (space_canbemig=%s - space_beingmig=%s)=%s > data_mig_threshold=%s ?\n",
+					stglogit("checkfile2mig", "STG98 - 1) (%s) (space_canbemig=%s - space_beingmig=%s - space_delaymig=%s)=%s > data_mig_threshold=%s ?\n",
 							 pool_p->mig_data_thresh > 0 ? "ON" : "OFF",
 							 u64tostru(pool_p->migr->fileclass_predicates[j].space_canbemig, tmpbuf1, 0),
 							 u64tostru(pool_p->migr->fileclass_predicates[j].space_beingmig, tmpbuf2, 0),
-							 u64tostru(pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig, tmpbuf3, 0),
-							 u64tostru(pool_p->mig_data_thresh, tmpbuf4, 0)
+							 u64tostru(pool_p->migr->fileclass_predicates[j].space_delaymig, tmpbuf3, 0),
+							 u64tostru(pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig - pool_p->migr->fileclass_predicates[j].space_delaymig, tmpbuf4, 0),
+							 u64tostru(pool_p->mig_data_thresh, tmpbuf5, 0)
 						);
 					stglogit("checkfile2mig", "STG98 - 2) (%s) last migrator started %d seconds ago > %d seconds ?\n",
 							 pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0 ? "ON" : "OFF",
