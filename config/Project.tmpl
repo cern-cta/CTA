@@ -537,8 +537,12 @@ EXPERTDIR = expert
 #if BuildRHCpp
 RHCPPDIR = rh
 #endif
-#if BuildCastorClientCPPLibrary || BuildOraCpp
+#if BuildCastorClientCPPLibrary
 COMMONCPPDIR = castor
+#endif
+#if BuildOraCpp
+ORACPPDIR = ora
+DBCPPDIR = db
 #endif
 #if BuildCppTest
 COMMONCPPTESTDIR = castor
