@@ -413,13 +413,14 @@ BEGIN
    WHERE id = tapeCopyId;
   UPDATE Stream SET status = 3 -- RUNNING
    WHERE id = streamId;
-  -- update NbTapeCopiesInFS accordingly
+  -- update NbTapeCopiesInFS accordingly. Take care to remove the
+  -- TapeCopy from all streams and all filesystems
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
                  WHERE DiskCopy.CastorFile = TapeCopy.castorFile
                    AND TapeCopy.id = tapeCopyId)
-     AND Stream = streamId;
+     AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId);
   -- Update Filesystem state
   updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
   EXCEPTION WHEN NO_DATA_FOUND THEN
