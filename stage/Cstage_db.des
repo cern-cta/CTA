@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.14 2001/07/12 10:55:59 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.15 2002/04/30 12:20:17 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -21,16 +21,17 @@ database stage {         /* STAGE Database Description */
   table stgcat_tape {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
-    int  size;           /* Size in MB of data to be staged */
+    u_signed64 size;     /* Size in bytes of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
     int blksize;         /* Maximum block size */
     int  retentd;        /* Retention period in days */
+    int  side;           /* Side (like DVD etc...) */
     int  lrecl;          /* Record length */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
-    off_t actual_size;   /* Current size */
+    u_signed64 actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
     char poolname[CA_MAXPOOLNAMELEN+1];
@@ -58,7 +59,7 @@ database stage {         /* STAGE Database Description */
   table stgcat_disk {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
-    int  size;           /* Size in MB of data to be staged */
+    u_signed64 size;     /* Size in bytes of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
     int blksize;         /* Maximum block size */
@@ -66,7 +67,7 @@ database stage {         /* STAGE Database Description */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
-    off_t actual_size;   /* Current size */
+    u_signed64 actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
     char recfm[CA_MAXRECFMLEN+1]; /* Record format */
@@ -85,13 +86,13 @@ database stage {         /* STAGE Database Description */
   table stgcat_hpss {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
-    int  size;           /* Size in MB of data to be staged */
+    u_signed64 size;     /* Size in bytes of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
-    off_t actual_size;   /* Current size */
+    u_signed64 actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
     char poolname[CA_MAXPOOLNAMELEN+1];
@@ -108,13 +109,13 @@ database stage {         /* STAGE Database Description */
   table stgcat_hsm {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
-    int  size;           /* Size in MB of data to be staged */
+    u_signed64 size;     /* Size in bytes of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
-    off_t actual_size;   /* Current size */
+    u_signed64 actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
     char poolname[CA_MAXPOOLNAMELEN+1];
@@ -137,13 +138,13 @@ database stage {         /* STAGE Database Description */
   table stgcat_alloc {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
-    int  size;           /* Size in MB of data to be staged */
+    u_signed64 size;     /* Size in bytes of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
-    off_t actual_size;   /* Current size */
+    u_signed64 actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
     char poolname[CA_MAXPOOLNAMELEN+1];
