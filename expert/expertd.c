@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:36 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -271,7 +271,7 @@ procreq(magic, req_type, req_data, data_len, clienthost, s)
 
   default:
     explogit (func, EXP98, "illegal request\n");
-    sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, SEEXPILLREQ);
+    sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, EEXPILLREQ);
     c = SEINTERNAL;
     break;
   }

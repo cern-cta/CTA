@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:36 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -42,7 +42,7 @@ char **argv;
 #endif
 	n = expert_send_request(&socket, EXP_EXECUTE);
 	if (n < 0) {
-	  fprintf (stdout, "Error sending request: serrno = %d\n", serrno);
+	  fprintf (stdout, "Error sending request: serrno = %d %s\n", serrno, sstrerror(serrno));
 	  exit (serrno);
 	}
 	while ((n = expert_receive_data(socket, buffer, sizeof(buffer), 10)) > 0) {

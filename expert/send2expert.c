@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 17:34:55 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.3 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -97,7 +97,7 @@ int reql;
 #endif
 			  	exp_errmsg (func, EXP00, exphost);
 				(void) netclose (s);
-				serrno = 21 /*EEXPNACT*/;
+				serrno = EEXPNACT;
 				return (-1);
 			} else {
 			  	exp_errmsg (func, EXP02, "connect", neterror());

@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 17:34:54 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.3 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -188,7 +188,7 @@ int timeout;
 	if (c > 0) { /* Data have been received */
 	  if (c >= el) {
 	    if (strncmp(buffer, EXP_ERRSTRING, el) == 0) {
-	      serrno = SEEXPEXECV;
+	      serrno = EEXPEXECV;
 	      return (-1);
 	    }
 	  }
