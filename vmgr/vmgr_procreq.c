@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:11:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.3 $ $Date: 2005/03/17 12:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -182,6 +182,8 @@ struct vmgr_srv_thread_info *thip;
 		RETURN (serrno);
 	if (vmgr_delete_dgnmap_entry (&thip->dbfd, &rec_addr))
 		RETURN (serrno);
+
+	vmgr_sweep_dgns(&thip->dbfd);
 	RETURN (0);
 }
 
@@ -606,6 +608,8 @@ struct vmgr_srv_thread_info *thip;
 
 	if (vmgr_insert_dgnmap_entry (&thip->dbfd, &dgnmap_entry))
 		RETURN (serrno);
+
+	vmgr_populate_dgns(&thip->dbfd);
 	RETURN (0);
 }
 
@@ -1021,8 +1025,11 @@ struct vmgr_srv_thread_info *thip;
 	/* get and lock entry */
 
 	memset ((void *) &side_entry, 0, sizeof(struct vmgr_tape_side));
-	if (vmgr_get_side_by_size (&thip->dbfd, poolname, Size, &side_entry, 1,
-	    &rec_addr)) {
+	/*if (vmgr_get_side_by_size (&thip->dbfd, poolname, Size, &side_entry, 1,
+		&rec_addr)) { */
+	if (vmgr_get_side_by_weight (&thip->dbfd, poolname, Size, &side_entry,
+		1, &rec_addr)) {
+
 		if (serrno == ENOENT)
 			serrno = ENOSPC;
 		save_serrno = serrno;
@@ -1541,6 +1548,73 @@ DBLISTPTR *dblistptr;
 	RETURN (0);
 }
 
+
+/*      vmgr_srv_listweight - list weights of dgns */
+
+vmgr_srv_listweight(magic, req_data, clienthost, thip, endlist, dblistptr)
+int magic;
+char *req_data;
+char *clienthost;
+struct vmgr_srv_thread_info *thip;
+int endlist;
+DBLISTPTR *dblistptr;
+{
+	int bol;	/* beginning of list flag */
+	int c;
+	struct vmgr_tape_dgn dgn_entry;
+	int eol = 0;	/* end of list flag */
+	char func[18];
+	gid_t gid;
+	int listentsz;	/* size of client machine vmgr_tape_info structure */
+	int maxnbentries;	/* maximum number of entries/call */
+	int nbentries = 0;
+	char outbuf[LISTBUFSZ+4];
+	char *p;
+	char *rbp;
+	char *sbp;
+	uid_t uid;
+
+	strcpy (func, "vmgr_srv_listweight");
+	rbp = req_data;
+	unmarshall_LONG (rbp, uid);
+	unmarshall_LONG (rbp, gid);
+
+	RESETID(uid, gid);
+
+	vmgrlogit (func, VMG92, "listweight", uid, gid, clienthost);
+	unmarshall_WORD (rbp, listentsz);
+	unmarshall_WORD (rbp, bol);
+
+	/* return as many entries as possible to the client */
+
+	maxnbentries = LISTBUFSZ / ((MARSHALLED_TAPE_ENTRYSZ > listentsz) ?
+		MARSHALLED_TAPE_ENTRYSZ : listentsz);
+	sbp = outbuf;
+	marshall_WORD (sbp, nbentries);		/* will be updated */
+
+        while (nbentries < maxnbentries && 
+            (c = vmgr_list_dgn_entry (&thip->dbfd, bol, &dgn_entry,
+                endlist, dblistptr)) == 0) {
+                marshall_STRING (sbp, dgn_entry.dgn);
+                marshall_LONG (sbp, dgn_entry.weight);
+                marshall_LONG (sbp, dgn_entry.deltaweight);
+                nbentries++;
+                bol = 0;
+        }
+
+	if (c < 0)
+		RETURN (serrno);
+	if (c == 1)
+		eol = 1;
+
+	marshall_WORD (sbp, eol);
+	p = outbuf;
+	marshall_WORD (p, nbentries);		/* update nbentries in reply */
+	sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
+	RETURN (0);
+}
+
+
 /*	vmgr_srv_modifylibrary - modify an existing tape library */
 
 vmgr_srv_modifylibrary(magic, req_data, clienthost, thip)
@@ -1996,6 +2070,61 @@ struct vmgr_srv_thread_info *thip;
 	RETURN (0);
 }
 
+/*	vmgr_srv_modifyweight - modify an existing tape volume */
+
+vmgr_srv_modifyweight(magic, req_data, clienthost, thip)
+int magic;
+char *req_data;
+char *clienthost;
+struct vmgr_srv_thread_info *thip;
+{
+
+
+	struct vmgr_tape_dgnmap dgnmap_entry;
+	char func[25];
+	gid_t gid;
+	int i;
+	char dgn[CA_MAXDGNLEN+1];
+        int weight;
+        int delta;
+        int valid;
+	char logbuf[CA_MAXVIDLEN+CA_MAXPOOLNAMELEN+24];
+	char *rbp;
+	uid_t uid;
+
+	strcpy (func, "vmgr_srv_modifyweight");
+	rbp = req_data;
+	unmarshall_LONG (rbp, uid);
+	unmarshall_LONG (rbp, gid);
+
+	RESETID(uid, gid);
+
+	vmgrlogit (func, VMG92, "modifyweight", uid, gid, clienthost);
+	if (unmarshall_STRINGN (rbp, dgn, CA_MAXDGNLEN + 1) < 0)
+		RETURN (EINVAL);
+	unmarshall_LONG (rbp, weight);
+	unmarshall_LONG (rbp, delta);
+	unmarshall_LONG (rbp, valid);
+
+	sprintf (logbuf, "modifyweight %s %i", dgn, weight);
+	vmgr_logreq (func, logbuf);
+
+	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN)) 
+		RETURN (serrno);
+
+	/* start transaction */
+
+	(void) vmgr_start_tr (thip->s, &thip->dbfd);
+
+	/* update the weight for the given dgn */
+	if (vmgr_update_weight(&thip->dbfd, dgn, weight, delta, valid) != 0) {
+		RETURN (serrno);
+        }
+
+	RETURN (0);
+}
+
+
 /*	vmgr_srv_querypool - query about a tape pool */
 
 vmgr_srv_querypool(magic, req_data, clienthost, thip)
@@ -2044,6 +2173,53 @@ struct vmgr_srv_thread_info *thip;
 	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
 	RETURN (0);
 }
+
+/*	vmgr_srv_queryweight - query the weight of a dgn */
+
+vmgr_srv_queryweight(magic, req_data, clienthost, thip)
+int magic;
+char *req_data;
+char *clienthost;
+struct vmgr_srv_thread_info *thip;
+{
+	u_signed64 capacity;
+	char func[19];
+	gid_t gid;
+	char logbuf[CA_MAXDGNLEN+11];
+	struct vmgr_tape_dgn dgn_entry;
+	char dgn[CA_MAXDGNLEN+1];
+	char *rbp;
+	char repbuf[24];
+	char *sbp;
+	u_signed64 tot_free_space;
+	uid_t uid;
+
+	strcpy (func, "vmgr_srv_queryweight");
+	rbp = req_data;
+	unmarshall_LONG (rbp, uid);
+	unmarshall_LONG (rbp, gid);
+
+	RESETID(uid,gid);
+
+	vmgrlogit (func, VMG92, "queryweight", uid, gid, clienthost);
+	if (unmarshall_STRINGN (rbp, dgn, CA_MAXDGNLEN + 1) < 0)
+		RETURN (EINVAL);
+	sprintf (logbuf, "queryweight %s", dgn);
+	vmgr_logreq (func, logbuf);
+
+
+	memset((void *) &dgn_entry , 0, sizeof(struct vmgr_tape_dgn));
+	if (vmgr_get_dgn_entry (&thip->dbfd, dgn, &dgn_entry,
+	    0, NULL))
+		RETURN (serrno);
+
+	sbp = repbuf;
+	marshall_LONG (sbp, dgn_entry.weight);
+	marshall_LONG (sbp, dgn_entry.deltaweight);
+	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+	RETURN (0);
+}
+
 
 /*	vmgr_srv_querylibrary - query about a tape library */
 

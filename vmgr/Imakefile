@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2005/01/23 08:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2005/03/17 12:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make volume manager programs.
 
@@ -132,6 +132,9 @@ MANPAGES = $(LIBMANDIR)/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_modifymodel.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_modifypool.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_modifytape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_queryweight.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listweight.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_modifyweight.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_querylibrary.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_querymodel.$(LIBMANSUFFIX) \
 	   $(LIBMANDIR)/vmgr_querypool.$(LIBMANSUFFIX) \
@@ -166,6 +169,8 @@ MANPAGES = $(LIBMANDIR)/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(MANDIR)/vmgrmodifylibrary.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrmodifypool.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrmodifytape.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrmodifyweight.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistweight.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrsettag.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrshutdown.$(MANSUFFIX)
 EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
@@ -193,6 +198,9 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_modifymodel.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_modifypool.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_modifytape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_modifyweight.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listweight.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_queryweight.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_querylibrary.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_querymodel.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_querypool.$(LIBMANSUFFIX) \
@@ -227,6 +235,8 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifylibrary.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifypool.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifytape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrmodifyweight.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistweight.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrsettag.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrshutdown.$(MANSUFFIX)
 
@@ -258,6 +268,8 @@ CLIENT = ProgramTargetName(vmgrdeletedenmap) \
 	 ProgramTargetName(vmgrmodifylibrary) \
 	 ProgramTargetName(vmgrmodifypool) \
 	 ProgramTargetName(vmgrmodifytape) \
+	 ProgramTargetName(vmgrmodifyweight) \
+	 ProgramTargetName(vmgrlistweight) \
 	 ProgramTargetName(vmgrsettag) \
 	 ProgramTargetName(vmgrshutdown)
 IPROGS_C = FileName($(BIN),ProgramTargetName(vmgrdeletedenmap)) \
@@ -283,6 +295,8 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(vmgrdeletedenmap)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifylibrary)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifypool)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifytape)) \
+	   FileName($(BIN),ProgramTargetName(vmgrmodifyweight)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistweight)) \
 	   FileName($(BIN),ProgramTargetName(vmgrsettag)) \
 	   FileName($(BIN),ProgramTargetName(vmgrshutdown))
 EPROGS_C = $(EXPORTBIN)/vmgrdeletedenmap \
@@ -308,6 +322,8 @@ EPROGS_C = $(EXPORTBIN)/vmgrdeletedenmap \
 	   $(EXPORTBIN)/vmgrmodifylibrary \
 	   $(EXPORTBIN)/vmgrmodifypool \
 	   $(EXPORTBIN)/vmgrmodifytape \
+	   $(EXPORTBIN)/vmgrmodifyweight \
+	   $(EXPORTBIN)/vmgrlistweight \
 	   $(EXPORTBIN)/vmgrsettag \
 	   $(EXPORTBIN)/vmgrshutdown
 #endif
@@ -349,6 +365,9 @@ VMGRLIB_OBJS	=	vmgr_apiinit.Osuf \
 			vmgr_modifymodel.Osuf \
 			vmgr_modifypool.Osuf \
 			vmgr_modifytape.Osuf \
+			vmgr_queryweight.Osuf \
+			vmgr_listweight.Osuf \
+			vmgr_modifyweight.Osuf \
 			vmgr_querylibrary.Osuf \
 			vmgr_querymodel.Osuf \
 			vmgr_querypool.Osuf \
@@ -400,6 +419,8 @@ NormalProgramTarget(vmgrlisttape,vmgrlisttape.Osuf,LibraryTargetName(vmgr) $(DEP
 NormalProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrmodifypool,vmgrmodifypool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrmodifytape,vmgrmodifytape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifyweight,vmgrmodifyweight.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistweight,vmgrlistweight.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrsettag,vmgrsettag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 
 NormalLibraryTarget(vmgr,$(VMGRLIB_OBJS))
@@ -494,6 +515,12 @@ IEXPORT(vmgrmodifypool,$(EXPORTBIN),755);
 InstallProgram(vmgrmodifytape,$(BIN),root,$(OPSGRP),755)
 IEXPORT(vmgrmodifytape,$(EXPORTBIN),755);
 
+InstallProgram(vmgrmodifyweight,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrmodifyweight,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistweight,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrlistweight,$(EXPORTBIN),755);
+
 InstallProgram(vmgrsettag,$(BIN),root,bin,755)
 IEXPORT(vmgrsettag,$(EXPORTBIN),755);
 
@@ -536,6 +563,9 @@ IMANPAGE(vmgr_modifylibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_modifymodel,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_modifypool,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_modifytape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_modifyweight,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_queryweight,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listweight,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_querylibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_querymodel,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(vmgr_querypool,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -570,6 +600,8 @@ IMANPAGE(vmgrlisttape,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrmodifylibrary,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrmodifypool,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrmodifytape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrmodifyweight,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistweight,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrsettag,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrshutdown,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vmgr_deletedenmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -597,6 +629,9 @@ EMANPAGE(vmgr_modifylibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_modifymodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_modifypool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_modifytape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_modifyweight,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_queryweight,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listweight,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_querylibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_querymodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_querypool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -631,6 +666,8 @@ EMANPAGE(vmgrlisttape,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrmodifylibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrmodifypool,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrmodifytape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrmodifyweight,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistweight,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrsettag,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
