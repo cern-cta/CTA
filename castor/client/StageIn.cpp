@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/29 17:34:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -43,6 +43,7 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
   rejected.push_back("K");
+  rejected.push_back("a");
   rejectFlags(rejected, "stagein");
   // uses some other flags
   u_signed64 flags = 0;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 17:34:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -43,6 +43,7 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
   rejected.push_back("A");
+  rejected.push_back("a");
   rejected.push_back("silent");
   rejected.push_back("nowait");
   rejected.push_back("rdonly");

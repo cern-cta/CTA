@@ -118,7 +118,7 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   Coptreset = 1;  /* In case we are parsing several times the same argv */
   int ch;
 
-	while ((ch = Cgetopt_long (argc, argv, "A:h:Kp:s:", longopts, NULL)) != -1) {
+	while ((ch = Cgetopt_long (argc, argv, "aA:h:Kp:s:", longopts, NULL)) != -1) {
     switch (ch) {
 		case 'A':
 		case 'h':
@@ -127,7 +127,8 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
 			m_inputFlags[std::string(1, ch)] = Coptarg;
       break;
     case 'K':
-			m_inputFlags["K"] = "";
+    case 'a':
+			m_inputFlags[std::string(1, ch)] = "";
       break;
     case 0:
 			// Long option without short option correspondance
@@ -283,6 +284,8 @@ void castor::client::BaseCmdLineClient::rejectFlags(std::vector<std::string> &fl
        it++) {
     if (m_inputFlags.find(*it) != m_inputFlags.end()) {
       castor::exception::Exception e(ETPRM);
+      e.getMessage() << "-";
+      if (it->size() > 1) e.getMessage() << "-";
       e.getMessage()
         << *it << " option is not valid in the "
         << cmdName << " command.";

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/29 16:59:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/29 17:34:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,6 +55,9 @@ castor::rh::Request* castor::client::StageQry::buildRequest()
   setRhHost();
   setRhPort();
   std::string poolName = getPoolName();
+  if (m_inputFlags.find("a") != m_inputFlags.end()) {
+    flags |= STAGE_ALL;
+  }
   if (m_inputFlags.find("noretry") != m_inputFlags.end()) {
     flags |= STAGE_NORETRY;
   }
@@ -90,7 +93,7 @@ castor::client::StageQry::responseHandler() throw() {
 //------------------------------------------------------------------------------
 void castor::client::StageQry::usage(std::string error) throw() {
   std::cout << error << std::endl;
-  std::cout << "usage : stageqry [-h rh_host] [-p poolname] [--noretry] hsmfile..."
+  std::cout << "usage : stageqry [-a] [-h rh_host] [-p poolname] [--noretry] hsmfile..."
             << std::endl;
 }
 
