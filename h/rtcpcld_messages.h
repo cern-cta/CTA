@@ -79,6 +79,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_REMAININGSEGMS,
     RTCPCLD_MSG_STAGED,
     RTCPCLD_MSG_IGNORE_ENOENT,
+    RTCPCLD_MSG_ZEROSIZE,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -147,6 +148,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_REMAININGSEGMS, DLF_LVL_SYSTEM,"Not all segments staged for file"},
     { RTCPCLD_MSG_STAGED, DLF_LVL_SYSTEM,"File staged"},
     { RTCPCLD_MSG_IGNORE_ENOENT, DLF_LVL_SYSTEM,"File removed during migration. Error ignored"},
+    { RTCPCLD_MSG_ZEROSIZE, DLF_LVL_SYSTEM,"Zero size disk file rejected"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
