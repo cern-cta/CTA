@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.22 $ $Date: 2000/01/19 18:00:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.23 $ $Date: 2000/01/19 18:05:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1140,7 +1140,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
     int rc, severity, save_serrno;
-    diskIOstatus_t *diskIOstatus = NULL;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
         rtcpd_SetProcError(RTCP_FAILED);
@@ -1155,9 +1154,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
     offset = ((thread_arg_t *)arg)->start_offset;
     last_file = ((thread_arg_t *)arg)->last_file;
     end_of_tpfile = ((thread_arg_t *)arg)->end_of_tpfile;
-
-
-    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
 
     if ( file == NULL || tape == NULL ) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL tape/file element\n");
