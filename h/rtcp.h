@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.10 $ $Date: 2000/02/16 17:12:13 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.11 $ $Date: 2000/03/02 14:32:45 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -211,6 +211,12 @@ typedef struct file_list {
      * On write this counter is used in the label handling.
      */
     int trec ;
+    /*
+     * Last data buffer used by the tape IO thread for this file
+     * (tape read only). This is needed by the disk IO thread to
+     * calculate the start data buffer for next file.
+     */
+    int end_index;
     /*
      * For end of volume processing. 
      */
