@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1996-2001 by CERN/IT/PDP
+ * Copyright (C) 1996-2002 by CERN/IT/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.14 $ $Date: 2001/03/08 09:14:50 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.15 $ $Date: 2002/08/21 13:56:44 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -62,6 +62,7 @@ COMPRESSION_STATS *comp_stats;
 	if (strncmp (devtype, "DAT", 3) == 0)
 		cdb[2] = 0x40 | 0x39;	/* PC = 1, compression page  */
 	else if (strncmp (devtype, "DLT", 3) == 0 ||
+		 strcmp (devtype, "SDLT") == 0 ||
 		 strcmp (devtype, "LTO") == 0)
 		cdb[2] = 0x40 | 0x32;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "3490") == 0 ||
@@ -111,6 +112,7 @@ COMPRESSION_STATS *comp_stats;
 			p += *(p+3) + 4;
 		}
 	} else if (strncmp (devtype, "DLT", 3) == 0 ||
+		   strcmp (devtype, "SDLT") == 0 ||
 		   strcmp (devtype, "LTO") == 0) {	/* values in bytes */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
