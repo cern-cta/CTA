@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.6 $ $Date: 1999/11/25 14:45:25 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 11:45:34 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,15 +83,19 @@ COMPRESSION_STATS *comp_stats;
 			case 0x5:
 				kbytes_from_host =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x6:
 				kbytes_to_host =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x7:
 				kbytes_to_tape =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x8:
 				kbytes_from_tape =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			}
 			p += *(p+3) + 4;
 		}
@@ -102,27 +106,35 @@ COMPRESSION_STATS *comp_stats;
 			case 0x2:
 				kbytes_to_host =
 				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				break;
 			case 0x3:
 				kbytes_to_host +=
 				    *(p+5) << 6 | *(p+6) >> 2;
+				break;
 			case 0x4:
 				kbytes_from_tape =
 				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				break;
 			case 0x5:
 				kbytes_from_tape +=
 				    *(p+5) << 6 | *(p+6) >> 2;
+				break;
 			case 0x6:
 				kbytes_from_host =
 				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				break;
 			case 0x7:
 				kbytes_from_host +=
 				    *(p+5) << 6 | *(p+6) >> 2;
+				break;
 			case 0x8:
 				kbytes_to_tape =
 				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				break;
 			case 0x9:
 				kbytes_to_tape +=
 				    *(p+5) << 6 | *(p+6) >> 2;
+				break;
 			}
 			p += *(p+3) + 4;
 		}
@@ -152,15 +164,19 @@ COMPRESSION_STATS *comp_stats;
 			case 0xF:
 				kbytes_to_host =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x10:
 				kbytes_from_tape =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x11:
 				kbytes_from_host =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x12:
 				kbytes_to_tape =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			}
 			p += *(p+3) + 4;
 		}
@@ -171,15 +187,19 @@ COMPRESSION_STATS *comp_stats;
 			case 0x0:
 				kbytes_from_host =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x1:
 				kbytes_to_tape =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x2:
 				kbytes_from_tape =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			case 0x3:
 				kbytes_to_host =
 				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				break;
 			}
 			p += *(p+3) + 4;
 		}
