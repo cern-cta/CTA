@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.116 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.117 $ $Release$ $Date: 2005/02/04 13:01:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.116 $ $Release$ $Date: 2005/01/25 13:46:05 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.117 $ $Release$ $Date: 2005/02/04 13:01:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1095,8 +1095,7 @@ static int procSegmentsForTape(
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
     memset(blockid,'\0',sizeof(blockid));
-    if ( (cmpStatus == SEGMENT_UNPROCESSED) &&
-         (alreadySelected(tape,segmArray[i]) == 0) ) {
+    if ( alreadySelected(tape,segmArray[i]) == 0 ) {
       Cstager_Segment_blockId0(
                                segmArray[i],
                                (unsigned char *)&blockid[0]
@@ -1194,14 +1193,6 @@ static int procSegmentsForTape(
                              segmArray[i],
                              &(fl->filereq.offset)
                              );
-      /*
-       * Update the Segment status in DB to avoid that
-       * this segment is returned twice
-       */
-      Cstager_Segment_setStatus(
-                                segmArray[i],
-                                SEGMENT_SELECTED
-                                );
       iObj = Cstager_Segment_getIObject(segmArray[i]);
       rc = C_Services_updateRep(
                                 *svcs,
@@ -2491,7 +2482,7 @@ int rtcpcld_updcMigrFailed(
  *  - Leave the TapeCopy in TAPECOPY_SELECTED status
  *  - Don't update the DiskCopy (will remain in DISKCOPY_STAGEOUT until the
  *    recall control process decides to do no further retries)
- * Note that the trvsllrt will never attempt to do any retries by itself.
+ * Note that the recaller will never attempt to do any retries by itself.
  * All retries has to be decided by a separate process scanning the catalogue
  * for SELECTED TapeCopies associated with FAILED Segments. The number of
  * failed retries == the number of FAILED Segments associated with the TapeCopy
@@ -3011,7 +3002,7 @@ int rtcpcld_updcFileMigrated(
 
   for ( i=0; i<nbDiskCopies; i++ ) {
     Cstager_DiskCopy_status(diskCopyArray[i],&diskCopyStatus);
-    if ( diskCopyStatus == DISKCOPY_STAGEOUT ) {
+    if ( diskCopyStatus == DISKCOPY_CANBEMIGR ) {
       Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_STAGED);
       iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
       rc = C_Services_updateRep(
@@ -3154,11 +3145,6 @@ int rtcpcld_updateTapeStatus(
         Cstager_Tape_setSeverity(tapeItem,tape->tapereq.err.severity);
     }
     
-    if ( toStatus == TAPE_FAILED || toStatus == TAPE_FINISHED ) {
-      char *vwAddress = "";
-      Cstager_Tape_setVwAddress(tapeItem,vwAddress);
-    }
-    
     rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
     save_serrno = serrno;
     if ( rc == -1 ) {
@@ -3291,6 +3277,10 @@ int rtcpcld_restoreSelectedTapeCopies(
   int rc, doCommit = 0;
   struct Cns_fileid *fileId = NULL;
 
+  /*
+   * This routine is only for tape writes
+   */
+  if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ) return(0);
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
@@ -3384,6 +3374,157 @@ int rtcpcld_restoreSelectedTapeCopies(
   }
   C_IAddress_delete(iAddr);
   return(0);
+}
+
+/**
+ * This method is called by the rtcpclientd daemon after a recaller
+ * has finished with a tape. It checks if some Segments are still
+ * unprocessed because one of them got an error. If so, reset all Segments
+ * that are in SEGMENT_SELECTED state (set by segmentsForTape()) but not yet
+ * processed, allowing them to be picked up by another recaller. If we found
+ * one or more Segments to reset, we also reset the Tape status to TAPE_PENDING.
+ *
+ * To avoid tight tape mount loops, tape status is only reset iff: there was at
+ * least one selected {\b AND} failed segment. The risk otherwise, is that if no
+ * failed segment was found the rtcopy request most probably failed due to a
+ * configuration problem or some other fatal error that will persist over retries.
+ * In this case, we leave the request for further analysis.
+ */
+int rtcpcld_restoreSelectedSegments(
+                                    tape
+                                    )
+     tape_list_t *tape;
+{
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  struct Cstager_Tape_t *tp = NULL;
+  struct Cstager_Segment_t **segmentArray = NULL;
+  enum Cstager_SegmentStatusCodes_t segmentStatus;
+  enum Cstager_TapeStatusCodes_t tapeStatus;
+  int msgNb = RTCPCLD_MSG_RESTORESEGS;
+  int rc, i, nbSegments = 0, nbSegmentsRestored = 0, nbSegmentsFailed = 0;
+
+  /*
+   * This routine is only for tape recalls
+   */
+  if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) return(0);
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+
+  rc = updateTapeFromDB(tape);
+  if ( (rc == -1) || (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
+    return(-1);
+  }
+
+  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  iObj = Cstager_Tape_getIObject(tp);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Segment
+                          );
+  if ( rc == -1 ) {
+    LOG_DBCALL_ERR(
+                   "C_Services_fillObj(tape,OBJ_Segment)",
+                   C_Services_errorMsg(*svcs)
+                   );
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+
+  Cstager_Tape_segments(tp,&segmentArray,&nbSegments);
+  if ( (segmentArray != NULL) && (nbSegments > 0) ) {
+    for ( i=0; i<nbSegments; i++ ) {
+      Cstager_Segment_status(segmentArray[i],&segmentStatus);
+      if ( segmentStatus == SEGMENT_SELECTED ) {
+        Cstager_Segment_setStatus(segmentArray[i],SEGMENT_UNPROCESSED);
+        iObj = Cstager_Segment_getIObject(segmentArray[i]);
+        rc = C_Services_updateRep(
+                                  *svcs,
+                                  iAddr,
+                                  iObj,
+                                  0
+                                  );
+        if ( rc == -1 ) {
+          LOG_DBCALL_ERR(
+                         "C_Services_fillObj(tape,OBJ_Segment)",
+                         C_Services_errorMsg(*svcs)
+                         );
+          break;
+        }
+        nbSegmentsRestored++;
+      } else if ( segmentStatus == SEGMENT_FAILED ) {
+        nbSegmentsFailed++;
+      }
+    }
+  }
+  if ( rc == -1 ) {
+    (void)C_Services_rollback(
+                              *svcs,
+                              iAddr
+                              );
+  } else {
+    if ( nbSegmentsRestored > 0 ) {
+      /*
+       * Only reset tape status if there was at least one failed
+       * segment (see comments above)
+       */
+      if ( nbSegmentsFailed > 0 ) {
+        Cstager_Tape_setStatus(tp,TAPE_PENDING);
+      } else {
+        Cstager_Tape_setStatus(tp,TAPE_FAILED);
+        msgNb = RTCPCLD_MSG_TPNOTRETRIED;
+      }
+      iObj = Cstager_Tape_getIObject(tp);
+      rc = C_Services_updateRep(
+                                *svcs,
+                                iAddr,
+                                iObj,
+                                0
+                                );
+    }
+    rc = C_Services_commit(
+                           *svcs,
+                           iAddr
+                           );
+    if ( rc == -1 ) {
+      LOG_DBCALL_ERR(
+                     "C_Services_commit()",
+                     C_Services_errorMsg(*svcs)
+                     );
+      C_IAddress_delete(iAddr);
+      return(-1);
+    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(msgNb),
+                    (struct Cns_fileid *)NULL,
+                    3,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tape->tapereq.vid,
+                    "NBSELECT",
+                    DLF_MSG_PARAM_INT,
+                    nbSegmentsRestored,
+                    "NBFAILED",
+                    DLF_MSG_PARAM_INT,
+                    nbSegmentsFailed
+                    );
+  }
+
+  C_IAddress_delete(iAddr);
+  return(nbSegmentsRestored);
 }
   
 
