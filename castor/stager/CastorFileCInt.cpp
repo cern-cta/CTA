@@ -219,26 +219,26 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_addCopies
+  // Cstager_CastorFile_addTapeCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_addCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy* obj) {
-    instance->addCopies(obj);
+  int Cstager_CastorFile_addTapeCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy* obj) {
+    instance->addTapeCopies(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_removeCopies
+  // Cstager_CastorFile_removeTapeCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_removeCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy* obj) {
-    instance->removeCopies(obj);
+  int Cstager_CastorFile_removeTapeCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy* obj) {
+    instance->removeTapeCopies(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_copies
+  // Cstager_CastorFile_tapeCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_copies(castor::stager::CastorFile* instance, castor::stager::TapeCopy*** var, int* len) {
-    std::vector<castor::stager::TapeCopy*> result = instance->copies();
+  int Cstager_CastorFile_tapeCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy*** var, int* len) {
+    std::vector<castor::stager::TapeCopy*> result = instance->tapeCopies();
     *len = result.size();
     *var = (castor::stager::TapeCopy**) malloc((*len) * sizeof(castor::stager::TapeCopy*));
     for (int i = 0; i < *len; i++) {

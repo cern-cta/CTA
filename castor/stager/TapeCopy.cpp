@@ -59,7 +59,7 @@ castor::stager::TapeCopy::~TapeCopy() throw() {
   }
   m_segmentsVector.clear();
   if (0 != m_castorFile) {
-    m_castorFile->removeCopies(this);
+    m_castorFile->removeTapeCopies(this);
   }
 };
 

@@ -57,11 +57,11 @@ castor::stager::CastorFile::~CastorFile() throw() {
     m_diskCopiesVector[i]->setCastorFile(0);
   }
   m_diskCopiesVector.clear();
-  for (unsigned int i = 0; i < m_copiesVector.size(); i++) {
-    m_copiesVector[i]->setCastorFile(0);
-    delete m_copiesVector[i];
+  for (unsigned int i = 0; i < m_tapeCopiesVector.size(); i++) {
+    m_tapeCopiesVector[i]->setCastorFile(0);
+    delete m_tapeCopiesVector[i];
   }
-  m_copiesVector.clear();
+  m_tapeCopiesVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -105,11 +105,11 @@ void castor::stager::CastorFile::print(std::ostream& stream,
     }
   }
   {
-    stream << indent << "Copies : " << std::endl;
+    stream << indent << "TapeCopies : " << std::endl;
     int i;
     std::vector<TapeCopy*>::const_iterator it;
-    for (it = m_copiesVector.begin(), i = 0;
-         it != m_copiesVector.end();
+    for (it = m_tapeCopiesVector.begin(), i = 0;
+         it != m_tapeCopiesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

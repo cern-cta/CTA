@@ -108,15 +108,15 @@ const std::string castor::db::ora::OraCastorFileCnv::s_deleteDiskCopyStatementSt
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateDiskCopyStatementString =
 "UPDATE rh_DiskCopy SET castorFile = : 1 WHERE id = :2";
 
-/// SQL select statement for member copies
+/// SQL select statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementString =
 "SELECT id from rh_TapeCopy WHERE castorFile = :1";
 
-/// SQL delete statement for member copies
+/// SQL delete statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTapeCopyStatementString =
 "UPDATE rh_TapeCopy SET castorFile = 0 WHERE castorFile = :1";
 
-/// SQL remote update statement for member copies
+/// SQL remote update statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateTapeCopyStatementString =
 "UPDATE rh_TapeCopy SET castorFile = : 1 WHERE id = :2";
 
@@ -359,19 +359,19 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // Get current database data
-  std::set<int> copiesList;
+  std::set<int> tapeCopiesList;
   m_selectTapeCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    copiesList.insert(rset->getInt(1));
+    tapeCopiesList.insert(rset->getInt(1));
   }
   m_selectTapeCopyStatement->closeResultSet(rset);
-  // update copies and create new ones
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->copies().begin();
-       it != obj->copies().end();
+  // update tapeCopies and create new ones
+  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+       it != obj->tapeCopies().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = copiesList.find((*it)->id())) == copiesList.end()) {
+    if ((item = tapeCopiesList.find((*it)->id())) == tapeCopiesList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
       // Check remote update statement
@@ -382,12 +382,12 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
       m_remoteUpdateTapeCopyStatement->setDouble(1, obj->id());
       m_remoteUpdateTapeCopyStatement->setDouble(2, (*it)->id());
       m_remoteUpdateTapeCopyStatement->executeUpdate();
-      copiesList.erase(item);
+      tapeCopiesList.erase(item);
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = copiesList.begin();
-       it != copiesList.end();
+  for (std::set<int>::iterator it = tapeCopiesList.begin();
+       it != tapeCopiesList.end();
        it++) {
     if (0 == m_deleteTapeCopyStatement) {
       m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
@@ -563,24 +563,24 @@ void castor::db::ora::OraCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFi
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // retrieve the object from the database
-  std::set<int> copiesList;
+  std::set<int> tapeCopiesList;
   m_selectTapeCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    copiesList.insert(rset->getInt(1));
+    tapeCopiesList.insert(rset->getInt(1));
   }
   // Close ResultSet
   m_selectTapeCopyStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::TapeCopy*> toBeDeleted;
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->copies().begin();
-       it != obj->copies().end();
+  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+       it != obj->tapeCopies().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = copiesList.find((*it)->id())) == copiesList.end()) {
+    if ((item = tapeCopiesList.find((*it)->id())) == tapeCopiesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
-      copiesList.erase(item);
+      tapeCopiesList.erase(item);
       cnvSvc()->updateObj((*it));
     }
   }
@@ -588,15 +588,15 @@ void castor::db::ora::OraCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFi
   for (std::vector<castor::stager::TapeCopy*>::iterator it = toBeDeleted.begin();
        it != toBeDeleted.end();
        it++) {
-    obj->removeCopies(*it);
+    obj->removeTapeCopies(*it);
     delete (*it);
   }
   // Create new objects
-  for (std::set<int>::iterator it = copiesList.begin();
-       it != copiesList.end();
+  for (std::set<int>::iterator it = tapeCopiesList.begin();
+       it != tapeCopiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addCopies(dynamic_cast<castor::stager::TapeCopy*>(item));
+    obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(item));
   }
 }
 
@@ -735,8 +735,8 @@ void castor::db::ora::OraCastorFileCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->copies().begin();
-         it != obj->copies().end();
+    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+         it != obj->tapeCopies().end();
          it++) {
       cnvSvc()->deleteRep(0, *it, false);
     }

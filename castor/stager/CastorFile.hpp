@@ -224,32 +224,32 @@ namespace castor {
       }
 
       /**
-       * Add a TapeCopy* object to the m_copiesVector list
+       * Add a TapeCopy* object to the m_tapeCopiesVector list
        */
-      void addCopies(TapeCopy* add_object) {
-        m_copiesVector.push_back(add_object);
+      void addTapeCopies(TapeCopy* add_object) {
+        m_tapeCopiesVector.push_back(add_object);
       }
 
       /**
-       * Remove a TapeCopy* object from m_copiesVector
+       * Remove a TapeCopy* object from m_tapeCopiesVector
        */
-      void removeCopies(TapeCopy* remove_object) {
-        for (unsigned int i = 0; i < m_copiesVector.size(); i++) {
-          TapeCopy* item = m_copiesVector[i];
+      void removeTapeCopies(TapeCopy* remove_object) {
+        for (unsigned int i = 0; i < m_tapeCopiesVector.size(); i++) {
+          TapeCopy* item = m_tapeCopiesVector[i];
           if (item == remove_object) {
-            std::vector<TapeCopy*>::iterator it = m_copiesVector.begin() + i;
-            m_copiesVector.erase(it);
+            std::vector<TapeCopy*>::iterator it = m_tapeCopiesVector.begin() + i;
+            m_tapeCopiesVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of TapeCopy* objects held by m_copiesVector
-       * @return list of TapeCopy* objects held by m_copiesVector
+       * Get the list of TapeCopy* objects held by m_tapeCopiesVector
+       * @return list of TapeCopy* objects held by m_tapeCopiesVector
        */
-      std::vector<TapeCopy*>& copies() {
-        return m_copiesVector;
+      std::vector<TapeCopy*>& tapeCopies() {
+        return m_tapeCopiesVector;
       }
 
     private:
@@ -274,7 +274,7 @@ namespace castor {
 
       std::vector<DiskCopy*> m_diskCopiesVector;
 
-      std::vector<TapeCopy*> m_copiesVector;
+      std::vector<TapeCopy*> m_tapeCopiesVector;
 
     }; // end of class CastorFile
 

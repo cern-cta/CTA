@@ -321,22 +321,22 @@ namespace castor {
         /// SQL remote update statement object for member diskCopies
         oracle::occi::Statement *m_remoteUpdateDiskCopyStatement;
 
-        /// SQL select statement for member copies
+        /// SQL select statement for member tapeCopies
         static const std::string s_selectTapeCopyStatementString;
 
-        /// SQL select statement object for member copies
+        /// SQL select statement object for member tapeCopies
         oracle::occi::Statement *m_selectTapeCopyStatement;
 
-        /// SQL delete statement for member copies
+        /// SQL delete statement for member tapeCopies
         static const std::string s_deleteTapeCopyStatementString;
 
-        /// SQL delete statement object for member copies
+        /// SQL delete statement object for member tapeCopies
         oracle::occi::Statement *m_deleteTapeCopyStatement;
 
-        /// SQL remote update statement for member copies
+        /// SQL remote update statement for member tapeCopies
         static const std::string s_remoteUpdateTapeCopyStatementString;
 
-        /// SQL remote update statement object for member copies
+        /// SQL remote update statement object for member tapeCopies
         oracle::occi::Statement *m_remoteUpdateTapeCopyStatement;
 
       }; // end of class OraCastorFileCnv

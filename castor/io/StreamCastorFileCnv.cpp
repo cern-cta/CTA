@@ -148,9 +148,9 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    address->stream() << obj->copies().size();
-    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->copies().begin();
-         it != obj->copies().end();
+    address->stream() << obj->tapeCopies().size();
+    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+         it != obj->tapeCopies().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
@@ -183,11 +183,11 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
     IObject* objDiskCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addDiskCopies(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopies));
   }
-  unsigned int copiesNb;
-  ad.stream() >> copiesNb;
-  for (unsigned int i = 0; i < copiesNb; i++) {
-    IObject* objCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addCopies(dynamic_cast<castor::stager::TapeCopy*>(objCopies));
+  unsigned int tapeCopiesNb;
+  ad.stream() >> tapeCopiesNb;
+  for (unsigned int i = 0; i < tapeCopiesNb; i++) {
+    IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(objTapeCopies));
   }
 }
 
