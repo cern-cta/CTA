@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.19 2002/09/20 12:27:35 jdurand Exp $
+ * $Id: stagechng.c,v 1.20 2002/09/23 12:51:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.19 $ $Date: 2002/09/20 12:27:35 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.20 $ $Date: 2002/09/23 12:51:21 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -254,6 +254,14 @@ int main(argc, argv)
 			}
 			marshall_STRING (sbp, path);
 		}
+	}
+
+	if (errflg) {
+		usage (argv[0]);
+#if defined(_WIN32)
+		WSACleanup();
+#endif
+		exit (1);
 	}
 
 	msglen = sbp - sendbuf;
