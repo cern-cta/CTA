@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.30 2003/10/29 08:38:01 baud Exp $
+ * $Id: vmgr_api.h,v 1.31 2003/10/29 12:17:23 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.30 $ $Date: 2003/10/29 08:38:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.31 $ $Date: 2003/10/29 12:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -41,6 +41,8 @@ typedef struct {
 
 			/* function prototypes */
 
+EXTERN_C int DLL_DECL send2vmgr _PROTO((int *, char *, int, char *, int));
+EXTERN_C int DLL_DECL vmgr_apiinit _PROTO((struct vmgr_api_thread_info **));
 EXTERN_C int DLL_DECL vmgr_deletedenmap _PROTO((const char *, char *, char *));
 EXTERN_C int DLL_DECL vmgr_deletedgnmap _PROTO((const char *, char *));
 EXTERN_C int DLL_DECL vmgr_deletelibrary _PROTO((const char *));
@@ -54,6 +56,7 @@ EXTERN_C int DLL_DECL vmgr_enterlibrary _PROTO((const char *, int, int));
 EXTERN_C int DLL_DECL vmgr_entermodel _PROTO((const char *, char *, int));
 EXTERN_C int DLL_DECL vmgr_enterpool _PROTO((const char *, uid_t, gid_t));
 EXTERN_C int DLL_DECL vmgr_entertape _PROTO((const char *, char *, char *, char *, char *, char *, char *, char *, char *, int, char *, int));
+EXTERN_C int DLL_DECL vmgr_errmsg _PROTO((char *, char *, ...));
 EXTERN_C int DLL_DECL vmgr_gettag _PROTO((const char *, char *));
 EXTERN_C int DLL_DECL vmgr_gettape _PROTO((const char *, u_signed64, const char *, char *, char *, char *, char *, char *, char *, int *, int *, u_signed64 *));
 EXTERN_C struct vmgr_tape_denmap DLL_DECL *vmgr_listdenmap _PROTO((int, vmgr_list *));
