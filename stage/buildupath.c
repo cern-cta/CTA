@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.14 2001/03/04 08:44:23 jdurand Exp $
+ * $Id: buildupath.c,v 1.15 2001/11/30 11:26:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.14 $ $Date: 2001/03/04 08:44:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:26:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -20,9 +20,10 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.14 $ $Date: 
 #else
 #include <unistd.h>
 #endif
-#include "stage.h"
-#include "stage_api.h"
+#include "osdep.h"
 #include "Castor_limits.h"
+#include "stage_constants.h"
+#include "stage_messages.h"
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -33,11 +34,12 @@ static char hostname[CA_MAXHOSTNAMELEN + 1];
 static int initialized = 0;
 static char nfsroot[MAXPATH];
 
-int init_cwd_hostname _PROTO(());
-int resolvelinks _PROTO((char *, char *, int, int));
-int build_Upath _PROTO((int, char *, int, int));
+int  DLL_DECL  build_linkname _PROTO((char *, char *, int, int));
+int  DLL_DECL  build_Upath _PROTO((int, char *, int, int));
+static int init_cwd_hostname _PROTO(());
+static int resolvelinks _PROTO((char *, char *, int, int));
 
-int init_cwd_hostname()
+static int init_cwd_hostname()
 {
 	char *getconfent();
 	char *getcwd();
@@ -72,7 +74,7 @@ int init_cwd_hostname()
 	return (0);
 }
 
-int resolvelinks(argvi, buf, buflen, req_type)
+static int resolvelinks(argvi, buf, buflen, req_type)
 		 char *argvi;
 		 char *buf;
 		 int buflen;
