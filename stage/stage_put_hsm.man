@@ -1,10 +1,10 @@
-.\" $Id: stage_put_hsm.man,v 1.5 2002/10/13 11:47:30 jdurand Exp $
+.\" $Id: stage_put_hsm.man,v 1.6 2002/10/27 23:29:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.5 $ $Date: 2002/10/13 11:47:30 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.6 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT_HSM "3" "$Date: 2002/10/13 11:47:30 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT_HSM "3" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put_hsm \- copy disk files to Hierarchical Storage Management System.
 .SH SYNOPSIS
@@ -61,8 +61,6 @@ variable might contain the following values:
 1       Bad parameter.
 .br
 2       System error.
-.br
-4       Configuration error.
 .br
 28      ENOSPC: tape volume overflow.
 .br

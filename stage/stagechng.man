@@ -1,10 +1,10 @@
-.\" $Id: stagechng.man,v 1.15 2002/10/03 13:58:34 jdurand Exp $
+.\" $Id: stagechng.man,v 1.16 2002/10/27 23:29:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 13:58:34 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.16 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2001-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECHNG "1" "$Date: 2002/10/03 13:58:34 $" "CASTOR" "Stage User Commands"
+.TH STAGECHNG "1" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagechng \- change status and time dependency of records in the stager catalog
 .SH SYNOPSIS
@@ -103,8 +103,6 @@ option values are supported.
 1       Bad parameter.
 .br
 2       System error.
-.br
-4       Configuration error.
 
 .SH SEE ALSO
 \fBstageqry\fP(1)

@@ -1,10 +1,10 @@
-.\" $Id: stagealloc.man,v 1.10 2002/10/03 13:57:34 jdurand Exp $
+.\" $Id: stagealloc.man,v 1.11 2002/10/27 23:29:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.10 $ $Date: 2002/10/03 13:57:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.11 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEALLOC "1" "$Date: 2002/10/03 13:57:34 $" "CASTOR" "Stage User Commands"
+.TH STAGEALLOC "1" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagealloc \- allocate space in a disk pool
 
@@ -77,8 +77,6 @@ stageupdc out
 1	Bad parameter.
 .br
 2	System error.
-.br
-4	Configuration error.
 .br
 28	ENOSPC: unable to find enough disk space.
 .br

@@ -1,10 +1,10 @@
-.\" $Id: stageupdc.man,v 1.11 2002/10/08 11:45:59 baud Exp $
+.\" $Id: stageupdc.man,v 1.12 2002/10/27 23:29:13 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.11 $ $Date: 2002/10/08 11:45:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.12 $ $Date: 2002/10/27 23:29:13 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC "1" "$Date: 2002/10/08 11:45:59 $" "CASTOR" "Stager User Commands"
+.TH STAGEUPDC "1" "$Date: 2002/10/27 23:29:13 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
@@ -81,8 +81,6 @@ The value is in the form
 1       Bad parameter.
 .br
 2       System error.
-.br
-4       Configuration error.
 
 .SH SEE ALSO
 \fBstageout\fP(1), \fBstage_other_options\fP(1)
