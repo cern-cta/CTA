@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/03/02 16:08:34 $ $Author: obarring $
+ * @(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/03/02 17:42:26 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/03/02 16:08:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/03/02 17:42:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -21,8 +21,11 @@ static char sccsid[] = "@(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.1 $ $Rel
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <Castor_limits.h>
+#include <Cgetopt.h>
 #include <rfio_api.h>
 #include <serrno.h>
+
+static int doOpen = 0;
 
 void usage(char *cmd) 
 {
@@ -85,22 +88,25 @@ int doValidPathTest(char *rootPath)
       return(-1);
     }
 
-    rc = rfio_open(fullPath,O_RDWR,0755);
-    if ( rc == -1 ) {
-      save_errno = rfio_serrno();
-      if ( save_errno == EISDIR ) {
-        fprintf(stdout,"rfio_open(%s) expected error %s\n",
-                fullPath,rfio_serror());
+    if ( doOpen == 1 ) {
+      rc = rfio_open(fullPath,O_RDWR,0755);
+      if ( rc == -1 ) {
+        save_errno = rfio_serrno();
+        if ( save_errno == EISDIR ) {
+          fprintf(stdout,"rfio_open(%s) expected error %s\n",
+                  fullPath,rfio_serror());
+        } else {
+          fprintf(stdout,"rfio_open(%s) unexpected error %s\n",
+                  fullPath,rfio_serror());
+          return(-1);
+        }
       } else {
-        fprintf(stdout,"rfio_open(%s) unexpected error %s\n",
-                fullPath,rfio_serror());
+        fprintf(stdout,"rfio_open(%s) unexpected success\n",fullPath);
+        rfio_close(rc);
         return(-1);
       }
-    } else {
-      fprintf(stdout,"rfio_open(%s) unexpected success\n",fullPath);
-      rfio_close(rc);
-      return(-1);
     }
+    
     totLen = strlen(fullPath);
     if ( totLen < CA_MAXPATHLEN ) strcat(fullPath,"/");
     totLen = strlen(fullPath);
@@ -169,7 +175,8 @@ int doInvalidPathTest(char *rootPath)
     if ( rc == -1 ) {
       save_errno = rfio_serrno();
       if ( nameTooLong == 1 && 
-           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG) ) {
+           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG || 
+            save_errno == ENOENT ) ) {
         fprintf(stdout,"rfio_access(%s,0x%x) expected error %s\n",
                 fullPath,R_OK,rfio_serror());
       } else {
@@ -182,7 +189,8 @@ int doInvalidPathTest(char *rootPath)
     if ( rc == -1 ) {
       save_errno = rfio_serrno();
       if ( nameTooLong == 1 && 
-           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG) ) {
+           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG ||
+            save_errno == ENOENT ) ) {
         fprintf(stdout,"rfio_stat(%s,%p) expected error %s\n",
                 fullPath,&st,rfio_serror());
       } else {
@@ -192,29 +200,32 @@ int doInvalidPathTest(char *rootPath)
       }
     }
 
-    rc = rfio_open(fullPath,O_RDWR,0755);
-    if ( rc == -1 ) {
-      save_errno = rfio_serrno();
-      if ( nameTooLong == 1 && 
-           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG) ) {
-        fprintf(stdout,"rfio_open(%s) expected error %s\n",
-                fullPath,rfio_serror());
-      } else {
-        if ( save_errno != EISDIR ) {
-          fprintf(stdout,"rfio_stat(%s): unexpected error %s\n",
-                  fullPath,rfio_serror());
-          return(-1);
-        } else {
+    if ( doOpen == 1 ) {
+      rc = rfio_open(fullPath,O_RDWR,0755);
+      if ( rc == -1 ) {
+        save_errno = rfio_serrno();
+        if ( nameTooLong == 1 && 
+             (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG ||
+              save_errno == ENOENT) ) {
           fprintf(stdout,"rfio_open(%s) expected error %s\n",
                   fullPath,rfio_serror());
-        }        
+        } else {
+          if ( save_errno != EISDIR ) {
+            fprintf(stdout,"rfio_stat(%s): unexpected error %s\n",
+                    fullPath,rfio_serror());
+            return(-1);
+          } else {
+            fprintf(stdout,"rfio_open(%s) expected error %s\n",
+                    fullPath,rfio_serror());
+          }        
+        }
+      } else {
+        fprintf(stdout,"rfio_open(%s) unexpected success\n",fullPath);
+        rfio_close(rc);
+        return(-1);
       }
-    } else {
-      fprintf(stdout,"rfio_open(%s) unexpected success\n",fullPath);
-      rfio_close(rc);
-      return(-1);
     }
-    
+ 
     totLen = strlen(fullPath);
     if ( totLen < 2*CA_MAXPATHLEN ) strcat(fullPath,"/");
     totLen = strlen(fullPath);
@@ -227,7 +238,7 @@ int doInvalidPathTest(char *rootPath)
 int rmPath(char *rootPath, char *path) 
 {
   struct stat st;
-  int rc, save_errno;
+  int rc, save_errno, nameTooLong = 0;
   char *p;
   if ( rootPath == NULL || path == NULL ) {
     fprintf(stdout,"rmPath() called with NULL argument (%p,%p)\n",
@@ -244,6 +255,7 @@ int rmPath(char *rootPath, char *path)
   rc = 0;
   while ( (p == path) && (strcmp(p,rootPath) != 0) ) {
     fprintf(stdout,"rmPath() remove %s\n",path);
+    if (strlen(path) > CA_MAXPATHLEN ) nameTooLong = 1;
     rc = rfio_stat(path,&st);
     if ( rc == -1 ) {
       save_errno = rfio_serrno();
@@ -252,11 +264,15 @@ int rmPath(char *rootPath, char *path)
     rc = rfio_rmdir(path);
     if ( rc == -1 ) {
       save_errno = rfio_serrno();
-      fprintf(stdout,"rmPath() rmdir(%s): %s\n",path,rfio_serror());
+      fprintf(stdout,"rmPath() rfio_rmdir(%s): %s\n",path,rfio_serror());
+      if ( nameTooLong == 1 && 
+           (save_errno == SENAMETOOLONG || save_errno == ENAMETOOLONG || 
+            save_errno == ENOENT ) ) rc = 0;
     }
     p = strrchr(path,'/');
     if ( p != NULL ) *p = '\0';
     else break;
+    if ( strlen(p+1) > CA_MAXNAMELEN ) nameTooLong = 1;
     p = strstr(path,rootPath);
   }
   if ( rc == -1 ) serrno = save_errno;
@@ -268,14 +284,33 @@ int main(int argc, char *argv[])
   char *rootPath;
   char *nextElement;
   char *fullPath;
-  int i, rc;
+  int i, rc, c;
   
   if ( argc < 2 ) {
     usage(argv[0]);
     return(2);
   }
-  
-  for (i=1; i<argc; i++) {
+
+  Coptind = 1;
+  Copterr = 1;
+
+  while ( (c = Cgetopt(argc, argv, "o")) != -1 ) {
+    switch (c) {
+    case 'o':
+      doOpen = 1;
+      break;
+    default:
+      usage(argv[0]);
+      return(2);
+    }  
+  }
+
+  if ( argc <= Coptind ) {
+    usage(argv[0]);
+    return(2);
+  }
+
+  for (i=Coptind; i<argc; i++) {
     rootPath = argv[i];
     rc = doValidPathTest(rootPath);
     if ( rc == -1 ) break;
