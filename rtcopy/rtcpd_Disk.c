@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.58 $ $Date: 2000/03/20 13:09:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.59 $ $Date: 2000/03/20 19:43:44 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -117,6 +117,13 @@ static int DiskIOstarted() {
         return(-1);
     }
     return(0);
+}
+
+static void SignalFinished() {
+    (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    return;
 }
 
 int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
@@ -250,58 +257,15 @@ static int ReturnFortranUnit(int pool_index, file_list_t *file) {
 }
     
 static int LockForAppend(const int lock) {
-    int rc,severity,i, *my_wait_entry;
+    int rc,severity,i;
     static int nb_waiters = 0;
     static int next_entry = 0;
     static int *wait_list = NULL;
 
-    rc = Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
-    if ( (rtcpd_CheckProcError() & 
-          (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
-        proc_cntl.DiskFileAppend = lock;
-        (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
-        (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
-        return(-1);
-    }
-    if ( rc == -1 ) return(-1);
-    if ( wait_list == NULL ) {
-        /*
-         * There cannot be more waiters than the number of disk IO threads.
-         */
-        wait_list = (int *)calloc(proc_stat.nb_diskIO,sizeof(int));
-        if ( wait_list == NULL ) {
-            proc_cntl.DiskFileAppend = lock;
-            (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
-            (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
-            return(-1);
-        }
-    }
-    if ( lock != 0 ) {
-        wait_list[next_entry] = nb_waiters;
-        my_wait_entry = &wait_list[next_entry];
-        next_entry = (next_entry + 1) % proc_stat.nb_diskIO;
-        nb_waiters++;
-        while ( proc_cntl.DiskFileAppend == lock || *my_wait_entry > 0 ) {
-            rc = Cthread_cond_wait_ext(proc_cntl.DiskFileAppend_lock);
-            if ( rc == -1 || (rtcpd_CheckProcError() & 
-                 (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { 
-                proc_cntl.DiskFileAppend = lock;
-                (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
-                (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
-                return(-1);
-            }
-        }
-        nb_waiters--;
-        for (i=0; i<proc_stat.nb_diskIO; i++) wait_list[i]--;
-    }
-    rtcp_log(LOG_DEBUG,"LockForAppend() change DiskFileAppend lock from %d to %d\n",proc_cntl.DiskFileAppend,lock);
-    proc_cntl.DiskFileAppend = lock;
-    if ( lock == 0 ) {
-        rc = Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
-    }
-    (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
-    if ( rc == -1 ) return(-1);
-    return(0);
+    rtcp_log(LOG_DEBUG,"LockForAppend(%d) current_lock=%d\n",
+             lock,proc_cntl.DiskFileAppend);
+    return(rtcpd_SerializeLock(lock,&proc_cntl.DiskFileAppend,
+           proc_cntl.DiskFileAppend_lock,&nb_waiters,&next_entry,&wait_list));
 }
 
 static int DiskFileOpen(int pool_index, 
@@ -1254,6 +1218,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
         (Z),severity,save_errno,save_serrno); \
         if ( mode == WRITE_DISABLE && \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
+            (void)rtcpd_WaitCompletion(tape,file); \
             if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) \
                 rtcpd_SetProcError(severity); \
             else if ( (severity & RTCP_LOCAL_RETRY) == 0 ) \
@@ -1266,6 +1231,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=0 to client\n"); \
                 (void) tellClient(&client_socket,X,Y,0); \
                 (void)rtcpd_WaitCompletion(tape,file); \
+                rtcpd_SetProcError(severity); \
             } \
             if ( AbortFlag == 0 ) \
             (void) rtcpd_stageupdc(tape,file); \
@@ -1503,6 +1469,7 @@ void *diskIOthread(void *arg) {
             filereq->proc_status,severity);
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
     } 
+        SignalFinished();
 
     rtcp_CloseConnection(&client_socket);
     return((void *)&success);

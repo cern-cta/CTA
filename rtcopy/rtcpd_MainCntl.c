@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.43 $ $Date: 2000/03/20 13:05:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.44 $ $Date: 2000/03/20 19:43:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -675,6 +675,7 @@ static int rtcpd_InitProcCntl() {
 int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr, 
                         int *nb_waiters, int *next_entry, int **wait_list) {
     int rc, severity, i, *my_wait_entry;
+    int *loc_wait_list, loc_next_entry;
 
     if ( lockflag == NULL || lockaddr == NULL || nb_waiters == NULL ||
          next_entry == NULL || wait_list == NULL ) {
@@ -703,14 +704,21 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
             (void)Cthread_mutex_unlock_ext(lockaddr);
             return(-1);
         }
+        rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() allocated wait_list at 0x%lx\n",
+                 *wait_list);
     }
 
     if ( lock != 0 ) {
-        (*wait_list)[*next_entry] = *nb_waiters;
-        my_wait_entry = &(*wait_list)[*next_entry];
-        *next_entry = (*next_entry + 1) % proc_stat.nb_diskIO;
-        *nb_waiters++;
+        loc_wait_list = *(int **)wait_list;
+        loc_next_entry = *next_entry;
+        loc_wait_list[loc_next_entry] = *nb_waiters;
+        my_wait_entry = &loc_wait_list[loc_next_entry];
+        *next_entry = ((*next_entry) + 1) % proc_stat.nb_diskIO;
+        (*nb_waiters)++;
         while ( *lockflag == lock || *my_wait_entry > 0 ) {
+            rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() nb_waiters=%d, next_entry=%d, my_index=%d, my_wait_entry=%d(0x%lx)\n",*nb_waiters,*next_entry,loc_next_entry,*my_wait_entry,my_wait_entry);
+            for (i=0;i<proc_stat.nb_diskIO;i++)
+                rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() loc_wait_list[%d](0x%lx)=%d\n",i,&loc_wait_list[i],loc_wait_list[i]);
             rc = Cthread_cond_wait_ext(lockaddr);
             if ( rc == -1 || (rtcpd_CheckProcError() &
                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
@@ -719,8 +727,9 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
                 (void)Cthread_mutex_unlock_ext(lockaddr);
                 return(-1);
             }
+            rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() woke up with nb_waiters=%d, next_entry=%d, my_wait_entry=%d(0x%lx)\n",*nb_waiters,*next_entry,*my_wait_entry,my_wait_entry);
         }
-        *nb_waiters--;
+        (*nb_waiters)--;
         for (i=0; i<proc_stat.nb_diskIO; i++) (*wait_list)[i]--;
     }
     rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() change lock from %d to %d\n",
@@ -1058,6 +1067,51 @@ int rtcpd_WaitProcStatus(int what) {
     }
     return(0);
 }
+
+int rtcpd_WaitCompletion(tape_list_t *tape, file_list_t *file) {
+    tape_list_t *tl;
+    file_list_t *fl;
+    int all_finished = 0;
+    int rc;
+
+    while (all_finished == 0) {
+       all_finished = 1;
+       rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+       if ( rc == -1 ) {
+           rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_mutex_lock_ext() : %s\n",
+                    sstrerror(serrno));
+           return(-1);
+       }
+
+       CLIST_ITERATE_BEGIN(tape,tl) {
+           CLIST_ITERATE_BEGIN(tl->file,fl) {
+               if ( fl == file ) break;
+               if ( fl->filereq.proc_status < RTCP_PARTIALLY_FINISHED ) {
+                   all_finished = 0;
+                   break;
+               }
+           } CLIST_ITERATE_END(tl->file,fl);
+           if ( all_finished == 0 ) break;
+       } CLIST_ITERATE_END(tape,tl); 
+       if ( all_finished == 0 ) {
+           rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
+           if ( rc == -1 ) {
+               rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_cond_wait_ext(): %s\n",
+                        sstrerror(serrno));
+               (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+               return(-1);
+           } 
+       } /* if ( all_finished == 0 ) */
+       rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+       if ( rc == -1 ) {
+           rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_cond_wait_ext(): %s\n",
+                    sstrerror(serrno));
+           return(-1);
+       }
+    } /* while (all_finished == 0)  */
+    return(0);
+}
+
 
 int rtcpd_CheckProcError() {
     return(rtcpd_ProcError(NULL));
