@@ -1,0 +1,33 @@
+#
+# $Id: stgdaemon.logrotate,v 1.1 2003/10/31 10:03:29 jdurand Exp $
+#
+# @(#)$RCSfile: stgdaemon.logrotate,v $ $Revision: 1.1 $ $Date: 2003/10/31 10:03:29 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/stgdaemon {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/stage/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/stage/stgdaemon_mig {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/stage/mig_log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
