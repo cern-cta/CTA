@@ -211,6 +211,9 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
   } else if (type == "string") {
     content = "\"\"";
   } else if (m_castorTypes.find(type) != m_castorTypes.end()) {
+    if (0 == type.compare("u_signed64")) {
+      content = "0";
+    }
   } else if (m_castorTypes.find(type.left(type.length()-2)) !=
              m_castorTypes.end()) {
     // The _t has may have to be removed for looking in castor type !
