@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/28 10:29:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/28 10:29:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -215,8 +215,7 @@ int rtcpcld_updateNsSegmentAttributes(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SEGMCHECK,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SEGMCHECK),
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR",
@@ -244,8 +243,7 @@ int rtcpcld_updateNsSegmentAttributes(
     save_serrno = errno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -273,8 +271,7 @@ int rtcpcld_updateNsSegmentAttributes(
   if ( tapereq->mode != WRITE_ENABLE ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_WRONGMODE,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGMODE),
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+3,
                     "",
@@ -317,8 +314,7 @@ int rtcpcld_updateNsSegmentAttributes(
   
   (void)dlf_write(
                   (inChild == 0 ? mainUuid : childUuid),
-                  DLF_LVL_DEBUG,
-                  RTCPCLD_MSG_ADDSEGM,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_ADDSEGM),
                   (struct Cns_fileid *)&castorFileId,
                   9,
                   "",
@@ -360,8 +356,7 @@ int rtcpcld_updateNsSegmentAttributes(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -445,8 +440,7 @@ int rtcpcld_checkNsSegment(
   if ( found == 0 ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_NSSEGNOTFOUND,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_NSSEGNOTFOUND),
                     (struct Cns_fileid *)castorFileId,
                     RTCPCLD_NB_PARAMS+5,
                     "",
@@ -494,8 +488,7 @@ int rtcpcld_checkNsSegment(
       newSegattrs.checksum = filereq->castorSegAttr.segmCksum;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_UPDCKSUM,
+                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_UPDCKSUM),
                       (struct Cns_fileid *)castorFileId,
                       9,
                       "",
@@ -543,8 +536,7 @@ int rtcpcld_checkNsSegment(
         if ( currentSegattrs[i].checksum != filereq->castorSegAttr.segmCksum ) {
           (void)dlf_write(
                           (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_WRONGCKSUM,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGCKSUM),
                           (struct Cns_fileid *)castorFileId,
                           RTCPCLD_NB_PARAMS+7,
                           "",
@@ -575,8 +567,7 @@ int rtcpcld_checkNsSegment(
         } else {
           (void)dlf_write(
                           (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_SYSTEM,
-                          RTCPCLD_MSG_CKSUMOK,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_CKSUMOK),
                           (struct Cns_fileid *)castorFileId,
                           6,
                           "",
@@ -605,8 +596,7 @@ int rtcpcld_checkNsSegment(
          */
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_SYSTEM,
-                        RTCPCLD_MSG_WRONGALG,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGALG),
                         (struct Cns_fileid *)castorFileId,
                         9,
                         "",

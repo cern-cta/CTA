@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.68 $ $Release$ $Date: 2004/11/03 11:07:12 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.69 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.68 $ $Release$ $Date: 2004/11/03 11:07:12 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.69 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -133,8 +133,7 @@ static int getDbSvc(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -190,8 +189,7 @@ static int getStgSvc(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -270,8 +268,7 @@ static int updateTapeFromDB(
       save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -404,8 +401,7 @@ static int updateSegmentFromDB(
       save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -497,8 +493,7 @@ static int verifyTape(
      */
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ALERT,
-                    RTCPCLD_MSG_WRONG_TAPE,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONG_TAPE),
                     (struct Cns_fileid *)NULL,
                     2,
                     "VID",
@@ -660,8 +655,7 @@ int rtcpcld_getTapesToDo(
         Cstager_Stream_id(streamArray[i],&key);
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_NOTAPEPOOL,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOTAPEPOOL),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "DBKEY",
@@ -1048,8 +1042,7 @@ static int nextSegmentToDo(
     }
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_BADPATH,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_BADPATH),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+3,
                     "DISKSRV",
@@ -1183,8 +1176,7 @@ static int procSegmentsForTape(
         free(segmArray);
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)&fileid,
                         RTCPCLD_NB_PARAMS+2,
                         "SYSCALL",
@@ -1202,8 +1194,7 @@ static int procSegmentsForTape(
       }
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_FILEREQ,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_FILEREQ),
                       (struct Cns_fileid *)&fileid,
                       1,
                       "FSEQ",
@@ -1309,8 +1300,7 @@ int procTapeCopiesForStream(
   if ( stream == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1436,8 +1426,7 @@ int procTapeCopiesForStream(
   if ( mountPoint == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1462,8 +1451,7 @@ int procTapeCopiesForStream(
   } else {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1484,8 +1472,7 @@ int procTapeCopiesForStream(
   if ( relPath == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1690,8 +1677,7 @@ int rtcpcld_updcMigrFailed(
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)fileid,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1876,8 +1862,7 @@ int rtcpcld_updcFileMigrated(
   if ( (segment == NULL) || (tapeCopy == NULL) || (castorFile == NULL) ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)fileid,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -1947,8 +1932,7 @@ int rtcpcld_updcFileMigrated(
     if ( tapeCopyStatus != TAPECOPY_STAGED ) {
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_REMAININGTPCPS,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_REMAININGTPCPS),
                       (struct Cns_fileid *)fileid,
                       0
                       );
@@ -2120,8 +2104,7 @@ int rtcpcld_updateTapeStatus(
   if ( tapeItem == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -2218,8 +2201,7 @@ int rtcpcld_returnStream(
   if ( tp == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "REASON",
@@ -2327,8 +2309,7 @@ int rtcpcld_restoreSelectedTapeCopies(
      */
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LEVEL(RTCPCLD_MSG_INTERNAL),
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "",
@@ -2442,8 +2423,7 @@ int rtcpcld_setVidWorkerAddress(
   if ( tp == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "",
@@ -2552,8 +2532,7 @@ int rtcpcld_setFileStatus(
        (newStatus != SEGMENT_FAILED) ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SEGMFAILED,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SEGMFAILED),
                     (struct Cns_fileid *)&fileid,
                     RTCPCLD_NB_PARAMS+1,
                     "",

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -212,10 +212,7 @@ int rtcpcld_gettape(
      tape_list_t **tape;
      u_signed64 initialSizeToTransfer;
 {
-  int rc, rcGetTape, i, nbRetries, maxNbRetries = RTCPCLD_GETTAPE_RETRIES;
-  int retryTime, retryTimeENOSPC;
-  int maxRetryTime = RTCPCLD_GETTAPE_RETRY_TIME;
-  int maxRetryTimeENOSPC = RTCPCLD_GETTAPE_ENOSPC_RETRY_TIME;
+  int rc, rcGetTape, i, nbRetriesMaxFseq = 1;  
   char model[CA_MAXMODELLEN+1];
   int maxFseq, startFseq, save_serrno;
   char *vmgrErrMsg = NULL;
@@ -233,8 +230,7 @@ int rtcpcld_gettape(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -257,8 +253,7 @@ int rtcpcld_gettape(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -274,10 +269,8 @@ int rtcpcld_gettape(
   }
   tapereq = &((*tape)->tapereq);
   (void)getVmgrErrBuf(&vmgrErrMsg);
-  for ( i=0; i<maxNbRetries; i++ ) {
+  for ( i=0; i<nbRetriesMaxFseq; i++ ) {
     serrno = 0;
-    rtcp_log(LOG_DEBUG,"rtcpcld_gettape() calling vmgr_gettape(%s,%d,...)\n",
-             tapePool,initialSizeToTransfer);
     if ( vmgrErrMsg != NULL ) *vmgrErrMsg = '\0';
     *tapereq->vid = '\0';
     *tapereq->dgn = '\0';
@@ -303,63 +296,65 @@ int rtcpcld_gettape(
     if ( rcGetTape != 0 ) {
       save_serrno = serrno;
       switch (save_serrno) {
+      case ENOSPC:
+        /*
+         * No space left in tape pool. Cannot retry here because we
+         * are not in a multi-thread/process context. The rtcpclientd,
+         * which is our caller, is single threaded while selecting
+         * tapes so we cannot allow to block
+         */
       case ENOENT:
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_VMGRFATAL),
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+1,
+                        "POOLNAME",
+                        DLF_MSG_PARAM_STR,
+                        tapePool,
+                        RTCPCLD_LOG_WHERE
+                        );
+        break;
+      case SENOSHOST:
+      case SENOSSERV:
+      case SECOMERR:
+      case SESYSERR:
+      case EVMGRNACT:
+        LOG_SYSCALL_ERR("vmgr_gettape()");
+        break;
+      case ESEC_NO_CONTEXT:
+      case ESEC_CTX_NOT_INITIALIZED:
+        LOG_SECURITY_ERR("vmgr_gettape()");
+      break;
       case EFAULT:
       case EACCES:
       case EINVAL:
-        retryTime = 0;
-        maxNbRetries = 0;
-        break;
-      case ENOSPC:
-        /*
-         * No space left in tape pool. Loop forever until somebody adds
-         * some more tapes.
-         */
-        if ( i+1 >= maxNbRetries ) maxNbRetries++;
-        /* Progressive retry time, start with 5 minutes */
-        if ( retryTimeENOSPC <= 0 ) {
-          retryTimeENOSPC = 5*60;
-        } else if ( retryTimeENOSPC < maxRetryTimeENOSPC ) {
-          retryTimeENOSPC *= 2;
-        }
-        /* Up to a maximum set by maxRetryTimeENOSPC */
-        if ( retryTimeENOSPC > maxRetryTimeENOSPC ) {
-          retryTimeENOSPC = maxRetryTimeENOSPC;
-        }
-        retryTime = retryTimeENOSPC;
-        break;
       default:
-        retryTimeENOSPC = 0;
-        retryTime = maxRetryTime;
+        /*
+         * Should never happen. We log VID as a string here since EFAULT may
+         * imply that it's a NULL
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+2,
+                        "POOLNAME",
+                        DLF_MSG_PARAM_STR,
+                        tapePool,
+                        "VIDPARAM",
+                        DLF_MSG_PARAM_STR,
+                        (tapereq->vid == NULL ? "(null)" : tapereq->vid),
+                        RTCPCLD_LOG_WHERE
+                        );
         break;
-      }      
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+6,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "vmgr_gettape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      "VMGRERR",
-                      DLF_MSG_PARAM_STR,
-                      (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                      "NBRETRIES",
-                      DLF_MSG_PARAM_INT,
-                      nbRetries,
-                      "MAXRETRIES",
-                      DLF_MSG_PARAM_INT,
-                      maxNbRetries,
-                      "RETRYTIME",
-                      DLF_MSG_PARAM_INT,
-                      retryTime,
-                      RTCPCLD_LOG_WHERE
-                      );
-      sleep(retryTime);
+      }
+      /*
+       * Never retry VMGR errors here. Instead we should put the Stream
+       * in PENDING or WAITSPACE (if no more tapes) and wait for it
+       * to be selected again with streamsToDo()
+       */
+      break;
     } else {
       /*
        * vmgr_gettape() was successful. Check that the returned start fseq is OK.
@@ -368,8 +363,7 @@ int rtcpcld_gettape(
       if ( (maxFseq > 0) && (startFseq > maxFseq) ) {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_MAXFSEQ,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_MAXFSEQ),
                         (struct Cns_fileid *)NULL,
                         6,
                         "TPPOOL",
@@ -402,8 +396,7 @@ int rtcpcld_gettape(
         if ( rc == -1 ) {
           (void)dlf_write(
                           (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_SYSCALL,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                           (struct Cns_fileid *)NULL,
                           RTCPCLD_NB_PARAMS+3,
                           "SYSCALL",
@@ -418,40 +411,24 @@ int rtcpcld_gettape(
                           RTCPCLD_LOG_WHERE
                           );
         }
-        sleep(2);
-      } else {
         /*
-         * Everything is fine. We got a VID to work with
+         * OK, allow for one retry
          */
-        break;
+        rcGetTape = -1;
+        save_serrno = SEWOULDBLOCK;
+        continue;
       }
     }
+    break;
   }
+  
   if ( rcGetTape == -1 ) {
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_MAXRETRY,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "SYSCALL",
-                    DLF_MSG_PARAM_STR,
-                    "vmgr_getape()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "VMGRERR",
-                    DLF_MSG_PARAM_STR,
-                    (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                    RTCPCLD_LOG_WHERE
-                    );
     serrno = save_serrno;
     return(-1);
   }
   (void)dlf_write(
                   (inChild == 0 ? mainUuid : childUuid),
-                  DLF_LVL_SYSTEM,
-                  RTCPCLD_MSG_GOTTAPE,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_GOTTAPE),
                   (struct Cns_fileid *)NULL,
                   RTCPCLD_NB_PARAMS+4,
                   "",
@@ -511,8 +488,7 @@ int tapeStatus(
            ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_TAPEUNAVAILABLE,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_TAPEUNAVAILABLE),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+3,
                         "",
@@ -542,8 +518,7 @@ int tapeStatus(
     }
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_MAXRETRY,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_MAXRETRY),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+5,
                     "SYSCALL",
@@ -619,7 +594,7 @@ int rtcpcld_updateTape(
      */
     rc = tapeStatus(tape,&freeSpace,&flags);
     if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+      LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
       return(-1);
     }
     /*
@@ -691,7 +666,7 @@ int rtcpcld_updateTape(
           if ( freeSpace == 0 ) {
             rc = tapeStatus(tape,&freeSpace,&flags);
             if ( rc == -1 ) {
-              LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+              LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
               return(-1);
             }
           }
@@ -708,6 +683,17 @@ int rtcpcld_updateTape(
             compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
           } else {
             compressionFactor = 100;
+          }
+          {
+            char u64buf[32];
+            rtcp_log(LOG_DEBUG,
+                     "updateTape() on ENOSPC: bytes_in=%s, bytes_out=%s, host_bytes=%s, freeSpace=%s, bytesWritten=%s\n",
+                     u64tostr(filereq->bytes_in,u64buf,-sizeof(u64buf)),
+                     u64tostr(filereq->bytes_out,u64buf,-sizeof(u64buf)),
+                     u64tostr(filereq->host_bytes,u64buf,-sizeof(u64buf)),
+                     u64tostr(freeSpace,u64buf,-sizeof(u64buf)),
+                     u64tostr(bytesWritten,u64buf,-sizeof(u64buf))
+                     );
           }
         } else {
           if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
@@ -757,8 +743,7 @@ int rtcpcld_updateTape(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)fileId,
                     RTCPCLD_NB_PARAMS+4,
                     "SYSCALL",
@@ -780,10 +765,9 @@ int rtcpcld_updateTape(
   } else {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_SYSTEM,
-                    RTCPCLD_MSG_UPDATETAPE,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_UPDATETAPE),
                     (struct Cns_fileid *)fileId,
-                    4,
+                    5,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tapereq->vid,

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/02 16:29:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/02 16:29:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -618,8 +618,7 @@ static int updateClientInfo(
        tape == NULL ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -640,8 +639,7 @@ static int updateClientInfo(
   if ( pw == NULL ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_PWUID,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_PWUID),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -685,8 +683,7 @@ static int updateClientInfo(
     save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -750,8 +747,7 @@ int rtcpcld_runWorker(
        (myCallback == NULL) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -766,10 +762,9 @@ int rtcpcld_runWorker(
 
   (void)dlf_write(
                   mainUuid,
-                  DLF_LVL_SYSTEM,
-                  (tape->tapereq.mode == WRITE_ENABLE ?
-                   RTCPCLD_MSG_MIGRATOR_STARTED :
-                   RTCPCLD_MSG_RECALLER_STARTED),
+                  RTCPCLD_LOG_MSG((tape->tapereq.mode == WRITE_ENABLE ?
+                                 RTCPCLD_MSG_MIGRATOR_STARTED :
+                                 RTCPCLD_MSG_RECALLER_STARTED)),
                   (struct Cns_fileid *)NULL,
                   5,
                   "",
@@ -797,8 +792,7 @@ int rtcpcld_runWorker(
     save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -816,8 +810,7 @@ int rtcpcld_runWorker(
   if ( rc == 0 ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_SYSTEM,
-                    RTCPCLD_MSG_NOREQS,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOREQS),
                     (struct Cns_fileid *)NULL,
                     0
                     );
@@ -835,8 +828,7 @@ int rtcpcld_runWorker(
     save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -876,8 +868,7 @@ int rtcpcld_runWorker(
         save_serrno = serrno;
         (void)dlf_write(
                         childUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_INTERNAL,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STRING",
@@ -913,8 +904,7 @@ int rtcpcld_runWorker(
     save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -959,8 +949,7 @@ int rtcpcld_runWorker(
       save_serrno = serrno;
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_VDQM,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -1032,8 +1021,7 @@ static int checkArgs(
   if ( vid == NULL || strlen(vid) > CA_MAXVIDLEN ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
@@ -1050,8 +1038,7 @@ static int checkArgs(
        (dgn != NULL && strlen(dgn) > CA_MAXDGNLEN) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
@@ -1068,8 +1055,7 @@ static int checkArgs(
        (lbltype != NULL && strlen(lbltype) > CA_MAXLBLTYPLEN) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
@@ -1086,8 +1072,7 @@ static int checkArgs(
        (density != NULL && strlen(density) > CA_MAXDENLEN) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
@@ -1105,8 +1090,7 @@ static int checkArgs(
        (unit != NULL && strlen(unit) > CA_MAXUNMLEN) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
@@ -1288,8 +1272,7 @@ int rtcpcld_parseWorkerCmd(
         if ( serrno == 0 ) serrno = errno;
         (void)dlf_write(
                         childUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+2,
                         "SYSCALL",
@@ -1319,8 +1302,7 @@ int rtcpcld_parseWorkerCmd(
       sprintf(optstr,"-%c",c);
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_UNKNOPT,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_UNKNOPT),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+1,
                       "OPTION",
@@ -1443,10 +1425,9 @@ int rtcpcld_workerFinished(
   }  
   (void)dlf_write(
                   childUuid,
-                  DLF_LVL_SYSTEM,
-                  (tape->tapereq.mode == WRITE_ENABLE ?
-                   RTCPCLD_MSG_MIGRATOR_ENDED :
-                   RTCPCLD_MSG_RECALLER_ENDED),
+                  RTCPCLD_LOG_MSG((tape->tapereq.mode == WRITE_ENABLE ?
+                                 RTCPCLD_MSG_MIGRATOR_ENDED :
+                                 RTCPCLD_MSG_RECALLER_ENDED)),
                   (struct Cns_fileid *)NULL,
                   6,
                   "",

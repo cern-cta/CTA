@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 11:30:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 11:47:34 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 11:30:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 11:47:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -121,8 +121,7 @@ static int getVIDFromRtcpd(
   if ( rc == -1 ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -153,8 +152,7 @@ static int getVIDFromRtcpd(
   if ( rc == -1 ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -170,8 +168,7 @@ static int getVIDFromRtcpd(
   if ( tapereq->VolReqID <= 0 ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_NOVOLREQID,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOVOLREQID),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS,
                     RTCPCLD_LOG_WHERE
@@ -199,8 +196,7 @@ static int getTapeRequestItem(
   if ( item == NULL || (VolReqID < 0 && vid == NULL && pid < 0) ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -237,8 +233,7 @@ static int getTapeRequestItem(
   else {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+5,
                     "ERROR_STRING",
@@ -280,8 +275,7 @@ static int getTapeRequest(
   if ( tape == NULL ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -320,8 +314,7 @@ static int updateRequestList(
   if ( tape == NULL ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -353,8 +346,7 @@ static int updateRequestList(
     if ( iterator == NULL ) {
       (void)dlf_write(
                       mainUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -393,8 +385,7 @@ static void logConnection(
     if ( rc == SOCKET_ERROR ) {
       (void)dlf_write(
                       mainUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -413,8 +404,7 @@ static void logConnection(
     if ( hp == NULL ) {
       (void)dlf_write(
                       mainUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -432,8 +422,7 @@ static void logConnection(
 
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_SYSTEM,
-                    RTCPCLD_MSG_NEWCONNECT,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_NEWCONNECT),
                     (struct Cns_fileid *)NULL,
                     1,
                     "REMHOST",
@@ -482,10 +471,9 @@ void checkWorkerExit()
     if ( rc == 0 && item != NULL ) {
       (void)dlf_write(
                       mainUuid,
-                      DLF_LVL_SYSTEM,
-                      (item->tape->tapereq.mode == WRITE_ENABLE ?
-                       RTCPCLD_MSG_MIGRATOR_ENDED : 
-                       RTCPCLD_MSG_RECALLER_ENDED),
+                      RTCPCLD_LOG_MSG((item->tape->tapereq.mode == WRITE_ENABLE ?
+                                     RTCPCLD_MSG_MIGRATOR_ENDED : 
+                                     RTCPCLD_MSG_RECALLER_ENDED)),
                       (struct Cns_fileid *)NULL,
                       5,
                       "",
@@ -575,8 +563,7 @@ static int startWorker(
   if ( rc == -1 ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -611,8 +598,7 @@ static int startWorker(
   if ( argv == NULL ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -687,8 +673,7 @@ static int startWorker(
   }
   (void)dlf_write(
                   mainUuid,
-                  DLF_LVL_SYSTEM,
-                  RTCPCLD_MSG_EXECCMD,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_EXECCMD),
                   (struct Cns_fileid *)NULL,
                   1,
                   "COMMAND",
@@ -701,8 +686,7 @@ static int startWorker(
    */
   (void)dlf_write(
                   mainUuid,
-                  DLF_LVL_ERROR,
-                  RTCPCLD_MSG_SYSCALL,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                   (struct Cns_fileid *)NULL,
                   RTCPCLD_NB_PARAMS+2,
                   "SYSCALL",
@@ -748,8 +732,7 @@ int rtcpcld_main(
 #if defined(__DATE__) && defined (__TIME__)
   (void)dlf_write(
                   mainUuid,
-                  DLF_LVL_SYSTEM,
-                  RTCPCLD_MSG_STARTUP,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_STARTUP),
                   (struct Cns_fileid *)NULL,
                   3,
                   "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__,
@@ -763,8 +746,7 @@ int rtcpcld_main(
   if ( rc == -1 ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ALERT,
-                    RTCPCLD_MSG_INITNW,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INITNW),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STR",
@@ -779,8 +761,7 @@ int rtcpcld_main(
   if ( rc == SOCKET_ERROR ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
@@ -800,8 +781,7 @@ int rtcpcld_main(
   if ( rc == -1 ) {
     (void)dlf_write(
                     mainUuid,
-                    DLF_LVL_ALERT,
-                    RTCPCLD_MSG_INITNW,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INITNW),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STR",
@@ -859,8 +839,7 @@ int rtcpcld_main(
       errno = save_errno;
       (void)dlf_write(
                       mainUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -887,8 +866,7 @@ int rtcpcld_main(
       if ( rc == -1 ) {
         (void)dlf_write(
                         mainUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_LISTEN,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_LISTEN),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STR",
@@ -946,8 +924,7 @@ int rtcpcld_main(
       if ( pid == -1 ) {
         (void)dlf_write(
                         mainUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+2,
                         "SYSCALL", 
@@ -967,8 +944,7 @@ int rtcpcld_main(
          */
         (void)dlf_write(
                         mainUuid,
-                        DLF_LVL_SYSTEM,
-                        RTCPCLD_MSG_REQSTARTED,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_REQSTARTED),
                         (struct Cns_fileid *)NULL,
                         4,
                         "",
@@ -1006,8 +982,7 @@ int rtcpcld_main(
       if ( rc == -1 ) {
         (void)dlf_write(
                         childUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_WFAILED,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_WFAILED),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STR",
@@ -1039,8 +1014,7 @@ int rtcpcld_main(
       if ( rc == -1 ) {
         (void)dlf_write(
                         mainUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_CATALOGUE,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_CATALOGUE),
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STR",
@@ -1079,8 +1053,7 @@ int rtcpcld_main(
           if ( rc == -1 ) {
             (void)dlf_write(
                             mainUuid,
-                            DLF_LVL_ERROR,
-                            RTCPCLD_MSG_VDQM,
+                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM),
                             (struct Cns_fileid *)NULL,
                             RTCPCLD_NB_PARAMS+1,
                             "ERROR_STR", 
@@ -1092,8 +1065,7 @@ int rtcpcld_main(
           } else {
             (void)dlf_write(
                             mainUuid,
-                            DLF_LVL_SYSTEM,
-                            RTCPCLD_MSG_VDQMINFO,
+                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
                             (struct Cns_fileid *)NULL,
                             3,
                             "VID",

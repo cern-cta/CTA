@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/03 11:09:02 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/03 11:47:34 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/03 11:09:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/03 11:47:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -106,8 +106,7 @@ int migratorCallbackFileCopied(
   if ( (tapereq == NULL) || (filereq == NULL) ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -155,8 +154,7 @@ int migratorCallbackFileCopied(
       save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_FAILEDVMGRUPD,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDVMGRUPD),
                       (struct Cns_fileid *)castorFileId,
                       RTCPCLD_NB_PARAMS+6,
                       "",
@@ -192,8 +190,7 @@ int migratorCallbackFileCopied(
       save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_FAILEDNSUPD,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDNSUPD),
                       (struct Cns_fileid *)castorFileId,
                       RTCPCLD_NB_PARAMS+6,
                       "",
@@ -296,8 +293,7 @@ int migratorCallbackMoreWork(
        */
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_NOMORESEGMS,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOMORESEGMS),
                       (struct Cns_fileid *)NULL,
                       0
                       );
@@ -307,8 +303,7 @@ int migratorCallbackMoreWork(
     } else {
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)NULL,
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
@@ -365,8 +360,7 @@ int migratorCallback(
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
                     childUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_INTERNAL,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
                     (struct Cns_fileid *)NULL,
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STRING",
@@ -478,8 +472,7 @@ int migratorCallback(
       }
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_ERROR,
-                      msgNo,
+                      RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
                       10,
                       "",
@@ -560,8 +553,7 @@ int main(
   
   (void)dlf_write(
                   childUuid,
-                  DLF_LVL_SYSTEM,
-                  RTCPCLD_MSG_MIGRATOR_STARTED,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_MIGRATOR_STARTED),
                   (struct Cns_fileid *)NULL,
                   1,
                   "COMMAND",
