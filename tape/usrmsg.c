@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 13:25:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.4 $ $Date: 1999/11/05 08:29:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -20,11 +20,10 @@ usrmsg(va_alist) va_dcl
 	va_list args;
 	char *func;
 	char *msg;
-#ifdef NOTRACE
 	char prtbuf[PRTBUFSZ];
-#else
+#ifndef NOTRACE
 	char *p;
-	extern struct tpdrep rep;
+	extern int rpfd;
 #endif
 	int save_errno;
 
@@ -36,10 +35,11 @@ usrmsg(va_alist) va_dcl
 	vsprintf (prtbuf, msg, args);
 	Ctape_errmsg (func, "%s\n", prtbuf);
 #else
-	sprintf (rep.data, "%s: ", func);
-	p = rep.data + strlen (rep.data);
+	sprintf (prtbuf, "%s: ", func);
+	p = prtbuf + strlen (prtbuf);
 	vsprintf (p, msg, args);
 	tplogit (func, "%s", p);
+	sendrep (rpfd, MSG_ERR, "%s", prtbuf);
 #endif
 	va_end (args);
 	errno = save_errno;
