@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.107 2001/03/08 17:52:39 jdurand Exp $
+ * $Id: poolmgr.c,v 1.108 2001/03/09 00:19:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.107 $ $Date: 2001/03/08 17:52:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.108 $ $Date: 2001/03/09 00:19:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2083,6 +2083,9 @@ int migrate_files(pool_p)
     pool_p->migr->mig_pid = 0;
     return (SYERR);
   } else if (pid == 0) {  /* we are in the child */
+    /* @@@@ EXCEPTIONNAL @@@@ */
+    /* exit(2); */
+    /* @@@@ END OF EXCEPTIONNAL @@@@ */
     exit(migpoolfiles(pool_p));
   } else {  /* we are in the parent */
     struct pool *pool_n;
@@ -2090,6 +2093,14 @@ int migrate_files(pool_p)
     int ipoolname;
     int j;
     char tmpbuf[21];
+
+    /* For logging purpose we reset these variables, used only in this routine */
+    pool_p->migr->global_predicates.nbfiles_to_mig = 0;
+    pool_p->migr->global_predicates.space_to_mig = 0;
+    for (j = 0; j < pool_p->migr->nfileclass; j++) {
+      pool_p->migr->fileclass_predicates[j].nbfiles_to_mig = 0;
+      pool_p->migr->fileclass_predicates[j].space_to_mig = 0;
+    }
 
     /* We remember all the entries that will be treated in this migration */
     for (stcp = stcs; stcp < stce; stcp++) {
@@ -2110,24 +2121,27 @@ int migrate_files(pool_p)
       if ((ifileclass = upd_fileclass(pool_p,stcp)) < 0) continue;
       /* We update the fileclass within this migrator watch variables */
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_to_mig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
+      pool_p->migr->fileclass_predicates[ifileclass].space_to_mig += stcp->actual_size;
       /* We flag this stcp a WAITING_MIGR (before being in STAGEOUT|CAN_BE_MIGR|BEING_MIGR) */
       stcp->status |= WAITING_MIGR;
       /* We update the migrator global watch variables */
       pool_p->migr->global_predicates.nbfiles_beingmig++;
+      pool_p->migr->global_predicates.nbfiles_to_mig++;
       pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
+      pool_p->migr->global_predicates.space_to_mig += stcp->actual_size;
     }
       
     stglogit (func, "execing migrator %s@%s for %d HSM files (total of %s), pid=%d\n",
               pool_p->migr->name,
               pool_p->name,
-              pool_p->migr->global_predicates.nbfiles_beingmig,
-              u64tostru(pool_p->migr->global_predicates.space_beingmig, tmpbuf, 0),
+              pool_p->migr->global_predicates.nbfiles_to_mig,
+              u64tostru(pool_p->migr->global_predicates.space_to_mig, tmpbuf, 0),
               pid);
 
     for (j = 0; j < pool_p->migr->nfileclass; j++) {
-      if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig) <= 0)	/* No point to log */
-        continue;
+      if (pool_p->migr->fileclass_predicates[j].nbfiles_to_mig <= 0) continue;
       /* We log how many files per fileclass are concerned for this migration */
       stglogit (func, "detail> migrator %s@%s, Fileclass %s@%s (classid %d) : %d HSM files (total of %s)\n",
                 pool_p->migr->name,
@@ -2135,8 +2149,8 @@ int migrate_files(pool_p)
                 pool_p->migr->fileclass[j]->Cnsfileclass.name,
                 pool_p->migr->fileclass[j]->server,
                 pool_p->migr->fileclass[j]->Cnsfileclass.classid,
-                pool_p->migr->fileclass_predicates[j].nbfiles_beingmig,
-                u64tostru(pool_p->migr->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
+                pool_p->migr->fileclass_predicates[j].nbfiles_to_mig,
+                u64tostru(pool_p->migr->fileclass_predicates[j].space_to_mig, tmpbuf, 0));
     }
     /* We keep track of last fork time with the associated pid */
     pool_p->migr->migreqtime = time(NULL);
@@ -2248,7 +2262,6 @@ int migpoolfiles(pool_p)
 
   for (i = 0; i < pool_p->migr->nfileclass; i++) {
     pool_p->migr->fileclass[i]->streams = 0;
-    pool_p->migr->fileclass[i]->being_migr = 0;
   }
 
   sci = scs;
@@ -2295,12 +2308,7 @@ int migpoolfiles(pool_p)
       }
     }
     sci->stcp = stcp;
-    pool_p->migr->fileclass[upd_fileclass(pool_p,stcp)]->being_migr++;
-    if (++found_nbfiles > pool_p->migr->global_predicates.nbfiles_canbemig) {
-      /* Oupss... We reach the max of entries to migrate that are known to the pool ? */
-      stglogit(func, STG114, found_nbfiles, pool_p->migr->global_predicates.nbfiles_canbemig);
-      break;
-    }
+    ++found_nbfiles;
     sci++;
   }
 
