@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.4 $ $Date: 2002/06/05 11:50:44 $ CERN IT-PDP/DM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2002/06/06 15:34:33 $ CERN IT-PDP/DM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -178,7 +178,7 @@ Cupv_dbrec_addr *rec_addr;
   char rowid_value[19];
   struct sqlca sqlca;
 
-  strcpy (func, "vmgr_delete_priv_entry");
+  strcpy (func, "Cupv_delete_priv_entry");
   
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   
