@@ -1,7 +1,7 @@
 .\"
-.\" $Id: Cglobals.man,v 1.1 2001/06/10 06:54:52 jdurand Exp $
+.\" $Id: Cglobals.man,v 1.2 2001/06/12 07:49:53 jdurand Exp $
 .\"
-.TH CGLOBALS "3" "$Date: 2001/06/10 06:54:52 $" "CASTOR" "Common Library Functions"
+.TH CGLOBALS "3" "$Date: 2001/06/12 07:49:53 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCglobals\fP \- \fBC\fPASTOR thread-safe \fBglobal\fP variable\fBs\fP interface
 .SH SYNOPSIS
@@ -17,7 +17,7 @@
 .RE
 .BI ");"
 .P
-.BI "void Cglobals_get(int *" key ", void **" addr ", size_t " size ");"
+.BI "int Cglobals_get(int *" key ", void **" addr ", size_t " size ");"
 .P
 .BI "void Cglobals_getTid(int *" Tid ");"
 .P
@@ -122,6 +122,13 @@ content, at return of \fBCglobals_get\fP, is not NULL, you can safely fill this 
 bytes length speficied in your previous call to \fBCglobals_get\fP. Because of applications that are \fBnot\fP multi-threaded, the initial value of 
 .I key
 has then an importance, that's why it is necessary to always declare it with an initial value of -1.
+.P
+Return code is -1 on error, 0 on success and \fBnot\fP the first call for this
+.I
+key
+, 1 on success and \fBit is\fP the first call for this
+.I key.
+This allows to distinguish when Cglobals_get() initialize the memory with zeros (return code 1) and not (return code 0).
 .P
 \fBCglobals_getTid\fP uses the third function address, 
 .I getTid
