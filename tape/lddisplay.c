@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1992-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1992-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.1 $ $Date: 1999/09/21 05:56:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	lddisplay - load display on 3480 compatible drives */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.1 $ $Date: 19
 #include <errno.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <string.h>
 #if defined(_IBMESA) || defined(RS6000PCTA)
 #include <sys/mtio.h>
 #endif

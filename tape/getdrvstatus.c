@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 11:34:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <string.h>
 #if defined(__osf__) && defined(__alpha)
 #include <sys/types.h>
 #include <sys/devio.h>

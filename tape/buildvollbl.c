@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:44:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildvollbl - build VOL1 */
+#include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
 buildvollbl(vol1, vsn, lblcode, name)

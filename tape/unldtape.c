@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: unldtape.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 07:22:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: unldtape.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:29:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_AIX) && defined(_IBMR2)
 #include <sys/tape.h>

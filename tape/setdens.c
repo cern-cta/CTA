@@ -4,12 +4,13 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.4 $ $Date: 2000/03/09 08:43:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 10:27:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"

@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:40:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildhdrlbl - build HDR1 and HDR2 from tpmnt parameters */
+#include <string.h>
 #include <sys/types.h>
 #include <time.h>
 #include "Ctape.h"

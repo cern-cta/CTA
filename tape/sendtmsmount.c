@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.4 $ $Date: 2000/01/06 16:03:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 10:27:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #include "serrno.h"
