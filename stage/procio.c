@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.49 2000/11/03 06:09:50 jdurand Exp $
+ * $Id: procio.c,v 1.50 2000/11/03 06:25:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.49 $ $Date: 2000/11/03 06:09:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.50 $ $Date: 2000/11/03 06:25:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -652,14 +652,22 @@ void procioreq(req_type, req_data, clienthost)
 			case STAGEOUT:
 				/* Special case for CASTOR's HSM files : We check in advance if the file is not "busy" */
 				if (stgreq.t_or_d == 'h') {
-					switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
-						case STAGEOUT|CAN_BE_MIGR:
-						case STAGEPUT|CAN_BE_MIGR:
-							sendrep (rpfd, MSG_ERR, STG37);
-							c = EBUSY;
-							goto reply;
-						default:
-							break;
+					memset(&(hsmfileids[ihsmfiles]),0,sizeof(struct Cns_fileid));
+					if (Cns_statx(hsmfiles[ihsmfiles], &(hsmfileids[ihsmfiles]), &Cnsfilestat) == 0) {
+						/* File already exist */
+						strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
+						strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
+						stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
+						switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
+							case STAGEOUT|CAN_BE_MIGR:
+							case STAGEPUT|CAN_BE_MIGR:
+								/* And is busy with respect to our knowledge */
+								sendrep (rpfd, MSG_ERR, STG37);
+								c = EBUSY;
+								goto reply;
+							default:
+								break;
+						}
 					}
 				}
 				/* There is intentionnaly no 'break' here */
@@ -1849,7 +1857,7 @@ isstaged(cur, p, poolflag, poolname)
 			if (strcmp (cur->u1.m.xfile, stcp->u1.m.xfile)) continue;
 		} else if (cur->t_or_d == 'h') {
 			if (strcmp (cur->u1.h.server, stcp->u1.h.server) != 0 || cur->u1.h.fileid != stcp->u1.h.fileid) continue;
-			/* Invariants already exist and the same - was this file renamed ? */
+			/* Invariants already exist and the are same - was this file renamed ? */
 			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile)) {
 				sendrep(rpfd, MSG_ERR, STG101, cur->u1.h.xfile, stcp->u1.h.xfile);
 				strcpy(stcp->u1.h.xfile,cur->u1.h.xfile);
