@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.193 2002/09/17 11:46:54 jdurand Exp $
+ * $Id: procio.c,v 1.194 2002/09/18 05:00:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.193 $ $Date: 2002/09/17 11:46:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.194 $ $Date: 2002/09/18 05:00:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2099,12 +2099,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  strcpy (wqp->pool_user, pool_user);
 				  if (! Aflag) {
 					  if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
-						  if (noretry_flag != 0) {
-							  c = ENOSPC;
-							  sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(c));
-							  delreq(stcp,1);
-							  goto reply;
-						  }
 						  stcp->status |= WAITING_SPC;
 						  strcpy (wqp->waiting_pool, stcp->poolname);
 					  } else if (c) {
@@ -2267,12 +2261,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 			c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode);
 			STAGE_TIME_END;
 			if (c < 0) {
-				if (noretry_flag != 0) {
-					c = ENOSPC;
-					sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(c));
-					delreq(stcp,stcp->t_or_d == 'h' ? 0 : 1);
-					goto reply;
-				}
 				stcp->status |= WAITING_SPC;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
