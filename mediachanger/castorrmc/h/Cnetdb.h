@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: Cnetdb.h,v $ $Revision: 1.8 $ $Date: 1999/12/14 16:43:12 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cnetdb.h,v $ $Revision: 1.9 $ $Date: 2000/05/12 15:57:50 $ CERN IT-PDP/DM Olof Barring
  */
 
 
@@ -15,8 +15,8 @@
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
-EXTERN_C int DLL_DECL *__h_errno _PROTO((void));
-#define h_errno (*__h_errno())
+EXTERN_C int DLL_DECL *C__h_errno _PROTO((void));
+#define h_errno (*C__h_errno())
 #endif /* hpux || HPUX10 || sgi || SOLARIS */
 #endif /* _REENTRANT || _THREAD_SAFE */
 
