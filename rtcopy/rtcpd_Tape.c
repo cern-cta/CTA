@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.36 $ $Date: 2000/03/02 14:35:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.37 $ $Date: 2000/03/03 16:22:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1477,7 +1477,7 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
-                (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG);
+                (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPPRC);
             } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
         if ( nexttape->next != tape ) {

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.4 $ $Date: 2000/02/29 15:18:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.5 $ $Date: 2000/03/03 16:22:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.4 $ $Da
 #include <osdep.h>
 #include <net.h>
 #include <sacct.h>
+#include <log.h>
 #include <Ctape_constants.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
@@ -127,6 +128,11 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     }
     if ( errmsgtxt == NULL || *errmsgtxt == '\0' ) 
         errmsgtxt = tapereq->err.errmsgtxt;
+
+    if ( subtype == RTCPEMSG && *errmsgtxt == '\0' ) {
+        rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPEMSG) without msg txt\n");
+        return(-1);
+    }
 
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
                     stager_reqID,charcom,ifce,tapereq->vid,

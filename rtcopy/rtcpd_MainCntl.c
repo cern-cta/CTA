@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.28 $ $Date: 2000/03/02 17:18:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.29 $ $Date: 2000/03/03 16:22:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1144,18 +1144,24 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
 #if !defined(_WIN32)
     rc = setgid(client->gid);
-    if ( rc == -1 )
+    if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() setgid(%d): %s\n",
             client->gid,sstrerror(errno));
-    else {
+        (void)rtcpd_AppendClientMsg(tape,NULL,"setgid(%d): %s",
+            client->gid,sstrerror(serrno));
+    } else {
         rc = setuid(client->uid);
-        if ( rc == -1 )
+        if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() setuid(%d): %s\n",
                 client->uid,sstrerror(errno));
+            (void)rtcpd_AppendClientMsg(tape,NULL,"setuid(%d): %s",
+                client->uid,sstrerror(serrno));
+        }
     }
     (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
@@ -1169,6 +1175,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
             sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
@@ -1184,6 +1191,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_ClientListen(): %s\n",
             sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
@@ -1202,6 +1210,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_tpdump(): %s\n",
                      sstrerror(serrno));
+            if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
+                (void)rtcpd_AppendClientMsg(tape,NULL,"tpdump(): %s\n",
+                         sstrerror(serrno));
+                (void)rtcp_WriteAccountRecord(client,tape,NULL,RTCPEMSG);
+            }
             (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         }
         (void)rtcp_WriteAccountRecord(client,tape,NULL,RTCPCMDC);
@@ -1235,7 +1248,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_InitDiskIO(0x%lx): %s\n",
             &thPoolSz,sstrerror(serrno));
+        (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_InitDiskIO(): %s\n",
+              sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
         (void)rtcpd_WaitCLThread(CLThId,&status);
         rtcpd_FreeResources(&client_socket,&client,&tape);
@@ -1267,6 +1283,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                   sstrerror(serrno));
             (void)tellClient(client_socket,tape,NULL,-1);
             (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+            (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
             break;
         }
 
@@ -1277,6 +1294,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         if ( rc == -1 ) {
             (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to start disk I/O thread\n");
+            (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartDiskIO(): %s\n",
+                  sstrerror(serrno));
+            (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
             rtcpd_SetProcError(RTCP_FAILED);
         }
 
