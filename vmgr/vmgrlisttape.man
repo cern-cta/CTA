@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.6 $ $Date: 2002/02/07 06:56:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTTAPE 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTTAPE 1 "$Date: 2002/02/07 06:56:01 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlisttape \- query the CASTOR Volume Manager about a tape or list all existing tapes
 .SH SYNOPSIS
@@ -21,9 +21,11 @@ in tabular form:
 .HP 1.2i
 vid		volume visual identifier.
 .HP
+side		optional side number.
+.HP
 vsn		magnetically recorded volume serial number of the tape.
 .HP
-dgn		device group name corresponding to the tape.
+library		name of the tape library.
 .HP
 density		alphanumeric density.
 .HP
@@ -40,6 +42,8 @@ sn		cartridge serial number.
 .HP
 poolname
 .HP
+etime		indicates the time the volume was entered in the Volume Manager.
+.HP
 free_space
 .HP
 nbfiles		number of files written on the tape.
@@ -47,6 +51,14 @@ nbfiles		number of files written on the tape.
 rcount		number of times the volume has been mounted for read.
 .HP
 wcount		number of times the volume has been mounted for write.
+.HP
+rhost		indicates the last tape server where the tape was mounted for read.
+.HP
+whost		indicates the last tape server where the tape was mounted for write.
+.HP
+rjid		is the job id of the last read request.
+.HP
+wjid		is the job id of the last write request.
 .HP
 rtime		indicates the last time the volume was mounted for read.
 .HP
@@ -71,17 +83,18 @@ It must be at most CA_MAXVIDLEN characters long.
 .TP
 .B \-x
 extended format.
-If this option is not set, only vid, vsn, dgn, density, lbltype, poolname,
+If this option is not set, only vid, vsn, library, density, lbltype, poolname,
 free_space, last access (read or write) and status are given.
 .SH EXAMPLES
 .nf
 .ft CW
 vmgrlisttape -V RT0001
-RT0001 RT0001 9840R3 20GC     al default          20.00GB 00000000
+RT0001   RT0001 STK_ACS3 20GC     al  default          20.00GB 00000000
 
 vmgrlisttape -V RT0003 -x
-RT0003 RT0003 9840R3 20GC     al 9840   R  STK          123456789 \\
-         default          17.14GB    237     4     1 20010130 20001211 DISABLED
+RT0003   RT0003 STK_ACS3 20GC     al  9840   R  STK          123456789 \\
+         default         20010101  17.14GB    237     4     1 tpsrv001 \\
+         tpsrv002        25453      39123 20010130 20001211 DISABLED
 .ft
 .fi
 .SH EXIT STATUS
