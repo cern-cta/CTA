@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/19 12:56:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/20 13:06:11 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -110,6 +110,7 @@ namespace castor {
       OPERATOR(short);
       OPERATOR(unsigned short);
       OPERATOR(const char*);
+      OPERATOR(const void*);
       OPERATOR(std::string);
       OPERATOR(bool);
       OPERATOR(float);
