@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.16 $ $Date: 2000/02/08 16:06:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.17 $ $Date: 2000/02/09 18:35:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1731,7 +1731,10 @@ static int rtcpc_diskfiles(int mode,
              * -q option was not specified. Default is -q 1
              */
             rc = newFileList(tape,&fl,mode);
-            if ( fl != NULL ) fl->filereq.tape_fseq = 1;
+            if ( fl != NULL ) {
+                fl->filereq.tape_fseq = 1;
+                fl->filereq.position_method = TPPOSIT_FSEQ;
+            }
             tl = *tape;
         } 
         toomany = 1;
