@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.17 $ $Date: 2004/02/12 15:59:08 $ CERN IT/ADC Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.18 $ $Date: 2004/04/01 09:07:38 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -158,7 +158,10 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     else *err_p = err;
 
     Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(SOCKET *));
-    if ( client_socket != NULL && client_socket_p == NULL ) {RESTORE_ERRNO; return(-1);}
+    if ( client_socket != NULL && client_socket_p == NULL ) {
+      RESTORE_ERRNO; 
+      return(-1);
+    }
     else *client_socket_p = client_socket;
 
     rtcp_log = (void (*)(int, const char *, ...))rtcpc_SetErrTxt;
@@ -167,7 +170,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
 }
 
 /*
- * Useful routine for printing binary quantities (e.g. uuids)
+ * Useful routine for printing binary quantities (e.g. uuids) in hex
  * The returned string must be free'd by the caller
  */
 char *rtcp_voidToString(void *in, int len) {
@@ -186,6 +189,48 @@ char *rtcp_voidToString(void *in, int len) {
          if ( ((i+1) % 4 == 0) && (i+1 < len) ) *buf++ = '-';
     }
     return(str);
+}
+
+/*
+ * Dual to rtcp_voidToString(). Transform a hex string back to
+ * binary quantity
+ */
+int rtcp_stringToVoid(char *str, void *out, int len)
+{
+  u_char *c, *outCp;
+  u_long num;
+  char current_char[3], *p;
+  int i;
+
+  if ( str == NULL || out == NULL || len < 0 ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  outCp = (u_char *)malloc(len);
+  if ( outCp == NULL ) return(-1);
+  p = str;
+  i=0;
+  while ( (*p != '\0') && (*(p+1) != '\0') ) {
+    if ( *p == '-' ) {
+      p++;
+      continue;
+    }
+    if ( i>len ) {
+      free(outCp);
+      serrno = E2BIG;
+      return(-1);
+    }
+    current_char[0] = *p;
+    current_char[1] = *(p+1);
+    current_char[2] = '\0';
+    num = strtol(current_char,(char **)0,16);
+    outCp[i++] = num & 0xff;
+    p+=2;
+  }
+  memcpy(out,outCp,len);
+  free(outCp);
+  return(0);
 }
 
 #if defined(RTCP_SERVER)
