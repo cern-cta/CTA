@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/06 15:55:20 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/06 15:57:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/06 15:55:20 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/06 15:57:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -519,11 +519,10 @@ int rtcpcld_checkNsSegment(
                       DLF_MSG_PARAM_STR,
                       filereq->castorSegAttr.segmCksumAlgorithm
                       );
-    }
-    if ( (currentSegattrs[i].checksum_name[0] == '\0') ||
-         ((change_checksum_name == 1) && 
-          (strcmp(currentSegattrs[i].checksum_name,
-                  filereq->castorSegAttr.segmCksumAlgorithm) != 0 )) ) {
+    } else if ( (currentSegattrs[i].checksum_name[0] == '\0') ||
+                ((change_checksum_name == 1) && 
+                 (strcmp(currentSegattrs[i].checksum_name,
+                         filereq->castorSegAttr.segmCksumAlgorithm) != 0 )) ) {
       /*
        * The checksum is not set for this segment, or it is set but the
        * algorithm has changed since. If it is not set it normally means that
