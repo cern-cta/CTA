@@ -1,0 +1,27 @@
+.\"   $Id: Cgrp.man,v 1.1 2000/10/27 13:56:25 jdurand Exp $
+.\"
+.TH CGRP "3" "$Date: 2000/10/27 13:56:25 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCgrp\fP \- \fBCASTOR\fP \fBGr\fPou\fBp\fP file Thread-Safe inferface
+.SH SYNOPSIS
+.B #include <Cgrp.h>
+.P
+.BI "struct group *Cgetgrnam(char *" name ");"
+.P
+.BI "struct group *Cgetgrgid(gid_t " gid ");"
+
+.SH ERRORS
+If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable.
+
+.SH DESCRIPTION
+
+\fBCgrp\fP is a common Thread-Safe API interface to get entries in the group file vs.
+.BI name
+or
+.BI gid.
+
+.SH SEE ALSO
+\fBserrno\fP, \fBgetgrnam\fP, \fBgetgrgid\fP
+
+.SH AUTHOR
+\fBJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
