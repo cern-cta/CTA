@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.19 $ $Date: 2000/09/01 07:58:43 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.20 $ $Date: 2000/09/04 08:54:15 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -30,10 +30,18 @@ struct rfstatfs {
         long freenods ;      /* Number of free inodes        */
 } ;
 
+#if !defined(RFIO_KERNEL)
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
+
 /*
  * Define structure for preseek requests.
  */
-#if !defined(SOLARIS) && !(defined(__osf__) && defined(__alpha)) && !defined(HPUX1010) && !defined(IRIX6) && !defined(linux) && !defined(AIX42) && !defined(IRIX5)
+#if !defined(_WIN32)
+#include <sys/uio.h>
+#else
 struct iovec {
         int iov_base ;
         int iov_len ;
