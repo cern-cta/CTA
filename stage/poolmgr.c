@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.245 2003/05/14 09:13:00 jdurand Exp $
+ * $Id: poolmgr.c,v 1.246 2003/06/30 10:29:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.245 $ $Date: 2003/05/14 09:13:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.246 $ $Date: 2003/06/30 10:29:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2675,11 +2675,15 @@ void redomigpool()
 			pool_n->migr->global_predicates.space_canbemig = 0;
 			pool_n->migr->global_predicates.nbfiles_beingmig = 0;
 			pool_n->migr->global_predicates.space_beingmig = 0;
+			pool_n->migr->global_predicates.nbfiles_delaymig = 0;
+			pool_n->migr->global_predicates.space_delaymig = 0;
 			for (k = 0; k < pool_n->migr->nfileclass; k++) {
 				pool_n->migr->fileclass_predicates[k].nbfiles_canbemig = 0;
 				pool_n->migr->fileclass_predicates[k].space_canbemig = 0;
 				pool_n->migr->fileclass_predicates[k].nbfiles_beingmig = 0;
 				pool_n->migr->fileclass_predicates[k].space_beingmig = 0;
+				pool_n->migr->fileclass_predicates[k].nbfiles_delaymig = 0;
+				pool_n->migr->fileclass_predicates[k].space_delaymig = 0;
 			}
 		}
 	}
