@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.33 2000/03/10 15:54:30 obarring Exp $
+ * $Id: Cthread.c,v 1.34 2000/04/04 15:12:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.33 $ $Date: 2000/03/10 15:54:30 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.34 $ $Date: 2000/04/04 15:12:13 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1032,14 +1032,15 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
     serrno = SECTHREADERR;
     return(-1);
   }
-#if defined(__osf__) && defined(__alpha)
+#if ((defined(__osf__) && defined(__alpha)) || (defined(IRIX5) || defined(IRIX6) || defined(IRIX64)))
   /*
-   * Need to increase the thread stack on DUNIX
+   * Need to increase the thread stack on DUNIX and IRIX
    */
   n = 256*1024;
-  if ( (n = pthread_attr_setstacksize(&attr,n)) ) {
+  if ((n = pthread_attr_setstacksize(&attr,n)) != 0) {
       pthread_attr_destroy(&attr);
       free(starter);
+      errno = n;
       serrno = SECTHREADERR;
       return(-1);
   }
