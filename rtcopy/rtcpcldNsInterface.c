@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/30 15:49:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/30 15:49:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -76,13 +76,6 @@ WSADATA wsadata;
 #include <castor/stager/SegmentStatusCodes.h>
 #include <castor/stager/CastorFile.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/Services.h>
-#include <castor/BaseAddress.h>
-#include <castor/db/DbAddress.h>
-#include <castor/IAddress.h>
-#include <castor/IObject.h>
-#include <castor/IClient.h>
-
 #include <castor/Constants.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
