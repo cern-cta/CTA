@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.113 2001/03/13 18:52:13 jdurand Exp $
+ * $Id: poolmgr.c,v 1.114 2001/03/21 11:29:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.113 $ $Date: 2001/03/13 18:52:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.114 $ $Date: 2001/03/21 11:29:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -168,6 +168,7 @@ int ispoolmigrating _PROTO((char *));
 struct pool_element *betterfs_vs_pool _PROTO((char *, int, u_signed64, int *));
 int pool_elements_cmp _PROTO((CONST void *, CONST void *));
 void get_global_stream_count _PROTO((char *, int *, int *));
+char *findpoolname _PROTO((char *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
