@@ -4,8 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.1 $ $Date: 2000/04/11 14:43:43 $ CERN IT-PDP/DM Olof Barring";
-P/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.2 $ $Date: 2000/04/11 15:17:50 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -130,9 +129,10 @@ int main(int argc, char *argv[]) {
         } else {
             tp = localtime(&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
-            fprintf(stdout,"QUEUED: %s (%d,%d) received at %s\n",
+            fprintf(stdout,"QUEUED: %s user (%d,%d)@%s received at %s\n",
                     tmp1->volreq.volid,tmp1->volreq.clientUID,
-                    tmp1->volreq.clientGID,timestr);
+                    tmp1->volreq.clientGID,
+                    tmp1->volreq.client_host,timestr);
         }
     } CLIST_ITERATE_END(reqlist,tmp1);
 
