@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_QueueOp.c,v 1.3 1999/09/01 15:11:06 obarring Exp $
+ * $Id: vdqm_QueueOp.c,v 1.4 1999/09/03 14:50:55 obarring Exp $
  * $Log: vdqm_QueueOp.c,v $
+ * Revision 1.4  1999/09/03 14:50:55  obarring
+ * Add action for new unit status types: WAITDOWN, MBCOUNT and ERROR
+ *
  * Revision 1.3  1999/09/01 15:11:06  obarring
  * Fix sccsid string
  *
@@ -22,11 +25,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_QueueOp.c,v 1.3 1999/09/01 15:11:06 obarring Exp $";
+static char sccsid[] = "@(#)$Id: vdqm_QueueOp.c,v 1.4 1999/09/03 14:50:55 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
+#include <osdep.h>
 #include <net.h>
 #include <log.h>
 #include <serrno.h>
@@ -1059,9 +1063,19 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
      */
     if ( DrvReq->status & VDQM_UNIT_DOWN ) {
         /*
-         * Unit configured down. No other status possible
-         * First check if there was a running job to re-enter
-         * it into the queue.
+         * Unit configured down. No other status possible.
+         * For security this status can only be set from
+         * tape server.
+         */
+        if ( strcmp(DrvReq->reqhost,drvrec->drv.server) ) {
+            log(LOG_ERR,"(ID %d)vdqm_NewDrvRequest(): unauthorized %s@%s DOWN from %s\n",
+                thID,DrvReq->drive,DrvReq->server,DrvReq->reqhost);
+            FreeDgnContext(&dgn_context);
+            vdqm_SetError(EPERM);
+            return(-1);
+        }
+        /*
+         * Move back running request (if any) to top of VolReq queue.
          */
         if ( drvrec->drv.status & VDQM_UNIT_BUSY ) {
             volrec = drvrec->vol;
@@ -1075,11 +1089,25 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             drvrec->drv.jobID = 0;
         }
         drvrec->drv.status = VDQM_UNIT_DOWN;
+    } else if ( DrvReq->status & VDQM_UNIT_WAITDOWN ) {
+        /*
+         * Intermediate state until tape daemon confirms that
+         * the drive is down. If a volume request is assigned 
+         * we cannot put it back in queue until drive is confirmed
+         * down since the volume may still be stuck in the unit.
+         * First check the drive isn't already down...
+         */ 
+        if ( !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
+            log(LOG_INFO,"vdqm_NewDrvRequest(): WAIT DOWN request from %s\n",
+                DrvReq->reqhost); 
+            drvrec->drv.status = VDQM_UNIT_WAITDOWN;
+        }
     } else if ( DrvReq->status & VDQM_UNIT_UP ) {
         /*
          * Unit configured up. Make sure that "down" status is reset.
          */
         drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
+        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
         drvrec->drv.status |= DrvReq->status;
     } else {
         if ( !(drvrec->drv.status & VDQM_UNIT_UP) ) {
@@ -1189,14 +1217,19 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 }
             }
             /*
-             * VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT are not really unit status
-             * values. Their purpose is twofold: 1) input - update the volid field in the
-             * drive record (both MOUNT and UNMOUNT) and 2) output - tell client
-             * to unmount or keep volume mounted in case of deferred unmount 
-             * (UNMOUNT only).
+             * VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT are not persistent unit 
+             * status values. Their purpose is twofold: 1) input - update 
+             * the volid field in the drive record (both MOUNT and UNMOUNT)
+             * and 2) output - tell client to unmount or keep volume mounted
+             * in case of deferred unmount (UNMOUNT only). 
+            *
+             * VDQM_UNIT_ERROR and VDQM_UNIT_MBCOUNT are not persistent unit
+             * status values. They request update of drive statistics.
              */
             if ( drvrec->drv.status & VDQM_UNIT_UP )
-                drvrec->drv.status |= DrvReq->status & (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT);
+                drvrec->drv.status |= DrvReq->status & 
+                                      (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
+                                       ~VDQM_UNIT_ERROR & ~VDQM_UNIT_MBCOUNT );
         }
     }
     
@@ -1209,6 +1242,18 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
             drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_FREE;
             drvrec->drv.status |= VDQM_UNIT_BUSY;
+        }
+        if ( (DrvReq->status & VDQM_UNIT_MBCOUNT) ) {
+            /*
+             * Update TotalMB counter
+             */
+            drvrec->drv.TotalMB += DrvReq->MBtransf;
+        }
+        if ( (DrvReq->status & VDQM_UNIT_ERROR) ) {
+            /*
+             * Update error counter.
+             */
+            drvrec->drv.errcount++;
         }
         if ( (DrvReq->status & VDQM_VOL_MOUNT) ) {
             /*
@@ -1240,6 +1285,10 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             }
             strcpy(drvrec->drv.volid,DrvReq->volid);
             drvrec->drv.status |= VDQM_UNIT_BUSY;
+            /*
+             * Update usage counter
+             */
+            drvrec->drv.usecount++;
         }
         if ( (DrvReq->status & VDQM_VOL_UNMOUNT) ) {
             *drvrec->drv.volid = '\0';
