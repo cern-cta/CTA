@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.32 2002/02/11 14:07:32 jdurand Exp $
+ * $Id: stgconvert.c,v 1.33 2002/02/11 14:08:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.32 $ $Date: 2002/02/11 14:07:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.33 $ $Date: 2002/02/11 14:08:46 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -2522,7 +2522,7 @@ int stppcmp(stpp1,stpp2,bindiff)
 	if ((stpp1->reqid <= 0) && (stpp2->reqid <= 0)) {
 		/* Who cares */
 		return(0);
-	} else if ((stp1->reqid <= 0) && (stpp2->reqid  > 0)) {
+	} else if ((stpp1->reqid <= 0) && (stpp2->reqid  > 0)) {
 		/* stpp1 to go at the end */
 		return(1);
 	} else if ((stpp1->reqid  > 0) && (stpp2->reqid <= 0)) {
