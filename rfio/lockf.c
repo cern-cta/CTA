@@ -1,5 +1,5 @@
 /*
- * $Id: lockf.c,v 1.7 2002/09/20 06:59:35 baud Exp $
+ * $Id: lockf.c,v 1.8 2002/11/19 12:55:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.7 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.8 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
@@ -30,6 +30,7 @@ long		siz;		/* locked region			*/
    char    	*p=buf;
    int 		rt ;
    int 		rcode ;
+   int          s_index;
 
 
    INIT_TRACE("RFIO_TRACE");
@@ -38,13 +39,25 @@ long		siz;		/* locked region			*/
    /* 
     * The file is local
     */
-   if (rfio_rfilefdt_findentry(sd,FINDRFILE_WITHOUT_SCAN) == -1) {
+   if ((s_index=rfio_rfilefdt_findentry(sd, FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(1, "rfio", "rfio_lockf: using local lockf(%d, %d, %ld)",
 	    sd, op, siz);
       END_TRACE();
       rfio_errno = 0;
       status = lockf(sd,op,siz);
       if ( status < 0 ) serrno = 0;
+      return(status);
+   }
+   
+   /*
+    * Checking mode 64.
+    */
+   if (rfilefdt[s_index]->mode64) {
+      off64_t siz64;
+      
+      siz64 = siz;
+      status = rfio_lockf64(sd, op, siz64);
+      END_TRACE();
       return(status);
    }
 

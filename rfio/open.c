@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.17 2002/09/20 06:59:35 baud Exp $
+ * $Id: open.c,v 1.18 2002/11/19 12:55:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.17 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.18 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -57,6 +57,8 @@ int	passwd;
    */
 
    iop->magic = RFIO_MAGIC;
+   iop->version3 = 0;
+   iop->mode64   = 0;
    iop->s = -1;
    if (uid || gid)
       iop->mapping=0;
@@ -143,6 +145,17 @@ int     flags,mode ;
    int fd;
    int fd_index;
 
+#ifdef O_LARGEFILE
+   /* If O_LARGEFILE go to open64                                     */
+   if ( flags & O_LARGEFILE ) return( rfio_open64(filepath, flags, mode) );
+#endif /* O_LARGEFILE */
+
+#if ( defined(__osf__) && defined(__alpha) ) || defined(IRIX64) || defined(__ia64__)
+   /* Try to promote into rfio 64 bits call                           */
+   /* If 64 is not supported goes to rfio_open_ext                    */
+   return( rfio_open64(filepath, flags, mode) );
+#else
+
    old = rfioreadopt(RFIO_READOPT);
 
    if ((old & RFIO_STREAM) == RFIO_STREAM)
@@ -184,6 +197,7 @@ int     flags,mode ;
 	 rfilefdt[fd_index]->version3 = 0;
       return(fd);
    }
+#endif
 } 
 	
 int 	rfio_open_v2(filepath, flags, mode)
@@ -198,6 +212,8 @@ int     flags,mode ;
 
 /*
  * Remote file open.
+ * This entry is called from rfio_open64_v2 and rfio_open64_v3
+ * when server does not support 64 bits mode.
  */
 int	rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr) 
 char    * filepath ;
@@ -245,7 +261,7 @@ char  	*vmstr ;
    INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_open_ext(%s, %d, %d, %d, %d, %d, %s, %s)",filepath,flags,mode,uid,gid,passwd,reqhost,vmstr ) ;
 
-	/* the rtcopy program calls directly rfio_open_ext, so we (again) do this test here, ugly */
+   /* Note: the call can not be promoted into 64 bits mode */
    old = rfioreadopt(RFIO_READOPT);
 
    /* New V3 stream protocol for sequential transfers */
@@ -292,7 +308,7 @@ char  	*vmstr ;
                 filename);
           END_TRACE();
           rfio_errno = 0;
-          return(rfio_HsmIf_open(filename,flags,mode));
+          return(rfio_HsmIf_open(filename,flags,mode,0));
       }
       status= open(filename, flags, mode) ;
       if ( status < 0 ) serrno = 0;

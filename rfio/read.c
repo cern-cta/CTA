@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.19 2002/09/20 06:59:36 baud Exp $
+ * $Id: read.c,v 1.20 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.19 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.20 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -125,6 +125,15 @@ int     s, size;
       return(-1);
    }
 
+   /*
+    * Checking mode 64.
+    */
+   if (rfilefdt[s_index]->mode64) {
+      status = rfio_read64_v2(s, ptr, size);
+      END_TRACE();
+      return(status);
+   }
+
    if ( ! rfilefdt[s_index]->socset ) {
       char * ifce, *p ;
       int bufsize ;
@@ -210,7 +219,7 @@ int     s, size;
        * Sending a request to fill the
        * user buffer.
        */
-      TRACE(2,"rfio","rfio_read: call rfio_filbuf(%d,%d,%d) at line %d",
+      TRACE(2,"rfio","rfio_read: call rfio_filbuf(%d,%x,%d) at line %d",
 		s,ptr,size,__LINE__);
       if ( (status= rfio_filbuf(s,ptr,size)) < 0 ) { 
 	 TRACE(2,"rfio","rfio_read: rfio_filbuf returned %d",status);

@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.10 2002/09/20 06:59:35 baud Exp $
+ * $Id: lstat.c,v 1.11 2002/11/19 12:55:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.11 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -27,23 +27,28 @@ int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat	*/
 char    *filepath;              	/* remote file path  		*/
 struct stat *statbuf;           	/* status buffer 		*/
 {
+#if (defined(__alpha) && defined(__osf__))
+   return (rfio_stat64(filepath,statbuf));
+#else
+   int      lstatus;		/* remote lstat() status    	*/
+#if defined(IRIX64) || defined(__ia64__)
+   struct stat64 statb64;
+
+   if ((lstatus = rfio_stat64(filepath,&statb64)) == 0)
+	(void) stat64tostat(&statb64, statbuf);
+   return (lstatus);
+#else
    register int    s;           /* socket descriptor 		*/
    char     buf[256];      	/* General input/output buffer  */
-   int      lstatus;		/* remote lstat() status    	*/
    int	    len;
    char     *host, *filename;
    char     *p=buf;
    int     uid;
    int     gid;
-   int     req;
    int	i;
    struct  passwd *pw_tmp;
    struct  passwd *pw = NULL;
    int	*old_uid = NULL;
-#if defined(vms)
-   unsigned short  unix_st_dev;
-   unsigned long   unix_st_ino;
-#endif /* vms */
    int 		rt,rc,reqst,magic ;
 
 
@@ -70,11 +75,11 @@ struct stat *statbuf;           	/* status buffer 		*/
 
       END_TRACE();
       rfio_errno = 0;
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
       lstatus = lstat(filename,statbuf);
 #else
       lstatus = stat(filename,statbuf);
-#endif /* vms  || _WIN32 */
+#endif /* _WIN32 */
       if ( lstatus < 0 ) serrno = 0;
       return(lstatus);
    }
@@ -142,13 +147,8 @@ struct stat *statbuf;           	/* status buffer 		*/
 	 }
       } else break;
    }
-#if !defined(vms)
    unmarshall_WORD(p, statbuf->st_dev);
    unmarshall_LONG(p, statbuf->st_ino);
-#else
-   unmarshall_WORD(p, unix_st_dev);
-   unmarshall_LONG(p, unix_st_ino);
-#endif /* vms */
    unmarshall_WORD(p, statbuf->st_mode);
    unmarshall_WORD(p, statbuf->st_nlink);
    unmarshall_WORD(p, statbuf->st_uid);
@@ -167,4 +167,71 @@ struct stat *statbuf;           	/* status buffer 		*/
    }
    END_TRACE();
    return (0);
+#endif
+#endif
+}
+
+int DLL_DECL rfio_lstat64(filepath, statbuf)    /* Remote file lstat    */
+char    *filepath;                              /* remote file path     */
+struct stat64 *statbuf;                         /* status buffer        */
+{
+   register int    s;                           /* socket descriptor    */
+   int       status ;
+   char     *host, *filename;
+   int      rt ;
+
+   INIT_TRACE("RFIO_TRACE");
+   TRACE(1, "rfio", "rfio_lstat64(%s, %x)", filepath, statbuf);
+
+   if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
+      /* if not a remote file, must be local or HSM                     */
+      if ( host != NULL ) {
+          /*
+           * HSM file
+           */
+          TRACE(1,"rfio","rfio_lstat64: %s is an HSM path", filename);
+          END_TRACE();
+          rfio_errno = 0;
+          return(rfio_HsmIf_stat64(filename,statbuf));
+      }
+      TRACE(1, "rfio", "rfio_lstat64: using local lstat64(%s, %x)",
+         filename, statbuf);
+
+      END_TRACE();
+      rfio_errno = 0;
+#if !defined(_WIN32)
+      status = lstat64(filename,statbuf);
+#else
+      status = stat64(filename,statbuf);
+#endif /* _WIN32 */
+      if ( status < 0 ) serrno = 0;
+      return(status);
+   }
+
+   s = rfio_connect(host,&rt);
+   if (s < 0)      {
+      return(-1);
+   }
+   END_TRACE();
+   status = rfio_smstat64(s, filename, statbuf, RQST_LSTAT64) ;
+   if ( status == -1 && serrno == SEPROTONOTSUP ) {
+      /* The RQST_LSTAT64 is not supported by remote server          */
+      /* So, we use RQST_LSTAT_SEC instead                           */
+      s = rfio_connect(host,&rt);    /* First: reconnect             */
+      if (s < 0)      {
+          return(-1);
+      }
+      status = rfio_smstat64(s, filename, statbuf, RQST_LSTAT_SEC);
+      if ( status == -1 && serrno == SEPROTONOTSUP ) {
+         /* The RQST_LSTAT_SEC is not supported by remote server     */
+         /* So, we use RQST_LSTAT instead                            */
+         s = rfio_connect(host,&rt);
+         if (s < 0)      {
+             return(-1);
+         }
+         status = rfio_smstat64(s, filename, statbuf, RQST_LSTAT) ;
+      }
+   }
+   (void) netclose(s);
+   return (status);
 }

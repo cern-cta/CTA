@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.15 2002/10/15 06:12:52 baud Exp $
+ * $Id: lseek.c,v 1.16 2002/11/19 12:55:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.15 $ $Date: 2002/10/15 06:12:52 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.16 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -22,6 +22,10 @@ static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.15 $ $Date: 2002/
 
 #include <stdlib.h>            /* malloc prototype */
 
+#if !defined(OFF_MAX)
+#define OFF_MAX 2147483647
+#endif
+
 /*
  * Forward declaration.
  */
@@ -31,9 +35,9 @@ static int rfio_forcelseek() ;
 /*
  * Remote file seek
  */
-int DLL_DECL rfio_lseek(s, offset, how)   
+off_t DLL_DECL rfio_lseek(s, offset, how)   
 int      s ;
-int offset ; 
+off_t  offset ; 
 int    how ;
 {
    int     status ;
@@ -52,12 +56,12 @@ int    how ;
     * The file is local
     */
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1 ) {
-      TRACE(2, "rfio", "rfio_lseek: using local lseek(%d, %d, %d)",s,offset,how) ;
-      status= lseek(s,offset,how) ; 
-      if ( status < 0 ) serrno = 0;
+      TRACE(2, "rfio", "rfio_lseek: using local lseek(%d, %ld, %d)",s,offset,how) ;
+      offset= lseek(s,offset,how) ; 
+      if ( offset < 0 ) serrno = 0;
       rfio_errno = 0;
       END_TRACE() ;
-      return status ;
+      return offset ;
    }
    /*
     * Checking 'how' parameter.
@@ -78,11 +82,35 @@ int    how ;
       return -1 ;
    }
 
+   /*
+    * Checking mode 64.
+    */
+   if (rfilefdt[s_index]->mode64) {
+      off64_t offsetin;
+      off64_t offsetout;
+      
+      offsetin  = offset;
+      offsetout = rfio_lseek64(s, offsetin, how);
+      if (offsetout > OFF_MAX && sizeof(off_t) == 4) {
+#if (defined(__osf__) && defined(__alpha)) || defined(hpux) || defined(_WIN32)
+         errno = EINVAL;
+#else
+         errno = EOVERFLOW;
+#endif
+         END_TRACE();
+         return(-1);
+      }
+      offset    = offsetout;
+      END_TRACE();
+      return(offset);
+   }
+
+   
    /* If RFIO version 3 enabled, then call the corresponding procedure */
    if (rfilefdt[s_index]->version3 == 1) {
       status= rfio_lseek_v3(s,offset,how);
       END_TRACE();
-      return status ;
+      return(status);
    }
 
    /*

@@ -1,15 +1,15 @@
 /*
- * $Id: rfrm.c,v 1.12 2001/04/02 12:47:40 baud Exp $
+ * $Id: rfrm.c,v 1.13 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.12 $ $Date: 2001/04/02 12:47:40 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.13 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ char *argv[];
   char *path,*root_path;
   int recursive = 0;
   int ask_yesno = 1;
-  struct stat st;
+  struct stat64 st;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif /* _WIN32 */
@@ -109,7 +109,7 @@ char *argv[];
       }
       free(root_path);
     } else {
-      if ( rfio_lstat(path,&st) ) {
+      if ( rfio_lstat64(path,&st) ) {
         rfio_perror(path);
         exit(2);
       }
@@ -193,13 +193,13 @@ int *yesno;
 {
   DIR *dirp;
   struct dirent *de;
-  struct stat st;
+  struct stat64 st;
   char *p;
   struct dirstack *ds = NULL;
   int ask_yesno = 1;
   int empty = 1;
   
-  if ( !rfio_lstat(path,&st) ) {
+  if ( !rfio_lstat64(path,&st) ) {
     if ( S_ISDIR(st.st_mode) ) {
       if ( yesno == NULL || *yesno ) {
         printf("%s: descend into directory `%s'? ",cmd,path);
@@ -215,7 +215,7 @@ int *yesno;
           strcpy(p,path);
           strcat(p,"/");
           strcat(p,de->d_name);
-          if ( rfio_lstat(p,&st) == -1 ) {
+          if ( rfio_lstat64(p,&st) == -1 ) {
             fprintf(stderr,"%s: %s\n",p,rfio_serror());
             free(p);
           } else {
@@ -250,7 +250,7 @@ int *yesno;
       while ( rm_recursive(ds->dir,&ask_yesno) == 0 );
       rfio_popdir(&ds);
     }
-  } else { /* if ( !rfio_lstat(path,&st) ) .... */
+  } else { /* if ( !rfio_lstat64(path,&st) ) .... */
     return(-1);
   }
   return(0);

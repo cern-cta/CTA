@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.6 $ $Date: 2002/10/25 10:29:57 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.7 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -16,7 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.6 $ $Date: 2002
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <rfio.h>
+#include <rfio_api.h>
 
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -35,7 +35,9 @@ char *argv[];
   char *path,*root_path,*p;
   int rc, c;
   mode_t mode = 0777;
-  struct stat st;
+  long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
+  char *endprt;             /* For conversion                        IN2P3*/
+  struct stat64 st;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif /* _WIN32 */
@@ -49,9 +51,11 @@ char *argv[];
   while ( (c = getopt(argc,argv,"m:p")) != EOF ) {
     switch(c) {
     case 'm':
-      if ( isdigit(*optarg) ) sscanf(optarg,"%o",&mode);
+      /* Converts mode into long then casts it - IN2P3 */
+      lmode = strtol(optarg, &endprt, 8);
+      if ( lmode > 0 && lmode <= 0777 && *endprt == '\0' ) mode = lmode;
       else {
-	fprintf(stderr,"Invalid mode.\n");
+	fprintf(stderr, "Invalid mode '%s'.\n", optarg);
 	exit(2);
       }
       break;
@@ -78,7 +82,7 @@ char *argv[];
       strcpy(root_path,path);
       while ( (p = strrchr(root_path,'/')) != NULL ) {
 	*p = '\0';
-	if ( !rfio_stat(root_path,&st) ) break;
+	if ( !rfio_stat64(root_path,&st) ) break;
       }
       while ( strlen(root_path) != strlen(path) ) {
 	root_path[strlen(root_path)] = '/';

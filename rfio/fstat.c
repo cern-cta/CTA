@@ -1,5 +1,5 @@
 /*
- * $Id: fstat.c,v 1.11 2002/09/20 06:59:35 baud Exp $
+ * $Id: fstat.c,v 1.12 2002/11/19 12:55:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.12 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -29,7 +29,17 @@ int DLL_DECL rfio_fstat(s, statbuf)
 int     s;
 struct stat *statbuf;
 {
+#if (defined(__alpha) && defined(__osf__))
+   return (rfio_fstat64(s,statbuf));
+#else
    int status ;
+#if defined(IRIX64) || defined(__ia64__)
+   struct stat64 statb64;
+
+   if ((status = rfio_fstat64(s,&statb64)) == 0)
+       (void) stat64tostat(&statb64, statbuf);
+   return (status);
+#else
    char   * p ;
    char * trp ;
    int temp=0 ;
@@ -59,6 +69,7 @@ struct stat *statbuf;
       END_TRACE();
       return(-1);
    }
+
    /*
     * File mark has to be repositionned.
     */
@@ -174,4 +185,6 @@ struct stat *statbuf;
 	  return -1 ;
       }
    }	
+#endif
+#endif
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.13 2002/09/20 06:59:36 baud Exp $
+ * $Id: write.c,v 1.14 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.13 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.14 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -54,7 +54,7 @@ int     s, size;
    int HsmType, save_errno, written_to;
    char   * p ; 	/* Pointer to buffer		*/
    char * trp ; 	/* Pointer to a temp buffer	*/
-   int temp=0 ;	/* Has it been allocated ? 	*/
+   int temp=0 ; 	/* Has it been allocated ?	*/
    char     rfio_buf[BUFSIZ];
    int s_index;
 
@@ -112,6 +112,16 @@ int     s, size;
       END_TRACE();
       return(-1);
    }
+
+   /*
+    * Checking mode 64.
+    */
+   if (rfilefdt[s_index]->mode64) {
+      status = rfio_write64_v2(s, ptr, size);
+      END_TRACE();
+      return(status);
+   }
+
    /*
     * Repositionning file mark if needed.
     */
@@ -178,13 +188,17 @@ int     s, size;
       unmarshall_WORD(p,req) ;
       unmarshall_LONG(p,status) ;
       unmarshall_LONG(p,rcode) ;
-      unmarshall_LONG(p,msgsiz) ; 
+      unmarshall_LONG(p,msgsiz) ;
       switch(req) {
        case RQST_WRITE:
 	  rfio_errno = rcode;
           if ( status < 0 ) rfio_HsmIf_IOError(s,rfio_errno);
 	  if ( status < 0 && rcode == 0 )
 	     serrno = SENORCODE ;
+	  if (status > 0 && rfilefdt[s_index]->offset + status < 0) {
+	      status = -1;
+	      serrno = EFBIG;
+	  }
 	  rfilefdt[s_index]->offset += status ;
 	  TRACE(1,"rfio","rfio_write: status %d, rcode %d",status,rcode) ;
 	  if ( temp ) (void) free(trp) ; 

@@ -1,5 +1,5 @@
 /*
- * $Id: rfioacct.c,v 1.4 2002/02/27 10:12:03 baud Exp $
+ * $Id: rfioacct.c,v 1.5 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.4 $ $Date: 2002/02/27 10:12:03 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.5 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -39,8 +39,9 @@ int rc;
 struct rfiostat *infop;
 char *filename1,*filename2;
 {
+#if defined(SACCT)
   int acctreclen;
-  struct acctrfio acct_rfio;
+  struct acctrfio64  acct_rfio;
   struct sockaddr_in local_addr;
   struct sockaddr_in remote_addr;
 #if defined(_AIX)
@@ -74,7 +75,7 @@ char *filename1,*filename2;
 #endif
   if ( ACCTRFIO_ON == 0 ) return;
   if ( ns < 0 ) return;
-  memset(&acct_rfio,'\0',sizeof(struct acctrfio));
+  memset(&acct_rfio,'\0',sizeof(struct acctrfio64));
   acct_rfio.reqtype = (int) reqtype;
   acct_rfio.uid = (int) uid;
   acct_rfio.gid = (int) gid;
@@ -83,14 +84,14 @@ char *filename1,*filename2;
   acct_rfio.flags.anonymous.flag1 = (int)flag1;
   acct_rfio.flags.anonymous.flag2 = (int)flag2;
   if ( infop != NULL ) {
-    acct_rfio.nb_read = (int) infop->readop;
-    acct_rfio.nb_write = (int) infop->writop;
-    acct_rfio.nb_ahead = (int) infop->aheadop;
-    acct_rfio.nb_stat = (int) infop->statop;
-    acct_rfio.nb_seek = (int) infop->seekop;
+    acct_rfio.nb_read    = (int) infop->readop;
+    acct_rfio.nb_write   = (int) infop->writop;
+    acct_rfio.nb_ahead   = (int) infop->aheadop;
+    acct_rfio.nb_stat    = (int) infop->statop;
+    acct_rfio.nb_seek    = (int) infop->seekop;
     acct_rfio.nb_preseek = (int) infop->presop;
-    acct_rfio.read_size = (int) infop->rnbr;
-    acct_rfio.write_size = (int) infop->wnbr;
+    acct_rfio.read_size  = infop->rnbr;
+    acct_rfio.write_size = infop->wnbr;
   }
 
   if (ns >= 0 ) {
@@ -112,12 +113,13 @@ char *filename1,*filename2;
   acct_rfio.status = status;
   acct_rfio.rc = rc;
   acctreclen = ((char *)acct_rfio.filename - (char *) &acct_rfio) + strlen(acct_rfio.filename) + 1;
-  wsacct(ACCTRFIO,&acct_rfio,acctreclen);
+  wsacct(ACCTRFIO64, &acct_rfio, acctreclen);
 #if defined(HPSS)
   /*
    * release accounting mutex
    */
   /*  rhpss_end_accounting(ns); */
 #endif /* HPSS */
+#endif /* SACCT */
   return;
 }

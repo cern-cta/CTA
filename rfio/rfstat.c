@@ -1,24 +1,28 @@
 /*
- * $Id: rfstat.c,v 1.5 2000/09/04 09:13:39 baud Exp $
+ * $Id: rfstat.c,v 1.6 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.5 $ $Date: 2000/09/04 09:13:39 $ CERN/IT/PDP/DM fhe";
+static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.6 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM fhe";
 #endif /* not lint */
 
-#define RFIO_KERNEL 1
-#include <rfio.h>
+#include <rfio_api.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <statbits.h>
+#endif
+#include <u64subr.h>
 
 static char *ftype="dbclps-";
 static char *perm="rwx-";
@@ -41,11 +45,8 @@ unsigned int mode;
 		case    S_IFCHR: c = 'c'; break;
 		case    S_IFBLK: c = 'b'; break;
 		case    S_IFREG: c = '-'; break;
-#ifndef CRAY
 		case    S_IFLNK: c = 'l'; break;
-#endif /* CRAY */
 		case    S_IFSOCK: c = 's'; break;
-#if !defined(apollo)
 #if defined(_WIN32)
 		case	_S_IFIFO: c = 'p'; break;
 #else
@@ -55,7 +56,6 @@ unsigned int mode;
 		case    S_IFIFO: c = 'p'; break;
 #endif
 #endif
-#endif /* apollo */
 		default :       c = '?';
 	}
 	letters[0]=c;
@@ -115,10 +115,11 @@ unsigned int mode;
 
 
 void report(buf)
-struct stat    *buf;
+struct stat64    *buf;
 {
 	struct passwd   *pwd;
 	struct group    *grp;
+	char tmpbuf[21];
 
 	fprintf(stdout,"Device          : %x\n",(int) buf->st_dev);
 	fprintf(stdout,"Inode number    : %d\n",(int) buf->st_ino);
@@ -136,8 +137,7 @@ struct stat    *buf;
 	else    {
 		fprintf(stdout,"Gid             : %d (%s)\n",(int) buf->st_gid,grp->gr_name);
 	}
-
-	fprintf(stdout,"Size (bytes)    : %d\n",(int) buf->st_size);
+	fprintf(stdout,"Size (bytes)    : %s\n", u64tostr(buf->st_size, tmpbuf, 0));
 	fprintf(stdout,"Last access     : %s",ctime(&buf->st_atime));
 	fprintf(stdout,"Last modify     : %s",ctime(&buf->st_mtime));
 	fprintf(stdout,"Last stat. mod. : %s",ctime(&buf->st_ctime));
@@ -147,7 +147,7 @@ main(argc,argv)
 int     argc;
 char    **argv;
 {
-	struct stat     buf;
+	struct stat64     buf;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -163,7 +163,7 @@ char    **argv;
 	}
 #endif
 
-	if (rfio_stat(argv[1],&buf) < 0)     {
+	if (rfio_stat64(argv[1],&buf) < 0) {
 		rfio_perror(argv[1]);
 #if defined(_WIN32)
 		WSACleanup();

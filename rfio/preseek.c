@@ -1,5 +1,5 @@
 /*
- * $Id: preseek.c,v 1.9 2002/09/13 06:14:11 baud Exp $
+ * $Id: preseek.c,v 1.10 2002/11/19 12:55:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.9 $ $Date: 2002/09/13 06:14:11 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.10 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -70,6 +70,22 @@ struct iovec *iov ;
    if ( iovnb == 0 ) {
       END_TRACE() ;
       return 0 ; 
+   }
+   /*
+    * Checking mode 64.
+    */
+   if (rfilefdt[s_index]->mode64) {
+      struct iovec64 *iov64 ;
+      int status ;
+      if ((iov64 = malloc (iovnb * sizeof(struct iovec64))) == NULL)
+         return (-1) ;
+      for(i= 0; i<iovnb; i ++) {
+         iov64[i].iov_base = (off64_t)iov[i].iov_base ;
+         iov64[i].iov_len = iov[i].iov_len ;
+      }
+      status = rfio_preseek64(s,iov64,iovnb) ;
+      END_TRACE() ;
+      return (status) ;
    }
    /*
     * Repositionning file mark if needed.
