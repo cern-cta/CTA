@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MsgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MsgSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:37:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,7 +39,6 @@
 // -----------------------------------------------------------------------
 static castor::SvcFactory<castor::MsgSvc> s_factoryMsgSvc;
 const castor::IFactory<castor::IService>& MsgSvcFactory = s_factoryMsgSvc;
-std::string castor::MsgSvc::s_defaultLogfilename = "log";
 
 // -----------------------------------------------------------------------
 // Constructor
@@ -75,21 +74,6 @@ const unsigned int castor::MsgSvc::ID() {
 // -----------------------------------------------------------------------
 // stream
 // -----------------------------------------------------------------------
-castor::logstream& castor::MsgSvc::stream() {
+castor::logstream& castor::MsgSvc::stream() const {
   return *m_stream;
-}
-
-
-// -----------------------------------------------------------------------
-//  Returns the logfilename
-// -----------------------------------------------------------------------
-std::string castor::MsgSvc::defaultLogfilename() {
-  return s_defaultLogfilename;
-}
-
-// -----------------------------------------------------------------------
-//  Sets the logfilename
-// -----------------------------------------------------------------------
-void castor::MsgSvc::setDefaultLogfilename(std::string lfn) {
-  s_defaultLogfilename = lfn;
 }

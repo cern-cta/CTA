@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MsgSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MsgSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:37:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -66,28 +66,12 @@ namespace castor {
     /**
      * get the output stream associated to this service
      */
-    castor::logstream& stream();
-
-
-    /**
-     * Returns the defaultname of the logfile
-     */
-    static std::string defaultLogfilename();
-
-    /**
-     * Sets the default log file name
-     */
-    static void setDefaultLogfilename(std::string lfn);
-
-
+    castor::logstream& stream() const;
 
   private:
 
     /** the output stream */
     castor::logstream* m_stream;
-
-    /** The name of the logfile */
-    static std::string s_defaultLogfilename;
 
   };
   
