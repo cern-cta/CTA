@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.2 1999/12/15 10:59:36 baud Exp $
+ * $Id: vmgr_api.h,v 1.3 1999/12/16 07:05:27 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.2 $ $Date: 1999/12/15 10:59:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.3 $ $Date: 1999/12/16 07:05:27 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -30,9 +30,9 @@ struct vmgr_api_thread_info {
 
 #if defined(__STDC__)
 extern int vmgr_deletetape(const char *);
-extern int vmgr_entertape(const char *);
+extern int vmgr_entertape(const char *, char *, char *, char *, char *, char *, char *, char *);
 extern int vmgr_gettape(const char *, int, const char *, int *, char *, char *, char *, char *, char *, int *, unsigned int *);
-extern int vmgr_modifytape(const char *);
+extern int vmgr_modifytape(const char *, char *, char *, char *, char *, char *, char *, char *);
 extern int vmgr_querytape(const char *, char *, char *, char *, char *);
 extern int vmgr_updatetape(int, u_signed64, int, int, int);
 #else
