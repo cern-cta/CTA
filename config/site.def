@@ -158,6 +158,13 @@
 #endif
 #define DlfHost        "lxshare001d"
 #define DlfSpool       /usr/spool/dlf
+#if defined(_WIN32)
+#define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\EXPCONFIG
+#else
+#define ExpertConfigFile  /etc/EXPCONFIG
+#endif
+#define ExpertHost     "localhost"
+#define ExpertSpool    /usr/spool/expert
 
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
@@ -209,6 +216,8 @@
 #define BuildVolumeMgrDaemon	NO
 #define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
+#define BuildExpertClient	NO
+#define BuildExpertDaemon	NO
 
 #define BuildClientCpp          YES
 #define BuildDstageCpp          YES

@@ -282,6 +282,20 @@ DLFDIR = dlf
 #endif
 #endif
 
+#if BuilExpertClient || BuildExpertDaemon
+EXPERTDIR = expert
+#if BuildCommon != YES
+#undef BuildCommon
+#define BuildCommon	YES
+#endif
+#if BuildExpertClient
+#if BuildLib != YES
+#undef BuildLib
+#define BuildLib	YES
+#endif
+#endif
+#endif
+
 #if BuildVolumeMgrClient || BuildVolumeMgrDaemon
 VMGRDIR = vmgr
 #if UseVmgr
