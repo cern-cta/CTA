@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.7 $ $Date: 2002/03/11 15:47:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.8 $ $Date: 2003/03/20 17:16:07 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2002/03/11 15:47:19 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2003/03/20 17:16:07 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -140,7 +140,9 @@ for STK 9940 cartridges,
 .B 100G
 or
 .B 100GC
-for LTO cartridges.
+for LTO cartridges. If
+.B 0
+is specified, the tape daemon does not check the density and does not set it on the drive either.
 .TP
 initial status
 .B up
