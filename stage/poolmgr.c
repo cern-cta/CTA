@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.220 2002/09/30 14:03:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.221 2002/09/30 14:32:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.220 $ $Date: 2002/09/30 14:03:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.221 $ $Date: 2002/09/30 14:32:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -107,6 +107,7 @@ int nbmigrator;
 int nbpool;
 int nbhost;
 int nbstageout;
+int nbstagealloc;
 static char *nfsroot;
 static char **poolc;
 struct pool *pools;
@@ -2033,9 +2034,19 @@ rwcountersfs(poolname, ipath, status, req_type)
 			case STAGEOUT:
 				nbstageout++;
 				break;
+			case STAGEALLOC:
+				nbstagealloc++;
+				break;
 			case STAGEUPDC:
-				if ((status & 0xF) == STAGEOUT) {
+				switch (status & 0xF) {
+				case STAGEOUT:
 					nbstageout--;
+					break;
+				case STAGEALLOC:
+					nbstagealloc--;
+					break;
+				default:
+					break;
 				}
 				break;
 			default:
@@ -2257,8 +2268,8 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			free (sav_migrators);
 		}
-		/* Counters on the number of entries in STAGEOUT status */
-		nbstageout = 0;
+		/* Counters on the number of entries in STAGEOUT/STAGEALLOC status */
+		nbstageout = nbstagealloc = 0;
 		/* And restore rw counters + check poolname definition */
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
@@ -5168,7 +5179,7 @@ void check_expired() {
 	int fork_pid;
 
     /* We do NOT loop if there is nothing to check */
-    if (nbstageout <= 0) return;
+    if ((nbstageout <= 0) && (nbstagealloc <= 0)) return;
 
 	thistime = time(NULL);
 

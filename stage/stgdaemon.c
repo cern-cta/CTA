@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.225 2002/09/30 14:04:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.226 2002/09/30 14:32:40 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.225 $ $Date: 2002/09/30 14:04:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.226 $ $Date: 2002/09/30 14:32:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -344,6 +344,7 @@ EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
  */
 extern int nbhost;
 extern int nbstageout;
+extern int nbstagealloc;
 int nwaitq = 0;
 int nwaitq_with_connection = 0;
 
@@ -987,7 +988,7 @@ int main(argc,argv)
 #endif
 
 	/* Counters on the number of entries in STAGEOUT status */
-	nbstageout = 0;
+	nbstageout = nbstagealloc = 0;
 	/* remove uncompleted requests */
 	for (stcp = stcs; stcp < stce; ) {
 		int rc_upd_fileclass;
