@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/SvcFactory.hpp"
 
 // Local Files
@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
 // -----------------------------------------------------------------------
 castor::IObject* castor::io::StreamCnvSvc::createObj
  (castor::IAddress* address, ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
     StreamAddress* ad = dynamic_cast<StreamAddress*>(address);

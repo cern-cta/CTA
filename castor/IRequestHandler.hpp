@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRequestHandler.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRequestHandler.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,7 @@
 #define CASTOR_IREQUESTHANDLER_HPP 1
 
 // Include Files
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -51,13 +51,15 @@ namespace castor {
      * forgotten whatever happens.
      * @exception Exception throws an Exception in case of error
      */
-    virtual IAddress* nextRequestAddress() throw (Exception) = 0;
+    virtual IAddress* nextRequestAddress()
+      throw (castor::exception::Exception) = 0;
 
     /**
      * returns the number of requests handle in the database.
      * @exception Exception throws an Exception in case of error
      */
-    virtual unsigned int nbRequestsToProcess() throw (Exception) = 0;
+    virtual unsigned int nbRequestsToProcess()
+      throw (castor::exception::Exception) = 0;
     
   };
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/17 14:46:39 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -78,7 +78,6 @@ STGLIB_OBJS = IAddressCInt.Osuf \
               BaseServer.Osuf \
               BaseSvc.Osuf \
               Converters.Osuf \
-              Exception.Osuf \
               Factories.Osuf \
               IAddress.Osuf \
               IClientCInt.Osuf \
@@ -148,7 +147,11 @@ STGLIB_OBJS = IAddressCInt.Osuf \
               stager/TpFileCopy.Osuf \
               stager/TpFileCopyCInt.Osuf \
               db/DbAddress.Osuf \
-              db/DbAddressCInt.Osuf
+              db/DbAddressCInt.Osuf \
+              exception/Exception.Osuf \
+              exception/InvalidArgument.Osuf \
+              exception/Internal.Osuf \
+              exception/NoEntry.Osuf
 
 STAGEIN_OBJ = client/StageIn.Osuf
 MTTEST_OBJ = client/Mttest.Osuf

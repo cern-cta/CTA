@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageInRequest.hpp"
+#include "castor/exception/Exception.hpp"
 
 // Local Files
 #include "StageIn.hpp"
@@ -38,7 +39,7 @@
 // buildRequest
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageIn::buildRequest()
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // set up Client
   if (m_inputFlags.find("-h") != m_inputFlags.end()) {
     m_rhHost = m_inputFlags["-h"];
@@ -71,7 +72,7 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
 // printResult
 //------------------------------------------------------------------------------
 void castor::client::StageIn::printResult(castor::IObject& result)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::ObjectSet set;
   result.print(std::cout, "", set);
 }

@@ -34,7 +34,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 
 namespace castor {
@@ -78,7 +78,8 @@ namespace castor {
       /**
        * parses the input arguments and store them
        */
-      void parseInput(int argc, char** argv) throw (Exception);
+      void parseInput(int argc, char** argv)
+        throw (castor::exception::Exception);
 
       /**
        * builds the actual request. This method has to be
@@ -92,25 +93,29 @@ namespace castor {
       /**
        * builds a default description for a request
        */
-      std::string getDefaultDescription() throw (Exception);
+      std::string getDefaultDescription()
+        throw (castor::exception::Exception);
 
       /**
        * creates a Client object from the callback socket
        * The caller is responsible for deallocating the
        * new client
        */
-      virtual IClient* createClient() throw (Exception);
+      virtual IClient* createClient()
+        throw (castor::exception::Exception);
 
       /**
        * sends a request to the request handler
        */
-      void sendRequest(castor::rh::Request& request) throw (Exception);
+      void sendRequest(castor::rh::Request& request)
+        throw (castor::exception::Exception);
 
       /**
        * sends a request to the request handler
        * @return the object sent back
        */
-      IObject* waitForCallBack() throw (Exception);
+      IObject* waitForCallBack()
+        throw (castor::exception::Exception);
 
       /**
        * this method is responsible for the output of the

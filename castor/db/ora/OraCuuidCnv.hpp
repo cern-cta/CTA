@@ -2,7 +2,7 @@
 #define CASTOR_DB_CUUID_H
 
 // Include Files
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
@@ -63,7 +63,7 @@ namespace castor {
                                castor::IObject* object,
                                castor::ObjectSet& alreadyDone,
                                bool autocommit = true)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
         /**
          * Updates foreign representation from a C++ Object.
@@ -81,7 +81,7 @@ namespace castor {
                                castor::IObject* object,
                                castor::ObjectSet& alreadyDone,
                                bool autocommit = true)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
         /**
          * Deletes foreign representation of a C++ Object.
@@ -99,7 +99,7 @@ namespace castor {
                                castor::IObject* object,
                                castor::ObjectSet& alreadyDone,
                                bool autocommit = true)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
         /**
          * Creates C++ object from foreign representation
@@ -116,7 +116,7 @@ namespace castor {
          */
         virtual castor::IObject* createObj(castor::IAddress* address,
                                            castor::ObjectCatalog& newlyCreated)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
       private:
 

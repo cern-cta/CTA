@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -36,7 +36,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/BaseAddress.hpp"
 
 #include "castor/rh/Request.hpp"
@@ -71,8 +71,10 @@ int main(int argc, char *argv[]) {
     std::cout << "Command line parsed, now starting" << std::endl;
     server.start();
     return 0;
-  } catch (castor::Exception e) {
-    std::cout << "Caught exception:" << e.getMessage().str() << std::endl;
+  } catch (castor::exception::Exception e) {
+    std::cout << "Caught exception : "
+              << sstrerror(e.code()) << std::endl
+              << e.getMessage().str() << std::endl;
   }catch (...) {
     std::cout << "Caught exception!" << std::endl;
   }
@@ -101,8 +103,9 @@ int castor::rh::Server::main () {
   castor::io::Socket sock(CSP_RHSERVER_PORT, true);
   try {
     sock.reusable();
-  } catch(castor::Exception e) {
-    clog() << "Could not set the socket to reusable" << std::endl;
+  } catch(castor::exception::Exception e) {
+    clog() << sstrerror(e.code())
+           << e.getMessage().str() << std::endl;
   }
   
   
@@ -123,8 +126,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   castor::IObject* obj;
   try {
     obj = sock->readObject();
-  } catch (Exception e) {
-    clog() << "Could not get incoming request: Exception:"
+  } catch (castor::exception::Exception e) {
+    clog() << "Could not get incoming request : "
+           << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
   castor::rh::Request* fr =
@@ -139,8 +143,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     unsigned long ip;
     try {
       sock->getPeerIp(port, ip);
-    } catch(castor::Exception e) {
-      clog() << "Exception:" << e.getMessage() << std::endl;
+    } catch(castor::exception::Exception e) {
+      clog() << "Exception :" << sstrerror(e.code())
+             << std::endl << e.getMessage() << std::endl;
     }
 
     clog() << castor::getTimestamp() << " Got request from client "
@@ -157,8 +162,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     handleRequest(fr);
     ack.setStatus(true);
 
-  } catch (castor::Exception e) {
-    clog() << "Exception:" << e.getMessage().str() << std::endl;
+  } catch (castor::exception::Exception e) {
+    clog() << "Exception : " << sstrerror(e.code())
+           << std::endl << e.getMessage().str() << std::endl;
     ack.setStatus(false);
     ack.setErrorCode(1);
     ack.setErrorMessage(e.getMessage().str());
@@ -168,8 +174,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
 
   try {
     sock->sendObject(ack);
-  } catch (Exception e) {
-    clog() << "Could not send ack to client: Exception:"
+  } catch (castor::exception::Exception e) {
+    clog() << "Could not send ack to client : "
+           << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
 
@@ -181,18 +188,13 @@ void *castor::rh::Server::processRequest(void *param) throw() {
 //------------------------------------------------------------------------------
 // handleRequest
 //------------------------------------------------------------------------------
-void castor::rh::Server::handleRequest(castor::IObject* fr) throw(Exception) {
+void castor::rh::Server::handleRequest(castor::IObject* fr)
+  throw (castor::exception::Exception) {
   // Stores it into Oracle
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-  try {
-    svcs()->createRep(&ad, fr, true);
-    clog() << castor::getTimestamp() << " request stored in Oracle, id "
-           << fr->id() << std::endl;
-  } catch (castor::Exception e) {
-    clog() << "Error caught in createRep :" << std::endl
-           << e.getMessage().str() << std::endl;
-    throw e;
-  }
+  svcs()->createRep(&ad, fr, true);
+  clog() << castor::getTimestamp() << " request stored in Oracle, id "
+         << fr->id() << std::endl;
   // Send an UDP message to the stager
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (fd < 0) {

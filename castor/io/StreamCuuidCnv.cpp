@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:37:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,8 @@
 #include "StreamCuuidCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -80,7 +81,7 @@ void castor::io::StreamCuuidCnv::createRep(castor::IAddress* address,
                                           castor::IObject* object,
                                           castor::ObjectSet& alreadyDone,
                                           bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj = 
     dynamic_cast<castor::stager::Cuuid*>(object);
   StreamAddress* ad = 
@@ -106,10 +107,9 @@ void castor::io::StreamCuuidCnv::updateRep(castor::IAddress* address,
                                           castor::IObject* object,
                                           castor::ObjectSet& alreadyDone,
                                           bool autocommit)
-  throw (castor::Exception) {
-  castor::Exception ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot update representation in case of streaming.";
   throw ex;
 }
 
@@ -120,10 +120,9 @@ void castor::io::StreamCuuidCnv::deleteRep(castor::IAddress* address,
                                           castor::IObject* object,
                                           castor::ObjectSet& alreadyDone,
                                           bool autocommit)
-  throw (castor::Exception) {
-  castor::Exception ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot delete representation in case of streaming.";
   throw ex;
 }
 
@@ -132,7 +131,7 @@ void castor::io::StreamCuuidCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamCuuidCnv::createObj(castor::IAddress* address,
                                                       castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object

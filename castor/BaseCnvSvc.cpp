@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,6 +26,8 @@
 
 // Include Files
 #include <map>
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 
 // Local Includes
 #include "ICnvFactory.hpp"
@@ -68,7 +70,7 @@ bool castor::BaseCnvSvc::removeConverter(const unsigned int id) {
 // converter
 //-----------------------------------------------------------------------------
 castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
-  throw (Exception) {
+  throw (castor::exception::Exception) {
   // check if we have one
   IConverter* conv = m_converters[objType];
   if (0 != conv) return conv;
@@ -76,20 +78,20 @@ castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
   const castor::ICnvFactory* fac =
     castor::Converters::instance()->cnvFactory(repType(), objType);
   if (0 == fac) {
-    Exception e;
+    castor::exception::Internal e;
     e.getMessage() << "No factory found for object type "
-		   << objType << " and representation type "
-		   << repType() << std::endl;
-    throw e; 
+                   << objType << " and representation type "
+                   << repType();
+    throw e;
   }
 
   m_converters[objType] = fac->instantiate();
   if (0!= m_converters[objType]) return m_converters[objType];
   // Throw an exception since we did not find any suitable converter
-  Exception e;
+  castor::exception::Internal e;
   e.getMessage() << "No converter for object type "
                  << objType << " and representation type "
-                 << repType() << std::endl;
+                 << repType();
   throw e;
 };
 
@@ -100,7 +102,7 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    ObjectSet& alreadyDone,
                                    bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // Look for an adapted converter
   IConverter* conv = converter(object->type());
   // convert
@@ -115,7 +117,7 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    ObjectSet& alreadyDone,
                                    bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // Look for an adapted converter
   IConverter* conv = converter(object->type());
   // convert
@@ -130,7 +132,7 @@ void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    ObjectSet& alreadyDone,
                                    bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // Look for an adapted converter
   IConverter* conv = converter(object->type());
   // convert
@@ -143,7 +145,7 @@ void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 castor::IObject* castor::BaseCnvSvc::createObj
 (castor::IAddress* address, castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // Look for an adapted converter
   castor::IConverter* conv = converter(address->objType());
   return conv->createObj(address, newlyCreated);

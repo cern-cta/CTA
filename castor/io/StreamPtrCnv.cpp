@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:37:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,8 @@
 #include "StreamPtrCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -77,12 +78,11 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
                                          castor::IObject* object,
                                          castor::ObjectSet& alreadyDone,
                                          bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
-  castor::Exception ex;
-  ex.getMessage() << "Internal error :" << std::endl
-                  << "  castor::io::StreamPtrCnv::createRep "
-                  << "should never be called" << std::endl;
+  castor::exception::Internal ex;
+  ex.getMessage() << "castor::io::StreamPtrCnv::createRep "
+                  << "should never be called";
   throw ex;
 }
 
@@ -93,12 +93,11 @@ void castor::io::StreamPtrCnv::updateRep(castor::IAddress* address,
                                          castor::IObject* object,
                                          castor::ObjectSet& alreadyDone,
                                          bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
-  castor::Exception ex;
-  ex.getMessage() << "Internal error :" << std::endl
-                  << "  castor::io::StreamPtrCnv::updateRep "
-                  << "should never be called" << std::endl;
+  castor::exception::Internal ex;
+  ex.getMessage() << "castor::io::StreamPtrCnv::updateRep "
+                  << "should never be called";
   throw ex;
 }
 
@@ -109,10 +108,9 @@ void castor::io::StreamPtrCnv::deleteRep(castor::IAddress* address,
                                          castor::IObject* object,
                                          castor::ObjectSet& alreadyDone,
                                          bool autocommit)
-  throw (castor::Exception) {
-  castor::Exception ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot delete representation in case of streaming.";
   throw ex;
 }
 
@@ -121,7 +119,7 @@ void castor::io::StreamPtrCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::createObj
 (castor::IAddress* address, castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // Just retrieve the object from the newlyCreated catalog
@@ -134,8 +132,8 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
   if (newlyCreated.find(id) != newlyCreated.end()) {
     return newlyCreated[id];
   }
-  castor::Exception ex;
+  castor::exception::Internal ex;
   ex.getMessage() << "Deserialization error : wrong id found in stream : "
-                  << id << std::endl;
+                  << id;
   throw ex;
 }

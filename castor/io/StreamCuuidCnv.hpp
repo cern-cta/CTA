@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/13 16:49:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/19 16:37:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,7 @@
 #define CASTOR_IO_CUUID_HPP
 
 // Include Files
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
@@ -87,7 +87,7 @@ namespace castor {
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
                              bool autocommit = true)
-        throw (castor::Exception);
+        throw (castor::exception::Exception);
 
       /**
        * Updates foreign representation from a C++ Object.
@@ -105,7 +105,7 @@ namespace castor {
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
                              bool autocommit = true)
-        throw (castor::Exception);
+        throw (castor::exception::Exception);
 
       /**
        * Deletes foreign representation of a C++ Object.
@@ -123,7 +123,7 @@ namespace castor {
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
                              bool autocommit = true)
-        throw (castor::Exception);
+        throw (castor::exception::Exception);
 
       /**
        * Creates C++ object from foreign representation
@@ -140,7 +140,7 @@ namespace castor {
        */
       virtual castor::IObject* createObj(castor::IAddress* address,
                                          castor::ObjectCatalog& newlyCreated)
-        throw (castor::Exception);
+        throw (castor::exception::Exception);
 
     }; // end of class StreamCuuidCnv
 

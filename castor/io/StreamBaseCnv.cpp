@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:37:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/IObject.hpp"
+#include "castor/exception/Internal.hpp"
 
 // Local Files
 #include "StreamBaseCnv.hpp"
@@ -43,9 +44,8 @@ castor::io::StreamBaseCnv::StreamBaseCnv() :
   m_cnvSvc = dynamic_cast<castor::io::StreamCnvSvc*>
     (svcs()->cnvService("StreamCnvSvc", SVC_STREAMCNV));
   if (!m_cnvSvc) {
-    castor::Exception ex;
-    ex.getMessage() << "No StreamCnvSvc available"
-                    << std::endl;
+    castor::exception::Internal ex;
+    ex.getMessage() << "No StreamCnvSvc available";
     throw ex;
   }
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/14 09:34:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,7 +29,7 @@
 
 //Include Files
 #include <map>
-#include "Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -85,7 +85,8 @@ namespace castor {
      */
     void createRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = true) throw (Exception);
+                   bool autocommit = true)
+      throw (castor::exception::Exception);
 
     /**
      * Updates foreign representation from a C++ Object.
@@ -101,7 +102,8 @@ namespace castor {
      */
     void updateRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = true) throw (Exception);
+                   bool autocommit = true)
+      throw (castor::exception::Exception);
 
     /**
      * deletes foreign representation of a C++ Object
@@ -114,7 +116,8 @@ namespace castor {
      */
     void deleteRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = false) throw (Exception);
+                   bool autocommit = false)
+      throw (castor::exception::Exception);
 
     /**
      * create C++ object from foreign representation
@@ -125,7 +128,8 @@ namespace castor {
      * for the deallocation of the newly created object
      * @exception Exception throws an Exception in cas of error
      */
-    IObject* createObj(IAddress* address) throw (Exception);
+    IObject* createObj(IAddress* address)
+      throw (castor::exception::Exception);
 
   private:
     /**

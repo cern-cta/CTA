@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/14 14:11:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,10 +25,11 @@
  *****************************************************************************/
 
 // C++ Include Files
-#include "castor/Services.hpp"
 #include <string>
 #include <iostream>
-#include <errno.h>
+#include <serrno.h>
+#include "castor/Services.hpp"
+#include "castor/exception/Exception.hpp"
 
 extern "C" {
 
@@ -59,8 +60,8 @@ extern "C" {
   int C_Services_delete(C_Services_t* svcs) {
     try {
       if (0 != svcs->svcs) delete svcs->svcs;
-    } catch (castor::Exception e) {
-      errno = EINVAL;
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }
@@ -82,8 +83,8 @@ extern "C" {
     }
     try {
       svcs->svcs->createRep(address, object, autocommit);
-    } catch (castor::Exception e) {
-      errno = EINVAL;
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }
@@ -104,8 +105,8 @@ extern "C" {
     }
     try {
       svcs->svcs->updateRep(address, object, autocommit);
-    } catch (castor::Exception e) {
-      errno = EINVAL;      
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }
@@ -126,8 +127,8 @@ extern "C" {
     }
     try {
       svcs->svcs->deleteRep(address, object, autocommit);
-    } catch (castor::Exception e) {
-      errno = EINVAL;      
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }
@@ -147,8 +148,8 @@ extern "C" {
     }
     try {
       *object = svcs->svcs->createObj(address);
-    } catch (castor::Exception e) {
-      errno = EINVAL;
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,7 +33,7 @@
 // Local Includes
 #include "ICnvSvc.hpp"
 #include "BaseSvc.hpp"
-#include "Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "ObjectSet.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -81,7 +81,7 @@ namespace castor {
      * is found
      */
     virtual IConverter* converter(const unsigned int objType)
-      throw (Exception);
+      throw (castor::exception::Exception);
 
     /**
      * gets the representation type, that is the type of
@@ -105,7 +105,7 @@ namespace castor {
                            IObject* object,
                            ObjectSet& alreadyDone,
                            bool autocommit = false)
-      throw (Exception);
+      throw (castor::exception::Exception);
 
     /**
      * Updates foreign representation from a C++ Object.
@@ -123,7 +123,7 @@ namespace castor {
                            IObject* object,
                            ObjectSet& alreadyDone,
                            bool autocommit = true)
-      throw (Exception);
+      throw (castor::exception::Exception);
     
     /**
      * Deletes foreign representation of a C++ Object.
@@ -141,7 +141,7 @@ namespace castor {
                            castor::IObject* object,
                            castor::ObjectSet& alreadyDone,
                            bool autocommit = true)
-      throw (castor::Exception);
+      throw (castor::exception::Exception);
     
     /**
      * Creates C++ object from foreign representation
@@ -158,7 +158,7 @@ namespace castor {
      */
     virtual IObject* createObj (IAddress* address,
                                 ObjectCatalog& newlyCreated)
-      throw (castor::Exception);
+      throw (castor::exception::Exception);
 
   private:
     /**

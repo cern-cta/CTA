@@ -27,7 +27,6 @@
 // Include Files
 #include "StreamMessageAckCnv.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Exception.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -35,6 +34,8 @@
 #include "castor/MessageAck.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include <string>
 
@@ -78,7 +79,7 @@ void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::MessageAck* obj = 
     dynamic_cast<castor::MessageAck*>(object);
   StreamAddress* ad = 
@@ -99,8 +100,8 @@ void castor::io::StreamMessageAckCnv::updateRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
-  throw (castor::Exception) {
-  castor::Exception ex;
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
                   << std::endl;
   throw ex;
@@ -113,8 +114,8 @@ void castor::io::StreamMessageAckCnv::deleteRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
-  throw (castor::Exception) {
-  castor::Exception ex;
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
   ex.getMessage() << "Cannot delete representation in case of streaming."
                   << std::endl;
   throw ex;
@@ -125,7 +126,7 @@ void castor::io::StreamMessageAckCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* address,
                                                             castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object

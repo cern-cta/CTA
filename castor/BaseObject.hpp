@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:14 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -29,7 +29,7 @@
 
 // Include Files
 #include "castor/logstream.h"
-#include "Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -47,7 +47,7 @@ namespace castor {
     /**
      * Access to the underlying Services object
      */
-    Services* svcs() throw(Exception);
+    Services* svcs() throw(castor::exception::Exception);
     
     /**
      * gets the message service.
@@ -55,19 +55,19 @@ namespace castor {
      * @return a pointer to the message service or 0 if none
      * is available.
      */
-    MsgSvc* msgSvc() throw(Exception);
+    MsgSvc* msgSvc() throw(castor::exception::Exception);
     
     /**
      * Access to the log stream
      */
-    castor::logstream& clog() throw(Exception);
+    castor::logstream& clog() throw(castor::exception::Exception);
 
   private:
     
     /**
      * gets the thread local storage
      */
-    void getTLS(void** thip) throw(Exception);
+    void getTLS(void** thip) throw(castor::exception::Exception);
 
   }; // end of class BaseObject
 

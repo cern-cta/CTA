@@ -30,6 +30,8 @@
 #include "castor/Services.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/db/DbAddress.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 
 // Local Files
 #include "OraBaseCnv.hpp"
@@ -48,15 +50,14 @@ castor::db::ora::OraBaseCnv::OraBaseCnv() :
     try {
       m_connection = m_cnvSvc->getConnection();
     } catch (oracle::occi::SQLException e) {
-      castor::Exception ex;
+      castor::exception::Internal ex;
       ex.getMessage() << "Error trying to get a connection to ORACLE :"
-                      << std::endl << e.what() << std::endl;
+                      << std::endl << e.what();
       throw ex;
     }
   } else {
-    castor::Exception ex;
-    ex.getMessage() << "No OraCnvSvc available"
-                    << std::endl;
+    castor::exception::Internal ex;
+    ex.getMessage() << "No OraCnvSvc available";
     throw ex;
   }
 }
@@ -88,11 +89,10 @@ inline const unsigned int castor::db::ora::OraBaseCnv::repType() const {
 // -----------------------------------------------------------------------
 oracle::occi::Statement*
 castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   if (0 == m_connection) {
-    castor::Exception ex;
-    ex.getMessage() << "Cannot create statement with no connection."
-                    << std::endl;
+    castor::exception::Internal ex;
+    ex.getMessage() << "Cannot create statement without connection.";
     throw ex;
   };
   try {
@@ -100,10 +100,10 @@ castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
     stmt->setSQL(stmtString);
     return stmt;
   } catch (oracle::occi::SQLException e) {
-    castor::Exception ex;
+    castor::exception::Internal ex;
     ex.getMessage() << "Unable to create statement :" << std::endl
                     << stmtString << std::endl
-                    << e.what() << std::endl;
+                    << e.what();
     throw ex;
   }
   // This is never called
@@ -138,7 +138,7 @@ castor::db::ora::OraCnvSvc* castor::db::ora::OraBaseCnv::cnvSvc() const {
 castor::IObject* castor::db::ora::OraBaseCnv::getObjFromId
 (unsigned long id,
  castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   if (newlyCreated.find(id) != newlyCreated.end()) {
     return newlyCreated[id];
   } else {

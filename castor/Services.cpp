@@ -17,13 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
+// Include Files
 #include "Services.hpp"
 #include "Factories.hpp"
 #include "Constants.hpp"
@@ -34,6 +35,8 @@
 #include "ICnvSvc.hpp"
 #include "ObjectSet.hpp"
 #include "ObjectCatalog.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -104,7 +107,7 @@ castor::ICnvSvc* castor::Services::cnvService(const std::string name,
 void castor::Services::createRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->createRep(address, object, alreadyDone, autocommit);
@@ -116,7 +119,7 @@ void castor::Services::createRep(castor::IAddress* address,
 void castor::Services::updateRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->updateRep(address, object, alreadyDone, autocommit);
@@ -128,7 +131,7 @@ void castor::Services::updateRep(castor::IAddress* address,
 void castor::Services::deleteRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->deleteRep(address, object, alreadyDone, autocommit);
@@ -141,19 +144,18 @@ castor::ICnvSvc*
 castor::Services::cnvSvcFromAddress(castor::IAddress* address) {
   // check address
   if (0 == address) {
-    castor::Exception ex;
-    ex.getMessage() << "No appropriate converter for a null address !"
-                    << std::endl;
+    castor::exception::Internal ex;
+    ex.getMessage() << "No appropriate converter for a null address !";
     throw ex;
   }
   // Look for an adapted conversion service
   castor::ICnvSvc *cnvSvc =
     cnvService(address->cnvSvcName(), address->cnvSvcType());
   if (0 == cnvSvc) {
-    castor::Exception ex;
+    castor::exception::Internal ex;
     ex.getMessage() << "No conversion service with name "
                     << address->cnvSvcName() << " and type "
-                    << address->cnvSvcType() << std::endl;
+                    << address->cnvSvcType();
     throw ex;
   }
   return cnvSvc;
@@ -163,7 +165,7 @@ castor::Services::cnvSvcFromAddress(castor::IAddress* address) {
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::Services::createObj(castor::IAddress* address)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectCatalog newlyCreated;
   return cnvSvc->createObj(address, newlyCreated);

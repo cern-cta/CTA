@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define IO_STREAMCNVSVC_HPP 1
 
 #include "castor/BaseCnvSvc.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -85,7 +86,7 @@ namespace castor {
        * @exception Exception throws an Exception in cas of error
        */
       IObject* createObj (IAddress* address, ObjectCatalog& newlyCreated)
-        throw (castor::Exception);
+        throw (castor::exception::Exception);
       
     };
 

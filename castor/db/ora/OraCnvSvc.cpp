@@ -28,9 +28,12 @@
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/MsgSvc.hpp"
-#include "castor/Exception.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbAddress.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include <iomanip>
 #include <Cthread_api.h>
 
@@ -194,7 +197,7 @@ void castor::db::ora::OraCnvSvc::deleteConnection
 // -----------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* address,
                                                    ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
     castor::db::DbAddress* ad =
@@ -222,9 +225,9 @@ castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
       m_getIdStatement->registerOutParam(2, oracle::occi::OCCIINT, sizeof(int));
     } catch (oracle::occi::SQLException e) {
       m_getIdStatement = 0;
-      castor::Exception ex;
+      castor::exception::Internal ex;
       ex.getMessage() << "Error in creating get Id statement."
-                      << std::endl << e.what() << std::endl;
+                      << std::endl << e.what();
       throw ex;
     }
   }
@@ -233,9 +236,9 @@ castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
     m_getIdStatement->executeUpdate();
     return m_getIdStatement->getInt(2) - nids;
   } catch (oracle::occi::SQLException e) {
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting next id."
-                    << std::endl << e.what() << std::endl;
+                    << std::endl << e.what();
     throw ex;
   }
   return 0;
@@ -245,7 +248,7 @@ castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
 // nextRequestAddress
 // -----------------------------------------------------------------------
 castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // Prepare statement
   if (0 == m_getNRStatement) {
     try {
@@ -255,9 +258,9 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
       m_getNRStatement->registerOutParam(1, oracle::occi::OCCIINT, sizeof(int));
     } catch (oracle::occi::SQLException e) {
       m_getNRStatement = 0;
-      castor::Exception ex;
+      castor::exception::Internal ex;
       ex.getMessage() << "Error in creating next request statement."
-                      << std::endl << e.what() << std::endl;
+                      << std::endl << e.what();
       throw ex;
     }
   }
@@ -267,9 +270,9 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
       return new DbAddress(m_getNRStatement->getInt(1), "OraCnvSvc", castor::SVC_ORACNV);  
     }
   } catch (oracle::occi::SQLException e) {
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting next request id."
-                    << std::endl << e.what() << std::endl;
+                    << std::endl << e.what();
     throw ex;
   }
   return 0;
@@ -279,7 +282,7 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
 // nbRequestsToProcess
 // -----------------------------------------------------------------------
 unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
-  throw (Exception) {
+  throw (castor::exception::Exception) {
   try {
     // Prepare statements
     if (0 == m_getNBRStatement) {
@@ -294,14 +297,16 @@ unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
       return rset->getInt(1);
     }
   } catch (oracle::occi::SQLException e) {
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting number of request to process."
-                    << std::endl << e.what() << std::endl;
+                    << std::endl << e.what();
     try {
       getConnection()->rollback();
     } catch (oracle::occi::SQLException e2) {
-      ex.getMessage() << "After that, the rollback also failed :"
-                      << std::endl << e2.what() << std::endl;
+      // XXX fix it depending on ORACLE error
+      ex.getMessage() << std::endl
+                      << "After that, the rollback also failed :"
+                      << std::endl << e2.what();
     }
     throw ex;
   }
@@ -314,7 +319,7 @@ unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
 // -----------------------------------------------------------------------
 const unsigned int
 castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // a null id has a null type
   if (0 == id) return 0;
   try {
@@ -327,20 +332,21 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
     m_getTypeStatement->setInt(1, id);
     oracle::occi::ResultSet *rset = m_getTypeStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::Exception ex;
-      ex.getMessage() << "No type found for id :" << id << std::endl;
+      castor::exception::NoEntry ex;
+      ex.getMessage() << "No type found for id :" << id;
       throw ex;
     }
     return rset->getInt(1);
   } catch (oracle::occi::SQLException e) {
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting type from id."
-                    << std::endl << e.what() << std::endl;
+                    << std::endl << e.what();
     try {
       getConnection()->rollback();
     } catch (oracle::occi::SQLException e2) {
+      // XXX fix it depending on ORACLE error
       ex.getMessage() << "After that, the rollback also failed :"
-                      << std::endl << e2.what() << std::endl;
+                      << std::endl << e2.what();
     }
     throw ex;
   }

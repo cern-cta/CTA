@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Server.hpp
+ *                      Internal.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,68 +17,39 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Internal.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/19 16:37:22 $ $Author: sponcec3 $
  *
- *
+ * Internal error exception
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RH_SERVER_HPP
-#define RH_SERVER_HPP 1
+#ifndef EXCEPTION_INTERNAL_HPP 
+#define EXCEPTION_INTERNAL_HPP 1
 
-#include "castor/BaseServer.hpp"
+// Include Files
 #include "castor/exception/Exception.hpp"
-
-#define CSP_MSG_MAGIC 0xCA001
-#define CSP_RHSERVER_PORT 9002
-#define CSP_NOTIFICATION_PORT 9001
 
 namespace castor {
 
-  namespace rh {
+  namespace exception {
 
     /**
-     * The Request Handler server. This is were client requests
-     * arrive. The main task of this component is to store them
-     * for future use
+     * Invalid argument exception
      */
-    class Server : public castor::BaseServer {
-
+    class Internal : public castor::exception::Exception {
+      
     public:
-
+      
       /**
-       * Constructor
+       * default constructor
        */
-      Server();
+      Internal();
 
-      /**
-       * Method called once per request, where all the code resides
-       */
-      void *processRequest(void *param) throw();
-
-      /**
-       * Main Server loop, listening for the clients
-       */
-      int main();
-
-      /**
-       * Overriding start method for logging purposes
-       */
-      //virtual int start();
-
-    private:
-
-      /**
-       * handles an incoming request
-       */
-      void handleRequest(castor::IObject* fr)
-        throw (castor::exception::Exception);
-
-    }; // class Server
-
-  } // end of namespace rh
+    };
+      
+  } // end of namespace exception
 
 } // end of namespace castor
 
-#endif // RH_SERVER_HPP
+#endif // EXCEPTION_INTERNAL_HPP

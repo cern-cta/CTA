@@ -1,7 +1,6 @@
 // Include Files
 #include "OraCuuidCnv.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Exception.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -11,6 +10,10 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/stager/Cuuid.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include <list>
 
 //------------------------------------------------------------------------------
@@ -92,7 +95,7 @@ void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
                                              castor::IObject* object,
                                              castor::ObjectSet& alreadyDone,
                                              bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);
   // check whether something needs to be done
@@ -130,10 +133,11 @@ void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl;
+                    << "Statement was :" << std::endl
+                    << s_insertStatementString;
     throw ex;
   }
 }
@@ -145,7 +149,7 @@ void castor::db::ora::OraCuuidCnv::updateRep(castor::IAddress* address,
                                              castor::IObject* object,
                                              castor::ObjectSet& alreadyDone,
                                              bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);
   // check whether something needs to be done
@@ -173,11 +177,11 @@ void castor::db::ora::OraCuuidCnv::updateRep(castor::IAddress* address,
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
-                    << s_updateStatementString << std::endl;
+                    << s_updateStatementString;
     throw ex;
   }
 }
@@ -189,7 +193,7 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
                                              castor::IObject* object,
                                              castor::ObjectSet& alreadyDone,
                                              bool autocommit)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);
   // check whether something needs to be done
@@ -213,12 +217,12 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << "and id was " << obj->id();
     throw ex;
   }
 }
@@ -228,7 +232,7 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* address,
                                                          castor::ObjectCatalog& newlyCreated)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   DbAddress* ad =
     dynamic_cast<DbAddress*>(address);
   try {
@@ -237,17 +241,17 @@ castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* addre
       m_selectStatement = createStatement(s_selectStatementString);
     }
     if (0 == m_selectStatement) {
-      castor::Exception ex;
+      castor::exception::Internal ex;
       ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString << std::endl;
+                      << s_selectStatementString;
       throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setInt(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::Exception ex;
-      ex.getMessage() << "No object found for id :" << ad->id() << std::endl;
+      castor::exception::NoEntry ex;
+      ex.getMessage() << "No object found for id :" << ad->id();
       throw ex;
     }
     // create the new Object
@@ -267,12 +271,12 @@ castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* addre
     return object;
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
-    castor::Exception ex;
+    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE Error
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->id() << std::endl;;
+                    << "and id was " << ad->id();
     throw ex;
   }
 }

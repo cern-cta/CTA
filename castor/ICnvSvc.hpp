@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,7 +29,7 @@
 
 // Include Files
 #include "IService.hpp"
-#include "Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "ObjectSet.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -81,7 +81,7 @@ namespace castor {
                            IObject* object,
                            ObjectSet& alreadyDone,
                            bool autocommit)
-      throw (Exception) = 0;
+      throw (castor::exception::Exception) = 0;
 
     /**
      * Updates foreign representation from a C++ Object.
@@ -99,7 +99,7 @@ namespace castor {
                            IObject* object,
                            ObjectSet& alreadyDone,
                            bool autocommit)
-      throw (Exception) = 0;
+      throw (castor::exception::Exception) = 0;
 
     /**
      * Deletes foreign representation of a C++ Object.
@@ -117,7 +117,7 @@ namespace castor {
                            castor::IObject* object,
                            castor::ObjectSet& alreadyDone,
                            bool autocommit = true)
-      throw (castor::Exception) = 0;
+      throw (castor::exception::Exception) = 0;
 
     /**
      * create C++ object from foreign representation
@@ -134,7 +134,7 @@ namespace castor {
      */
     virtual IObject* createObj (IAddress* address,
                                 ObjectCatalog& newlyCreated)
-      throw (castor::Exception) = 0;
+      throw (castor::exception::Exception) = 0;
 
   };
 

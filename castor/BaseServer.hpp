@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <string>
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 
 namespace castor {
@@ -114,7 +114,7 @@ namespace castor {
      * @return a pointer to the message service or 0 if none
      * is available.
      */
-    std::ostream& log() throw (castor::Exception);
+    std::ostream& log() throw (castor::exception::Exception);
 
     /**
      * Output stream to logfile

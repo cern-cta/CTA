@@ -31,6 +31,7 @@
 #include "occi.h"
 #include "castor/BaseCnvSvc.hpp"
 #include "castor/IRequestHandler.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -107,7 +108,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         IObject* createObj (IAddress* address, ObjectCatalog& newlyCreated)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
         /**
          * reserves a bunch of ids from the database and
@@ -131,13 +132,15 @@ namespace castor {
          * @return the address to the next request to handle or 0
          * if no request is left
          */
-        virtual IAddress* nextRequestAddress() throw (castor::Exception);
+        virtual IAddress* nextRequestAddress()
+          throw (castor::exception::Exception);
 
         /**
          * returns the number of requests handle in the database.
          * @exception Exception throws an Exception in case of error
          */
-        virtual unsigned int nbRequestsToProcess() throw (Exception);
+        virtual unsigned int nbRequestsToProcess()
+          throw (castor::exception::Exception);
 
       protected:
 
@@ -145,7 +148,7 @@ namespace castor {
          * retrieves the type of an object given by its id
          */
         const unsigned int getTypeFromId(const unsigned long id)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
 
       private:
 

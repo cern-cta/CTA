@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 
 // Include Files
 #include "BaseClient.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -50,14 +51,16 @@ namespace castor {
        * of the request
        * @return the request to be sent to the request handler
        */
-      virtual castor::rh::Request* buildRequest() throw (Exception);
+      virtual castor::rh::Request* buildRequest()
+        throw (castor::exception::Exception);
 
       /**
        * this method is responsible for the output of the
        * request result. This method has to be reimplemented
        * in each client
        */
-      virtual void printResult(castor::IObject& result) throw (Exception);
+      virtual void printResult(castor::IObject& result)
+        throw (castor::exception::Exception);
 
     };
 

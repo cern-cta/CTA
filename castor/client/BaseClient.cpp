@@ -43,6 +43,9 @@
 #include "castor/rh/Client.hpp"
 #include "castor/rh/Request.hpp"
 #include "castor/Services.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 extern "C" {
 #include <Cgetopt.h>
 }
@@ -93,7 +96,7 @@ void castor::client::BaseClient::run(int argc, char** argv)
     printResult(*result);
     // delete the result
     delete result;
-  } catch (Exception ex) {
+  } catch (castor::exception::Exception ex) {
     clog() << ex.getMessage().str();
   }
 }
@@ -102,7 +105,7 @@ void castor::client::BaseClient::run(int argc, char** argv)
 // parseInput
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::parseInput(int argc, char** argv)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   Coptind = 1;    /* Required */
   Copterr = 1;    /* Some stderr output if you want */
   Coptreset = 1;  /* In case we are parsing several times the same argv */
@@ -123,26 +126,32 @@ void castor::client::BaseClient::parseInput(int argc, char** argv)
 // getDefaultDescription
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::getDefaultDescription()
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   struct utsname utsname;
   if (uname(&utsname) == -1) {
-    Exception ex;
-    ex.getMessage() << "Unable to get machine name" << std::endl;
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to get machine name";
     throw ex;
   }
   uid_t uid = getuid();
+  errno = 0;
   passwd* pwd = getpwuid(uid);
   if (pwd == 0) {
-    Exception ex;
-    ex.getMessage() << "Unable to get user name" << std::endl;
-    throw ex;;
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to get user name";
+    throw ex;
   }
   const time_t stime = time(0);
+  if (stime == -1) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to get time";
+    throw ex;
+  }
   struct tm *t = localtime(&stime);
   if (t == 0) {
-    Exception ex;
-    ex.getMessage() << "Unable to get time" << std::endl;
-    throw ex;;
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to get local time";
+    throw ex;
   }
   std::ostringstream desc;
   desc << "Request by " << pwd->pw_name
@@ -160,11 +169,11 @@ std::string castor::client::BaseClient::getDefaultDescription()
 // createClient
 //------------------------------------------------------------------------------
 castor::IClient* castor::client::BaseClient::createClient()
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // if no callbackSocket
   if (0 == m_callbackSocket) {
-    Exception ex;
-    ex.getMessage() << "No call back socket available" << std::endl;
+    castor::exception::Internal ex;
+    ex.getMessage() << "No call back socket available";
     throw ex;
   }
   // build client
@@ -181,7 +190,7 @@ castor::IClient* castor::client::BaseClient::createClient()
 // sendRequest
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::sendRequest(castor::rh::Request& request)
-  throw (castor::Exception) {
+  throw (castor::exception::Exception) {
   // creates a socket
   castor::io::Socket s(m_rhPort, m_rhHost);
   // sends the request
@@ -191,13 +200,13 @@ void castor::client::BaseClient::sendRequest(castor::rh::Request& request)
   castor::MessageAck* ack =
     dynamic_cast<castor::MessageAck*>(obj);
   if (0 == ack) {
-    castor::Exception e;
+    castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "No Acknowledgement from the Server";
     delete ack;
     throw e;
   }
   if (!ack->status()) {
-    castor::Exception e;
+    castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "Server Error "
                    << ack->errorCode() << " :" << std::endl
                    << ack->errorMessage();
@@ -211,15 +220,14 @@ void castor::client::BaseClient::sendRequest(castor::rh::Request& request)
 // waitForCallBack
 //------------------------------------------------------------------------------
 castor::IObject* castor::client::BaseClient::waitForCallBack()
-  throw (Exception) {
+  throw (castor::exception::Exception) {
 
   int rc, nonblocking;
 
   rc = ioctl(m_callbackSocket->socket(),FIONBIO,&nonblocking);
   if (rc == SOCKET_ERROR) {
-    Exception e;
-    e.getMessage() << "Could not set socket asynchonous: " << strerror(errno)
-                   << std::endl;
+    castor::exception::InvalidArgument e; // XXX To be changed
+    e.getMessage() << "Could not set socket asynchonous";
     throw e;
   }
 
@@ -233,13 +241,12 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
   /* Will return > 0 if the descriptor is readable */
   rc = poll(&pollit,1,timeout*1000);
   if (0 == rc) {
-    Exception e;
-    e.getMessage() << "Accept timeout" << std::endl;
+    castor::exception::InvalidArgument e; // XXX To be changed
+    e.getMessage() << "Accept timeout";
     throw e;
   } else if (rc < 0) {
-    Exception e;
-    e.getMessage() << "Poll error: " << strerror(errno)
-                   << std::endl;
+    castor::exception::InvalidArgument e; // XXX To be changed
+    e.getMessage() << "Poll error";
     throw e;
   }
 

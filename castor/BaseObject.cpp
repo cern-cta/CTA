@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,13 +29,15 @@
 #include "castor/Services.hpp"
 #include "castor/MsgSvc.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/Exception.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "Cglobals.h"
 
 // -----------------------------------------------------------------------
 // msgSvc
 // -----------------------------------------------------------------------
-castor::MsgSvc* castor::BaseObject::msgSvc() throw (castor::Exception) {
+castor::MsgSvc* castor::BaseObject::msgSvc()
+  throw (castor::exception::Exception) {
   IService* svc = svcs()->service("MsgSvc",
                                   castor::MsgSvc::ID());
   if (0 == svc) return 0;
@@ -50,7 +52,8 @@ castor::MsgSvc* castor::BaseObject::msgSvc() throw (castor::Exception) {
 //------------------------------------------------------------------------------
 // svcs
 //------------------------------------------------------------------------------
-castor::Services* castor::BaseObject::svcs() throw (castor::Exception) {
+castor::Services* castor::BaseObject::svcs()
+  throw (castor::exception::Exception) {
   void **tls;
   getTLS((void **)&tls);
   if (0 == *tls) {
@@ -62,11 +65,12 @@ castor::Services* castor::BaseObject::svcs() throw (castor::Exception) {
 //------------------------------------------------------------------------------
 // getTLS
 //------------------------------------------------------------------------------
-void castor::BaseObject::getTLS(void **thip) throw (castor::Exception) {
+void castor::BaseObject::getTLS(void **thip)
+ throw (castor::exception::Exception) {
   static int Cns_api_key = -1;
   int rc = Cglobals_get (&Cns_api_key, (void **) thip, sizeof(void *));
   if (*thip == NULL) {
-    Exception ex;
+    castor::exception::Internal ex;
     ex.getMessage() << "Could not get thread local storage";
     throw ex;
   }
@@ -78,6 +82,7 @@ void castor::BaseObject::getTLS(void **thip) throw (castor::Exception) {
 //------------------------------------------------------------------------------
 // clog
 //------------------------------------------------------------------------------
-castor::logstream& castor::BaseObject::clog() throw(castor::Exception) {
+castor::logstream& castor::BaseObject::clog()
+ throw(castor::exception::Exception) {
   return msgSvc()->stream();
 }

@@ -32,6 +32,7 @@
 #include "castor/IConverter.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/ObjectCatalog.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -88,7 +89,7 @@ namespace castor {
          * @see deleteStatement()
          */
         oracle::occi::Statement* createStatement(const std::string &stmtString)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
         
         /**
          * deletes a statement and frees the associated memory
@@ -106,7 +107,7 @@ namespace castor {
          */
         castor::IObject* getObjFromId (unsigned long id,
                                        ObjectCatalog& newlyCreated)
-          throw (castor::Exception);
+          throw (castor::exception::Exception);
         
         /**
          * access to the Oracle connection for child classes

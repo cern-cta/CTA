@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,7 +31,7 @@
 #include <map>
 
 // Local Includes
-#include "Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "ObjectSet.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -76,7 +76,8 @@ namespace castor {
     virtual void createRep(IAddress* address,
                            IObject* object,
                            ObjectSet& alreadyDone,
-                           bool autocommit) throw (Exception) = 0;
+                           bool autocommit)
+      throw (castor::exception::Exception) = 0;
     
     /**
      * Updates foreign representation from a C++ Object.
@@ -93,7 +94,8 @@ namespace castor {
     virtual void updateRep(IAddress* address,
                            IObject* object,
                            ObjectSet& alreadyDone,
-                           bool autocommit) throw (Exception) = 0;
+                           bool autocommit)
+      throw (castor::exception::Exception) = 0;
 
     /**
      * deletes foreign representation of a C++ Object
@@ -110,7 +112,8 @@ namespace castor {
     virtual void deleteRep(IAddress* address,
                            IObject* object,
                            ObjectSet& alreadyDone,
-                           bool autocommit) throw (Exception) = 0;
+                           bool autocommit)
+      throw (castor::exception::Exception) = 0;
 
     /**
      * create C++ object from foreign representation
@@ -127,7 +130,7 @@ namespace castor {
      */
     virtual IObject* createObj(IAddress* address,
                                ObjectCatalog& newlyCreated)
-      throw (castor::Exception) = 0;
+      throw (castor::exception::Exception) = 0;
 
   };
 
