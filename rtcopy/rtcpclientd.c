@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/22 08:30:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:44:25 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/22 08:30:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:44:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -253,7 +253,7 @@ static int getTapeRequestItem(
                     "MODE",
                     DLF_MSG_PARAM_INT,
                     mode,
-                    "PID",
+                    "VWPID",
                     DLF_MSG_PARAM_INT,
                     pid,
                     RTCPCLD_LOG_WHERE
@@ -495,7 +495,7 @@ void checkVidWorkerExit()
                       "VOLREQID",
                       DLF_MSG_PARAM_INT,
                       item->tape->tapereq.VolReqID,
-                      "PID",
+                      "VWPID",
                       DLF_MSG_PARAM_INT,
                       pid,
                       (stopped == 1 ? "STOPPED" : 
@@ -945,7 +945,7 @@ int rtcpcld_main(
                         "VOLREQID",
                         DLF_MSG_PARAM_INT,
                         tape->tapereq.VolReqID,
-                        "PID",
+                        "VWPID",
                         DLF_MSG_PARAM_INT,
                         pid
                         );
@@ -1055,7 +1055,7 @@ int rtcpcld_main(
                             "MODE",
                             DLF_MSG_PARAM_INT,
                             tape->tapereq.mode,
-                            "REQID",
+                            "VDQMRQID",
                             DLF_MSG_PARAM_INT,
                             tape->tapereq.VolReqID
                             );
