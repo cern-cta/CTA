@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.4 $ $Date: 2000/01/09 07:32:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.5 $ $Date: 2000/01/26 08:02:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -87,7 +87,7 @@ char	*path;
 	if (fsec == 1 && dlip->fseq != 1 && dlip->rewritetm)
 		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
 	if (dlip->lblcode == NL) return (0);	/* tape is unlabelled */
-	if (dlip->fseq == 1) {
+	if (dlip->fseq == 1 || fsec > 1) {
 		memcpy (vol1, dlip->vol1, 80);
 		if (dlip->lblcode == SL) asc2ebc (vol1, 80);
 		if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
