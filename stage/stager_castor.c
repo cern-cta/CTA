@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.16 2002/04/30 13:09:34 jdurand Exp $
+ * $Id: stager_castor.c,v 1.17 2002/05/06 10:22:47 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.16 $ $Date: 2002/04/30 13:09:34 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.17 $ $Date: 2002/05/06 10:22:47 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -183,6 +183,11 @@ static struct vmgr_tape_info vmgr_tapeinfo;
 #undef STGSEGMENT_NOTOK
 #endif
 #define STGSEGMENT_NOTOK ' '
+
+#ifdef STGSEGMENT_STATUS
+#undef STGSEGMENT_STATUS
+#endif
+#define STGSEGMENT_STATUS(segment) ( (((segment).s_status == '-') && ((segment).vid[0] != '\0')) ? ((vmgr_querytape((segment).vid, (segment).side, &vmgr_tapeinfo, NULL) == 0) ? (((vmgr_tapeinfo.status & DISABLED) == DISABLED) ? "DISABLED" : (((vmgr_tapeinfo.status & EXPORTED) == EXPORTED) ? "EXPORTED" : (((vmgr_tapeinfo.status & ARCHIVED) == ARCHIVED) ? "ARCHIVED" : "?"))) : "?") : "?" )
 
 #ifdef RETRYI_VMGR_GETTAPE_ENOSPC_MAX
 #undef RETRYI_VMGR_GETTAPE_ENOSPC_MAX
@@ -1168,8 +1173,35 @@ int stagein_castor_hsm_file() {
 				} else {
 					/* But here, we found no valid segment - are they all STGSEGMENT_NOTOK */
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-							 "stagein", "File has no valid segment");
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "stagein", "Required segments are not all accessible");
+					/* We give to the the list of non-accessible tapes */
+					for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
+						if (hsm_segments[i][isegments].s_status == '-') {
+							char tmpbuf[21];
+							if (hsm_segments[i][isegments].side > 0) {
+								sendrep (rpfd, MSG_ERR, "STG02 - %s : Copy No %2d, segment No %2d (%s bytes), on %s/%d.%d : tape status is %s\n",
+										 castor_hsm,
+										 hsm_segments[i][isegments].copyno,
+										 hsm_segments[i][isegments].fsec,
+										 u64tostr(hsm_segments[i][isegments].segsize,tmpbuf, 0),
+										 hsm_segments[i][isegments].vid,
+										 hsm_segments[i][isegments].side,
+										 hsm_segments[i][isegments].fseq,
+										 STGSEGMENT_STATUS(hsm_segments[i][isegments])
+									);
+							} else {
+								sendrep (rpfd, MSG_ERR, "STG02 - %s : Copy No %2d, segment No %2d (%s bytes), on %s.%d : tape status is %s\n",
+										 castor_hsm,
+										 hsm_segments[i][isegments].copyno,
+										 hsm_segments[i][isegments].fsec,
+										 u64tostr(hsm_segments[i][isegments].segsize,tmpbuf, 0),
+										 hsm_segments[i][isegments].vid,
+										 hsm_segments[i][isegments].fseq,
+										 STGSEGMENT_STATUS(hsm_segments[i][isegments])
+									);
+							}
+						}
+					}
 					RESTORE_EID;
 					RETURN (USERR);
 				}
