@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.37 $ $Date: 2000/08/01 12:57:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.38 $ $Date: 2000/08/04 06:52:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -579,7 +579,7 @@ int rtcp_CheckReq(SOCKET *client_socket,
         return(-1);
     }
 
-    if ( rtcp_CheckReqStructures(tape) == -1 ) return(-1);
+    if ( rtcp_CheckReqStructures(client_socket,client,tape) == -1 ) return(-1);
 
     rc = rtcp_CallTMS(tape);
 
@@ -639,7 +639,9 @@ int rtcp_CheckReq(SOCKET *client_socket,
     return(rc);
 }
 
-int rtcp_CheckReqStructures(tape_list_t *tape) {
+int rtcp_CheckReqStructures(SOCKET *client_socket,
+                            rtcpClientInfo_t *client,
+                            tape_list_t *tape) {
     int rc;
     tape_list_t *tl;
     file_list_t *file, *fl;
@@ -661,8 +663,10 @@ int rtcp_CheckReqStructures(tape_list_t *tape) {
             strcpy(errmsgtxt,sstrerror(serrno));
             SET_REQUEST_ERR(tapereq,RTCP_FAILED | RTCP_USERR);
 #if defined(RTCP_SERVER)
-            tellClient(client_socket,tl,NULL,rc);
-            (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
+            if ( client_socket != NULL && client != NULL ) {
+                tellClient(client_socket,tl,NULL,rc);
+                (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
+            }
 #endif /* RTCP_SERVER */
             return(-1);
         }
@@ -672,8 +676,10 @@ int rtcp_CheckReqStructures(tape_list_t *tape) {
             strcpy(errmsgtxt,sstrerror(serrno));
             SET_REQUEST_ERR(tapereq,RTCP_FAILED | RTCP_USERR);
 #if defined(RTCP_SERVER)
-            tellClient(client_socket,tl,NULL,rc);
-            (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
+            if ( client_socket != NULL && client != NULL ) {
+                tellClient(client_socket,tl,NULL,rc);
+                (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
+            }
 #endif /* RTCP_SERVER */
             return(-1);
         }
@@ -686,19 +692,23 @@ int rtcp_CheckReqStructures(tape_list_t *tape) {
                 strcpy(errmsgtxt,sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_FAILED | RTCP_USERR);
 #if defined(RTCP_SERVER)
-                tellClient(client_socket,NULL,fl,rc);
-                (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+                if ( client_socket != NULL && client != NULL ) {
+                    tellClient(client_socket,NULL,fl,rc);
+                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+                }
 #endif /* RTCP_SERVER */
                 return(-1);
             }
-            if ( fl->tape != tl || !RTCP_FILEREQ_OK(filereq)) {
+            if ( !RTCP_FILEREQ_OK(filereq)) {
                 serrno = ERTBADREQ;
                 filereq->cprc = -1;
                 strcpy(errmsgtxt,sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_FAILED | RTCP_USERR);
 #if defined(RTCP_SERVER)
-                tellClient(client_socket,NULL,fl,rc);
-                (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+                if ( client_socket != NULL && client != NULL ) {
+                    tellClient(client_socket,NULL,fl,rc);
+                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+                }
 #endif /* RTCP_SERVER */
                 return(-1);
             }
