@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.21 2001/03/02 18:11:30 jdurand Exp $
+ * $Id: stageput.c,v 1.22 2001/06/21 10:34:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.21 $ $Date: 2001/03/02 18:11:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.22 $ $Date: 2001/06/21 10:34:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -84,7 +84,7 @@ int main(argc, argv)
 	char *tppool = NULL;
 	static struct Coptions longopts[] =
 	{
-		{"grpuser",            REQUIRED_ARGUMENT,  NULL,      'G'},
+		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
 		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
 		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
 		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
