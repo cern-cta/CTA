@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.25 $ $Date: 2000/12/21 11:44:55 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.26 $ $Date: 2001/03/22 10:56:31 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -87,6 +87,7 @@ EXTERN_C int DLL_DECL rfio_preseek _PROTO((int, struct iovec *, int));
 EXTERN_C int DLL_DECL rfstatfs _PROTO((char *, struct rfstatfs *)) ;
 EXTERN_C int DLL_DECL rfio_statfs _PROTO((char *, struct rfstatfs *)) ;
 EXTERN_C char DLL_DECL *rfio_serror _PROTO((void));
+EXTERN_C int DLL_DECL rfio_serrno _PROTO((void));
 EXTERN_C int DLL_DECL rfio_mkdir _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_rmdir _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_rename _PROTO((char *, char *));
