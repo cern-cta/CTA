@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/30 14:01:21 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/12 14:33:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/30 14:01:21 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/12 14:33:08 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -51,6 +51,8 @@ WSADATA wsadata;
 #include <dlf_api.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
+#include "castor/BaseObject.h"
+#include "castor/Constants.h"
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -527,6 +529,9 @@ static int startVidWorker(
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
   char usePipeStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
+
+  // Initializing the C++ log
+  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
   
   if ( s == NULL || *s == INVALID_SOCKET || 
        tape == NULL || *tape->tapereq.vid == '\0' ) {
