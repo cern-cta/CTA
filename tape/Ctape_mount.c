@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.12 $ $Date: 2000/02/16 07:20:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.13 $ $Date: 2000/03/20 17:14:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -137,8 +137,10 @@ int vdqm_reqid;
 #if TMS
 	if (! vsn)
 		actual_vsn[0] = '\0';
-	else
+	else {
 		strcpy (actual_vsn, vsn);
+		UPPER (actual_vsn);
+	}
 	if (! dgn)
 		actual_dgn[0] = '\0';
 	else
