@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.20 $ $Date: 2000/02/16 17:09:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.21 $ $Date: 2000/02/29 15:20:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -185,6 +185,10 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     return(0);
 }
 
+int rtcp_NewTapeList(tape_list_t **tape, tape_list_t **newtape,int mode) {
+    return(newTapeList(tape,newtape,mode));
+}
+
 static int newFileList(tape_list_t **tape, file_list_t **newfile,
                        int mode) {
     file_list_t *fl;
@@ -226,6 +230,10 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
 
     if ( newfile != NULL ) *newfile = fl;
     return(0);
+}
+
+int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,int mode) {
+    return(newFileList(tape,newfile,mode));
 }
 
 static int rtcpc_A_opt(int mode, 
