@@ -27,7 +27,18 @@ EXTERN_C struct passwd DLL_DECL *getpwent _PROTO((void));
 EXTERN_C void          DLL_DECL  setpwent _PROTO((void));
 EXTERN_C void          DLL_DECL  endpwent _PROTO((void));
 
-EXTERN_C struct passwd DLL_DECL *getpwuid _PROTO((uid_t));
+EXTERN_C char          DLL_DECL *cuserid _PROTO((char *));
+EXTERN_C struct group  DLL_DECL *fillgrpent _PROTO((char *));
+EXTERN_C struct passwd DLL_DECL *fillpwent _PROTO((char *));
+EXTERN_C gid_t         DLL_DECL  getgid _PROTO(());
+EXTERN_C struct group  DLL_DECL *getgrgid _PROTO((gid_t));
+EXTERN_C struct group  DLL_DECL *getgrnam _PROTO((char *));
 EXTERN_C struct passwd DLL_DECL *getpwnam _PROTO((char *));
+EXTERN_C struct passwd DLL_DECL *getpwuid _PROTO((uid_t));
+EXTERN_C uid_t         DLL_DECL  getuid _PROTO(());
+EXTERN_C gid_t         DLL_DECL  getegid _PROTO(());
+EXTERN_C uid_t         DLL_DECL  geteuid _PROTO(());
+EXTERN_C int           DLL_DECL  setuid _PROTO((uid_t));
+EXTERN_C int           DLL_DECL  setgid _PROTO((gid_t));
 
 #endif /* __win32_pwd_h */
