@@ -1,14 +1,14 @@
 /*
- * $Id: osdep.h,v 1.13 2000/12/12 13:04:46 jdurand Exp $
+ * $Id: osdep.h,v 1.14 2001/09/19 09:54:58 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/IP
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.13 $ $Date: 2000/12/12 13:04:46 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.14 $ $Date: 2001/09/19 09:54:58 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -50,6 +50,7 @@ typedef struct  {
 #define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
 #define QUADADDR(x)     (((char *)&(x))+sizeof(QUAD)-QUADSIZE)
 
+#ifndef HPSS_IFCE
 #ifndef _WIN32
 typedef long long		signed64;
 typedef unsigned long long	u_signed64;
@@ -63,6 +64,12 @@ typedef int mode_t;
 
 typedef signed64 HYPER;
 typedef u_signed64 U_HYPER;
+#else
+typedef long long		signed64_castor;
+typedef unsigned long long	u_signed64_castor;
+typedef signed64_castor HYPER;
+typedef u_signed64_castor U_HYPER;
+#endif
 typedef U_HYPER TIME_T;
 
 #define ONE_KB 0x400
