@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.26 2001/09/18 21:09:17 jdurand Exp $
+ * $Id: stage_api.c,v 1.27 2001/10/14 09:08:41 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -283,16 +283,21 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* If no user specified we check environment variable STAGE_USER */
   if (((pooluser == NULL) || (pooluser[0] == '\0')) && (p = getenv ("STAGE_USER")) != NULL) {
-    strcpy(User,p);
+    strncpy(User,p,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
     }
+  } else if ((pooluser != NULL) && (pooluser[0] != '\0')) {
+    strncpy(User,pooluser,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
   } else {
     User[0] = '\0';
   }
+
 
   switch (t_or_d) {                     /* This method supports only */
   case 't':                             /* - tape files */
@@ -1333,13 +1338,17 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 
   /* If no user specified we check environment variable STAGE_USER */
   if (((pooluser == NULL) || (pooluser[0] == '\0')) && (p = getenv ("STAGE_USER")) != NULL) {
-    strcpy(User,p);
+    strncpy(User,p,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
     }
+  } else if ((pooluser != NULL) && (pooluser[0] != '\0')) {
+    strncpy(User,pooluser,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
   } else {
     User[0] = '\0';
   }
