@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 12:24:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.6 $ $Date: 2000/06/15 17:01:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -32,7 +32,8 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.5 $ $Date: 2
 char strftime_format[] = "%b %d %H:%M:%S";
 
 int main(int argc, char *argv[]) {
-    int rc;
+    int rc, c;
+    int give_jid = 1;
     time_t now;
     struct tm *tp;
     char    timestr[64] ;   /* Time in its ASCII format             */
@@ -46,15 +47,29 @@ int main(int argc, char *argv[]) {
     struct vdqm_reqlist *tmp, *tmp1;
     char drv_status[10];
     vdqmnw_t *nw = NULL;
-    char *dgn = NULL;
-    char *server = NULL;
+    char dgn[CA_MAXDGNLEN+1];
+    char server[CA_MAXHOSTNAMELEN+1];
+    extern char * optarg ; 
+    extern int    optind ;
 
-    if ( argc <= 1 ) {
-        fprintf(stderr,"Usage: %s [device-group] [tape-server]\n",argv[0]);
-        exit(2);
+
+    *dgn = *server = '\0';
+    while ( (c = getopt(argc,argv,"jg:S:")) != EOF ) {
+        switch(c) {
+        case 'j':
+            give_jid = 0;
+            break;
+        case 'g' :
+            strcpy(dgn,optarg);
+            break;
+        case 'S' :
+            strcpy(server,optarg);
+            break;
+        case '?':
+            fprintf(stderr,"Usage: %s [-j] [-g <dgn>] [-S <server>]\n",argv[0]);
+            exit(2);
+        }
     }
-    dgn = argv[1];
-    if ( argc > 2 ) server = argv[2];
 
     /*
      * Get drive status
@@ -65,7 +80,7 @@ int main(int argc, char *argv[]) {
        if ( tmp == NULL ) 
            tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
        strcpy(tmp->drvreq.dgn,dgn);
-       if ( server != NULL ) strcpy(tmp->drvreq.server,server); 
+       if ( *server != '\0' ) strcpy(tmp->drvreq.server,server); 
        rc = vdqm_NextDrive(&nw,&tmp->drvreq);
        if ( rc != -1 && *tmp->drvreq.server != '\0' && *tmp->drvreq.drive != '\0' ) {
            CLIST_INSERT(reqlist,tmp); 
@@ -83,7 +98,7 @@ int main(int argc, char *argv[]) {
        if ( tmp == NULL )
            tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
        strcpy(tmp->volreq.dgn,dgn);
-       if ( server != NULL ) strcpy(tmp->volreq.server,server);
+       if ( *server != '\0' ) strcpy(tmp->volreq.server,server);
        rc = vdqm_NextVol(&nw,&tmp->volreq);
        if ( rc != -1 && tmp->volreq.VolReqID > 0 ) {
            CLIST_ITERATE_BEGIN(reqlist,tmp1) {
@@ -108,12 +123,26 @@ int main(int argc, char *argv[]) {
         if ( tmp1->drvreq.VolReqID > 0 ) {
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
-            fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) user (%d,%d) %d secs.\n",
-                tmp1->drvreq.drive,tmp1->drvreq.server,
-                (int)tmp1->drvreq.TotalMB,tmp1->drvreq.jobID,
-                tmp1->volreq.volid,(tmp1->volreq.mode == 0 ? "read" : "write"),
-                tmp1->volreq.clientUID,tmp1->volreq.clientGID,
-                now - tmp1->drvreq.recvtime);
+            if ( tmp1->drvreq.status == 
+                 VDQM_UNIT_UP|VDQM_UNIT_ASSIGN|VDQM_UNIT_BUSY) {
+                fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) user (%d,%d) %d secs.\n",
+                    tmp1->drvreq.drive,tmp1->drvreq.server,
+                    (int)tmp1->drvreq.TotalMB,
+                    (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
+                    tmp1->volreq.volid,
+                    (tmp1->volreq.mode == 0 ? "read" : "write"),
+                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    now - tmp1->drvreq.recvtime);
+            } else {
+                 fprintf(stdout,"%s@%s (%d MB) status UNKNOWN jid %d %s(%s) user (%d,%d) %d secs.\n",
+                    tmp1->drvreq.drive,tmp1->drvreq.server,
+                    (int)tmp1->drvreq.TotalMB,
+                    (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
+                    tmp1->volreq.volid,
+                    (tmp1->volreq.mode == 0 ? "read" : "write"),
+                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    now - tmp1->drvreq.recvtime);
+            }
         } else if ( *tmp1->drvreq.drive != '\0' ) {
             tp = localtime((time_t *)&tmp1->drvreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
@@ -128,11 +157,15 @@ int main(int argc, char *argv[]) {
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,drv_status,tmp1->drvreq.volid,
                     timestr);
+            if ( *tmp1->drvreq.dedicate != 0 )
+                fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
         } else {
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
-            fprintf(stdout,"QUEUED: %s user (%d,%d)@%s received at %s\n",
-                    tmp1->volreq.volid,tmp1->volreq.clientUID,
+            fprintf(stdout,"QUEUED: %s ReqID: %d user (%d,%d)@%s received at %s\n",
+                    tmp1->volreq.volid,
+                    tmp1->volreq.VolReqID,
+                    tmp1->volreq.clientUID,
                     tmp1->volreq.clientGID,
                     tmp1->volreq.client_host,timestr);
         }
