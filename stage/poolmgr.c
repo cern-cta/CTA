@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.230 2002/10/24 08:34:26 jdurand Exp $
+ * $Id: poolmgr.c,v 1.231 2002/10/25 13:54:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.230 $ $Date: 2002/10/24 08:34:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.231 $ $Date: 2002/10/25 13:54:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -910,7 +910,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	/* guaranteed to never start, so it does not hurt if gc_stop_thresh == gc_start_thresh == 0 */
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (pool_p->gc_start_thresh >= pool_p->gc_stop_thresh) {
-			if ((pool_p->gc_start_thresh != 0) | (pool_p->gc_stop_thresh != 0)) {
+			if ((pool_p->gc_start_thresh != 0) || (pool_p->gc_stop_thresh != 0)) {
 				stglogit (func, STG163, pool_p->name, pool_p->gc_start_thresh, pool_p->gc_stop_thresh);
 				errflg++;
 				goto reply;
