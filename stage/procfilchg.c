@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.9 2001/07/12 07:38:49 jdurand Exp $
+ * $Id: procfilchg.c,v 1.10 2001/07/12 10:17:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.9 $ $Date: 2001/07/12 07:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.10 $ $Date: 2001/07/12 10:17:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.9 $ $Date: 2
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "stage_api.h"
+#include "rfio_api.h"
 
 void procfilchgreq _PROTO((int, int, char *, char *));
 
@@ -71,6 +72,8 @@ extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *))
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
+extern u_signed64 findblocksize _PROTO((char *));
+extern int updfreespace _PROTO((char *, char *, signed64));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -278,13 +281,31 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			/* From now on we assume that permission to change parameters on this file is granted */
 
 			if (donestatus) { /* --status */
+				u_signed64 actual_size_block;
+				struct stat st;
+
 				switch (thisstatus) {
 				case STAGEOUT|CAN_BE_MIGR:
 					/* Will work only if this stcp is in STAGEOUT|CAN_BE_MIGR|PUT_FAILED */
 					switch (stcp->status) {
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 						/* We simulate a stageout followed by a stageupdc */
+						if (rfio_stat (stcp->ipath, &st) == 0) {
+							stcp->actual_size = st.st_size;
+							if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
+								actual_size_block = stcp->actual_size;
+							}
+						} else {
+							stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+							/* No block information - assume mismatch with actual_size will be acceptable */
+							actual_size_block = stcp->actual_size;
+						}
 						stcp->status = STAGEOUT;
+						updfreespace (
+										stcp->poolname,
+										stcp->ipath,
+										(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
+						);
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp)) != 0) {
 							if (c != CLEARED) {
