@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.39 2003/04/17 08:25:13 jdurand Exp $
+ * $Id: stager_castor.c,v 1.40 2003/05/12 12:49:19 jdurand Exp $
  */
 
 /*
@@ -11,17 +11,24 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 /* Do you want to do the Cns_setsegattrs() under real uid/gid of the owner of file in Castor Name Server ? */
-/* #define SETSEGATTRS_WITH_OWNER_UID_GID */
+#define SETSEGATTRS_WITH_OWNER_UID_GID
+
+/* Do you want to do a Cns_statx() or use the yet known uid/gid from stager catalog (recommended) ? */
+#define SETSEGATTRS_WITH_OWNER_UID_GID_FROM_CATALOG
 
 /* Do you want to hardcode the limit of number of files per rtcpc() request ? */
 #define MAX_RTCPC_FILEREQ 1000
+
+/* Do you want disk to disk copy done a la third party, e.g. transfer not going through this process */
+/* if source file is not local ? */
+#define DISK2DISK_COPY_REMOTE
 
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #define USE_SUBREQID
 
-/* If you want to always migrate the full data to tape do: */
+/* If you want to always migrate the full data to tape do (default is to migrated a predicted nb of bytes, not up to EOF): */
 /* #define FULL_STAGEWRT_HSM */
 
 #ifdef STAGE_CSETPROCNAME
@@ -30,7 +37,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.39 $ $Date: 2003/04/17 08:25:13 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.40 $ $Date: 2003/05/12 12:49:19 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -105,6 +112,8 @@ char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
 int api_flag;                       /* Api flag, .e.g we will NOT re-arrange the file sequences in case of a tape request */
 u_signed64 api_flags;               /* Flags themselves of the Api call */
+uid_t rtcp_uid;                     /* Forced uid */
+gid_t rtcp_gid;                     /* Forced gid */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int silent;                         /* Tells if we are running in silent mode or not */
 int use_subreqid;                   /* Tells if we allow asynchroneous callbacks from RTCOPY */
@@ -541,8 +550,16 @@ int main(argc,argv,envp)
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
 #endif
+	rtcp_uid = atoi (argv[12]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_uid = %d\n", (int) rtcp_uid);
+#endif
+	rtcp_gid = atoi (argv[13]);
+#ifdef STAGER_DEBUG
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rtcp_gid = %d\n", (int) rtcp_gid);
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[12];
+	tmpfile = argv[14];
 #ifdef STAGER_DEBUG
 	sendrep(&rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
@@ -2051,7 +2068,7 @@ int stagewrt_castor_hsm_file() {
 		/* We loop until everything is staged */
 		Flags = 0;
 
-		SETTAPEEID(stcs->uid,stcs->gid);
+		SETTAPEEID(rtcp_uid ? rtcp_uid : stcs->uid,rtcp_gid ? rtcp_gid : stcs->gid);
 
 		vmgr_gettape_nretry = 3;
 		vmgr_gettape_iretry = 0;
@@ -3154,6 +3171,7 @@ int stager_hsm_callback(tapereq,filereq)
 					Cnsfileid.fileid = stcp->u1.h.fileid;
 #ifdef SETSEGATTRS_WITH_OWNER_UID_GID
 					/* Grab current euid/egid */
+#ifndef SETSEGATTRS_WITH_OWNER_UID_GID_FROM_CATALOG
 #ifdef STAGER_DEBUG
 					SAVE_EID;
 					sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_statx(path=\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},&statbuf)\n",
@@ -3182,6 +3200,10 @@ int stager_hsm_callback(tapereq,filereq)
 							return(-1);
 						}
 					}
+#else
+					statbuf.uid = stcp->uid;
+					statbuf.gid = stcp->gid;
+#endif
 #ifdef STAGER_DEBUG
 					sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},nbseg=%d,segments)\n",
 							castor_hsm,
@@ -3758,16 +3780,22 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize,size)
 	u_signed64 totalsize;           /* How many to transfer */
 	u_signed64 *size;               /* How many transferred */
 {
+	char buf[256];
+	char command[2*(CA_MAXHOSTNAMELEN+1+MAXPATH)+CA_MAXHOSTNAMELEN+1+196];
+	char *filename;
+	char *host;
+	FILE *rf;
+	int c;
 	int fd1, fd2;
-	int v, rc;
+	int v;
 	char *ifce;
 	char ifce1[8] ;
 	char ifce2[8] ;
 	time_t starttime, endtime;
 	EXTERN_C char DLL_DECL *getifnam _PROTO(());
-	char stageid[CA_MAXSTGRIDLEN+1];
 	int l1 = -1;
-
+	char stageid[CA_MAXSTGRIDLEN+1];
+	int rc;
 	/*
 	 * @@@ TO BE MOVED TO cpdskdsk.sh @@@
 	 */
@@ -3805,102 +3833,153 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize,size)
 #endif
 	}
 
-    /* Active V3 RFIO protocol */
-	v = RFIO_STREAM;
-	rfiosetopt(RFIO_READOPT,&v,4); 
+	(void) rfio_parseln (inpfile, &host, &filename, NORDLINKS);
 
-#ifdef STAGER_DEBUG
-	SAVE_EID;
-	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_RDONLY,0644)\n", inpfile);
-	RESTORE_EID;
-#endif
+	if (host != NULL) {
+		/* Source file is remote: we will do copy from there */
+		c = RFIO_NONET;
+		rfiosetopt (RFIO_NETOPT, &c, 4);
+		sprintf (command, "%s:%s/cpdskdsk", host, BIN);
+		sprintf (command+strlen(command), " -Z %d.%d@%s", reqid, key, hostname);
 
-	PRE_RFIO;
-	fd1 = rfio_open64(inpfile,O_RDONLY ,0644);
-
-	if (fd1 < 0) {
-		if (serrno) {
-			SAVE_EID;
-			sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
-			RESTORE_EID;
-			rc = serrno;
-		} else {
-			switch (rfio_errno) {
-			case EACCES:
-			case EISDIR:
-			case ENOENT:
-			case EPERM :
-				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
-				RESTORE_EID;
-				rc = rfio_errno;
-				break ;
-			case 0:
-				switch(errno) {
-				case EACCES:
-				case EISDIR:
-				case ENOENT:
-				case EPERM :
-					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
-					RESTORE_EID;
-					rc = errno;
-					break;
-				default:
-					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
-					RESTORE_EID;
-					rc = SYERR;
-				}
-				break;
-			default:
-				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
-				RESTORE_EID;
-				rc = SYERR;
-			}
+		if (totalsize > 0) {
+			char tmpbuf[21];
+			u64tostr(totalsize, tmpbuf, 0);
+			sprintf (command+strlen(command), " -s %s", tmpbuf);
 		}
-		return(rc);
-	}
-
-	if ((ifce=getifnam(fd1)) == NULL) {
-		strcpy(ifce1,"local");
+		sprintf (command+strlen(command), " '%s'", inpfile);
+		sprintf (command+strlen(command), " '%s'", outfile);
+#ifdef STAGER_DEBUG
+		SAVE_EID;
+		sendrep(&rpfd, MSG_ERR, "[DEBUG-FILECOPY] Execing %s\n",command);
+		RESTORE_EID;
+#else
+		SAVE_EID;
+		stglogit (func, "execing command : %s\n", command);
+		RESTORE_EID;
+#endif
+		
+		/* Note: look just before call to stage_copyfile(), SETID() is called there */
+		PRE_RFIO;
+		rf = rfio_popen (command, "r");
+		if (rf == NULL) {
+			/* This way we will sure that it will be logged... */
+			SAVE_EID;
+			sendrep(&rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
+			RESTORE_EID;
+			return(rfio_serrno());
+		}
+		
+		while (1) {
+			PRE_RFIO;
+			if ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) <= 0) break;
+			buf[c] = '\0';
+			SAVE_EID;
+			sendrep (&rpfd, RTCOPY_OUT, "%s", buf);
+			RESTORE_EID;
+		}
+		
+		PRE_RFIO;
+		c = rfio_pclose (rf);
+		if (c != 0) {
+			SAVE_EID;
+			sendrep(&rpfd, MSG_ERR, "STG02 - %s : error reported at %s time : status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
+			RESTORE_EID;
+			return((c >> 8) & 0xFF); /* Status is in higher byte */
+		}
+		return(c);
 	} else {
-		strncpy(ifce1,ifce,7);
-		ifce1[7] = '\0';
-	}
+		/* Source file is local : we will do ourself the copy */
+		/* because rfio_popen() on localhost would translate to */
+		/* popen() and we will LOOSE the euid, e.g. popen() would */
+		/* have executed something under root (we do not want to */
+		/* play with setuid and/or options of the shell) */
 
-    /* Active V3 RFIO protocol */
-	v = RFIO_STREAM;
-	rfiosetopt(RFIO_READOPT,&v,4); 
+		/* Active V3 RFIO protocol */
+		v = RFIO_STREAM;
+		rfiosetopt(RFIO_READOPT,&v,4); 
+		
+#ifdef STAGER_DEBUG
+		SAVE_EID;
+		sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_RDONLY,0644)\n", inpfile);
+		RESTORE_EID;
+#endif
+		
+		PRE_RFIO;
+		fd1 = rfio_open64(inpfile,O_RDONLY ,0644);
+		
+		if (fd1 < 0) {
+			if (serrno) {
+				SAVE_EID;
+				sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
+				RESTORE_EID;
+				rc = serrno;
+			} else {
+				switch (rfio_errno) {
+				case EACCES:
+				case EISDIR:
+				case ENOENT:
+				case EPERM :
+					SAVE_EID;
+					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
+					RESTORE_EID;
+					rc = rfio_errno;
+					break ;
+				case 0:
+					switch(errno) {
+					case EACCES:
+					case EISDIR:
+					case ENOENT:
+					case EPERM :
+						SAVE_EID;
+						sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
+						RESTORE_EID;
+						rc = errno;
+						break;
+					default:
+						SAVE_EID;
+						sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
+						RESTORE_EID;
+						rc = SYERR;
+					}
+					break;
+				default:
+					SAVE_EID;
+					sendrep (&rpfd, MSG_ERR, STG02, inpfile, "rfio_open64", rfio_serror());
+					RESTORE_EID;
+					rc = SYERR;
+				}
+			}
+			return(rc);
+		}
+
+		if ((ifce=getifnam(fd1)) == NULL) {
+			strcpy(ifce1,"local");
+		} else {
+			strncpy(ifce1,ifce,7);
+			ifce1[7] = '\0';
+		}
+
+		/* Active V3 RFIO protocol */
+		v = RFIO_STREAM;
+		rfiosetopt(RFIO_READOPT,&v,4); 
 
 #ifdef STAGER_DEBUG
-	SAVE_EID;
-	sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_WRONLY|O_CREAT|O_TRUNC,st_mode & 0777)\n", outfile);
-	RESTORE_EID;
+		SAVE_EID;
+		sendrep (&rpfd, MSG_ERR, "[DEBUG] rfio_open64(\"%s\",O_WRONLY|O_CREAT|O_TRUNC,st_mode & 0777)\n", outfile);
+		RESTORE_EID;
 #endif
 
-	PRE_RFIO;
-	fd2 = rfio_open64(outfile, O_WRONLY|O_CREAT|O_TRUNC, st_mode & 0777);
-	if (fd2 < 0) {
-		if (serrno) {
-			SAVE_EID;
-			sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
-			RESTORE_EID;
-			rc = serrno;
-		} else {
-			switch (rfio_errno) {
-			case EACCES:
-			case EISDIR:
-			case ENOENT:
-			case EPERM :
+		PRE_RFIO;
+		fd2 = rfio_open64(outfile, O_WRONLY|O_CREAT|O_TRUNC, st_mode & 0777);
+		if (fd2 < 0) {
+			if (serrno) {
 				SAVE_EID;
 				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 				RESTORE_EID;
-				rc = rfio_errno;
-				break;
-			case 0:
-				switch(errno) {
+				rc = serrno;
+			} else {
+				switch (rfio_errno) {
 				case EACCES:
 				case EISDIR:
 				case ENOENT:
@@ -3908,7 +3987,25 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize,size)
 					SAVE_EID;
 					sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
 					RESTORE_EID;
-					rc = errno;
+					rc = rfio_errno;
+					break;
+				case 0:
+					switch(errno) {
+					case EACCES:
+					case EISDIR:
+					case ENOENT:
+					case EPERM :
+						SAVE_EID;
+						sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
+						RESTORE_EID;
+						rc = errno;
+						break;
+					default:
+						SAVE_EID;
+						sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
+						RESTORE_EID;
+						rc = SYERR;
+					}
 					break;
 				default:
 					SAVE_EID;
@@ -3916,77 +4013,71 @@ int stage_copyfile(inpfile,outfile,st_mode,subreqid,totalsize,size)
 					RESTORE_EID;
 					rc = SYERR;
 				}
-				break;
-			default:
-				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, outfile, "rfio_open64", rfio_serror());
-				RESTORE_EID;
-				rc = SYERR;
 			}
-        }
-		return(rc);
-	}
+			return(rc);
+		}
 
-	if ((ifce=getifnam(fd2)) == NULL) {
-		strcpy(ifce2,"local");
-	} else {
-		strncpy(ifce2,ifce,7) ;
-		ifce2[7] = '\0';
-	}
+		if ((ifce=getifnam(fd2)) == NULL) {
+			strcpy(ifce2,"local");
+		} else {
+			strncpy(ifce2,ifce,7) ;
+			ifce2[7] = '\0';
+		}
 
-	time(&starttime);
-	rc = copyfile(fd1, fd2, inpfile, outfile, totalsize, size);
-	time(&endtime);
-	if (rc == 0) {
-		if (*size > 0)  {
-			char tmpbuf1[21];
+		time(&starttime);
+		rc = copyfile(fd1, fd2, inpfile, outfile, totalsize, size);
+		time(&endtime);
+		if (rc == 0) {
+			if (*size > 0)  {
+				char tmpbuf1[21];
 
-			l1 = (int) (endtime-starttime);
-			if ( l1 > 0) {
-				SAVE_EID;
-				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out) (%d KB/sec)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2, (int) ((*size)/(1024*l1)));
-				RESTORE_EID;
+				l1 = (int) (endtime-starttime);
+				if ( l1 > 0) {
+					SAVE_EID;
+					sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out) (%d KB/sec)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2, (int) ((*size)/(1024*l1)));
+					RESTORE_EID;
+				} else {
+					SAVE_EID;
+					sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2);
+					RESTORE_EID;
+					l1 = 0;
+				}
+				rc = (totalsize == *size ? 0 : SYERR);
 			} else {
 				SAVE_EID;
-				sendrep (&rpfd, RTCOPY_OUT, "%s bytes in %d seconds through %s (in) and %s (out)\n", u64tostr(*size, tmpbuf1, 0), (int) (endtime-starttime), ifce1, ifce2);
+				sendrep (&rpfd, RTCOPY_OUT, "%d bytes transferred !!\n",(int) 0);
 				RESTORE_EID;
-				l1 = 0;
+				rc = (totalsize == 0 ? 0 : SYERR);
 			}
-			rc = (totalsize == *size ? 0 : SYERR);
-		} else {
-			SAVE_EID;
-			sendrep (&rpfd, RTCOPY_OUT, "%d bytes transferred !!\n",(int) 0);
-			RESTORE_EID;
-			rc = (totalsize == 0 ? 0 : SYERR);
 		}
-	}
 #ifdef STAGER_DEBUG
-	SAVE_EID;
-	sendrep (&rpfd, MSG_ERR, "Calling stage_updc_filcp(stageid=%s,...,rc=%d,...)\n",stageid,rc);
-	RESTORE_EID;
-#endif
-	if (stage_updc_filcp (
-		stageid,                 /* Stage ID      */
-		use_subreqid != 0 ? subreqid : -1, /* subreqid      */
-		rc,                      /* Copy rc       */
-		NULL,                    /* Interface     */
-		rc == 0 ? (*size) : 0,   /* Size          */
-		0,                       /* Waiting time  */
-		rc == 0 ? l1 : 0,        /* Transfer time */
-		0,                       /* block size    */
-		NULL,                    /* drive         */
-		NULL,                    /* fid           */
-		0,                       /* fseq          */
-		0,                       /* lrecl         */
-		NULL,                    /* recfm         */
-		NULL                     /* path          */
-		) != 0) {
 		SAVE_EID;
-		sendrep (&rpfd, MSG_ERR, STG02, outfile, "stage_updc_filcp", sstrerror (serrno));
+		sendrep (&rpfd, MSG_ERR, "Calling stage_updc_filcp(stageid=%s,...,rc=%d,...)\n",stageid,rc);
 		RESTORE_EID;
-		return(serrno);
-    }
-	return(rc);
+#endif
+		if (stage_updc_filcp (
+				stageid,                 /* Stage ID      */
+				use_subreqid != 0 ? subreqid : -1, /* subreqid      */
+				rc,                      /* Copy rc       */
+				NULL,                    /* Interface     */
+				rc == 0 ? (*size) : 0,   /* Size          */
+				0,                       /* Waiting time  */
+				rc == 0 ? l1 : 0,        /* Transfer time */
+				0,                       /* block size    */
+				NULL,                    /* drive         */
+				NULL,                    /* fid           */
+				0,                       /* fseq          */
+				0,                       /* lrecl         */
+				NULL,                    /* recfm         */
+				NULL                     /* path          */
+				) != 0) {
+			SAVE_EID;
+			sendrep (&rpfd, MSG_ERR, STG02, outfile, "stage_updc_filcp", sstrerror (serrno));
+			RESTORE_EID;
+			return(serrno);
+		}
+		return(rc);
+	}
 }
 
 #ifndef TRANSFER_UNIT
