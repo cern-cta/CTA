@@ -213,7 +213,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, service_name, client_name,
     hp = gethostbyaddr ((char *)(&client.sin_addr),
                         sizeof(struct in_addr), client.sin_family);
     if (hp == NULL)
-        clienthost = inet_ntoa (client.sin_addr);
+      clienthost = (char *)inet_ntoa (client.sin_addr);
     else
         clienthost = hp->h_name ;
     
@@ -327,7 +327,7 @@ int Csec_client_establish_context_impl(ctx, s, service_name, ret_flags)
     hp = gethostbyaddr ((char *)(&server.sin_addr),
                          sizeof(struct in_addr), server.sin_family);
     if (hp == NULL)
-        clienthost = inet_ntoa (server.sin_addr);
+      clienthost = (char *)inet_ntoa (server.sin_addr);
     else
         clienthost = hp->h_name ;
     

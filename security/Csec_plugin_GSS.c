@@ -303,7 +303,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, service_name, client_name,
         if (send_tok.length != 0) {
 
 
-            if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT) < 0) {
+	  if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT, CSEC_TOKEN_TYPE_HANDSHAKE) < 0) {
                 serrno = ESEC_SYSTEM;
                 Csec_errmsg(func, "failure sending token");
                 return -1;
@@ -459,7 +459,7 @@ int Csec_client_establish_context_impl(ctx, s, service_name, ret_flags)
 
         if (send_tok.length > 0) {
 
-            if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT) < 0) {
+	  if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT, CSEC_TOKEN_TYPE_HANDSHAKE) < 0) {
                 (void) gss_release_buffer(&min_stat, &send_tok);
                 (void) gss_release_name(&min_stat, &target_name);
                 /* XXX */

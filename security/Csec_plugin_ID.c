@@ -227,7 +227,7 @@ int Csec_client_establish_context_impl(ctx, s, service_name, ret_flags)
   strncpy((char *)(send_tok.value), buf, strlen(buf)); 
   send_tok.length = strlen(buf);
 
-  if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT) < 0) {
+  if (_Csec_send_token(s, &send_tok, CSEC_NET_TIMEOUT, CSEC_TOKEN_TYPE_HANDSHAKE) < 0) {
     Csec_errmsg(func, "Could not send token");
     return -1;
   }
