@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.38 2001/11/30 12:14:19 jdurand Exp $
+ * $Id: stagein.c,v 1.39 2001/12/04 10:32:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.38 $ $Date: 2001/11/30 12:14:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.39 $ $Date: 2001/12/04 10:32:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -797,9 +797,9 @@ int main(argc, argv)
 			continue;
 		}
 		if (c == 0 || serrno == EINVAL || serrno == ERTBLKSKPD || serrno == ERTTPE_LSZ ||
-				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == CLEARED ||
+				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == ESTCLEARED ||
 				serrno == ENOSPC) break;
-		if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
+		if (serrno == ESTLNKNSUP) {	/* symbolic links not supported on that platform */
 			serrno = USERR;
 			break;
 		}
