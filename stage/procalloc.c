@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.53 2003/01/30 09:14:14 jdurand Exp $
+ * $Id: procalloc.c,v 1.54 2003/05/12 12:35:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.53 $ $Date: 2003/01/30 09:14:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.54 $ $Date: 2003/05/12 12:35:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -39,8 +39,8 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.53 $ $Date: 2
 #include "Cgetopt.h"
 #include "u64subr.h"
 
-extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
-extern char func[16];
+extern char defpoolname[];
+extern char func[];
 extern int reqid;
 extern int rpfd;
 extern u_signed64 stage_uniqueid;
