@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:11:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -62,8 +62,8 @@ char *lblbuf;
 				errcat = gettperror (tapefd, &msgaddr);
 #if defined(sun) || defined(RS6000PCTA) || defined(ADSTAR) || defined(hpux)
 				if (errcat == ETBLANK) RETURN (3);
-				rc = errcat;
 #endif
+				rc = errcat;
 			} else {
 				msgaddr = sys_errlist[errno];
 				rc = errno;
