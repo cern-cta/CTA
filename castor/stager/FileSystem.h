@@ -31,7 +31,6 @@
 #include "castor/stager/FileSystemStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_float_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskPool_t;
 struct Cstager_DiskServer_t;
@@ -105,23 +104,23 @@ int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, u_signed64
  * Get the value of weight
  * Weight of the filesystem, as computed by the expert system
  */
-int Cstager_FileSystem_weight(struct Cstager_FileSystem_t* instance, struct C_float_t* var);
+int Cstager_FileSystem_weight(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of weight
  * Weight of the filesystem, as computed by the expert system
  */
-int Cstager_FileSystem_setWeight(struct Cstager_FileSystem_t* instance, struct C_float_t new_var);
+int Cstager_FileSystem_setWeight(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of fsDeviation
  */
-int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, struct C_float_t* var);
+int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of fsDeviation
  */
-int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, struct C_float_t new_var);
+int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of mountPoint
@@ -137,13 +136,13 @@ int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, cons
  * Get the value of deltaWeight
  * Estimation of the modifications of the weight since the last update.
  */
-int Cstager_FileSystem_deltaWeight(struct Cstager_FileSystem_t* instance, struct C_float_t* var);
+int Cstager_FileSystem_deltaWeight(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of deltaWeight
  * Estimation of the modifications of the weight since the last update.
  */
-int Cstager_FileSystem_setDeltaWeight(struct Cstager_FileSystem_t* instance, struct C_float_t new_var);
+int Cstager_FileSystem_setDeltaWeight(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of id

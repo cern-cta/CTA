@@ -31,7 +31,6 @@
 #include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_float_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_FileSystem_t;
@@ -105,13 +104,13 @@ int Cstager_DiskCopy_setPath(struct Cstager_DiskCopy_t* instance, const char* ne
  * Get the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */
-int Cstager_DiskCopy_gcWeight(struct Cstager_DiskCopy_t* instance, struct C_float_t* var);
+int Cstager_DiskCopy_gcWeight(struct Cstager_DiskCopy_t* instance, float* var);
 
 /**
  * Set the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */
-int Cstager_DiskCopy_setGcWeight(struct Cstager_DiskCopy_t* instance, struct C_float_t new_var);
+int Cstager_DiskCopy_setGcWeight(struct Cstager_DiskCopy_t* instance, float new_var);
 
 /**
  * Get the value of id
