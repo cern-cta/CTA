@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:04:48 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.5 $ $Date: 2005/03/23 11:16:20 $ CERN IT-ADC Vitaly Motyakov
  */
 
 
@@ -130,5 +130,18 @@ typedef struct _dlf_log_message
   int next_tapevid_idx;
 
 } dlf_log_message_t;
+
+typedef struct dlf_write_param
+{
+  char *name;
+  int type;
+  union {
+    char *par_string;
+    int par_int;
+    u_signed64 par_u64;
+    double par_double;
+    Cuuid_t par_uuid;
+  } par;
+} dlf_write_param_t;
 
 #endif
