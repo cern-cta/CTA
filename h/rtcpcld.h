@@ -19,7 +19,7 @@
     int _save_serrno = serrno; \
     (void)dlf_write( \
                     childUuid, \
-                    DLF_LVL_ERROR, \
+                    RTCPCLD_LEVEL(RTCPCLD_MSG_SYSCALL), \
                     RTCPCLD_MSG_SYSCALL, \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+2, \
@@ -38,7 +38,7 @@
     int _save_serrno = serrno; \
     (void)dlf_write( \
                     childUuid, \
-                    DLF_LVL_ERROR, \
+                    RTCPCLD_LEVEL(RTCPCLD_MSG_DBSVC), \
                     RTCPCLD_MSG_DBSVC, \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+3, \
@@ -56,6 +56,23 @@
     if ( _dbErr != NULL ) free(_dbErr); \
     serrno = _save_serrno;}
 
+#define LOG_SECURITY_ERR(func) {\
+    int _save_serrno = serrno; \
+    (void)dlf_write( \
+                    childUuid, \
+                    RTCPCLD_LEVEL(RTCPCLD_MSG_SECURITY), \
+                    RTCPCLD_MSG_SECURITY, \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+2, \
+                    "SYSCALL", \
+                    DLF_MSG_PARAM_STR, \
+                    func, \
+                    "ERROR_STRING", \
+                    DLF_MSG_PARAM_STR, \
+                    sstrerror(serrno), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    serrno = _save_serrno;}
 
 #define ID_TYPE u_signed64
 enum NotificationState {
@@ -200,6 +217,12 @@ int rtcpcld_getSegmentsToDo _PROTO((
 int rtcpcld_anyReqsForTape _PROTO((
                                   tape_list_t *
                                   ));
+int rtcpcld_returnStream _PROTO((
+                                 tape_list_t *
+                                 ));
+int rtcpcld_restoreSelectedTapeCopies _PROTO((
+                                              tape_list_t *
+                                              ));
 int rtcpcld_setVidWorkerAddress _PROTO((
                                         tape_list_t *,
                                         int
