@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.122 2001/03/30 09:03:29 jdurand Exp $
+ * $Id: procio.c,v 1.123 2001/04/11 06:20:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.122 $ $Date: 2001/03/30 09:03:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.123 $ $Date: 2001/04/11 06:20:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1244,6 +1244,26 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stgreq.mask = save_mask;
 			strcpy(stgreq.user,save_user);
 			strcpy(stgreq.group,save_group);
+			/* In API mode, some entries might have a pool specified, and others not */
+			/* So we redo the poolflag calculation for each of the entry */
+			if (*stgreq.poolname == '\0') {
+				poolflag = 0;
+				if (req_type != STAGEWRT && req_type != STAGECAT) {
+					switch (req_type) {
+					case STAGEIN:
+						strcpy(stgreq.poolname,defpoolname_in);
+						break;
+					case STAGEOUT:
+						bestnextpool_out(stgreq.poolname,WRITE_MODE);
+						break;
+					default:
+						break;
+					}
+				}
+			} else if (strcmp (stgreq.poolname, "NOPOOL") == 0) {
+				poolflag = -1;
+				stgreq.poolname[0] = '\0';
+			} else poolflag = 1;
 		}
 
 		forced_Cns_creatx = forced_rfio_stat = 0;
