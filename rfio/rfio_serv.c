@@ -300,7 +300,8 @@ char    **argv;
   struct group *this_group;             /* Group structure */
   struct passwd *this_passwd;             /* password structure pointer */
 #endif
-
+  int select_status;
+  
    strcpy(logfile, "syslog"); /* default logfile */
    opterr++;
 
@@ -767,12 +768,15 @@ char    **argv;
       memcpy (&readfd, &readmask, sizeof(readmask));
       timeval.tv_sec = CHECKI;  /* must set each time for linux */
       timeval.tv_usec = 0;
-      if (select (s + 1, &readfd, NULL, NULL, &timeval) < 0) {
+      if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
 		  if (once_only) {
 			  exit(1);
 		  }
 		  FD_ZERO (&readfd);
       }
+	  if (select_status == 0 && once_only) { /* Timeout */
+		  exit(1);
+	  }
      }
    } else {       /* !standalone */
 
