@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.192 2002/04/12 06:41:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.193 2002/04/30 12:30:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.192 $ $Date: 2002/04/12 06:41:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.193 $ $Date: 2002/04/30 12:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -156,9 +156,9 @@ int max_setretenp _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
-int selectfs _PROTO((char *, int *, char *, int, int));
+int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
 void rwcountersfs _PROTO((char *, char *, int, int));
-void getdefsize _PROTO((char *, int *));
+void getdefsize _PROTO((char *, u_signed64 *));
 int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 void redomigpool _PROTO(());
 int updpoolconf _PROTO((char *, char *, char *));
@@ -222,9 +222,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	char *defpoolname_out;
 {
 	char buf[4096];
-	int defsize;
+	u_signed64 defsize;
 	char *dp;
-	struct pool_element *elemp;
+	struct pool_element *elemp = NULL;
 	int errflg = 0;
 	FILE *fopen(), *s;
 	char func[16];
@@ -335,56 +335,64 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			pool_p->stageout_retenp = -1;
 			while ((p = strtok (NULL, " \t\n")) != NULL) {
 				if (strcmp (p, "DEFSIZE") == 0) {
+					int checkrc;
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
-					stage_strtoi(&(pool_p->defsize), p, &dp, 10);
-					if (*dp != '\0' || pool_p->defsize <= 0) {
-						stglogit (func, STG26, "pool", pool_p->name);
+					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
+						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
+					pool_p->defsize = strutou64(p);
+					if (pool_p->defsize <= 0) {
+						/* Well, it can not be < 0, strictly speaking */
+						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					if (checkrc == 0) pool_p->defsize *= ONE_MB; /* Not unit : default MB */
 				} else if ((strcmp (p, "MINFREE") == 0) || (strcmp (p, "GC_STOP_THRESH") == 0)) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "GC_STOP_THRESH (or MINFREE) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->gc_stop_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->gc_stop_thresh < 0) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "GC_STOP_THRESH (or MINFREE) pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "GC_START_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "GC_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->gc_start_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->gc_start_thresh < 0) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "GC_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MAX_SETRETENP") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->max_setretenp), p, &dp, 10);
 					if (*dp != '\0') {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "PUT_FAILED_RETENP") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -393,13 +401,13 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					if (*dp != '\0' || pool_p->put_failed_retenp == 0) {
 						if (*dp == '\0' && pool_p->put_failed_retenp == 0)
 							stglogit (func, STG26, "option", "pool_p->put_failed_retenp (should be <0 or >0)");
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "STAGEOUT_RETENP") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -408,14 +416,14 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					if (*dp != '\0' || pool_p->stageout_retenp == 0) {
 						if (*dp == '\0' && pool_p->stageout_retenp == 0)
 							stglogit (func, STG26, "option", "pool_p->stageout_retenp (should be <0 xor >0)");
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp(p, "GC") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL ||
 						strchr (p, ':') == NULL ) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "GC in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -442,7 +450,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 					if (pool_p->migr_name[0] != '\0') {
 						/* Yet defined !? */
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIGRATOR in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -463,35 +471,43 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 				} else if (strcmp (p, "MIG_START_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIG_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->mig_start_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->mig_start_thresh < 0) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIG_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MIG_STOP_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->mig_stop_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->mig_stop_thresh < 0) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MIG_DATA_THRESH") == 0) {
+					int checkrc;
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "pool", pool_p->name);
+						stglogit (func, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
+						stglogit (func, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					pool_p->mig_data_thresh = strutou64 (p);
+					if (checkrc == 0) pool_p->mig_data_thresh *= ONE_MB; /* Not unit : default MB */
+					/* It is allowed to have pool_p->mig_data_thresh == 0 */
 				} else {
 					stglogit (func, STG26, "pool", pool_p->name);
 					errflg++;
@@ -551,6 +567,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			strcpy (defpoolname_out, p);
 			/* Please note that defpoolname_out can contain multiple entries, separated with a ':' */
 		} else if (strcmp (p, "DEFSIZE") == 0) {
+			int checkrc;
 			if (poolalloc (pool_p, nbpool_ent) < 0) {
 				errflg++;
 				goto reply;
@@ -561,12 +578,19 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				errflg++;
 				goto reply;
 			}
-			stage_strtoi(&defsize, p, &dp, 10);
-			if (*dp != '\0' || defsize <= 0) {
+			if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
 				stglogit (func, STG28);
 				errflg++;
 				goto reply;
 			}
+			defsize = strutou64(p);
+			if (defsize <= 0) {
+				/* Cannot be < 0, strictly speaking */
+				stglogit (func, STG28);
+				errflg++;
+				goto reply;
+			}
+			if (checkrc == 0) defsize *= ONE_MB; /* Not unit : default MB */
 		} else {
 			if (nbpool_ent < 0) {
 				stglogit (func, STG26, "pool", "");
@@ -675,6 +699,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		}
 		if ((p = strtok (buf, " \t\n")) == NULL) continue;
 		if (strcmp (p, "POOL") == 0) {
+			char tmpbuf[21];
 			pool_p++;
 			elemp = pool_p->elemp;
 			if (pool_p->defsize == 0) pool_p->defsize = defsize;
@@ -685,8 +710,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				errflg++;
 				goto reply;
 			}
-			stglogit (func,"POOL %s DEFSIZE %d GC_STOP_THRESH %d GC_START_THRESH %d\n",
-					  pool_p->name, pool_p->defsize, pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
+			stglogit (func,"POOL %s DEFSIZE %s GC_STOP_THRESH %d GC_START_THRESH %d\n",
+					  pool_p->name, u64tostru(pool_p->defsize, tmpbuf, 0), pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
 			stglogit (func,".... GC %s\n",
 					  *(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
 			stglogit (func,".... NO_FILE_CREATION %s\n",
@@ -1083,7 +1108,7 @@ int ismigovl(pid, status)
 	int found, found2;
 	int i;
 	struct pool *pool_p;
-	struct pool *pool_p_ok;
+	struct pool *pool_p_ok = NULL;
 	struct stgcat_entry *stcp;
 	char *func = "ismigovl";
 	struct pool **pool_migovl;
@@ -1240,6 +1265,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	struct migrator *pool_p_migr = NULL;
 	char tmpbuf[21];
 	char timestr[64] ;   /* Time in its ASCII format             */
+	char tmpbuf0[21];
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 	char tmpbuf3[21];
@@ -1252,11 +1278,11 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
 		if (*poolname) pool_p_migr = pool_p->migr;
-		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
+		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
 				 pool_p->name,
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
-				 pool_p->defsize,
+				 u64tostru(pool_p->defsize,tmpbuf0,0),
 				 pool_p->gc_start_thresh,
 				 pool_p->gc_stop_thresh,
 				 pool_p->gc,
@@ -1458,7 +1484,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 int
 selectfs(poolname, size, path, status, noallocation)
 	char *poolname;
-	int *size;
+	u_signed64 *size;
 	char *path;
 	int status;
 	int noallocation;
@@ -1482,7 +1508,7 @@ selectfs(poolname, size, path, status, noallocation)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	if (! noallocation) {
 		if (*size == 0) *size = pool_p->defsize;
-		reqsize = (u_signed64) ((u_signed64) *size * (u_signed64) ONE_MB);	/* size in bytes */
+		reqsize = *size;	/* size in bytes */
 	} else {
 		*size = 0;
 		reqsize = 0;
@@ -1673,7 +1699,7 @@ rwcountersfs(poolname, ipath, status, req_type)
 void
 getdefsize(poolname, size)
 	char *poolname;
-	int *size;
+	u_signed64 *size;
 {
 	int i;
 	struct pool *pool_p;
@@ -1700,8 +1726,10 @@ updfreespace(poolname, ipath, reject_overflow, elemp_free, incr)
 	char tmpbuf2[21];
 	char tmpbuf3[21];
 
-	if (*poolname == '\0')
+	if ((poolname == NULL) || (*poolname == '\0'))
 		return (0);
+	if ((ipath == NULL) || (*ipath == '\0'))
+		return(0);
 	if ((p = strchr (ipath, ':')) != NULL) {
 		strncpy (server, ipath, (size_t) (p - ipath));
 		*(server + (p - ipath)) = '\0';
@@ -2904,9 +2932,9 @@ int migpoolfiles(pool_p)
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 
 	int c;
-	struct sorted_ent *prev, *scc, *sci, *scf, *scs, *scc_found;
+	struct sorted_ent *prev, *scc, *sci, *scf, *scs, *scc_found = NULL;
 	struct stgcat_entry *stcp;
-	struct stgpath_entry *stpp;
+	struct stgpath_entry *stpp = NULL;
 	int found_nbfiles = 0;
 	int found_nbfiles_max = 0;
 	char func[16];
@@ -2938,9 +2966,14 @@ int migpoolfiles(pool_p)
 	/* We get the minimum size to be transfered */
 	minsize = defminsize;
 	if ((minsize_per_stream = getconfent ("STG", "MINSIZE_PER_STREAM", 0)) != NULL) {
+		int checkrc;
 		minsize = defminsize;
-		if ((minsize = strutou64(minsize_per_stream)) <= 0) {
-			minsize = defminsize;
+		if ((checkrc = stage_util_check_for_strutou64(minsize_per_stream)) >= 0) {
+			if ((minsize = strutou64(minsize_per_stream)) <= 0) {
+				minsize = defminsize;
+			} else {
+				if (checkrc == 0) minsize *= ONE_MB; /* Not unit : default MB */
+			}
 		}
 	}
 
@@ -3278,8 +3311,10 @@ int migpoolfiles(pool_p)
 		int nstcp;
 		int found_nideal_minsize;
 		int created_new_streams;
+#ifdef STAGER_DEBUG
 		char tmpbuf1[21];
 		char tmpbuf2[21];
+#endif
 
 		/* This stream has already been subject to expansion */
 		if (tppool_vs_stcp[j].nb_substreams > 0) continue;
@@ -3547,7 +3582,7 @@ int migpoolfiles(pool_p)
 			}
 		} else if (fork_pid == 0) {
 			/* We are in the child */
-			int rc;
+			int rc = 0;
 
 			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
