@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.104 $ $Release$ $Date: 2004/12/09 12:27:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.105 $ $Release$ $Date: 2004/12/09 14:51:16 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.104 $ $Release$ $Date: 2004/12/09 12:27:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.105 $ $Release$ $Date: 2004/12/09 14:51:16 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3147,13 +3147,15 @@ int rtcpcld_returnStream(
      tape_list_t *tape;
 {
   struct C_Services_t **svcs = NULL;
+  struct Cstager_IStagerSvc_t **stgSvc = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
-  struct C_IAddress_t *iAddr;
+  struct C_IAddress_t *iAddr = NULL;
   struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Stream_t *stream = NULL;
   enum Cstager_TapeStatusCodes_t tpStatus;  
-  struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
+  struct Cstager_TapeCopyForMigration_t *nextMigrCandidate = NULL;
+  struct Cstager_TapeCopy_t **tapeCopyArray = NULL, *tapeCopy = NULL;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   int i, waitingFound = 0, rc = 0, save_serrno, nbTapeCopies = 0;
   ID_TYPE key = 0;
@@ -3164,6 +3166,8 @@ int rtcpcld_returnStream(
   }
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+  rc = getStgSvc(&stgSvc);
+  if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) return(-1);
 
   if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
     rc = updateTapeFromDB(tape);
@@ -3209,13 +3213,62 @@ int rtcpcld_returnStream(
     C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
     C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
 
+    iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+    /*
+     * Lock the stream. Normally there shouldn't be any TapeCopies
+     * attach to this stream anymore but there is a timewindow
+     * when the MigHunter may have run. If we find a TapeCopy
+     * the stream will not be removed but its status is set
+     * to STREAM_PENDING allowing it to be picked up in the
+     * next streamsToDo(). It's too late now to continue the stream
+     * with this tape since the mover has already been told that
+     * there is nothing more to do.
+     */
+    rc = Cstager_IStagerSvc_bestTapeCopyForStream(
+                                                  *stgSvc,
+                                                  stream,
+                                                  &nextMigrCandidate,
+                                                  0
+                                                  );
+    if ( (rc == -1) && (serrno != ENOENT) ) {
+      save_serrno = serrno;
+      LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
+                     Cstager_IStagerSvc_errorMsg(*stgSvc));
+      C_IAddress_delete(iAddr);
+      serrno = save_serrno;
+      return(-1);
+    }
+    /*
+     * If we got a TapeCopy we have to reset its status
+     */
+    if ( nextMigrCandidate != NULL ) {
+      tapeCopy = Cstager_TapeCopyForMigration_getTapeCopy(nextMigrCandidate);
+      Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
+      iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+      rc = C_Services_updateRep(
+                                *svcs,
+                                iAddr,
+                                iObj,
+                                0
+                                );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        LOG_DBCALL_ERR("C_Services_updateRep()",
+                       C_Services_errorMsg(*svcs));
+        (void)C_Services_rollback(*svcs,iAddr);
+        C_IAddress_delete(iAddr);
+        serrno = save_serrno;
+        return(-1);
+      }
+      waitingFound = 1;
+    }
     /*
      * We detach the stream from the tape. Delete the stream
      * if there are no more tape copies waiting in stream, otherwise
      * reset the stream status to pending so that a new tape
      * can be selected.
      */
-    iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Stream_getIObject(stream);
     rc = C_Services_fillObj(
                             *svcs,
@@ -3227,10 +3280,12 @@ int rtcpcld_returnStream(
       save_serrno = serrno;
       LOG_DBCALL_ERR("C_Services_fillObj()",
                      C_Services_errorMsg(*svcs));
+      (void)C_Services_rollback(*svcs,iAddr);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
+
     Cstager_Stream_tapeCopy(stream,&tapeCopyArray,&nbTapeCopies);     
     Cstager_Stream_id(stream,&key);
     for ( i=0; i<nbTapeCopies; i++ ) {
@@ -3258,6 +3313,7 @@ int rtcpcld_returnStream(
       LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_Tape)",
                      C_Services_errorMsg(*svcs));
       (void)C_Services_rollback(*svcs,iAddr);
+      if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -3287,6 +3343,7 @@ int rtcpcld_returnStream(
         LOG_DBCALL_ERR("C_Services_updateRep(stream)",
                        C_Services_errorMsg(*svcs));
         (void)C_Services_rollback(*svcs,iAddr);
+        if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
@@ -3309,10 +3366,14 @@ int rtcpcld_returnStream(
         LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_TapePool)",
                        C_Services_errorMsg(*svcs));
         (void)C_Services_rollback(*svcs,iAddr);
+        if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
       }
+      /*
+       * Detach the TapeCopies
+       */
       for ( i=0; i<nbTapeCopies; i++ ) {
         Cstager_Stream_removeTapeCopy(stream,tapeCopyArray[i]);
         Cstager_TapeCopy_removeStream(tapeCopyArray[i],stream);
@@ -3329,6 +3390,7 @@ int rtcpcld_returnStream(
         LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_TapeCopy)",
                        C_Services_errorMsg(*svcs));
         (void)C_Services_rollback(*svcs,iAddr);
+        if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
@@ -3344,11 +3406,13 @@ int rtcpcld_returnStream(
         LOG_DBCALL_ERR("C_Services_deleteRep(stream)",
                        C_Services_errorMsg(*svcs));
         (void)C_Services_rollback(*svcs,iAddr);
+        if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
       }
     }
+    if ( tapeCopyArray != NULL ) free(tapeCopyArray);
     rc = C_Services_commit(*svcs,iAddr);
     if ( rc == -1 ) {
         save_serrno = serrno;
@@ -3358,8 +3422,8 @@ int rtcpcld_returnStream(
         serrno = save_serrno;
         return(-1);
     }
+    C_IAddress_delete(iAddr);
   }
-  C_IAddress_delete(iAddr);
 
   return(0);
 }
