@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.22 $ $Date: 2000/06/08 07:38:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.23 $ $Date: 2000/06/13 16:55:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -95,7 +95,10 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
             severity = RTCP_RESELECT_SERV | RTCP_SYERR;
             break;
         case EIO:    /* I/O error */
+            msgaddr = NULL;
             errcat = gettperror (fd, filereq->tape_path, &msgaddr);
+            if ( errcat <= 0 ) errcat = EIO;
+            if ( msgaddr == NULL ) msgaddr = sstrerror(errcat);
             rtcpd_AppendClientMsg(NULL, file,RT126,"CPDSKTP", msgaddr, trec+1);
             if ( filereq != NULL ) status = errcat;
             switch (errcat) {
@@ -224,7 +227,10 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
 
     switch(errno) {
         case EIO:
+            msgaddr = NULL;
             errcat = gettperror (fd, filereq->tape_path, &msgaddr);
+            if ( errcat <= 0 ) errcat = EIO;
+            if ( msgaddr == NULL ) msgaddr = sstrerror(errcat);
             rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", 
                                   msgaddr, trec+1);
 
@@ -697,7 +703,7 @@ int tread(int fd,char *ptr,int len,
          */
 #if defined(sun)
         if ( rc == 0 ) {
-            char *msgaddr;
+            char *msgaddr = NULL;
 
             if (gettperror (fd, filereq->tape_path, &msgaddr) == ETBLANK) {
                 rtcpd_AppendClientMsg(NULL, file, RT118,"CPTPDSK",
