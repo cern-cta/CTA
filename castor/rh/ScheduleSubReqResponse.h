@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponse.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -32,6 +32,7 @@
 struct C_IObject_t;
 struct Crh_Response_t;
 struct Crh_ScheduleSubReqResponse_t;
+struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
 
 //------------------------------------------------------------------------------
@@ -147,18 +148,18 @@ int Crh_ScheduleSubReqResponse_diskCopy(struct Crh_ScheduleSubReqResponse_t* ins
 int Crh_ScheduleSubReqResponse_setDiskCopy(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 /**
- * Add a struct Cstager_DiskCopy_t* object to the sources list
+ * Add a struct Cstager_DiskCopyForRecall_t* object to the sources list
  */
-int Crh_ScheduleSubReqResponse_addSources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopy_t* obj);
+int Crh_ScheduleSubReqResponse_addSources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopyForRecall_t* obj);
 
 /**
- * Remove a struct Cstager_DiskCopy_t* object from sources
+ * Remove a struct Cstager_DiskCopyForRecall_t* object from sources
  */
-int Crh_ScheduleSubReqResponse_removeSources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopy_t* obj);
+int Crh_ScheduleSubReqResponse_removeSources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopyForRecall_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskCopy_t* objects held by sources
+ * Get the list of struct Cstager_DiskCopyForRecall_t* objects held by sources
  */
-int Crh_ScheduleSubReqResponse_sources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
+int Crh_ScheduleSubReqResponse_sources(struct Crh_ScheduleSubReqResponse_t* instance, struct Cstager_DiskCopyForRecall_t*** var, int* len);
 
 #endif // CASTOR_RH_SCHEDULESUBREQRESPONSE_H

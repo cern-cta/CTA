@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.56 $ $Release$ $Date: 2004/11/24 17:21:27 $ $Author: bcouturi $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.57 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -204,6 +204,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/Request.cpp \
               stager/RequestCInt.cpp \
 	      stager/RequestQueryType.cpp \
+	      stager/RemoteStagerSvc.cpp \
               stager/ScheduleSubReqRequest.cpp \
               stager/ScheduleSubReqRequestCInt.cpp \
               stager/Segment.cpp \
@@ -264,8 +265,9 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
+              exception/NotSupported.cpp \
               exception/Communication.cpp \
-              exception/NoEntry.cpp 
+              exception/NoEntry.cpp
 
 #if BuildSecurity
 STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp

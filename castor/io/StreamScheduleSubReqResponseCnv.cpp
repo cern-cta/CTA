@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamScheduleSubReqResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamScheduleSubReqResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,6 +39,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -135,7 +136,7 @@ void castor::io::StreamScheduleSubReqResponseCnv::marshalObject(castor::IObject*
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
     address->stream() << obj->sources().size();
-    for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->sources().begin();
+    for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it = obj->sources().begin();
          it != obj->sources().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
@@ -167,7 +168,7 @@ castor::IObject* castor::io::StreamScheduleSubReqResponseCnv::unmarshalObject(ca
   for (unsigned int i = 0; i < sourcesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
     IObject* objSources = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addSources(dynamic_cast<castor::stager::DiskCopy*>(objSources));
+    obj->addSources(dynamic_cast<castor::stager::DiskCopyForRecall*>(objSources));
   }
   return object;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponseCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponseCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -181,7 +182,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crh_ScheduleSubReqResponse_addSources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_addSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopy* obj) {
+  int Crh_ScheduleSubReqResponse_addSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall* obj) {
     instance->addSources(obj);
     return 0;
   }
@@ -189,7 +190,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crh_ScheduleSubReqResponse_removeSources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_removeSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopy* obj) {
+  int Crh_ScheduleSubReqResponse_removeSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall* obj) {
     instance->removeSources(obj);
     return 0;
   }
@@ -197,10 +198,10 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crh_ScheduleSubReqResponse_sources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_sources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopy*** var, int* len) {
-    std::vector<castor::stager::DiskCopy*>& result = instance->sources();
+  int Crh_ScheduleSubReqResponse_sources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall*** var, int* len) {
+    std::vector<castor::stager::DiskCopyForRecall*>& result = instance->sources();
     *len = result.size();
-    *var = (castor::stager::DiskCopy**) malloc((*len) * sizeof(castor::stager::DiskCopy*));
+    *var = (castor::stager::DiskCopyForRecall**) malloc((*len) * sizeof(castor::stager::DiskCopyForRecall*));
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }

@@ -106,7 +106,8 @@ namespace castor {
     SVC_ORACNV = 4,
     SVC_ODBCCNV = 5,
     SVC_STREAMCNV = 6,
-    SVC_ORASTAGERSVC = 7
+    SVC_ORASTAGERSVC = 7,
+    SVC_REMOTESTAGERSVC = 8
   };
 
   /**
@@ -140,7 +141,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[8];
+  extern const char* ServicesIdStrings[9];
 
   /**
    * Names of the differents representations, used to display

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponse.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,6 +31,7 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -77,7 +78,7 @@ void castor::rh::ScheduleSubReqResponse::print(std::ostream& stream,
   {
     stream << indent << "Sources : " << std::endl;
     int i;
-    std::vector<castor::stager::DiskCopy*>::const_iterator it;
+    std::vector<castor::stager::DiskCopyForRecall*>::const_iterator it;
     for (it = m_sourcesVector.begin(), i = 0;
          it != m_sourcesVector.end();
          it++, i++) {

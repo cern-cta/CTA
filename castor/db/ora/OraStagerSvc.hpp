@@ -68,7 +68,7 @@ namespace castor {
         /**
          * default destructor
          */
-        ~OraStagerSvc() throw();
+        virtual ~OraStagerSvc() throw();
 
         /**
          * Get the service id

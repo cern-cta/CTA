@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponse.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -44,6 +44,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class DiskCopyForRecall;
     class DiskCopy;
 
   }; // end of namespace stager
@@ -133,20 +134,20 @@ namespace castor {
       }
 
       /**
-       * Add a castor::stager::DiskCopy* object to the m_sourcesVector list
+       * Add a castor::stager::DiskCopyForRecall* object to the m_sourcesVector list
        */
-      void addSources(castor::stager::DiskCopy* add_object) {
+      void addSources(castor::stager::DiskCopyForRecall* add_object) {
         m_sourcesVector.push_back(add_object);
       }
 
       /**
-       * Remove a castor::stager::DiskCopy* object from m_sourcesVector
+       * Remove a castor::stager::DiskCopyForRecall* object from m_sourcesVector
        */
-      void removeSources(castor::stager::DiskCopy* remove_object) {
+      void removeSources(castor::stager::DiskCopyForRecall* remove_object) {
         for (unsigned int i = 0; i < m_sourcesVector.size(); i++) {
-          castor::stager::DiskCopy* item = m_sourcesVector[i];
+          castor::stager::DiskCopyForRecall* item = m_sourcesVector[i];
           if (item == remove_object) {
-            std::vector<castor::stager::DiskCopy*>::iterator it = m_sourcesVector.begin() + i;
+            std::vector<castor::stager::DiskCopyForRecall*>::iterator it = m_sourcesVector.begin() + i;
             m_sourcesVector.erase(it);
             return;
           }
@@ -154,10 +155,12 @@ namespace castor {
       }
 
       /**
-       * Get the list of castor::stager::DiskCopy* objects held by m_sourcesVector
-       * @return list of castor::stager::DiskCopy* objects held by m_sourcesVector
+       * Get the list of castor::stager::DiskCopyForRecall* objects held by
+       * m_sourcesVector
+       * @return list of castor::stager::DiskCopyForRecall* objects held by
+       * m_sourcesVector
        */
-      std::vector<castor::stager::DiskCopy*>& sources() {
+      std::vector<castor::stager::DiskCopyForRecall*>& sources() {
         return m_sourcesVector;
       }
 
@@ -170,7 +173,7 @@ namespace castor {
 
       castor::stager::DiskCopy* m_diskCopy;
 
-      std::vector<castor::stager::DiskCopy*> m_sourcesVector;
+      std::vector<castor::stager::DiskCopyForRecall*> m_sourcesVector;
 
     }; // end of class ScheduleSubReqResponse
 
