@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/02 18:10:11 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -48,9 +48,12 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 // Static constants initialization
 //------------------------------------------------------------------------------
 /// SQL statement for tapesToDo
-const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
+/*const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
 "SELECT DiskCopy.id, DiskCopy.path, CastorFile.filesize, DiskCopy.status as dstatus, tapecopy.status as tstatus, NULL FROM CastorFile, DiskCopy, tapecopy WHERE CastorFile.fileId =  :1   AND CastorFile.nsHost = :2 AND DiskCopy.status in (0,2,4,5,6)  AND DiskCopy.castorFile = Castorfile.id   AND castorfile.id = tapecopy.castorfile (+) UNION SELECT DiskCopy.id, DiskCopy.path, CastorFile.filesize, DiskCopy.status, tapecopy.status, segment.status  FROM CastorFile, DiskCopy, tapecopy, segment    WHERE CastorFile.fileId =  :1   AND CastorFile.nsHost = :2 AND DiskCopy.status in (0,2,4,5,6)  AND DiskCopy.castorFile = Castorfile.id   AND castorfile.id = tapecopy.castorfile AND segment.copy = tapecopy.id (+)";
+*/
 
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
+"SELECT  DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1) FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg WHERE DiskCopy.castorFile = Castorfile.id AND CastorFile.fileId = :1 AND CastorFile.nsHost = :2 AND castorfile.id = tpseg.castorfile (+) ";
 
 
 // -----------------------------------------------------------------------
@@ -122,9 +125,9 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       item->setSize(rset->getInt(3));
       item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
                               rset->getInt(4));
-      item->setDiskCopyStatus((castor::stager::TapeCopyStatusCodes)
+      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
                               rset->getInt(5));
-      item->setDiskCopyStatus((castor::stager::SegmentStatusCodes)
+      item->setSegmentStatus((castor::stager::SegmentStatusCodes)
                               rset->getInt(6));
       result.push_back(item);
     }
