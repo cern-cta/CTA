@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.12 $ $Date: 1999/12/10 10:52:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.13 $ $Date: 2000/01/07 13:52:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -150,10 +150,9 @@ char	**argv;
 		tapefd = open (path, O_RDWR|O_NDELAY);
 		if (tapefd < 0) {
 			c = errno;
-			if (errno == ENXIO) {	/* drive not operational */
-				usrmsg (func, TP033, drive, hostname);
+			if (errno == ENXIO)	/* drive not operational */
 				configdown (drive);
-			} else
+			else
 				usrmsg (func, TP042, path, "open",
 					sys_errlist[errno]);
 			goto reply;
@@ -188,10 +187,9 @@ char	**argv;
 			}
 #endif
 			c = errno;
-			if (errno == ENXIO) {	/* drive not operational */
-				usrmsg (func, TP033, drive, hostname);
+			if (errno == ENXIO)	/* drive not operational */
 				configdown (drive);
-			} else
+			else
 				usrmsg (func, TP042, path, "open",
 					sys_errlist[errno]);
 			goto reply;
@@ -375,6 +373,7 @@ char *drive;
 	char msg[OPRMSGSZ];
 
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
+	usrmsg ("posovl", "%s\n", msg);
 	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.12 $ $Date: 2000/01/03 14:27:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.13 $ $Date: 2000/01/07 13:51:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -300,10 +300,9 @@ remount_loop:
 #endif
 #endif
 			if (c) {
-				if (errno == ENXIO) {	/* drive not operational */
-					usrmsg (func, TP033, drive, hostname);
+				if (errno == ENXIO)	/* drive not operational */
 					configdown (drive);
-				} else
+				else
 					usrmsg (func, TP042, path, "open",
 						sys_errlist[errno]);
 				goto reply;
@@ -435,7 +434,7 @@ unload_loop1:
 
 		if (tpmode != mode && tpmode == WRITE_DISABLE && *loader != 'm') {
 			sprintf (msg, TP041, "mount", vid, drive, "write protected");
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 			omsgr (func, msg, 0);
 			c = EACCES;
 			goto reply;
@@ -517,7 +516,7 @@ unload_loop1:
 				sprintf (msg, TP062, vid, "is an NL tape", "");
 			else
 				sprintf (msg, TP062, vid, "has vsn ", tpvsn);
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 			omsgr (func, msg, 0);
 			checkorep (func, orepbuf);
 			if (strcmp (orepbuf, "ok") && strcmp (orepbuf, "yes")) {
@@ -835,6 +834,7 @@ configdown(drive)
 char *drive;
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
+	usrmsg ("mounttape", "%s\n", msg);
 	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
