@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.131 2001/03/06 15:15:52 jdurand Exp $
+ * $Id: stager.c,v 1.132 2001/03/14 11:46:17 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.131 $ $Date: 2001/03/06 15:15:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.132 $ $Date: 2001/03/14 11:46:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2172,7 +2172,7 @@ int filecopy(stcp, key, hostname)
 
 	c = rfio_pclose (rf);
 	if (c != 0) {
-		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", "rfio_pclose", rfio_serror());
+		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s error : exiting with status 0x%x\n", "filecopy", "rfio_pclose", c);
 	}
 	return(c);
 }
@@ -3642,6 +3642,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Tuesday 06 March, 2001 at 16:15:21 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 14 March, 2001 at 12:43:52 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
