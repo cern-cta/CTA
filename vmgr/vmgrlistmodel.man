@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistmodel.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrlistmodel.man,v $ $Revision: 1.3 $ $Date: 2002/05/30 10:39:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTMODEL 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTMODEL 1 "$Date: 2002/05/30 10:39:49 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistmodel \- query the CASTOR Volume Manager about a given model or list all existing cartridge models
 .SH SYNOPSIS
@@ -22,6 +22,7 @@ model		model of cartridge.
 media_letter	media identification letter.
 .HP
 capacity		native capacity (without compression).
+For a multi-sided media like DVD, the native capacity corresponds to one side.
 .HP
 media_cost
 .SH EXAMPLES
@@ -35,10 +36,13 @@ vmgrlistmodel
 8200       2.00G 0
 8500       5.00G 0
 9840   R  20.00G 0
+9940   P  60.00G 0
 DAT120     4.00G 0
 DLT2      10.00G 0
 DLT4      20.00G 0
 DLT7   D  35.00G 0
+DLT8   D  40.00G 0
+LTO1   L 100.00G 0
 SD1M      43.00G 0
 SD1L      96.00G 0
 SD3S   A  10.00G 0
