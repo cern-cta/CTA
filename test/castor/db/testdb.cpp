@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 15:31:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 16:55:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -93,10 +93,10 @@ int main (int argc, char** argv) {
   // Display both objects for comparison
   std::cout << "Originally :" << std::endl;
   castor::ObjectSet alreadyPrinted;
-  fr->print(std::cout, "", alreadyPrinted);
+  fr->print(std::cout, "  ", alreadyPrinted);
   castor::ObjectSet alreadyPrinted2;
   std::cout << "Finally :" << std::endl;
-  fr2->print(std::cout, "", alreadyPrinted2);
+  fr2->print(std::cout, "  ", alreadyPrinted2);
 
   // Now modify the first object
   fr->removeFiles(f2);
@@ -118,8 +118,6 @@ int main (int argc, char** argv) {
     return 1;
   }
 
-  std::cout << "UpdateRep ok" << std::endl;
-
   // And update the second representation of the object
   try {
     svcs->updateObj(&ad, fr2);
@@ -136,10 +134,10 @@ int main (int argc, char** argv) {
   // Finally display the two modified objects to check
   std::cout << "Originally modified :" << std::endl;
   castor::ObjectSet alreadyPrinted3;
-  fr->print(std::cout, "", alreadyPrinted3);
+  fr->print(std::cout, "  ", alreadyPrinted3);
   castor::ObjectSet alreadyPrinted4;
   std::cout << "Finally modified :" << std::endl;
-  fr2->print(std::cout, "", alreadyPrinted4);
+  fr2->print(std::cout, "  ", alreadyPrinted4);
 
   delete svcs;
   delete fr;
