@@ -1,0 +1,453 @@
+.\" $Id: stage_constants.man,v 1.1 2002/10/03 12:48:17 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_constants.man,v $ $Revision: 1.1 $ $Date: 2002/10/03 12:48:17 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_CONSTANTS "3" "$Date: 2002/10/03 12:48:17 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage constants \- Constants for the stage package
+
+.SH DESCRIPTION
+The \fBstage constants\fP are used in both clients and stage daemon
+
+.SH CONSTANTS
+.TP 2.0i
+.B STAGE_NAME
+Name of the service. Default is "stage".
+.TP
+.B STAGE_PROTO
+Protocol over the network. Default is "tcp".
+.TP
+.B STAGE_PORT
+Port on which is listening the stager daemon. Default is 5007.
+.TP
+.B STAGEIN
+Describes a stagein request or a STAGEIN status. Value is 1.
+.TP
+.B STAGEOUT
+Describes a stageout request or a STAGEOUT status. Value is 2.
+.TP
+.B STAGEWRT
+Describes a stagewrt request or a STAGEWRT status. Value is 3.
+.TP
+.B STAGEPUT
+Describes a stageput request or a STAGEPUT status. Value is 4.
+.TP
+.B STAGEQRY
+Describes a stageqry request. Value is 5.
+.TP
+.B STAGECLR
+Describes a stageclr request. Value is 6.
+.TP
+.B STAGEKILL
+Describes a stagekill request. Value is 7.
+.TP
+.B STAGEUPDC
+Describes a stageupdc request. Value is 8.
+.TP
+.B STAGEINIT
+Describes a stageinit request. Value is 9.
+.TP
+.B STAGECAT
+Describes a stagecat request. Value is 10.
+.TP
+.B STAGEALLOC
+Describes a stagealloc request. Value is 11.
+.TP
+.B STAGEGET
+Describes a stageget request. Value is 12.
+.TP
+.B STAGEFILCHG
+Describes a stagechng request. Value is 14.
+.TP
+.B STAGESHUTDOWN
+Describes a stageshutdown request. Value is 15.
+.TP
+.B STAGEPING
+Describes a stageping request. Value is 16.
+.TP
+.B RTCOPY_OUT
+Describes an output from the mover sent to a client. Value is 2.
+.TP
+.B STAGERC
+Describes a global return code output sent to a client. Value is 3.
+.TP
+.B SYMLINK
+Describes a request to the client to create a symbolic link. Value is 4.
+.TP
+.B RMSYMLINK
+Describes a request to the client to remove a symbolic link. Value is 5.
+.TP
+.B API_STCP_OUT
+Describes a packet containing an stgcat_entry record. Value is 6.
+.TP
+.B API_STPP_OUT
+Describes a packet containing an stgpath_entry record. Value is 7.
+.TP
+.B UNIQUEID
+Describes a packet containing an unique id sent to the client. Only for very old API clients. Value is 8.
+.TP
+.B NOTSTAGED
+Used internally by the stgager daemon when a record is not found. Value is 0 (0x000000).
+.TP
+.B WAITING_SPC
+Bit in the status member of an stgcat_entry record describing it is waiting for free space. Value is 16 (0x000010).
+.TP
+.B WAITING_REQ
+Bit in the status member of an stgcat_entry record describing it is waiting on another request to complete. Value is 32 (0x000020).
+.TP
+.B STAGED
+Bit in the status member of an stgcat_entry record describing it is staged. Value is 48 (0x000030).
+.TP
+.B KILLED
+Status describing that an entry in its process queue has been killed. Value is 64 (0x000040).
+.TP
+.B STG_FAILED
+Status describing that an entry in its process queue has failed. Value is 80 (0x000050).
+.TP
+.B PUT_FAILED
+Bit in the status member of an stgcat_entry record describing its migration have failed. Value is 96 (0x000060).
+.TP
+.B STAGED_LSZ
+Bit in the status member of an stgcat_entry record describing its recall was successful but truncated. Value is 256 (0x000100).
+.TP
+.B STAGED_TPE
+Bit in the status member of an stgcat_entry record describing its recall was successful but bypassed tape errors, on user's request, that should have been fatal by default. Only possible in tape explicit mode, not in HSM mode. Value is 512 (0x000200).
+.TP
+.B CAN_BE_MIGR
+Bit in the status member of an stgcat_entry record describing it is a candidate for automatic CASTOR migration. Value is 1024 (0x000400).
+.TP
+.B LAST_TPFILE
+Bit in the status member of an stgcat_entry record describing it corresponds to the last tape file of given volume. Value is 4096 (0x001000).
+.TP
+.B BEING_MIGR
+Bit in the status member of an stgcat_entry record describing it is being handle by the automatic CASTOR migration. Value is 8192 (0x002000).
+.TP
+.B ISSTAGEDBUSY
+Internal flag used by stager daemon describing a CASTOR record temporarly busy, because being migrated for example. Value is 16384 (0x004000).
+.TP
+.B ISSTAGEDSYERR
+Internal flag used by stager daemon describing a STAGED record it cannot remove. Value is 65536 (0x010000).
+.TP
+.B WAITING_MIGR
+Bit in the status member of an stgcat_entry record describing a CASTOR HSM record elected for being migrated now, but not yet exactly in this state. This is a intermediate state with short lifetime. Value is 131072 (0x020000).
+.TP
+.B WAITING_NS
+Bit in the status member of an stgcat_entry record describing a CASTOR HSM record waiting for creation in the CASTOR Name Server. Value is 262144 (0x040000).
+.TP
+.B STAGE_RDONLY
+Bit in the status member of an stgcat_entry record describing a CASTOR HSM record accessed in read-only mode. Happens only when other copies of the same disk file are in a busy state. Value is 1048576 (0x100000).
+.TP
+.B STAGE_AUTO_TPPOOL
+Flag saying an I/O process can switch from a tape pool to another when migrating CASTOR files. Not yet supported (option \-\-volative_tppool). Value is 1.
+.TP
+.B MSG_OUT
+Describes a message sent to the client for its standard output. Value is 0.
+.TP
+.B MSG_ERR
+Describes a message sent to the client for its standard error. Value is 1.
+.TP
+.B USERR
+Global return code of a process identifying a user error. Value is 1.
+.TP
+.B SYERR
+Global return code of a process identifying a system error. Value is 2.
+.TP
+.B CONFERR
+Global return code of a process identifying a configuration error. Value is 4.
+.TP
+.B SHIFT_ECUPVNACT
+Error code describing failure with the CASTOR User Privilege daemon. Never happens by default (system keeps retrying). Value is 187.
+.TP
+.B ETHELDERR
+Global return code of a process identifying an error because a tape is held. Value is 188.
+.TP
+.B LNKNSUP
+Global return code of a process identifying an error because symbolic links are not supported on that platform. Value is 189.
+.TP
+.B CLEARED
+Global return code of a process identifying an error because request was cleared. Value is 192.
+.TP
+.B BLKSKPD
+Global return code of a process identifying a warning because blocks were skipped when doing a recall. Only possible in tape explicit mode, not in HSM mode. Value is 193.
+.TP
+.B TPE_LSZ
+Global return code of a process identifying a warning because blocks were skipped and stage was limited by size. Only possible in tape explicit mode, not in HSM mode. Value is 194.
+.TP
+.B MNYPARI
+Global return code of a process identifying a warning because there was too many tape errors. Only possible in tape explicit mode, not in HSM mode. Value is 195.
+.TP
+.B REQKILD
+Global return code of a process identifying an error because request was killed. Value is 196.
+.TP
+.B LIMBYSZ
+Global return code of a process identifying a warning because stagein was limited by size. Value is 197.
+.TP
+.B SHIFT_ESTNACT
+Global return code of a process identifying a stager daemon that is absent or in pause mode. Value is 198.
+.TP
+.B ENOUGHF
+Internal code desbribing a stageclr that got refused because free space is not out of configuration bounds. Value is 199.
+.TP
+.B STGMAGIC
+Describes first version of the stage protocol. Value is 0x13140701.
+.TP
+.B STGMAGIC2
+Describes second version of the stage protocol (with its first API). Value is 0x13140702.
+.TP
+.B STGMAGIC3
+Describes third version of the stage protocol. Value is 0x13140703.
+.TP
+.B STGMAGIC4
+Describes fourth version of the stage protocol. Value is 0x13140704.
+.TP
+.B STGDAEMON_LEVEL
+Describes default level of the stager daemon. Value is STGMAGIC4.
+.TP
+.B ONE_SECOND
+Unit for a second. Value is 1.
+.TP
+.B ONE_MINUTE
+Number of units for a minute. Value is 60.
+.TP
+.B ONE_HOUR
+Number of units for an hour. Value is 3600.
+.TP
+.B ONE_DAY
+Number of units for a day. Value is ONE_HOUR*24.
+.TP
+.B ONE_YEAR
+Number of units for a year. Value is ONE_DAY*365.
+.TP
+.B RETRYI
+Default number of seconds between each retry. Value is 60.
+.TP
+.B STGTIMEOUT
+Default timeout when a client is dialing with a stager daemon, or withing stager daemon. Value is 10.
+.TP
+.B DEFDGN
+Default device group name for a cartridge. Value is "CART".
+.TP
+.B MAXRETRY
+Default maximum number of retries. Value is 5 (counting from zero, so 6 in reality).
+.TP
+.B PRTBUFSZ
+Maximum buffer size when stager daemon is logging. Value is 1024.
+.TP
+.B REPBUFSZ
+Maximum buffer size between client and stager daemon for protocols others than structures and the initial request. Value is 512.
+.TP
+.B REQBUFSZ
+Maximum buffer size in client when asking something to stager daemon. Value is 20000.
+.TP
+.B CHECKI
+Maximum number of seconds between each main loop in the stager daemon. Value is 10.
+.TP
+.B STAGE_INPUT_MODE
+Describes a marshalling of stage structures. Values is 0.
+.TP
+.B STAGE_OUTPUT_MODE
+Describes an unmarshalling of stage structures. Values is 1.
+.TP
+.B STAGE_DEFERRED
+Flag corresponding to \-A deferred (stagein). Value is 0x0000000000001.
+.TP
+.B STAGE_GRPUSER
+Flag corresponding to \-G (stagein for example). Not in HSM mode. Value is 0x0000000000002.
+.TP
+.B STAGE_COFF
+Flag corresponding to \-c off (stagein). Not in HSM mode. Value is 0x0000000000004.
+.TP
+.B STAGE_UFUN
+Flag corresponding to \-U (stagein for example). Not in HSM mode. Not supported in reality. Value is 0x0000000000008.
+.TP
+.B STAGE_INFO
+Flag corresponding to \-z (stagein for example). Value is 0x0000000000010.
+.TP
+.B STAGE_ALL
+Flag corresponding to \-a (stageqry). Value is 0x0000000000020.
+.TP
+.B STAGE_LINKNAME
+Flag corresponding to \-L (stageqry,stageclr). Value is 0x0000000000040.
+.TP
+.B STAGE_LONG
+Flag corresponding to \-l (stageqry). Value is 0x0000000000080.
+.TP
+.B STAGE_PATHNAME
+Flag corresponding to \-P (stageqry). Value is 0x0000000000100.
+.TP
+.B STAGE_SORTED
+Flag corresponding to \-S (stageqry). Value is 0x0000000000200.
+.TP
+.B STAGE_STATPOOL
+Flag corresponding to \-s (stageqry). Value is 0x0000000000400.
+.TP
+.B STAGE_TAPEINFO
+Flag corresponding to \-T (stageqry). Value is 0x0000000000800.
+.TP
+.B STAGE_USER
+Flag corresponding to \-u (stageqry). Value is 0x0000000001000.
+.TP
+.B STAGE_EXTENDED
+Flag corresponding to \-x (stageqry). Value is 0x0000000002000.
+.TP
+.B STAGE_ALLOCED
+Flag corresponding to \-A (stageqry). Value is 0x0000000004000.
+.TP
+.B STAGE_FILENAME
+Flag corresponding to \-f (stageqry). Value is 0x0000000008000.
+.TP
+.B STAGE_EXTERNAL
+Flag corresponding to \-I (stageqry). Value is 0x0000000010000.
+.TP
+.B STAGE_MULTIFSEQ
+Flag corresponding to \-Q (stageclr,stageqry). Value is 0x0000000020000.
+.TP
+.B STAGE_MIGRULES
+Flag corresponding to \-\-migrator (stageqry). Value is 0x0000000040000.
+.TP
+.B STAGE_SILENT
+Flag corresponding to \-\-silent (stagein for example). Value is 0x0000000080000.
+.TP
+.B STAGE_NOWAIT
+Flag corresponding to \-\-nowait (stagein for example). Value is 0x0000000100000.
+.TP
+.B STAGE_NOREGEXP
+Flag corresponding to \-\-noregexp (stageqry). Value is 0x0000000200000.
+.TP
+.B STAGE_DUMP
+Flag corresponding to \-\-dump (stageqry). Value is 0x0000000400000.
+.TP
+.B STAGE_DUMCLASS
+Flag corresponding to \-\-class (stageqry). Value is 0x0000000800000.
+.TP
+.B STAGE_QUEUE
+Flag corresponding to \-\-queue (stageqry). Value is 0x0000001000000.
+.TP
+.B STAGE_COUNTERS
+Flag corresponding to \-\-counters (stageqry). Value is 0x0000002000000.
+.TP
+.B STAGE_NOHSMCREAT
+Flag corresponding to \-\-nohsmcreat (stagewrt). Value is 0x0000004000000.
+.TP
+.B STAGE_CONDITIONAL
+Flag corresponding to \-c (stageclr). Value is 0x0000008000000.
+.TP
+.B STAGE_FORCE
+Flag corresponding to \-F (stageclr,stageinit). Value is 0x0000010000000.
+.TP
+.B STAGE_REMOVEHSM
+Flag corresponding to \-remove_from_hsm (stageclr). Value is 0x0000020000000.
+.TP
+.B STAGE_RETENP
+Flag corresponding to \-\-retenp (stageqry). Value is 0x0000040000000.
+.TP
+.B STAGE_MINTIME
+Flag corresponding to \-\-mintime (stageqry). Value is 0x0000100000000.
+.TP
+.B STAGE_VERBOSE
+Flag corresponding to \-\-verbose (stageping). Value is 0x0000200000000.
+.TP
+.B STAGE_DISPLAY_SIDE
+Flag corresponding to \-\-display_side (stageqry). Value is 0x0000400000000.
+.TP
+.B STAGE_SIDE
+Flag corresponding to \-\-side (stagein,stagewrt,stagecat,stageout,stageqry). Value is 0x0000800000000.
+.TP
+.B STAGE_FILE_ROPEN
+Flag corresponding to \-o (stageupdc). Value is 0x0001000000000.
+.TP
+.B STAGE_FILE_RCLOSE
+Flag corresponding to \-c (stageupdc). Value is 0x0002000000000.
+.TP
+.B STAGE_FILE_WOPEN
+Flag corresponding to \-O (stageupdc). Value is 0x0004000000000.
+.TP
+.B STAGE_FILE_WCLOSE
+Flag corresponding to \-C (stageupdc). Value is 0x0008000000000.
+.TP
+.B STAGE_REQID
+Flag corresponding to \-\-reqid (stageclr,stageqry). Value is 0x0010000000000.
+.TP
+.B STAGE_HSM_ENOENT_OK
+Flag corresponding to \-\-enoent_ok (stagewrt). Value is 0x0020000000000.
+.TP
+.B STAGE_NOLINKCHECK
+Flag corresponding to \-\-nolinkcheck (stagewrt,stagein,stageupdc,stageclr). Value is 0x0040000000000.
+.TP
+.B STAGE_MIGLOG
+internal flag for the CASTOR migrator. Value is 0x0080000000000.
+.TP
+.B STAGE_NORETRY
+Flag corresponding to \-\-noretry (stagein,stagewrt). Value is 0x0100000000000.
+.TP
+.B STAGE_VOLATILE_TPPOOL
+Flag corresponding to \-\-volatile_tppool (stagein,stagewrt). Value is 0x0200000000000.
+.TP
+.B STAGE_NODISK
+Flag corresponding to \-\-nodisk (stageclr). Value is 0x0400000000000.
+.TP
+.B STAGE_MIGRINIT
+Flag corresponding to \-X (stageinit). Value is 0x1000000000000.
+.TP
+.B STAGE_HSMCREAT
+Flag corresponding to \-\-hsmcreat (stagechng). Value is 0x2000000000000.
+.TP
+.B STAGE_FORMAT
+Flag corresponding to \-\-format (hint for stageqry processing into the stage daemon). Value is 0x4000000000000.
+.TP
+.B STAGE_00
+Constant used in the stage daemon to easily differentiate between a\-la\-SHIFT and a\-la\-CASTOR protocols. Value is 100.
+.TP
+.B STAGE_IN
+Constant describing a stagein request using the API. Value is 101.
+.TP
+.B STAGE_OUT
+Constant describing a stageout request using the API. Value is 102.
+.TP
+.B STAGE_WRT
+Constant describing a stagewrt request using the API. Value is 103.
+.TP
+.B STAGE_PUT
+Constant describing a stageput request using the API. Not yet supported. Value is 104.
+.TP
+.B STAGE_QRY
+Constant describing a stageqrt request using the API. Value is 105.
+.TP
+.B STAGE_CLR
+Constant describing a stageclr request using the API. Value is 106.
+.TP
+.B STAGE_KILL
+Constant describing a stagekill request using the API. Value is 107.
+.TP
+.B STAGE_UPDC
+Constant describing a stageupdc request using the API. Value is 108.
+.TP
+.B STAGE_INIT
+Constant describing a stageinit request using the API. Value is 109.
+.TP
+.B STAGE_CAT
+Constant describing a stagecat request using the API. Value is 110.
+.TP
+.B STAGE_ALLOC
+Constant describing a stagealloc request using the API. Value is 111.
+.TP
+.B STAGE_GET
+Constant describing a stageget request using the API. Value is 112.
+.TP
+.B STAGE_FILCHG
+Constant describing a stagechng request using the API. Value is 114.
+.TP
+.B STAGE_SHUTDOWN
+Constant describing a stageshutdown request using the API. Value is 115.
+.TP
+.B STAGE_PING
+Constant describing a stageping request using the API. Value is 116.
+
+.SH ALSO
+\fBstage\fP(1), \fBstage_limits\fP(3), \fBstage_macros\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
