@@ -1,14 +1,14 @@
 /*
- * $Id: procfilchg.c,v 1.33 2002/09/23 11:10:58 jdurand Exp $
+ * $Id: procfilchg.c,v 1.34 2002/11/19 08:59:53 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.33 $ $Date: 2002/09/23 11:10:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.34 $ $Date: 2002/11/19 08:59:53 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -531,7 +531,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			}
 			if (donestatus) { /* --status */
 				u_signed64 actual_size_block;
-				struct stat st;
+				struct stat64 st;
 				int save_stcp_status;
 
 				switch (thisstatus) {
@@ -598,13 +598,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						/* we deleted all but stcp entries that match option values */
 						/* We simulate a stageout followed by a stageupdc */
 						PRE_RFIO;
-						if (RFIO_STAT(stcp->ipath, &st) == 0) {
+						if (RFIO_STAT64(stcp->ipath, &st) == 0) {
 							stcp->actual_size = st.st_size;
 							if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 								actual_size_block = stcp->actual_size;
 							}
 						} else {
-							stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+							stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
 							/* No block information - assume mismatch with actual_size will be acceptable */
 							actual_size_block = stcp->actual_size;
 						}
