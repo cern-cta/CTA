@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.3 $ $Date: 2002/10/16 08:04:57 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.4 $ $Date: 2004/02/05 10:39:51 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvadd" "1" "$Date: 2002/10/16 08:04:57 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvadd" "1" "$Date: 2004/02/05 10:39:51 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvadd \- Adds an entry to the user privilege validation system
 .SH "SYNOPSIS"
@@ -27,10 +27,10 @@ is the user id/user name of the user for whom the authorization is requested.
 is the group id/group name of the user for whom authorization is requested.
 .TP 
 .I source_host
-the source host.
+regular expression for the source host name, which should not include the domain name.
 .TP 
 .I target_host
-the target host.
+regular expression for the target host name, which should not include the domain name.
 .TP 
 .I privilege
 is the privilege requested. It must be one of the following:
