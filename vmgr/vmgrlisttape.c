@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.5 $ $Date: 2000/05/11 05:24:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.6 $ $Date: 2000/07/07 06:35:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -32,7 +32,7 @@ char **argv;
 	vmgr_list list;
 	struct vmgr_tape_info *lp;
 	char manufacturer[CA_MAXMANUFLEN+1];
-	char media_letter[2];
+	char media_letter[CA_MAXMLLEN+1];
 	char model[CA_MAXMODELLEN+1];
 	int nbfiles;
 	char pool_name[CA_MAXPOOLNAMELEN+1];
