@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.71 $ $Release$ $Date: 2004/12/16 18:52:19 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.72 $ $Release$ $Date: 2004/12/17 14:27:36 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -163,6 +163,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
+              query/IQuerySvcCInt.cpp \
 	      replier/ClientConnection.cpp \
 	      replier/RequestReplier.cpp \
               replier/RequestReplierCInt.cpp \
