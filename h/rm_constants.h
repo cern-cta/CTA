@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.11 2005/02/01 22:51:07 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.12 2005/02/18 17:16:32 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -350,5 +350,27 @@
 /* remote's kill -0. Do not put that value to hight - there is a chance that rmmaster will create */
 /* as many remote connection as there is place in that pool */
 #define NODES_SURVEY_POOLSIZE 10
+
+/* Default nodes checkpoint interval in seconds */
+#define CHECKPOINT_NODES_INTERVAL 300
+
+/* Default nodes checkpoint valid lifetime */
+#define CHECKPOINT_NODES_LIFETIME 1800             /* 30 mins */
+
+/* Default jobs checkpoint interval in seconds */
+#define CHECKPOINT_JOBS_INTERVAL 300
+
+/* Default jobs checkpoint valid lifetime */
+#define CHECKPOINT_JOBS_LIFETIME 900               /* 15 mins */
+
+/* Default basename for nodes checkpoint */
+#define CHECKPOINT_NODES_BASENAME "nodes.ck"
+#define CHECKPOINT_NODES_BASENAME_NEW "nodes.ck.new"
+#define CHECKPOINT_NODES_BASENAME_OLD "nodes.ck.old" /* Important: old and new have the same length */
+
+/* Default basename for jobs checkpoint */
+#define CHECKPOINT_JOBS_BASENAME "jobs.ck"
+#define CHECKPOINT_JOBS_BASENAME_NEW "jobs.ck.new"
+#define CHECKPOINT_JOBS_BASENAME_OLD "jobs.ck.old" /* Important: old and new have the same length */
 
 #endif /* __rm_constants_h */
