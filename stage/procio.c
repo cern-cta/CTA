@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.83 2001/02/04 22:15:01 jdurand Exp $
+ * $Id: procio.c,v 1.84 2001/02/04 23:07:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.83 $ $Date: 2001/02/04 22:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.84 $ $Date: 2001/02/04 23:07:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -365,13 +365,13 @@ void procioreq(req_type, req_data, clienthost)
 			unmarshall_STAGE_CAT(STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
 			if (struct_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			/* Note - per construction u1.m.xfile and u1.h.xfile points to same area... */
 			if (check_hsm_type_light(stcp_input[i].u1.m.xfile,&(stcp_input[i].t_or_d)) != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			logit[0] = '\0';
@@ -406,7 +406,7 @@ void procioreq(req_type, req_data, clienthost)
 			unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
 			if (path_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			stglogit(func,"stpp[%d/%d] : %s\n",i+1,nstpp_input,stpp_input[i].upath);
