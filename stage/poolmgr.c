@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.237 2003/01/13 10:41:53 jdurand Exp $
+ * $Id: poolmgr.c,v 1.238 2003/01/13 12:19:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.237 $ $Date: 2003/01/13 10:41:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.238 $ $Date: 2003/01/13 12:19:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -123,6 +123,8 @@ extern int savereqs _PROTO(());
 extern char *localhost; /* Fully qualified hostname */
 extern char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
 static int redomigpool_in_action = 0;
+static struct pool *sav_pools = NULL;
+static int sav_nbpool = 0;
 
 struct files_per_stream {
 	struct stgcat_entry *stcp;
@@ -1029,10 +1031,34 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			PRE_RFIO;
 			if (rfio_access (path, W_OK|F_OK|X_OK|R_OK) < 0) {
 				sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_access", rfio_serror());
+			  check_fs_yet_known:
+				if (rfio_serrno() == SETIMEDOUT) {
+					/* Check if we already know about that filesystem. If yes, we take */
+					/* old values (capacity,free,blocksize) */
+					if ((sav_pools != NULL) && (sav_nbpool > 0)) {
+						int i, j;
+						struct pool *sav_pool_p;
+						struct pool_element *sav_elemp = NULL;
+
+						for (i = 0, sav_pool_p = sav_pools; i < sav_nbpool; i++, sav_pool_p++) {
+							for (j = 0, sav_elemp = sav_pool_p->elemp; j < sav_pool_p->nbelem; j++, sav_elemp++) {
+								if ((strcmp(sav_elemp->server,elemp->server) == 0) &&
+									(strcmp(sav_elemp->dirpath,elemp->dirpath) == 0)) {
+									sendrep(&rpfd, MSG_ERR, "%s capacity, blocksize and free space kept as before\n", path);
+									elemp->bsize = sav_elemp->bsize;
+									elemp->capacity = sav_elemp->capacity;
+									elemp->free = sav_elemp->free;
+									goto forced_fs_ok;
+								}
+							}
+						}
+					}
+				}
 			} else {
 				PRE_RFIO;
 				if (rfio_statfs (path, &st) < 0) {
 					sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_statfs", rfio_serror());
+					goto check_fs_yet_known;
 				} else {
 					char tmpbuf1[21];
 					char tmpbuf2[21];
@@ -1040,6 +1066,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					elemp->bsize = (u_signed64) st.bsize;
 					elemp->capacity = (u_signed64) ((u_signed64) st.totblks * elemp->bsize);
 					elemp->free = (u_signed64) ((u_signed64) st.freeblks * elemp->bsize);
+				  forced_fs_ok:
 					pool_p->capacity += elemp->capacity;
 					pool_p->free += elemp->free;
 					stglogit (func,
@@ -2184,10 +2211,8 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	char sav_defpoolname_out[10 * (CA_MAXPOOLNAMELEN + 1)];
 	struct migrator *sav_migrators;
 	int sav_nbmigrator;
-	int sav_nbpool;
 	int sav_nbhost;
 	char **sav_poolc;
-	struct pool *sav_pools;
 	extern int migr_init;
 	struct stgcat_entry *stcp;
 	struct waitq *wqp = NULL;
@@ -2254,6 +2279,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		nbpool = sav_nbpool;
 		nbhost = sav_nbhost;
 		pools = sav_pools;
+		sav_pools = NULL;
 	} else {			/* free the old configuration */
 		/* but keep pids of cleaner/migrator as well as started time if any */
 		free (sav_poolc);
@@ -2277,6 +2303,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			free (pool_p->elemp);
 		}
 		free (sav_pools);
+		sav_pools = NULL;
 		if (sav_migrators) {
 			for (i = 0; i < sav_nbmigrator; i++) {
 				if (sav_migrators[i].fileclass != NULL) free (sav_migrators[i].fileclass);
