@@ -62,7 +62,14 @@ if [ $rfcprc -eq 0 ]
 then
 	echo $rfcpstats 1>&2
 	bsent=`echo $rfcpstats | cut -f1 -d' '`
-	ttime=`echo $rfcpstats | cut -f4 -d' '`
+	if [ "$bsent" != "0" ]; then
+		ttime=`echo $rfcpstats | cut -f4 -d' '`
+	else
+		#
+		## Output is like: "0 bytes transferred " followed by two exclamation marks
+		#
+		ttime=0
+	fi
 	BINDIR/stageupdc -R $rfcprc -s $bsent -T $ttime -Z $stagerid
 else
 	BINDIR/stageupdc -R $rfcprc -Z $stagerid
