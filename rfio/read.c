@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.4 1999/12/09 13:47:03 jdurand Exp $
+ * $Id: read.c,v 1.5 1999/12/10 19:46:57 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -58,7 +58,7 @@ int     s, size;
 {
    int status ;		/* Status and return code from remote   */
    int nbytes ; 		/* Bytes still to read			*/
-   static int socset = 0 ;
+   int socset = 0 ;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_read(%d, %x, %d)", s, ptr, size);

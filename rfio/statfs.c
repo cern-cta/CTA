@@ -1,5 +1,5 @@
 /*
- * $Id: statfs.c,v 1.4 1999/12/09 13:47:18 jdurand Exp $
+ * $Id: statfs.c,v 1.5 1999/12/10 19:47:49 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:18 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:47:49 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
@@ -20,7 +20,7 @@ int  rfio_statfs(path, statfsbuf)
 char    *path;              	/* remote file path                     */
 struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
 {
-   static char     buf[256];       /* General input/output buffer          */
+   char     buf[256];       /* General input/output buffer          */
    register int    s;      /* socket descriptor            */
    int      status;
    int      len;

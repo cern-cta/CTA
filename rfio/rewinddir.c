@@ -1,5 +1,5 @@
 /*
- * $Id: rewinddir.c,v 1.4 1999/12/09 13:47:05 jdurand Exp $
+ * $Id: rewinddir.c,v 1.5 1999/12/10 19:47:29 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:05 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:47:29 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
@@ -21,24 +21,27 @@ static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.4 $ $Date: 19
  * remote directory close
  */
 
+static int skey = -1;
+
 int rfio_rewinddir(dirp)
 RDIR *dirp;
 {
    WORD    req ; 
    LONG  rcode ;
    LONG msgsiz ;
-   static int s;
+   int *s = NULL;
    int status;
    char *p;
    extern RDIR *rdirfdt[MAXRFD];
    char     rfio_buf[BUFSIZ];
 
+   Cglobals_get(&skey, (void **)&s, sizeof(int));
    /*
     * Search internal table for this directory pointer
     * Check first that it's not the last one used
     */
-   if ( s<0 || s>=MAXRFD || rdirfdt[s] != dirp )
-      for ( s=0; s<MAXRFD; s++ ) if ( rdirfdt[s] == dirp ) break;
+   if ( *s<0 || *s>=MAXRFD || rdirfdt[*s] != dirp )
+      for ( *s=0; *s<MAXRFD; (*s)++ ) if ( rdirfdt[*s] == dirp ) break;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_rewinddir(0x%x)", dirp);
@@ -46,7 +49,7 @@ RDIR *dirp;
    /*
     * The directory is local
     */
-   if ( s < 0 || s >= MAXRFD || rdirfdt[s] == NULL ) {
+   if ( *s < 0 || *s >= MAXRFD || rdirfdt[*s] == NULL ) {
       TRACE(2, "rfio", "rfio_rewinddir: using local rewinddir(0x%x)",dirp) ; 
       (void)rewinddir((DIR *)dirp) ; 
       END_TRACE() ; 
@@ -55,11 +58,11 @@ RDIR *dirp;
    /*
     * Checking magic number
     */
-   if ( rdirfdt[s]->magic != RFIO_MAGIC ) {
+   if ( rdirfdt[*s]->magic != RFIO_MAGIC ) {
       serrno = SEBADVERSION ;
-      (void) close(s) ;
-      free((char *)rdirfdt[s]);
-      rdirfdt[s] = 0;
+      (void) close(*s) ;
+      free((char *)rdirfdt[*s]);
+      rdirfdt[*s] = 0;
       END_TRACE();
       return(-1);
    }
@@ -70,9 +73,9 @@ RDIR *dirp;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_REWINDDIR);
    TRACE(2, "rfio", "rfio_rewinddir: sending %d bytes",RQSTSIZE) ;
-   if (netwrite_timeout(s, rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+   if (netwrite_timeout(*s, rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
       TRACE(2, "rfio", "rfio_rewinddir: write(): ERROR occured (errno=%d)", errno);
-      (void) rfio_dircleanup(s) ;
+      (void) rfio_dircleanup(*s) ;
       END_TRACE() ;
       return -1 ;
    }
@@ -81,9 +84,9 @@ RDIR *dirp;
     */
 
    TRACE(2, "rfio", "rfio_rewinddir: reading %d bytes",WORDSIZE+3*LONGSIZE) ; 
-   if (netread_timeout(s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE)) {
+   if (netread_timeout(*s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE)) {
       TRACE(2, "rfio", "rfio_rewinddir: read(): ERROR occured (errno=%d)", errno);
-      (void)rfio_dircleanup(s) ; 
+      (void)rfio_dircleanup(*s) ; 
       END_TRACE() ;
       return -1 ; 
    }

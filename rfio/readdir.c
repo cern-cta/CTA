@@ -1,5 +1,5 @@
 /*
- * $Id: readdir.c,v 1.4 1999/12/09 13:47:04 jdurand Exp $
+ * $Id: readdir.c,v 1.5 1999/12/10 19:47:12 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:04 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:47:12 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -22,17 +22,20 @@ static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.4 $ $Date: 1999
 
 #define RFIO_KERNEL     1 
 #include "rfio.h"  
-
+#include <Cglobals.h>
 /*
  * Remote directory read
  */
+
+static int s_key = -1;
+
 struct dirent *rfio_readdir(dirp)
 RDIR *dirp;
 {
    int status ;		/* Status and return code from remote   */
    int rcode;
    int req;
-   static int s;
+   int *s = NULL;
    int namlen;
    struct dirent *de;
    char *p;
@@ -42,17 +45,19 @@ RDIR *dirp;
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_readdir(%x)", dirp);
 
+   Cglobals_get(&s_key, (void**)&s, sizeof(int));
+   
    /*
     * Search internal table for this directory pointer
     * Check first that it's not the last one used
     */
-   if ( s<0 || s>=MAXRFD || rdirfdt[s] != dirp )
-      for ( s=0; s<MAXRFD; s++ ) if ( rdirfdt[s] == dirp ) break;
+    if ( *s<0 || *s>=MAXRFD || rdirfdt[*s] != dirp )
+       for ( *s=0; *s<MAXRFD; (*s)++ ) if ( rdirfdt[*s] == dirp ) break;
 
    /* 
     * The directory is local.
     */
-   if ( s<0 || s >= MAXRFD || rdirfdt[s] == NULL) {
+   if ( *s<0 || *s >= MAXRFD || rdirfdt[*s] == NULL) {
       TRACE(2,"rfio","rfio_readdir: using local readdir(%x)", dirp);
       de = readdir((DIR *)dirp);
       END_TRACE();
@@ -64,16 +69,16 @@ RDIR *dirp;
     * directory descriptor. 
     */
   
-   de = (struct dirent *)rdirfdt[s]->dp.dd_buf;
+   de = (struct dirent *)rdirfdt[*s]->dp.dd_buf;
   
    /*
     * Checking magic number.
     */
-   if (rdirfdt[s]->magic != RFIO_MAGIC) {
+   if (rdirfdt[*s]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      (void) close(s) ;
-      free((char *)rdirfdt[s]);
-      rdirfdt[s] = NULL;
+      (void) close(*s) ;
+      free((char *)rdirfdt[*s]);
+      rdirfdt[*s] = NULL;
       END_TRACE();
       return(NULL);
    }
@@ -81,13 +86,13 @@ RDIR *dirp;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_READDIR) ; 
    TRACE(2,"rfio","rfio_readdir: writing %d bytes",RQSTSIZE) ;
-   if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
+   if (netwrite_timeout(*s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
       TRACE(2,"rfio","rfio_readdir: write(): ERROR occured (errno=%d)", errno) ;
       END_TRACE() ;
       return(NULL) ; 
    }
    TRACE(2, "rfio", "rfio_readdir: reading %d bytes",WORDSIZE+3*LONGSIZE) ; 
-   if ( netread_timeout(s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
+   if ( netread_timeout(*s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
       TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
       END_TRACE();
       return(NULL) ; 
@@ -109,7 +114,7 @@ RDIR *dirp;
       memset(de->d_name,'\0',MAXFILENAMSIZE);
       /* Directory name is of a small size, so I put RFIO_CTRL_TIMEOUT instead */
       /* of RFIO_DATA_TIMEOUT */
-      if ( netread_timeout(s,de->d_name,namlen,RFIO_CTRL_TIMEOUT) != namlen ) {
+      if ( netread_timeout(*s,de->d_name,namlen,RFIO_CTRL_TIMEOUT) != namlen ) {
 	 TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
 	 END_TRACE();
 	 return(NULL) ; 

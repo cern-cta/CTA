@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.4 1999/12/09 13:46:38 jdurand Exp $
+ * $Id: chown.c,v 1.5 1999/12/10 19:43:08 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:38 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:43:08 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -22,7 +22,7 @@ char		*file;          /* remote file path             */
 int		owner ;		   /* Owner's uid */
 int 		group ;		   /* Owner's gid */
 {
-	static char     buf[256];       /* General input/output buffer          */
+	char     buf[256];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote chown() status        */
 	int     	len;

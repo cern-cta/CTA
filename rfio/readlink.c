@@ -1,5 +1,5 @@
 /*
- * $Id: readlink.c,v 1.4 1999/12/09 13:47:04 jdurand Exp $
+ * $Id: readlink.c,v 1.5 1999/12/10 19:46:42 baran Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:04 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:42 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -25,105 +25,105 @@ char *buf ;
 int length ;
 
 {
-	int c;
-        int status ;
-	int s ;
-	char *host ;
-	char * filename;
-	char *p ;
-	int rt ;
-	int rcode , len;
-	int uid ;
-	int gid ;
-	static  char buffer[256];
+   int c;
+   int status ;
+   int s ;
+   char *host ;
+   char * filename;
+   char *p ;
+   int rt ;
+   int rcode , len;
+   int uid ;
+   int gid ;
+   char buffer[256];
 
-/*
-         * The file is local.
-         */
-        INIT_TRACE("RFIO_TRACE");
-	TRACE( 1, "rfio", " rfio_readlink (%s,%x,%d)",path,buf,length);
-        if ( ! rfio_parseln(path,&host,&filename,NORDLINKS) ) {
+   /*
+    * The file is local.
+    */
+   INIT_TRACE("RFIO_TRACE");
+   TRACE( 1, "rfio", " rfio_readlink (%s,%x,%d)",path,buf,length);
+   if ( ! rfio_parseln(path,&host,&filename,NORDLINKS) ) {
 #if !defined(_WIN32)
-		status = readlink(filename,buf,length) ;
+      status = readlink(filename,buf,length) ;
 #else
-		{ serrno = SEOPNOTSUP; status = -1; }
+      { serrno = SEOPNOTSUP; status = -1; }
 #endif
-                END_TRACE() ;
-		rfio_errno = 0;
-                return status ;
-        }
+      END_TRACE() ;
+      rfio_errno = 0;
+      return status ;
+   }
 
-        s = rfio_connect(host,&rt);
-        if (s < 0)      {
-                END_TRACE();
-                return(-1);
-        }
-	uid = geteuid() ;
-	gid = getegid () ;
+   s = rfio_connect(host,&rt);
+   if (s < 0)      {
+      END_TRACE();
+      return(-1);
+   }
+   uid = geteuid() ;
+   gid = getegid () ;
 
-        p = buffer ;
-        marshall_WORD(p, B_RFIO_MAGIC);
-        marshall_WORD(p, RQST_READLINK);
+   p = buffer ;
+   marshall_WORD(p, B_RFIO_MAGIC);
+   marshall_WORD(p, RQST_READLINK);
 
-	status = 2*WORDSIZE + strlen(path) + 1;
-	marshall_LONG(p, status) ;
+   status = 2*WORDSIZE + strlen(path) + 1;
+   marshall_LONG(p, status) ;
 
-        if (netwrite_timeout(s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
-                TRACE(2, "rfio", "readlink: write(): ERROR occured (errno=%d)",errno);
-                (void) close(s);
-                END_TRACE();
-                return(-1);
-        }
+   if (netwrite_timeout(s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+      TRACE(2, "rfio", "readlink: write(): ERROR occured (errno=%d)",errno);
+      (void) close(s);
+      END_TRACE();
+      return(-1);
+   }
 
-	p = buffer ;
-	marshall_WORD(p,uid) ;
-	marshall_WORD(p,gid) ;
-	marshall_STRING(p,filename) ;
+   p = buffer ;
+   marshall_WORD(p,uid) ;
+   marshall_WORD(p,gid) ;
+   marshall_STRING(p,filename) ;
 	
-	if (netwrite_timeout(s,buffer,status,RFIO_CTRL_TIMEOUT) != status ) {
-                TRACE(2, "rfio", "readlink(): write(): ERROR occured (errno=%d)",errno);
-                (void) close(s);
-                END_TRACE();
-                return(-1);
-        }
+   if (netwrite_timeout(s,buffer,status,RFIO_CTRL_TIMEOUT) != status ) {
+      TRACE(2, "rfio", "readlink(): write(): ERROR occured (errno=%d)",errno);
+      (void) close(s);
+      END_TRACE();
+      return(-1);
+   }
 
-	/*
- 	 * Getting back status
-	 */ 
-        if ((c=netread_timeout(s, buffer, 3*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (3*LONGSIZE))  {
-		if (c == 0) {
-			serrno = SEOPNOTSUP;    /* symbolic links not supported on remote machine */
-			TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (serrno=%d)", serrno);
-		} else
-			TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-                (void) close(s);
-                END_TRACE();
-                return(-1);
-        }
-	p = buffer;
-	unmarshall_LONG( p, len );
-        unmarshall_LONG( p, status ) ;
-	unmarshall_LONG( p, rcode ) ;
+   /*
+    * Getting back status
+    */ 
+   if ((c=netread_timeout(s, buffer, 3*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (3*LONGSIZE))  {
+      if (c == 0) {
+	 serrno = SEOPNOTSUP;    /* symbolic links not supported on remote machine */
+	 TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (serrno=%d)", serrno);
+      } else
+	 TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
+      (void) close(s);
+      END_TRACE();
+      return(-1);
+   }
+   p = buffer;
+   unmarshall_LONG( p, len );
+   unmarshall_LONG( p, status ) ;
+   unmarshall_LONG( p, rcode ) ;
 
-        if ( status < 0 ) {
-		TRACE(1,"rfio","rfio_readlink(): rcode = %d , status = %d",rcode, status);
-		rfio_errno = rcode ;
-                (void) close(s);
-                END_TRACE();
-                return(status);
-        }
-        /* Length is not of a long size, so RFIO_CTRL_TIMEOUT is enough */
-        if (netread_timeout(s, buffer, len, RFIO_CTRL_TIMEOUT) != len)  {
-                TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-                (void) close(s);
-                END_TRACE();
-                return(-1);
-        }
-	p = buffer ;
-	unmarshall_STRING( p, buf ) ;
-	TRACE (2,"rfio","rfio_readlink succeded: returned %s",buf);
-	END_TRACE();
-	(void) close (s) ;
-	return(rcode) ;
+   if ( status < 0 ) {
+      TRACE(1,"rfio","rfio_readlink(): rcode = %d , status = %d",rcode, status);
+      rfio_errno = rcode ;
+      (void) close(s);
+      END_TRACE();
+      return(status);
+   }
+   /* Length is not of a long size, so RFIO_CTRL_TIMEOUT is enough */
+   if (netread_timeout(s, buffer, len, RFIO_CTRL_TIMEOUT) != len)  {
+      TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
+      (void) close(s);
+      END_TRACE();
+      return(-1);
+   }
+   p = buffer ;
+   unmarshall_STRING( p, buf ) ;
+   TRACE (2,"rfio","rfio_readlink succeded: returned %s",buf);
+   END_TRACE();
+   (void) close (s) ;
+   return(rcode) ;
 }
 

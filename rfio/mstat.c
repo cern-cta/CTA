@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.4 1999/12/09 13:46:55 jdurand Exp $
+ * $Id: mstat.c,v 1.5 1999/12/10 19:44:43 baran Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:55 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:44:43 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -25,8 +25,12 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.4 $ $Date: 1999/1
 #include "log.h"
 #define RFIO_KERNEL 1
 #include "rfio.h"
+#include <Cglobals.h>
+#include <Cpwd.h>
 
-static int rfindex = 0 ;
+int *rfindex = NULL;
+static int rfindex_key = -1;
+
 typedef struct socks {
   char host[MAXHOSTNAMELEN];
   int s ;
@@ -41,21 +45,24 @@ char *file ;
 struct stat *statb;
 
 {
-	
    int rt ,rc ,i ,fd ,retry;
    char *host , *filename ;
-   static char     buf[256];
+   char     buf[256];
 
+   INIT_TRACE("RFIO_TRACE");
+   TRACE(1, "rfio", "rfio_mstat(%s, %x)", file, statb);
+   Cglobals_get(&rfindex_key, (void**)&rfindex, sizeof(int));
+   TRACE(2, "rfio", "rfio_mstat: rfindex=%d", *rfindex);
    if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
       /* The file is local */
       rc = stat(filename,statb) ;
       rfio_errno = 0;
       return (rc) ;
-   }
-   else {
+   }  else  {
       /* Look if already in */
       serrno = 0;
-      for ( i=0; i<rfindex; i++ ) {
+      TRACE(2, "rfio", "rfio_mstat: rfindex=%d", *rfindex);
+      for ( i=0; i<*rfindex; i++ ) {
 	 if ( !strcmp(host,tab[i].host) ) {
 	    if ( tab[i].sec )
 	       rc = rfio_smstat(tab[i].s,filename,statb,RQST_MSTAT_SEC ) ;
@@ -74,14 +81,14 @@ struct stat *statb;
 	 if ( fd < 0 ) {
 	    return (-1) ;
 	 }
-	 if ( rfindex < MAXMCON ) {	
-	    tab[rfindex].s=fd ;
-	    strcpy( tab[rfindex].host, host) ;
-	    if ( !rc ) tab[rfindex].sec = 1;
-	    else tab[rfindex].sec = 0;
+	 if ( *rfindex < MAXMCON ) {	
+	    tab[*rfindex].s=fd ;
+	    strcpy( tab[*rfindex].host, host) ;
+	    if ( !rc ) tab[*rfindex].sec = 1;
+	    else tab[*rfindex].sec = 0;
 	 }
 	 serrno = 0;
-	 if ( rfindex < MAXMCON ) {
+	 if ( *rfindex < MAXMCON ) {
 	    if ( !rc ) 
 	       rc = rfio_smstat(fd,filename,statb,RQST_MSTAT_SEC);
 	    else
@@ -94,7 +101,8 @@ struct stat *statb;
 	 }
 	 if ( !(rc == -1 && serrno == SEPROTONOTSUP) ) break;
       }
-      rfindex++;
+      (*rfindex)++;
+      END_TRACE();
       return (rc)  ;
    }
 
@@ -104,6 +112,10 @@ struct stat *statb;
  * Simplest operation in stat() : just do a stat() 
  * for 1 filename
  */
+
+static int pw_key = -1;
+static int old_uid_key = -1;
+
 rfio_smstat(s,filename,statbuf,reqst) 
 int s ;
 char * filename ;
@@ -111,20 +123,24 @@ struct stat *statbuf ;
 int reqst ;
 
 {
-   static char     buf[256];
+   char     buf[256];
    int             status;         /* remote fopen() status        */
    int     len;
    int     rc;
    char    *p=buf;
    int     uid;
    int     gid;
-   static int old_uid = -1;
-   struct  passwd *pw_tmp;
-   static struct passwd pw;
+   int *old_uid = NULL;
+   struct passwd *pw_tmp;
+   struct passwd *pw = NULL;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_stat(%s, %x)", filename, statbuf);
 
+   Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int));
+   *old_uid = -1;
+   Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
+  
    len = strlen(filename)+1;
    switch ( reqst ) {
     case RQST_MSTAT_SEC :
@@ -133,18 +149,19 @@ int reqst ;
        marshall_WORD(p, B_RFIO_MAGIC);
        uid = geteuid() ;
        gid = getegid () ;
-       if ( uid != old_uid ) {
-	  if ( (pw_tmp = getpwuid(uid) ) == NULL ) {
-	     TRACE(2, "rfio" ,"rfio_stat: getpwuid(): ERROR occured (errno=%d)",errno);
+       if ( uid != *old_uid ) {
+	  pw_tmp = Cgetpwuid(uid);
+	  if( pw_tmp  == NULL ) {
+	     TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
 	     END_TRACE();
 	     (void) close(s);
 	     return -1 ;
 	  }	
-	  memcpy(&pw,pw_tmp,sizeof(struct passwd));
-	  old_uid = uid;
+	  memcpy(pw, pw_tmp, sizeof(struct passwd));
+	  *old_uid = uid;
        }
        marshall_WORD(p, reqst);
-       len+=2*WORDSIZE + strlen(pw.pw_name) + 1;
+       len+=2*WORDSIZE + strlen(pw->pw_name) + 1;
        break;
     case RQST_MSTAT:
     case RQST_STAT:
@@ -160,7 +177,7 @@ int reqst ;
    if ( reqst == RQST_STAT_SEC || reqst == RQST_MSTAT_SEC ) {
       marshall_WORD(p, uid);
       marshall_WORD(p, gid);
-      marshall_STRING(p,pw.pw_name);
+      marshall_STRING(p,pw->pw_name);
    }
    marshall_STRING(p, filename);
    TRACE(2,"rfio","rfio_stat: sending %d bytes",RQSTSIZE+len) ;
@@ -221,11 +238,13 @@ int reqst ;
 int rfio_end()
 {
    int i,j=0 ;
-   static char     buf[256];
+   char buf[256];
    char *p=buf ;
+   
    INIT_TRACE("RFIO_TRACE");
    TRACE(3,"rfio","rfio_end entered\n");
-   for ( i=0 ; i< rfindex; i++ )  {
+   Cglobals_get(&rfindex_key, (void**)&rfindex, sizeof(int));
+   for ( i=0 ; i< *rfindex; i++ )  {
       marshall_WORD(p, RFIO_MAGIC);
       marshall_WORD(p, RQST_END);
       marshall_LONG(p, j);
@@ -236,7 +255,9 @@ int rfio_end()
       }
       (void) close(tab[i].s);
    }
+   *rfindex=0;
+   
    END_TRACE();
-   rfindex=0 ;
 }
+
 

@@ -1,5 +1,5 @@
 /*
- * $Id: mkdir.c,v 1.4 1999/12/09 13:46:53 jdurand Exp $
+ * $Id: mkdir.c,v 1.5 1999/12/10 19:44:34 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:53 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:44:34 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* mkdir.c       Remote File I/O - make a directory file                */
@@ -21,7 +21,7 @@ int  rfio_mkdir(dirpath, mode)     /* Remote mkdir	                */
 char		*dirpath;          /* remote directory path             */
 int		mode;              /* remote directory mode             */
 {
-   static char     buf[256];       /* General input/output buffer          */
+   char     buf[256];       /* General input/output buffer          */
    register int    s;              /* socket descriptor            */
    int             status;         /* remote mkdir() status        */
    int     	len;

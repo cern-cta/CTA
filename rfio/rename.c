@@ -1,5 +1,5 @@
 /*
- * $Id: rename.c,v 1.4 1999/12/09 13:47:05 jdurand Exp $
+ * $Id: rename.c,v 1.5 1999/12/10 19:47:18 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:05 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:47:18 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* rename.c       Remote File I/O - change the name of a file           */
@@ -29,7 +29,7 @@ int  rfio_rename(fileo, filen)  /* Remote rename	                */
 char		*fileo,		/* remote old path  			*/
    *filen;		/* remote new path            		*/
 {
-   static char     buf[256];       /* General input/output buffer          */
+   char     buf[256];       /* General input/output buffer          */
    register int    s;              /* socket descriptor            */
    int             status;         /* remote rename() status       */
    int     	len;

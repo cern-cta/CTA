@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.4 1999/12/09 13:46:59 jdurand Exp $
+ * $Id: pclose.c,v 1.5 1999/12/10 19:46:04 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:59 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:04 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -34,7 +34,8 @@ RFILE 	*fs ;
    int  status ;
    int i ;
    int remoteio = 0 ;
-   static char     buf[256];       /* General input/output buffer          */
+   char     buf[256];       /* General input/output buffer          */
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_pclose(%x)", fs);
 

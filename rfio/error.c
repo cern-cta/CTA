@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.4 1999/12/09 13:46:41 jdurand Exp $
+ * $Id: error.c,v 1.5 1999/12/10 19:43:46 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:41 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:43:46 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -45,7 +45,7 @@ size_t 	buflen;
 {
    char   *p;
    LONG   len;
-   static char msg[256];
+   char msg[256];
    char rfio_buf[256];
 
    if( buf == NULL || buflen <=0 ) return NULL;
@@ -107,9 +107,9 @@ size_t buflen;
    int		last_rferr ; 	/* to preserve rfio_errno 		*/
    int		last_err ; 	/* to preserve errno 			*/
    int          last_serrno ;   /* to preserve serrno                   */
-   int 		rt ;		/* Request is from other network ?  	*/
+   int 		rt ;		/* Request is from other network?  	*/
    char 	*rferrmsg ;
-   static char rerrlist[256] ; 	/* Message from errlist */
+   char 	rerrlist[256] ; /* Message from errlist 		*/
 
    if( buf == NULL || buflen <=0 ) return NULL;
    memset(buf, '\0', buflen);

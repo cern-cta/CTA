@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.4 1999/12/09 13:47:22 jdurand Exp $
+ * $Id: xyopen.c,v 1.5 1999/12/10 19:48:21 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:22 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:48:21 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.4 $ $Date: 1999/
 #endif
 #include <stdlib.h>
 #include <pwd.h>
+#include <Cpwd.h>
 
 RFILE *ftnlun[MAXFTNLUN];       /* Fortran logical units                */
 
@@ -269,8 +270,8 @@ char *reqhost;
    fd->s = s;
    ftnlun[lun]=fd;
 
-   if ( (pw = getpwuid(geteuid()) ) == NULL ) {
-      TRACE(2, "rfio" ,"rfio_open: getpwuid() error %s",sys_errlist[errno]);
+   if ( (pw = Cgetpwuid(geteuid()) ) == NULL ) {
+      TRACE(2, "rfio" ,"rfio_open: Cgetpwuid() error %s",sys_errlist[errno]);
       free ((char *)fd);
       END_TRACE();
       return(errno);

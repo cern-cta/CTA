@@ -1,5 +1,5 @@
 /*
- * $Id: checkkey.c,v 1.3 1999/12/09 13:46:37 jdurand Exp $
+ * $Id: checkkey.c,v 1.4 1999/12/10 19:42:49 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:37 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.4 $ $Date: 1999/12/10 19:42:49 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.3 $ $Date: 199
 #include <marshall.h>
 #endif /* HPSS */
 #include <socket_timeout.h>
+#include <Cnetdb.h>
 
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1
@@ -67,9 +68,9 @@ int connecttpread(host,aport)
                 return -1 ;
         }
 
-        if ((hp= gethostbyname(host)) == NULL ) {
+        if ((hp= Cgethostbyname(host)) == NULL ) {
                 serrno = SENOSHOST;
-                log(LOG_ERR,"gethostbyname(): %s\n",sstrerror(serrno)) ;
+                log(LOG_ERR,"Cgethostbyname(): %s\n",sstrerror(serrno)) ;
                 return -1 ;
         }
 
