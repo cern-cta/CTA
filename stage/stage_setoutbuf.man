@@ -1,0 +1,73 @@
+.\" $Id: stage_setoutbuf.man,v 1.1 2002/09/08 07:28:18 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_setoutbuf.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 07:28:18 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_SETOUTBUF "3" "$Date: 2002/09/08 07:28:18 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_setoutbuf \- Set output buffer
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_setoutbuf(char *" buffer ", int " buflen ");"
+
+.SH DESCRIPTION
+The \fBstage_setoutbuf\fP API method is setting the output buffer of stage API. Unless this method is called or global log messages are setted using \fBstage_setlog\fP method, out messages will always go to stdout by default.
+
+.SH PARAMETERS
+.BI buffer
+is the address of a buffer receiving the output message, and
+.BI buflen
+is the length of this buffer. If message exceeds this length, it is truncated. A null byte is guaranteed to end the message buffer, even in case of truncation.
+
+.SH NOTE
+It is the user's responsability to make sure that the output buffer is thread-safe or not.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stage_api.h>
+#include <serrno.h>
+
+char mybuf[1024]; /* Not thread-safe */
+
+int main(argc,argv)
+     int argc;
+     char **argv;
+{
+  if (stage_setoutbuf(mybuf,1024) != 0) {
+    fprintf(stderr,"### stage_setoutbuf error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  exit(0);
+}
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+.TP
+.B SECTHREADERR
+Thread interface call error
+.TP
+.B SECTHREADINIT
+Cthread initialization error
+
+.SH SEE ALSO
+\fBstage_getoutbuf\fP(3), \fBstage_setlog\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
