@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/02 15:14:16 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.32 $ $Release$ $Date: 2004/08/02 16:26:09 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.31 $ $Date: 2004/08/02 15:14:16 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.32 $ $Date: 2004/08/02 16:26:09 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,18 +71,20 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.31 $ $Date: 
 #include <rtcpcld.h>
 #include <rtcpcldapi.h>
 
-#define LOG_FAILED_CALL(X)  { \
+#define LOG_FAILED_CALL(X,Y)  { \
         int _save_errno = errno; \
         int _save_serrno = serrno; \
         rtcp_log( \
                  LOG_ERR, \
-                 "(%s:%d) %s %s (serrno=%d, errno=%d)\n", \
+                 "(%s:%d) %s %s (serrno=%d, errno=%d) %s:%s\n", \
                  __FILE__, \
                  __LINE__, \
                  (X), \
                  sstrerror((_save_serrno > 0 ? _save_serrno : _save_errno)), \
                  serrno, \
-                 errno \
+                 errno, \
+                 (((Y) != NULL && *(Y) != '\0') ? "Additional Error information" : ""), \
+                 (Y) \
                  ); \
         serrno = _save_serrno; \
         errno = _save_errno; \
@@ -147,7 +149,7 @@ static int initOldStgUpdc(tape)
 
   rc = Cglobals_get(&ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
   if ( rc == -1 || ENOSPC_occurred == NULL ) {
-    LOG_FAILED_CALL("Cglobals_get()");
+    LOG_FAILED_CALL("Cglobals_get()","");
     return(-1);
   }
   
@@ -176,7 +178,7 @@ static int updateOldStgCat(tape,file)
   
   rc = Cglobals_get(&ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
   if ( rc == -1 || ENOSPC_occurred == NULL ) {
-    LOG_FAILED_CALL("Cglobals_get()");
+    LOG_FAILED_CALL("Cglobals_get()","");
     return(-1);
   }
   
@@ -397,14 +399,14 @@ static int updateCaller(tape,file)
                                                   rtcpFileRequest_t *)))NULL ) {
     rc = rtcpcld_ClientCallback(&(tape->tapereq),&(file->filereq));
     if ( rc == -1 ) {
-      LOG_FAILED_CALL("rtcpcld_ClientCallback()");
+      LOG_FAILED_CALL("rtcpcld_ClientCallback()","");
       return(-1);
     }
   }
 
   rc = updateOldStgCat(tape,file);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("updateOldStgCat()");
+    LOG_FAILED_CALL("updateOldStgCat()","");
     return(-1);
   }
   
@@ -430,7 +432,7 @@ static int getMoreInfo(tape)
   if ( rtcpcld_MoreInfoCallback != (int (*) _PROTO((tape_list_t *)))NULL ) {
     rc = rtcpcld_MoreInfoCallback(tape);
     if ( rc == -1 ) {
-      LOG_FAILED_CALL("rtcpcld_MoreInfoCallback()");
+      LOG_FAILED_CALL("rtcpcld_MoreInfoCallback()","");
       return(-1);
     }
   }
@@ -562,7 +564,7 @@ static int updateSegmentInDB(
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
     save_serrno = serrno;
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
@@ -576,7 +578,7 @@ static int updateSegmentInDB(
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()","");
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
     serrno = save_serrno;
@@ -585,7 +587,7 @@ static int updateSegmentInDB(
   segmIObj = Cstager_Segment_getIObject(segment->segment);
   rc = C_Services_updateRepNoRec(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
-    LOG_FAILED_CALL("C_Services_updateRepNoRec()");
+    LOG_FAILED_CALL("C_Services_updateRepNoRec()",C_Services_errorMsg(*dbSvc));
     save_serrno = serrno;
     filereq->err.errorcode = serrno;
     strcpy(filereq->err.errmsgtxt,
@@ -638,7 +640,7 @@ static int addSegment(
   rtcpcldSegm = (RtcpcldSegmentList_t *)
     calloc(1,sizeof(RtcpcldSegmentList_t));
   if ( rtcpcldSegm == NULL ) {
-    LOG_FAILED_CALL("calloc()");
+    LOG_FAILED_CALL("calloc()","");
     serrno = SESYSERR;
     return(-1);
   }
@@ -647,7 +649,7 @@ static int addSegment(
   serrno = 0;
   rc = Cstager_Segment_create(&rtcpcldSegm->segment);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cstager_Segment_create()");
+    LOG_FAILED_CALL("Cstager_Segment_create()","");
     if ( serrno == 0 ) serrno = errno;
     return(-1);
   }
@@ -777,6 +779,39 @@ static void dumpFileList(
   return;
 }
 
+static void dumpSegmList(
+                         tpList
+                         )
+     RtcpcldTapeList_t *tpList;
+{
+  ID_TYPE key;
+  int fseq;
+  unsigned char *blkid;
+  char *diskPath;  
+  RtcpcldSegmentList_t *segment;
+
+  rtcp_log(LOG_DEBUG,"Dumping all segments\n");
+  CLIST_ITERATE_BEGIN(tpList->segments,segment)
+    {
+      Cstager_Segment_fseq(segment->segment,&fseq);
+      Cstager_Segment_blockid(segment->segment,(CONST unsigned char **)&blkid);
+      Cstager_Segment_diskPath(segment->segment,(CONST char **)&diskPath);
+      Cstager_Segment_id(segment->segment,&key);
+      rtcp_log(LOG_DEBUG,
+               "    Segment: FSEQ=%d, blkid=%.2d%.2d%.2d%.2d, path=%s, DBkey=%lu\n",
+               fseq,
+               (int)blkid[0],
+               (int)blkid[1],
+               (int)blkid[2],
+               (int)blkid[3],
+               diskPath,
+               key);
+    }
+  CLIST_ITERATE_END(tpList->segments,segment);
+  rtcp_log(LOG_DEBUG,"End of segment dump\n");
+  return;
+}
+
 static int updateSegmList(
                          tpList,
                          newFileList
@@ -834,7 +869,7 @@ static int addSegmentToDB(
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
     save_serrno = serrno;
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
@@ -849,14 +884,14 @@ static int addSegmentToDB(
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("C_Services_create()");
+    LOG_FAILED_CALL("C_Services_create()","");
     serrno = save_serrno;
     return(-1);
   }
   segmIObj = Cstager_Segment_getIObject(segment->segment);
   rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
-    LOG_FAILED_CALL("C_Services_createRep()");
+    LOG_FAILED_CALL("C_Services_createRep()",C_Services_errorMsg(*dbSvc));
     save_serrno = serrno;
     strcpy(filereq->err.errmsgtxt,
            C_Services_errorMsg(*dbSvc));
@@ -981,9 +1016,10 @@ static int getUpdates(
       rc = getIAddr(iObj,&iAddr);
       if ( rc != -1 ) {
         rc = C_Services_updateObj(svcs,iAddr,iObj);
-        if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()");
+        if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()",
+                                        C_Services_errorMsg(svcs));
       } else {
-        LOG_FAILED_CALL("getIAddr()");
+        LOG_FAILED_CALL("getIAddr()","");
       }
       
       if ( rc == -1 ) {
@@ -1203,6 +1239,7 @@ static int getUpdates(
             rc = doFullUpdate(tpIterator,tape);
             if ( rc == -1 ) save_serrno = serrno;
           }
+          dumpSegmList(tpIterator);
         }
         if ( rc == -1 ) {
           serrno = save_serrno;
@@ -1231,7 +1268,7 @@ static int findTpReqMap(tape,tpList,killed,mapItem)
   if ( tpList != NULL ) *tpList = NULL;
   rc = Cmutex_lock(&runningReqsMap,-1);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     return(-1);
   }
   
@@ -1305,7 +1342,7 @@ int rtcpcld_addTpReqMap(tape,tpList)
   
   runningReqMap = (TpReqMap_t *)calloc(1,sizeof(TpReqMap_t));
   if ( runningReqMap == NULL ) {
-    LOG_FAILED_CALL("calloc()");
+    LOG_FAILED_CALL("calloc()","");
     serrno = SESYSERR;
     return(-1);
   }
@@ -1314,7 +1351,7 @@ int rtcpcld_addTpReqMap(tape,tpList)
 
   rc = Cmutex_lock(&runningReqsMap,-1);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     return(-1);
   }
   
@@ -1351,7 +1388,7 @@ int rtcpcld_delTpReqMap(tape,tpList)
 
   rc = Cmutex_lock(&runningReqsMap,-1);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     return(-1);
   }
   
@@ -1380,13 +1417,13 @@ int rtcpcldc_appendFileReqs(tape,file)
   }
   rc = Cmutex_lock(tape,-1);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     return(-1);
   }
   
   rc = rtcpcld_findTpReqMap(tape,&tpList);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("rtcpcld_findTpReqMap()");
+    LOG_FAILED_CALL("rtcpcld_findTpReqMap()","");
     save_serrno = serrno;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
@@ -1399,7 +1436,7 @@ int rtcpcldc_appendFileReqs(tape,file)
   }
   rc = updateSegmList(tpList,file);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("updateSegmList()");
+    LOG_FAILED_CALL("updateSegmList()","");
     save_serrno = serrno;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
@@ -1420,7 +1457,7 @@ int rtcpcldc_appendFileReqs(tape,file)
                       NULL
                       );
       if ( rc == -1 ) {
-        LOG_FAILED_CALL("addSegment()");
+        LOG_FAILED_CALL("addSegment()","");
         save_serrno = serrno;
         (void)Cmutex_unlock(tape);
         serrno = save_serrno;
@@ -1432,7 +1469,7 @@ int rtcpcldc_appendFileReqs(tape,file)
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
     save_serrno = serrno;
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
@@ -1448,7 +1485,7 @@ int rtcpcldc_appendFileReqs(tape,file)
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("C_Services_create()");
+    LOG_FAILED_CALL("C_Services_create()","");
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1470,7 +1507,8 @@ int rtcpcldc_appendFileReqs(tape,file)
         segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
         rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
         if ( rc != 0 ) {
-          LOG_FAILED_CALL("C_Services_createRep()");
+          LOG_FAILED_CALL("C_Services_createRep()",
+                          C_Services_errorMsg(*dbSvc));
           save_serrno = serrno;
           fl->filereq.err.errorcode = serrno;
           strcpy(fl->filereq.err.errmsgtxt,
@@ -1513,7 +1551,7 @@ static int deleteFromDB(segmItem)
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
     return(-1);
   }
 
@@ -1522,7 +1560,7 @@ static int deleteFromDB(segmItem)
   dbSvc = NULL;
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
-    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()","");
     return(-1);
   }
 
@@ -1530,7 +1568,8 @@ static int deleteFromDB(segmItem)
   rc = C_Services_deleteRep(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("C_Services_deleteRep()");
+    LOG_FAILED_CALL("C_Services_deleteRep()",
+                    C_Services_errorMsg(*dbSvc));
     rtcp_log(LOG_ERR,"DB error: %s\n",C_Services_errorMsg(*dbSvc));
     C_IAddress_delete(iAddr);
     C_Services_delete(*dbSvc);
@@ -1562,7 +1601,7 @@ int rtcpcldc_kill(
   /* Try to get the lock but don't give up if not acquired */
   rc = Cmutex_lock(tape,0); 
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     noLock = 1;
   }
 
@@ -1571,7 +1610,7 @@ int rtcpcldc_kill(
   rc = rtcpcld_findTpReqMap(tape,&tpList);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_findTpReqMap()");
+    LOG_FAILED_CALL("rtcpcld_findTpReqMap()","");
     if ( noLock == 0 ) (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1597,7 +1636,7 @@ int rtcpcldc_kill(
   rc = rtcp_Connect(&abortSocket,server,&port);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcp_Connect()");
+    LOG_FAILED_CALL("rtcp_Connect()","");
     if ( noLock == 0 ) (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1609,7 +1648,7 @@ int rtcpcldc_kill(
   rc = rtcp_SendReq(&abortSocket,&hdr,NULL,NULL,NULL);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcp_SendReq(RTCP_KILLJID_REQ)");
+    LOG_FAILED_CALL("rtcp_SendReq(RTCP_KILLJID_REQ)","");
     if ( noLock == 0 ) (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1618,7 +1657,7 @@ int rtcpcldc_kill(
   rc = rtcp_RecvAckn(&abortSocket,hdr.reqtype);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcp_RecvAckn(RTCP_KILLJID_REQ)");
+    LOG_FAILED_CALL("rtcp_RecvAckn(RTCP_KILLJID_REQ)","");
     if ( noLock == 0 ) (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1690,7 +1729,7 @@ int rtcpcldc(tape)
 
   rc = rtcpcld_initNotifyByPort(&notificationSocket,&notificationPort);
   if ( (rc == -1) || (notificationSocket == NULL) ) {
-    LOG_FAILED_CALL("rtcpcld_initNotifyByPort()");
+    LOG_FAILED_CALL("rtcpcld_initNotifyByPort()","");
     return(-1);
   }
   
@@ -1711,7 +1750,7 @@ int rtcpcldc(tape)
   
   rc = Cmutex_lock(tape, -1);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
+    LOG_FAILED_CALL("Cmutex_lock()","");
     return(-1);
   }
 
@@ -1721,7 +1760,7 @@ int rtcpcldc(tape)
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()","");
     *dbSvc = NULL;
     strncpy(tape->tapereq.err.errmsgtxt,
             sstrerror(save_serrno),
@@ -1735,7 +1774,7 @@ int rtcpcldc(tape)
 
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
     save_serrno = serrno;
     strncpy(tape->tapereq.err.errmsgtxt,
             sstrerror(save_serrno),
@@ -1753,7 +1792,7 @@ int rtcpcldc(tape)
   rc = rtcpcld_getStgDbSvc(&stgSvc);
   if ( rc == -1 || stgSvc == NULL ) {
     save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_getStgDbSvc()");
+    LOG_FAILED_CALL("rtcpcld_getStgDbSvc()","");
     stgSvc = NULL;
     C_IAddress_delete(iAddr);
     rtcpcldc_cleanup(tape);
@@ -1766,7 +1805,7 @@ int rtcpcldc(tape)
     {
       rtcpcldTp = (RtcpcldTapeList_t *)calloc(1,sizeof(RtcpcldTapeList_t));
       if ( rtcpcldTp == NULL ) {
-        LOG_FAILED_CALL("calloc()");
+        LOG_FAILED_CALL("calloc()","");
         C_IAddress_delete(iAddr);
         (void)C_Services_rollback(*dbSvc,iAddr);
         rtcpcldc_cleanup(tape);
@@ -1776,7 +1815,7 @@ int rtcpcldc(tape)
       }
       rc = rtcpcld_addTpReqMap(tl,rtcpcldTp);
       if ( rc == -1 ) {
-        LOG_FAILED_CALL("rtcpcld_addTpReqMap()");
+        LOG_FAILED_CALL("rtcpcld_addTpReqMap()","");
         save_serrno = serrno;
         (void)C_Services_rollback(*dbSvc,iAddr);
         C_IAddress_delete(iAddr);
@@ -1796,7 +1835,8 @@ int rtcpcldc(tape)
                                          tl->tapereq.mode
                                          );
       if ( rc == -1 ) {
-        LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()");
+        LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()",
+                        C_Services_errorMsg(*dbSvc));
         if ( serrno == 0 ) serrno = errno;
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"Cstager_IStagerSvc_selectTape() DB error: %s\n",
@@ -1848,7 +1888,7 @@ int rtcpcldc(tape)
                           NULL
                           );
           if ( rc == -1 ) {
-            LOG_FAILED_CALL("addSegment()");
+            LOG_FAILED_CALL("addSegment()","");
             save_serrno = serrno;
             (void)C_Services_rollback(*dbSvc,iAddr);
             C_IAddress_delete(iAddr);
@@ -1867,7 +1907,8 @@ int rtcpcldc(tape)
       tapeIObj = Cstager_Tape_getIObject(rtcpcldTp->tp);
       rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
       if ( rc != 0 ) {
-        LOG_FAILED_CALL("C_Services_updateRep()");
+        LOG_FAILED_CALL("C_Services_updateRep()",
+                        C_Services_errorMsg(*dbSvc));
         save_serrno = serrno;
         (void)C_Services_rollback(*dbSvc,iAddr);
         rtcpcldTp->tape->tapereq.err.errorcode = save_serrno;
@@ -1883,6 +1924,7 @@ int rtcpcldc(tape)
         serrno = save_serrno;
         return(-1);
       }
+      dumpSegmList(rtcpcldTp);
     }
   CLIST_ITERATE_END(rtcpcldTpList,rtcpcldTp);
   (void)Cmutex_unlock(tape);
@@ -1895,6 +1937,7 @@ int rtcpcldc(tape)
 #ifndef _WIN32
   maxfd = (*notificationSocket)+1;
 #endif /* _WIN32 */
+
 
   for (;;) {
     rd_setcp = rd_set;
@@ -1912,7 +1955,7 @@ int rtcpcldc(tape)
       if ( rc > 0 ) (void)rtcpcld_getNotify(*notificationSocket);
       rc = Cmutex_lock(tape,-1);
       if ( rc == -1 ) {
-        LOG_FAILED_CALL("Cmutex_lock()");
+        LOG_FAILED_CALL("Cmutex_lock()","");
         save_serrno = serrno;
         break;
       }
@@ -1921,7 +1964,7 @@ int rtcpcldc(tape)
       (void)Cmutex_unlock(tape);
       if ( rc == -1 ) break;
     } else {
-      LOG_FAILED_CALL("select()");
+      LOG_FAILED_CALL("select()","");
       /** Test for appending requests */
       /*       if ( errno == EINTR ) { */
       /*         printf("Add more requests?\n"); */
@@ -1951,13 +1994,13 @@ int rtcpcldc(tape)
     }
     rc = Cmutex_lock(tape,-1);
     if ( rc == -1 ) {
-      LOG_FAILED_CALL("Cmutex_lock()");
+      LOG_FAILED_CALL("Cmutex_lock()","");
       save_serrno = serrno;
       break;
     }
     rc = rtcpc_EndOfRequest(tape);
     if ( rc == -1 ) {
-      LOG_FAILED_CALL("rtcpc_EndOfRequest()");
+      LOG_FAILED_CALL("rtcpc_EndOfRequest()","");
       save_serrno = serrno;
     }
     (void)Cmutex_unlock(tape);
