@@ -1,0 +1,68 @@
+#
+#                  test/castor/db/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/26 10:14:54 $ $Author: sponcec3 $
+#
+# Make Castor DB example
+#
+# @author Sebastien Ponce, sebastien.ponce@cern.ch
+#
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+INCLUDES = -I FileName(../../..,h) -I FileName(../../..,)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+LIBS = -lcastorClient -lcastorCommonOra
+
+RHBIN_OBJ = teststgsvc.Osuf
+
+DEPLIB = DepSharedLibraryTargetName(../../castor,castorClient) \
+         DepSharedLibraryTargetName(../../castor/db/ora,castorCommonOra)
+
+LDFLAGS = -L ../../../castor -L ../../../castor/db/ora
+LD = g++
+
+all: ProgramTargetName(teststgsvc)
+
+NormalProgramTarget(teststgsvc,$(RHBIN_OBJ),$(DEPLIB),$(LIBS))
+
+Makefiles:
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(teststgsvc))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(DFLAGS) -Y../../../h -Y../../.. *.cpp 2> /dev/null
+#endif
