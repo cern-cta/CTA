@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.98 2001/03/06 11:18:16 jdurand Exp $
+ * $Id: procio.c,v 1.99 2001/03/06 17:33:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.98 $ $Date: 2001/03/06 11:18:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.99 $ $Date: 2001/03/06 17:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -237,6 +237,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	gid_t gid_waitq;
 	char user_waitq[CA_MAXUSRNAMELEN+1];
 	char group_waitq[CA_MAXGRPNAMELEN+1];
+	int global_c_stagewrt = 0;
 
 	static struct Coptions longopts[] =
 	{
@@ -1149,19 +1150,19 @@ void procioreq(req_type, magic, req_data, clienthost)
 		u_signed64 hsmsize;
 		u_signed64 size_to_recall;
 		int stage_wrt_migration;
+		struct stgcat_entry save_stcp_for_Cns_creatx;
+		int have_save_stcp_for_Cns_creatx = 0;
+
+		global_c_stagewrt = 0;
 
 		if (api_out != 0) {
 			memcpy(&stgreq,&(stcp_input[i < nstcp_input ? i : nstcp_input - 1]),sizeof(struct stgcat_entry));
 			stgreq.t_or_d = stcp_input[0].t_or_d; /* Might have been overwriten ('m' -> 'h') */
-			if (req_type != STAGEWRT) {
-				/* If it is a migration request, we respect the uid, gid, mask, user, group of each single entry */
-				/* ... This is needed for the eventual call to Cns_creatx */
-				stgreq.uid = save_uid;
-				stgreq.gid = save_gid;
-				stgreq.mask = save_mask;
-				strcpy(stgreq.user,save_user);
-				strcpy(stgreq.group,save_group);
-			}
+			stgreq.uid = save_uid;
+			stgreq.gid = save_gid;
+			stgreq.mask = save_mask;
+			strcpy(stgreq.user,save_user);
+			strcpy(stgreq.group,save_group);
 		}
 
 		forced_Cns_creatx = forced_rfio_stat = 0;
@@ -1685,7 +1686,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (Aflag) {
 					/* Must have a valid poolname in deferred mode */
 					sendrep (rpfd, MSG_ERR, STG33, upath, "must be in a valid pool if -A deferred mode");
-					c = USERR;
+					global_c_stagewrt += (c = USERR);
 					goto reply;
 				}
 				if (poolflag > 0)
@@ -1693,8 +1694,75 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolflag = -1;
 				actual_poolname[0] = '\0';
 			}
-			setegid(stgreq.gid);
-			seteuid(stgreq.uid);
+			stage_wrt_migration = 0;
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
+			case ISSTAGEDBUSY:
+				global_c_stagewrt += (c = EBUSY);
+				goto reply;
+			case ISSTAGEDSYERR:
+				global_c_stagewrt += (c = SYERR);
+				goto reply;
+			case NOTSTAGED:
+				break;
+			case STAGED:
+				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+										 "rfio_unlink", rfio_serror());
+						global_c_stagewrt += (c = SYERR);
+						goto reply;
+					}
+				} else {
+					save_stcp_for_Cns_creatx = *stcp;
+					have_save_stcp_for_Cns_creatx = 1;
+					delreq(stcp,0);
+				}
+				break;
+			case STAGEOUT|PUT_FAILED:
+			case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
+				save_stcp_for_Cns_creatx = *stcp;
+				have_save_stcp_for_Cns_creatx = 1;
+				delreq(stcp,0);
+				break;
+			case STAGEOUT|CAN_BE_MIGR:
+			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+			case STAGEPUT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+				sendrep (rpfd, MSG_ERR, STG37);
+				c = EBUSY;
+				goto reply;
+			case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
+				/* We accept a stagewrt request on a record waiting for it only if both tape pool matches */
+				/* and are non-null */
+				if (! ((stgreq.t_or_d == 'h') && 
+						(stcp->u1.h.tppool[0] != '\0') && strcmp(stcp->u1.h.tppool,stgreq.u1.h.tppool) == 0)) {
+					sendrep (rpfd, MSG_ERR, STG37);
+					global_c_stagewrt += (c = USERR);
+					goto reply;
+				}
+				stcp->status = STAGEOUT|CAN_BE_MIGR|BEING_MIGR;
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				stage_wrt_migration = 1;
+				save_stcp_for_Cns_creatx = *stcp;
+				have_save_stcp_for_Cns_creatx = 1;
+				break;
+			case STAGEWRT:
+				if (stcp->t_or_d == 't' && *stcp->u1.t.fseq == 'n') {
+					save_stcp_for_Cns_creatx = *stcp;
+					have_save_stcp_for_Cns_creatx = 1;
+					break;
+				}
+			default:
+				sendrep (rpfd, MSG_ERR, STG37);
+				global_c_stagewrt += (c = USERR);
+				goto reply;
+			}
+			setegid(have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.gid : stgreq.gid);
+			seteuid(have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.uid : stgreq.uid);
 			switch (stgreq.t_or_d) {
 			case 'h':
 				/* If it is a stagewrt on CASTOR file and if this file have the same size we assume */
@@ -1711,7 +1779,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						seteuid(start_passwd.pw_uid);
 						/* Note - per construction u1.m.xfile and u1.h.xfile points to same string */
 						sendrep (rpfd, MSG_ERR, STG119, stcp_input[ihsmfiles].u1.m.xfile);
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					}
 
@@ -1719,7 +1787,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					}
 					correct_size = (u_signed64) filemig_stat.st_size;
@@ -1740,7 +1808,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (rpfd, MSG_OUT,
 									"STG98 - %s size is of zero size - not migrated\n",
 									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					} else {
 						/* Not the same size or diskfile size is zero */
@@ -1762,7 +1830,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					}
 					if (filemig_stat.st_size <= 0) {
@@ -1771,7 +1839,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (rpfd, MSG_OUT,
 									"STG98 - %s size is of zero size - not migrated\n",
 									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					}
 					/* We will have to create it */
@@ -1781,18 +1849,39 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (forced_Cns_creatx != 0) {
 					mode_t okmode;
 
+					if (have_save_stcp_for_Cns_creatx == 0) {
+						struct stgcat_entry *stclp;
+						/* We look if by chance there is an entry for the same disk file (case of automatic migration) */
+						for (stclp = stcs; stclp < stce; stclp++) {
+							if (stclp->reqid == 0) break;
+							if ((stclp->status & 0xF0) != STAGED) continue;
+							if (! (ISSTAGEIN(stclp) || ISSTAGEOUT(stclp) || ISSTAGEALLOC(stclp))) continue;
+							if (strcmp(stclp->ipath, upath) != 0) continue;
+							/* Got it */
+							have_save_stcp_for_Cns_creatx = 1;
+							save_stcp_for_Cns_creatx = *stclp;
+							break;
+						}
+					}
 					if (api_out == 0) {
-						okmode = ( 0777 & ~ stgreq.mask);
+						okmode = ( 0777 & ~ (have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.mask : stgreq.mask));
 					} else {
-						okmode = (07777 & (openmode & ~ stgreq.mask));
+						okmode = (07777 & (openmode & ~ (have_save_stcp_for_Cns_creatx ? save_stcp_for_Cns_creatx.mask : stgreq.mask)));
+					}
+					if (have_save_stcp_for_Cns_creatx) {
+						/* Makes sure we are under correct uid,gid */
+						setegid(start_passwd.pw_gid);
+						seteuid(start_passwd.pw_uid);
+						setegid(save_stcp_for_Cns_creatx.gid);
+						seteuid(save_stcp_for_Cns_creatx.uid);
 					}
 					if (Cns_creatx(hsmfiles[ihsmfiles], okmode, &Cnsfileid) != 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
-						/* We switch to the next disk file if there are */
-						/* c = USERR; */
-						/* goto reply; */
+						global_c_stagewrt += (c = USERR);
+						/* We switch to the next disk file unless this is the last one */
+						/* if (ihsmfiles == (nbdskf - 1)) goto reply; */
 						goto stagewrt_continue_loop;
 					}
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
@@ -1808,72 +1897,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
-					c = USERR;
+					global_c_stagewrt += (c = USERR);
 					goto reply;
 				}
 				break;
 			default:
 				break;
 			}
-			stage_wrt_migration = 0;
 			setegid(start_passwd.pw_gid);
 			seteuid(start_passwd.pw_uid);
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
-			case ISSTAGEDBUSY:
-				c = EBUSY;
-				goto reply;
-			case ISSTAGEDSYERR:
-				c = SYERR;
-				goto reply;
-			case NOTSTAGED:
-				break;
-			case STAGED:
-				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
-					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 "rfio_unlink", rfio_serror());
-						c = SYERR;
-						goto reply;
-					}
-				} else {
-					delreq(stcp,0);
-				}
-				break;
-			case STAGEOUT|PUT_FAILED:
-			case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
-				delreq(stcp,0);
-				break;
-			case STAGEOUT|CAN_BE_MIGR:
-			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
-			case STAGEPUT|CAN_BE_MIGR:
-			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = EBUSY;
-				goto reply;
-			case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
-				/* We accept a stagewrt request on a record waiting for it only if both tape pool matches */
-				/* and are non-null */
-				if (! ((stgreq.t_or_d == 'h') && 
-						(stcp->u1.h.tppool[0] != '\0') && strcmp(stcp->u1.h.tppool,stgreq.u1.h.tppool) == 0)) {
-					sendrep (rpfd, MSG_ERR, STG37);
-					c = USERR;
-					goto reply;
-				}
-				stcp->status = STAGEOUT|CAN_BE_MIGR|BEING_MIGR;
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
-#endif
-				stage_wrt_migration = 1;
-				break;
-			case STAGEWRT:
-				if (stcp->t_or_d == 't' && *stcp->u1.t.fseq == 'n') break;
-			default:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = USERR;
-				goto reply;
-			}
 			if (stgreq.t_or_d == 'h' && forced_Cns_creatx != 0) {
 				if (forced_rfio_stat != 0) {
 					if (rfio_stat (upath, &st) == 0) {
@@ -1887,7 +1919,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					} else {
 						sendrep (rpfd, MSG_ERR, STG02, upath,
 							"rfio_stat", rfio_serror());
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 						goto reply;
 					}
 				}
@@ -1899,7 +1931,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
 						"Cns_setfsize", sstrerror(serrno));
-					c = SYERR;
+					global_c_stagewrt += (c = SYERR);
 					goto reply;
 				}
 				setegid(start_passwd.pw_gid);
@@ -1949,7 +1981,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (stcp->u1.h.tppool[0] == '\0') {
 					if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 #ifdef USECDB
 						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
 							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
@@ -1968,7 +2000,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We use it at the first round to check that requestor's uid/gid is compatible */
 						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
 						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(i == 0) ? &stcx : NULL,NULL,0) != 0) {
-							c = USERR;
+							global_c_stagewrt += (c = USERR);
 #ifdef USECDB
 							if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
 								stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
@@ -1978,7 +2010,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						}
 					}
 					if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 #ifdef USECDB
 						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
 							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
@@ -1990,7 +2022,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
 					/* This entry is in the pool anyway and this is not for internal migration */
 					if (update_migpool(stcp,1,Aflag ? 0 : 1) != 0) {
-						c = USERR;
+						global_c_stagewrt += (c = USERR);
 #ifdef USECDB
 						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
 							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
@@ -2022,7 +2054,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 							}
 						}
 						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
-								c = USERR;
+								global_c_stagewrt += (c = USERR);
 								goto reply;
 						}
 					} else {
@@ -2110,6 +2142,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			break;
 		}
 	}
+	if ((req_type == STAGEWRT) && ((c = global_c_stagewrt) != 0)) goto reply;
 	savepath ();
 	savereqs ();
 	c = 0;
