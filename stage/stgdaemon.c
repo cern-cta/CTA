@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.106 2001/02/13 15:10:50 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.107 2001/02/13 15:54:37 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.106 $ $Date: 2001/02/13 15:10:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.107 $ $Date: 2001/02/13 15:54:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -710,7 +710,7 @@ int main(argc,argv)
 		checkwaitingspc ();	/* check requests that are waiting for space */
 		checkpoolspace ();	/* launch gc if necessary */
 		checkwaitq ();	/* scan the wait queue */
-		if ((stat (NOMORESTAGE, &st) != 0) || (stat (NOMOREMIGR, &st) != 0)) checkfile2mig ();	/* scan the pools vs. their migration policies */
+		if ((stat (NOMORESTAGE, &st) != 0) && (stat (NOMOREMIGR, &st) != 0)) checkfile2mig ();	/* scan the pools vs. their migration policies */
 		if ((shutdownreq_reqid != 0) && (waitqp == NULL || force_shutdown)) {
 			/* We send a kill to all processes we are aware about */
 			killallovl(SIGINT);
