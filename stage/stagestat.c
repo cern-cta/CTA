@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.30 2002/06/16 05:29:12 jdurand Exp $
+ * $Id: stagestat.c,v 1.31 2002/06/18 08:34:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.30 $ $Date: 2002/06/16 05:29:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.31 $ $Date: 2002/06/18 08:34:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1766,7 +1766,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("     Group");
 			printf ("\n                        (hrs)  Accesses");
 			for (i = 0; i < num_frecs; i++){
-				frecord = faccs[i].rec;
+				if ((frecord = faccs[i].rec) == NULL) continue;
 				if (strcmp (frecord->poolname, current_pool) == 0)
 					print_fdetails (frecord);
 			}
@@ -1778,7 +1778,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("    Group");
 			printf ("\n                        (hrs)  Accesses");
 			for (i = 0; i<num_frecs ; i++) {
-				frecord = favg[i].rec;
+				if ((frecord = favg[i].rec) == NULL) continue;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
 					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_fdetails (frecord);
@@ -1792,7 +1792,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i < num_drecs; i++) {
-				frecord = daccs[i].rec;
+				if ((frecord = daccs[i].rec) == NULL) continue;
 				if (strcmp (frecord->poolname, current_pool) == 0)
 					print_ddetails (frecord);
 			}
@@ -1804,7 +1804,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i< num_drecs; i++) {
-				frecord = davg[i].rec;
+				if ((frecord = davg[i].rec) == NULL) continue;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
 					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_ddetails (frecord);
@@ -1818,7 +1818,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i < num_mrecs; i++) {
-				frecord = maccs[i].rec;
+				if ((frecord = maccs[i].rec) == NULL) continue;
 				if (strcmp (frecord->poolname, current_pool) == 0)
 					print_mdetails (frecord);
 			}
@@ -1830,7 +1830,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i< num_mrecs; i++) {
-				frecord = mavg[i].rec;
+				if ((frecord = mavg[i].rec) == NULL) continue;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
 					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_mdetails (frecord);
@@ -1844,7 +1844,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i < num_hrecs; i++) {
-				frecord = haccs[i].rec;
+				if ((frecord = haccs[i].rec) == NULL) continue;
 				if (strcmp (frecord->poolname, current_pool) == 0)
 					print_hdetails (frecord);
 			}
@@ -1856,7 +1856,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
 			for(i=0; i< num_mrecs; i++) {
-				frecord = mavg[i].rec;
+				if ((frecord = mavg[i].rec) == NULL) continue;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
 					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_mdetails (frecord);
