@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_tppos.c,v 1.5 2000/03/15 19:12:16 jdurand Exp $
+ * $Id: stage_updc_tppos.c,v 1.6 2000/03/15 19:26:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.5 $ $Date: 2000/03/15 19:12:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.6 $ $Date: 2000/03/15 19:26:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -68,6 +68,10 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
   }
 #endif
   if (! stageid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (stageid[0] == '\0') {
     serrno = EFAULT;
     return (-1);
   }
@@ -131,19 +135,25 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     nargs += 2;
   }
   if (drive) {
-    marshall_STRING (sbp,"-D");
-    marshall_STRING (sbp, drive);
-    nargs += 2;
+    if (drive[0] != '\0') {
+      marshall_STRING (sbp,"-D");
+      marshall_STRING (sbp, drive);
+      nargs += 2;
+    }
   }
   if (recfm) {
-    marshall_STRING (sbp,"-F");
-    marshall_STRING (sbp, recfm);
-    nargs += 2;
+    if (recfm[0] != '\0') {
+      marshall_STRING (sbp,"-F");
+      marshall_STRING (sbp, recfm);
+      nargs += 2;
+    }
   }
   if (fid) {
-    marshall_STRING (sbp,"-f");
-    marshall_STRING (sbp, fid);
-    nargs += 2;
+    if (fid[0] != '\0') {
+      marshall_STRING (sbp,"-f");
+      marshall_STRING (sbp, fid);
+      nargs += 2;
+    }
   }
   if (lrecl > 0) {
     sprintf (tmpbuf, "%d", lrecl);
