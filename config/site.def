@@ -215,6 +215,7 @@
 #define BuildDlfDaemon    	NO
 #define BuildExpertClient	YES
 #define BuildExpertDaemon	YES
+#define BuildSchedPlugin	YES
 
 #define BuildClientCpp          YES
 #define BuildDstageCpp          YES
