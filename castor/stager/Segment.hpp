@@ -28,7 +28,6 @@
 #define CASTOR_STAGER_SEGMENT_HPP
 
 // Include Files
-#include "Cuuid.h"
 #include "castor/IObject.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "osdep.h"
@@ -45,7 +44,6 @@ namespace castor {
     // Forward declarations
     class TapeCopy;
     class Tape;
-    class Cuuid;
 
     /**
      * class Segment
@@ -328,22 +326,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_stgReqId
-       * @return the value of m_stgReqId
-       */
-      Cuuid* stgReqId() const {
-        return m_stgReqId;
-      }
-
-      /**
-       * Set the value of m_stgReqId
-       * @param new_var the new value of m_stgReqId
-       */
-      void setStgReqId(Cuuid* new_var) {
-        m_stgReqId = new_var;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -395,8 +377,6 @@ namespace castor {
       Tape* m_tape;
 
       TapeCopy* m_copy;
-
-      Cuuid* m_stgReqId;
 
       SegmentStatusCodes m_status;
 

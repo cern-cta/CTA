@@ -25,9 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "Cuuid.h"
 #include "castor/IObject.hpp"
-#include "castor/stager/Cuuid.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -315,26 +313,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Segment_setCopy(castor::stager::Segment* instance, castor::stager::TapeCopy* new_var) {
     instance->setCopy(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_stgReqId
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_stgReqId(castor::stager::Segment* instance, Cuuid_t* var) {
-    if (0 != instance->stgReqId()) {
-      *var = instance->stgReqId()->content();
-    }
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_setStgReqId
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setStgReqId(castor::stager::Segment* instance, Cuuid_t new_var) {
-    castor::stager::Cuuid* new_varcpp = new castor::stager::Cuuid();
-    new_varcpp->setContent(new_var);
-    instance->setStgReqId(new_varcpp);
     return 0;
   }
 

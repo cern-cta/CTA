@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "Cuuid.h"
 #include "StreamSegmentCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
@@ -39,7 +38,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/Cuuid.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -111,7 +109,6 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
   alreadyDone.insert(obj);
   marshalObject(obj->tape(), ad, alreadyDone);
   marshalObject(obj->copy(), ad, alreadyDone);
-  marshalObject(obj->stgReqId(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -198,8 +195,6 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   object->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
   IObject* objCopy = unmarshalObject(ad->stream(), newlyCreated);
   object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
-  IObject* objStgReqId = unmarshalObject(ad->stream(), newlyCreated);
-  object->setStgReqId(dynamic_cast<castor::stager::Cuuid*>(objStgReqId));
   return object;
 }
 

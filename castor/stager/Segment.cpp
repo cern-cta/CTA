@@ -25,10 +25,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "Cuuid.h"
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Cuuid.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -53,8 +51,7 @@ castor::stager::Segment::Segment() throw() :
   m_severity(0),
   m_id(),
   m_tape(0),
-  m_copy(0),
-  m_stgReqId(0) {
+  m_copy(0) {
   memset(m_blockid, 0, 4 * sizeof(unsigned char));
 };
 
@@ -67,10 +64,6 @@ castor::stager::Segment::~Segment() throw() {
   }
   if (0 != m_copy) {
     m_copy->removeSegments(this);
-  }
-  if (0 != m_stgReqId) {
-    delete m_stgReqId;
-    m_stgReqId = 0;
   }
 };
 
@@ -108,12 +101,6 @@ void castor::stager::Segment::print(std::ostream& stream,
   stream << indent << "Copy : " << std::endl;
   if (0 != m_copy) {
     m_copy->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "StgReqId : " << std::endl;
-  if (0 != m_stgReqId) {
-    m_stgReqId->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

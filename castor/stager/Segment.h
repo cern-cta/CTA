@@ -234,16 +234,6 @@ int Cstager_Segment_copy(struct Cstager_Segment_t* instance, struct Cstager_Tape
 int Cstager_Segment_setCopy(struct Cstager_Segment_t* instance, struct Cstager_TapeCopy_t* new_var);
 
 /**
- * Get the value of stgReqId
- */
-int Cstager_Segment_stgReqId(struct Cstager_Segment_t* instance, Cuuid_t* var);
-
-/**
- * Set the value of stgReqId
- */
-int Cstager_Segment_setStgReqId(struct Cstager_Segment_t* instance, Cuuid_t new_var);
-
-/**
  * Get the value of status
  */
 int Cstager_Segment_status(struct Cstager_Segment_t* instance, enum Cstager_SegmentStatusCodes_t* var);

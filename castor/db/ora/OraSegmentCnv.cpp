@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "Cuuid.h"
 #include "OraSegmentCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/IAddress.hpp"
@@ -40,7 +39,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/Cuuid.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -60,7 +58,7 @@ const castor::IFactory<castor::IConverter>& OraSegmentCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSegmentCnv::s_insertStatementString =
-"INSERT INTO rh_Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, stgReqId, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16)";
+"INSERT INTO rh_Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
@@ -68,11 +66,11 @@ const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSegmentCnv::s_selectStatementString =
-"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, stgReqId, status FROM rh_Segment WHERE id = :1";
+"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status FROM rh_Segment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSegmentCnv::s_updateStatementString =
-"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, tape = :12, copy = :13, stgReqId = :14, status = :15 WHERE id = :16";
+"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, tape = :12, copy = :13, status = :14 WHERE id = :15";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSegmentCnv::s_storeTypeStatementString =
@@ -226,17 +224,6 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    if (recursive) {
-      if (alreadyDone.find(obj->stgReqId()) == alreadyDone.end() &&
-          obj->stgReqId() != 0) {
-        if (0 == obj->stgReqId()->id()) {
-          toBeSaved.push_back(obj->stgReqId());
-          nids++;
-        } else {
-          toBeUpdated.push_back(obj->stgReqId());
-        }
-      }
-    }
     u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
@@ -263,8 +250,7 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(12, obj->id());
     m_insertStatement->setDouble(13, obj->tape() ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(14, obj->copy() ? obj->copy()->id() : 0);
-    m_insertStatement->setDouble(15, obj->stgReqId() ? obj->stgReqId()->id() : 0);
-    m_insertStatement->setDouble(16, (int)obj->status());
+    m_insertStatement->setDouble(15, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -333,7 +319,6 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  copy : " << obj->copy() << std::endl
-                    << "  stgReqId : " << obj->stgReqId() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }
@@ -453,28 +438,6 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
           }
         }
       }
-      // Dealing with stgReqId
-      {
-        u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
-        castor::db::DbAddress ad(stgReqIdId, " ", 0);
-        if (0 != stgReqIdId &&
-            0 != obj->stgReqId() &&
-            obj->stgReqId()->id() != stgReqIdId) {
-          cnvSvc()->deleteRepByAddress(&ad, false);
-          stgReqIdId = 0;
-        }
-        if (stgReqIdId == 0) {
-          if (0 != obj->stgReqId()) {
-            if (alreadyDone.find(obj->stgReqId()) == alreadyDone.end()) {
-              cnvSvc()->createRep(&ad, obj->stgReqId(), alreadyDone, false, true);
-            }
-          }
-        } else {
-          if (alreadyDone.find(obj->stgReqId()) == alreadyDone.end()) {
-            cnvSvc()->updateRep(&ad, obj->stgReqId(), alreadyDone, false, recursive);
-          }
-        }
-      }
       m_selectStatement->closeResultSet(rset);
     }
     // Now Update the current object
@@ -492,9 +455,8 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(11, obj->severity());
     m_updateStatement->setDouble(12, obj->tape() ? obj->tape()->id() : 0);
     m_updateStatement->setDouble(13, obj->copy() ? obj->copy()->id() : 0);
-    m_updateStatement->setDouble(14, obj->stgReqId() ? obj->stgReqId()->id() : 0);
-    m_updateStatement->setDouble(15, (int)obj->status());
-    m_updateStatement->setDouble(16, obj->id());
+    m_updateStatement->setDouble(14, (int)obj->status());
+    m_updateStatement->setDouble(15, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
     }
@@ -550,10 +512,6 @@ void castor::db::ora::OraSegmentCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    if (alreadyDone.find(obj->stgReqId()) == alreadyDone.end() &&
-        obj->stgReqId() != 0) {
-      cnvSvc()->deleteRep(0, obj->stgReqId(), alreadyDone, false);
-    }
     // Delete link to tape object
     if (0 != obj->tape()) {
       // Check whether the statement is ok
@@ -650,10 +608,7 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     u_signed64 copyId = (unsigned long long)rset->getDouble(14);
     IObject* objCopy = cnvSvc()->getObjFromId(copyId, newlyCreated);
     object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
-    u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
-    IObject* objStgReqId = cnvSvc()->getObjFromId(stgReqIdId, newlyCreated);
-    object->setStgReqId(dynamic_cast<castor::stager::Cuuid*>(objStgReqId));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(16));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -757,26 +712,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
         }
       }
     }
-    // Dealing with stgReqId
-    u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
-    if (0 != object->stgReqId() &&
-        (0 == stgReqIdId ||
-         object->stgReqId()->id() != stgReqIdId)) {
-      delete object->stgReqId();
-      object->setStgReqId(0);
-    }
-    if (0 != stgReqIdId) {
-      if (0 == object->stgReqId()) {
-        object->setStgReqId
-          (dynamic_cast<castor::stager::Cuuid*>
-           (cnvSvc()->getObjFromId(stgReqIdId, alreadyDone)));
-      } else if (object->stgReqId()->id() == stgReqIdId) {
-        if (alreadyDone.find(object->stgReqId()->id()) == alreadyDone.end()) {
-          cnvSvc()->updateObj(object->stgReqId(), alreadyDone);
-        }
-      }
-    }
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(16));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

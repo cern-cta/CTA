@@ -17,10 +17,6 @@ DROP TABLE RH_REQUESTSSTATUS;
 CREATE TABLE RH_REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);
 CREATE INDEX I_RH_REQUESTSSTATUS_FULL on RH_REQUESTSSTATUS (id, status);
 
-/* SQL statements for type Cuuid */
-DROP TABLE rh_Cuuid;
-CREATE TABLE rh_Cuuid (id INTEGER PRIMARY KEY, time_low NUMBER, time_mid NUMBER, time_hv NUMBER, clock_hi NUMBER, clock_low NUMBER, node CHAR(6));
-
 /* PL/SQL procedure for getting the next request to handle */
 CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
 BEGIN
@@ -75,7 +71,7 @@ CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VA
 
 /* SQL statements for type Segment */
 DROP TABLE rh_Segment;
-CREATE TABLE rh_Segment (blockid CHAR(4), fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR(255), segmCksum NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, stgReqId INTEGER, status INTEGER);
+CREATE TABLE rh_Segment (blockid CHAR(4), fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR(255), segmCksum NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
 DROP TABLE rh_Tape2Segment;
 CREATE TABLE rh_Tape2Segment (Parent INTEGER, Child INTEGER);
 DROP TABLE rh_TapeCopy2Segment;
