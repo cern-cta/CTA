@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.75 2001/02/01 12:43:09 jdurand Exp $
+ * $Id: procio.c,v 1.76 2001/02/01 16:32:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.75 $ $Date: 2001/02/01 12:43:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.76 $ $Date: 2001/02/01 16:32:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -209,7 +209,7 @@ void procioreq(req_type, req_data, clienthost)
 	struct stgpath_entry *stpp_input = NULL;
 	uid_t save_uid;
 	gid_t save_gid;
-#if defined(vms) || defined(_WIN32)
+#if defined(_WIN32)
 	int save_mask;
 #else
 	mode_t	save_mask;
