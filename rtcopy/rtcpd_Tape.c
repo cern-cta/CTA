@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.44 $ $Date: 2000/03/13 11:38:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.45 $ $Date: 2000/03/14 11:08:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1081,10 +1081,6 @@ void *tapeIOthread(void *arg) {
         if ( rc == -1 ) {
             CHECK_PROC_ERR(tape,NULL,"rtcpd_CtapeInit() error");
         }
-        /*
-         * Initialize stager API error message buffer
-         */
-        (void)rtcpd_init_stgupdc();
 #if defined(CTAPE_DUMMIES)
         /*
          * If we run with dummy Ctape we need to assign the
