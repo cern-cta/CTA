@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.13 2000/02/02 10:01:43 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.14 2000/02/04 14:02:37 jdurand Exp $
  */
 
 /*
@@ -9,6 +9,7 @@
 
 #include <stdio.h>              /* Contains BUFSIZ */
 #include <stdlib.h>             /* Contains qsort */
+#include <unistd.h>             /* Contains sleep */
 #include <serrno.h>
 
 #include "osdep.h"
@@ -23,7 +24,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.13 $ $Date: 2000/02/02 10:01:43 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.14 $ $Date: 2000/02/04 14:02:37 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -88,6 +89,7 @@ extern char func[];
     stglogit("stgdb_Cdb_ifce","### Warning at %s:%d: Cannot reconnect to Cdb at retry " \
              "No %d\n",                                                                 \
              __FILE__,__LINE__,iretry);                                                 \
+    sleep(1);                                                                           \
   }                                                                                     \
 }
 
