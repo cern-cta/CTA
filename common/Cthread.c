@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.48 2002/02/06 14:01:38 jdurand Exp $
+ * $Id: Cthread.c,v 1.49 2002/02/06 14:04:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)Cthread.c,v 1.43 2000/08/23 13:59:12 CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.49 $ $Date: 2002/02/06 14:04:09 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
