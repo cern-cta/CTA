@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.3 $ $Date: 2003/12/18 11:04:25 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -65,7 +65,8 @@ int main(argc, argv)
   }
 #endif
   errflg = 0;
-  while ((c = Cgetopt (argc, argv, "n:?")) != EOF) {
+  Coptind = 1; /* REQUIRED */
+  while ((c = Cgetopt (argc, argv, "n:?")) != -1) {
     switch (c) {
     case 'n':
       num_msgs = strtol(Coptarg, &endptr, 10);
