@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.16 2000/12/05 09:27:54 jdurand Exp $
+ * $Id: stageclr.c,v 1.17 2000/12/12 14:35:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.16 $ $Date: 2000/12/05 09:27:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.17 $ $Date: 2000/12/12 14:35:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,10 +28,10 @@ static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.16 $ $Date: 20
 #include "stage.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
+
 extern	char	*getenv();
 extern	char	*getconfent();
-extern	char	*optarg;
-extern	int	optind;
 
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
@@ -91,7 +91,9 @@ int main(argc, argv)
 		exit (SYERR);
 	}
 #endif
-	while ((c = getopt (argc, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != -1) {
 		switch (c) {
 		case 'F':
 			Fflag++;
@@ -117,7 +119,7 @@ int main(argc, argv)
 			}
 			break;
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case 'I':
 			Iflag++;
@@ -126,10 +128,10 @@ int main(argc, argv)
 			iflag++;
 			break;
 		case 'L':
-			Lflag = optind - 1;
-			if (n = optarg - argv[Lflag])
+			Lflag = Coptind - 1;
+			if (n = Coptarg - argv[Lflag])
 				strncpy (path, argv[Lflag], n);
-			if ((c = build_linkname (optarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
+			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
 #if defined(_WIN32)
 				WSACleanup();
 #endif
@@ -140,14 +142,14 @@ int main(argc, argv)
 		case 'M':
 			Mflag++;
 			/* Check if the option -M is attached or not */
-			if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
+			if (strstr(argv[Coptind - 1],"-M") == argv[Coptind - 1]) {
 				attached = 1;
 			}
 			/* We want to know if there is no ':' in the string or, if there is such a ':' */
 			/* if there is no '/' before (then is will indicate a hostname)                */
-			if (! ISCASTOR(optarg)) {
+			if (! ISCASTOR(Coptarg)) {
 				/* We prepend HSM_HOST only for non CASTOR-like files */
-				if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
+				if ((dummy = strchr(Coptarg,':')) == NULL || (dummy != Coptarg && strrchr(dummy,'/') == NULL)) {
 					if ((hsm_host = getenv("HSM_HOST")) != NULL) {
 						if (attached != 0) {
 							strcpy (hsm_path, "-M");
@@ -156,8 +158,8 @@ int main(argc, argv)
 							strcpy (hsm_path, hsm_host);
 						}
 						strcat (hsm_path, ":");
-						strcat (hsm_path, optarg);
-						argv[optind - 1] = hsm_path;
+						strcat (hsm_path, Coptarg);
+						argv[Coptind - 1] = hsm_path;
 					} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
 						if (attached != 0) {
 							strcpy (hsm_path, "-M");
@@ -166,8 +168,8 @@ int main(argc, argv)
 							strcpy (hsm_path, hsm_host);
 						}
 						strcat (hsm_path, ":");
-						strcat (hsm_path, optarg);
-						argv[optind - 1] = hsm_path;
+						strcat (hsm_path, Coptarg);
+						argv[Coptind - 1] = hsm_path;
 					} else {
 						fprintf (stderr, STG54);
 						errflg++;
@@ -176,10 +178,10 @@ int main(argc, argv)
 			}
 			break;
 		case 'P':
-			Pflag = optind - 1;
-			if (n = optarg - argv[Pflag])
+			Pflag = Coptind - 1;
+			if (n = Coptarg - argv[Pflag])
 				strncpy (path, argv[Pflag], n);
-			if ((c = build_linkname (optarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
+			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
 #if defined(_WIN32)
 				WSACleanup();
 #endif
@@ -188,7 +190,7 @@ int main(argc, argv)
 				errflg++;
 			break;
 		case 'r':
-			if (strcmp (optarg, "emove_from_hsm") != 0)
+			if (strcmp (Coptarg, "emove_from_hsm") != 0)
 				errflg++;
 			break;
 		case 'V':
@@ -201,7 +203,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (argc > optind) {
+	if (argc > Coptind) {
 		fprintf (stderr, STG16);
 		errflg++;
 	}

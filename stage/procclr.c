@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.20 2000/12/06 11:29:01 jdurand Exp $
+ * $Id: procclr.c,v 1.21 2000/12/12 14:35:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.20 $ $Date: 2000/12/06 11:29:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.21 $ $Date: 2000/12/12 14:35:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,11 +31,10 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.20 $ $Date: 200
 #endif
 #include "osdep.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
 
 void procclrreq _PROTO((char *, char *));
 
-extern char *optarg;
-extern int optind;
 extern char func[16];
 extern int nbcat_ent;
 extern int reqid;
@@ -99,12 +98,9 @@ void procclrreq(req_data, clienthost)
 		goto reply;
 	}
 	strcpy (group, gr->gr_name);
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != -1) {
 		switch (c) {
 		case 'c':
 			cflag++;
@@ -123,52 +119,52 @@ void procclrreq(req_data, clienthost)
 		case 'h':
 			break;
 		case 'I':
-			xfile = optarg;
+			xfile = Coptarg;
 			break;
 		case 'i':
 			break;
 		case 'L':
-			linkname = optarg;
+			linkname = Coptarg;
 			break;
 		case 'l':	/* label type (al, nl, sl or blp) */
-			lbl = optarg;
+			lbl = Coptarg;
 			break;
 		case 'M':
-			mfile = optarg;
+			mfile = Coptarg;
 			break;
 		case 'm':
-			minfree = strtol (optarg, &dp, 10);
+			minfree = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0' || minfree > 100) {
 				sendrep (rpfd, MSG_ERR, STG06, "-m");
 				errflg++;
 			}
 			break;
 		case 'P':
-			path = optarg;
+			path = Coptarg;
 			if (*path == '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-P");
 				errflg++;
 			}
 			break;
 		case 'p':
-			if (strcmp (optarg, "NOPOOL") == 0 ||
-					isvalidpool (optarg)) {
-				strcpy (poolname, optarg);
+			if (strcmp (Coptarg, "NOPOOL") == 0 ||
+					isvalidpool (Coptarg)) {
+				strcpy (poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, optarg);
+				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
 		case 'q':	/* file sequence number(s) */
-			fseq = optarg;
+			fseq = Coptarg;
 			break;
 		case 'r':
-			/* optarg is equal to emove_from_hsm */
+			/* Coptarg is equal to emove_from_hsm */
 			/* because we only allows this in the stageclr command line */
 			rflag = 1;
 			break;
 		case 'V':	/* visual identifier(s) */
-			q = strtok (optarg, ":");
+			q = strtok (Coptarg, ":");
 			while (q != NULL) {
 				strcpy (vid[numvid], q);
 				UPPER (vid[numvid]);
