@@ -1,5 +1,10 @@
 /*
- * $Id: Cthread_flags.h,v 1.1.1.1 1999/07/20 08:03:13 jdurand Exp $
+ * $Id: Cthread_flags.h,v 1.2 1999/07/26 15:18:25 jdurand Exp $
+ *
+ * $Log: Cthread_flags.h,v $
+ * Revision 1.2  1999/07/26 15:18:25  jdurand
+ * Some Raima interface
+ *
  */
 
 #ifndef __cthread_flags_h
