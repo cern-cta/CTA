@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.17 $ $Date: 2000/02/09 18:35:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.18 $ $Date: 2000/02/14 14:54:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1705,7 +1705,7 @@ static int rtcpc_diskfiles(int mode,
                            const char *filename,
                            tape_list_t **tape) {
     int rc, toomany, disk_fseq;
-    tape_list_t *tl;
+    tape_list_t *tl, *tl1;
     file_list_t *fl, *fl1;
     rtcpFileRequest_t *filereq;
     char *last_filename;
@@ -1817,9 +1817,35 @@ static int rtcpc_diskfiles(int mode,
             /*
              * There was a trailing minus ("-"). Set CONCAT to EOD for
              * last specified file and remove the place holder element.
+             * Only valid for tape read!
              */
+            if ( tl->tapereq.mode == WRITE_ENABLE ) {
+                /*
+                 * This should never happen! the check is already done in
+                 * rtcp_q_opt()
+                 */
+                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalid
+for cpdsktp\n"); 
+                serrno = EINVAL;
+                return(-1);
+            }
             fl->prev->filereq.concat = CONCAT_TO_EOD;
             CLIST_DELETE(tl->file,fl);
+            free(fl);
+            fl = tl->file->prev;
+            /*
+             * If multi-volume request we must make sure that the file
+             * elements on the other volumes are updated as well
+             */
+            CLIST_ITERATE_BEGIN(tl,tl1) {
+                if ( tl1 != tl ) {
+                    CLIST_ITERATE_BEGIN(tl1->file,fl1) {
+                        if ( fl1->filereq.tape_fseq == 0 ) {
+                            fl1->filereq = fl->filereq;
+                        }
+                    } CLIST_ITERATE_END(tl1->file,fl1);
+                }
+            } CLIST_ITERATE_END(tl,tl1);
         }
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
