@@ -1,5 +1,5 @@
 /*
- * $Id: shift_cmp_shift.c,v 1.6 2000/12/12 14:13:40 jdurand Exp $
+ * $Id: shift_cmp_shift.c,v 1.7 2000/12/21 13:55:07 jdurand Exp $
  */
 
 /* ============== */
@@ -14,6 +14,9 @@
 #include <stdlib.h>           /* atoi etc... */
 #include <errno.h>            /* errno etc... */
 #include <string.h>           /* memset etc... */
+#ifndef _WIN32
+#include <ctype.h>
+#endif
 
 /* ============= */
 /* Local headers */
@@ -163,8 +166,6 @@ int main(argc, argv)
 	int skip_stgcat = 0;
 	int skip_stgpath = 0;
 	int errflg = 0;
-	char tmpbuf[21];
-	int answer;
 
 	Coptind = 1;
 	Copterr = 1;

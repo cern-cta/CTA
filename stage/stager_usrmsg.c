@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.10 2000/11/22 11:16:20 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.11 2000/12/21 13:55:10 jdurand Exp $
  */
 
 /*
@@ -8,15 +8,18 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.10 $ $Date: 2000/11/22 11:16:20 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.11 $ $Date: 2000/12/21 13:55:10 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
 
 #if defined(_WIN32)
 #include <io.h>
-#include <pwd.h>
+#else
+#include <unistd.h>
 #endif /* _WIN32 */
+#include <pwd.h>
+#include <sys/types.h>
 
 #include <stdlib.h>
 #include <stdio.h>              /* standard input/output definitions    */
@@ -32,12 +35,13 @@ static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.10 $ $Date
 #include "osdep.h"
 
 extern int rpfd;
-EXTERN_C int sendrep _PROTO(());
-EXTERN_C int stglogit _PROTO(());
+int sendrep _PROTO(());
+int stglogit _PROTO(());
+extern struct passwd start_passwd;
 
 #define SETEID(thiseuid,thisegid) {              \
-	setegid(0);                                  \
-	seteuid(0);                                  \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
 	setegid(thisegid);                           \
 	seteuid(thiseuid);                           \
 }

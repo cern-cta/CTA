@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.11 2000/09/15 07:33:05 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.12 2000/12/21 13:55:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.11 $ $Date: 2000/09/15 07:33:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.12 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.11 $ $Dat
 #endif
 #if !defined(_WIN32)
 #include <sys/wait.h>
+#include <unistd.h>
 #endif
 #include <sys/stat.h>
 #include "marshall.h"
@@ -34,10 +35,12 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.11 $ $Dat
 #include "osdep.h"
 #include "stage.h"
 #include "Cnetdb.h"
+#include "stage_api.h"
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
 int rc_shift2castor _PROTO((int));
+EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
 int rc_shift2castor(rc)
 		 int rc;
@@ -223,7 +226,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 			break;
 		case SYMLINK:
 			unmarshall_STRING (p, file2);
-			if (c = dosymlink (prtbuf, file2))
+			if ((c = dosymlink (prtbuf, file2)))
 				link_rc = c;
 			break;
 		case RMSYMLINK:

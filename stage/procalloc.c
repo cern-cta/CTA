@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.23 2000/12/18 16:00:28 jdurand Exp $
+ * $Id: procalloc.c,v 1.24 2000/12/21 13:55:05 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.23 $ $Date: 2000/12/18 16:00:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.24 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <grp.h>
 #include <string.h>
@@ -52,6 +53,20 @@ extern struct stgdb_fd dbfd;
 void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
+extern int req2argv _PROTO((char *, char ***));
+extern int sendrep _PROTO(());
+extern int stglogit _PROTO(());
+extern int isvalidpool _PROTO((char *));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern int cleanpool _PROTO((char *));
+extern void delreq _PROTO((struct stgcat_entry *, int));
+extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern int savepath _PROTO(());
+extern int savereqs _PROTO(());
+extern void rmfromwq _PROTO((struct waitq *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+
+void procallocreq _PROTO((char *, char *));
 
 void procallocreq(req_data, clienthost)
 		 char *req_data;

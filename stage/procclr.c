@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.21 2000/12/12 14:35:37 jdurand Exp $
+ * $Id: procclr.c,v 1.22 2000/12/21 13:55:05 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.21 $ $Date: 2000/12/12 14:35:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.22 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -32,6 +33,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.21 $ $Date: 200
 #include "osdep.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "rfio_api.h"
 
 void procclrreq _PROTO((char *, char *));
 
@@ -44,6 +46,16 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
+extern int req2argv _PROTO((char *, char ***));
+extern int sendrep _PROTO(());
+extern int stglogit _PROTO(());
+extern int isvalidpool _PROTO((char *));
+extern void dellink _PROTO((struct stgpath_entry *));
+extern int enoughfreespace _PROTO((char *, int));
+extern int checklastaccess _PROTO((char *, time_t));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern int savepath _PROTO(());
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 

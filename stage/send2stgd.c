@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.23 2000/09/15 07:33:04 jdurand Exp $
+ * $Id: send2stgd.c,v 1.24 2000/12/21 13:55:07 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.23 $ $Date: 2000/09/15 07:33:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.24 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -18,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.23 $ $Date: 2
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -46,6 +48,9 @@ void dounlink _PROTO((char *));
 void wait4child _PROTO(());
 #endif
 int rc_shift2castor _PROTO((int));
+EXTERN_C int DLL_DECL stage_errmsg _PROTO(());
+EXTERN_C int DLL_DECL stage_outmsg _PROTO(());
+EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
 int rc_shift2castor(rc)
 		 int rc;
@@ -72,7 +77,7 @@ int rc_shift2castor(rc)
 	}
 }
 
-int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
+int send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
 		 char *host;
 		 char *reqp;
 		 int reql;
@@ -237,7 +242,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 			break;
 		case SYMLINK:
 			unmarshall_STRING (p, file2);
-			if (c = dosymlink (prtbuf, file2))
+			if ((c = dosymlink (prtbuf, file2)) != 0)
 				link_rc = c;
 			break;
 		case RMSYMLINK:

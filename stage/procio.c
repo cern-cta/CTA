@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.67 2000/12/18 16:00:29 jdurand Exp $
+ * $Id: procio.c,v 1.68 2000/12/21 13:55:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.67 $ $Date: 2000/12/18 16:00:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.68 $ $Date: 2000/12/21 13:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.67 $ $Date: 2000
 #else
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <unistd.h>
 #endif
 #include <sys/stat.h>
 #include <errno.h>
@@ -52,9 +53,6 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.67 $ $Date: 2000
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
 
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep (int, int, ...);
-#endif
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
 extern int reqid;
@@ -82,6 +80,22 @@ int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern void getdefsize _PROTO((char *, int *));
+extern int stglogit _PROTO(());
+extern int req2argv _PROTO((char *, char ***));
+extern int sendrep _PROTO(());
+extern int isvalidpool _PROTO((char *));
+extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern void delreq _PROTO((struct stgcat_entry *, int));
+extern int savepath _PROTO(());
+extern int savereqs _PROTO(());
+extern int cleanpool _PROTO((char *));
+extern int fork_exec_stager _PROTO((struct waitq *));
+extern void rmfromwq _PROTO((struct waitq *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
 #ifdef MIN
 #undef MIN
@@ -113,7 +127,6 @@ void procioreq(req_type, req_data, clienthost)
 	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
 	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
-	char filemig_size[5];
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
@@ -149,7 +162,8 @@ void procioreq(req_type, req_data, clienthost)
 	struct waitq *wqp = NULL;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
-	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
+	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
+	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -701,8 +715,8 @@ void procioreq(req_type, req_data, clienthost)
 			case 'h':
 				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) {
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
 					c = USERR;
 					goto reply;
@@ -714,8 +728,8 @@ void procioreq(req_type, req_data, clienthost)
 				break;
 			case 'm':
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
 					c = USERR;
 					goto reply;
@@ -726,8 +740,8 @@ void procioreq(req_type, req_data, clienthost)
 			default:
 				break;
 			}
-			setegid(0);
-			seteuid(0);
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
 			if (! size) {
 				/* We force size to be allocated to exactly what we need */
 				stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
@@ -869,8 +883,8 @@ void procioreq(req_type, req_data, clienthost)
 					setegid(stgreq.gid);
 					seteuid(stgreq.uid);
 					(void) Cns_setatime (NULL, &Cnsfileid);
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 				}
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
@@ -1032,14 +1046,14 @@ void procioreq(req_type, req_data, clienthost)
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
 				if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
 					c = USERR;
 					goto reply;
 				}
-				setegid(0);
-				seteuid(0);
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
 				strcpy(stgreq.u1.h.server,Cnsfileid.server);
 				stgreq.u1.h.fileid = Cnsfileid.fileid;
 			}
@@ -1090,7 +1104,7 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 			break;
 		case STAGEWRT:
-			if (p = findpoolname (upath)) {
+			if ((p = findpoolname (upath)) != NULL) {
 				if (poolflag < 0 ||
 						(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
@@ -1116,8 +1130,8 @@ void procioreq(req_type, req_data, clienthost)
 					/* immediately to the correct disk file associated with this HSM file */
 					/* We compare the size of the disk file with the size in Name Server */
 					if (rfio_stat(argv[Coptind + ihsmfiles], &filemig_stat) < 0) {
-						setegid(0);
-						seteuid(0);
+						setegid(start_passwd.pw_gid);
+						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, argv[Coptind + ihsmfiles], "rfio_stat", rfio_serror());
 						c = USERR;
 						goto reply;
@@ -1134,8 +1148,8 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy(stgreq.u1.h.server,Cnsfileid.server);
 						stgreq.u1.h.fileid = Cnsfileid.fileid;
 					} else if (correct_size <= 0) {
-						setegid(0);
-						seteuid(0);
+						setegid(start_passwd.pw_gid);
+						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_OUT,
 									"STG98 - %s size is of zero size - not migrated\n",
 									argv[Coptind + ihsmfiles]);
@@ -1144,8 +1158,8 @@ void procioreq(req_type, req_data, clienthost)
 					} else {
 						/* Not the same size or diskfile size is zero */
 						if (Cnsfilestat.filesize > 0) {
-							setegid(0);
-							seteuid(0);
+							setegid(start_passwd.pw_gid);
+							seteuid(start_passwd.pw_uid);
 							sendrep (rpfd, MSG_OUT,
 										"STG98 - %s renewed (size differs vs. %s)\n",
 										hsmfiles[ihsmfiles],
@@ -1162,8 +1176,8 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				if (forced_Cns_creatx != 0) {
 					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
-						setegid(0);
-						seteuid(0);
+						setegid(start_passwd.pw_gid);
+						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
 						c = USERR;
 						goto reply;
@@ -1177,8 +1191,8 @@ void procioreq(req_type, req_data, clienthost)
 			case 'm':
 				/* Overwriting an existing non-CASTOR HSM file is not allowed */
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
 					c = USERR;
 					goto reply;
@@ -1187,8 +1201,8 @@ void procioreq(req_type, req_data, clienthost)
 			default:
 				break;
 			}
-			setegid(0);
-			seteuid(0);
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
@@ -1249,15 +1263,15 @@ void procioreq(req_type, req_data, clienthost)
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
 				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
-					setegid(0);
-					seteuid(0);
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
 						"Cns_setfsize", sstrerror(serrno));
 					c = SYERR;
 					goto reply;
 				}
-				setegid(0);
-				seteuid(0);
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
 			}
 			stcp = newreq ();
 			memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -1301,8 +1315,8 @@ void procioreq(req_type, req_data, clienthost)
 
 					/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
 					if (ncastorfiles > 0 && nuserlevel > 0) {
-						uid_waitq = stpasswd->pw_uid;
-						gid_waitq = stpasswd->pw_gid;
+						uid_waitq = stage_passwd.pw_uid;
+						gid_waitq = stage_passwd.pw_gid;
  						user_waitq = user_stage;
 					} else {
 						uid_waitq = stcp->uid;
@@ -1328,7 +1342,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case STAGECAT:
-			if (p = findpoolname (upath)) {
+			if ((p = findpoolname (upath)) != NULL) {
 				if (poolflag < 0 ||
 						(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
@@ -1464,7 +1478,7 @@ void procputreq(req_data, clienthost)
 	int ndiskfiles = 0;
 	int nuserlevel = 0;
 	int nexplevel = 0;
-	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
+	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1749,8 +1763,8 @@ void procputreq(req_data, clienthost)
 
 			/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
 			if (ncastorfiles > 0 && nuserlevel > 0) {
-				uid_waitq = stpasswd->pw_uid;
-				gid_waitq = stpasswd->pw_gid;
+				uid_waitq = stage_passwd.pw_uid;
+				gid_waitq = stage_passwd.pw_gid;
  				user_waitq = user_stage;
 			} else {
 				uid_waitq = uid;
@@ -1780,7 +1794,7 @@ void procputreq(req_data, clienthost)
 					goto reply;
 				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					if ((hsmfilesstcp[ihsmfiles]->status) & (STAGEWRT|CAN_BE_MIGR) == (STAGEWRT|CAN_BE_MIGR)) {
+					if (((hsmfilesstcp[ihsmfiles]->status) & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
 						hsmfilesstcp[ihsmfiles]->status |= BEING_MIGR;
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
@@ -1837,7 +1851,7 @@ void procputreq(req_data, clienthost)
 		/* and, if there are also other types of files, there is NO userlevel CASTOR's ones. */
 		for (i = 0; i < nbdskf; i++) {
 			strcpy (upath, argv[Coptind+i]);
-			if (c = ask_stageout (STAGEPUT, upath, &found_stcp))
+			if ((c = ask_stageout (STAGEPUT, upath, &found_stcp)) != 0)
 				goto reply;
 			switch (found_stcp->t_or_d) {
 			case 'm':
@@ -1967,8 +1981,8 @@ void procputreq(req_data, clienthost)
 
 		/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
 		if (ncastorfiles > 0 && nuserlevel > 0) {
-			uid_waitq = stpasswd->pw_uid;
-			gid_waitq = stpasswd->pw_gid;
+			uid_waitq = stage_passwd.pw_uid;
+			gid_waitq = stage_passwd.pw_gid;
  			user_waitq = user_stage;
 		} else {
 			uid_waitq = uid;
@@ -2096,7 +2110,6 @@ isstaged(cur, p, poolflag, poolname)
 		 char *poolname;
 {
 	int found = 0;
-	int thisfseq;
 	int i;
 	struct stgcat_entry *stcp;
 	struct stgcat_entry *stcp_castor_name = NULL;
@@ -2277,7 +2290,7 @@ maxfseq_per_vid(cur, poolflag, poolname, concat_off_flag)
 	return(result);
 }
 
-unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
+int unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 		 char *fseq;
 		 int req_type;
 		 char *trailing;

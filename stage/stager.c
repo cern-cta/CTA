@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.110 2000/12/19 15:45:55 jdurand Exp $
+ * $Id: stager.c,v 1.111 2000/12/21 13:55:09 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.110 $ $Date: 2000/12/19 15:45:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.111 $ $Date: 2000/12/21 13:55:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.110 $ $Date: 200
 #include "u64subr.h"
 #include "osdep.h"
 #include "Cpwd.h"
+#include "Cgrp.h"
 
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
@@ -61,9 +62,10 @@ EXTERN_C void DLL_DECL stager_migmsg _PROTO(());
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
 EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
-EXTERN_C int sendrep _PROTO(());
-EXTERN_C int stglogit _PROTO(());
-EXTERN_C int DLL_DECL stage_migpool _PROTO((char *, char *, char *));
+EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
+extern int sendrep _PROTO(());
+extern int stglogit _PROTO(());
+extern int stage_migpool _PROTO((char *, char *, char *));
 
 int stagein_castor_hsm_file _PROTO(());
 int stagewrt_castor_hsm_file _PROTO(());
@@ -83,6 +85,7 @@ extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_
 int isuserlevel _PROTO((char *));
 int getnamespace _PROTO((char *, char *));
 void init_hostname _PROTO(());
+int get_subreqid _PROTO((struct stgcat_entry *));
 
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
@@ -130,7 +133,8 @@ char cns_error_buffer[512];         /* Cns error buffer */
 char vmgr_error_buffer[512];        /* Vmgr error buffer */
 int Flags = 0;                      /* Tape flag for vmgr_updatetape */
 int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback already did the job */
-struct passwd *stpasswd;            /* Generic uid/gid stage:st */
+struct passwd stage_passwd;         /* Generic uid/gid stage:st */
+struct passwd start_passwd;
 int nuserlevel = 0;                 /* Number of user-level files */
 int nexplevel = 0;                  /* Number of experiment-level files */
 int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
@@ -213,11 +217,11 @@ int save_euid, save_egid;
 /* The following macros will set the correct uid/gid or euid/egid for tape operations */
 
 #define SETTAPEEID(thiseuid,thisegid) {          \
-	setegid(0);                                  \
-	seteuid(0);                                  \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
 	if (StageIDflag != 0) {                      \
-		setegid(stpasswd->pw_gid);               \
-		seteuid(stpasswd->pw_uid);               \
+		setegid(stage_passwd.pw_gid);            \
+		seteuid(stage_passwd.pw_uid);            \
 	} else {                                     \
 		setegid(thisegid);                       \
 		seteuid(thiseuid);                       \
@@ -225,11 +229,11 @@ int save_euid, save_egid;
 }
 
 #define SETTAPEID(thisuid,thisgid) {             \
-	setegid(0);                                  \
-	seteuid(0);                                  \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
 	if (StageIDflag != 0) {                      \
-		setgid(stpasswd->pw_gid);                \
-		setuid(stpasswd->pw_uid);                \
+		setgid(stage_passwd.pw_gid);             \
+		setuid(stage_passwd.pw_uid);             \
 	} else {                                     \
 		setgid(thisgid);                         \
 		setuid(thisuid);                         \
@@ -239,15 +243,15 @@ int save_euid, save_egid;
 /* The following macros will set the correct uid/gid or euid/egid for nameserver operations */
 
 #define SETID(thisuid,thisgid) {                 \
-	setegid(0);                                  \
-	seteuid(0);                                  \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
 	setgid(thisgid);                             \
 	setuid(thisuid);                             \
 }
 
 #define SETEID(thiseuid,thisegid) {              \
-	setegid(0);                                  \
-	seteuid(0);                                  \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
 	setegid(thisegid);                           \
 	seteuid(thiseuid);                           \
 }
@@ -335,6 +339,8 @@ int main(argc, argv)
 	int nretry;
 	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
+	struct passwd *this_passwd;
+	struct passwd root_passwd;
 #ifdef __INSURE__
 	char *tmpfile;
 	FILE *f;
@@ -450,6 +456,50 @@ int main(argc, argv)
 	/* Initialize hostname */
 	init_hostname();
 
+	/* We get information on current uid/gid */
+	if ((this_passwd = Cgetpwuid(getuid())) == NULL) {
+		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) getuid(), strerror(errno));
+		stglogit(func, "### Please check existence of current uid %d in password file\n", (int) getuid());
+ 		exit (SYERR);
+	}
+	start_passwd = *this_passwd;
+	if (Cgetgrgid(start_passwd.pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",start_passwd.pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", start_passwd.pw_gid, start_passwd.pw_name);
+ 		exit (SYERR);
+	}
+
+	/* We get information on generic stage:st uid/gid */
+	if ((this_passwd = Cgetpwnam("stage")) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "stage");
+ 		exit (SYERR);
+	}
+	stage_passwd = *this_passwd;
+	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, "stage");
+ 		exit (SYERR);
+	}
+
+	/* We check that we currently run under root account */
+	if ((this_passwd = Cgetpwnam("root")) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","root",strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "root");
+	} else {
+		root_passwd = *this_passwd;
+		if (Cgetgrgid(root_passwd.pw_gid) == NULL) {
+			stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",root_passwd.pw_gid,strerror(errno));
+			stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) root_passwd.pw_gid, "root");
+	 		/* If "root" group does not exist in group file (!), let's continue anyway */
+		} else {
+			if ((root_passwd.pw_uid != start_passwd.pw_uid) ||
+				(root_passwd.pw_gid != start_passwd.pw_gid)) {
+				stglogit(func, "### Warning : You, \"%s\" (uid=%d,gid=%d), are NOT running under \"root\" (uid=%d,gid=%d) account. Functionnality might very well be extremely limited.\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, root_passwd.pw_uid, root_passwd.pw_gid);
+			}
+		}
+	}
+
 	if (stcs->t_or_d == 'm' || stcs->t_or_d == 'h') {
 		/* We cannot mix HPSS and CASTOR files... */
 
@@ -476,67 +526,59 @@ int main(argc, argv)
 	}
 
 	if (StageIDflag != 0) {
-      struct stgcat_entry *stcp;
-      char currentnamespace[CA_MAXPATHLEN+1];
-      char previousnamespace[CA_MAXPATHLEN+1];
+		struct stgcat_entry *stcp;
+		char currentnamespace[CA_MAXPATHLEN+1];
+		char previousnamespace[CA_MAXPATHLEN+1];
 
-      previousnamespace[0] = '\0';
+		previousnamespace[0] = '\0';
 
-      /* We decide if this migration is a user-level one or an experiment-level one */
-      for (stcp = stcs; stcp < stce; stcp++) {
-		if (isuserlevel(ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile)) {
-          nuserlevel++;
-        } else {
-          nexplevel++;
-        }
-        if (stcp == stcs) {
-          if (getnamespace(previousnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
+		/* We decide if this migration is a user-level one or an experiment-level one */
+		for (stcp = stcs; stcp < stce; stcp++) {
+			if (isuserlevel(ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile)) {
+				nuserlevel++;
+			} else {
+				nexplevel++;
+			}
+			if (stcp == stcs) {
+				if (getnamespace(previousnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
+					SAVE_EID;
+					sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
+					RESTORE_EID;
+					free(stcs);
+					exit(SYERR);
+				}
+			} else {
+				if (getnamespace(currentnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
+					SAVE_EID;
+					sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
+					RESTORE_EID;
+					free(stcs);
+					exit(SYERR);
+				}
+				if (strcmp(previousnamespace,currentnamespace) != 0) {
+					SAVE_EID;
+					sendrep(rpfd, MSG_ERR, "### Cannot mix namespaces (/%s/ and /%s/)\n",previousnamespace,currentnamespace);
+					RESTORE_EID;
+					free(stcs);
+					exit(SYERR);
+				}
+				strcpy(previousnamespace,currentnamespace);
+			}
+		}
+		if ((nuserlevel == 0 && nexplevel == 0) ||
+			(nuserlevel  > 0 && nexplevel  > 0)) {
 			SAVE_EID;
-            sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
+			sendrep(rpfd, MSG_ERR, "### Found %d user-level files, %d experiment-level files\n",
+					nuserlevel,nexplevel);
 			RESTORE_EID;
 			free(stcs);
-            exit(SYERR);
-          }
-        } else {
-          if (getnamespace(currentnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
-			SAVE_EID;
-            sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
-			RESTORE_EID;
-			free(stcs);
-            exit(SYERR);
-          }
-          if (strcmp(previousnamespace,currentnamespace) != 0) {
-			SAVE_EID;
-            sendrep(rpfd, MSG_ERR, "### Cannot mix namespaces (/%s/ and /%s/)\n",previousnamespace,currentnamespace);
-			RESTORE_EID;
-			free(stcs);
-            exit(SYERR);
-          }
-          strcpy(previousnamespace,currentnamespace);
-        }
-      }
-      if ((nuserlevel == 0 && nexplevel == 0) ||
-          (nuserlevel  > 0 && nexplevel  > 0)) {
-		SAVE_EID;
-        sendrep(rpfd, MSG_ERR, "### Found %d user-level files, %d experiment-level files\n",
-                nuserlevel,nexplevel);
-		RESTORE_EID;
-		free(stcs);
-        exit(SYERR);
-      }
-      /* We get information on generic stage:st uid/gid */
-      if ((stpasswd = Cgetpwnam("stage")) == NULL) {
-		SAVE_EID;
-        sendrep(rpfd, MSG_ERR, "STG02 - Cannot Cgetpwnam(\"%s\") (%s)","stage",strerror(errno));
-		RESTORE_EID;
-		free(stcs);
-        exit(SYERR);
-      }
-      /* For exp level, we will use the last of the entries */
-      if (nexplevel > 0) {
-        stpasswd->pw_gid = (stce - 1)->gid;
-        stpasswd->pw_uid = (stce - 1)->uid;
-      }
+			exit(SYERR);
+		}
+		/* For exp level, we will use the last of the entries */
+		if (nexplevel > 0) {
+			stage_passwd.pw_uid = (stce - 1)->uid;
+			stage_passwd.pw_gid = (stce - 1)->gid;
+		}
 	}
 
 	if (concat_off_fseq > 0) {
@@ -804,7 +846,6 @@ int stagein_castor_hsm_file() {
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 #endif
-	char fseg_status;
     struct devinfo *devinfo;
     int isegments;
     int save_serrno;
@@ -941,8 +982,6 @@ int stagein_castor_hsm_file() {
 	/* We loop on all the requests, choosing those that requires the same tape */
 	new_tape = 0;
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
-		struct Cns_fileid Cnsfileid;
-
 #ifdef STAGER_DEBUG
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
@@ -1169,7 +1208,6 @@ int stagein_castor_hsm_file() {
 
 		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 			tape_list_t *tl;
-			file_list_t *fl;
 			/* Rtcopy bits suggest to retry */
 			CLIST_ITERATE_BEGIN(rtcpcreqs[0],tl) {
 		   		*tl->tapereq.unit = '\0';
@@ -1256,14 +1294,14 @@ int stagein_castor_hsm_file() {
 
 int stagewrt_castor_hsm_file() {
 	int fseq;
-	int fseq_rtcp;
 	int i;
 	struct stat statbuf;
-	struct Cns_filestat statbuf_check;
 	int rtcp_rc;
 	struct stgcat_entry *stcp = stcs;
 	char *castor_hsm;
+#ifdef STAGER_DEBUG
 	char tmpbuf[21];
+#endif
 	extern char* poolname2tapepool _PROTO((char *));
     struct devinfo *devinfo;
 #ifdef SKIP_TAPE_POOL_TURNAROUND
@@ -1575,7 +1613,6 @@ int stagewrt_castor_hsm_file() {
 
 				if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 					tape_list_t *tl;
-					file_list_t *fl;
 					/* Rtcopy bits suggest to retry */
 					CLIST_ITERATE_BEGIN(rtcpcreqs[0],tl) {
 						*tl->tapereq.unit = '\0';
@@ -1665,9 +1702,6 @@ int stage_tape() {
 		dont_change_srv = 1;
 	}
 
- stage_tape_retry:
-	/* We "interrogate" for the number of structures */
-
     stcp_start = stcs;
     stcp_end = stce;
 	nbcat_ent_current = nbcat_ent;
@@ -1722,12 +1756,8 @@ int stage_tape() {
 	}
 
 	if (rtcp_rc < 0) {
-		int stage_tape_retry_flag = 0;
-		int i;
-
 		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 			tape_list_t *tl;
-			file_list_t *fl;
 			/* Rtcopy bits suggest to retry */
 			CLIST_ITERATE_BEGIN(rtcpcreqs[0],tl) {
 		   		*tl->tapereq.unit = '\0';
@@ -2098,10 +2128,8 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			}
             {
 				int nbtpf, j;
-				char *p, *q;
-				char trailing;
 				char trailing2;
-				int n1, n2, n;
+				int n;
 				int nbfiles, nbfiles_orig, nbfiles_ok;
 				file_list_t *fl;
 				int last_disk_fseq;
@@ -2744,7 +2772,7 @@ void free_rtcpcreq(rtcpcreq)
 	/* and it contains a pointer to a file_list_t which is also a circular list */
 	/* but that have been allocated one (with a calloc())                       */
 	
-	tape_list_t *first_rtcpcreq, *current_rtcpcreq, *dummy_rtcpcreq;
+	tape_list_t *first_rtcpcreq, *current_rtcpcreq;
 	
 	if (rtcpcreq == NULL) {
 		return;
@@ -2791,14 +2819,14 @@ int stager_hsm_callback(tapereq,filereq)
 	rtcpTapeRequest_t *tapereq;
 	rtcpFileRequest_t *filereq;
 {
+#ifdef STAGER_DEBUG
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 	char tmpbuf3[21];
-	char tmpbuf4[21];
+#endif
 	int compression_factor = 0;		/* times 100 */
 	int stager_client_callback_i = -1;
 	int stager_client_true_i = -1;
-	int i;
 	struct stgcat_entry *stcp;
 	char *castor_hsm;
 	struct Cns_fileid Cnsfileid;
@@ -3081,9 +3109,11 @@ int stager_tape_callback(tapereq,filereq)
 	rtcpTapeRequest_t *tapereq;
 	rtcpFileRequest_t *filereq;
 {
+#ifdef STAGER_DEBUG
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 	char tmpbuf3[21];
+#endif
 
 	if (tapereq == NULL || filereq == NULL) {
 		serrno = EINVAL;
@@ -3140,6 +3170,6 @@ int get_subreqid(stcp)
 
 
 /*
- * Last Update: "Tuesday 19 December, 2000 at 16:45:35 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 21 December, 2000 at 13:08:55 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.46 2000/12/19 14:38:30 jdurand Exp $
+ * $Id: procupd.c,v 1.47 2000/12/21 13:55:07 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.46 $ $Date: 2000/12/19 14:38:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.47 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -61,6 +62,18 @@ extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
+extern int req2argv _PROTO((char *, char ***));
+extern int sendrep _PROTO(());
+extern int stglogit _PROTO(());
+extern int nextreqid _PROTO(());
+extern int savereqs _PROTO(());
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern int cleanpool _PROTO((char *));
+extern void delreq _PROTO((struct stgcat_entry *, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -109,7 +122,6 @@ procupdreq(req_data, clienthost)
 	struct waitf *wfp;
 	struct waitq *wqp;
 	int Zflag = 0;
-	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
 	int callback_index = -1;
 	int found_wfp = 0;
 
@@ -217,7 +229,7 @@ procupdreq(req_data, clienthost)
 	}
 	if (nargs > Coptind) {
 		for  (i = Coptind; i < nargs; i++)
-			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL)) {
+			if ((c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
 				if (c != CLEARED) {
 					goto reply;
 				} else {
@@ -410,7 +422,7 @@ procupdreq(req_data, clienthost)
 				}
 #endif
 				strcpy (wqp->waiting_pool, stcp->poolname);
-				if (c = cleanpool (stcp->poolname)) goto reply;
+				if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
 				return;
 			}
 			has_been_modified = 1;
@@ -436,8 +448,6 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 	if (stcp->ipath[0] != '\0') {
-		int done_partial_msg = 0;
-
 		if ((p = strchr (stcp->ipath, ':')) != NULL) {
 			q = stcp->ipath;
 		} else {
@@ -596,7 +606,7 @@ procupdreq(req_data, clienthost)
 		}
 #endif
 		strcpy (wqp->waiting_pool, stcp->poolname);
-		if (c = cleanpool (stcp->poolname)) goto reply;
+		if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
 		return;
 	}
 	if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') {

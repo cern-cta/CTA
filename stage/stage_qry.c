@@ -1,5 +1,5 @@
 /*
- * $Id: stage_qry.c,v 1.1 2000/11/17 07:46:33 jdurand Exp $
+ * $Id: stage_qry.c,v 1.2 2000/12/21 13:55:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_qry.c,v $ $Revision: 1.1 $ $Date: 2000/11/17 07:46:33 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_qry.c,v $ $Revision: 1.2 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -76,16 +76,7 @@ int _stage_qry_hsm_ipath(stghost,stgpool,hsmpath,ipath)
   char *sbp;
   char *sendbuf;
   size_t sendbuf_size;
-  char tmpbuf[21];
   uid_t uid;
-  stage_hsm_t *hsm;
-  int isize;
-#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
-  int mask;
-#else
-  mode_t mask;
-#endif
-  int pid;
   char *command = "stage_qry_hsm_ipath";
 
   uid = geteuid();

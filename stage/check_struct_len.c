@@ -1,7 +1,8 @@
 /*
- * $Id: check_struct_len.c,v 1.6 2000/05/31 06:51:01 jdurand Exp $
+ * $Id: check_struct_len.c,v 1.7 2000/12/21 13:55:04 jdurand Exp $
  */
 
+#include <stdio.h>
 #include <stddef.h>            /* for NULL */
 #include <sys/types.h>
 #include <string.h>

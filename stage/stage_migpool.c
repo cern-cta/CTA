@@ -1,5 +1,5 @@
 /*
- * $Id: stage_migpool.c,v 1.3 2000/10/27 14:04:32 jdurand Exp $
+ * $Id: stage_migpool.c,v 1.4 2000/12/21 13:55:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.3 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.4 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,7 +30,7 @@ static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.3 $ $Date: 20
 #include "stage.h"
 #include "Cpwd.h"
 
-int DLL_DECL stage_migpool(stghost,diskpool,migpool)
+int stage_migpool(stghost,diskpool,migpool)
 		 char *stghost;
 		 char *diskpool;
 		 char *migpool;

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.57 2000/12/20 11:14:37 jdurand Exp $
+ * $Id: poolmgr.c,v 1.58 2000/12/21 13:55:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.57 $ $Date: 2000/12/20 11:14:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.58 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,10 +57,9 @@ extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int maxfds;
 extern int reqid;
+extern int stglogit _PROTO(());
+extern int sendrep _PROTO(());
 
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep (int, int, ...);
-#endif
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
@@ -94,8 +93,16 @@ int selectfs _PROTO((char *, int *, char *));
 void getdefsize _PROTO((char *, int *));
 int updfreespace _PROTO((char *, char *, signed64));
 void redomigpool _PROTO(());
+int updpoolconf _PROTO((char *));
+int getpoolconf _PROTO((char *));
+int checkpoolcleaned _PROTO((char ***));
+int cleanpool _PROTO((char *));
+int get_create_file_option _PROTO((char *));
+int poolalloc _PROTO((struct pool *, int));
+int checklastaccess _PROTO((char *, time_t));
+int enoughfreespace _PROTO((char *, int));
 
-getpoolconf(defpoolname)
+int getpoolconf(defpoolname)
 		 char *defpoolname;
 {
 	char buf[128];
@@ -356,7 +363,7 @@ getpoolconf(defpoolname)
 					nbtape_pools = 0;
 					p = tape_pool_str;
 					while (1) {
-						if (q = strchr (p, ':'))
+						if ((q = strchr (p, ':')) != NULL)
 							*q = '\0';
 						if (*p == '\0' ||
 						    strlen (p) > CA_MAXPOOLNAMELEN) {
@@ -375,7 +382,7 @@ getpoolconf(defpoolname)
 					migp_p->tape_pool[0] = strdup (tape_pool_str);
 					p = migp_p->tape_pool[0];
 					nbtape_pools = 1;
-					while (p = strchr (p, ':')) {
+					while ((p = strchr (p, ':')) != NULL) {
 						*p = '\0';
 						migp_p->tape_pool[nbtape_pools++] = ++p;
 					}
@@ -639,7 +646,7 @@ reply:
 	}
 }
 
-checklastaccess(poolname, atime)
+int checklastaccess(poolname, atime)
 		 char *poolname;
 		 time_t atime;
 {
@@ -660,7 +667,7 @@ checklastaccess(poolname, atime)
 	return (-1);
 }
 
-checkpoolcleaned(pool_list)
+int checkpoolcleaned(pool_list)
 		 char ***pool_list;
 {
 	int i, n;
@@ -677,7 +684,7 @@ checkpoolcleaned(pool_list)
 	return (n);	/* number of pools cleaned since last call */
 }
 
-cleanpool(poolname)
+int cleanpool(poolname)
 		 char *poolname;
 {
 	char func[16];
@@ -708,7 +715,7 @@ cleanpool(poolname)
 	return (0);
 }
 
-enoughfreespace(poolname, minf)
+int enoughfreespace(poolname, minf)
 		 char *poolname;
 		 int minf;
 {
@@ -813,7 +820,7 @@ int isvalidpool(poolname)
 	return (i == nbpool ? 0 : 1);
 }
 
-poolalloc(pool_p, nbpool_ent)
+int poolalloc(pool_p, nbpool_ent)
 		 struct pool *pool_p;
 		 int nbpool_ent;
 {
@@ -1108,13 +1115,11 @@ updfreespace(poolname, ipath, incr)
 	return (0);
 }
 
-updpoolconf(defpoolname)
+int updpoolconf(defpoolname)
 		 char *defpoolname;
 {
 	int c, i, j;
-	struct pool_element *elemp;
 	struct migpolicy *migp_p;
-	struct migrator *migr_p;
 	struct pool *pool_n, *pool_p;
 	char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
 	struct migpolicy *sav_migpol;
@@ -1135,7 +1140,7 @@ updpoolconf(defpoolname)
 	sav_poolc = poolc;
 	sav_pools = pools;
 
-	if (c = getpoolconf (defpoolname)) {	/* new configuration is incorrect */
+	if ((c = getpoolconf (defpoolname))) {	/* new configuration is incorrect */
 		/* restore the previous configuration */
 		strcpy (defpoolname, sav_defpoolname);
 		migpolicies = sav_migpol;
@@ -1188,7 +1193,6 @@ updpoolconf(defpoolname)
 
 void redomigpool()
 {
-	int i;
 	struct stgcat_entry *stcp;
 
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -1239,7 +1243,7 @@ void procmigpoolreq(req_data, clienthost)
 		 char *clienthost;
 {
 	char **argv;
-	int c, i, ipool;
+	int i, ipool;
 	uid_t uid;
 	gid_t gid;
 	int nargs;
@@ -1448,8 +1452,6 @@ int migrate_files(migr_p)
 		 struct migrator *migr_p;
 {
 	char func[16];
-	char *p;
-	struct sorted_ent *prev, *scc, *sci, *scf, *scs;
 	struct stgcat_entry *stcp;
     int pid;
 
@@ -1499,7 +1501,6 @@ int migpoolfiles(migr_p)
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 
 	int c;
-	char *p;
 	struct sorted_ent *prev, *scc, *sci, *scf, *scs;
 	struct stgcat_entry *stcp;
 	int found_nbfiles = 0;
@@ -1509,10 +1510,8 @@ int migpoolfiles(migr_p)
 	char func[16];
     int iclass;
     int itype;
-	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
-    int *processes = NULL;
-    int pid;
-    int npidwait;
+	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
+	extern struct passwd start_passwd;         /* Generic uid/gid stage:st */
     int okpoolname;
     int ipoolname;
     int term_status;
@@ -1673,10 +1672,10 @@ int migpoolfiles(migr_p)
             } else if (fork_pid == 0) {
               int rc;
               
-              setegid(0);
-              seteuid(0);
-              setegid(itype != 0 ? scc->stcp->gid : stpasswd->pw_gid);
-              seteuid(itype != 0 ? scc->stcp->uid : stpasswd->pw_uid);
+              setegid(start_passwd.pw_gid);
+              seteuid(start_passwd.pw_uid);
+              setegid(itype != 0 ? scc->stcp->gid : stage_passwd.pw_gid);
+              seteuid(itype != 0 ? scc->stcp->uid : stage_passwd.pw_uid);
               rc = stage_put_hsm(NULL, 1, files);
               free(files);
               free (scs);

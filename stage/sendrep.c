@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.11 2000/08/15 09:51:54 baud Exp $
+ * $Id: sendrep.c,v 1.12 2000/12/21 13:55:07 jdurand Exp $
  */
 
 /*
@@ -8,23 +8,31 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.11 $ $Date: 2000/08/15 09:51:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.12 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include <varargs.h>
 #include "marshall.h"
 #include "net.h"
 #include "stage.h"
+#ifndef linux 
 extern char *sys_errlist[];
-sendrep(va_alist) va_dcl
+#endif
+int iserrmsg _PROTO((char *));
+int sendrep _PROTO(());
+extern int stglogit _PROTO(());
+
+int sendrep(va_alist) va_dcl
 {
 	va_list args;
 	char *file1, *file2;
@@ -132,22 +140,25 @@ sendrep(va_alist) va_dcl
 	return (0);
 }
 
-iserrmsg(p)
+int iserrmsg(p)
 		 char *p;
 {
 	char *q;
 
 	if (*p == '\0') return (0);
-	if (strncmp (p, " CP", 3) == 0)
-		if (*(p+9) == '!')
+	if (strncmp (p, " CP", 3) == 0) {
+		if (*(p+9) == '!') {
 			return (2);
-		else
+		} else {
 			return (0);
+		}
+	}
 	if (strncmp (p+16, "tpread", 6) &&
-			strncmp (p+16, "tpwrite", 7)) return (2);
+		strncmp (p+16, "tpwrite", 7)) return (2);
 	if ((q = strchr (p, ']')) == NULL) return (0);
-	if (*(q+3) == '!')
+	if (*(q+3) == '!') {
 		return (1);
-	else
+	} else {
 		return (0);
+	}
 }

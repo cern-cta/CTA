@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.12 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stageinit.c,v 1.13 2000/12/21 13:55:09 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.12 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.13 $ $Date: 2000/12/21 13:55:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <signal.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include <sys/types.h>
 #include <pwd.h>
 #if defined(_WIN32)
@@ -28,6 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.12 $ $Date: 2
 
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
+extern int send2stgd _PROTO((char *, char *, int, int, char *, int));
 
 int main(argc, argv)
 		 int	argc;

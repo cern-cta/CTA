@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.13 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stagestat.c,v 1.14 2000/12/21 13:55:11 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.13 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.14 $ $Date: 2000/12/21 13:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -37,6 +40,9 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.13 $ $Date: 2
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
+
+int getacctrec _PROTO((int, struct accthdr *, char *, int *));
+int match_2_stgin _PROTO((struct acctstage *));
 
 struct file_inf{
 	int uid;				/* user id number */	
@@ -121,7 +127,7 @@ void print_globstat _PROTO((time_t, time_t, int, int));
 void print_time_interval _PROTO((time_t, time_t));
 void print_xdetails _PROTO((struct file_inf *));
 
-main(argc, argv)
+int main(argc, argv)
 		 int argc;
 		 char **argv;
 {
@@ -508,7 +514,7 @@ void enter_pool_details (rp)
 
 /* Function to read each record from the accounting file */
 
-getacctrec (fd_acct, accthdr, buf,swapped)
+int getacctrec (fd_acct, accthdr, buf,swapped)
 		 int fd_acct;
 		 struct accthdr *accthdr;
 		 char *buf;
@@ -547,7 +553,7 @@ getacctrec (fd_acct, accthdr, buf,swapped)
 
 /* Function to match a FILS request with a stagein request */
 
-match_2_stgin (rp)
+int match_2_stgin (rp)
 		 struct acctstage *rp;
 {
 	int matched =0;				/* record matched flag */
@@ -555,14 +561,15 @@ match_2_stgin (rp)
 	
 	srec = stage_list;
 	while (srec != NULL) {
-	if (rp->reqid == srec->reqid) {
+		if (rp->reqid == srec->reqid) {
 			matched = 1;
 			srec_match = srec;
 			break;
+		} else {
+			srec = srec->next;
+		}
 	}
-	else srec = srec->next;
-	}
-	return matched;
+	return(matched);
 }
 
 	
@@ -947,7 +954,7 @@ int comp (a, b)
 {
 	int c = 0;
 
-	if (c = strcmp(a->poolname, b->poolname)) return (c);
+	if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
 	else if (a->nbaccesses <  b->nbaccesses) return (1);
 	else if (a->nbaccesses ==  b->nbaccesses) return (0);
 	else return (-1); 
@@ -959,7 +966,7 @@ int comp2 (a, b)
 {
 	int c = 0;
 
-	if (c = strcmp(a->poolname, b->poolname)) return (c);
+	if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
 	else if (a->avg_life < b->avg_life) return (1);
 	else if (a->avg_life == b->avg_life) return (0);
 	else return (-1);

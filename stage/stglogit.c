@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.11 2000/08/14 13:26:54 baud Exp $
+ * $Id: stglogit.c,v 1.12 2000/12/21 13:55:12 jdurand Exp $
  */
 
 /*
@@ -8,15 +8,20 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.11 $ $Date: 2000/08/14 13:26:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.12 $ $Date: 2000/12/21 13:55:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #include <varargs.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include "stage.h"
+
 extern int reqid;
 
 int stglogit(va_alist) va_dcl

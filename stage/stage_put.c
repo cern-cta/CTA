@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.5 2000/09/27 08:10:08 jdurand Exp $
+ * $Id: stage_put.c,v 1.6 2000/12/21 13:55:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.5 $ $Date: 2000/09/27 08:10:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.6 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,7 +16,6 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.5 $ $Date: 20
 #include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <grp.h>
 #include <pwd.h>
 #include <string.h>
 #if defined(_WIN32)
@@ -42,7 +41,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	gid_t gid;
 	char *sbp;
 	struct passwd *pw;
-	char *p, *q, *q2;
+	char *q, *q2;
 	int nargs;
 	char *sendbuf = NULL;
     size_t sendbuf_size = 0;
@@ -50,9 +49,6 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	int c;
 	int ntries = 0;
     char *stghost_ok = NULL;
-	char Gname[15];
-	uid_t Guid;
-	struct group *gr;
     int pid;
 	char repbuf[CA_MAXPATHLEN+1];
     stage_hsm_t *hsm;

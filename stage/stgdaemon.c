@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.85 2000/12/18 16:00:32 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.86 2000/12/21 13:55:11 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.85 $ $Date: 2000/12/18 16:00:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.86 $ $Date: 2000/12/21 13:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -96,6 +96,7 @@ struct winsize {
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "u64subr.h"
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -104,9 +105,6 @@ struct winsize {
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
 
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep (int, int, ...);
-#endif
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
@@ -139,7 +137,8 @@ char *Default_db_user = "Cstg_username";
 char *Default_db_pwd  = "Cstg_password";
 struct stgdb_fd dbfd;
 #endif
-struct passwd *stpasswd;             /* Generic uid/gid stage:st */
+struct passwd stage_passwd;             /* Generic uid/gid stage:st */
+struct passwd start_passwd;
 
 void prockilreq _PROTO((char *, char *));
 void procinireq _PROTO((char *, char *));
@@ -159,6 +158,17 @@ int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 int check_coff_waiting_on_req _PROTO((int, int));
 int check_waiting_on_req _PROTO((int, int));
 int nextreqid _PROTO(());
+int savereqs _PROTO(());
+#if defined(_WIN32)
+int create_dir _PROTO((char *, uid_t, gid_t, int));
+#else
+int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
+#endif
+int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+int fork_exec_stager _PROTO((struct waitq *));
+int savepath _PROTO(());
+int upd_staged _PROTO((char *));
+
 struct stgcat_entry *newreq _PROTO(());
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
@@ -169,12 +179,32 @@ extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
+int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern void checkfile2mig _PROTO(());
+extern int updpoolconf _PROTO((char *));
+extern void procioreq _PROTO((int, char *, char *));
+extern void procputreq _PROTO((char *, char *));
+extern void procqryreq _PROTO((char *, char *));
+extern void procclrreq _PROTO((char *, char *));
+extern void procupdreq _PROTO((char *, char *));
+extern void procallocreq _PROTO((char *, char *));
+extern void procgetreq _PROTO((char *, char *));
+extern void procfilchgreq _PROTO((char *, char *));
+extern int getpoolconf _PROTO((char *));
+extern int checkpoolcleaned _PROTO((char ***));
+extern int cleanpool _PROTO((char *));
+extern int get_create_file_option _PROTO((char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
-main(argc,argv)
+/* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
+extern int stglogit _PROTO(());
+extern int sendrep _PROTO(());
+
+int main(argc,argv)
 		 int argc;
 		 char **argv;
 {
-	int c, i, l;
+	int c, l;
 	char *clienthost;
 	int errflg = 0;
 	int foreground = 0;
@@ -189,15 +219,20 @@ main(argc,argv)
 	char req_hdr[3*LONGSIZE];
 	int req_type;
 	int rqfd;
-	int scfd;
 	struct sockaddr_in sin;		/* internet address */
+#ifndef USECDB
+	int i;
+	int scfd;
 	int spfd;
+#endif
 	struct servent *sp;
 	struct stat st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	struct timeval timeval;
 	char tmpbuf[21];
+	struct passwd *this_passwd;             /* password structure pointer */
+	struct passwd root_passwd;
 
 	Coptind = 1;
 	Copterr = 0;
@@ -272,16 +307,49 @@ main(argc,argv)
 	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "");
 #endif
 
+	/* We get information on current uid/gid */
+	if ((this_passwd = Cgetpwuid(getuid())) == NULL) {
+		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) getuid(), strerror(errno));
+		stglogit(func, "### Please check existence of current uid %d in password file\n", (int) getuid());
+ 		exit (SYERR);
+	}
+	start_passwd = *this_passwd;
+	if (Cgetgrgid(start_passwd.pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",start_passwd.pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", start_passwd.pw_gid, start_passwd.pw_name);
+ 		exit (SYERR);
+	}
+	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d)\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid);
+
 	/* We get information on generic stage:st uid/gid */
-	if ((stpasswd = Cgetpwnam("stage")) == NULL) {
+	if ((this_passwd = Cgetpwnam("stage")) == NULL) {
 		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
 		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "stage");
  		exit (SYERR);
 	}
-	if (Cgetgrgid(stpasswd->pw_gid) == NULL) {
-		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stpasswd->pw_gid,strerror(errno));
-		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", stpasswd->pw_gid, "stage");
+	stage_passwd = *this_passwd;
+	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, "stage");
  		exit (SYERR);
+	}
+
+	/* We check that we currently run under root account */
+	if ((this_passwd = Cgetpwnam("root")) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","root",strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "root");
+	} else {
+		root_passwd = *this_passwd;
+		if (Cgetgrgid(root_passwd.pw_gid) == NULL) {
+			stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",root_passwd.pw_gid,strerror(errno));
+			stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) root_passwd.pw_gid, "root");
+	 		/* If "root" group does not exist in group file (!), let's continue anyway */
+		} else {
+			if ((root_passwd.pw_uid != start_passwd.pw_uid) ||
+				(root_passwd.pw_gid != start_passwd.pw_gid)) {
+				stglogit(func, "### Warning : You, \"%s\" (uid=%d,gid=%d), are NOT running under \"root\" (uid=%d,gid=%d) account. Functionnality might very well be extremely limited.\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, root_passwd.pw_uid, root_passwd.pw_gid);
+			}
+		}
 	}
 
 	FD_ZERO (&readmask);
@@ -320,7 +388,7 @@ main(argc,argv)
 
 	/* get pool configuration */
 
-	if (c = getpoolconf (defpoolname)) exit (c);
+	if ((c = getpoolconf (defpoolname))) exit (c);
 
 #ifdef USECDB
 	/* Get stager/database login:password */
@@ -717,7 +785,7 @@ void procinireq(req_data, clienthost)
 		 char *clienthost;
 {
 	char **argv;
-	int c, i;
+	int c;
 	gid_t gid;
 	int nargs;
 	char *rbp;
@@ -818,12 +886,11 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 	struct waitf *wfp_new;
 {
 	struct waitq *wqp;
-	int i;
 	struct waitf *newwaitf, *wfp;
 	struct stgcat_entry *stcp;
 	struct stgcat_entry *stcp_ok;
 	struct waitf *wfp_ok;
-	int found, index_found;
+	int i, found, index_found;
 	int save_reqid, save_nextreqid;
 	int rc = 0;
 
@@ -952,7 +1019,7 @@ add2wf (wqp)
 	return(newwaitf);
 }
 
-build_ipath(upath, stcp, pool_user)
+int build_ipath(upath, stcp, pool_user)
 		 char *upath;
 		 struct stgcat_entry *stcp;
 		 char *pool_user;
@@ -1340,13 +1407,12 @@ check_coff_waiting_on_req(subreqid, state)
 		 int subreqid;
 		 int state;
 {
-	int c;
 	int firstreqid;
 	int found;
 	int i;
 	int savereqid;
 	int saverpfd;
-	struct stgcat_entry *stcp, *stcp_check;
+	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;
 
@@ -1570,7 +1636,7 @@ void checkwaitq()
 #endif
 }
 
-create_dir(dirname, uid, gid, mask)
+int create_dir(dirname, uid, gid, mask)
 		 char *dirname;
 		 uid_t uid;
 		 gid_t gid;
@@ -1647,7 +1713,7 @@ void create_link(stcp, upath)
 #endif
 }
 
-delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
+int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 		 struct stgcat_entry *stcp;
 		 int freersv;
 		 int dellinks;
@@ -1792,7 +1858,7 @@ void delreq(stcp,nodb_delete_flag)
 	savereqs ();
 }
 
-fork_exec_stager(wqp)
+int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
 	char arg_Aflag[2], arg_StageIDflag[2], arg_background[2], arg_use_subreqid[2];
@@ -2034,10 +2100,12 @@ void rmfromwq(wqp)
 	free (wqp);
 }
 
-savepath()
+int savepath()
 {
+#ifndef USECDB
 	int c, n;
 	int spfd;
+#endif
 
 #ifdef USECDB
 	/* This function is now dummy with the DB interface */
@@ -2061,10 +2129,12 @@ savepath()
 	return (0);
 }
 
-savereqs()
+int savereqs()
 {
+#ifndef USECDB
 	int c, n;
 	int scfd;
+#endif
 
 #ifdef USECDB
 	/* This function is now dummy with the DB interface */
@@ -2117,7 +2187,6 @@ int ask_stageout(req_type, upath, found_stcp)
 		 struct stgcat_entry **found_stcp;
 {
 	int found;
-	struct stat st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 
@@ -2270,21 +2339,12 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 	return (0);
 }
 
-upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
-		 int req_type;
-		 char *user;
-		 char *clienthost;
-		 uid_t uid;
-		 gid_t gid;
+int upd_staged(upath)
 		 char *upath;
 {
-	int found, c;
-	struct stat st;
+	int found;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
-	struct waitf *wfp;
-	struct waitq *wqp = NULL;
-	struct Cns_fileid Cnsfileid;
 
 	found = 0;
 	/* first lets assume that internal and user path are different */

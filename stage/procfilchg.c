@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.2 2000/12/12 14:13:40 jdurand Exp $
+ * $Id: procfilchg.c,v 1.3 2000/12/21 13:55:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.2 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.3 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,10 @@ void procfilchgreq _PROTO((char *, char *));
 extern char func[16];
 extern int reqid;
 extern int rpfd;
+extern int req2argv _PROTO((char *, char ***));
+extern int upd_staged _PROTO((char *));
+extern int sendrep _PROTO(());
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
 void
 procfilchgreq(req_data, clienthost)
@@ -65,7 +69,7 @@ procfilchgreq(req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEUPDC, 0, 0, NULL, "");
+						 reqid, STAGEFILCHG, 0, 0, NULL, "");
 #endif
 
 	Coptind = 1;
@@ -79,7 +83,7 @@ procfilchgreq(req_data, clienthost)
 	}
 	if (nargs > Coptind) {
 		for  (i = Coptind; i < nargs; i++)
-			if (c = upd_staged (STAGEFILCHG, clienthost, user, uid, gid, clientpid, argv[i]))
+			if ((c = upd_staged (argv[i])) != 0)
 				goto reply;
 	}
  reply:

@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.8 2000/05/05 09:28:02 baud Exp $
+ * $Id: stageacct.c,v 1.9 2000/12/21 13:55:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.8 $ $Date: 2000/05/05 09:28:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.9 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -17,6 +17,10 @@ static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.8 $ $Date: 20
 #include "stage.h"
 #include "sacct.h"
 
+void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern int wsacct _PROTO((int, char *, int));
+
+void
 stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp, tapesrvr)
 int subtype;
 uid_t uid;
@@ -67,5 +71,5 @@ char *tapesrvr;
 				- (char *) &acctstage) + strlen (clienthost) + 1;
 	}
 
-	wsacct (ACCTSTAGE, &acctstage, acctreclen);
+	wsacct (ACCTSTAGE, (char *) &acctstage, acctreclen);
 }

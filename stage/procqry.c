@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.38 2000/12/12 14:59:23 jdurand Exp $
+ * $Id: procqry.c,v 1.39 2000/12/21 13:55:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.38 $ $Date: 2000/12/12 14:59:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.39 $ $Date: 2000/12/21 13:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,6 +32,9 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.38 $ $Date: 200
 #include <netinet/in.h>
 #include <time.h>
 #include <sys/stat.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include "marshall.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
@@ -52,11 +55,22 @@ void procqryreq _PROTO((char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *));
-extern unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
+extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
+extern int req2argv _PROTO((char *, char ***));
+extern int sendrep _PROTO(());
+extern int isvalidpool _PROTO((char *));
+extern int stglogit _PROTO(());
+extern void print_pool_utilization _PROTO((int, char *, char *));
+extern int nextreqid _PROTO(());
+extern int savereqs _PROTO(());
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern int cleanpool _PROTO((char *));
+extern void delreq _PROTO((struct stgcat_entry *, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep (int, int, ...);
-#endif
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
