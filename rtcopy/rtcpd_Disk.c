@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.94 $ $Date: 2001/01/28 10:42:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.95 $ $Date: 2001/02/12 10:32:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -280,7 +280,8 @@ static int DiskFileOpen(int pool_index,
                         file_list_t *file) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
-    int rc, irc, save_serrno, disk_fd, flags, use_rfioV3, severity;
+    int rc, irc, save_errno, save_serrno, save_rfio_errno;
+    int disk_fd, flags, use_rfioV3, severity;
     diskIOstatus_t *diskIOstatus = NULL;
     char *ifce;
     char node[2];
@@ -360,15 +361,18 @@ static int DiskFileOpen(int pool_index,
         use_rfioV3 = RFIO_STREAM;
         rfiosetopt(RFIO_READOPT,&use_rfioV3,4); 
 
-        serrno = 0;
         rfio_errno = 0;
+        serrno = 0;
+        errno = 0;
         rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x)\n",filereq->file_path,
             flags);
         DK_STATUS(RTCP_PS_OPEN);
         rc = rfio_open(filereq->file_path,flags,0666);
         DK_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc == -1 ) {
-            save_serrno = rfio_errno;
+            save_errno = errno;
+            save_serrno = serrno;
+            save_rfio_errno = rfio_errno;
             rtcp_log(LOG_ERR,
                 "DiskFileOpen() rfio_open(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,flags,errno,serrno,rfio_errno);
@@ -381,16 +385,25 @@ static int DiskFileOpen(int pool_index,
         if ( rc == 0 && filereq->offset > 0 ) {
             rtcp_log(LOG_DEBUG,"DiskFileOpen() attempt to set offset %d\n",
                      (int)filereq->offset);
+            rfio_errno = 0;
+            serrno = 0;
+            errno = 0;
             rc = rfio_lseek(disk_fd,(int)filereq->offset,SEEK_SET);
             if ( rc == -1 ) {
-                save_serrno = rfio_errno;
+                save_errno = errno;
+                save_serrno = serrno;
+                save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,
                  "DiskFileOpen() rfio_lseek(%d,%d,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                  disk_fd,(int)filereq->offset,SEEK_SET,errno,serrno,rfio_errno);
             } else if ( rc != (int)filereq->offset ) {
+                save_errno = errno;
+                save_serrno = serrno;
+                save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,"rfio_lseek(%d,%d,%d) returned %d\n",
                          disk_fd,(int)filereq->offset,SEEK_SET,rc);
-                save_serrno = SEINTERNAL;
+                if ( save_rfio_errno == 0 && save_serrno == 0 &&
+                     save_errno == 0 ) save_rfio_errno = SEINTERNAL;
                 rc = -1;
             } else rc = 0;
         }
@@ -427,12 +440,17 @@ static int DiskFileOpen(int pool_index,
             }
         }
         strcpy(node," ");
+        rfio_errno = 0;
+        serrno = 0;
+        errno = 0;
         DK_STATUS(RTCP_PS_OPEN);
         rc = rfio_xyopen(filereq->file_path,node,file->FortranUnit,0,
                          Uformat_flags,&irc);
         DK_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc != 0 || irc != 0 ) {
-            save_serrno = (rc != 0 ? rc : irc);
+            save_errno = errno;
+            save_serrno = serrno;
+            save_rfio_errno = (rc != 0 ? rc : irc);
             rtcp_log(LOG_ERR,
                 "DiskFileOpen() rfio_open(%s,%d): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,Uformat_flags,errno,serrno,rfio_errno);
@@ -452,26 +470,30 @@ static int DiskFileOpen(int pool_index,
         else
             rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK",
                                   rfio_serror());
-        switch (save_serrno) {
+        switch (save_rfio_errno) {
         case ENOENT:
         case EISDIR:
         case EPERM:
         case EACCES:
-            filereq->err.errorcode = save_serrno;
-            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_USERR | RTCP_FAILED);
+            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_USERR | RTCP_FAILED);
             break;
         default:
-            if (errno = EBADF && rfio_errno == 0 && serrno == 0)
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_RESELECT_SERV | 
-                                                         RTCP_UNERR);
-            else if ( serrno = SETIMEDOUT && rfio_errno == 0 &&
+            if (save_errno = EBADF && save_rfio_errno == 0 && save_serrno == 0)
+                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
+                                   RTCP_RESELECT_SERV | RTCP_UNERR);
+            else if ( save_serrno = SETIMEDOUT && save_rfio_errno == 0 &&
                       filereq->err.max_cpretry > 0 ) {
                 filereq->err.max_cpretry--;
-                rtcpd_SetReqStatus(NULL,file,serrno,RTCP_RESELECT_SERV|
-                                                    RTCP_UNERR);
-            } else
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_UNERR | 
-                                                         RTCP_FAILED);
+                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_RESELECT_SERV|
+                                                         RTCP_UNERR);
+            } else {
+                save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
+                                                         save_serrno);
+                save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
+                                                         save_errno); 
+                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
+                                   RTCP_FAILED | RTCP_UNERR);
+            }
             break;
         }
         return(-1);
@@ -501,7 +523,7 @@ static int DiskFileClose(int disk_fd,
                          tape_list_t *tape,
                          file_list_t *file) {
     rtcpFileRequest_t *filereq;
-    int rc, irc, save_serrno, last_errno;
+    int rc, irc, save_rfio_errno, save_serrno, save_errno;
     diskIOstatus_t *diskIOstatus = NULL;
 
     if ( file == NULL ) return(-1);
@@ -512,13 +534,15 @@ static int DiskFileClose(int disk_fd,
              filereq->file_path,disk_fd);
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
-        last_errno = errno;
-        save_serrno = rfio_errno;
+        save_errno = errno;
+        save_serrno = serrno;
+        save_rfio_errno = rfio_errno;
     } else if ( (*filereq->recfm == 'U') && 
                 ((filereq->convert & NOF77CW) == 0) ) {
         rc = rfio_xyclose(file->FortranUnit," ",&irc);
-        last_errno = errno;
-        save_serrno = rfio_errno;
+        save_errno = errno;
+        save_serrno = serrno;
+        save_rfio_errno = rfio_errno;
         (void)ReturnFortranUnit(pool_index,file);
     }
     if ( rc == -1 ) {
@@ -526,23 +550,25 @@ static int DiskFileClose(int disk_fd,
 
         rtcp_log(LOG_ERR,"%s: errno = %d, serrno = %d, rfio_errno = %d\n",
                  (*filereq->recfm == 'F' ? "rfio_close()" : "rfio_xyclose()"),
-                 last_errno,serrno,save_serrno);
-        if ( save_serrno == ENOSPC || (save_serrno == 0 &&
-                                       last_errno == ENOSPC) ) {
-            save_serrno = ENOSPC;
+                 save_errno,save_serrno,save_rfio_errno);
+        if ( save_rfio_errno == ENOSPC || (save_rfio_errno == 0 &&
+                                           save_errno == ENOSPC) ) {
+            save_rfio_errno = ENOSPC;
             rtcp_log(LOG_DEBUG,"DiskFileClose(%s) ENOSPC detected\n",
                                   filereq->file_path);
             if ( *filereq->stageID != '\0' ) {
                 rtcp_log(LOG_DEBUG,"DiskFileClose(%s) stageID=<%s>, request local retry\n",
                           filereq->file_path,filereq->stageID);
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_LOCAL_RETRY);
+                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_LOCAL_RETRY);
             } else {
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
+                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
             }
         } else {
-            rtcpd_SetReqStatus(NULL,file,
-                               (save_serrno != 0 ? save_serrno : last_errno),
-                               RTCP_FAILED);
+            save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno : 
+                                                     save_serrno);
+            save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
+                                                     save_errno);
+            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
         }
     }
 
