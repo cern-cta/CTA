@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1995-2000 by CERN CN-PDP/CS
+ * Copyright (C) 1995-2001 by CERN CN-PDP/CS
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: getacctent.h,v $ $Revision: 1.1 $ $Date: 2000/05/31 10:14:23 $ CERN CN-PDP/CS Antony Simmins
+ * @(#)$RCSfile: getacctent.h,v $ $Revision: 1.2 $ $Date: 2001/05/04 05:18:16 $ CERN CN-PDP/CS Antony Simmins
  */
 
 
@@ -13,11 +13,8 @@
 #include <osdep.h>
 
 #ifndef ACCT_FILE
-#if defined(_WIN32)
-#define ACCT_FILE "%SystemRoot%\\system32\\drivers\\etc\\account"
-#else
+#if ! defined(_WIN32)
 #define ACCT_FILE	"/etc/account"
-#endif
 #endif
 #define ACCT_FILE_VAR	"ACCT_FILE"
 
