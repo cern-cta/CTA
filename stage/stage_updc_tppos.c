@@ -1,14 +1,14 @@
 /*
- * $Id: stage_updc_tppos.c,v 1.2 2000/02/11 11:06:56 jdurand Exp $
+ * $Id: stage_updc_tppos.c,v 1.3 2000/02/27 10:42:41 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.2 $ $Date: 2000/02/11 11:06:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.3 $ $Date: 2000/02/27 10:42:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -149,6 +149,12 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
   if (lrecl > 0) {
     sprintf (tmpbuf, "%d", lrecl);
     marshall_STRING (sbp,"-L");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    marshall_STRING (sbp,"-q");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
