@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.55 2001/06/21 10:16:35 jdurand Exp $
+ * $Id: procqry.c,v 1.56 2001/06/21 11:38:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.55 $ $Date: 2001/06/21 10:16:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.56 $ $Date: 2001/06/21 11:38:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -1036,6 +1036,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 				sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
 				if (req_type > STAGE_00) sendrep(rpfd, API_STPP_OUT, stpp);
 				if (dump_flag != 0) dump_stpp(rpfd, stpp, &sendrep);
+			}
 		}
 	}
 }
