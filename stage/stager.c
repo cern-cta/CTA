@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.128 2001/02/22 08:30:48 jdurand Exp $
+ * $Id: stager.c,v 1.129 2001/03/01 18:59:36 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.128 $ $Date: 2001/02/22 08:30:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.129 $ $Date: 2001/03/01 18:59:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -79,6 +79,7 @@ void stagekilled _PROTO(());
 int build_rtcpcreq _PROTO((int *, tape_list_t ***, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *));
 char *hsmpath _PROTO((struct stgcat_entry *));
 int hsmidx_vs_ipath _PROTO((char *));
+int hsmidx _PROTO((struct stgcat_entry *));
 void free_rtcpcreq _PROTO((tape_list_t ***));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **));
 void stager_log_callback _PROTO((int, char *));
@@ -133,6 +134,7 @@ int *hsm_fseq = NULL;               /* Current file sequence on current tape (vi
 typedef unsigned char blockid_t[4];
 blockid_t nullblockid = { '\0', '\0', '\0', '\0' };
 blockid_t *hsm_blockid = NULL;      /* Current file sequence on current tape (vid) */
+int *hsm_flag = NULL;               /* Flag saying to hsmidx() not to consider this entry while scanning */
 char **hsm_vid = NULL;              /* Current vid pointer or NULL if not in current rtcpc request */
 char cns_error_buffer[512];         /* Cns error buffer */
 char vmgr_error_buffer[512];        /* Vmgr error buffer */
@@ -279,6 +281,7 @@ int save_euid, save_egid;
       (hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))   == NULL ||              \
       (hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_blockid = (blockid_t *) calloc(nbcat_ent,sizeof(blockid_t)))            == NULL ||              \
+      (hsm_flag = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
       (hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {              \
     SAVE_EID;                                    \
@@ -305,6 +308,7 @@ int save_euid, save_egid;
   if (hsm_endsegment != NULL) free(hsm_endsegment);                          \
   if (hsm_fseq != NULL) free(hsm_fseq);                                      \
   if (hsm_blockid != NULL) free(hsm_blockid);                                \
+  if (hsm_flag != NULL) free(hsm_flag);                                      \
   if (hsm_status != NULL) free(hsm_status);                                  \
   if (hsm_vid != NULL) free(hsm_vid);                                        \
 }
@@ -812,6 +816,29 @@ int hsmidx_vs_ipath(ipath)
 		}
 		if ((strcmp(host1,host2) == 0) && (strcmp(path1,path2) == 0)) {
 			return(i);
+		}
+	}
+
+	return(-1);
+}
+
+/* This routine will return the index in the nbcat_ent entries of an HSM file       */
+/* provided the associated hsm_flag[] is == 0                                       */
+int hsmidx(stcp)
+     struct stgcat_entry *stcp;
+{
+	struct stgcat_entry *stcx;
+	int i;
+
+	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
+		if (ncastor > 0) {
+			if (strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0 && hsm_flag[i] == 0) {
+				return(i);
+			}
+		} else {
+			if (strcmp(stcx->u1.m.xfile,stcp->u1.m.xfile) == 0 && hsm_flag[i] == 0) {
+				return(i);
+			}
 		}
 	}
 
@@ -1404,6 +1431,15 @@ int stagein_castor_hsm_file() {
 		RETURN (USERR);
 	}
 
+	/* We reset all the hsm_flag[] values that are candidates for search */
+	for (i = 0; i < nbcat_ent; i++) {
+		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+			hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+		} else {
+			hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+		}
+	}
+
 	/* We build the request */
 	if (rtcpcreqs != NULL) {
 		free_rtcpcreq(&rtcpcreqs);
@@ -1429,6 +1465,16 @@ int stagein_castor_hsm_file() {
 #endif
 	Flags = 0;
 	rtcpc_kill_cleanup = 1;
+
+	/* We reset all the hsm_flag[] values that are candidates for callback search */
+	for (i = 0; i < nbcat_ent; i++) {
+		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+			hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+		} else {
+			hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+		}
+	}
+
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -1465,6 +1511,14 @@ int stagein_castor_hsm_file() {
 			/* Rtcopy bits suggest to stop */
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",sstrerror(save_serrno));
+			/* We reset all the hsm_flag[] values */
+			for (i = 0; i < nbcat_ent; i++) {
+				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+				} else {
+					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+				}
+			}
 
 			for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
 				/* Note that if there is a medium error it it catched in the callback */
@@ -1472,7 +1526,7 @@ int stagein_castor_hsm_file() {
 					/* We check if the failure was because of a missing file ? */
 					int ihsm;
 
-					if ((ihsm = hsmidx_vs_ipath(stcp_tmp->ipath)) < 0) {
+					if (((ihsm = hsmidx_vs_ipath(stcp_tmp->ipath)) < 0) || ((ihsm = hsmidx(stcp_tmp)) < 0)) {
 						serrno = SEINTERNAL;
 						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Cannot find internal hsm index",sstrerror(serrno));
 						forced_exit = 1;
@@ -1775,6 +1829,15 @@ int stagewrt_castor_hsm_file() {
 				RETURN (USERR);
 			}
 
+			/* We reset all the hsm_flags entries */
+			for (i = 0; i < nbcat_ent; i++) {
+				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+				} else {
+					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+				}
+			}
+
 			/* Build the request from where we started (included) up to our next (excluded) */
 			if (rtcpcreqs != NULL) {
 				free_rtcpcreq(&rtcpcreqs);
@@ -1801,6 +1864,16 @@ int stagewrt_castor_hsm_file() {
 	reselect:
 			Flags = 0;
 			rtcpc_kill_cleanup = 1;
+
+			/* We reset all the hsm_flag[] values that are candidates for callback search */
+			for (i = 0; i < nbcat_ent; i++) {
+				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+				} else {
+					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+				}
+			}
+
 			rtcp_rc = rtcpc(rtcpcreqs[0]);
 			save_serrno = serrno;
 			rtcpc_kill_cleanup = 0;
@@ -2695,7 +2768,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				RESTORE_EID;
 				return(-1);
 			}
-			if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
+			if (((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) || ((ihsm = hsmidx(stcp)) < 0)) {
 				serrno = SEINTERNAL;
 				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
@@ -2847,6 +2920,8 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
 			}
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
+			/* We set the hsm_flag[ihsm] so that this entry cannot be returned twice */
+			hsm_flag[ihsm] = 1;
 #ifndef SKIP_FILEREQ_MAXSIZE
 			/* Here we support maxsize in the rtcopy structure only if explicit STAGEWRT */
 			if (ISSTAGEWRT(stcs)) {
@@ -3107,7 +3182,9 @@ int stager_hsm_callback(tapereq,filereq)
 
 	stager_client_callback_i = filereq->disk_fseq - 1;
 	stager_client_true_i = stager_client_callback_i + istart;
-	stager_client_true_i = hsmidx_vs_ipath(filereq->file_path);
+	if ((stager_client_true_i = hsmidx_vs_ipath(filereq->file_path)) < 0) {
+		stager_client_true_i = hsmidx(&stcp_start[stager_client_callback_i]);
+	}
 
 	if ((stager_client_callback_i < 0) || (stager_client_callback_i > iend) || (stager_client_true_i >= nbcat_ent) || (stager_client_true_i < 0)) {
 		serrno = SEINTERNAL;
@@ -3561,6 +3638,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Wednesday 21 February, 2001 at 11:55:37 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 01 March, 2001 at 19:53:45 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
