@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.79 2001/02/08 09:46:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.80 2001/02/08 10:13:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.79 $ $Date: 2001/02/08 09:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.80 $ $Date: 2001/02/08 10:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -158,7 +158,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
      char *defpoolname_in;
      char *defpoolname_out;
 {
-  char buf[128];
+  char buf[4096];
   int defsize;
   char *dp;
   struct pool_element *elemp;
@@ -176,6 +176,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
+  int nbmigrator_real;
 
   strcpy (func, "getpoolconf");
   if ((s = fopen (STGCONFIG, "r")) == NULL) {
@@ -186,6 +187,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   /* 1st pass: count number of pools and migrators  */
 
   migrators = NULL;
+  nbmigrator_real = 0;
   nbmigrator = 0;
   nbpool = 0;
   *defpoolname = '\0';
@@ -194,7 +196,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   defsize = 0;
   while (fgets (buf, sizeof(buf), s) != NULL) {
     int gotit;
-
+    if (buf[0] == '#') continue;	/* comment line */
     if ((p = strtok (buf, " \t\n")) == NULL) continue; 
     if (strcmp (p, "POOL") == 0) {
       nbpool++;
@@ -316,15 +318,16 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           strcpy (pool_p->migr_name, p);
           for (j = 0, migr_p = migrators; j < nbmigrator; j++, migr_p++) {
             if (strcmp (pool_p->migr_name, migr_p->name) == 0) {
-              /* Got it */
+              /* Yet defined */
               pool_p->migr = migr_p;
               break;
             }
             if (migr_p->name[0] != '\0') continue; /* Place yet taken by another migrator name... */
             /* migrator name was not yet registered */
             strcpy(migr_p->name, p);
-             /* Got a new one */
-             pool_p->migr = migr_p;
+            /* Got a new one */
+            pool_p->migr = migr_p;
+            nbmigrator_real++;
             break;
           }
         } else if (strcmp (p, "MIG_START_THRESH") == 0) {
@@ -477,6 +480,15 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       errflg++;
       goto reply;
     }
+  }
+
+  /* Reduce number of migrator in case of pools sharing the same one */
+  if ((nbmigrator_real > 0) && (nbmigrator > 0) && (nbmigrator_real < nbmigrator)) {
+    struct migrator *dummy;
+    
+    dummy = (struct migrator *) realloc(migrators, nbmigrator_real * sizeof(struct migrator));
+    migrators = dummy;
+    nbmigrator = nbmigrator_real;
   }
 
   /* associate pools with migrators */
