@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.145 2001/07/12 11:08:54 jdurand Exp $
+ * $Id: poolmgr.c,v 1.146 2001/07/12 11:17:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.145 $ $Date: 2001/07/12 11:08:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.146 $ $Date: 2001/07/12 11:17:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4408,8 +4408,10 @@ void bestnextpool_out(nextout,mode)
   struct pool *pool_p;
   struct pool_element *elemp;
   char *func = "bestnextpool_out";
+#ifdef STAGER_DEBUG
   char tmpbuf[21];
   char tmpbuf2[21];
+#endif
   char timestr[64] ;   /* Time in its ASCII format             */
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   struct tm tmstruc;
