@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.1 $ $Date: 1999/10/29 05:55:04 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.2 $ $Date: 2000/05/03 15:50:10 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,6 +59,7 @@ int total_mounts[MAXDGP];	/* Total number of mounts made */
 int total_requests[MAXDGP];	/* Total number of requests made */
 int stdin_flag = 0;		/* Standard input flag */
 int server_failed = 0;	        /* Flag set if an open or read has failed */
+int max_acctreclen = 0;
 
 static char devgrps[MAXDGP][MAXLEN]; /* Array storing device group names */
 
@@ -146,6 +147,16 @@ struct summary {		/* Structure of summary information on mounts */
 };
 
 /* ************************************************************************** */
+void set_max_acctreclen() {
+  if ( sizeof(struct acctrfio) > max_acctreclen ) 
+      max_acctreclen = sizeof(struct acctrfio);
+  if ( sizeof(struct accttape) > max_acctreclen ) 
+      max_acctreclen = sizeof(struct accttape);
+  if ( sizeof(struct acctrtcp) > max_acctreclen ) 
+      max_acctreclen = sizeof(struct acctrtcp);
+  if ( sizeof(struct acctstage) > max_acctreclen ) 
+      max_acctreclen = sizeof(struct acctstage);
+}
  
 main(argc, argv)
 int argc;
@@ -218,6 +229,8 @@ char **argv;
   acctfile2[0] = '\0';
   acctweek[0] = '\0';
   buf[0] = '\0';
+  set_max_acctreclen();
+
   devgroup[0] = '\0';		/* Make sure that devgroup is set null so */
 				/* that we know if it is used or not */
   serv_name[0] = '\0';		/* Make sure that devgroup is set null so */
@@ -1617,7 +1630,7 @@ int *swapped;
     *swapped = 1;
   }
 
-  if (accthdr->len > 256) {
+  if (accthdr->len > max_acctreclen || accthdr->len < 0 ) {
     fprintf (stderr, "corrupted accounting file\n");
     return (0);
   }
