@@ -76,7 +76,7 @@ int DLL_DECL Cmonit_send_stager_status(time_t last_init_time)
   }
 
   /* Creating the packet header */
-  p = (char*)&buf;
+  p = (char*)buf;
   marshall_LONG(p, MREC_MAGIC);
   marshall_LONG(p, MREC_STAGER);
   p_message_length = p;
