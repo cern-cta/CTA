@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.52 $ $Date: 2000/10/04 07:44:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.53 $ $Date: 2000/10/23 12:31:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -266,7 +266,7 @@ void rtcpd_CtapeKill() {
 
 int rtcpd_Reserve(tape_list_t *tape) {
     struct dgn_rsv rsv;
-    int rc, count, save_serrno;
+    int rc, count, save_serrno, severity;
     rtcpTapeRequest_t *tapereq;
 
     if ( tape == NULL ) {
@@ -286,6 +286,13 @@ int rtcpd_Reserve(tape_list_t *tape) {
 
     tapereq->tprc = rc;
     save_serrno = serrno;
+    if ( AbortFlag == 1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_Reserve() ABORTING!\n");
+        severity = RTCP_FAILED | RTCP_USERR;
+        rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
+        return(-1);
+    }
+
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_Reserve() Ctape_reserve(): %s\n",
             CTP_ERRTXT);
