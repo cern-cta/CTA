@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.102 2002/09/30 13:57:46 jdurand Exp $
+ * $Id: procqry.c,v 1.103 2002/10/01 09:27:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.102 $ $Date: 2002/09/30 13:57:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.103 $ $Date: 2002/10/01 09:27:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1810,13 +1810,15 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	scs = (struct sorted_ent *) calloc (nbcat_ent, sizeof(struct sorted_ent));
 	sci = scs;
 	for (stcp = stcs; stcp < stce; stcp++) {
-		int isstageout_expired;
-		int isstagealloc_expired;
+		/* int isstageout_expired; */
+		/* int isstagealloc_expired; */
 		int isput_failed_expired;
 		int isother_ok;
 		signed64 put_failed_retenp;
+		/*
 		signed64 stageout_retenp;
 		signed64 stagealloc_retenp;
+		*/
 
 		if (stcp->reqid == 0) break;
 		/* Did user asked for a specific reqid ? */
@@ -1830,24 +1832,31 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		/* STAGEOUT entries that have expired retention period on disk */
 		/* STAGEALLOC entries that have expired retention period on disk */
 		/* PUT_FAILED entries that have expired retention period on disk */
-		isstageout_expired   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
-								   (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
-								   (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
-								   (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
-								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
-								   (  (thistime - stcp->a_time) > stageout_retenp)); /* And with an expired retention period */
-		isstagealloc_expired   = (   ISSTAGEALLOC  (stcp)   &&     /* A STAGEALLOC file */
-									 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
-									 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
-									 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
-									 (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) && /* And with a retention period */
-									 (  (thistime - stcp->a_time) > stagealloc_retenp)); /* And with an expired retention period */
+		/*
+		isstageout_expired   = (   ISSTAGEOUT  (stcp)   &&
+								   (!  ISCASTORMIG (stcp) ) &&
+								   (!  ISSTAGED    (stcp) ) &&
+								   (!  ISPUT_FAILED(stcp) ) &&
+								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) &&
+								   (  (thistime - stcp->a_time) > stageout_retenp));
+		*/
+		/*
+		isstagealloc_expired   = (   ISSTAGEALLOC  (stcp)   &&
+									 (!  ISCASTORMIG (stcp) ) &&
+									 (!  ISSTAGED    (stcp) ) &&
+									 (!  ISPUT_FAILED(stcp) ) &&
+									 (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) &&
+									 (  (thistime - stcp->a_time) > stagealloc_retenp));
+		*/
 		isput_failed_expired = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								   ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
 								   (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
 								   (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got expired */
 		isother_ok = ISSTAGED(stcp);
+		/*
 		if (! (isstageout_expired || isput_failed_expired || isstagealloc_expired || isother_ok)) continue;
+		*/
+		if (! (isput_failed_expired || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
