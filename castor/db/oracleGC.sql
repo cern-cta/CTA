@@ -1009,7 +1009,7 @@ BEGIN
           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
    FROM FileSystem, DiskServer
    WHERE FileSystem.diskserver = DiskServer.id
-    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(0)
+    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
