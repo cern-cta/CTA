@@ -92,32 +92,6 @@ void castor::io::StreamClientCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamClientCnv::updateRep(castor::IAddress* address,
-                                            castor::IObject* object,
-                                            bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamClientCnv::deleteRep(castor::IAddress* address,
-                                            castor::IObject* object,
-                                            bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* address)
@@ -137,17 +111,6 @@ castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* addres
   ad->stream() >> id;
   object->setId(id);
   return object;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamClientCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
-  throw ex;
 }
 
 //------------------------------------------------------------------------------

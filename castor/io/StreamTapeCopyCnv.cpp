@@ -35,7 +35,6 @@
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -95,32 +94,6 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamTapeCopyCnv::updateRep(castor::IAddress* address,
-                                              castor::IObject* object,
-                                              bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamTapeCopyCnv::deleteRep(castor::IAddress* address,
-                                              castor::IObject* object,
-                                              bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* address)
@@ -137,17 +110,6 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   ad->stream() >> status;
   object->setStatus((castor::stager::TapeCopyStatusCodes)status);
   return object;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamTapeCopyCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
-  throw ex;
 }
 
 //------------------------------------------------------------------------------

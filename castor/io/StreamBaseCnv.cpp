@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/11 13:43:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 16:44:37 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -69,6 +69,69 @@ const unsigned int castor::io::StreamBaseCnv::RepType() {
 // -----------------------------------------------------------------------
 inline const unsigned int castor::io::StreamBaseCnv::repType() const {
   return RepType();
+}
+
+//------------------------------------------------------------------------------
+// updateRep
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::updateRep(castor::IAddress* address,
+                                          castor::IObject* object,
+                                          bool autocommit)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot update representation in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// deleteRep
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::deleteRep(castor::IAddress* address,
+                                          castor::IObject* object,
+                                          bool autocommit)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot delete representation in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::updateObj(castor::IObject* obj)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot update object in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
+                                        castor::IObject* object,
+                                        unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "fillRep should never be called in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::fillObj(castor::IAddress* address,
+                                        castor::IObject* object,
+                                        unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "fillObj should never be called in case of streaming."
+                  << std::endl;
+  throw ex;
 }
 
 // -----------------------------------------------------------------------

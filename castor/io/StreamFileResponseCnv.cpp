@@ -35,7 +35,6 @@
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/FileResponse.hpp"
@@ -96,32 +95,6 @@ void castor::io::StreamFileResponseCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamFileResponseCnv::updateRep(castor::IAddress* address,
-                                                  castor::IObject* object,
-                                                  bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamFileResponseCnv::deleteRep(castor::IAddress* address,
-                                                  castor::IObject* object,
-                                                  bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamFileResponseCnv::createObj(castor::IAddress* address)
@@ -150,17 +123,6 @@ castor::IObject* castor::io::StreamFileResponseCnv::createObj(castor::IAddress* 
   ad->stream() >> id;
   object->setId(id);
   return object;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamFileResponseCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
-  throw ex;
 }
 
 //------------------------------------------------------------------------------

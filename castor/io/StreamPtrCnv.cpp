@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 13:43:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/11 16:44:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -86,32 +86,6 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamPtrCnv::updateRep(castor::IAddress* address,
-                                         castor::IObject* object,
-                                         bool autocommit)
-  throw (castor::exception::Exception) {
-  // This is normally never called, so just raise an exception
-  castor::exception::Internal ex;
-  ex.getMessage() << "castor::io::StreamPtrCnv::updateRep "
-                  << "should never be called";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamPtrCnv::deleteRep(castor::IAddress* address,
-                                         castor::IObject* object,
-                                         bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::createObj
@@ -120,17 +94,6 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
   castor::exception::Internal ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createObj "
                   << "should never be called";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamPtrCnv::updateObj(castor::IObject* object)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
   throw ex;
 }
 

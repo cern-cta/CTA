@@ -86,34 +86,6 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Updates foreign representation from a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void updateRep(castor::IAddress* address,
-                             castor::IObject* object,
-                             bool autocommit)
-        throw (castor::exception::Exception);
-
-      /**
-       * Deletes foreign representation of a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void deleteRep(castor::IAddress* address,
-                             castor::IObject* object,
-                             bool autocommit)
-        throw (castor::exception::Exception);
-
-      /**
        * Creates C++ object from foreign representation
        * @param address the place where to find the foreign
        * representation
@@ -123,14 +95,6 @@ namespace castor {
        * @exception Exception throws an Exception in cas of error
        */
       virtual castor::IObject* createObj(castor::IAddress* address)
-        throw (castor::exception::Exception);
-
-      /**
-       * Updates C++ object from its foreign representation.
-       * @param obj the object to deal with
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void updateObj(castor::IObject* obj)
         throw (castor::exception::Exception);
 
       /**

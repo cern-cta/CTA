@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 16:44:37 $ $Author: sponcec3 $
  *
  * 
  *
@@ -74,6 +74,68 @@ namespace castor {
        * the representation this converter can deal with
        */
       virtual const unsigned int repType() const;
+      
+      /**
+       * Updates foreign representation from a C++ Object.
+       * @param address where the representation of
+       * the object is stored
+       * @param object the object to deal with
+       * @param autocommit whether the changes to the database
+       * should be commited or not
+       * @exception Exception throws an Exception in cas of error
+       */
+      virtual void updateRep(castor::IAddress* address,
+                             castor::IObject* object,
+                             bool autocommit)
+        throw (castor::exception::Exception);
+
+      /**
+       * Deletes foreign representation of a C++ Object.
+       * @param address where the representation of
+       * the object is stored
+       * @param object the object to deal with
+       * @param autocommit whether the changes to the database
+       * should be commited or not
+       * @exception Exception throws an Exception in cas of error
+       */
+      virtual void deleteRep(castor::IAddress* address,
+                             castor::IObject* object,
+                             bool autocommit)
+        throw (castor::exception::Exception);
+
+      /**
+       * Updates C++ object from its foreign representation.
+       * @param obj the object to deal with
+       * @exception Exception throws an Exception in cas of error
+       */
+      virtual void updateObj(castor::IObject* obj)
+        throw (castor::exception::Exception);
+
+      /**
+       * Fill the foreign representation with some of the objects
+       * refered by a given C++ object.
+       * @param address the place where to find the foreign representation
+       * @param object the original C++ object
+       * @param type the type of the refered objects to store
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void fillRep(castor::IAddress* address,
+                           castor::IObject* object,
+                           unsigned int type)
+        throw (castor::exception::Exception);
+      
+      /**
+       * Retrieve from the foreign representation some of the
+       * objects refered by a given C++ object.
+       * @param address the place where to find the foreign representation
+       * @param object the original object
+       * @param type the type of the refered objects to retrieve
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void fillObj(castor::IAddress* address,
+                           castor::IObject* object,
+                           unsigned int type)
+        throw (castor::exception::Exception);
       
       /**
        * Removes a link from a parent to a child.

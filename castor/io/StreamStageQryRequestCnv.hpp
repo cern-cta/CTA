@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageQryRequestCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/11 13:43:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageQryRequestCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/11 16:44:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -89,34 +89,6 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Updates foreign representation from a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void updateRep(castor::IAddress* address,
-                             castor::IObject* object,
-                             bool autocommit)
-        throw (castor::exception::Exception);
-
-      /**
-       * Deletes foreign representation of a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void deleteRep(castor::IAddress* address,
-                             castor::IObject* object,
-                             bool autocommit)
-        throw (castor::exception::Exception);
-
-      /**
        * Creates C++ object from foreign representation
        * @param address the place where to find the foreign
        * representation
@@ -126,14 +98,6 @@ namespace castor {
        * @exception Exception throws an Exception in cas of error
        */
       virtual castor::IObject* createObj(castor::IAddress* address)
-        throw (castor::exception::Exception);
-
-      /**
-       * Updates C++ object from its foreign representation.
-       * @param obj the object to deal with
-       * @exception Exception throws an Exception in cas of error
-       */
-      virtual void updateObj(castor::IObject* obj)
         throw (castor::exception::Exception);
 
       /**

@@ -35,7 +35,6 @@
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Segment.hpp"
@@ -106,32 +105,6 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamSegmentCnv::updateRep(castor::IAddress* address,
-                                             castor::IObject* object,
-                                             bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamSegmentCnv::deleteRep(castor::IAddress* address,
-                                             castor::IObject* object,
-                                             bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* address)
@@ -181,17 +154,6 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   ad->stream() >> status;
   object->setStatus((castor::stager::SegmentStatusCodes)status);
   return object;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamSegmentCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
-  throw ex;
 }
 
 //------------------------------------------------------------------------------

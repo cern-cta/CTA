@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 14:13:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 16:44:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -36,7 +36,6 @@
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/StageOutRequest.hpp"
@@ -103,32 +102,6 @@ void castor::io::StreamStageOutRequestCnv::createRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::io::StreamStageOutRequestCnv::updateRep(castor::IAddress* address,
-                                                     castor::IObject* object,
-                                                     bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::io::StreamStageOutRequestCnv::deleteRep(castor::IAddress* address,
-                                                     castor::IObject* object,
-                                                     bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot delete representation in case of streaming."
-                  << std::endl;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddress* address)
@@ -169,17 +142,6 @@ castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddres
   ad->stream() >> id;
   object->setId(id);
   return object;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamStageOutRequestCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
-  throw ex;
 }
 
 //------------------------------------------------------------------------------
