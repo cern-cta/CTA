@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.20 $ $Date: 2000/01/19 09:56:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.21 $ $Date: 2000/02/01 16:31:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -32,6 +32,33 @@ static int vdqm_maxtimediff = VDQM_MAXTIMEDIFF;
 static int vdqm_retrydrvtime = VDQM_RETRYDRVTIM;
 
 static int Rollback = 0;
+
+static int CheckDgn(char *dgn) {
+    dgn_element_t *tmp = NULL;
+    int found,rc;
+
+    if ( dgn == NULL ) {
+        vdqm_SetError(SEINTERNAL);
+        return(-1);
+    }
+
+    log(LOG_DEBUG,"CheckDgn(%s) lock mutex 0x%x\n",dgn,(long)&nb_dgn);
+    if ( (rc = Cthread_mutex_lock(&nb_dgn)) == -1 ) {
+        vdqm_SetError(EVQSYERR);
+        return(rc);
+    }
+    found = 0;
+    CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
+        if ( !strcmp(tmp->dgn,dgn) ) {
+            found = 1;
+            break;
+        }
+    } CLIST_ITERATE_END(dgn_queues,tmp);
+    log(LOG_DEBUG,"CheckDgn(%s) unlock mutex 0x%x\n",dgn,(long)&nb_dgn);
+    Cthread_mutex_unlock(&nb_dgn);
+
+    return(found);
+}
 
 static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     dgn_element_t *tmp = NULL;
@@ -183,6 +210,8 @@ static int AnyDrvFreeForDgn(const dgn_element_t *dgn_context) {
  * VolInUse(): Check whether another request is currently
  * using the specified volume. Note that volume can still
  * be mounted on a drive if not in use by another request.
+ * The volume is also considered to be in use if it is mounted
+ * on a drive which has UNKNOWN or ERROR status.
  */
 static int VolInUse(const dgn_element_t *dgn_context, 
                     const char *volid) {
@@ -196,7 +225,7 @@ static int VolInUse(const dgn_element_t *dgn_context,
               *drv->vol->vol.volid != '\0' && 
               !strcmp(drv->vol->vol.volid,volid)) ||
              (!strcmp(drv->drv.volid,volid) && 
-              (drv->drv.status & VDQM_UNIT_UNKNOWN)) ) {
+              (drv->drv.status & (VDQM_UNIT_UNKNOWN | VDQM_UNIT_ERROR))) ) {
             found = 1;
             break;
         }
@@ -1019,14 +1048,29 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     
     if ( hdr == NULL || VolReq == NULL ) return(-1);
     
-    /*
-     * Reset Device Group Name context
-     */
     log(LOG_INFO,"vdqm_NewVolReq() (%d,%d)@%s:%d requests %s, mode=%d in DGN %s (%s@%s)\n",
         VolReq->clientUID,VolReq->clientGID,VolReq->client_host,
         VolReq->client_port,VolReq->volid,VolReq->mode,VolReq->dgn,
         (*VolReq->drive == '\0' ? "***" : VolReq->drive),
         (*VolReq->server == '\0' ? "***" : VolReq->server));
+    /*
+     * Check that the requested device exists.
+     */
+    rc = CheckDgn(VolReq->dgn);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_NewVolReq() CheckDgn(%s): %s\n",VolReq->dgn,
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( rc == 0 ) {
+        log(LOG_ERR,"vdqm_NewVolReq() DGN %s does not exist\n",VolReq->dgn);
+        vdqm_SetError(EVQDGNINVL);
+        return(-1);
+    }
+
+    /*
+     * Reset Device Group Name context
+     */
     rc = SetDgnContext(&dgn_context,VolReq->dgn);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_NewVolReq() cannot set Dgn context for %s\n",
@@ -1414,14 +1458,14 @@ n",
              * the volid field in the drive record (both MOUNT and UNMOUNT)
              * and 2) output - tell client to unmount or keep volume mounted
              * in case of deferred unmount (UNMOUNT only). 
-            *
-             * VDQM_UNIT_ERROR and VDQM_UNIT_MBCOUNT are not persistent unit
-             * status values. They request update of drive statistics.
+             *
+             * VDQM_UNIT_MBCOUNT is not a persistent unit status value.
+             * It request update of drive statistics.
              */
             if ( drvrec->drv.status & VDQM_UNIT_UP )
                 drvrec->drv.status |= DrvReq->status & 
                                       (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
-                                       ~VDQM_UNIT_ERROR & ~VDQM_UNIT_MBCOUNT );
+                                       ~VDQM_UNIT_MBCOUNT );
         }
     }
     
@@ -1437,9 +1481,12 @@ n",
         }
         if ( (DrvReq->status & VDQM_UNIT_MBCOUNT) ) {
             /*
-             * Update TotalMB counter
+             * Update TotalMB counter. Since this request is sent by
+             * RTCOPY rather than the tape daemon we cannot yet reset
+             * unknown status if it was previously set.
              */
             drvrec->drv.TotalMB += DrvReq->MBtransf;
+            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
         }
         if ( (DrvReq->status & VDQM_UNIT_ERROR) ) {
             /*
@@ -1509,6 +1556,11 @@ n",
              */
             drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
             /*
+             * If it was an forced unmount due to an error we can reset
+             * the ERROR status at this point.
+             */
+            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ERROR;
+            /*
              * We should also reset UNMOUNT status in the request so that
              * we tell the drive to unmount twice
              */
@@ -1567,22 +1619,25 @@ n",
                  * unmount in all cases.
                  */
                 rc = 0;
-                if (!unknown)
+                if (!unknown && !(drvrec->drv.status & VDQM_UNIT_ERROR))
                     rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-                if ( unknown || rc == -1 || volrec == NULL || 
+                if ( (drvrec->drv.status & VDQM_UNIT_ERROR) ||
+                     unknown || rc == -1 || volrec == NULL || 
                      volrec->vol.mode != drvrec->drv.mode ) {
+                    if ( drvrec->drv.status & VDQM_UNIT_ERROR ) 
+                        log(LOG_ERR,"vdqm_NewDrvReq(): unit in error status. Force unmount!\n");
                     if ( rc == -1 ) 
                         log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
                     if ( unknown )
                         log(LOG_ERR,"vdqm_NewDrvReq(): drive in UNKNOWN status. Force unmount!\n");
                     /*
-                     * No, there wasn't another job for that volume. Tell the
-                     * drive to unmount the volume. Maintain unknown status
+                     * No, there wasn't any other job for that volume. Tell the
+                     * drive to unmount the volume. Put unit in unknown status
                      * until volume has been unmounted to prevent other
                      * request from being assigned.
                      */
                     DrvReq->status  = VDQM_VOL_UNMOUNT;
-                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
+                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
                     volrec = NULL;
                 } else {
                     volrec->drv = drvrec;
