@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.22 1999/11/09 15:24:25 jdurand Exp $
+ * $Id: Cthread.c,v 1.23 1999/11/21 13:55:05 obarring Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.22 $ $Date: 1999/11/09 15:24:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.23 $ $Date: 1999/11/21 13:55:05 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -542,7 +542,10 @@ int _Cthread_init() {
   /* Cthread_.. call is serialized. This will not work */
   /* if the application uses non-Cthread routines to   */
   /* first create some threads.                        */
-  if ( !once ) (void)_Cthread_once();
+  if ( !once ) {
+      (void)_Cthread_once();
+      (void)_Cthread_cid_once();
+  }
 #else /* _CTHREAD_PROTO_WIN32 */
   /* In a thread environment we need to have our own */
   /* mutex. So we create it right now - we do it     */
@@ -602,37 +605,32 @@ int _Cthread_init() {
 /* _beginthreadex(). Note that the thread handle*/
 /* should be closed with CloseHandle() when the */
 /* thread has exit (see _Cthread_destroy()).    */
-/* Profit from wrapper to do some cleanup at end*/
-/* of thread.                                   */
 /* ============================================ */
 unsigned __stdcall _Cthread_start_threadex(void *arg) {
-	Cthread_start_params_t *start_params;
-	void                 *status;
-    int                   thID;
-    Cth_pid_t             pid;
-    void               *(*routine)(void *);
-    void               *routineargs;
+    Cthread_start_params_t *start_params;
+    unsigned               status;
+    int                    thID;
+    void                   *(*routine)(void *);
+    void                   *routineargs;
 
-    thID = GetCurrentThreadId();
-    pid = (Cth_pid_t) getpid();
-	if ( arg == NULL ) {
-      serrno = EINVAL;
-      return(-1);
+    if ( arg == NULL ) {
+        serrno = EINVAL;
+        return(status);
     }
-	start_params = (Cthread_start_params_t *)arg;
-    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
-      free(arg);
-      return(-1);
+    start_params = (Cthread_start_params_t *)arg;
+    thID = GetCurrentThreadId();
+    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,NULL,thID,start_params->_thread_routine,start_params->detached) < 0) {
+        free(arg);
+        return(status);
     }
     routine = start_params->_thread_routine;
     routineargs = start_params->_thread_arg;
-    free(arg);
-    /* status = start_params->_thread_routine(start_params->_thread_arg); */
-    status = routine(routineargs);
+    free(start_params);
+    start_params = NULL;
+    arg = NULL;
+    status = (unsigned)routine(routineargs);
 
-    /* Destroy the entry in Cthread internal linked list */
-    _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
-	return((unsigned)status);
+    return(status);
 }
 /* ============================================ */
 /* Routine  : _Cthread_start_thread             */
@@ -653,44 +651,39 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
 /* ============================================ */
 /* Notes:                                       */
 /* Thread startup wrapper (Windows only!)       */
-/* Start routine for attached threads.          */
+/* Start routine for detached threads.          */
 /* This routine should be passed to             */
 /* _beginthread(). No system resource cleanup is*/
 /* needed for these threads because             */
 /* CloseHandle() is automatically called by     */
 /* system at thread exit).                      */
-/* Profit from wrapper to do some cleanup at end*/
-/* of thread.                                   */
 /* ============================================ */
 void __cdecl _Cthread_start_thread(void *arg) {
-	Cthread_start_params_t *start_params;
-	void                 *status;
+    Cthread_start_params_t *start_params;
+    void                 *status;
     int                   thID;
-    int                   pid;
     void               *(*routine)(void *);
     void               *routineargs;
 
 
-    thID = GetCurrentThreadId();
-    pid = (Cth_pid_t) getpid();
-	if ( arg == NULL ) {
-      serrno = EINVAL;
-      return;
+    if ( arg == NULL ) {
+        serrno = EINVAL;
+        return;
     }
-	start_params = (Cthread_start_params_t *)arg;
-    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
-      free(arg);
-      return;
+    start_params = (Cthread_start_params_t *)arg;
+    thID = GetCurrentThreadId();
+    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,NULL,thID,start_params->_thread_routine,start_params->detached) < 0) {
+        free(arg);
+        return;
     }
     routine = start_params->_thread_routine;
     routineargs = start_params->_thread_arg;
-    free(arg);
-    /* status = start_params->_thread_routine(start_params->_thread_arg); */
+    free(start_params);
     status = routine(routineargs);
 
     /* Destroy the entry in Cthread internal linked list */
     _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
-	return;
+    return;
 }
 #else /* _CTHREAD_PROTO_WIN32 */
 /* ============================================ */
@@ -1134,9 +1127,9 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
   }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   if ( (pid = _beginthreadex(NULL,0,_Cthread_start_threadex,starter,0,&thID)) == 0 ) {
-    free(starter);
-    serrno = SECTHREADERR;
-	return(-1);
+      free(starter);
+      serrno = SECTHREADERR;
+      return(-1);
   }
 #else
   serrno = SEOPNOTSUP;
@@ -1368,26 +1361,30 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
 #if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   n = -1;
   if ( !current->detached ) {
-	for (;;) {
-	  if ( (n = WaitForSingleObject((HANDLE)current->pid,INFINITE)) == 
-	   	        WAIT_FAILED ) {
-        serrno = SECTHREADERR;
-        n = -1;
-		break;
-	  }
-      if ( status != NULL ) {
-        if ( (n = GetExitCodeThread((HANDLE)current->pid,
-	  	                          (LPDWORD)status)) == STILL_ACTIVE ) {
-          continue;
-		}
-        n = 0;
-	  } else {
-        serrno = SECTHREADERR;
-        n = -1;
-      }
-      break;
-	}
-    _Cthread_destroy(__FILE__,__LINE__,cid);
+       for (;;) {
+           if ( (n = WaitForSingleObject((HANDLE)current->pid,INFINITE)) == 
+                     WAIT_FAILED ) {
+               serrno = SECTHREADERR;
+               n = -1;
+               break;
+           }
+           if ( status != NULL ) {
+               if ( (n = GetExitCodeThread((HANDLE)current->pid,
+                                           (LPDWORD)status)) == STILL_ACTIVE ) {
+                   continue;
+               }
+               /*
+                * GetExitCodeThread() returns boolean: non-zero == OK, 0 == not OK.
+                */
+               if ( n == 0 ) n = -1;
+               else n = 0;
+           } else {
+               serrno = SECTHREADERR;
+               n = -1;
+           }
+           break;
+       }
+       _Cthread_destroy(__FILE__,__LINE__,current->cid);
   }
   return(n);
 #else /* _CTHREAD_PROTO_WIN32 */
@@ -2059,7 +2056,11 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
     }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
     if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1)) != 0) {
-      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      /*
+       * Note that _Cthread_win32_cond_wait() does not set errno, it sets
+       * serrno directly. ETIMEDOUT is undefined on _WIN32
+       */
+      serrno = ( serrno == SETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
     }
 #else
     serrno = SEOPNOTSUP;
@@ -2109,7 +2110,11 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
 	}
 #else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
     if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout)) != 0) {
-      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      /*
+       * Note that _Cthread_win32_cond_wait() does not set errno, it sets
+       * serrno directly. ETIMEDOUT is undefined on _WIN32
+       */
+      serrno = ( serrno == SETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
     }
 #endif
   }
@@ -2242,7 +2247,11 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
     }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
     if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1)) != 0) {
-      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      /*
+       * Note that _Cthread_win32_cond_wait() does not set errno, it sets
+       * serrno directly. ETIMEDOUT is undefined on _WIN32
+       */
+      serrno = ( serrno == SETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
     }
 #else
     serrno = SEOPNOTSUP;
@@ -2292,7 +2301,11 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
 	}
 #else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
     if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout)) != 0) {
-      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      /*
+       * Note that _Cthread_win32_cond_wait() does not set errno, it sets
+       * serrno directly. ETIMEDOUT is undefined on _WIN32
+       */
+      serrno = ( serrno == SETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
     }
 #endif
   }
@@ -2538,7 +2551,7 @@ int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         serrno = SECTHREADERR;
         _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
-	  }
+      }
 #  else /* _CTHREAD_WIN32MTX */
       /*
        * Default is to use critical section.
@@ -2555,7 +2568,7 @@ int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 #  else /* _CTHREAD_WIN32MTX */
         DeleteCriticalSection(&(Cmtx_new->mtx.mtx));
 #  endif /* _CTHREAD_WIN32MTX */
-		/* Release Cmtx element */
+        /* Release Cmtx element */
         free(Cmtx_new);
         serrno = SECTHREADERR;
         _Cthread_release_mtx(file,line,&(Cthread.mtx));
@@ -3070,7 +3083,10 @@ int _Cthread_release_mtx(file, line, mtx)
        * Reset counter before release to avoid race condition.
        */
       mtx->nb_locks = 0;
-      while ( n-- > 0 ) LeaveCriticalSection(&(mtx->mtx));
+      while ( n > 0 ) {
+        n--;
+        LeaveCriticalSection(&(mtx->mtx));
+      }
   } else {
     if (file != NULL) {
       serrno = SECTHREADERR;
@@ -3149,12 +3165,12 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
    * Use Win32 mutex handles
    */
   if ( timeout < 0 ) {
-	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
+    if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
       if (file != NULL) {
         serrno = SECTHREADERR;
       }
       return(-1);
-	} else {
+    } else {
       return(0);
     }
   } else {
@@ -3163,12 +3179,12 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         serrno = SECTHREADERR;
       }
       return(-1);
-	} else if ( n == WAIT_TIMEOUT ) {
+    } else if ( n == WAIT_TIMEOUT ) {
       if (file != NULL) {
         serrno = SETIMEDOUT;
       }
       return(-1);
-	} else {
+    } else {
       return(0);
     }
   }
