@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/10/21 15:40:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/10/22 07:42:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -254,6 +254,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       e.getMessage() << "No TapeCopy found";
       throw e;
     }
+    
     // Create result
     castor::stager::TapeCopyForMigration* result =
       new castor::stager::TapeCopyForMigration();
@@ -298,11 +299,18 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in bestTapeCopyForStream."
-      << std::endl << e.what();
-    throw ex;
+    if (1403 == e.getErrorCode()) {
+      // No Data Found exception
+      castor::exception::NoEntry e;
+      e.getMessage() << "No TapeCopy found";
+      throw e;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error caught in bestTapeCopyForStream."
+        << std::endl << e.what();
+      throw ex;
+    }
   }
 }
 
