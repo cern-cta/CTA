@@ -212,3 +212,27 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
 END;
+
+/* PL/SQL method implementing recreateCastorFile */
+CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER, dcid OUT INTEGER) AS
+BEGIN
+ -- Lock the access to the TapeCopies and DiskCopies
+ LOCK TABLE TapeCopy in share mode;
+ LOCK TABLE DiskCopy in share mode;
+ -- check if recreation is possible (exception if not)
+ SELECT id INTO dcid FROM TapeCopy WHERE status = 3; -- TAPECOPY_SELECTED
+ SELECT id INTO dcid FROM DiskCopy WHERE status IN (1, 2, 5); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
+ -- delete all tapeCopies
+ DELETE from TapeCopy WHERE castorFile = cfId;
+ -- set DiskCopies to INVALID
+ UPDATE DiskCopy SET status = 7 -- INVALID
+  WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
+ -- create new DiskCopy
+ getId(1, dcid);
+ INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
+  VALUES ('', dcid, 0, cfId, 5); -- status WAITFS
+ COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we cannot recreate
+  dcid := 0;
+  COMMIT;
+END;
