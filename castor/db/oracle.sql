@@ -465,7 +465,7 @@ END;
 
 /* PL/SQL method implementing recreateCastorFile */
 CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
-                                               srId IN INTEGER. AS
+                                               srId IN INTEGER,
                                                dcId OUT INTEGER) AS
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
