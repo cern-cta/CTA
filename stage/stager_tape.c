@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.4 2002/02/05 15:30:16 jdurand Exp $
+ * $Id: stager_tape.c,v 1.5 2002/02/07 18:07:50 jdurand Exp $
  */
 
 /*
@@ -24,14 +24,16 @@
 #define USE_SUBREQID
 
 #ifdef STAGE_CSETPROCNAME
-#define STAGE_CSETPROCNAME_FORMAT_DISK "%s %s %s"
-#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s.%d"
-#define STAGE_CSETPROCNAME_FORMAT_CASTOR "%s %s %s.%d %s"
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s/%d.%d"
+#else
+#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s/.%d"
+#endif
 #include "Csetprocname.h"
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.4 $ $Date: 2002/02/05 15:30:16 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.5 $ $Date: 2002/02/07 18:07:50 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -269,9 +271,6 @@ int main(argc,argv)
 	int c;
 	int l;
 	int nretry;
-#ifdef STAGER_DEBUG
-	int i;
-#endif
 	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
 	struct passwd *this_passwd;
@@ -506,11 +505,12 @@ int main(argc,argv)
 #endif
 #ifdef STAGE_CSETPROCNAME
 	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
-					sav_argv0,
-					"STARTING",
-					"???",
-					0
-					) != 0) {
+					 sav_argv0,
+					 "STARTING",
+					 "???",
+					 -1,
+					 0
+		) != 0) {
 		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
 	}
 #endif
@@ -610,10 +610,13 @@ int stage_tape() {
 	fatal_callback_error = callback_error = 0;
 #ifdef STAGE_CSETPROCNAME
 	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
-					sav_argv0,
-					"STARTING",
-					rtcpcreqs[0]->tapereq.vid,
-					0
+					 sav_argv0,
+					 "STARTING",
+					 rtcpcreqs[0]->tapereq.vid,
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+					 rtcpcreqs[0]->tapereq.side,
+#endif
+					 0
 					) != 0) {
 		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
 	}
@@ -639,7 +642,15 @@ int stage_tape() {
 		   		if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
 			} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			if (rtcpcreqs[0]->tapereq.side > 0) {
+				sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
+			} else {
+#endif
+				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			}
+#endif
 			if (save_serrno == ETVBSY) {
 				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
@@ -715,13 +726,29 @@ int stage_tape() {
 		}
 
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		if (rtcpcreqs[0]->tapereq.vid > 0) {
+			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc", sstrerror(save_serrno));
+		} else {
+#endif
+			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		}
+#endif
 		RESTORE_EID;
 		RETURN ((save_serrno == ETHELD) ? ETHELDERR : USERR);
 
 	} else if (rtcp_rc > 0) {
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		if  (rtcpcreqs[0]->tapereq.side > 0) {
+			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc","Unknown error code (>0)");
+		} else {
+#endif
+			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		}
+#endif
 		RESTORE_EID;
 		RETURN (SYERR);
 #ifdef MAX_RTCPC_FILEREQ
@@ -1435,10 +1462,13 @@ int stager_tape_callback(tapereq,filereq)
 
 #ifdef STAGE_CSETPROCNAME
 	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
-					sav_argv0,
-					(filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ? "COPIED" : "COPYING",
-					tapereq->vid,
-					filereq->tape_fseq
+					 sav_argv0,
+					 (filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ? "COPIED" : "COPYING",
+					 tapereq->vid,
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+					 tapereq->side,
+#endif
+					 filereq->tape_fseq
 					) != 0) {
 		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
 	}
