@@ -1,9 +1,9 @@
 /*
- * $Id: marshall.h,v 1.11 2000/12/07 12:57:33 baud Exp $
+ * $Id: marshall.h,v 1.12 2000/12/12 08:23:46 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.11 $ $Date: 2000/12/07 12:57:33 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.12 $ $Date: 2000/12/12 08:23:46 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -131,6 +131,9 @@ typedef  char*          bitvct; /* bit vector type definition           */
 #define  unmarshall_STRING(ptr,str)     { (void) strcpy((char*)(str),(char*)(ptr)); \
 					  INC_PTR(ptr,strlen(str)+1); \
 					}
+
+EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
+#define  unmarshall_STRINGN(ptr,str,n)  _unmarshall_STRINGN(&ptr, str, n)
 
 /*
  *    H Y P E R   ( 6 4   B I T S )
