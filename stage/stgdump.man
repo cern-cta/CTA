@@ -1,14 +1,16 @@
-.\" @(#)$RCSfile: stgdump.man,v $ $Revision: 1.1 $ $Date: 2002/05/06 09:14:42 $ CERN IT/DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stgdump.man,v $ $Revision: 1.2 $ $Date: 2002/05/21 07:53:13 $ CERN IT/DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDUMP l "$Date: 2002/05/06 09:14:42 $"
+.TH STGDUMP l "$Date: 2002/05/21 07:53:13 $"
 .SH NAME
 stgdump \- Ask a stager deamon to dump its in\-memory catalog and save it in flat file format - for backup purpose
 .SH SYNOPSIS
 .B stgdump
 [
-.BI \-h " stghost"
+.BI \-\-stghost_input " hostname"
+] [
+.BI \-\-stghost_output " hostname"
 ]
 .BI \-\-stcp_output " stgcat_dump_filename"
 .BI \-\-stpp_output " stgpath_dump_filename"
@@ -22,10 +24,15 @@ See the \fBEXAMPLES\fP section below. The flat-file version of the catalog is ty
 to know how to convert a flat-file catalog to a stager database one.
 .SH OPTIONS
 .RS
-.B \-h
-stghost
+.B \-\-stghost_input
+hostname
 .RS
-Host where is running a stager deamon. Can be overwriten by STAGE_HOST environment variable.
+Host where is running a stager deamon that we will query the content.
+.RE
+.B \-\-stghost_output
+hostname
+.RS
+Host where is running a stager deamon that we will use to store the result.
 .RE
 .B \-\-stcp_output
 stgcat_dump_filename
@@ -42,16 +49,16 @@ Output file for the link catalog
 .ft 3
 .nf
 .sp
-export STAGE_HOST=stagebackup
-stgdump \-h stagepublic \-\-stcp_output /castor/cern.ch/c3/backup/default/2002/05/05/stgcat
-
-will ask for a dump of in\-memory catalog of 'stagepublic' stager and use the 'stagebackup' one to store (and later migrate) the result.
+stgdump \-\-stghost_input stagepublic \-\-stghost_output stagebackup \-\-stcp_output /castor/cern.ch/c3/backup/default/2002/05/05/stgcat
 .ft
 .LP
 .fi
+will ask for a dump of in\-memory catalog of 'stagepublic' stager and use the 'stagebackup' one to store (and later migrate) the result.
 
 .SH NOTES
 If you wish to recover a catalog from a flat-file, you have to shutdown the stager, remove (or rename) the directory containing the stager catalog, typically /usr/spool/db/stage, and then use stgconvert tool and restart stager.
+.br
+Options \-\-stghost_input and \-\-stghost_output go together. You cannot specify one without specifying the other.
 .SH SEE ALSO
 \fBstgconvert\fP(1), \fBstgdaemon\fP(1), \fBstageshutdown\fP(1), \fBCdbserver\fP(1), 
 
