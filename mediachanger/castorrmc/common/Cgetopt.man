@@ -1,4 +1,4 @@
-.\" $Id: Cgetopt.man,v 1.4 2001/09/26 09:13:48 jdurand Exp $
+.\" $Id: Cgetopt.man,v 1.5 2003/06/05 11:13:20 jdurand Exp $
 .\"
 .\"	$NetBSD: getopt_long.3,v 1.1 1999/07/23 03:55:27 mcr Exp $
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.TH CGETOPT_LONG "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library"
+.TH CGETOPT_LONG "3" "$Date: 2003/06/05 11:13:20 $" "CASTOR" "Common Library"
 .SH NAME
 Cgetopt_long - get long options from command line argument list
 .SH SYNOPSIS
@@ -242,9 +242,9 @@ while ((ch = Cgetopt(argc, argv, "bf:")) != -1)
 		bflag = 1;
 		break;
 	case 'f':
-		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+		if ((fd = open(Coptarg, O_RDONLY, 0)) < 0) {
 			(void)fprintf(stderr,
-			    "myname: %s: %s\en", optarg, strerror(errno));
+			    "myname: %s: %s\en", Coptarg, strerror(errno));
 			exit(1);
 		}
 		break;
@@ -285,9 +285,9 @@ while ((ch = Cgetopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 		bflag = 1;
 		break;
 	case 'f':
-		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+		if ((fd = open(Coptarg, O_RDONLY, 0)) < 0) {
 			(void)fprintf(stderr,
-			    "myname: %s: %s\en", optarg, strerror(errno));
+			    "myname: %s: %s\en", Coptarg, strerror(errno));
 			exit(1);
 		}
 		break;
