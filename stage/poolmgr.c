@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.122 2001/03/27 08:34:54 jdurand Exp $
+ * $Id: poolmgr.c,v 1.123 2001/03/27 08:41:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.122 $ $Date: 2001/03/27 08:34:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.123 $ $Date: 2001/03/27 08:41:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3684,7 +3684,7 @@ void check_lifetime_on_disk() {
 		if (stcp->reqid == 0) break;
 
         /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
-        if (ISSTAGEOUT(stcp) && ((stcp->status & STAGED) != STAGED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
+        if (ISSTAGEOUT(stcp) && ((stcp->status & STAGED) != STAGED) ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
           stglogit (func, STG143, stcp->ipath, stageout_lifetime);
           rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
           stcp->status |= PUT_FAILED;
