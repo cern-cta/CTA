@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraUpdateRepRequestCnv.hpp
+ *                      castor/db/ora/OraDisk2DiskCopyDoneRequestCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraUpdateRepRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/30 11:27:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_ORA_UPDATEREPREQUEST_HPP
-#define CASTOR_DB_ORA_UPDATEREPREQUEST_HPP
+#ifndef CASTOR_DB_ORA_DISK2DISKCOPYDONEREQUEST_HPP
+#define CASTOR_DB_ORA_DISK2DISKCOPYDONEREQUEST_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -43,7 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class UpdateRepRequest;
+    class Disk2DiskCopyDoneRequest;
 
   }; // end of namespace stager
 
@@ -52,22 +52,23 @@ namespace castor {
     namespace ora {
 
       /**
-       * class OraUpdateRepRequestCnv
-       * A converter for storing/retrieving UpdateRepRequest into/from an Oracle database
+       * class OraDisk2DiskCopyDoneRequestCnv
+       * A converter for storing/retrieving Disk2DiskCopyDoneRequest into/from an Oracle
+       * database
        */
-      class OraUpdateRepRequestCnv : public OraBaseCnv {
+      class OraDisk2DiskCopyDoneRequestCnv : public OraBaseCnv {
 
       public:
 
         /**
          * Constructor
          */
-        OraUpdateRepRequestCnv(castor::ICnvSvc* cnvSvc);
+        OraDisk2DiskCopyDoneRequestCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor
          */
-        virtual ~OraUpdateRepRequestCnv() throw();
+        virtual ~OraDisk2DiskCopyDoneRequestCnv() throw();
 
         /**
          * Gets the object type.
@@ -173,7 +174,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepSvcClass(castor::stager::UpdateRepRequest* obj)
+        virtual void fillRepSvcClass(castor::stager::Disk2DiskCopyDoneRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -181,23 +182,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepIClient(castor::stager::UpdateRepRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type IObject refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepIObject(castor::stager::UpdateRepRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type IAddress refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepIAddress(castor::stager::UpdateRepRequest* obj)
+        virtual void fillRepIClient(castor::stager::Disk2DiskCopyDoneRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -216,7 +201,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjSvcClass(castor::stager::UpdateRepRequest* obj)
+        virtual void fillObjSvcClass(castor::stager::Disk2DiskCopyDoneRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -224,23 +209,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjIClient(castor::stager::UpdateRepRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type IObject refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjIObject(castor::stager::UpdateRepRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type IAddress refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjIAddress(castor::stager::UpdateRepRequest* obj)
+        virtual void fillObjIClient(castor::stager::Disk2DiskCopyDoneRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -311,19 +280,7 @@ namespace castor {
         /// SQL update statement object for member client
         oracle::occi::Statement *m_updateIClientStatement;
 
-        /// SQL update statement for member object
-        static const std::string s_updateIObjectStatementString;
-
-        /// SQL update statement object for member object
-        oracle::occi::Statement *m_updateIObjectStatement;
-
-        /// SQL update statement for member address
-        static const std::string s_updateIAddressStatementString;
-
-        /// SQL update statement object for member address
-        oracle::occi::Statement *m_updateIAddressStatement;
-
-      }; // end of class OraUpdateRepRequestCnv
+      }; // end of class OraDisk2DiskCopyDoneRequestCnv
 
     }; // end of namespace ora
 
@@ -331,4 +288,4 @@ namespace castor {
 
 }; // end of namespace castor
 
-#endif // CASTOR_DB_ORA_UPDATEREPREQUEST_HPP
+#endif // CASTOR_DB_ORA_DISK2DISKCOPYDONEREQUEST_HPP

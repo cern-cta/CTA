@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.89 $ $Release$ $Date: 2004/12/13 16:49:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.90 $ $Release$ $Date: 2004/12/14 10:57:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -158,6 +158,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapeCopiesForMigrationS
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
 
+/// SQL statement for disk2DiskCopyDone
+const std::string castor::db::ora::OraStagerSvc::s_disk2DiskCopyDoneStatementString =
+  "BEGIN disk2DiskCopyDone(:1); END;";
+
 /// SQL statement for recreateCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
   "BEGIN recreateCastorFile(:1, :2, :3); END;";
@@ -192,6 +196,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectDiskServerStatement(0),
   m_selectTapeCopiesForMigrationStatement(0),
   m_updateAndCheckSubRequestStatement(0),
+  m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0) {
 }
@@ -245,6 +250,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_selectTapeCopiesForMigrationStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
+    deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -270,6 +276,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectDiskServerStatement = 0;
   m_selectTapeCopiesForMigrationStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
+  m_disk2DiskCopyDoneStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
 }
@@ -1632,15 +1639,28 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 }
 
 // -----------------------------------------------------------------------
-// updateRep
+// disk2DiskCopyDone
 // -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::updateRep
-(castor::IAddress* address, castor::IObject* object)
+void castor::db::ora::OraStagerSvc::disk2DiskCopyDone
+(u_signed64 diskCopyId)
   throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "OraStagerSvc implementation does not supported the updateRep method.";
-  throw ex;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_disk2DiskCopyDoneStatement) {
+      m_disk2DiskCopyDoneStatement =
+        createStatement(s_disk2DiskCopyDoneStatementString);
+      m_disk2DiskCopyDoneStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_disk2DiskCopyDoneStatement->setDouble(1, diskCopyId);
+    m_disk2DiskCopyDoneStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in disk2DiskCopyDone."
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
 // -----------------------------------------------------------------------

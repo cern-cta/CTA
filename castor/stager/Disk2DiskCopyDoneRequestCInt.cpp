@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/UpdateRepRequestCInt.cpp
+ *                      castor/stager/Disk2DiskCopyDoneRequestCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateRepRequestCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/30 11:28:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -25,335 +25,318 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
+#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "castor/stager/UpdateRepRequest.hpp"
 #include "osdep.h"
 
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_create
+  // Cstager_Disk2DiskCopyDoneRequest_create
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_create(castor::stager::UpdateRepRequest** obj) {
-    *obj = new castor::stager::UpdateRepRequest();
+  int Cstager_Disk2DiskCopyDoneRequest_create(castor::stager::Disk2DiskCopyDoneRequest** obj) {
+    *obj = new castor::stager::Disk2DiskCopyDoneRequest();
     return 0;
   }
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_delete
+  // Cstager_Disk2DiskCopyDoneRequest_delete
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_delete(castor::stager::UpdateRepRequest* obj) {
+  int Cstager_Disk2DiskCopyDoneRequest_delete(castor::stager::Disk2DiskCopyDoneRequest* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_getRequest
+  // Cstager_Disk2DiskCopyDoneRequest_getRequest
   //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_UpdateRepRequest_getRequest(castor::stager::UpdateRepRequest* obj) {
+  castor::stager::Request* Cstager_Disk2DiskCopyDoneRequest_getRequest(castor::stager::Disk2DiskCopyDoneRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_fromRequest
+  // Cstager_Disk2DiskCopyDoneRequest_fromRequest
   //----------------------------------------------------------------------------
-  castor::stager::UpdateRepRequest* Cstager_UpdateRepRequest_fromRequest(castor::stager::Request* obj) {
-    return dynamic_cast<castor::stager::UpdateRepRequest*>(obj);
+  castor::stager::Disk2DiskCopyDoneRequest* Cstager_Disk2DiskCopyDoneRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_getIObject
+  // Cstager_Disk2DiskCopyDoneRequest_getIObject
   //----------------------------------------------------------------------------
-  castor::IObject* Cstager_UpdateRepRequest_getIObject(castor::stager::UpdateRepRequest* obj) {
+  castor::IObject* Cstager_Disk2DiskCopyDoneRequest_getIObject(castor::stager::Disk2DiskCopyDoneRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_fromIObject
+  // Cstager_Disk2DiskCopyDoneRequest_fromIObject
   //----------------------------------------------------------------------------
-  castor::stager::UpdateRepRequest* Cstager_UpdateRepRequest_fromIObject(castor::IObject* obj) {
-    return dynamic_cast<castor::stager::UpdateRepRequest*>(obj);
+  castor::stager::Disk2DiskCopyDoneRequest* Cstager_Disk2DiskCopyDoneRequest_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_print
+  // Cstager_Disk2DiskCopyDoneRequest_print
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_print(castor::stager::UpdateRepRequest* instance) {
+  int Cstager_Disk2DiskCopyDoneRequest_print(castor::stager::Disk2DiskCopyDoneRequest* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_TYPE
+  // Cstager_Disk2DiskCopyDoneRequest_TYPE
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_TYPE(int* ret) {
-    *ret = castor::stager::UpdateRepRequest::TYPE();
+  int Cstager_Disk2DiskCopyDoneRequest_TYPE(int* ret) {
+    *ret = castor::stager::Disk2DiskCopyDoneRequest::TYPE();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_flags
+  // Cstager_Disk2DiskCopyDoneRequest_flags
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_flags(castor::stager::UpdateRepRequest* instance, u_signed64* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_flags(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
     *var = instance->flags();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setFlags
+  // Cstager_Disk2DiskCopyDoneRequest_setFlags
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setFlags(castor::stager::UpdateRepRequest* instance, u_signed64 new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setFlags(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
     instance->setFlags(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_userName
+  // Cstager_Disk2DiskCopyDoneRequest_userName
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_userName(castor::stager::UpdateRepRequest* instance, const char** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_userName(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
     *var = instance->userName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setUserName
+  // Cstager_Disk2DiskCopyDoneRequest_setUserName
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setUserName(castor::stager::UpdateRepRequest* instance, const char* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setUserName(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setUserName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_euid
+  // Cstager_Disk2DiskCopyDoneRequest_euid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_euid(castor::stager::UpdateRepRequest* instance, unsigned long* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_euid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long* var) {
     *var = instance->euid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setEuid
+  // Cstager_Disk2DiskCopyDoneRequest_setEuid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setEuid(castor::stager::UpdateRepRequest* instance, unsigned long new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setEuid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long new_var) {
     instance->setEuid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_egid
+  // Cstager_Disk2DiskCopyDoneRequest_egid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_egid(castor::stager::UpdateRepRequest* instance, unsigned long* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_egid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long* var) {
     *var = instance->egid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setEgid
+  // Cstager_Disk2DiskCopyDoneRequest_setEgid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setEgid(castor::stager::UpdateRepRequest* instance, unsigned long new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setEgid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long new_var) {
     instance->setEgid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_mask
+  // Cstager_Disk2DiskCopyDoneRequest_mask
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_mask(castor::stager::UpdateRepRequest* instance, unsigned long* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_mask(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long* var) {
     *var = instance->mask();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setMask
+  // Cstager_Disk2DiskCopyDoneRequest_setMask
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setMask(castor::stager::UpdateRepRequest* instance, unsigned long new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setMask(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long new_var) {
     instance->setMask(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_pid
+  // Cstager_Disk2DiskCopyDoneRequest_pid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_pid(castor::stager::UpdateRepRequest* instance, unsigned long* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_pid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long* var) {
     *var = instance->pid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setPid
+  // Cstager_Disk2DiskCopyDoneRequest_setPid
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setPid(castor::stager::UpdateRepRequest* instance, unsigned long new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setPid(castor::stager::Disk2DiskCopyDoneRequest* instance, unsigned long new_var) {
     instance->setPid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_machine
+  // Cstager_Disk2DiskCopyDoneRequest_machine
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_machine(castor::stager::UpdateRepRequest* instance, const char** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_machine(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
     *var = instance->machine().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setMachine
+  // Cstager_Disk2DiskCopyDoneRequest_setMachine
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setMachine(castor::stager::UpdateRepRequest* instance, const char* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setMachine(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setMachine(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_svcClassName
+  // Cstager_Disk2DiskCopyDoneRequest_svcClassName
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_svcClassName(castor::stager::UpdateRepRequest* instance, const char** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_svcClassName(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
     *var = instance->svcClassName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setSvcClassName
+  // Cstager_Disk2DiskCopyDoneRequest_setSvcClassName
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setSvcClassName(castor::stager::UpdateRepRequest* instance, const char* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setSvcClassName(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setSvcClassName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_userTag
+  // Cstager_Disk2DiskCopyDoneRequest_userTag
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_userTag(castor::stager::UpdateRepRequest* instance, const char** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_userTag(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
     *var = instance->userTag().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setUserTag
+  // Cstager_Disk2DiskCopyDoneRequest_setUserTag
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setUserTag(castor::stager::UpdateRepRequest* instance, const char* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setUserTag(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setUserTag(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_reqId
+  // Cstager_Disk2DiskCopyDoneRequest_reqId
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_reqId(castor::stager::UpdateRepRequest* instance, const char** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_reqId(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
     *var = instance->reqId().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setReqId
+  // Cstager_Disk2DiskCopyDoneRequest_setReqId
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setReqId(castor::stager::UpdateRepRequest* instance, const char* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setReqId(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setReqId(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_svcClass
+  // Cstager_Disk2DiskCopyDoneRequest_svcClass
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_svcClass(castor::stager::UpdateRepRequest* instance, castor::stager::SvcClass** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_svcClass(castor::stager::Disk2DiskCopyDoneRequest* instance, castor::stager::SvcClass** var) {
     *var = instance->svcClass();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setSvcClass
+  // Cstager_Disk2DiskCopyDoneRequest_setSvcClass
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setSvcClass(castor::stager::UpdateRepRequest* instance, castor::stager::SvcClass* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setSvcClass(castor::stager::Disk2DiskCopyDoneRequest* instance, castor::stager::SvcClass* new_var) {
     instance->setSvcClass(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_client
+  // Cstager_Disk2DiskCopyDoneRequest_client
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_client(castor::stager::UpdateRepRequest* instance, castor::IClient** var) {
+  int Cstager_Disk2DiskCopyDoneRequest_client(castor::stager::Disk2DiskCopyDoneRequest* instance, castor::IClient** var) {
     *var = instance->client();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setClient
+  // Cstager_Disk2DiskCopyDoneRequest_setClient
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setClient(castor::stager::UpdateRepRequest* instance, castor::IClient* new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setClient(castor::stager::Disk2DiskCopyDoneRequest* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_type
+  // Cstager_Disk2DiskCopyDoneRequest_type
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_type(castor::stager::UpdateRepRequest* instance,
-                                    int* ret) {
+  int Cstager_Disk2DiskCopyDoneRequest_type(castor::stager::Disk2DiskCopyDoneRequest* instance,
+                                            int* ret) {
     *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_clone
+  // Cstager_Disk2DiskCopyDoneRequest_clone
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_clone(castor::stager::UpdateRepRequest* instance,
-                                     castor::IObject** ret) {
+  int Cstager_Disk2DiskCopyDoneRequest_clone(castor::stager::Disk2DiskCopyDoneRequest* instance,
+                                             castor::IObject** ret) {
     *ret = instance->clone();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_id
+  // Cstager_Disk2DiskCopyDoneRequest_diskCopyId
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_id(castor::stager::UpdateRepRequest* instance, u_signed64* var) {
+  int Cstager_Disk2DiskCopyDoneRequest_diskCopyId(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
+    *var = instance->diskCopyId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_setDiskCopyId
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_setDiskCopyId(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
+    instance->setDiskCopyId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_id(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
     *var = instance->id();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setId
+  // Cstager_Disk2DiskCopyDoneRequest_setId
   //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setId(castor::stager::UpdateRepRequest* instance, u_signed64 new_var) {
+  int Cstager_Disk2DiskCopyDoneRequest_setId(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
     instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_object
-  //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_object(castor::stager::UpdateRepRequest* instance, castor::IObject** var) {
-    *var = instance->object();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setObject
-  //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setObject(castor::stager::UpdateRepRequest* instance, castor::IObject* new_var) {
-    instance->setObject(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_address
-  //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_address(castor::stager::UpdateRepRequest* instance, castor::IAddress** var) {
-    *var = instance->address();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_UpdateRepRequest_setAddress
-  //----------------------------------------------------------------------------
-  int Cstager_UpdateRepRequest_setAddress(castor::stager::UpdateRepRequest* instance, castor::IAddress* new_var) {
-    instance->setAddress(new_var);
     return 0;
   }
 

@@ -593,21 +593,21 @@ int Cstager_IStagerSvc_updateAndCheckSubRequest
  int* result);
 
 /**
- * Updates foreign representation from a C++ Object and
- * commits the changes.
+ * Updates database after successful completion of a
+ * disk to disk copy. This includes setting the DiskCopy
+ * status to DISKCOPY_STAGED and setting the SubRequest
+ * status to SUBREQUEST_READY.
+ * Changes are commited
  * @param stgSvc the IStagerSvc used
- * @param address where the representation of
- * the object is stored
- * @param object the object to deal with
+ * @param diskcopyId the id of the new DiskCopy
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_updateRep
+int Cstager_IStagerSvc_disk2DiskCopyDone
 (struct Cstager_IStagerSvc_t* stgSvc,
- struct C_IAddress_t* address,
- struct C_IObject_t* object);
+ u_signed64 diskCopyId);
 
 /**
  * Recreates a castorFile. This method cleans up the

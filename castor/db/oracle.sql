@@ -44,9 +44,9 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR(2048), cnvSvcType N
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
 
-/* SQL statements for type UpdateRepRequest */
-DROP TABLE UpdateRepRequest;
-CREATE TABLE UpdateRepRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, object INTEGER, address INTEGER);
+/* SQL statements for type Disk2DiskCopyDoneRequest */
+DROP TABLE Disk2DiskCopyDoneRequest;
+CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), diskCopyId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type MoverCloseRequest */
 DROP TABLE MoverCloseRequest;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/14 10:57:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -465,15 +465,15 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Updates foreign representation from a C++ Object and
-       * commits the changes.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
+       * Updates database after successful completion of a
+       * disk to disk copy. This includes setting the DiskCopy
+       * status to DISKCOPY_STAGED and setting the SubRequest
+       * status to SUBREQUEST_READY.
+       * Changes are commited
+       * @param diskcopyId the id of the new DiskCopy
        * @exception Exception throws an Exception in case of error
        */
-      virtual void updateRep(castor::IAddress* address,
-                             castor::IObject* object)
+      virtual void disk2DiskCopyDone(u_signed64 diskCopyId)
         throw (castor::exception::Exception);
 
       /**

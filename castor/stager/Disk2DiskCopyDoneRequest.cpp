@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/UpdateRepRequest.cpp
+ *                      castor/stager/Disk2DiskCopyDoneRequest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateRepRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/01 10:41:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -26,11 +26,10 @@
 
 // Include Files
 #include "castor/Constants.hpp"
-#include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/UpdateRepRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -38,26 +37,25 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::UpdateRepRequest::UpdateRepRequest() throw() :
+castor::stager::Disk2DiskCopyDoneRequest::Disk2DiskCopyDoneRequest() throw() :
   Request(),
-  m_id(0),
-  m_object(0),
-  m_address(0) {
+  m_diskCopyId(0),
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::UpdateRepRequest::~UpdateRepRequest() throw() {
+castor::stager::Disk2DiskCopyDoneRequest::~Disk2DiskCopyDoneRequest() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::UpdateRepRequest::print(std::ostream& stream,
-                                             std::string indent,
-                                             castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# UpdateRepRequest #]" << std::endl;
+void castor::stager::Disk2DiskCopyDoneRequest::print(std::ostream& stream,
+                                                     std::string indent,
+                                                     castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# Disk2DiskCopyDoneRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -66,26 +64,15 @@ void castor::stager::UpdateRepRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->Request::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Object : " << std::endl;
-  if (0 != m_object) {
-    m_object->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "Address : " << std::endl;
-  if (0 != m_address) {
-    m_address->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::UpdateRepRequest::print() const {
+void castor::stager::Disk2DiskCopyDoneRequest::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -93,21 +80,21 @@ void castor::stager::UpdateRepRequest::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::UpdateRepRequest::TYPE() {
-  return OBJ_UpdateRepRequest;
+int castor::stager::Disk2DiskCopyDoneRequest::TYPE() {
+  return OBJ_Disk2DiskCopyDoneRequest;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::UpdateRepRequest::type() const {
+int castor::stager::Disk2DiskCopyDoneRequest::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::stager::UpdateRepRequest::clone() {
-  return new UpdateRepRequest(*this);
+castor::IObject* castor::stager::Disk2DiskCopyDoneRequest::clone() {
+  return new Disk2DiskCopyDoneRequest(*this);
 }
 

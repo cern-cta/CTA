@@ -95,7 +95,7 @@ namespace castor {
     OBJ_GetUpdateStartResponse = 61,
     OBJ_BaseAddress = 62,
     OBJ_BasicResponse = 63,
-    OBJ_UpdateRepRequest = 64,
+    OBJ_Disk2DiskCopyDoneRequest = 64,
     OBJ_MoverCloseRequest = 65,
     OBJ_StartRequest = 66,
     OBJ_PutStartRequest = 67,

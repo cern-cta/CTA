@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/10 10:10:11 $ $Author: jdurand $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/14 10:57:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -42,7 +42,7 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/UpdateRepRequest.hpp"
+#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
@@ -513,15 +513,14 @@ bool castor::stager::RemoteStagerSvc::updateAndCheckSubRequest
 }
 
 // -----------------------------------------------------------------------
-// updateRep
+// disk2DiskCopyDone
 // -----------------------------------------------------------------------
-void castor::stager::RemoteStagerSvc::updateRep(IAddress* address,
-                                                IObject* object)
+void castor::stager::RemoteStagerSvc::disk2DiskCopyDone
+(u_signed64 diskCopyId)
   throw (castor::exception::Exception) {
-  // Build the UpdateRepRequest
-  castor::stager::UpdateRepRequest req;
-  req.setObject(object);
-  req.setAddress(address);
+  // Build the Disk2DiskCopyDoneRequest
+  castor::stager::Disk2DiskCopyDoneRequest req;
+  req.setDiskCopyId(diskCopyId);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

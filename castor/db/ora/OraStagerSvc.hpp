@@ -480,15 +480,15 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Updates foreign representation from a C++ Object and
-         * commits the changes.
-         * @param address where the representation of
-         * the object is stored
-         * @param object the object to deal with
+         * Updates database after successful completion of a
+         * disk to disk copy. This includes setting the DiskCopy
+         * status to DISKCOPY_STAGED and setting the SubRequest
+         * status to SUBREQUEST_READY.
+         * Changes are commited
+         * @param diskcopyId the id of the new DiskCopy
          * @exception Exception throws an Exception in case of error
          */
-        virtual void updateRep(castor::IAddress* address,
-                               castor::IObject* object)
+        virtual void disk2DiskCopyDone(u_signed64 diskCopyId)
           throw (castor::exception::Exception);
 
         /**
@@ -689,6 +689,12 @@ namespace castor {
 
         /// SQL statement object for function updateAndCheckSubRequest
         oracle::occi::Statement *m_updateAndCheckSubRequestStatement;
+
+        /// SQL statement for function disk2DiskCopyDone
+        static const std::string s_disk2DiskCopyDoneStatementString;
+
+        /// SQL statement object for function disk2DiskCopyDone
+        oracle::occi::Statement *m_disk2DiskCopyDoneStatement;
 
         /// SQL statement for function recreateCastorFile
         static const std::string s_recreateCastorFileStatementString;

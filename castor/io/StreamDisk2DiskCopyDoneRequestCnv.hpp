@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamUpdateRepRequestCnv.hpp
+ *                      castor/io/StreamDisk2DiskCopyDoneRequestCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamUpdateRepRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/30 11:27:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_UPDATEREPREQUEST_HPP
-#define CASTOR_IO_UPDATEREPREQUEST_HPP
+#ifndef CASTOR_IO_DISK2DISKCOPYDONEREQUEST_HPP
+#define CASTOR_IO_DISK2DISKCOPYDONEREQUEST_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -47,22 +47,23 @@ namespace castor {
     class StreamAddress;
 
     /**
-     * class StreamUpdateRepRequestCnv
-     * A converter for marshalling/unmarshalling UpdateRepRequest into/from stl streams
+     * class StreamDisk2DiskCopyDoneRequestCnv
+     * A converter for marshalling/unmarshalling Disk2DiskCopyDoneRequest into/from stl
+     * streams
      */
-    class StreamUpdateRepRequestCnv : public StreamBaseCnv {
+    class StreamDisk2DiskCopyDoneRequestCnv : public StreamBaseCnv {
 
     public:
 
       /**
        * Constructor
        */
-      StreamUpdateRepRequestCnv(castor::ICnvSvc* cnvSvc);
+      StreamDisk2DiskCopyDoneRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor
        */
-      virtual ~StreamUpdateRepRequestCnv() throw();
+      virtual ~StreamDisk2DiskCopyDoneRequestCnv() throw();
 
       /**
        * Gets the object type.
@@ -134,10 +135,10 @@ namespace castor {
                                                castor::ObjectCatalog& newlyCreated)
         throw (castor::exception::Exception);
 
-    }; // end of class StreamUpdateRepRequestCnv
+    }; // end of class StreamDisk2DiskCopyDoneRequestCnv
 
   }; // end of namespace io
 
 }; // end of namespace castor
 
-#endif // CASTOR_IO_UPDATEREPREQUEST_HPP
+#endif // CASTOR_IO_DISK2DISKCOPYDONEREQUEST_HPP

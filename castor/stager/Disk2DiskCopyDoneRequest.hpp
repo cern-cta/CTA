@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/UpdateRepRequest.hpp
+ *                      castor/stager/Disk2DiskCopyDoneRequest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateRepRequest.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/30 11:28:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_UPDATEREPREQUEST_HPP
-#define CASTOR_STAGER_UPDATEREPREQUEST_HPP
+#ifndef CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_HPP
+#define CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_HPP
 
 // Include Files
 #include "castor/stager/Request.hpp"
@@ -38,28 +38,28 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
   class IObject;
-  class IAddress;
 
   namespace stager {
 
     /**
-     * class UpdateRepRequest
-     * Internal request for updating an object in the database. This request is there to
-     * avoid the jobs on the diskservers to handle a connection to the database.
+     * class Disk2DiskCopyDoneRequest
+     * Internal request for updating the database after a successful Disk to Disk copy.
+     * This request is there to avoid the jobs on the diskservers to handle a connection
+     * to the database.
      */
-    class UpdateRepRequest : public virtual Request {
+    class Disk2DiskCopyDoneRequest : public virtual Request {
 
     public:
 
       /**
        * Empty Constructor
        */
-      UpdateRepRequest() throw();
+      Disk2DiskCopyDoneRequest() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~UpdateRepRequest() throw();
+      virtual ~Disk2DiskCopyDoneRequest() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -99,6 +99,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_diskCopyId
+       * The DiskCopy created.
+       * @return the value of m_diskCopyId
+       */
+      u_signed64 diskCopyId() const {
+        return m_diskCopyId;
+      }
+
+      /**
+       * Set the value of m_diskCopyId
+       * The DiskCopy created.
+       * @param new_var the new value of m_diskCopyId
+       */
+      void setDiskCopyId(u_signed64 new_var) {
+        m_diskCopyId = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -116,51 +134,18 @@ namespace castor {
         m_id = new_var;
       }
 
-      /**
-       * Get the value of m_object
-       * @return the value of m_object
-       */
-      castor::IObject* object() const {
-        return m_object;
-      }
-
-      /**
-       * Set the value of m_object
-       * @param new_var the new value of m_object
-       */
-      void setObject(castor::IObject* new_var) {
-        m_object = new_var;
-      }
-
-      /**
-       * Get the value of m_address
-       * @return the value of m_address
-       */
-      castor::IAddress* address() const {
-        return m_address;
-      }
-
-      /**
-       * Set the value of m_address
-       * @param new_var the new value of m_address
-       */
-      void setAddress(castor::IAddress* new_var) {
-        m_address = new_var;
-      }
-
     private:
+
+      /// The DiskCopy created.
+      u_signed64 m_diskCopyId;
 
       /// The id of this object
       u_signed64 m_id;
 
-      castor::IObject* m_object;
-
-      castor::IAddress* m_address;
-
-    }; // end of class UpdateRepRequest
+    }; // end of class Disk2DiskCopyDoneRequest
 
   }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_STAGER_UPDATEREPREQUEST_HPP
+#endif // CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_HPP

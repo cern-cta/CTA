@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraUpdateRepRequestCnv.cpp
+ *                      castor/db/ora/OraDisk2DiskCopyDoneRequestCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraUpdateRepRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/13 16:49:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "OraUpdateRepRequestCnv.hpp"
+#include "OraDisk2DiskCopyDoneRequestCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
@@ -39,75 +39,67 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "castor/stager/UpdateRepRequest.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraUpdateRepRequestCnv> s_factoryOraUpdateRepRequestCnv;
-const castor::ICnvFactory& OraUpdateRepRequestCnvFactory = 
-  s_factoryOraUpdateRepRequestCnv;
+static castor::CnvFactory<castor::db::ora::OraDisk2DiskCopyDoneRequestCnv> s_factoryOraDisk2DiskCopyDoneRequestCnv;
+const castor::ICnvFactory& OraDisk2DiskCopyDoneRequestCnvFactory = 
+  s_factoryOraDisk2DiskCopyDoneRequestCnv;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_insertStatementString =
-"INSERT INTO UpdateRepRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client, object, address) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_insertStatementString =
+"INSERT INTO Disk2DiskCopyDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, diskCopyId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14)";
 
 /// SQL statement for request deletion
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_deleteStatementString =
-"DELETE FROM UpdateRepRequest WHERE id = :1";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_deleteStatementString =
+"DELETE FROM Disk2DiskCopyDoneRequest WHERE id = :1";
 
 /// SQL statement for request selection
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client, object, address FROM UpdateRepRequest WHERE id = :1";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_selectStatementString =
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, diskCopyId, id, svcClass, client FROM Disk2DiskCopyDoneRequest WHERE id = :1";
 
 /// SQL statement for request update
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_updateStatementString =
-"UPDATE UpdateRepRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10 WHERE id = :11";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_updateStatementString =
+"UPDATE Disk2DiskCopyDoneRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, diskCopyId = :11 WHERE id = :12";
 
 /// SQL statement for type storage
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_storeTypeStatementString =
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_storeTypeStatementString =
 "INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_deleteTypeStatementString =
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_insertStatusStatementString =
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_insertStatusStatementString =
 "INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
 
 /// SQL statement for request status deletion
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_deleteStatusStatementString =
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_deleteStatusStatementString =
 "DELETE FROM requestsStatus WHERE id = :1";
 
 /// SQL existence statement for member svcClass
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_checkSvcClassExistStatementString =
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_checkSvcClassExistStatementString =
 "SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_updateSvcClassStatementString =
-"UPDATE UpdateRepRequest SET svcClass = : 1 WHERE id = :2";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_updateSvcClassStatementString =
+"UPDATE Disk2DiskCopyDoneRequest SET svcClass = : 1 WHERE id = :2";
 
 /// SQL update statement for member client
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_updateIClientStatementString =
-"UPDATE UpdateRepRequest SET client = : 1 WHERE id = :2";
-
-/// SQL update statement for member object
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_updateIObjectStatementString =
-"UPDATE UpdateRepRequest SET object = : 1 WHERE id = :2";
-
-/// SQL update statement for member address
-const std::string castor::db::ora::OraUpdateRepRequestCnv::s_updateIAddressStatementString =
-"UPDATE UpdateRepRequest SET address = : 1 WHERE id = :2";
+const std::string castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::s_updateIClientStatementString =
+"UPDATE Disk2DiskCopyDoneRequest SET client = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraUpdateRepRequestCnv::OraUpdateRepRequestCnv(castor::ICnvSvc* cnvSvc) :
+castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::OraDisk2DiskCopyDoneRequestCnv(castor::ICnvSvc* cnvSvc) :
   OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
@@ -119,21 +111,19 @@ castor::db::ora::OraUpdateRepRequestCnv::OraUpdateRepRequestCnv(castor::ICnvSvc*
   m_deleteTypeStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
-  m_updateIClientStatement(0),
-  m_updateIObjectStatement(0),
-  m_updateIAddressStatement(0) {}
+  m_updateIClientStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraUpdateRepRequestCnv::~OraUpdateRepRequestCnv() throw() {
+castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::~OraDisk2DiskCopyDoneRequestCnv() throw() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::reset() throw() {
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -148,8 +138,6 @@ void castor::db::ora::OraUpdateRepRequestCnv::reset() throw() {
     deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
     deleteStatement(m_updateIClientStatement);
-    deleteStatement(m_updateIObjectStatement);
-    deleteStatement(m_updateIAddressStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -163,34 +151,32 @@ void castor::db::ora::OraUpdateRepRequestCnv::reset() throw() {
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
-  m_updateIObjectStatement = 0;
-  m_updateIAddressStatement = 0;
 }
 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraUpdateRepRequestCnv::ObjType() {
-  return castor::stager::UpdateRepRequest::TYPE();
+const unsigned int castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::ObjType() {
+  return castor::stager::Disk2DiskCopyDoneRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraUpdateRepRequestCnv::objType() const {
+const unsigned int castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillRep(castor::IAddress* address,
-                                                      castor::IObject* object,
-                                                      unsigned int type,
-                                                      bool autocommit)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillRep(castor::IAddress* address,
+                                                              castor::IObject* object,
+                                                              unsigned int type,
+                                                              bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::UpdateRepRequest* obj = 
-    dynamic_cast<castor::stager::UpdateRepRequest*>(object);
+  castor::stager::Disk2DiskCopyDoneRequest* obj = 
+    dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
   try {
     switch (type) {
     case castor::OBJ_SvcClass :
@@ -198,12 +184,6 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillRep(castor::IAddress* address,
       break;
     case castor::OBJ_IClient :
       fillRepIClient(obj);
-      break;
-    case castor::OBJ_IObject :
-      fillRepIObject(obj);
-      break;
-    case castor::OBJ_IAddress :
-      fillRepIAddress(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -226,7 +206,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // fillRepSvcClass
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillRepSvcClass(castor::stager::UpdateRepRequest* obj)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillRepSvcClass(castor::stager::Disk2DiskCopyDoneRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
@@ -258,7 +238,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillRepSvcClass(castor::stager::Up
 //------------------------------------------------------------------------------
 // fillRepIClient
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillRepIClient(castor::stager::UpdateRepRequest* obj)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillRepIClient(castor::stager::Disk2DiskCopyDoneRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check update statement
   if (0 == m_updateIClientStatement) {
@@ -271,56 +251,20 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillRepIClient(castor::stager::Upd
 }
 
 //------------------------------------------------------------------------------
-// fillRepIObject
-//------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillRepIObject(castor::stager::UpdateRepRequest* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check update statement
-  if (0 == m_updateIObjectStatement) {
-    m_updateIObjectStatement = createStatement(s_updateIObjectStatementString);
-  }
-  // Update local object
-  m_updateIObjectStatement->setDouble(1, 0 == obj->object() ? 0 : obj->object()->id());
-  m_updateIObjectStatement->setDouble(2, obj->id());
-  m_updateIObjectStatement->executeUpdate();
-}
-
-//------------------------------------------------------------------------------
-// fillRepIAddress
-//------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillRepIAddress(castor::stager::UpdateRepRequest* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check update statement
-  if (0 == m_updateIAddressStatement) {
-    m_updateIAddressStatement = createStatement(s_updateIAddressStatementString);
-  }
-  // Update local object
-  m_updateIAddressStatement->setDouble(1, 0 == obj->address() ? 0 : obj->address()->id());
-  m_updateIAddressStatement->setDouble(2, obj->id());
-  m_updateIAddressStatement->executeUpdate();
-}
-
-//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillObj(castor::IAddress* address,
-                                                      castor::IObject* object,
-                                                      unsigned int type)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillObj(castor::IAddress* address,
+                                                              castor::IObject* object,
+                                                              unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::UpdateRepRequest* obj = 
-    dynamic_cast<castor::stager::UpdateRepRequest*>(object);
+  castor::stager::Disk2DiskCopyDoneRequest* obj = 
+    dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
   switch (type) {
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
     break;
   case castor::OBJ_IClient :
     fillObjIClient(obj);
-    break;
-  case castor::OBJ_IObject :
-    fillObjIObject(obj);
-    break;
-  case castor::OBJ_IAddress :
-    fillObjIAddress(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -334,7 +278,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillObj(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillObjSvcClass(castor::stager::UpdateRepRequest* obj)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillObjSvcClass(castor::stager::Disk2DiskCopyDoneRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -348,7 +292,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillObjSvcClass(castor::stager::Up
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(12);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -372,7 +316,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillObjSvcClass(castor::stager::Up
 //------------------------------------------------------------------------------
 // fillObjIClient
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillObjIClient(castor::stager::UpdateRepRequest* obj)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::fillObjIClient(castor::stager::Disk2DiskCopyDoneRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -386,7 +330,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillObjIClient(castor::stager::Upd
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(13);
+  u_signed64 clientId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -408,91 +352,15 @@ void castor::db::ora::OraUpdateRepRequestCnv::fillObjIClient(castor::stager::Upd
 }
 
 //------------------------------------------------------------------------------
-// fillObjIObject
-//------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillObjIObject(castor::stager::UpdateRepRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 objectId = (u_signed64)rset->getDouble(14);
-  // Close ResultSet
-  m_selectStatement->closeResultSet(rset);
-  // Check whether something should be deleted
-  if (0 != obj->object() &&
-      (0 == objectId ||
-       obj->object()->id() != objectId)) {
-    obj->setObject(0);
-  }
-  // Update object or create new one
-  if (0 != objectId) {
-    if (0 == obj->object()) {
-      obj->setObject
-        (dynamic_cast<castor::IObject*>
-         (cnvSvc()->getObjFromId(objectId)));
-    } else {
-      cnvSvc()->updateObj(obj->object());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjIAddress
-//------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::fillObjIAddress(castor::stager::UpdateRepRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 addressId = (u_signed64)rset->getDouble(15);
-  // Close ResultSet
-  m_selectStatement->closeResultSet(rset);
-  // Check whether something should be deleted
-  if (0 != obj->address() &&
-      (0 == addressId ||
-       obj->address()->id() != addressId)) {
-    obj->setAddress(0);
-  }
-  // Update object or create new one
-  if (0 != addressId) {
-    if (0 == obj->address()) {
-      obj->setAddress
-        (dynamic_cast<castor::IAddress*>
-         (cnvSvc()->getObjFromId(addressId)));
-    } else {
-      cnvSvc()->updateObj(obj->address());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::createRep(castor::IAddress* address,
-                                                        castor::IObject* object,
-                                                        bool autocommit,
-                                                        unsigned int type)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress* address,
+                                                                castor::IObject* object,
+                                                                bool autocommit,
+                                                                unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::UpdateRepRequest* obj = 
-    dynamic_cast<castor::stager::UpdateRepRequest*>(object);
+  castor::stager::Disk2DiskCopyDoneRequest* obj = 
+    dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   if (0 != obj->id()) return;
@@ -525,11 +393,10 @@ void castor::db::ora::OraUpdateRepRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, obj->id());
-    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
-    m_insertStatement->setDouble(14, (type == OBJ_IObject && obj->object() != 0) ? obj->object()->id() : 0);
-    m_insertStatement->setDouble(15, (type == OBJ_IAddress && obj->address() != 0) ? obj->address()->id() : 0);
+    m_insertStatement->setDouble(11, obj->diskCopyId());
+    m_insertStatement->setDouble(12, obj->id());
+    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -562,11 +429,10 @@ void castor::db::ora::OraUpdateRepRequestCnv::createRep(castor::IAddress* addres
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
+                    << "  diskCopyId : " << obj->diskCopyId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl
-                    << "  object : " << obj->object() << std::endl
-                    << "  address : " << obj->address() << std::endl;
+                    << "  client : " << obj->client() << std::endl;
     throw ex;
   }
 }
@@ -574,12 +440,12 @@ void castor::db::ora::OraUpdateRepRequestCnv::createRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::updateRep(castor::IAddress* address,
-                                                        castor::IObject* object,
-                                                        bool autocommit)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::updateRep(castor::IAddress* address,
+                                                                castor::IObject* object,
+                                                                bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::UpdateRepRequest* obj = 
-    dynamic_cast<castor::stager::UpdateRepRequest*>(object);
+  castor::stager::Disk2DiskCopyDoneRequest* obj = 
+    dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -598,7 +464,8 @@ void castor::db::ora::OraUpdateRepRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setString(8, obj->svcClassName());
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
-    m_updateStatement->setDouble(11, obj->id());
+    m_updateStatement->setDouble(11, obj->diskCopyId());
+    m_updateStatement->setDouble(12, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -628,12 +495,12 @@ void castor::db::ora::OraUpdateRepRequestCnv::updateRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::deleteRep(castor::IAddress* address,
-                                                        castor::IObject* object,
-                                                        bool autocommit)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::deleteRep(castor::IAddress* address,
+                                                                castor::IObject* object,
+                                                                bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::UpdateRepRequest* obj = 
-    dynamic_cast<castor::stager::UpdateRepRequest*>(object);
+  castor::stager::Disk2DiskCopyDoneRequest* obj = 
+    dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -685,7 +552,7 @@ void castor::db::ora::OraUpdateRepRequestCnv::deleteRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraUpdateRepRequestCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
@@ -703,7 +570,7 @@ castor::IObject* castor::db::ora::OraUpdateRepRequestCnv::createObj(castor::IAdd
       throw ex;
     }
     // create the new Object
-    castor::stager::UpdateRepRequest* object = new castor::stager::UpdateRepRequest();
+    castor::stager::Disk2DiskCopyDoneRequest* object = new castor::stager::Disk2DiskCopyDoneRequest();
     // Now retrieve and set members
     object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
@@ -715,7 +582,8 @@ castor::IObject* castor::db::ora::OraUpdateRepRequestCnv::createObj(castor::IAdd
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setId((u_signed64)rset->getDouble(11));
+    object->setDiskCopyId((u_signed64)rset->getDouble(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -743,7 +611,7 @@ castor::IObject* castor::db::ora::OraUpdateRepRequestCnv::createObj(castor::IAdd
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraUpdateRepRequestCnv::updateObj(castor::IObject* obj)
+void castor::db::ora::OraDisk2DiskCopyDoneRequestCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
@@ -759,8 +627,8 @@ void castor::db::ora::OraUpdateRepRequestCnv::updateObj(castor::IObject* obj)
       throw ex;
     }
     // Now retrieve and set members
-    castor::stager::UpdateRepRequest* object = 
-      dynamic_cast<castor::stager::UpdateRepRequest*>(obj);
+    castor::stager::Disk2DiskCopyDoneRequest* object = 
+      dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(obj);
     object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
@@ -771,7 +639,8 @@ void castor::db::ora::OraUpdateRepRequestCnv::updateObj(castor::IObject* obj)
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setId((u_signed64)rset->getDouble(11));
+    object->setDiskCopyId((u_signed64)rset->getDouble(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

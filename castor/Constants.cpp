@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/13 14:32:49 $ $Author: jdurand $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/14 10:57:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -95,7 +95,7 @@ const char* castor::ObjectsIdStrings[71] = {
   "GetUpdateStartResponse",
   "BaseAddress",
   "BasicResponse",
-  "UpdateRepRequest",
+  "Disk2DiskCopyDoneRequest",
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",

@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.12 2004/12/13 17:14:18 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.13 2004/12/14 10:57:10 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.12 $ $Date: 2004/12/13 17:14:18 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.13 $ $Date: 2004/12/14 10:57:10 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -43,7 +43,7 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.12 $ $Dat
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/UpdateRepRequest.hpp"
+#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
@@ -104,7 +104,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     types.push_back(castor::OBJ_GetUpdateStartRequest);
     types.push_back(castor::OBJ_PutStartRequest);
     types.push_back(castor::OBJ_MoverCloseRequest);
-    types.push_back(castor::OBJ_UpdateRepRequest);
+    types.push_back(castor::OBJ_Disk2DiskCopyDoneRequest);
     castor::stager::Request* req = stgSvc->requestToDo(types);
 
     if (0 == req) {
@@ -135,7 +135,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 
 
 namespace castor {
-  
+
   namespace stager {
 
     /**
@@ -183,7 +183,7 @@ namespace castor {
       std::list<castor::stager::DiskCopyForRecall*> sources;
       castor::stager::StartRequest *sReq;
       bool emptyFile;
-      
+
       try {
 
         /* get the StartRequest */
@@ -231,7 +231,7 @@ namespace castor {
           cl = stgSvc->getUpdateStart(subreq, fs, &dc, sources, &emptyFile);
         } else {
           STAGER_LOG_DEBUG(NULL, "Invoking PutStart");
-          cl = stgSvc->putStart(subreq, fs, &dc);          
+          cl = stgSvc->putStart(subreq, fs, &dc);
         }
 
         /* Fill DiskCopy with SubRequest           */
@@ -265,14 +265,14 @@ namespace castor {
             res.addSources(*it);
           }
         }
-        res.setClient(cl);  
+        res.setClient(cl);
         res.setEmptyFile(emptyFile);
       }
-      
+
       /* Reply To Client                */
       /* ------------------------------ */
       replyToClient(client, &res);
-      
+
       /* Cleanup                        */
       /* ------------------------------ */
       if (fs) delete fs;
@@ -287,42 +287,37 @@ namespace castor {
           delete *it;
         }
       }
-    }    
-    
+    }
+
     /**
-     * Handles a UpdateRepRequest and replies to client.
+     * Handles a Disk2DiskCopyDoneRequest and replies to client.
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
      * @param stgSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
-    void handle_updateRepRequest(castor::stager::Request* req,
-                                 castor::IClient *client,
-                                 castor::Services* svcs,
-                                 castor::stager::IStagerSvc* stgSvc,
-                                 castor::BaseAddress &ad) {
+    void handle_disk2DiskCopyDoneRequest(castor::stager::Request* req,
+                                         castor::IClient *client,
+                                         castor::Services* svcs,
+                                         castor::stager::IStagerSvc* stgSvc,
+                                         castor::BaseAddress &ad) {
       // Usefull Variables
-      char *func =  "castor::stager::updateRepRequest";
+      char *func =  "castor::stager::disk2DiskCopyDoneRequest";
       std::string error;
-      castor::stager::UpdateRepRequest *uReq;
-      
+      castor::stager::Disk2DiskCopyDoneRequest *uReq;
+
       try {
 
-        /* get the UpdateRepRequest */
-        /* -------------------- */
+        /* get the Disk2DiskCopyDoneRequest */
+        /* -------------------------------- */
         // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::UpdateRepRequest*> (req);
-
-        /* Fill Request */
-        /* ------------ */
-	svcs->fillObj(&ad, req, OBJ_IAddress);
-	svcs->fillObj(&ad, req, OBJ_IObject);	
+        uReq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*> (req);
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking updateRep");
-        svcs->updateRep(uReq->address(), uReq->object());
+        STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
+        stgSvc->disk2DiskCopyDone(uReq->diskCopyId());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
@@ -339,17 +334,13 @@ namespace castor {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
       }
-      
+
       /* Reply To Client                */
       /* ------------------------------ */
       replyToClient(client, &res);
-      
-      /* Cleanup                        */
-      /* ------------------------------ */
-      if (uReq->address()) delete uReq->address();
-      if (uReq->object()) delete uReq->object();
-    }    
-    
+
+    }
+
     /**
      * Handles a MoverCloseRequest and replies to client.
      * @param req the request to handle
@@ -359,10 +350,10 @@ namespace castor {
      * @param ad the address where to load/store objects in the DB
      */
     void handle_moverCloseRequest(castor::stager::Request* req,
-                                 castor::IClient *client,
-                                 castor::Services* svcs,
-                                 castor::stager::IStagerSvc* stgSvc,
-                                 castor::BaseAddress &ad) {
+                                  castor::IClient *client,
+                                  castor::Services* svcs,
+                                  castor::stager::IStagerSvc* stgSvc,
+                                  castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::moverCloseRequest";
       castor::stager::SubRequest *subreq = 0;
@@ -419,15 +410,15 @@ namespace castor {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
       }
-      
+
       /* Reply To Client                */
       /* ------------------------------ */
       replyToClient(client, &res);
-      
-    }    
-    
+
+    }
+
   } // End of namespace stager
-  
+
 } // End of namespace castor
 
 
@@ -519,15 +510,15 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
    */
 
   switch (req->type()) {
-    
+
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
     castor::stager::handle_startRequest
       (req, client, svcs, stgSvc, ad);
     break;
 
-  case castor::OBJ_UpdateRepRequest:
-    castor::stager::handle_updateRepRequest
+  case castor::OBJ_Disk2DiskCopyDoneRequest:
+    castor::stager::handle_disk2DiskCopyDoneRequest
       (req, client, svcs, stgSvc, ad);
     break;
 
@@ -543,7 +534,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     if (req) delete req;
     if (stgSvc) stgSvc->release();
     throw e;
-  }  
+  }
 
   // Cleanup
   if (req) delete req;
