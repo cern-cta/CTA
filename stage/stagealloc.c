@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.27 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stagealloc.c,v 1.28 2002/04/11 10:31:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.27 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.28 $ $Date: 2002/04/11 10:31:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -212,7 +212,7 @@ int main(argc, argv)
 	}
 #endif
 	if (Coptind < argc) {
-		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEALLOC)) == SYERR) {
+		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEALLOC)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -228,7 +228,7 @@ int main(argc, argv)
 		}
 	}
 	if (fun) {
-		if ((c = build_Upath (fun, path, sizeof(path), STAGEALLOC)) == SYERR) {
+		if ((c = build_Upath (fun, path, sizeof(path), STAGEALLOC)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
