@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.55 $ $Date: 2000/04/05 17:27:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.56 $ $Date: 2000/04/06 09:34:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -261,6 +261,10 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
         LOGLINE_APPEND(" -E %s","keep");
     if ( filereq->tp_err_action == IGNOREEOI ) 
         LOGLINE_APPEND(" -E %s","ignoreeoi");
+    if ( filereq->check_fid == CHECK_FILE )
+        LOGLINE_APPEND(" %s","-o");
+    if ( filereq->check_fid == NEW_FILE )
+        LOGLINE_APPEND(" %s","-n");
     if ( *filereq->stageID != '\0' )
         LOGLINE_APPEND(" -Z %s",filereq->stageID);
     if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) { 
@@ -1652,6 +1656,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             }
         }
     }
+#endif /* !_WIN32 */
+
     (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
@@ -1660,7 +1666,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
     }
-#endif /* _WIN32 */
     /*
      * Check the request and set defaults
      */
