@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.27 $ $Release$ $Date: 2004/07/14 16:40:39 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.28 $ $Release$ $Date: 2004/07/19 15:14:41 $ $Author: bcouturi $
 #
 # Make Castor libraries and executables
 #
@@ -57,6 +57,10 @@ OSLIBS = DepLibraryTargetName(lib,shift) wsock32.lib advapi32.lib
 #endif
 #endif
 LIBS = $(OSLIBS) $(MTLDLIBS)
+
+#if BuildSecurity
+LIBS+= -ldl
+#endif
 
 #if !defined(_WIN32)
 #if linux
@@ -100,6 +104,9 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stdbuf.cpp \
               dlfbuf.cpp \
               client/BaseClient.cpp \
+              io/AbstractSocket.cpp \
+              io/ClientSocket.cpp \
+              io/ServerSocket.cpp \
               io/Socket.cpp \
               io/StreamAddress.cpp \
               io/StreamBaseCnv.cpp \
@@ -177,6 +184,11 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
               exception/NoEntry.cpp 
+
+#if BuildSecurity
+STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
+#endif
+
 
 #if BuildDlfClient
 STGLIB_SRCS += DlfMsgSvc.cpp
