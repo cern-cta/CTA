@@ -155,30 +155,30 @@ CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoi
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
 CREATE TABLE SvcClass (policy VARCHAR(255), nbDrives NUMBER, name VARCHAR(255), id INTEGER PRIMARY KEY);
-DROP TABLE SvcClass2TapePool;
-CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
 DROP INDEX I_SvcClass2TapePool_Child;
 DROP INDEX I_SvcClass2TapePool_Parent;
+DROP TABLE SvcClass2TapePool;
+CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_SvcClass2TapePool_Child on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_Parent on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
 DROP TABLE DiskPool;
 CREATE TABLE DiskPool (name VARCHAR(255), id INTEGER PRIMARY KEY);
-DROP TABLE DiskPool2SvcClass;
-CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
 DROP INDEX I_DiskPool2SvcClass_Child;
 DROP INDEX I_DiskPool2SvcClass_Parent;
+DROP TABLE DiskPool2SvcClass;
+CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_DiskPool2SvcClass_Child on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_Parent on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
 DROP TABLE Stream;
 CREATE TABLE Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
-DROP TABLE Stream2TapeCopy;
-CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 DROP INDEX I_Stream2TapeCopy_Child;
 DROP INDEX I_Stream2TapeCopy_Parent;
+DROP TABLE Stream2TapeCopy;
+CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_Stream2TapeCopy_Child on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_Parent on Stream2TapeCopy (parent);
 
