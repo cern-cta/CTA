@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.147 2001/09/18 21:28:26 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.148 2001/09/22 05:55:42 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.147 $ $Date: 2001/09/18 21:28:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.148 $ $Date: 2001/09/22 05:55:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -166,7 +166,7 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 
 void prockilreq _PROTO((int, char *, char *));
-void procinireq _PROTO((char *, char *));
+void procinireq _PROTO((int, char *, char *));
 void procshutdownreq _PROTO((char *, char *));
 void check_upd_fileclasses _PROTO(());
 void checkpoolstatus _PROTO(());
@@ -882,7 +882,7 @@ int main(argc,argv)
 						procupdreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGEINIT:
-						procinireq (req_data, clienthost);
+						procinireq (req_type, req_data, clienthost);
 						break;
 					case STAGEALLOC:
 						procallocreq (req_data, clienthost);
@@ -1015,7 +1015,8 @@ void prockilreq(req_type, req_data, clienthost)
 	}
 }
 
-void procinireq(req_data, clienthost)
+void procinireq(req_type, req_data, clienthost)
+		 int req_type;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -1025,6 +1026,7 @@ void procinireq(req_data, clienthost)
 	int nargs;
 	char *rbp;
 	char *user;
+	int errflg = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -1048,13 +1050,26 @@ void procinireq(req_data, clienthost)
 		case 'F':
 			force_init = 1;
 			break;
+		case 'h':
+			break;
 		case 'X':
 			migr_init = 1;
 			break;
+		case '?':
+			errflg++;
+			break;
+		default:
+			errflg++;
+			break;
 		}
 	}
-	initreq_reqid = reqid;
-	initreq_rpfd = rpfd;
+	if (! errflg) {
+		initreq_reqid = reqid;
+		initreq_rpfd = rpfd;
+	} else {
+		sendrep (rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
+		sendrep (rpfd, STAGERC, req_type, USERR);
+    }
 	free (argv);
 }
 
@@ -3384,5 +3399,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Monday 17 September, 2001 at 13:04:17 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Saturday 22 September, 2001 at 07:50:02 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
