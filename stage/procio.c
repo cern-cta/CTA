@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.141 2001/09/24 12:52:25 jdurand Exp $
+ * $Id: procio.c,v 1.142 2001/09/24 13:54:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.141 $ $Date: 2001/09/24 12:52:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.142 $ $Date: 2001/09/24 13:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1703,7 +1703,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 					stcp->a_time = stcp->c_time;
 					break;
 				}
-				stcp->nbaccesses++;
 				/* Case of a recall of an HSM file of zero size */
 				if ((nhsmfiles > 0) && (hsmsize == 0)) {
 					int ifileclass;
@@ -1729,6 +1728,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 #endif
 					goto forced_yet_staged_branch;
 				} else {
+					stcp->nbaccesses++;
 					if (!wqp) {
 						wqp = add2wq (clienthost,
 										user, stcp->uid, stcp->gid,
