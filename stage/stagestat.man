@@ -1,10 +1,10 @@
-.\" $Id: stagestat.man,v 1.16 2002/10/03 14:07:51 jdurand Exp $
+.\" $Id: stagestat.man,v 1.17 2002/10/08 09:12:06 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.16 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.17 $ $Date: 2002/10/08 09:12:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESTAT "1" "$Date: 2002/10/03 14:07:51 $" "CASTOR" "Stager User Commands"
+.TH STAGESTAT "1" "$Date: 2002/10/08 09:12:06 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -176,106 +176,105 @@ the accounting file is not found, this tool will try to open the archived castor
 .I /castor/<domain>/c3/backup/sacct/<hostname>/sacct.yymm
 
 .SH EXAMPLES
-To get information on pool wacdr sorted by lifetime type the following command :
+To get information on pool wacdr, stager on host wacdr, week 39 of year 2002, with an histogram view of files lifetime, type the following command:
 .ft CW
 .nf
 .sp
 \s-2
-[] ~ > stagestat -h wacdr -p wacdr -H 170,260,30
-
-[INFO] Using default account file "wacdr:/usr/spool/sacct/sacct"
+[] ~ > stagestat -h wacdr -p wacdr -w 0239 -H 170,260,30 -v     
 
 You have requested accounting data for the stager wacdr
 
-Number of read account records:      43914
-Number of     accepted records:      43914
+[INFO] Using account file "wacdr:/usr/spool/sacct/sacct.0239"
+|========================================| ( 100.00 %) \
+Number of read account records:      45659
+Number of     accepted records:      45659
 Number of     rejected records:          0
                                 ...          0 (not a STAGE account record)
                                 ...          0 (error)
                                 ...          0 (filtered)
 
-	wacdr Stager statistics (22/09/2002 23:56:43  -  29/09/2002 10:06:00)
+        wacdr Stager statistics (22/09/2002 23:56:43  -  29/09/2002 23:55:35)
 
 Command    No Reqs API(%) Success Warning Userr Syserr Unerr Conferr Held Busy ENOSPC Cleared Killed
 
-stagein       5897 100.00    5839       0     0      0    45       0    0   14      0       0      0
-stageout      1832 100.00    1798       0     0      0    25       0    0    0      0       0      0
-stagewrt       360 100.00     359       0     0      0     0       0    0    0      0       0      0
+stagein       5994 100.00    5935       0     0      0    45       0    0   15      0       0      0
+stageout      1931 100.00    1897       0     0      0    25       0    0    0      0       0      0
+stagewrt       392 100.00     392       0     0      0     0       0    0    0      0       0      0
 stageput         0   0.00       0       0     0      0     0       0    0    0      0       0      0
 stagealloc       0   0.00       0       0     0      0     0       0    0    0      0       0      0
-stageqry      4824   6.01
+stageqry      5221   6.07
 stageclr      1529   1.96
 stagekill        0   0.00
-stageupdc     9108   0.00
+stageupdc     9589   0.00
 stageinit        7 100.00
-stagecat         0   0.00	
-stageget         0   0.00	
-stagechng        0   0.00	
-stageshutdown    0   0.00	
-stageping        0   0.00	
-restart(s)       0	
+stagecat         0   0.00
+stageget         0   0.00
+stagechng        0   0.00
+stageshutdown    0   0.00
+stageping        0   0.00
+restart(s)       0
 
-Stagein Statistics :
-	Number of forked I/O process			2288
-	Number of tape remount requests (write mode)			1
-	Number of tape remount requests (read  mode)			7
-	Number of tape requests avoided by stager (read mode)	3551
-	Number of multifile requests		1
+Stage Statistics :
+        Number of forked I/O process                                    :        2420
+        Number of tape remount requests (write mode)                    :           1
+        Number of tape remount requests (read  mode)                    :           7
+        Nb of read tape requests avoided by stager                      :        3515
+        Number of multifile requests                                    :           1
 
 File Request Details for Pool :      wacdr
 
-Number of requests started before time period began			697
-Out of these:	Number accessed before being cleared			0
-		Number accessed but not cleared during time period	697
+Number of requests started before time period began                     :         697
+Out of these:   Number accessed before being cleared                    :           0
+                Number accessed but not cleared during time period      :         697
 
-Number of requests started after beginning of time period		3520
-Out of these:	Number accessed but not cleared				3517
-		Number accessed and then cleared			3
+Number of requests started after beginning of time period               :        3700
+Out of these:   Number accessed but not cleared                         :        3697
+                Number accessed and then cleared                        :           3
 
-Average number of file accesses 	:	     1.94
-Average lifetime of staged and then garbaged file using creation time	:	  207.34 hours
-Number of files used in this calculation                               	:	    1331
-Standard deviation of lifetime                                      	:	   21.20 hours
+Average number of file accesses                                         :           1.90
+Average lifetime of staged and then garbaged file using creation time   :         207.34 hours
+Number of files used in this calculation                                :        1331
+Standard deviation of lifetime                                          :          21.20 hours
 
 
 
 Histogram of the lifetime of files garbage collected for the pool wacdr
 The number of entries for this  histogram is: 1331
 
-The number of underflows is:   0 	 the number of overflows is:  0
+The number of underflows is:   0         the number of overflows is:  0
 
-for   170.00<lifetime<  173.00 0
-for   173.00<lifetime<  176.00 0
-for   176.00<lifetime<  179.00 0
-for   179.00<lifetime<  182.00 24   *******
-for   182.00<lifetime<  185.00 70   **********************
-for   185.00<lifetime<  188.00 93   ******************************
-for   188.00<lifetime<  191.00 154  **************************************************
-for   191.00<lifetime<  194.00 132  ******************************************
-for   194.00<lifetime<  197.00 122  ***************************************
-for   197.00<lifetime<  200.00 91   *****************************
-for   200.00<lifetime<  203.00 51   ****************
-for   203.00<lifetime<  206.00 67   *********************
-for   206.00<lifetime<  209.00 68   **********************
-for   209.00<lifetime<  212.00 34   ***********
-for   212.00<lifetime<  215.00 37   ************
-for   215.00<lifetime<  218.00 26   ********
-for   218.00<lifetime<  221.00 44   **************
-for   221.00<lifetime<  224.00 33   **********
-for   224.00<lifetime<  227.00 22   *******
-for   227.00<lifetime<  230.00 14   ****
-for   230.00<lifetime<  233.00 11   ***
-for   233.00<lifetime<  236.00 9    **
-for   236.00<lifetime<  239.00 20   ******
-for   239.00<lifetime<  242.00 18   *****
-for   242.00<lifetime<  245.00 50   ****************
-for   245.00<lifetime<  248.00 59   *******************
-for   248.00<lifetime<  251.00 44   **************
-for   251.00<lifetime<  254.00 30   *********
-for   254.00<lifetime<  257.00 8    **
-for   257.00<lifetime<  260.00 0
-for   260.00<lifetime<  263.00 0
-
+for   170.00<lifetime<  173.00     0 
+for   173.00<lifetime<  176.00     0 
+for   176.00<lifetime<  179.00     0 
+for   179.00<lifetime<  182.00    24    *******
+for   182.00<lifetime<  185.00    70    **********************
+for   185.00<lifetime<  188.00    93    ******************************
+for   188.00<lifetime<  191.00   154    **************************************************
+for   191.00<lifetime<  194.00   132    ******************************************
+for   194.00<lifetime<  197.00   122    ***************************************
+for   197.00<lifetime<  200.00    91    *****************************
+for   200.00<lifetime<  203.00    51    ****************
+for   203.00<lifetime<  206.00    67    *********************
+for   206.00<lifetime<  209.00    68    **********************
+for   209.00<lifetime<  212.00    34    ***********
+for   212.00<lifetime<  215.00    37    ************
+for   215.00<lifetime<  218.00    26    ********
+for   218.00<lifetime<  221.00    44    **************
+for   221.00<lifetime<  224.00    33    **********
+for   224.00<lifetime<  227.00    22    *******
+for   227.00<lifetime<  230.00    14    ****
+for   230.00<lifetime<  233.00    11    ***
+for   233.00<lifetime<  236.00     9    **
+for   236.00<lifetime<  239.00    20    ******
+for   239.00<lifetime<  242.00    18    *****
+for   242.00<lifetime<  245.00    50    ****************
+for   245.00<lifetime<  248.00    59    *******************
+for   248.00<lifetime<  251.00    44    **************
+for   251.00<lifetime<  254.00    30    *********
+for   254.00<lifetime<  257.00     8    **
+for   257.00<lifetime<  260.00     0 
+for   260.00<lifetime<  263.00     0 
 \s+2
 .ft
 .LP
