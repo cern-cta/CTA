@@ -153,7 +153,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       m_environment->createConnection(m_user, m_passwd, m_dbName);
     clog() << DEBUG << "Created new Oracle connection : "
            << m_connection << std::endl;
-    std::string codeVersion = "2.0.0.0";
+    std::string codeVersion = "2.0.0.1";
     std::string DBVersion = "";
     oracle::occi::Statement* stmt = 0;
     try {
@@ -171,10 +171,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
                        << codeVersion << "\"";
         throw e;
       }
-    } catch (oracle::occi::SQLException ex) {
+    } catch (oracle::occi::SQLException e) {
       // No CastorVersion table ?? This means bad version
       if (0 != stmt) m_connection->terminateStatement(stmt);
-      castor::exception::BadVersion e;
+      castor::exception::BadVersion ex;
       ex.getMessage() << "Not able to find the version of castor in the database"
                       << "\n Original error was " << e.what();
       throw ex;
