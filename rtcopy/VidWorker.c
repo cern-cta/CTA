@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/07/22 07:02:10 $ $Author: jdurand $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/07/29 09:38:54 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/07/22 07:02:10 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/07/29 09:38:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -268,6 +268,7 @@ int rtcpcld_Callback(
 {
   char *func, *vid = "", *blkid = NULL, *disk_path = ".";
   int fseq = -1, proc_status = -1, msgNo = -1, rc, status, getMoreWork = 0;
+  int cprc = -1;
   struct Cns_fileid fileId;
   Cuuid_t stgUuid, rtcpUuid;
 
@@ -335,13 +336,13 @@ int rtcpcld_Callback(
     }
 
     /*
-     * Only update catalogue for real FILE callbacks. Note
+     * Always update catalogue upon error or for real FILE callbacks. Note
      * that for a RTCP_REQUSET_MORE_WORK callback, the status
      * is changed to RTCP_FINISHED when there is nothing more
      * to do.
      */
-    if ( getMoreWork == 0 && (filereq->cprc == -1 || 
-                              filereq->proc_status == RTCP_FINISHED) ) {
+    if ( filereq->cprc == -1 || 
+         (getMoreWork == 0 && filereq->proc_status == RTCP_FINISHED) ) {
       if ( filereq->cprc == 0 ) status = SEGMENT_FILECOPIED;
       else status = SEGMENT_FAILED;
       rc = rtcpcld_setFileStatus(
@@ -366,6 +367,7 @@ int rtcpcld_Callback(
         return(-1);
       }
     }
+
     fseq = filereq->tape_fseq;
     blkid = rtcp_voidToString(
                               (void *)filereq->blockid,
@@ -381,6 +383,7 @@ int rtcpcld_Callback(
     stgUuid = filereq->stgReqId;
     proc_status = filereq->proc_status;
     disk_path = filereq->file_path;
+    cprc = filereq->cprc;
   } /* if ( filereq != NULL ) */
 
   if ( msgNo > 0 ) {
@@ -389,7 +392,7 @@ int rtcpcld_Callback(
                     DLF_LVL_SYSTEM,
                     msgNo,
                     &fileId,
-                    6,
+                    7,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     vid,
@@ -407,7 +410,10 @@ int rtcpcld_Callback(
                     (blkid != NULL ? blkid : "unknown"),
                     "STATUS",
                     DLF_MSG_PARAM_INT,
-                    proc_status
+                    proc_status,
+                    "CPRC",
+                    DLF_MSG_PARAM_INT,
+                    cprc
                     );
   }
   if ( blkid != NULL ) free(blkid);
