@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.41 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.42 $ $Date: 2004/02/25 13:55:27 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -924,8 +924,8 @@ static int rtcpc_l_opt(int mode,
         /*
          * Set option
          */
-        if ( strlen(value) > 4 ) {
-            rtcp_log(LOG_ERR,"%s IS AN INVALID LABEL TYPE\n",value);
+        if ( strlen(value) > CA_MAXLBLTYPLEN ) {
+            rtcp_log(LOG_ERR,"INVALID LABEL TYPE\n");
             serrno = EINVAL;
             rc = -1;
         }
@@ -1375,6 +1375,7 @@ static int rtcpc_S_opt(int mode,
                      const char *value, 
                      tape_list_t **tape) {
     int rc;
+    char tmp[CA_MAXHOSTNAMELEN+1];
     tape_list_t *tl;
     rtcpTapeRequest_t *tapereq;
 
@@ -1398,7 +1399,9 @@ static int rtcpc_S_opt(int mode,
          * Set option
          */
         if ( strlen(value) > CA_MAXHOSTNAMELEN ) {
-            rtcp_log(LOG_ERR,"%s IS AN INVALID HOST NAME\n",value);
+            tmp[sizeof(tmp)-1] = '\0';
+            rtcp_log(LOG_ERR,"INVALID HOST NAME %s... is too long\n",
+                     strncpy(tmp,value,sizeof(tmp)-1));
             serrno = EINVAL;
             rc = -1;
         }
@@ -1495,7 +1498,7 @@ static int rtcpc_v_opt(int mode,
     tape_list_t *tl;
     file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
-    char *local_value, *p, *q;
+    char *local_value, *p, *q, tmp[CA_MAXVSNLEN+1];
 
     if ( value == NULL ) {
         serrno = EINVAL;
@@ -1547,7 +1550,9 @@ static int rtcpc_v_opt(int mode,
             if ( *tapereq->vsn == '\0' ) {
                 if ( (q = strstr(p,":")) != NULL ) *q = '\0';
                 if ( strlen(p) > CA_MAXVSNLEN ) {
-                    rtcp_log(LOG_ERR,"INVALID VSN SPECIFIED %s\n",p);
+                    tmp[sizeof(tmp)-1] = '\0';
+                    rtcp_log(LOG_ERR,"INVALID VSN SPECIFIED %s... is too long\n",
+                             strncpy(tmp,p,sizeof(tmp)-1));
                     serrno = EINVAL;
                     rc = -1;
                     break;
@@ -1578,7 +1583,7 @@ static int rtcpc_V_opt(int mode,
     tape_list_t *tl;
     file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
-    char *local_value, *p, *q;
+    char *local_value, *p, *q, tmp[CA_MAXVIDLEN+1];
 
     if ( value == NULL ) {
         serrno = EINVAL;
@@ -1634,7 +1639,9 @@ static int rtcpc_V_opt(int mode,
                         strcpy(tapereq->vid,tapereq->vsn);    
                 } else {
                     if ( strlen(p) > CA_MAXVIDLEN ) {
-                        rtcp_log(LOG_ERR,"INVALID VID SPECIFIED %s\n",p);
+                        tmp[sizeof(tmp)-1] = '\0';
+                        rtcp_log(LOG_ERR,"INVALID VID SPECIFIED %s... is too long\n",
+                                 strncpy(tmp,p,sizeof(tmp)-1));
                         serrno = EINVAL;
                         rc = -1;
                         break;
@@ -1724,7 +1731,7 @@ static int rtcpc_diskfiles(int mode,
     tape_list_t *tl, *tl1;
     file_list_t *fl, *fl1;
     rtcpFileRequest_t *filereq;
-    char *last_filename;
+    char *last_filename, tmp[CA_MAXPATHLEN+1];
 
     if ( tape == NULL ) {
         serrno = EINVAL;
@@ -1733,8 +1740,14 @@ static int rtcpc_diskfiles(int mode,
 
     if ( filename != NULL && (*filename == '\0' || 
         strlen(filename) > CA_MAXPATHLEN) ) {
-        rtcp_log(LOG_ERR,"INVALID FILE PATH %s\n",filename);
-        serrno = EINVAL;
+        if ( strlen(filename) > CA_MAXPATHLEN ) {
+            tmp[sizeof(tmp)-1] = '\0';
+            rtcp_log(LOG_ERR,"INVALID FILE PATH %s... is too long\n",strncpy(tmp,filename,sizeof(tmp)-1));
+            serrno = SENAMETOOLONG;
+        } else  {
+            rtcp_log(LOG_ERR,"INVALID FILE PATH %s\n",filename);
+            serrno = EINVAL;
+        }
         return(-1);
     }
 
