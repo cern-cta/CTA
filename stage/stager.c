@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.100 2000/11/27 17:05:22 jdurand Exp $
+ * $Id: stager.c,v 1.101 2000/11/28 12:29:57 jdurand Exp $
  */
 
 /*
@@ -15,11 +15,14 @@
 /* when a tape pool turnaround occurs.                                       */
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
+/* If you want to disable blockid support in recall, use the following: */
+#define SKIP_RECALL_WITH_BLOCKID
+
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.100 $ $Date: 2000/11/27 17:05:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.101 $ $Date: 2000/11/28 12:29:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2475,12 +2478,16 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
 			}
 			*/
+#ifndef SKIP_RECALL_WITH_BLOCKID
 			if (memcmp(hsm_blockid[ihsm],nullblockid,sizeof(blockid_t)) != 0) {
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_BLKID;
 				memcpy((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blockid,hsm_blockid[ihsm],sizeof(blockid_t));
 			} else {
+#endif
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
+#ifndef SKIP_RECALL_WITH_BLOCKID
 			}
+#endif
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 			/* We set the hsm_flag[ihsm] so that this entry cannot be returned twice */
 			hsm_flag[ihsm] = 1;
@@ -3318,5 +3325,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Monday 27 November, 2000 at 18:04:38 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 28 November, 2000 at 13:29:06 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
