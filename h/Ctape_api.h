@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.10 2000/03/09 08:59:05 baud Exp $
+ * $Id: Ctape_api.h,v 1.11 2000/03/31 15:04:44 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.10 $ $Date: 2000/03/09 08:59:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.11 $ $Date: 2000/03/31 15:04:44 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -72,14 +72,14 @@ struct rsv_status {		/* resource reservation status reply entry */
 #if defined(__STDC__)
 extern int Ctape_config(char *, int, int);
 extern struct devinfo *Ctape_devinfo(char *);
-extern int Ctape_info(char *, int *, unsigned int *, char *, char *, char *,
+extern int Ctape_info(char *, int *, unsigned char *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
 extern int Ctape_label(char *, char *, int, char *, char *, char *, char *,
 	char *, int, int);
 extern int Ctape_mount(char *, char *, int, char *, char *, char *, int,
 	char *, char *, int);
-extern int Ctape_position(char *, int, int, int, unsigned int, int, int,
+extern int Ctape_position(char *, int, int, int, unsigned char *, int, int,
 	int, char *, char *, int, int, int, int);
 extern int Ctape_reserve(int, struct dgn_rsv *);
 extern int Ctape_rls(char *, int);
