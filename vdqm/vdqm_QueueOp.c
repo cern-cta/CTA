@@ -913,6 +913,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
          * If a specific server (and maybe also drive) has been
          * specified, we check for that first
          */
+        log(LOG_INFO,"SelectVolAndDrv(): PopVolRecord() returned VolReqID: %d, VID: %s, server=%s\n",volrec->vol.VolReqID,volrec->vol.volid,volreq->vol.server);
         if ( *volrec->vol.server != '\0' ) {
             rc = AnyFreeDrvOnSrv(dgn_context,volrec,&drvrec);
             log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyFreeDrvOnSrv(%s) returned rc=%d\n",
@@ -932,6 +933,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
                  * Reset update until we are sure
                  */
                 drvrec->update = 0;
+                log(LOG_INFO,"SelectVolAndDrv(): AnyFreeDrvOnSrv() returned %s@%s, status=0x%x\n",drvrec->drv.drive,drvrec->drv.server,drvrec->drv.status);
                 break;
             }
         }
@@ -968,6 +970,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
                         return(-1);
                     }
                 }
+                log(LOG_INFO,"SelectVolAndDrv(): AnyVolRecForDrv() returned VolReqID: %d, VID: %s, server: %s\n",volrec->vol.VolReqID,volrec->vol.volid,volrec->vol.server);
                 /*
                  * Reset update until we are sure
                  */
