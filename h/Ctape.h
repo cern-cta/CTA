@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.27 2000/04/12 11:44:49 baud Exp $
+ * $Id: Ctape.h,v 1.28 2000/05/03 06:29:59 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.27 $ $Date: 2000/04/12 11:44:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.28 $ $Date: 2000/05/03 06:29:59 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -73,12 +73,12 @@
 #ifdef __STDC__
 #define ENTRY(x) \
 	{ \
-	strcpy (func, #x); \
+	(void) strcpy (func, #x); \
 	}
 #else
 #define ENTRY(x) \
 	{ \
-	strcpy (func, "x"); \
+	(void) strcpy (func, "x"); \
 	}
 #endif
 #define RETURN(x) \
@@ -89,13 +89,13 @@
 #ifdef __STDC__
 #define ENTRY(x) \
 	{ \
-	strcpy (func, #x); \
+	(void) strcpy (func, #x); \
 	tplogit (func, "function entered\n"); \
 	}
 #else
 #define ENTRY(x) \
 	{ \
-	strcpy (func, "x"); \
+	(void) strcpy (func, "x"); \
 	tplogit (func, "function entered\n"); \
 	}
 #endif
