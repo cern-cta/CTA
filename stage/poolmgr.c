@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.128 2001/03/28 14:02:01 jdurand Exp $
+ * $Id: poolmgr.c,v 1.129 2001/03/29 10:53:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.128 $ $Date: 2001/03/28 14:02:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.129 $ $Date: 2001/03/29 10:53:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -127,6 +127,7 @@ struct pool_element_ext {
   int poolmigrating;
   char server[CA_MAXHOSTNAMELEN+1];
   char dirpath[MAXPATH];
+  time_t last_allocation;
 };
 
 void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
@@ -1302,6 +1303,8 @@ selectfs(poolname, size, path, status)
     sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
   stglogit ("selectfs", "%s reqsize=%s, elemp->free=%s, pool_p->free=%s\n",
             path, u64tostr(reqsize, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
+  /* We udpate known allocation timestamp */
+  elemp->last_allocation = time(NULL);
   return (1);
 }
 
@@ -3793,6 +3796,12 @@ void bestnextpool_out(nextout,mode)
   char *func = "bestnextpool_out";
   char tmpbuf[21];
   char tmpbuf2[21];
+  char timestr[64] ;   /* Time in its ASCII format             */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+
 
   /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
   /* contention possible */
@@ -3841,6 +3850,7 @@ void bestnextpool_out(nextout,mode)
     strcpy(this_best_element->server,this_element->server);
     this_best_element->dirpath[0] = '\0';
     strcpy(this_best_element->dirpath,this_element->dirpath);
+    this_best_element->last_allocation = this_element->last_allocation;
     nbest_elements++;
 
     /* Go to the next pool unless round about or same pool returned */
@@ -3864,7 +3874,18 @@ void bestnextpool_out(nextout,mode)
 
 #ifdef STAGER_DEBUG
     for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
-      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
+      if (this_best_element->last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(this_best_element->last_allocation),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(this_best_element->last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        strftime(timestr,64,strftime_format,tp);
+      } else {
+        strcpy(timestr,"<none>");
+      }
+      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
                j,
                this_best_element->server,
                this_best_element->dirpath,
@@ -3873,14 +3894,26 @@ void bestnextpool_out(nextout,mode)
                this_best_element->nbreadserver,
                this_best_element->nbwriteserver,
                this_best_element->poolmigrating,
-               u64tostru(this_best_element->free, tmpbuf, 0)
-               u64tostru(this_best_element->capacity, tmpbuf2, 0)
+               u64tostru(this_best_element->free, tmpbuf, 0),
+               u64tostru(this_best_element->capacity, tmpbuf2, 0),
+               timestr
                );
     }
 #endif
   } else {
 #ifdef STAGER_DEBUG
-    stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
+    if (this_best_element->last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+      localtime_r(&(this_best_element->last_allocation),&tmstruc);
+      tp = &tmstruc;
+#else
+      tp = localtime(&(this_best_element->last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+      strftime(timestr,64,strftime_format,tp);
+    } else {
+      strcpy(timestr,"<none>");
+    }
+    stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
              this_best_element->nbreadaccess,
@@ -3888,13 +3921,13 @@ void bestnextpool_out(nextout,mode)
              this_best_element->nbreadserver,
              this_best_element->nbwriteserver,
              this_best_element->poolmigrating,
-             u64tostru(this_best_element->free, tmpbuf, 0)
-             u64tostru(this_best_element->capacity, tmpbuf, 0)
+             u64tostru(this_best_element->free, tmpbuf, 0),
+             u64tostru(this_best_element->capacity, tmpbuf2, 0),
+             timestr
              );
 #endif
   }
 
- bestnextpool_out_getit:
   /* So we have found here the best fs */
   /* We anticipate the coming call to selectfs() with the following trick: */
   /* - we know that selectfs() takes poolname as first argument and pool_p->next_pool_elem */
@@ -3921,7 +3954,18 @@ void bestnextpool_out(nextout,mode)
     stglogit(func, "something fishy happened - using %s\n", thispool_out);
     strcpy(nextout, thispool_out);
   } else {
-    stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
+    if (this_best_element->last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+      localtime_r(&(this_best_element->last_allocation),&tmstruc);
+      tp = &tmstruc;
+#else
+      tp = localtime(&(this_best_element->last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+      strftime(timestr,64,strftime_format,tp);
+    } else {
+      strcpy(timestr,"<none>");
+    }
+    stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
              this_best_element->nbreadaccess,
@@ -3930,7 +3974,8 @@ void bestnextpool_out(nextout,mode)
              this_best_element->nbwriteserver,
              this_best_element->poolmigrating,
              u64tostru(this_best_element->free, tmpbuf, 0),
-             u64tostru(this_best_element->capacity, tmpbuf2, 0)
+             u64tostru(this_best_element->capacity, tmpbuf2, 0),
+             timestr
              );
   }
 
@@ -4036,7 +4081,15 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
   char *func = "betterfs_vs_pool";
 #ifdef STAGER_DEBUG
   char tmpbuf[21];
+  char tmpbuf2[21];
   char tmpbufreqsize[21];
+#endif
+#ifdef STAGER_DEBUG
+  char timestr[64] ;   /* Time in its ASCII format             */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
 #endif
 
   found = 0;
@@ -4068,6 +4121,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
     elements[i].poolmigrating = ispoolmigrating(poolname); /* Not usefull in this sort, but pretty for output */
     strcpy(elements[i].server,pool_p->elemp[i].server);
     strcpy(elements[i].dirpath,pool_p->elemp[i].dirpath);
+    elements[i].last_allocation = pool_p->elemp[i].last_allocation;
   }
 
   /* We fill the global number of streams per server, used in the qsort to optimize server location */
@@ -4082,7 +4136,18 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
   for (j = 0; j < pool_p->nbelem; j++) {
     if (reqsize <= 0) {
 #ifdef STAGER_DEBUG
-      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+      if (elements[j].last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(elements[j].last_allocation),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(elements[j].last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        strftime(timestr,64,strftime_format,tp);
+      } else {
+        strcpy(timestr,"<none>");
+      }
+      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
                j,
                elements[j].server,
                elements[j].dirpath,
@@ -4091,14 +4156,27 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                elements[j].nbreadserver,
                elements[j].nbwriteserver,
                elements[j].poolmigrating,
-               u64tostru(elements[j].free, tmpbuf, 0)
+               u64tostru(elements[j].free, tmpbuf, 0),
+               u64tostru(elements[j].capacity, tmpbuf2, 0),
+               timestr
                );
 #endif
       if (jfound < 0) jfound = j;
     } else {
       if (elements[j].free < reqsize) {
 #ifdef STAGER_DEBUG
-        stglogit(func, "[reqsize=%s => rejected] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+        if (elements[j].last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+          localtime_r(&(elements[j].last_allocation),&tmstruc);
+          tp = &tmstruc;
+#else
+          tp = localtime(&(elements[j].last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+          strftime(timestr,64,strftime_format,tp);
+        } else {
+          strcpy(timestr,"<none>");
+        }
+        stglogit(func, "[reqsize=%s => rejected] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
                  u64tostru(reqsize, tmpbufreqsize, 0),
                  j,
                  elements[j].server,
@@ -4108,12 +4186,25 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                  elements[j].nbreadserver,
                  elements[j].nbwriteserver,
                  elements[j].poolmigrating,
-                 u64tostru(elements[j].free, tmpbuf, 0)
+                 u64tostru(elements[j].free, tmpbuf, 0),
+                 u64tostru(elements[j].capacity, tmpbuf2, 0),
+                 timestr
                  );
 #endif
       } else {
 #ifdef STAGER_DEBUG
-        stglogit(func, "[reqsize=%s => accepted] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+        if (elements[j].last_allocation > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+          localtime_r(&(elements[j].last_allocation),&tmstruc);
+          tp = &tmstruc;
+#else
+          tp = localtime(&(elements[j].last_allocation));
+#endif /* _REENTRANT || _THREAD_SAFE */
+          strftime(timestr,64,strftime_format,tp);
+        } else {
+          strcpy(timestr,"<none>");
+        }
+        stglogit(func, "[reqsize=%s => accepted] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
                  u64tostru(reqsize, tmpbufreqsize, 0),
                  j,
                  elements[j].server,
@@ -4123,7 +4214,9 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
                  elements[j].nbreadserver,
                  elements[j].nbwriteserver,
                  elements[j].poolmigrating,
-                 u64tostru(elements[j].free, tmpbuf, 0)
+                 u64tostru(elements[j].free, tmpbuf, 0),
+                 u64tostru(elements[j].capacity, tmpbuf2, 0),
+                 timestr
                  );
 #endif
         if (jfound < 0) jfound = j;
@@ -4183,30 +4276,18 @@ int pool_elements_cmp(p1,p2)
       if ((fp1->nbreadaccess == 0) && (fp2->nbreadaccess == 0)) {
 
         if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
-          u_signed64 fp1_before_fraction, fp1_after_fraction;
-          u_signed64 fp2_before_fraction, fp2_after_fraction;
 
-        pool_elements_cmp_vs_free:
-          fp1_before_fraction = fp1->capacity ? (100 * fp1->free) / fp1->capacity : 0;
-          fp1_after_fraction = fp1->capacity ?
-            (10 * (fp1->free * 100 - fp1->capacity * fp1_before_fraction)) / fp1->capacity :
-            0;
-          fp2_before_fraction = fp2->capacity ? (100 * fp2->free) / fp2->capacity : 0;
-          fp2_after_fraction = fp2->capacity ?
-            (10 * (fp2->free * 100 - fp2->capacity * fp2_before_fraction)) / fp2->capacity :
-            0;
-          if (fp1_before_fraction > fp2_before_fraction) {
+        pool_elements_cmp_vs_last_allocation:
+
+          /* We compare last known allocation timestamp */
+          if (fp1->last_allocation < fp2->last_allocation) {
+            /* filesystem fp1 had a successful space allocation that is older than filesystem fp2 */
+            /* so fp1 is our best candidate in order to simulate a successful turnaround */
             return(-1);
-          } else if (fp1_before_fraction < fp2_before_fraction) {
+          } else if (fp1->last_allocation > fp2->last_allocation) {
             return(1);
           } else {
-            if (fp1_after_fraction > fp2_after_fraction) {
-              return(-1);
-            } else if (fp1_after_fraction < fp2_after_fraction) {
-              return(1);
-            } else {
-              return(0);
-            }
+            return(0);
           }
 
         } else {
@@ -4223,7 +4304,7 @@ int pool_elements_cmp(p1,p2)
 
         if ((fp1->nbwriteaccess - fp1->nbreadaccess) == (fp2->nbwriteaccess - fp2->nbreadaccess)) {
 
-          goto pool_elements_cmp_vs_free;
+          goto pool_elements_cmp_vs_last_allocation;
 
         } else if ((fp1->nbwriteaccess - fp1->nbreadaccess) < (fp2->nbwriteaccess - fp2->nbreadaccess)) {
 
@@ -4238,7 +4319,7 @@ int pool_elements_cmp(p1,p2)
 
         if ((fp1->nbwriteaccess + fp1->nbreadaccess) == (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
-          goto pool_elements_cmp_vs_free;
+          goto pool_elements_cmp_vs_last_allocation;
 
         } else if ((fp1->nbwriteaccess + fp1->nbreadaccess) < (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
@@ -4259,7 +4340,7 @@ int pool_elements_cmp(p1,p2)
 
         if (fp1->nbreadaccess == fp2->nbreadaccess) {
 
-          goto pool_elements_cmp_vs_free;
+          goto pool_elements_cmp_vs_last_allocation;
 
         } else {
 
@@ -4275,7 +4356,7 @@ int pool_elements_cmp(p1,p2)
 
         if ((fp1->nbreadaccess - fp1->nbwriteaccess) == (fp2->nbreadaccess - fp2->nbwriteaccess)) {
 
-          goto pool_elements_cmp_vs_free;
+          goto pool_elements_cmp_vs_last_allocation;
 
         } else if ((fp1->nbreadaccess - fp1->nbwriteaccess) < (fp2->nbreadaccess - fp2->nbwriteaccess)) {
 
@@ -4290,7 +4371,7 @@ int pool_elements_cmp(p1,p2)
 
         if ((fp1->nbreadaccess + fp1->nbwriteaccess) == (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
-          goto pool_elements_cmp_vs_free;
+          goto pool_elements_cmp_vs_last_allocation;
 
         } else if ((fp1->nbreadaccess + fp1->nbwriteaccess) < (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
@@ -4311,7 +4392,7 @@ int pool_elements_cmp(p1,p2)
 
     if ((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver)) {
       
-      goto pool_elements_cmp_vs_free;
+      goto pool_elements_cmp_vs_last_allocation;
       
     } else if ((fp1->nbreadserver + fp1->nbwriteserver) < (fp2->nbreadserver + fp2->nbwriteserver)) {
       
