@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.2 $ $Date: 1999/10/21 06:23:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.3 $ $Date: 1999/11/03 07:55:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpstat - tape status display */
@@ -22,7 +22,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	int c, i, n;
+	int c, i;
 	struct drv_status drv_status[CA_MAXNBDRIVES];
 	char fulldrivename[18];
 	char hostname[CA_MAXHOSTNAMELEN+1];
@@ -50,7 +50,7 @@ char	**argv;
 	if (c > 0) {
 		if (p = strchr (hostname, '.')) *p = '\0';
 		printf ("userid     jid  dgn        stat dvn                 rl  vsn    vid\n");
-		for (i = 0; i < n; i++) {
+		for (i = 0; i < c; i++) {
 			if (drv_status[i].asn == 0) {
 				if (drv_status[i].status == 0)
 					strcpy (status, "down");
