@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.25 $ $Date: 2000/03/15 14:44:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.26 $ $Date: 2000/03/15 15:00:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -297,6 +297,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     rc = PCLOSE(stgupdc_fd);
     signal(SIGCHLD,SIG_IGN);
+    save_serrno = rc;
 #endif /* !USE_STAGECMD */
 
     if ( rc == 0 &&  tapereq->mode == WRITE_DISABLE && *newpath != '\0' && 
@@ -309,12 +310,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
     if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
-        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s\n",
-                 rc,newpath);
+        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s, serrno=%d\n",
+                 rc,newpath,save_serrno);
         if ( rc != 0 ) {
             rtcpd_AppendClientMsg(NULL,file,
                            "stageupdc failed, rc=%d, path=%s\n",rc,newpath);
-            if ( rc != ENOSPC ) rtcpd_SetReqStatus(NULL,file,rc,
+            if ( save_serrno != ENOSPC ) rtcpd_SetReqStatus(NULL,file,rc,
                                                    RTCP_FAILED | RTCP_SYERR);
             else rtcpd_SetReqStatus(NULL,file,rc,RTCP_FAILED | RTCP_USERR);
             return(-1);
