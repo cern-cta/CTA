@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.47 2003/08/28 14:20:39 jdurand Exp $
+ * $Id: stagestat.c,v 1.48 2003/10/31 13:15:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.47 $ $Date: 2003/08/28 14:20:39 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.48 $ $Date: 2003/10/31 13:15:23 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1350,7 +1350,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		/* buf is a pointer to an acctstage64 record: OK */
 		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE64 record, expected %d\n",c,(int) max_to_read ? max_to_read : sizeof(struct acctstage64));
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE64 record, expected %d\n",c,(int) (max_to_read ? max_to_read : sizeof(struct acctstage64)));
 			else
 				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
@@ -1374,7 +1374,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
 		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE2 record, expected %d\n",c,(int) max_to_read ? max_to_read : accthdr->len);
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE2 record, expected %d\n",c,(int) (max_to_read ? max_to_read : accthdr->len));
 			else
 				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
@@ -1455,7 +1455,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
 		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE record, expected %d\n",c,(int) max_to_read ? max_to_read : accthdr->len);
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE record, expected %d\n",c,(int) (max_to_read ? max_to_read : accthdr->len));
 			else
 				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
