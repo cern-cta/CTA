@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.9 2000/02/02 15:03:55 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.10 2000/05/19 14:21:16 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -51,7 +51,7 @@ database stage {         /* STAGE Database Description */
     char charconv;       /* Character conversion */
     char E_Tflags;       /* SKIPBAD, KEEPFILE, NOTRLCHK */
     unique key stgcat_tape_per_reqid {
-      order ascending;
+      order none;
       reqid;
     };
   };
@@ -78,7 +78,7 @@ database stage {         /* STAGE Database Description */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char Xparm[23];
     unique key stgcat_disk_per_reqid {
-      order ascending;
+      order none;
       reqid;
     };
   };
@@ -101,7 +101,7 @@ database stage {         /* STAGE Database Description */
     char keep;           /* Keep data on disk after successful stagewrt */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     unique key stgcat_hsm_per_reqid {
-      order ascending;
+      order none;
       reqid;
     };
   };
@@ -125,7 +125,7 @@ database stage {         /* STAGE Database Description */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char Xparm[23];
     unique key stgcat_alloc_per_reqid {
-      order ascending;
+      order none;
       reqid;
     };
   };
@@ -133,7 +133,7 @@ database stage {         /* STAGE Database Description */
     int reqid;          /* Request (not necessarly unique) ID */
     char upath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     key stgcat_link_per_reqid {
-      order ascending;
+      order none;
       reqid;
       upath;
     };
