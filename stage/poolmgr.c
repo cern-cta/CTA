@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.50 2000/11/17 08:25:20 jdurand Exp $
+ * $Id: poolmgr.c,v 1.51 2000/11/21 10:40:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.50 $ $Date: 2000/11/17 08:25:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.51 $ $Date: 2000/11/21 10:40:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,6 +56,7 @@ extern int req2argv _PROTO((char *, char ***));
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int maxfds;
+extern int reqid;
 
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
@@ -1442,6 +1443,8 @@ int migpoolfiles(migr_p)
     pid_t child_pid;
 
 	strcpy (func, "migpoolfiles");
+	/* We reset the reqid (we are in a child) */
+	reqid = 0;
 
 #ifdef STAGER_DEBUG
     stglogit(func, "### Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
