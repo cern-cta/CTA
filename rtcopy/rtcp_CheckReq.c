@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.40 $ $Date: 2000/08/29 10:38:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.41 $ $Date: 2000/08/29 14:28:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -627,7 +627,7 @@ int rtcp_CheckReq(SOCKET *client_socket,
         } CLIST_ITERATE_END(tl->file,fl);
         if ( tot_nb_filereqs > 0 && nb_filereqs == 0 ) {
             rtcp_log(LOG_ERR,"rtcp_CheckReq(): All filerequests already finished. Nothing to do!\n");
-            sprintf(errmsgtxt,"%s\n",RT127,CMD(tapereq->mode));
+            sprintf(errmsgtxt,RT127,CMD(tapereq->mode));
             serrno = SEINTERNAL;
             file = NULL;
             SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
