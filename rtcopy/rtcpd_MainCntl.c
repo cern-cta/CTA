@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.17 $ $Date: 2000/01/21 16:40:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.18 $ $Date: 2000/01/24 17:04:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -543,12 +543,14 @@ void rtcpd_SetProcError(int code) {
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
         proc_cntl.ProcError = RTCP_FAILED;
     }
-    if ( (rc & (RTCP_FAILED | RTCP_EOD)) != 0 && databufs != NULL ) {
-        for (i=0;i<nb_bufs;i++) {
-            if ( databufs[i] != NULL ) {
-                (void)Cthread_mutex_lock_ext(databufs[i]->lock);
-                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+    if ( (rc & (RTCP_FAILED | RTCP_EOD)) != 0 ) {
+        if ( databufs != NULL ) {
+            for (i=0;i<nb_bufs;i++) {
+                if ( databufs[i] != NULL ) {
+                    (void)Cthread_mutex_lock_ext(databufs[i]->lock);
+                    (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                    (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                }
             }
         }
         (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
@@ -577,7 +579,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
                         int severity) {
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
-    int rc;
+    int rc,i;
 
     rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() status=%d, severity=%d\n",
              status,severity);
@@ -624,6 +626,29 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
         }
     }
     (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
+    if ( (severity & (RTCP_FAILED | RTCP_EOD)) != 0 ) {
+        if ( databufs != NULL ) {
+            for (i=0;i<nb_bufs;i++) {
+                if ( databufs[i] != NULL ) {
+                    (void)Cthread_mutex_lock_ext(databufs[i]->lock);
+                    (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                    (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                }
+            }
+        }
+        (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+        (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+        (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+
+        (void)Cthread_mutex_lock_ext(proc_cntl.ReqStatus_lock);
+        (void)Cthread_cond_broadcast_ext(proc_cntl.ReqStatus_lock);
+        (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
+
+        (void)Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
+        (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
+        (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
+    }
+
     return;
 }
 

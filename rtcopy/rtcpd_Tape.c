@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.17 $ $Date: 2000/01/21 15:53:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.18 $ $Date: 2000/01/24 17:04:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -89,7 +89,6 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(p
 roc_cntl): %s\n",
             sstrerror(serrno));
-        rtcpd_SetProcError(RTCP_FAILED);
         return(-1);
     }
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
@@ -97,7 +96,6 @@ roc_cntl): %s\n",
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_e
 xt(proc_cntl): %s\n",
             sstrerror(serrno));
-        rtcpd_SetProcError(RTCP_FAILED);
         return(-1);
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -105,7 +103,6 @@ xt(proc_cntl): %s\n",
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext
 (proc_cntl): %s\n",
                  sstrerror(serrno));
-        rtcpd_SetProcError(RTCP_FAILED);
         return(-1);
     }
     return(0);
@@ -117,7 +114,7 @@ xt(proc_cntl): %s\n",
 static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         tape_list_t *tape, 
                         file_list_t *file) {
-    int nb_bytes, rc, i, j, last_sz, blksiz, lrecl;
+    int nb_bytes, rc, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, proc_err;
     char *convert_buffer = NULL;
     void *convert_context = NULL;
@@ -189,7 +186,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
             databufs[i]->nb_waiters--;
-            if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
+            rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( (convert & FIXVAR) != 0 ) {
@@ -486,7 +484,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * Has something fatal happened while we were occupied
          * writing to the tape?
          */
-        if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
+        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
             if ( (convert & FIXVAR) != 0 ) {
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( convert_context != NULL ) free(convert_context);
@@ -606,7 +605,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
             databufs[i]->nb_waiters--;
-            if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
+            rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 break;
@@ -896,7 +896,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * Has something fatal happened while we were occupied
          * reading from the tape?
          */
-        if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) break;
+        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) break;
     } /* for (;;) */
     if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
@@ -911,19 +912,37 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
  * In addition to the return code from any blocking (or non-blocking) 
  * call we need to check the setting of the global processing error
  * to see if e.g. a disk IO thread has failed.
+ * We have to be careful in setting processing error: if we are reading
+ * a tape the disk IO is behind us and we have to let it finish with
+ * previous file(s). Once it reach the current file it will stop because
+ * the file request status is FAILED. On tape write at the other hand
+ * we are behind the disk IO so we can safely interrupt everything in
+ * case of an error.
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
-    if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
-        if ( rc == -1 ) {\
-            rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
-            if ( rc == -1 && (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
-                rtcpd_SetProcError(RTCP_FAILED); \
-        }\
-        if ( rc == -1 && tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
-        if ( rc == -1 || mode == WRITE_ENABLE ) \
-            (void) tellClient(&client_socket,X,Y,rc); \
-        if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) \
+    rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
+    if ( rc == -1 || (severity & RTCP_FAILED) != 0 || \
+         (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
+         rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
+         if ( mode == WRITE_ENABLE &&  \
+            (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
+             rtcpd_SetProcError(RTCP_FAILED); \
+         if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
+        if ( rc == -1 || mode == WRITE_ENABLE ) { \
+            (void) tellClient(&client_socket,X,Y,-1); \
+            (void) rtcpd_stageupdc(nexttape,nextfile); \
+        } \
+        if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
+            if ( rc == -1 || mode == WRITE_ENABLE ) { \
+                (void) tellClient(&client_socket,X,Y,-1); \
+                (void) rtcpd_stageupdc(nexttape,nextfile); \
+            } \
             (void)rtcpd_Release((X),NULL); \
+            if ( mode == WRITE_ENABLE ) rtcpd_SetProcError(severity); \
+        } else { \
+            tape->local_retry++; \
+            if ( mode == WRITE_ENABLE ) (void) tellClient(&client_socket,X,Y,0); \
+        } \
         (void) tellClient(&client_socket,NULL,NULL,-1); \
         rtcp_CloseConnection(&client_socket); \
         if ( rc == -1 ) return((void *)&failure); \
@@ -1021,10 +1040,15 @@ void *tapeIOthread(void *arg) {
              * file section number is 1 for all files on first volume. Only
              * the last file can span over several volumes and in this case
              * its file section number is incremented for each new volume.
+             * The tape file sequence number must be the same as for the
+             * last file on previous volume (Ctape does not store this
+             * information).
              */
             if ( nexttape == tape ) nextfile->tape_fsec = 1;
             else {
                 nextfile->tape_fsec = nexttape->prev->file->tape_fsec + 1;
+                nextfile->filereq.tape_fseq = 
+                          nexttape->prev->file->filereq.tape_fseq;
                 if ( nexttape->prev->file->eovflag != 1 ) {
                     /* 
                      * More volumes than needed have been specified. This
@@ -1186,23 +1210,25 @@ void *tapeIOthread(void *arg) {
                              * No second volume specified
                              */
                             rtcpd_AppendClientMsg(NULL,nextfile,RT124,
-                                                  "CPDSKTP");
+                               (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
                             if ( nexttape->tapereq.mode == WRITE_ENABLE )
                                 serrno = ENOSPC;
                             else
                                 serrno = EFBIG;
                         } else {
                            rtcpd_AppendClientMsg(NULL,nextfile,RT127,
-                                                  "CPDSKTP");
+                               (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
                            serrno = EINVAL;
                         }
                         rtcpd_SetReqStatus(NULL,nextfile,serrno,
                             RTCP_FAILED | RTCP_USERR);
-                        tellClient(&client_socket,NULL,nextfile,-1);
-                        TP_STATUS(RTCP_PS_STAGEUPDC);
-                        rc = rtcpd_stageupdc(nexttape,nextfile);
-                        TP_STATUS(RTCP_PS_NOBLOCKING);
-                        rtcpd_SetProcError(RTCP_FAILED);
+                        if ( mode == WRITE_ENABLE ) {
+                            tellClient(&client_socket,NULL,nextfile,-1);
+                            TP_STATUS(RTCP_PS_STAGEUPDC);
+                            rc = rtcpd_stageupdc(nexttape,nextfile);
+                            TP_STATUS(RTCP_PS_NOBLOCKING);
+                            rtcpd_SetProcError(RTCP_FAILED);
+                        }
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
                         TP_STATUS(RTCP_PS_NOBLOCKING);
