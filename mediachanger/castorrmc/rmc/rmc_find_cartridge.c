@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2002 by CERN/IT/DS/HSM
+ * Copyright (C) 2002-2003 by CERN/IT/DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_find_cartridge.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:45:28 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_find_cartridge.c,v $ $Revision: 1.3 $ $Date: 2003/10/29 12:51:21 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      rmc_find_cartridge - find cartridge(s) in a remote SCSI robot */
@@ -35,7 +35,6 @@ struct smc_element_info *element_info;
 	gid_t gid;
 	int i;
 	int msglen;
-	int nbavail;
 	char *q;
 	char *rbp;
 	char repbuf[REPBUFSZ];
