@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2004/06/30 14:04:03 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2004/07/28 15:55:58 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -324,7 +324,7 @@ NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) 
 
 NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
 
-MakeDepLibrary(shlib,shift)
+MakeDepSharedLibrary(shlib,shift)
 
 MakeDepSharedLibrary(shlib,castorCommonOra)
 
