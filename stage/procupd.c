@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.85 2001/10/01 11:55:43 jdurand Exp $
+ * $Id: procupd.c,v 1.86 2001/11/30 12:01:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.85 $ $Date: 2001/10/01 11:55:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.86 $ $Date: 2001/11/30 12:01:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -421,7 +421,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 					if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						c = SYERR;
 						goto reply;
 					}
@@ -444,7 +444,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				savereqs();
 				/* We try to find another entry immediately */
 				if (pool_user == NULL)
-					pool_user = "stage";
+					pool_user = STAGERGENERICUSER;
 				if ((c = build_ipath (NULL, stcp, pool_user, 0)) < 0) {
 					stcp->status |= WAITING_SPC;
 					/* But add this request to the waiting queue */
@@ -580,6 +580,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
+
+	/* Here stcp points to the found entry */
+	/* and index_found points to the index starting at stcs */
 
 	if ((IS_RC_OK(rc) || IS_RC_WARNING(rc)) &&
 		wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
@@ -733,7 +736,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 		if (stcp->status == STAGEIN) {
 			char tmpbuf[21];
 
-			if (rfio_stat (stcp->ipath, &st) == 0) {
+			PRE_RFIO;
+			if (RFIO_STAT(stcp->ipath, &st) == 0) {
 				stcp->actual_size = (u_signed64) st.st_size;
 				wfp->size_yet_recalled = (u_signed64) st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
@@ -777,7 +781,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 #endif
 			} else {
-				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				stcp->actual_size += (u_signed64) size;
@@ -838,7 +842,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			}
 			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0, 0) < 0)
 				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
-								 "rfio_unlink", rfio_serror());
+								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 			check_coff_waiting_on_req (wfp->subreqid, LAST_TPFILE);
 			check_waiting_on_req (wfp->subreqid, STG_FAILED);
 		}
@@ -881,7 +885,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		}
 		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
-							 "rfio_unlink", rfio_serror());
+							 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 		/* Instead of asking immediately for a garbage collector, we give it another immediate try */
 		/* by asking for another filesystem */
 		if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0)) < 0) {
@@ -973,8 +977,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 					ifileclass = upd_fileclass(NULL,stcp);
 				else
 					ifileclass = -1;
+				/*
+				 * stcp, here, already points to the entry for whith stcp->reqid == wfp->subreqid
+				 */
+				/*
 				for (stcp = stcs; stcp < stce; stcp++)
 					if (stcp->reqid == wfp->subreqid) break;
+				*/
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (! stcp->keep && stcp->nbaccesses <= 1) {
@@ -1156,7 +1165,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 									/* We can delete this entry */
 									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0) < 0) {
 										sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
-													 "rfio_unlink", rfio_serror());
+													 RFIO_UNLINK_FUNC(stcp_found->ipath), rfio_serror());
 									}
 								}
 							}
@@ -1242,6 +1251,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 							(stcp_other_migration_found != NULL)
 							) break;
 						if (stcp_search->reqid == 0) break;
+						if (stcp_search == stcp) continue;
 						if ((save_stcp->poolname[0] != '\0') &&
 							(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
 						if (! (	(strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
@@ -1458,6 +1468,7 @@ void update_hsm_a_time(stcp)
 	switch (stcp->t_or_d) {
 	case 'm':
 		/* HPSS */
+		PRE_RFIO;
 		if (rfio_stat(stcp->u1.m.xfile, &statbuf) == 0) {
 			stcp->a_time = statbuf.st_mtime;
 		} else {
@@ -1480,5 +1491,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Monday 01 October, 2001 at 12:36:06 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 14 November, 2001 at 18:14:13 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
