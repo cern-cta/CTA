@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.25 2001/07/23 09:10:05 jdurand Exp $
+ * $Id: stage_api.c,v 1.26 2001/09/18 21:09:17 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -135,6 +135,8 @@ int DLL_DECL rc_castor2shift(rc)
   /* Input  is a CASTOR return code (usually serrno) */
   /* Output is a SHIFT  return code (usually process return code) */
   switch (rc) {
+  case ETHELD:
+    return(ETHELDERR);
   case ERTBLKSKPD:
     return(BLKSKPD);
   case ERTTPE_LSZ:
@@ -495,6 +497,15 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
 
+  /* Will we go over the maximum socket size (we say -1000 just to be safe v.s. header size) */
+  /* And anyway MAX_NETDATA_SIZE is alreayd 1MB by default which is high! */
+  if (sendbuf_size > MAX_NETDATA_SIZE) {
+    serrno = ESTMEM;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -573,7 +584,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       serrno = USERR;
       break;
     }
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -1034,6 +1045,15 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   }
   sendbuf_size += (nstcp_input * sizeof(struct stgcat_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
+  /* Will we go over the maximum socket size (we say -1000 just to be safe v.s. header size) */
+  /* And anyway MAX_NETDATA_SIZE is alreayd 1MB by default which is high! */
+  if (sendbuf_size > MAX_NETDATA_SIZE) {
+    serrno = ESTMEM;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -1078,7 +1098,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
     if ((c == 0) || (serrno == EINVAL)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -1407,7 +1427,15 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   }
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
-
+  /* Will we go over the maximum socket size (we say -1000 just to be safe v.s. header size) */
+  /* And anyway MAX_NETDATA_SIZE is alreayd 1MB by default which is high! */
+  if (sendbuf_size > MAX_NETDATA_SIZE) {
+    serrno = ESTMEM;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -1471,7 +1499,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -1741,6 +1769,15 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
 
+  /* Will we go over the maximum socket size (we say -1000 just to be safe v.s. header size) */
+  /* And anyway MAX_NETDATA_SIZE is alreayd 1MB by default which is high! */
+  if (sendbuf_size > MAX_NETDATA_SIZE) {
+    serrno = ESTMEM;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -1805,7 +1842,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
