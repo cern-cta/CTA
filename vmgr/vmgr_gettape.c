@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.5 $ $Date: 2000/02/16 13:35:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.6 $ $Date: 2000/03/31 13:23:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.5 $ $Date:
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, int *fseq, unsigned int *blockid)
+vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, int *fseq)
 {
 	int c;
 	char func[16];
@@ -31,7 +31,7 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[41];
+	char repbuf[37];
 	char *sbp;
 	struct vmgr_api_thread_info *thip;
 	char sendbuf[REQBUFSZ];
@@ -107,9 +107,6 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 		unmarshall_LONG (rbp, n);
 		if (fseq)
 			*fseq = n;
-		unmarshall_LONG (rbp, n);
-		if (blockid)
-			*blockid = n;
 	}
 	return (c);
 }
