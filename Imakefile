@@ -162,3 +162,8 @@ depend:
 	done ;
 
 #endif
+
+#ifndef _WIN32
+doc: tools/doxyconfig
+	doxygen tools/doxyconfig
+#endif
