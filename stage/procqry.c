@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.35 2000/11/20 17:44:50 jdurand Exp $
+ * $Id: procqry.c,v 1.36 2000/11/24 14:05:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.35 $ $Date: 2000/11/20 17:44:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.36 $ $Date: 2000/11/24 14:05:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.35 $ $Date: 200
 #include <serrno.h>
 #include "osdep.h"
 #include "Cgrp.h"
+#include "rfio_api.h"
 
 void procqryreq _PROTO((char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
