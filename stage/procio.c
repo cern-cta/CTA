@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.150 2002/01/15 08:33:31 jdurand Exp $
+ * $Id: procio.c,v 1.151 2002/01/18 08:32:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.150 $ $Date: 2002/01/15 08:33:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.151 $ $Date: 2002/01/18 08:32:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4388,20 +4388,19 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed)
 			return(USERR);
 		}
 		correct_size = (u_signed64) filemig_stat.st_size;
-		/* We always guarantee it is a new version if stcp current status is STAGEOUT or if we are able to */
-		/* detect the file was modified without telling us - there is clock synchronization hole in here */
-		if ((filemig_stat.st_mtime > stcp->a_time) || ((stcp->status == STAGEOUT) && (! was_put_failed))) {
+		/* We always guarantee it is a new version if stcp current status is STAGEOUT */
+		if ((stcp->status == STAGEOUT) && (! was_put_failed)) {
 			if (hsmsize > 0) {
 				if (Cnsfilestat.status == 'm') {
 					/* If this file already has some migrated stuff we say to the user that we are going to recreate it */
 					sendrep (rpfd, MSG_ERR,
-								"STG98 - %s, size=%s, has mtime > mtime known to stager - renewed\n",
+								"STG98 - %s, size=%srenewed\n",
 								stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
 					forced_Cns_creatx = 1;
 				} else {
     	          /* Otherwise we just log it for our purpose */
 					stglogit (func, 
-								"STG98 - %s, size=%s, has mtime > mtime known to stager - renewed\n",
+								"STG98 - %s, size=%s renewed\n",
 								stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
 				}
 				forced_Cns_setfsize = 1;
@@ -4411,7 +4410,7 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed)
             }
 		} else {
 			if ((correct_size > 0) && (correct_size == hsmsize)) {
-				/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
+				/* Same size and > 0 we assume user asks for a new copy */
 				return(0);
 			} else if (correct_size <= 0) {
 				sendrep (rpfd, MSG_ERR,
