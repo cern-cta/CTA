@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/09 13:04:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/09 17:20:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -215,7 +215,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillRep(castor::IAddre
       break;
     default :
       castor::exception::InvalidArgument ex;
-      ex.getMessage() << "fillRep called on type " << type 
+      ex.getMessage() << "fillRep called for type " << type 
                       << " on object of type " << obj->type() 
                       << ". This is meaningless.";
       throw ex;

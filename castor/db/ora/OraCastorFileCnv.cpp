@@ -233,7 +233,7 @@ void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
       break;
     default :
       castor::exception::InvalidArgument ex;
-      ex.getMessage() << "fillRep called on type " << type 
+      ex.getMessage() << "fillRep called for type " << type 
                       << " on object of type " << obj->type() 
                       << ". This is meaningless.";
       throw ex;

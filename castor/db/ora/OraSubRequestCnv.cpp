@@ -210,7 +210,7 @@ void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
       break;
     default :
       castor::exception::InvalidArgument ex;
-      ex.getMessage() << "fillRep called on type " << type 
+      ex.getMessage() << "fillRep called for type " << type 
                       << " on object of type " << obj->type() 
                       << ". This is meaningless.";
       throw ex;
@@ -496,7 +496,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjFileRequest(castor::stager::SubRe
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (u_signed64)rset->getDouble(11);
+  u_signed64 requestId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

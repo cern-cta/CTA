@@ -903,7 +903,7 @@ void CppCppOraCnvWriter::writeFillRep() {
   *m_stream << getIndent()
             << "castor::exception::InvalidArgument ex;"
             << endl << getIndent()
-            << "ex.getMessage() << \"fillRep called on type \" << type "
+            << "ex.getMessage() << \"fillRep called for type \" << type "
             << endl << getIndent()
             << "                << \" on object of type \" << obj->type() "
             << endl << getIndent()
@@ -1039,6 +1039,8 @@ void CppCppOraCnvWriter::writeFillObj() {
       } else if  (as->type.multiRemote == MULT_N) {
         writeBasicMultNFillObj(as);
       }
+    } else {
+      n++;
     }
   }
 }
