@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.46 2000/06/14 08:40:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.47 2000/06/14 10:49:33 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.46 $ $Date: 2000/06/14 08:40:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.47 $ $Date: 2000/06/14 10:49:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1147,20 +1147,7 @@ void checkwaitq()
 					break;
 				case STAGEPUT:
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						if (wqp->status != CLEARED) {
-							stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
-						} else {
-							if (wfp->waiting_on_req > 0) {
-								delreq (stcp,0);
-								update_migpool(stcp,-1);
-								continue;
-							}
-							if (delfile (stcp, 1, 0, 1,"req cleared", wqp->uid, wqp->gid, 0) < 0)
-								stglogit (func, STG02, stcp->ipath,"rfio_unlink", rfio_serror());
-							check_waiting_on_req (wfp->subreqid,STG_FAILED);
-							stcp->status = STAGEOUT | PUT_FAILED;
-                      
-						}
+						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
 					}
