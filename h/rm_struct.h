@@ -146,7 +146,6 @@ struct Crm_filesystem {
 	int ioratefrequency;
 	struct Crm_filesystem *next;
 	char state[CA_MAXFSSTATUSLEN+1];  /* state of the filesystem ("Available", "Disabled" or "Draining") */
-	u_signed64 reservedspace;
 };
 
 #endif /* __rm_struct_h */
