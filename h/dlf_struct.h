@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_struct.h,v $ $Revision: 1.3 $ $Date: 2003/11/06 07:35:14 $ CERN IT-ADC Vitaly Motyakov
  */
 
 
@@ -114,7 +114,11 @@ typedef struct _dlf_log_message
   int time_usec;                 /* Time microseconds */
   Cuuid_t request_id;
   char hostname[CA_MAXHOSTNAMELEN+1];
+#ifdef _WIN32
+  int pid;
+#else
   pid_t pid;
+#endif
   int cid;                                /* Cthread identifier */
   U_HYPER ns_invariant;
   U_BYTE facility_no;
