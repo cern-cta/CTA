@@ -630,14 +630,16 @@
 			    crlf
 		   )
 		)
+		(bind ?thisFactor 0.)
+		(if (> ?diskserverNbTot 0) then
+			(bind ?thisFactor (/ ?thisFilesystemNbTot ?diskserverNbTot))
+		)
+		(if (> ?diskserverIo 0.) then
+			(bind ?thisFactor (/ ?thisFilesystemIoTot ?diskserverIo))
+		)
 		(bind ?thisWeight
 			(abs
-				(* ?diskserverWeight
-					(+
-						(/ ?thisFilesystemNbTot ?diskserverNbTot )
-						(/ ?thisFilesystemIoTot ?diskserverIo    )
-					)
-				)
+				(* ?diskserverWeight ?thisFactor)
 			)
 		 )
 		(if (< ?thisWeight .1) then
