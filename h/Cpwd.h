@@ -1,5 +1,5 @@
 /*
- * $Id: Cpwd.h,v 1.3 2000/03/14 09:49:07 jdurand Exp $
+ * $Id: Cpwd.h,v 1.4 2000/03/14 14:40:27 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * $RCSfile: Cpwd.h,v $ $Revision: 1.3 $ $Date: 2000/03/14 09:49:07 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cpwd.h,v $ $Revision: 1.4 $ $Date: 2000/03/14 14:40:27 $ CERN IT-PDP/DM Olof Barring
  */
 
 

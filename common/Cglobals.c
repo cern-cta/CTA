@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.12 2000/03/14 09:48:40 jdurand Exp $
+ * $id$
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.12 $ $Date: 2000/03/14 09:48:40 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.13 $ $Date: 2000/03/14 14:38:32 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
