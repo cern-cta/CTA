@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.45 $ $Date: 2000/09/15 16:52:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.46 $ $Date: 2000/09/18 11:43:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -640,7 +640,7 @@ int rtcpd_Position(tape_list_t *tape,
                  * Problem with the tape. Don't retry.
                  */
                 filereq->err.max_tpretry = 0;
-                severity = RTCP_FAILED | RTCP_SYERR;
+                severity = RTCP_FAILED | RTCP_USERR;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             case EIO:        /* I/O error */
