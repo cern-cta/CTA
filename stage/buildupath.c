@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.19 2002/04/30 12:24:03 jdurand Exp $
+ * $Id: buildupath.c,v 1.20 2003/09/09 15:25:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.19 $ $Date: 2002/04/30 12:24:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.20 $ $Date: 2003/09/09 15:25:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,10 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.19 $ $Date: 
 #include "Cglobals.h"
 #include "serrno.h"
 #include "stage_api.h"
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 
 static int cwd_key = -1;
 static int hostname_key = -1;
@@ -82,12 +78,12 @@ static int init_cwd_hostname()
 #else
 	while ((p = getcwd (cwd, (size_t) 256)) == NULL && errno == ETIMEDOUT) {
 		if (n++ == 0)
-			stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
+			stage_errmsg(func, STG02, "", "getcwd", strerror(errno));
 		stage_sleep (RETRYI);
 	}
 #endif
 	if (p == NULL) {
-		stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
+		stage_errmsg(func, STG02, "", "getcwd", strerror(errno));
 		return (SESYSERR);
 	}
 	return (0);
@@ -148,7 +144,7 @@ static int resolvelinks(argvi, buf, buflen, req_type)
 	strcpy (linkbuf, dir);	/* links are not supported */
 #else
 	if (chdir (dir) < 0) {
-		stage_errmsg(func, STG02, dir, "chdir", sys_errlist[errno]);
+		stage_errmsg(func, STG02, dir, "chdir", strerror(errno));
 		if (req_type == STAGECLR || req_type == STAGE_CLR) {	/* let stgdaemon try */
 			if (strlen (dir) + 1 > buflen) return (-1);
 			strcpy (buf, dir);
@@ -157,11 +153,11 @@ static int resolvelinks(argvi, buf, buflen, req_type)
 			return (-1);
 	}
 	if (getcwd (linkbuf, sizeof(linkbuf)) == NULL) {
-		stage_errmsg(func, STG02, argvi, "getcwd", sys_errlist[errno]);
+		stage_errmsg(func, STG02, argvi, "getcwd", strerror(errno));
 		return (-1);
 	}
 	if (chdir (cwd) < 0) {
-		stage_errmsg(func, STG02, cwd, "chdir", sys_errlist[errno]);
+		stage_errmsg(func, STG02, cwd, "chdir", strerror(errno));
 		return (-1);
 	}
 #endif
