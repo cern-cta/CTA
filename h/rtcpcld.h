@@ -84,6 +84,8 @@
                     (_dbErr = rtcpcld_fixStr(#statement)), \
                     RTCPCLD_LOG_WHERE \
                     ); \
+    if ( _dbErr != NULL ) free(_dbErr); \
+    _dbErr = NULL; \
     serrno = _save_serrno; \
     statement; \
     _save_serrno = serrno; \
