@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.154 2001/09/25 08:23:39 jdurand Exp $
+ * $Id: stager.c,v 1.155 2001/10/07 07:13:08 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.154 $ $Date: 2001/09/25 08:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.155 $ $Date: 2001/10/07 07:13:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -604,7 +604,7 @@ int main(argc, argv)
 				SAVE_EID;
 				sendrep(rpfd, MSG_ERR, "### HSM file is of unknown type ('%c')\n",stcp->t_or_d);
 				RESTORE_EID;
-				exit(SYERR);
+				exit(USERR);
 			}
 		}
 		if ((nhpss == 0 && ncastor == 0) ||
@@ -613,7 +613,7 @@ int main(argc, argv)
 			sendrep(rpfd, MSG_ERR, "### Recognized %d HPSS files, %d CASTOR files\n",nhpss,ncastor);
 			RESTORE_EID;
 			free(stcs);
-			exit(SYERR);
+			exit(USERR);
 		}
 	}
 
@@ -624,7 +624,7 @@ int main(argc, argv)
     	    sendrep(rpfd, MSG_ERR, "### concat_off option not allowed in write-to-tape\n");
 			RESTORE_EID;
 			free(stcs);
-	        exit(SYERR);
+	        exit(USERR);
 		}
 		if (! Aflag) {
 			/* By precaution, we allow concat_off only for deferred allocation */
@@ -632,7 +632,7 @@ int main(argc, argv)
     	    sendrep(rpfd, MSG_ERR, "### concat_off option allowed only in deffered allocation mode\n");
 			RESTORE_EID;
 			free(stcs);
-	        exit(SYERR);
+	        exit(USERR);
 		}
 		if (use_subreqid != 0) {
 			/* By precaution, we do not allow async callback if concat_off_fseq is set */
@@ -640,7 +640,7 @@ int main(argc, argv)
     	    sendrep(rpfd, MSG_ERR, "### concat_off option is not compatible with async callback\n");
 			RESTORE_EID;
 			free(stcs);
-	        exit(SYERR);
+	        exit(USERR);
 		}
 	}
     if (use_subreqid != 0) {
@@ -651,7 +651,7 @@ int main(argc, argv)
     		    sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
 				RESTORE_EID;
 				free(stcs);
-		        exit(SYERR);
+		        exit(USERR);
 			}
 		}
     }
@@ -738,7 +738,7 @@ int main(argc, argv)
 						sendrep (rpfd, MSG_ERR, STG116);
 						RESTORE_EID;
 						free(stcs);
-						exit(SYERR);
+						exit(USERR);
 					} else {
 						/* We check that they are all the same */
 						for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
@@ -754,7 +754,7 @@ int main(argc, argv)
 										stcp->u1.h.tppool);
 								RESTORE_EID;
 								free(stcs);
-								exit(SYERR);
+								exit(USERR);
 							}
 						}
 						/* Everything is ok */
@@ -765,7 +765,7 @@ int main(argc, argv)
 					sendrep (rpfd, MSG_ERR, STG121);
 					RESTORE_EID;
 					free(stcs);
-					exit(SYERR);
+					exit(USERR);
 				}
 			}
 #ifdef STAGER_DEBUG
@@ -4079,6 +4079,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Tuesday 25 September, 2001 at 10:22:49 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 07 October, 2001 at 09:12:22 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
