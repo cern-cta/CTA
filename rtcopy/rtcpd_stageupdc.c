@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.46 $ $Date: 2000/09/28 09:56:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.47 $ $Date: 2000/11/03 17:23:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -135,6 +135,16 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
+        /*
+         * Local status is used for tppos only (filcp uses the local
+         * variable "retval"). We have to reset the status in case
+         * the tape file has already been entirely copied into memory and
+         * there was a warning (limited by size, blocks skipped or both).
+         * If we don't reset it the tppos will be skipped while the filcp
+         * still reports success, which will completely confuse the stager.
+         */ 
+        if ( status == ERTLIMBYSZ || status == ERTBLKSKPD ||
+             status == ERTMNYPARY ) status = 0;
         if ( filereq->proc_status == RTCP_POSITIONED && status == 0 ||
              (filereq->proc_status == RTCP_FINISHED && 
               (filereq->concat & NOCONCAT_TO_EOD) != 0 && status == ETFSQ) ) { 
