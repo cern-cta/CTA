@@ -1,3 +1,12 @@
+castor (2.0.0-16) unstable; urgency=low
+
+  * New DB schema (improving in particular requestsToDo and al. queries)
+  * Request Replier taking more than one fd at a time
+  * Fault tolerance improvement in recaller/migrator
+  * Floating point exception fix in rmnode when there is no xfs filesystem
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri,  4 Feb 2005 10:06:56 +0100
+
 castor (2.0.0-15) unstable; urgency=low
 
   * In version 2.0.0-14, the correction factor on i/o stat monitoring was wrongly applied to the number of blocks we get from filesystem stats, instead of the computed rate
