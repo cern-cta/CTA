@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.10 $ $Date: 2000/10/25 13:14:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.11 $ $Date: 2001/08/31 17:25:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -139,6 +139,8 @@ int main(int argc, char *argv[]) {
                     (tmp1->volreq.mode == 0 ? "read" : "write"),
                     tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                     now - tmp1->drvreq.recvtime);
+                if ( *tmp1->drvreq.dedicate != 0 )
+                    fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY)) { 
                  fprintf(stdout,"%s@%s (%d MB) START ReqID %d %s(%s) user (%d,%d) %d secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
@@ -148,6 +150,8 @@ int main(int argc, char *argv[]) {
                     (tmp1->volreq.mode == 0 ? "read" : "write"),
                     tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                     now - tmp1->drvreq.recvtime);
+                if ( *tmp1->drvreq.dedicate != 0 )
+                    fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN) ) {
                  fprintf(stdout,"%s@%s (%d MB) RELEASE jid %d %s(%s) user (%d,%d) %d secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
@@ -157,6 +161,8 @@ int main(int argc, char *argv[]) {
                     (tmp1->volreq.mode == 0 ? "read" : "write"),
                     tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                     now - tmp1->drvreq.recvtime);
+                if ( *tmp1->drvreq.dedicate != 0 )
+                    fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else {
                 fprintf(stdout,"%s@%s (%d MB) UNKNOWN jid %d %s(%s) user (%d,%d) %d secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
@@ -166,6 +172,8 @@ int main(int argc, char *argv[]) {
                     (tmp1->volreq.mode == 0 ? "read" : "write"),
                     tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                     now - tmp1->drvreq.recvtime);
+                if ( *tmp1->drvreq.dedicate != 0 )
+                    fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             }
         } else if ( *tmp1->drvreq.drive != '\0' ) {
             tp = localtime((time_t *)&tmp1->drvreq.recvtime);
