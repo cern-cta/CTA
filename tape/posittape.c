@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.10 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.11 $ $Date: 2002/04/09 05:03:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -16,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.10 $ $Date: 2
 #include "Ctape_api.h"
 #include "serrno.h"
 posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
-	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2)
+	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2, uhl1)
 int tapefd;
 char *path;
 char *devtype;
@@ -31,7 +32,7 @@ int den;
 int flags;
 int Qfirst;
 int Qlast;
-char *vol1, *hdr1, *hdr2;
+char *vol1, *hdr1, *hdr2, *uhl1;
 {
 	char buf[7];
 	int c;
@@ -41,12 +42,12 @@ char *vol1, *hdr1, *hdr2;
 	char func[16];
 	struct tm *localtime(), *tm;
 	int n;
-	int nohdr2;
 	char *p;
 	int pfseq;
 	int rewritetm = 1;	/* An Exabyte 8200 must be positionned on the
 			BOT side of a long filemark before starting to write */
-	char sfseq[7];
+	char sfseq[11];
+	int tmr;		/* tape mark read */
 	char tpfid[CA_MAXFIDLEN+1];
 
 	ENTRY (posittape);
@@ -91,7 +92,7 @@ char *vol1, *hdr1, *hdr2;
 					c = rwndtape (tapefd, path);
 					goto reply;
 				}
-				n = 30000;	/* arbitrary large count */
+				n = INT_MAX;	/* arbitrary large count */
 			}
 			tplogit (func, "trying to skip over %d files\n", n);
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
@@ -212,11 +213,16 @@ char *vol1, *hdr1, *hdr2;
 				goto reply;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
+			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
+			    uhl1, &tmr)) < 0)
+				goto reply;
+			if (c)
+				*cfseq = c;
 			if (*cfseq != fseq) {
 				c = ETLBL;
 				goto reply;
 			}
-			goto gethdr2;
+			goto prthdrs;
 		}
 		if (*cfseq == 0 || fseq == 1 || fsec > 1 || 
 		    (fseq == *cfseq && mode == WRITE_ENABLE)) {
@@ -233,6 +239,11 @@ char *vol1, *hdr1, *hdr2;
 				goto reply;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
+			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
+			    uhl1, &tmr)) < 0)
+				goto reply;
+			if (c)
+				*cfseq = c;
 			if (fsec > 1)	{ /* nth file section in multivolume set */
 				if (*cfseq != fseq && filstat != NEW_FILE) {
 					c = ETLBL;
@@ -254,7 +265,7 @@ char *vol1, *hdr1, *hdr2;
 				if (strcmp (tpfid, fid) == 0) fseq = *cfseq;
 			}
 			if (fseq != *cfseq) {
-				if ((c = skiptpff (tapefd, path, 1))) goto reply;
+				if (tmr == 0 && (c = skiptpff (tapefd, path, 1))) goto reply;
 				if (fseq == -1) {	/* -q n */
 					if ((c = readlbl (tapefd, path, hdr1)) < 0)
 						goto reply;
@@ -274,8 +285,14 @@ char *vol1, *hdr1, *hdr2;
 				if (lblcode == SL) ebc2asc (hdr1, 80);
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
+			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
+			    uhl1, &tmr)) < 0)
+				goto reply;
+			if (c)
+				*cfseq = c;
 			if (fseq > *cfseq)
-				if ((c = skiptpff (tapefd, path, 1))) goto reply;
+				if (tmr == 0 && (c = skiptpff (tapefd, path, 1)))
+					goto reply;
 		}
 #if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
 #if defined(ADSTAR)
@@ -292,7 +309,7 @@ char *vol1, *hdr1, *hdr2;
 			else if (fseq == -2)
 				n = (Qfirst - *cfseq - 1) * 3 + 1;
 			else
-				n = 30000;	/* arbitrary large count */
+				n = INT_MAX;	/* arbitrary large count */
 			tplogit (func, "trying to skip over %d files\n", n);
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
 			if (c > 0) {
@@ -314,6 +331,11 @@ char *vol1, *hdr1, *hdr2;
 					goto reply;
 				}
 				sscanf (hdr1 + 31, "%4d", cfseq);
+				if ((c = gethdr2uhl1 (tapefd, path, lblcode,
+				    hdr1, hdr2, uhl1, &tmr)) < 0)
+					goto reply;
+				if (c)
+					*cfseq = c;
 				if (fseq > 0) {
 					if (filstat != NEW_FILE)
 						usrmsg (func, TP024, sfseq);
@@ -322,7 +344,8 @@ char *vol1, *hdr1, *hdr2;
 					c = ENOENT;
 					goto reply;
 				}
-				if ((c = skiptpff (tapefd, path, 1))) goto reply;
+				if (tmr == 0 && (c = skiptpff (tapefd, path, 1)))
+					goto reply;
 				(*cfseq)++;
 				goto reply;
 			} else
@@ -376,6 +399,11 @@ char *vol1, *hdr1, *hdr2;
 				goto reply;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
+			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
+			    uhl1, &tmr)) < 0)
+				goto reply;
+			if (c)
+				*cfseq = c;
 			if (fseq == -2 &&	/* position by fid */
 			    (Qfirst == 0 || *cfseq >= Qfirst)) {
 				strncpy (tpfid, hdr1 + 4, 17);
@@ -393,7 +421,8 @@ char *vol1, *hdr1, *hdr2;
 				c = ENOENT;
 				goto reply;
 			}
-			if ((c = skiptpff (tapefd, path, 3))) goto reply;
+			if ((c = skiptpff (tapefd, path, (tmr == 0) ? 3 : 2)))
+				goto reply;
 		}
 		if (fseq < *cfseq) {
 			skiptpfb (tapefd, path, (*cfseq - fseq + 1) * 3);
@@ -406,28 +435,19 @@ char *vol1, *hdr1, *hdr2;
 				if (lblcode == SL) ebc2asc (hdr1, 80);
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
-		}
-gethdr2:
-		tplogit (func, "hdr1 = %s\n", hdr1);
-		nohdr2 = 0;
-		if ((c = readlbl (tapefd, path, hdr2)) < 0) goto reply;
-		if (c == 0) {
-			if (lblcode == SL) ebc2asc (hdr2, 80);
-			if (strncmp (hdr2, "HDR2", 4) != 0) {
-				c = ETLBL;
+			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
+			    uhl1, &tmr)) < 0)
 				goto reply;
-			}
+			if (c)
+				*cfseq = c;
+		}
+prthdrs:
+		c = 0;
+		tplogit (func, "hdr1 = %s\n", hdr1);
+		if (*hdr2)
 			tplogit (func, "hdr2 = %s\n", hdr2);
-		}
-		if (c == 1) {
-			c = ETLBL;
-			goto reply;
-		}
-		if (c == 2) {	/* tape mark found */
-			hdr2[0] = '\0';
-			nohdr2 = 1;
-			c = 0;
-		}
+		if (*uhl1)
+			tplogit (func, "uhl1 = %s\n", uhl1);
 		if (filstat != NEW_FILE && *fid) {
 			strncpy (tpfid, hdr1 + 4, 17);
 			tpfid[17] = '\0';
@@ -454,14 +474,14 @@ chkexpdat:
 			if (*cfseq == 1 || fsec > 1) {
 				if ((c = rwndtape (tapefd, path))) goto reply;
 			} else {
-				if ((c = skiptpfb (tapefd, path, nohdr2 ? 2 : 1)))
+				if ((c = skiptpfb (tapefd, path, tmr ? 2 : 1)))
 					goto reply;
 				if (! rewritetm)
 					if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			}
 			goto reply;
 		} else {	/* skip to data */
-			if (! nohdr2)
+			if (! tmr)
 				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 		}
 	}
@@ -471,6 +491,8 @@ finalpos:
 		if ((c = skiptpfb (tapefd, path, 1))) goto reply;
 	}
 reply:
+	if (c < 0 && serrno == ETLBL)
+		c = ETLBL;
 	switch (c) {
 	case ETFSQ:
 		if (fseq == -2)		/* -q u */
@@ -485,4 +507,52 @@ reply:
 		break;
 	}
 	RETURN (c);
+}
+
+gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
+int tapefd;
+char *path;
+int lblcode;
+char *hdr1;
+char *hdr2;
+char *uhl1;
+int *tmr;
+{
+	int c;
+	int cfseq;
+
+	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
+	if (c == 1) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if (c > 1) {	/* tape mark or blank tape found */
+		*hdr2 = '\0';
+		*uhl1 = '\0';
+		*tmr = 1;
+		return (0);
+	}
+	if (lblcode == SL) ebc2asc (hdr2, 80);
+	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
+	if (c == 1) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if (c > 1) {	/* tape mark or blank tape found */
+		*uhl1 = '\0';
+		*tmr = 1;
+		return (0);
+	}
+	if (lblcode == SL) ebc2asc (uhl1, 80);
+	if (strncmp (uhl1, (*hdr1 == 'H') ? "UHL1" : "UTL1", 4)) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	sscanf (uhl1+4, "%10d", &cfseq);
+	*tmr = 0;
+	return (cfseq);
 }
