@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.43 $ $Date: 2000/03/04 13:51:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.44 $ $Date: 2000/03/13 08:56:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1040,7 +1040,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
               (u_signed64)nb_bytes > filereq->maxsize) ) {
             nb_bytes = (int)(filereq->maxsize - file->diskbytes_sofar);
             end_of_dkfile = TRUE;
-            rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
+            rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
         }
         /*
          * If true U-format, re-allocate the lrecl_table[] if needed.

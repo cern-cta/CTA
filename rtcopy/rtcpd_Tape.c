@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.40 $ $Date: 2000/03/06 17:45:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.41 $ $Date: 2000/03/13 08:56:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -256,14 +256,14 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     filereq->maxnbrec ) {
                     databufs[i]->data_length = (int)(filereq->maxnbrec -
                         filereq->nbrecs) * lrecl;
-                    rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
+                    rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
                 }
             } else {
                 if ( filereq->nbrecs + databufs[i]->nbrecs > 
                     filereq->maxnbrec ) {
                     databufs[i]->nbrecs = (int)(filereq->maxnbrec -
                         filereq->nbrecs);
-                    rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
+                    rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
                 }
             }
         }
@@ -312,7 +312,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         if ( filereq->maxnbrec > 0 &&
                              filereq->nbrecs > filereq->maxnbrec ) {
                             spill = nb_bytes = 0;
-                            rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | 
+                            rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | 
                                                                RTCP_LIMBYSZ);
                             break;
                         }
@@ -796,7 +796,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 filereq->nbrecs = filereq->maxnbrec;
                 end_of_tpfile = TRUE;
                 severity = RTCP_OK | RTCP_LIMBYSZ;
-                rtcpd_SetReqStatus(NULL,file,EFBIG,severity);
+                rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,severity);
             }
             /*
              * Check if maxsize has been reached for this file
@@ -804,7 +804,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ((filereq->maxsize > 0) &&
                 (filereq->maxsize <= file->tapebytes_sofar) ) {
                 severity = RTCP_OK | RTCP_LIMBYSZ;
-                rtcpd_SetReqStatus(NULL,file,EFBIG,severity);
+                rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,severity);
                 end_of_tpfile = TRUE;
             }
 
@@ -937,10 +937,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         if ( nb_skipped_blks > 0 ) {
             if ( (severity & RTCP_LIMBYSZ) != 0  ) {
                 severity = RTCP_OK | RTCP_TPE_LSZ;
-                rtcpd_SetReqStatus(NULL,file,EFBIG,severity);
+                rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,severity);
             } else {
                 severity = RTCP_OK | RTCP_BLKSKPD;
-                rtcpd_SetReqStatus(NULL,file,EIO,severity);
+                rtcpd_SetReqStatus(NULL,file,ERTBLKSKPD,severity);
             }
         }
 
@@ -949,7 +949,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          */
         if ( nb_skipped_blks > MAXNBSKIPS ) {
             severity = RTCP_FAILED | RTCP_MNYPARY | RTCP_USERR;
-            rtcpd_SetReqStatus(NULL,file,EIO,severity);
+            rtcpd_SetReqStatus(NULL,file,ERTMNYPARY,severity);
             return(-1);
         }
 
