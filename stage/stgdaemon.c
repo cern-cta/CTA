@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.56 2000/08/07 10:32:50 baud Exp $
+ * $Id: stgdaemon.c,v 1.57 2000/09/02 06:29:28 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.56 $ $Date: 2000/08/07 10:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.57 $ $Date: 2000/09/02 06:29:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1319,11 +1319,21 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 		}
 	}
 	if (remove_hsm) {
-		if (rfio_unlink (stcp->u1.m.xfile) == 0)
-			stglogit (func, STG95, stcp->u1.m.xfile, by);
-		else
-			sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
-							 "rfio_unlink", rfio_serror());
+		if (stcp->t_or_d == 'm') {
+			if (rfio_unlink (stcp->u1.m.xfile) == 0) {
+				stglogit (func, STG95, stcp->u1.m.xfile, by);
+			} else {
+				sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.m.xfile,
+								 "rfio_unlink", rfio_serror());
+			}
+		} else if (stcp->t_or_d == 'h') {
+			if (Cns_unlink (stcp->u1.h.xfile) != 0) {
+				stglogit (func, STG95, stcp->u1.h.xfile, by);
+			} else {
+				sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
+								 "Cns_unlink", sstrerror(serrno));
+			}
+		}
 	}
 	if (dellinks) {
 		for (stpp = stps; stpp < stpe; ) {
@@ -1720,32 +1730,40 @@ upd_stageout(req_type, upath, subreqid)
 					goto upd_stageout_return;
 				}
             } else {
-              if (stcp->t_or_d == 'h') {
-                struct Cns_fileid Cnsfileid;
+				if (stcp->t_or_d == 'h') {
+					struct Cns_fileid Cnsfileid;
+					u_signed64 correct_size;
                 
-                /* This is a CASTOR HSM file */
-                strcpy(Cnsfileid.server,stcp->u1.h.server);
-                Cnsfileid.fileid = stcp->u1.h.fileid;
-                setegid(stcp->gid);
-                seteuid(stcp->uid);
-                if (Cns_setfsize(NULL,&Cnsfileid,(u_signed64) stcp->actual_size) != 0) {
-                  sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
-                           "Cns_setfsize", sstrerror(serrno));
-                  setegid(0);
-                  seteuid(0);
-                  goto upd_stageout_return;
+					/* This is a CASTOR HSM file */
+					strcpy(Cnsfileid.server,stcp->u1.h.server);
+					Cnsfileid.fileid = stcp->u1.h.fileid;
+					setegid(stcp->gid);
+					seteuid(stcp->uid);
+					correct_size = (u_signed64) stcp->actual_size;
+					if (stcp->size && ((u_signed64) (stcp->size * ONE_MB) < correct_size)) {
+						/* If use specified a maxsize of bytes to transfer and if this */
+						/* maxsize is lower than physical file size, then the size of */
+						/* of the migrated file will be the minimum of the twos */
+						correct_size = (u_signed64) (stcp->size * ONE_MB);
+					}
+					if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
+								"Cns_setfsize", sstrerror(serrno));
+						setegid(0);
+						seteuid(0);
+						goto upd_stageout_return;
+					}
+					setegid(0);
+					seteuid(0);
+					stcp->status |= CAN_BE_MIGR;
+					/* We update the corresponding poolname structure */
+					update_migpool(stcp,1);
 				}
-                setegid(0);
-                seteuid(0);
-                stcp->status |= CAN_BE_MIGR;
-                /* We update the corresponding poolname structure */
-                update_migpool(stcp,1);
-              }
-            }
-        } else {
-          stcp->status |= STAGED;
+			}
+		} else {
+			stcp->status |= STAGED;
 		}
-    }
+	}
 	stcp->a_time = time (0);
 	*subreqid = stcp->reqid;
 
