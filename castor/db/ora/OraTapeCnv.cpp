@@ -81,7 +81,7 @@ const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_selectStreamStatementString =
-"SELECT id from Stream WHERE tape = :1";
+"SELECT id from Stream WHERE tape = :1 FOR UPDATE";
 
 /// SQL delete statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_deleteStreamStatementString =
@@ -101,7 +101,7 @@ const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
-"SELECT id from Segment WHERE tape = :1";
+"SELECT id from Segment WHERE tape = :1 FOR UPDATE";
 
 /// SQL delete statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_deleteSegmentStatementString =

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/15 15:48:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/12/17 14:58:10 $ $Author: sponcec3 $
  *
  * 
  *
@@ -89,7 +89,7 @@ const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_deleteS
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE request = :1";
+"SELECT id from SubRequest WHERE request = :1 FOR UPDATE";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_deleteSubRequestStatementString =

@@ -90,7 +90,7 @@ const std::string castor::db::ora::OraFileSystemCnv::s_updateDiskPoolStatementSt
 
 /// SQL select statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_selectDiskCopyStatementString =
-"SELECT id from DiskCopy WHERE fileSystem = :1";
+"SELECT id from DiskCopy WHERE fileSystem = :1 FOR UPDATE";
 
 /// SQL delete statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteDiskCopyStatementString =

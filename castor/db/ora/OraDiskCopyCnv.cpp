@@ -82,7 +82,7 @@ const std::string castor::db::ora::OraDiskCopyCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraDiskCopyCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE diskcopy = :1";
+"SELECT id from SubRequest WHERE diskcopy = :1 FOR UPDATE";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteSubRequestStatementString =

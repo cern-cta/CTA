@@ -90,11 +90,11 @@ const std::string castor::db::ora::OraStreamCnv::s_deleteTapeCopyStatementString
 
 /// SQL select statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
-"SELECT Child from Stream2TapeCopy WHERE Parent = :1";
+"SELECT Child from Stream2TapeCopy WHERE Parent = :1 FOR UPDATE";
 
 /// SQL select statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeStatementString =
-"SELECT id from Tape WHERE stream = :1";
+"SELECT id from Tape WHERE stream = :1 FOR UPDATE";
 
 /// SQL delete statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_deleteTapeStatementString =

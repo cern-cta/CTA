@@ -98,7 +98,7 @@ const std::string castor::db::ora::OraCastorFileCnv::s_updateFileClassStatementS
 
 /// SQL select statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectDiskCopyStatementString =
-"SELECT id from DiskCopy WHERE castorFile = :1";
+"SELECT id from DiskCopy WHERE castorFile = :1 FOR UPDATE";
 
 /// SQL delete statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteDiskCopyStatementString =
@@ -110,7 +110,7 @@ const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateDiskCopyState
 
 /// SQL select statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementString =
-"SELECT id from TapeCopy WHERE castorFile = :1";
+"SELECT id from TapeCopy WHERE castorFile = :1 FOR UPDATE";
 
 /// SQL delete statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTapeCopyStatementString =

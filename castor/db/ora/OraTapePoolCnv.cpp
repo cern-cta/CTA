@@ -88,11 +88,11 @@ const std::string castor::db::ora::OraTapePoolCnv::s_deleteSvcClassStatementStri
 
 /// SQL select statement for member svcClasses
 const std::string castor::db::ora::OraTapePoolCnv::s_selectSvcClassStatementString =
-"SELECT Parent from SvcClass2TapePool WHERE Child = :1";
+"SELECT Parent from SvcClass2TapePool WHERE Child = :1 FOR UPDATE";
 
 /// SQL select statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString =
-"SELECT id from Stream WHERE tapePool = :1";
+"SELECT id from Stream WHERE tapePool = :1 FOR UPDATE";
 
 /// SQL delete statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_deleteStreamStatementString =

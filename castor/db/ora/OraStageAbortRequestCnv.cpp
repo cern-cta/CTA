@@ -89,7 +89,7 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatusStatem
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE request = :1";
+"SELECT id from SubRequest WHERE request = :1 FOR UPDATE";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteSubRequestStatementString =

@@ -89,7 +89,7 @@ const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_deleteStatus
 
 /// SQL select statement for member parameters
 const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_selectQueryParameterStatementString =
-"SELECT id from QueryParameter WHERE  = :1";
+"SELECT id from QueryParameter WHERE  = :1 FOR UPDATE";
 
 /// SQL delete statement for member parameters
 const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_deleteQueryParameterStatementString =

@@ -80,7 +80,7 @@ const std::string castor::db::ora::OraDiskServerCnv::s_deleteTypeStatementString
 
 /// SQL select statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_selectFileSystemStatementString =
-"SELECT id from FileSystem WHERE diskserver = :1";
+"SELECT id from FileSystem WHERE diskserver = :1 FOR UPDATE";
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteFileSystemStatementString =

@@ -80,7 +80,7 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementString =
-"SELECT id from FileSystem WHERE diskPool = :1";
+"SELECT id from FileSystem WHERE diskPool = :1 FOR UPDATE";
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteFileSystemStatementString =
@@ -100,7 +100,7 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_deleteSvcClassStatementStri
 
 /// SQL select statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectSvcClassStatementString =
-"SELECT Child from DiskPool2SvcClass WHERE Parent = :1";
+"SELECT Child from DiskPool2SvcClass WHERE Parent = :1 FOR UPDATE";
 
 //------------------------------------------------------------------------------
 // Constructor
