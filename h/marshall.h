@@ -1,5 +1,5 @@
 /*
- * %W% %G% CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.2 $ $Date: 1999/09/16 15:23:49 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -151,10 +151,10 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 #else
-#define  marshall_HYPER(ptr,n)          { LONG n_ = htonl(*((u_long *)((char *)&(n)+LONGSIZE))); \
+#define  marshall_HYPER(ptr,n)          { LONG n_ = htonl(*((U_LONG *)((char *)&(n)+LONGSIZE))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = htonl(*((u_long *)&(n))); \
+					  n_ = htonl(*((U_LONG *)&(n))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
 					}
@@ -162,11 +162,11 @@ typedef  char*          bitvct; /* bit vector type definition           */
 #define  unmarshall_HYPER(ptr,n)        { LONG n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
 					  *((LONG *)((char *)&(n)+LONGSIZE)) = \
-						ntohl((u_long)(n_)); \
+						ntohl((U_LONG)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					  n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)&(n)) = ntohl((u_long)(n_)); \
+					  *((LONG *)&(n)) = ntohl((U_LONG)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 #endif
