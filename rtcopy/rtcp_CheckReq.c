@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.33 $ $Date: 2000/05/04 08:32:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.34 $ $Date: 2000/05/26 07:59:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -551,9 +551,11 @@ int rtcp_CheckReq(SOCKET *client_socket,
                   rtcpClientInfo_t *client, 
                   tape_list_t *tape) {
     int rc = 0;
+    int save_serrno;
     tape_list_t *tl;
-    file_list_t *fl;
+    file_list_t *fl, *file;
     char *p;
+    char errmsgtxt[CA_MAXLINELEN+1];
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -598,7 +600,17 @@ int rtcp_CheckReq(SOCKET *client_socket,
 
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
-    rfio_end();
+    if ( rfio_end() < 0 && rc != -1 ) {
+        save_serrno = (errno > 0 ? errno : serrno);
+        tapereq = &tape->tapereq;
+        rtcp_log(LOG_ERR,"rtcp_CheckReq() rfio_end(): %s\n",
+                 sstrerror(save_serrno));
+        sprintf(errmsgtxt,RT136,CMD(tapereq->mode));
+        serrno = save_serrno;
+        file = NULL;
+        SET_REQUEST_ERR(tapereq,RTCP_SYERR | RTCP_FAILED);
+        tellClient(client_socket,tape,NULL,rc);
+        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
+    }
     return(rc);
 }
-
