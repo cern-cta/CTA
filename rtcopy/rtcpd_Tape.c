@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.34 $ $Date: 2000/03/02 11:48:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.35 $ $Date: 2000/03/02 12:03:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -185,7 +185,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
                 }
-                (void)Chtread_mutex_unlock_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
             databufs[i]->nb_waiters--;
