@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.10 $ $Date: 2000/01/19 15:19:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.11 $ $Date: 2000/01/21 15:56:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -425,10 +425,10 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
 
         rc = rtcp_GetOldCinfo(hdr,req);
         if ( rc == -1 ) {
-            rtcp_log(LOG_INFO,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
+            rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
             return(-1);
         }
-        rtcp_log(LOG_INFO,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
+        rtcp_log(LOG_DEBUG,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
         if ( rc == -1 ) return(-1);
