@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.8 2000/02/02 10:50:28 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.9 2000/02/02 15:03:55 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -7,7 +7,7 @@
 /* ======== */
 /* Includes */
 /* ======== */
-#include "../h/Castor_limits.h"
+#include "Castor_limits.h"
 
 /* ====== */
 /* Macros */
