@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:11:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.3 $ $Date: 2004/08/11 15:31:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -244,6 +244,7 @@ void *arg;
 	  else {
 	    vmgrlogit(func, "CSEC: Can't get client username\n");
 	    netclose (thip->s);
+	    thip->s = -1;
 	    return (NULL);
 	  }
 	}
