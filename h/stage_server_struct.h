@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.2 2001/12/05 10:02:02 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.3 2001/12/20 11:32:17 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -25,6 +25,7 @@ struct waitf {
 	int nb_segments;
 	u_signed64 size_yet_recalled;
 	char	upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+	char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1]; /* Used to lie to the system when doing internal copy of CASTOR file */
 };
 
 struct waitq {
@@ -102,6 +103,7 @@ struct pool {
 	int	max_setretenp;	/* maximum value for explicit setting of retention period (days) */
 	int	put_failed_retenp;	/* minimum value for put_failed retention period (days) */
 	int	stageout_retenp;	/* minimum value for stageout retention period (days) */
+	int	export_hsm;	/* exportable flag for HSM files */
 };
 
 struct predicates {
