@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.9 2004/12/01 10:02:21 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.10 2004/12/03 09:28:14 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.9 $ $Date: 2004/12/01 10:02:21 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.10 $ $Date: 2004/12/03 09:28:14 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -31,6 +31,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
+#include "castor/rh/IOResponse.hpp"
 
 /* ================= */
 /* External routines */
@@ -141,15 +142,18 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     }
     
     // Casting the response into a FileResponse !
-    castor::rh::FileResponse* fr = 
-      dynamic_cast<castor::rh::FileResponse*>(respvec[0]);
+    castor::rh::IOResponse* fr = 
+      dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Error in dynamic cast, response was NOT a file response";
         throw e;
       }
-
-      (*response)->filename = strdup(fr->castorFileName().c_str());
+      (*response)->castor_filename = strdup(fr->castorFileName().c_str());
+      (*response)->protocol = strdup(fr->protocol().c_str());
+      (*response)->server = strdup(fr->server().c_str());
+      (*response)->port = fr->port();
+      (*response)->filename = strdup(fr->fileName().c_str());
       (*response)->status = fr->status();
       (*response)->errorCode = fr->errorCode();
       if (fr->errorMessage().length() > 0) {
