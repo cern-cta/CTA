@@ -319,6 +319,7 @@ BEGIN
  buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
   VALUES (rpath, dcId, 0, cfId, 5); -- status WAITFS
+ INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
  COMMIT;
