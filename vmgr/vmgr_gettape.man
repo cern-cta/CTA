@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.9 $ $Date: 2002/02/07 06:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.10 $ $Date: 2003/10/29 08:53:46 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2002/02/07 06:43:06 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE 3 "$Date: 2003/10/29 08:53:46 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -74,6 +74,9 @@ Only
 and
 .I Size
 are mandatory. When a pointer to a field is NULL, the field value is not returned.
+.LP
+If the tape belongs to a private pool, the requester must match the ownership or
+have ADMIN privilege in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -83,6 +86,10 @@ is set appropriately.
 .TP 1.3i
 .B ENOENT
 The named pool does not exist.
+.TP
+.B EACCES
+The tape belongs to a private pool and the requester does not match the
+ownership and does not have ADMIN privilege in Cupv database.
 .TP
 .B EFAULT
 .I vid
