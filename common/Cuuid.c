@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.7 2004/11/24 19:05:28 jdurand Exp $
+ * $Id: Cuuid.c,v 1.8 2004/11/25 09:39:55 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.7 $ $Date: 2004/11/24 19:05:28 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.8 $ $Date: 2004/11/25 09:39:55 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,6 @@ struct nlist nl[] = {
 /* Set the following to a call to acquire a system wide global lock */
 #define LOCK
 #define UNLOCK
-
 
 /* Private MD5 */
 /*
@@ -845,7 +844,7 @@ int DLL_DECL Cuuid2string(output,maxlen,uuid)
 
   Csnprintf(output,
 	    maxlen,
-	    "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	    CUUID_STRING_FMT,
 	    uuid->time_low,
 	    uuid->time_mid,
 	    uuid->time_hi_and_version,
@@ -875,7 +874,7 @@ int string2Cuuid(uuid,input)
   }
 
   items = sscanf(input,
-		 "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x",
+		 CUUID_STRING_FMT,
 		 &(dummy[0]),
 		 &(dummy[1]),
 		 &(dummy[2]),
@@ -898,12 +897,12 @@ int string2Cuuid(uuid,input)
   uuid->time_hi_and_version       = (U_SHORT) dummy[2];
   uuid->clock_seq_hi_and_reserved = (U_BYTE)  dummy[3];
   uuid->clock_seq_low             = (U_BYTE)  dummy[4];
-  uuid->node[0]                   = (BYTE)    dummy[5];
-  uuid->node[1]                   = (BYTE)    dummy[6];
-  uuid->node[2]                   = (BYTE)    dummy[7];
-  uuid->node[3]                   = (BYTE)    dummy[8];
-  uuid->node[4]                   = (BYTE)    dummy[9];
-  uuid->node[5]                   = (BYTE)    dummy[10];
+  uuid->node[0]                   = (U_BYTE)  dummy[5];
+  uuid->node[1]                   = (U_BYTE)  dummy[6];
+  uuid->node[2]                   = (U_BYTE)  dummy[7];
+  uuid->node[3]                   = (U_BYTE)  dummy[8];
+  uuid->node[4]                   = (U_BYTE)  dummy[9];
+  uuid->node[5]                   = (U_BYTE)  dummy[10];
 
   return(0);
 }
