@@ -1,10 +1,10 @@
-.\" $Id: stagein_hsm.man,v 1.5 2002/10/03 16:31:31 jdurand Exp $
+.\" $Id: stagein_hsm.man,v 1.6 2002/10/03 16:35:33 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.5 $ $Date: 2002/10/03 16:31:31 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.6 $ $Date: 2002/10/03 16:35:33 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEIN_HSM "3" "$Date: 2002/10/03 16:31:31 $" "CASTOR" "Stage Library Functions"
+.TH STAGEIN_HSM "3" "$Date: 2002/10/03 16:35:33 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stagein_hsm \- Asks for one or more HSM files to be staged on disk
 .SH SYNOPSIS
@@ -87,6 +87,7 @@ Array giving the list of link files that will be created each time one of the fi
 .ft CW
 .nf
 .sp
+\s-2
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -251,6 +252,7 @@ void record_callback(stcp,stpp)
 	if (stcp != NULL) print_stcp(stcp);
 	if (stpp != NULL) print_stpp(stpp);
 }
+\s+2
 .ft
 .LP
 .fi
