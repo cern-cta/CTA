@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.4 $ $Date: 2000/08/09 07:26:09 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.5 $ $Date: 2001/10/04 13:42:29 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.4 $ $Date: 2000
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <Cgetopt.h>
 #include <osdep.h>
 #include <sacct.h>
 #include <rfio.h>
@@ -50,8 +51,6 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.4 $ $Date: 2000
 
 /* ************************************************************************** */
 
-extern char *optarg;		/* Optional command line argument */
-extern int optind;		/* Optional command line argument index */
 #if !defined(linux)
 extern char *sys_errlist[];	/* External system error list strings */
 #endif
@@ -177,14 +176,15 @@ main(argc, argv)
 int argc;
 char **argv;
 {
+  char acctdir[80];		/* Accounting directory name and path */
   char acctfile[80];		/* Accounting file name and path */
   char acctfiles[MAXSERVS][80];	/* Accounting file names and paths */
   char acctfile2[80];		/* Input accounting file */
   char acctweek[80];		/* Week number - optional */
   struct accthdr accthdr;	/* An accthdr record */
   struct accthdr accthdrs[MAXSERVS]; /* accthdr records */
-  char buf[256];		/* Input buffer */
-  char bufs[MAXSERVS][256];	/* Input buffers */
+  char buf[1204];		/* Input buffer */
+  char bufs[MAXSERVS][1204];	/* Input buffers */
   int c = 0;			/* Temp command line switch variable */
   time_t cvt_datime();		/* Date function */
   char devgroup[CA_MAXDGNLEN+1];/* Device group name */
@@ -203,6 +203,10 @@ char **argv;
   int gflag = 0;		/* If set device group given */
   int i = 0;			/* Counter */
   int Lflag = 0;		/* Set for detailed list of mounted volumes */
+  static struct Coptions longopts[] = {
+	{"acctdir", REQUIRED_ARGUMENT, 0, 'A'},
+	{0, 0, 0, 0}
+  };
   int Mflag = 0;		/* If set mount request details requested */
   int mflag = 0;		/* If set successful mount details requested */
   int nrec = 0;			/* Number of records read */
@@ -240,6 +244,7 @@ char **argv;
 
 /* Set acctfile = NULL and create list of valid device groups */
 
+  acctdir[0] = '\0';
   acctfile[0] = '\0';
   acctfile2[0] = '\0';
   acctweek[0] = '\0';
@@ -262,41 +267,46 @@ char **argv;
 /* Read in command line arguments and set flags accordingly */
 
   if ( argc > 1 ) printf("Run specifications: ");
-  while ((c = getopt(argc, argv, "De:f:g:LMmQS:s:TV:vw:Y")) != EOF) {
+  Copterr = 1;
+  Coptind = 1;
+  while ((c = Cgetopt_long(argc, argv, "De:f:g:LMmQS:s:TV:vw:Y", longopts, NULL)) != EOF) {
     switch (c) {
+      case 'A':			/* Accounting directory */
+                 strcpy(acctdir, Coptarg);
+                 break;
       case 'D':			/* Device Utilization */
                  Dflag++;
                  printf("Device utilisation");
                  break;
       case 'e':			/* End time */
-                 if ((endtime = cvt_datime(optarg)) < 0) {
-                   fprintf(stderr, "Incorrect time value %s\n", optarg);
+                 if ((endtime = cvt_datime(Coptarg)) < 0) {
+                   fprintf(stderr, "Incorrect time value %s\n", Coptarg);
                    errflg++;
                  }
                  else {
                    eflag++;
-                   printf("End time=%s", optarg);
+                   printf("End time=%s", Coptarg);
                  }
                  break;
       case 'f':			/* Accounting file */
-                 strcpy(acctfile2, optarg);
+                 strcpy(acctfile2, Coptarg);
                  if (strcmp(acctfile, "stdin") == 0) {
                    stdin_flag++;
                    printf(" Acct file=stdin");
                  }
                  else {
-                   printf("Acct file=%s", optarg);
+                   printf("Acct file=%s", Coptarg);
                  }
                  break;
       case 'g':			/* Device group */
-                 if ((dev_found = chk_devgrp(optarg, num_devs)) == 0) {
-                   fprintf(stderr, "Invalid device group %s\n", optarg);
+                 if ((dev_found = chk_devgrp(Coptarg, num_devs)) == 0) {
+                   fprintf(stderr, "Invalid device group %s\n", Coptarg);
                    errflg++;
                  }
                  else {
-                   strcpy(devgroup, optarg);
+                   strcpy(devgroup, Coptarg);
                    gflag++;
-                   printf("Devgroup=%s", optarg);
+                   printf("Devgroup=%s", Coptarg);
                  }
                  break;
       case 'L':			/* List mounted volumes */
@@ -317,24 +327,24 @@ char **argv;
                  break;
       case 'S':			/* Server name */
                  numservs = create_serverlist(servers, num_devs);
-                 if ((chk_serv(optarg, servers, numservs)) == 0) {
-                   fprintf(stderr, "Invalid server name %s\n", optarg);
+                 if ((chk_serv(Coptarg, servers, numservs)) == 0) {
+                   fprintf(stderr, "Invalid server name %s\n", Coptarg);
                    errflg++;
                  }
                  else {
-                   strcpy(serv_name, optarg);
+                   strcpy(serv_name, Coptarg);
                    Sflag++;
-                   printf("Tape server=%s", optarg);
+                   printf("Tape server=%s", Coptarg);
                  }
                  break;
       case 's':			/* Start time */
-                 if ((starttime = cvt_datime(optarg)) < 0) {
-                   fprintf(stderr, "Incorrect time value %s\n", optarg);
+                 if ((starttime = cvt_datime(Coptarg)) < 0) {
+                   fprintf(stderr, "Incorrect time value %s\n", Coptarg);
                    errflg++;
                  }
                  else {
                    sflag++;
-                   printf("Start time=%s", optarg);
+                   printf("Start time=%s", Coptarg);
                  }
                  break;
       case 'T':			/* General time information */
@@ -343,14 +353,14 @@ char **argv;
                  break;
       case 'V':			/* List of specific volume details */
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-                 if ((chk_vol(optarg, &expstruct)) == 0)
+                 if ((chk_vol(Coptarg, &expstruct)) == 0)
 #else
-                 if ((chk_vol(optarg, expbuf, sizeof(expbuf))) == 0)
+                 if ((chk_vol(Coptarg, expbuf, sizeof(expbuf))) == 0)
 #endif
                    errflg++;
                  else {
                    Vflag++;
-                   printf("Volumes search pattern=%s", optarg);
+                   printf("Volumes search pattern=%s", Coptarg);
                  }
                  break;
       case 'v':			/* Processing status messages requested */
@@ -358,9 +368,9 @@ char **argv;
                  printf("Processing status messages");
                  break;
       case 'w':			/* Week number */
-                 strcpy(acctweek, optarg);
+                 strcpy(acctweek, Coptarg);
                  wflag++;
-                 printf("Week=%s", optarg);
+                 printf("Week=%s", Coptarg);
                  break;
       case 'Y':			/* Summary information */
                  Yflag++;
@@ -369,9 +379,9 @@ char **argv;
       case '?':
                  errflg++;
     }
-    if ( optind < argc ) printf(", ");
+    if ( Coptind < argc ) printf(", ");
   }
-  if (argc > optind) {
+  if (argc > Coptind) {
     fprintf(stderr, "Additional parameters given\n");
     errflg++;
   }
@@ -452,13 +462,20 @@ char **argv;
     for (i = 0; i < numservs; i++) {
       server_failed = 0;
       if (!stdin_flag) {
-        strcpy(acctfile, reqserv_list[i]);
-        strcat(acctfile, ":");
-        if (acctfile2[0] != '\0') {
-          strcat(acctfile, acctfile2);
-        }
-        else {
-          strcat(acctfile, ACCTFILE);
+        if (! *acctdir) {
+          strcpy(acctfile, reqserv_list[i]);
+          strcat(acctfile, ":");
+          if (acctfile2[0] != '\0') {
+            strcat(acctfile, acctfile2);
+          }
+          else {
+            strcat(acctfile, ACCTFILE);
+          }
+        } else {
+          strcpy(acctfile, acctdir);
+          strcat(acctfile, "/");
+          strcat(acctfile, reqserv_list[i]);
+          strcat(acctfile, "/sacct");
         }
         if (wflag) {
           strcat(acctfile, ".");
@@ -2477,6 +2494,8 @@ int usage(cmd)
 char *cmd;
 {
   fprintf(stderr, "Usage: %s ", cmd);
-  fprintf(stderr, "%s", "[-D][-e end_time][-f accounting_file][-g device_group][-L][-M][-m][-Q][-S server name][-s start_time][-T][-V volume_label][-v][-w week_number][-Y]\n");
+  fprintf(stderr, "%s%s%s", "[--acctdir accounting_dir][-D][-e end_time]\n",
+    "\t[-f accounting_file][-g device_group][-L][-M][-m][-Q][-S server name]\n",
+    "\t[-s start_time][-T][-V volume_label][-v][-w week_number][-Y]\n");
   return(0);
 }
