@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Release$ $Date: 2004/12/13 14:27:34 $ $Author: jdurand $
 #
 # Make Castor DB libraries
 #
@@ -74,7 +74,8 @@ ORALIB_SRCS = OraBaseCnv.cpp \
               OraSvcClassCnv.cpp \
               OraTapeCnv.cpp \
               OraTapeCopyCnv.cpp \
-              OraTapePoolCnv.cpp
+              OraTapePoolCnv.cpp \
+              OraUpdateRepRequestCnv.cpp
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
