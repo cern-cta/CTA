@@ -286,7 +286,10 @@ DSTAGECPPDIR = dstage
 RHCPPDIR = rh
 #endif
 
+#if BuildOraCpp
 DBCPPDIR = db
+#endif
+
 #if BuildOraCpp
 #if BuildClientCpp != YES
 #define BuildClientCpp YES
