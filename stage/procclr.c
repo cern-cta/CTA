@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.41 2001/12/19 17:23:44 jdurand Exp $
+ * $Id: procclr.c,v 1.42 2002/01/18 09:38:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.41 $ $Date: 2001/12/19 17:23:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.42 $ $Date: 2002/01/18 09:38:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -485,12 +485,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 		} else {
-		stageclr_redo:
 			for (stcp = stcs; stcp < stce; stcp++) {
-				int thisnextreqid;
 				if (stcp->reqid == 0) break;
-				/* We keep in mind what would be the next reqid */
-				thisnextreqid = (stcp < (stce - 1)) ? (stcp+1)->reqid : 0;
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
@@ -508,26 +504,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 				}
-				if (thisnextreqid == 0) {
-					/* By definition we just have processed the last of the entries */
-					break;
-				}
-				/* By definition we know that there is something after : we can check the content of *(stcp+1) */
-				if (thisnextreqid == (stcp+1)->reqid) {
-					/* The catalog has not been shifted - we can continue unless end of the catalog */
-					if (thisnextreqid == 0) break;
-					continue;
-				}
-				if (thisnextreqid == stcp->reqid) {
-					/* The catalog has been shifted by one - we lye to the for() loop unless end of the catalog */
-					if (thisnextreqid == 0) break;
-					stcp--;
-					/* And we continue */
-					continue;
-                }
-				/* Here the catalog has been shifted by more than one, this is a bit too much */
-				/* for us so we restart the whole loop */
-				goto stageclr_redo;
+				stcp += i;
 			}
 		}
 		if (! found) {
@@ -724,7 +701,6 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 						 rfio_serror());
 				return (USERR);
 			}
-			return (0);
 		} else {
 			sendrep (rpfd, MSG_ERR, STG104, stcp->status);
 			return (USERR);
