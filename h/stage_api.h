@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.45 2001/09/22 16:21:01 jdurand Exp $
+ * $Id: stage_api.h,v 1.46 2001/09/22 16:25:55 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -260,13 +260,7 @@ typedef struct stage_hsm stage_hsm_t;
 #define STAGE_FORCE       0x010000000    /* -F           [stage_clr]            */
 #define STAGE_REMOVEHSM   0x020000000    /* -remove_from_hsm [stage_clr]        */
 #define STAGE_RETENP      0x040000000    /* --retenp     [stage_qry]            */
-#if (defined(hpux) || defined(_AIX))
-/* hpux cc compiler complains for procqry: 'Integer constant exceeds its storage.' */
-/* aix  cc compiler complainsfor stglogit: '(W) Integer constant 0x100000000 out of range.' */
-#define STAGE_MINTIME  ((u_signed64) 0x10000000) << 4 /* --mintime    [stage_qry]            */
-#else
-#define STAGE_MINTIME     0x100000000    /* --mintime    [stage_qry]            */
-#endif
+#define STAGE_MINTIME     0x100000000LL  /* --mintime    [stage_qry]            */
 
 /* For stage_qry only */
 /* ------------------ */
