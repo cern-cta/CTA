@@ -349,17 +349,18 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR,
          rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
-         rclient OUT INTEGER, rDiskCopyId OUT VARCHAR) AS
+         rclient OUT INTEGER, rDiskCopyId OUT VARCHAR,
+         reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
 BEGIN
- -- Get IClient
- SELECT client INTO rclient FROM SubRequest,
-      (SELECT client, id from StageGetRequest UNION
-       SELECT client, id from StagePrepareToGetRequest UNION
-       SELECT client, id from StageUpdateRequest UNION
-       SELECT client, id from StagePrepareToUpdateRequest) Request
+ -- Get IClient and uid, gid
+ SELECT client, euid, egid INTO rclient, reuid, regid FROM SubRequest,
+      (SELECT client, id, euid, egid from StageGetRequest UNION
+       SELECT client, id, euid, egid from StagePrepareToGetRequest UNION
+       SELECT client, id, euid, egid from StageUpdateRequest UNION
+       SELECT client, id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Try to find local DiskCopy
  dci := 0;
