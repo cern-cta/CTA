@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.12 2000/05/09 16:16:53 jdurand Exp $
+ * $Id: osdep.h,v 1.13 2000/12/12 13:04:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.12 $ $Date: 2000/05/09 16:16:53 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.13 $ $Date: 2000/12/12 13:04:46 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -75,19 +75,6 @@ typedef U_HYPER TIME_T;
 #define ONE_TB 0x10000000000
 #define ONE_PB 0x4000000000000
 #endif
-
-/*
- * Byte swapping
- */
-
-/*
- * Exit codes
- */
-
-#ifdef unix
-#define BADEXIT         1
-#define GOODEXIT        0
-#endif /* unix */
 
 /*
  * Error reporting
