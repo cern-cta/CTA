@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.11 2000/03/24 10:10:06 jdurand Exp $
+ * stagein.c,v 1.11 2000-03-24 11:10:06+01 jdurand Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.11 $ $Date: 2000/03/24 10:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)stagein.c,v 1.11 2000-03-24 11:10:06+01 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -219,12 +219,15 @@ int main(argc, argv)
 				}
 				if (stagemig == nhsmfiles + 1) {
 					int attached = 0;
+					char *dummy;
 
 					/* Check if the option -M is attached or not */
 					if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
 						attached = 1;
 					}
-					if (strchr(optarg,':') == NULL) {
+					/* We want to know if there is no ':' in the string or, if there is such a ':' */
+					/* if there is no '/' before (then is will indicate a hostname)                */
+					if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
 						if ((hsm_host = getenv("HSM_HOST")) != NULL) {
 							strcpy (hsm_path, hsm_host);
 							strcat (hsm_path, ":");
@@ -260,13 +263,16 @@ int main(argc, argv)
 							errflg++;
 						}
 						argv[optind - 1] = hsmfiles[nhsmfiles - 1];
-					}
+					} else {
+						/* Here we believe that the user gave a hostname */
+						hsmfiles[nhsmfiles++] = optarg;
+                    }
 				} else {
-					fprintf (stderr, "Bad mapping between seen -M flags and internal versions\n");
+					fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
 					errflg++;
 				}
 			} else {
-				fprintf (stderr, "Bad mapping between seen -M flags and internal versions\n");
+				fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
 				errflg++;
 			}
 			break;
