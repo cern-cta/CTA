@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.253 2003/11/17 17:10:47 jdurand Exp $
+ * $Id: poolmgr.c,v 1.254 2004/05/24 15:54:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.253 $ $Date: 2003/11/17 17:10:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.254 $ $Date: 2004/05/24 15:54:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3476,7 +3476,7 @@ void checkfile2mig()
 			/* Global predicate is not enough - we go through each fileclass predicate */
       
 			for (j = 0; j < pool_p->migr->nfileclass; j++) {
-				if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig - pool_p->migr->fileclass_predicates[j].nbfiles_delaymig) <= 0)	/* No point anyway */
+				if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig) <= 0)	/* No point anyway */
 					continue;
 				/* Preventive action in case of timing problem : the last startup time of a migration stream could not */
 				/* be higher than current time */
