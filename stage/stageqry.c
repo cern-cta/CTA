@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.37 2002/11/20 09:49:57 jdurand Exp $
+ * $Id: stageqry.c,v 1.38 2003/11/17 12:55:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.37 $ $Date: 2002/11/20 09:49:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.38 $ $Date: 2003/11/17 12:55:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -202,6 +202,9 @@ int main(argc, argv)
 		case 'p':
 			strncpy(stcp.poolname,Coptarg,CA_MAXPOOLNAMELEN); /* Next characters guaranteed '\0' because of the memset */
 			break;
+		case 'Q':
+			flags |= STAGE_MULTIFSEQ;
+			/* There is intentionnaly no break here */
 		case 'q':
 			if (stcp.t_or_d != '\0' && stcp.t_or_d != 't') {
 				++errflg;
@@ -210,8 +213,6 @@ int main(argc, argv)
 				strncpy(stcp.u1.t.fseq, Coptarg, CA_MAXFSEQLEN);
 			}
 			break;
-		case 'Q':
-			flags |= STAGE_MULTIFSEQ;
 			break;
 		case 'S':
 			flags |= STAGE_SORTED;
