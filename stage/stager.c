@@ -610,9 +610,8 @@ int stagein_castor_hsm_file() {
 					/* Reselect a server - we retry, though */
 					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode != ENOENT) {
-					Flags |= DISABLED;
-					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
-					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
 					free(stcs_tmp);
 					RETURN (SYERR);
 				}
@@ -886,9 +885,9 @@ int stagewrt_castor_hsm_file() {
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (ETVBSY)");
 			} else if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
 				/* Tape info very probably inconsistency with, for ex., TMS */
-				sendrep(rpfd, MSG_ERR, STG02, vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
-				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to TAPE_FULL");
-				Flags |= DISABLED;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
+				RETURN(USERR);
 			}
 		}
 
