@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.44 2000/12/18 16:00:29 jdurand Exp $
+ * $Id: procupd.c,v 1.45 2000/12/19 14:37:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.44 $ $Date: 2000/12/18 16:00:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.45 $ $Date: 2000/12/19 14:37:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -495,7 +495,9 @@ procupdreq(req_data, clienthost)
 			stglogit(func, STG97,
 					dsksrvr, strrchr (stcp->ipath, '/')+1,
 					stcp->user, stcp->group,
-					clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
+					clienthost, dvn, ifce,
+					u64tostr((u_signed64) size, tmpbuf, 0),
+					size, waiting_time, transfer_time, rc);
 		}
 	}
 #if SACCT
