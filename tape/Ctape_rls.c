@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 10:28:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.9 $ $Date: 1999/11/24 15:05:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rls - unload tape and release reservations */
@@ -109,6 +109,6 @@ int flags;
 
 	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0)
-		(void) rmlabelinfo (path ? fullpath : NULL, flags);
+		(void) rmlabelinfo (path, flags);
 	return (c);
 }

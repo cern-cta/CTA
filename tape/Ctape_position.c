@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.7 $ $Date: 1999/11/23 12:42:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.8 $ $Date: 1999/11/24 15:05:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -146,7 +146,7 @@ int flags;
 		unmarshall_STRING (rbp, vol1);
 		unmarshall_STRING (rbp, hdr1);
 		unmarshall_STRING (rbp, hdr2);
-		setlabelinfo (fullpath, flags, actual_fseq, vol1, hdr1, hdr2);
+		setlabelinfo (path, flags, actual_fseq, vol1, hdr1, hdr2);
 	}
 	return (c);
 }
