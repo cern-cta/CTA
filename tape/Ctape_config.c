@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.11 $ $Date: 1999/11/17 10:53:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.12 $ $Date: 2000/08/04 05:45:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -53,8 +53,10 @@ int reason;
 	/* unm may be in the form drivename@hostname */
 
 	if (p = strchr (unm, '@')) {
-		if ((p - unm) > CA_MAXUNMLEN)
-			return (EINVAL);
+		if ((p - unm) > CA_MAXUNMLEN) {
+			serrno = EINVAL;
+			return (-1);
+		}
 		strncpy (drive, unm, p - unm);
 		drive[p-unm] = '\0';
 		host = p + 1;

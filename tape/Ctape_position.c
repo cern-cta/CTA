@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.14 $ $Date: 2000/03/31 15:07:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.15 $ $Date: 2000/08/04 05:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -66,7 +66,8 @@ int flags;
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Ctape_errmsg (func, TP053);
-		return (SENOMAPFND);
+		serrno = SENOMAPFND;
+		return (-1);
 	}
 #endif
 	jid = getpgrp();

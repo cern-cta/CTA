@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.4 $ $Date: 1999/11/17 10:54:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.5 $ $Date: 2000/08/04 05:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_status - get drive status */
@@ -43,7 +43,8 @@ int nbentries;
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Ctape_errmsg (func, TP053);
-		return (USERR);
+		serrno = SENOMAPFND;
+		return (-1);
 	}
 #endif
  
