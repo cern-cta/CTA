@@ -1,5 +1,5 @@
 /*
- * $Id: access.c,v 1.6 2000/05/03 13:42:33 obarring Exp $
+ * $Id: access.c,v 1.7 2001/09/18 19:56:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:33 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.7 $ $Date: 2001/09/18 19:56:18 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
@@ -16,7 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.6 $ $Date: 2000/
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
 
-int  rfio_access(filepath, mode)       /* Remote file access            */
+int DLL_DECL rfio_access(filepath, mode)       /* Remote file access            */
 char    *filepath;              /* remote file path                     */
 int 	mode ;			/* Access mode 				*/
 {
