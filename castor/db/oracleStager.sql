@@ -575,11 +575,11 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
         (rsubreqId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
-  stat INTEGER;
-  dci INTEGER;
+  stat "numList";
+  dci "numList";
 BEGIN
  SELECT DiskCopy.status, DiskCopy.id
-  INTO stat, dci
+  BULK COLLECT INTO stat, dci
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
@@ -589,30 +589,34 @@ BEGIN
    AND DiskServer.status = 0 -- PRODUCTION
    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR
    AND ROWNUM < 2;
- IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
- THEN
-  -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
-  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci),
-                        lastModificationTime = getTime() WHERE id = rsubreqId;
-  result := 0;  -- no nschedule
+ IF stat.COUNT > 0 THEN
+   IF 0 MEMBER OF stat OR -- STAGED
+      6 MEMBER OF stat OR -- STAGEOUT
+      10 MEMBER OF stat   -- CANBEMIGR
+   THEN
+     result := 1;  -- schedule and diskcopies available
+     OPEN sources
+       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                  FileSystem.weight, FileSystem.mountPoint,
+                  DiskServer.name
+       FROM DiskCopy, SubRequest, FileSystem, DiskServer
+       WHERE SubRequest.id = rsubreqId
+         AND SubRequest.castorfile = DiskCopy.castorfile
+         AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+         AND FileSystem.id = DiskCopy.fileSystem
+         AND FileSystem.status = 0 -- PRODUCTION
+         AND DiskServer.id = FileSystem.diskServer
+         AND DiskServer.status = 0; -- PRODUCTION
+   ELSE
+     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
+     update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci(1)),
+                           lastModificationTime = getTime() WHERE id = rsubreqId;
+     result := 0;  -- no nschedule
+   END IF;
  ELSE
-  result := 1;  -- schedule and diskcopies available
-  OPEN sources
-    FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               FileSystem.weight, FileSystem.mountPoint,
-               DiskServer.name
-    FROM DiskCopy, SubRequest, FileSystem, DiskServer
-    WHERE SubRequest.id = rsubreqId
-      AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-      AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status = 0 -- PRODUCTION
-      AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status = 0; -- PRODUCTION
+   -- In this case, schedule for recall
+   result := 2;
  END IF;
-EXCEPTION
- WHEN NO_DATA_FOUND -- In this case, schedule for recall
- THEN result := 2;  -- schedule and no diskcopies
 END;
 
 /* Build diskCopy path from fileId */
