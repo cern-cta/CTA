@@ -407,7 +407,7 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(7, obj->vwAddress());
     m_insertStatement->setDouble(8, obj->id());
     m_insertStatement->setDouble(9, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
-    m_updateStatement->setInt(10, (int)obj->status());
+    m_insertStatement->setInt(10, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

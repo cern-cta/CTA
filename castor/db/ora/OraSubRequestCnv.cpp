@@ -604,7 +604,7 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(9, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setDouble(10, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
     m_insertStatement->setDouble(11, (type == OBJ_Request && obj->request() != 0) ? obj->request()->id() : 0);
-    m_updateStatement->setInt(12, (int)obj->status());
+    m_insertStatement->setInt(12, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

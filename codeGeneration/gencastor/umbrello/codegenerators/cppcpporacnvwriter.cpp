@@ -1591,7 +1591,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
        0 != as;
        as = assocs.next()) {
     if (isEnum(as->remotePart.typeName)) {
-      writeSingleSetIntoStatement("update", as->remotePart, n, true);
+      writeSingleSetIntoStatement("insert", as->remotePart, n, true);
       n++;
     } else if (as->type.multiRemote == MULT_ONE) {
       *m_stream << getIndent()

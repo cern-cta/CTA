@@ -525,7 +525,7 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->id());
     m_insertStatement->setDouble(2, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_updateStatement->setInt(3, (int)obj->status());
+    m_insertStatement->setInt(3, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

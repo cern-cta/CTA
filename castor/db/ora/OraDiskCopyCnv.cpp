@@ -414,7 +414,7 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(2, obj->id());
     m_insertStatement->setDouble(3, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
     m_insertStatement->setDouble(4, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_updateStatement->setInt(5, (int)obj->status());
+    m_insertStatement->setInt(5, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

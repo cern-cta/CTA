@@ -412,7 +412,7 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(12, obj->id());
     m_insertStatement->setDouble(13, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(14, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
-    m_updateStatement->setInt(15, (int)obj->status());
+    m_insertStatement->setInt(15, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
