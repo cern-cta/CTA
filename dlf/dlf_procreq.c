@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.3 $ $Date: 2003/11/03 09:28:40 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -516,7 +516,7 @@ int *last;
 	    switch (param->type) {
 	      case DLF_MSG_PARAM_TPVID:
 	      case DLF_MSG_PARAM_STR:
-		if (unmarshall_STRINGN (rbp, param->strval,DLF_MAXSTRVALLEN+1) < 0) {
+		if (unmarshall_STRINGN (rbp, (char*)param->strval,DLF_MAXSTRVALLEN+1) < 0) {
 		  dlf_delete_param_list (&log_message.param_list);
 		  RETURN (EINVAL);
 		}
@@ -525,11 +525,11 @@ int *last;
 		unmarshall_HYPER (rbp, param->numval);
 		break;
 	      case DLF_MSG_PARAM_DOUBLE:
-		if (unmarshall_STRINGN (rbp, param->strval,DLF_MAXSTRVALLEN+1) < 0) {
+		if (unmarshall_STRINGN (rbp, (char*)param->strval,DLF_MAXSTRVALLEN+1) < 0) {
 		  dlf_delete_param_list (&log_message.param_list);
 		  RETURN (EINVAL);
 		}
-		param->dval = atof(param->strval);
+		param->dval = atof((char*)param->strval);
 		break;
 	      case DLF_MSG_PARAM_UUID:
 		unmarshall_UUID (rbp, *((Cuuid_t*)param->strval));
