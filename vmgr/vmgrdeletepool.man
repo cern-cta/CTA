@@ -1,0 +1,24 @@
+.\" @(#)$RCSfile: vmgrdeletepool.man,v $ $Revision: 1.1 $ $Date: 2001/02/23 15:09:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRDELETEPOOL 1 "$Date: 2001/02/23 15:09:53 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrdeletepool \- remove the definition of a pool of tapes from the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrdeletepool
+.BI --name " pool_name"
+.SH DESCRIPTION
+.B vmgrdeletepool
+removes the definition of a pool of tapes from the CASTOR Volume Manager.
+.TP
+.I pool_name
+is the name of tape pool.
+It must be at most CA_MAXPOOLNAMELEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_deletepool(3) ,
+.B vmgrenterpool(1)
