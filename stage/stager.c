@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.118 2001/02/02 15:30:36 jdurand Exp $
+ * $Id: stager.c,v 1.119 2001/02/02 17:51:12 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #define USE_SUBREQID
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.118 $ $Date: 2001/02/02 15:30:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.119 $ $Date: 2001/02/02 17:51:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -531,8 +531,25 @@ int main(argc, argv)
 			free(stcs);
 	        exit(SYERR);
 		}
+		if (use_subreqid != 0) {
+			/* By precaution, we do not allow async callback if concat_off_fseq is set */
+			SAVE_EID;
+    	    sendrep(rpfd, MSG_ERR, "### concat_off option is not compatible with async callback\n");
+			RESTORE_EID;
+			free(stcs);
+	        exit(SYERR);
+		}
 	}
-
+    if (use_subreqid != 0) {
+		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+			/* By precaution, we disallow async callbacks if anything but stagein */
+			SAVE_EID;
+    	    sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
+			RESTORE_EID;
+			free(stcs);
+	        exit(SYERR);
+		}
+    }
 	(void) umask (stcs->mask);
 
 	signal (SIGINT, stagekilled);        /* If client died */
@@ -3294,6 +3311,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Friday 02 February, 2001 at 16:23:12 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 02 February, 2001 at 18:49:25 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
