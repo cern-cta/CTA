@@ -228,7 +228,6 @@
 #define BuildRHCpp              YES
 #define BuildOraCpp             YES
 #define BuildCppTest	        YES
-#define BuildProtoCppStager     YES
 
 #define Accounting		YES
 #define ClientLogging           NO
