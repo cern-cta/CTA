@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      StageIn.hpp
+ *                      IResponseHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,54 +17,47 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENT_STAGEIN_HPP 
-#define CLIENT_STAGEIN_HPP 1
-
-// Include Files
-#include "castor/client/BaseCmdLineClient.hpp"
-#include "castor/exception/Exception.hpp"
+#ifndef CLIENT_IRESPONSEHANDLER_HPP 
+#define CLIENT_IRESPONSEHANDLER_HPP 1
 
 namespace castor {
-
+  
   namespace rh {
     // Forward declaration
-    class Request;
+    class Response;
   }
-
+  
   namespace client {
-
-    class StageIn : public BaseCmdLineClient {
-
+    
+    class IResponseHandler {
+      
     public:
-
+      
       /**
-       * builds the actual request. This method has to be
-       * reimplemented in each client.
-       * Note that the caller is responsible for the deallocation
-       * of the request
-       * @return the request to be sent to the request handler
+       * handles a response when one arrives
+       * @param r the response to handle
        */
-      virtual castor::rh::Request* buildRequest()
-        throw (castor::exception::Exception);
-
+      virtual void handleResponse(castor::rh::Response& r)
+        throw (castor::exception::Exception) = 0;
+      
       /**
-       * Display an error message and
-       * show usage of the executable.
-       * Has to be reimplemented in each client.
+       * terminates the response handler. This is called
+       * when all responses were received.
        */
-      virtual void usage(std::string message) throw ();
+      virtual void terminate()
+        throw (castor::exception::Exception) = 0;
 
     };
 
   } // end of namespace client
-
+  
 } // end of namespace castor
-
-#endif // CLIENT_STAGEIN_HPP
+      
+#endif // CLIENT_IRESPONSEHANDLER_HPP

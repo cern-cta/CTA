@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/02 08:50:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/13 13:36:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -184,15 +184,6 @@ castor::rh::Request* castor::client::StageQry::buildRequest()
     f->setRequest(req);
   }
   return req;
-}
-
-//------------------------------------------------------------------------------
-// printResult
-//------------------------------------------------------------------------------
-void castor::client::StageQry::printResult(castor::IObject& result)
-  throw (castor::exception::Exception) {
-  castor::ObjectSet set;
-  result.print(std::cout, "", set);
 }
 
 //------------------------------------------------------------------------------

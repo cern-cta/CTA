@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/01 16:31:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,7 +28,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
-#include "castor/ObjectSet.hpp"
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageOutRequest.hpp"
 #include "castor/exception/Exception.hpp"
@@ -200,15 +199,6 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
     f->setRequest(req);
   }
   return req;
-}
-
-//------------------------------------------------------------------------------
-// printResult
-//------------------------------------------------------------------------------
-void castor::client::StageOut::printResult(castor::IObject& result)
-  throw (castor::exception::Exception) {
-  castor::ObjectSet set;
-  result.print(std::cout, "", set);
 }
 
 //------------------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/02 08:50:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/13 13:36:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,7 @@
 #define CLIENT_STAGEQRY_HPP 1
 
 // Include Files
-#include "BaseClient.hpp"
+#include "BaseCmdLineClient.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -40,7 +40,7 @@ namespace castor {
 
   namespace client {
 
-    class StageQry : public BaseClient {
+    class StageQry : public BaseCmdLineClient {
 
     public:
 
@@ -52,14 +52,6 @@ namespace castor {
        * @return the request to be sent to the request handler
        */
       virtual castor::rh::Request* buildRequest()
-        throw (castor::exception::Exception);
-
-      /**
-       * this method is responsible for the output of the
-       * request result. This method has to be reimplemented
-       * in each client
-       */
-      virtual void printResult(castor::IObject& result)
         throw (castor::exception::Exception);
 
       /**

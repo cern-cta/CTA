@@ -21,8 +21,6 @@
  *
  * A base class for all castor clients. Implements many
  * useful and common parts for all clients.
- * The only two methods to implement in order to get a real
- * client are buildRequest and printResult
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -31,12 +29,9 @@
 #define CLIENTS_BASECLIENT_HPP 1
 
 // Include Files
-#include <map>
 #include <string>
-#include <vector>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
-#include "Cgetopt.h"
 
 namespace castor {
 
@@ -56,6 +51,9 @@ namespace castor {
 
   namespace client {
 
+    // Forward declaration
+    class IResponseHandler;
+
     class BaseClient : public BaseObject {
 
     public:
@@ -73,31 +71,20 @@ namespace castor {
       /**
        * Main method. This is the only one to call in the
        * "main" method after creation of a Client object.
+       * It can be called any number of time to send any
+       * number of queries to the castor system.
+       * It is a blocking method that calls back the response
+       * handler given as a parameter.
+       * @param req the Request to send to the castor system
+       * @param rh the IResponseHandler interface to use
+       * for callbacks
+       * @exception Exception when something goed wrong
        */
-      void run(int argc, char** argv) throw();
+      void sendRequest(castor::rh::Request* req,
+                       castor::client::IResponseHandler* rh)
+        throw(castor::exception::Exception);
 
-      /**
-       * parses the input arguments and store them
-       * @return whether it was successful or not
-       */
-      bool parseInput(int argc, char** argv)
-        throw (castor::exception::Exception);
-      
-      /**
-       * Display an error message and
-       * show usage of the executable.
-       * Has to be reimplemented in each client.
-       */
-      virtual void usage(std::string message) throw () = 0;
-
-      /**
-       * builds the actual request. This method has to be
-       * reimplemented in each client.
-       * Note that the caller is responsible for the deallocation
-       * of the request
-       * @return the request to be sent to the request handler
-       */
-      virtual castor::rh::Request* buildRequest() = 0;
+    private:
 
       /**
        * creates a Client object from the callback socket
@@ -110,7 +97,7 @@ namespace castor {
       /**
        * sends a request to the request handler
        */
-      void sendRequest(castor::rh::Request& request)
+      void internalSendRequest(castor::rh::Request& request)
         throw (castor::exception::Exception);
 
       /**
@@ -119,13 +106,6 @@ namespace castor {
        */
       IObject* waitForCallBack()
         throw (castor::exception::Exception);
-
-      /**
-       * this method is responsible for the output of the
-       * request result. This method has to be reimplemented
-       * in each client
-       */
-      virtual void printResult(IObject& result) = 0;
 
     protected:
       
@@ -137,12 +117,6 @@ namespace castor {
       
       /// The callback socket
       castor::io::Socket* m_callbackSocket;
-
-      /// The input flags
-      std::map<std::string, std::string> m_inputFlags;
-
-      /// The input arguments
-      std::vector<std::string> m_inputArguments;
 
     };
 

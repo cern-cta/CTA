@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      StageIn.hpp
+ *                      BaseCmdLineClient.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,19 +17,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ * Base class for command line clients. It provides parsing
+ * of the input arguments and print out of the result plus
+ * some canvas for the implementation of actual clients
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENT_STAGEIN_HPP 
-#define CLIENT_STAGEIN_HPP 1
+#ifndef CLIENTS_BASECMDLINECLIENT_HPP
+#define CLIENTS_BASECMDLINECLIENT_HPP 1
 
 // Include Files
-#include "castor/client/BaseCmdLineClient.hpp"
+#include <map>
+#include <string>
+#include <vector>
 #include "castor/exception/Exception.hpp"
+#include "castor/client/BaseClient.hpp"
 
 namespace castor {
 
@@ -40,9 +45,32 @@ namespace castor {
 
   namespace client {
 
-    class StageIn : public BaseCmdLineClient {
+    class BaseCmdLineClient : public BaseClient {
 
     public:
+
+      /**
+       * constructor
+       */
+      BaseCmdLineClient() throw();
+
+      /**
+       * destructor
+       */
+      virtual ~BaseCmdLineClient() throw();
+
+      /**
+       * Main method. This is the only one to call in the
+       * "main" method after creation of a Client object.
+       */
+      void run(int argc, char** argv) throw();
+
+      /**
+       * parses the input arguments and store them
+       * @return whether it was successful or not
+       */
+      bool parseInput(int argc, char** argv)
+        throw (castor::exception::Exception);
 
       /**
        * builds the actual request. This method has to be
@@ -52,14 +80,22 @@ namespace castor {
        * @return the request to be sent to the request handler
        */
       virtual castor::rh::Request* buildRequest()
-        throw (castor::exception::Exception);
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Display an error message and
        * show usage of the executable.
        * Has to be reimplemented in each client.
        */
-      virtual void usage(std::string message) throw ();
+      virtual void usage(std::string message) throw () = 0;
+
+    protected:
+
+      /// The input flags
+      std::map<std::string, std::string> m_inputFlags;
+
+      /// The input arguments
+      std::vector<std::string> m_inputArguments;
 
     };
 
@@ -67,4 +103,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CLIENT_STAGEIN_HPP
+#endif // CLIENTS_BASECMDLINECLIENT_HPP

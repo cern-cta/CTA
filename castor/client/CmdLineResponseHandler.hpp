@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      StageIn.hpp
+ *                      CmdLineResponseHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,49 +17,49 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ * A simple Response Handler for command line clients
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENT_STAGEIN_HPP 
-#define CLIENT_STAGEIN_HPP 1
+#ifndef CLIENT_CMDLINERESPONSEHANDLER_HPP
+#define CLIENT_CMDLINERESPONSEHANDLER_HPP 1
 
 // Include Files
-#include "castor/client/BaseCmdLineClient.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/client/IResponseHandler.hpp"
 
 namespace castor {
 
   namespace rh {
     // Forward declaration
-    class Request;
+    class Response;
   }
 
   namespace client {
 
-    class StageIn : public BaseCmdLineClient {
+    /**
+     * A simple Response Handler for command line clients
+     */
+    class CmdLineResponseHandler : public IResponseHandler {
 
     public:
 
       /**
-       * builds the actual request. This method has to be
-       * reimplemented in each client.
-       * Note that the caller is responsible for the deallocation
-       * of the request
-       * @return the request to be sent to the request handler
+       * handles a response when one arrives
+       * @param r the response to handle
        */
-      virtual castor::rh::Request* buildRequest()
+      virtual void handleResponse(castor::rh::Response& r)
         throw (castor::exception::Exception);
 
       /**
-       * Display an error message and
-       * show usage of the executable.
-       * Has to be reimplemented in each client.
+       * terminates the response handler. This is called
+       * when all responses were received.
        */
-      virtual void usage(std::string message) throw ();
+      virtual void terminate()
+        throw (castor::exception::Exception) {};
 
     };
 
@@ -67,4 +67,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CLIENT_STAGEIN_HPP
+#endif // CLIENT_CMDLINERESPONSEHANDLER_HPP

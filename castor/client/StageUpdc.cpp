@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/01 16:31:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/13 13:36:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,7 +28,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
-#include "castor/ObjectSet.hpp"
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageUpdcRequest.hpp"
 #include "castor/exception/Exception.hpp"
@@ -176,15 +175,6 @@ castor::rh::Request* castor::client::StageUpdc::buildRequest()
     f->setRequest(req);
   }
   return req;
-}
-
-//------------------------------------------------------------------------------
-// printResult
-//------------------------------------------------------------------------------
-void castor::client::StageUpdc::printResult(castor::IObject& result)
-  throw (castor::exception::Exception) {
-  castor::ObjectSet set;
-  result.print(std::cout, "", set);
 }
 
 //------------------------------------------------------------------------------
