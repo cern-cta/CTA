@@ -214,6 +214,10 @@ int rtcpcld_getTapesToDo _PROTO((
 int rtcpcld_getSegmentsToDo _PROTO((
                                     tape_list_t *
                                     ));
+int rtcpcld_getTapeCopyNumber _PROTO((
+                                      file_list_t *,
+                                      int *
+                                      ));
 int rtcpcld_anyReqsForTape _PROTO((
                                   tape_list_t *
                                   ));
@@ -279,7 +283,8 @@ int rtcpcld_initCatalogueInterface _PROTO((
                                            ));
 int rtcpcld_updateNsSegmentAttributes _PROTO((
                                               tape_list_t *,
-                                              file_list_t *
+                                              file_list_t *,
+                                              int
                                               ));
 int rtcpcld_checkSegment _PROTO((
                                  tape_list_t *,
