@@ -123,14 +123,13 @@ BEGIN
   update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = rsubreqId;
   result := 0;  -- no nschedule
  ELSE
-  -- DiskCopies exist that are already recalled, thus schedule for access
   result := 1;  -- schedule and diskcopies available
   OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                DiskCopy.diskcopyId, FileSystem.weight,
                FileSystem.mountPoint, DiskServer.name
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
-    WHERE SubRequest.id = srId
+    WHERE SubRequest.id = rsubreqId
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6) -- STAGED, STAGEOUT
       AND FileSystem.id = DiskCopy.fileSystem
@@ -266,6 +265,7 @@ BEGIN
   RETURNING status, path, diskcopyId
   INTO rdcStatus, rdcPath, rdcDiskCopyId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
+  NULL;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
