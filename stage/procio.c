@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.19 2000/05/02 11:57:06 jdurand Exp $
+ * $Id: procio.c,v 1.20 2000/05/02 14:14:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.19 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.20 $ $Date: 2000/05/02 14:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1255,42 +1255,36 @@ isstaged(cur, p, poolflag, poolname)
 }
 
 unpackfseq(fseq, req_type, trailing, fseq_list)
-		 char *fseq;
-		 int req_type;
-		 char *trailing;
-		 fseq_elem **fseq_list;
+char *fseq;
+int req_type;
+char *trailing;
+fseq_elem **fseq_list;
 {
 	char *dp;
 	int i;
 	int n1, n2;
 	int nbtpf;
 	char *p, *q;
-	char tmp_fseq[CA_MAXFSEQLEN+1];
 
-	if (strlen (fseq) > CA_MAXFSEQLEN) {
-		sendrep (rpfd, MSG_ERR, STG06, "-q");
-		return (0);
-	}
-	strcpy (tmp_fseq, fseq);
-	*trailing = *(tmp_fseq + strlen (tmp_fseq) - 1);
+	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
 		if (req_type != STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG18);
 			return (0);
 		}
-		*(tmp_fseq + strlen (tmp_fseq) - 1) = '\0';
+		*(fseq + strlen (fseq) - 1) = '\0';
 	}
-	switch (*tmp_fseq) {
+	switch (*fseq) {
 	case 'n':
 		if (req_type == STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			return (0);
 		}
 	case 'u':
-		if (strlen (tmp_fseq) == 1) {
+		if (strlen (fseq) == 1) {
 			nbtpf = 1;
 		} else {
-			nbtpf = strtol (tmp_fseq + 1, &dp, 10);
+			nbtpf = strtol (fseq + 1, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
 				return (0);
@@ -1298,13 +1292,13 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		for (i = 0; i < nbtpf; i++)
-			sprintf ((char *)(*fseq_list + i), "%c", *tmp_fseq);
+			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
 		break;
 	default:
 		nbtpf = 0;
-		p = strtok (tmp_fseq, ",");
-		while (p != NULL) {
-			if ((q = strchr (p, '-')) != NULL) {
+		p = strtok (fseq, ",");
+		while (p) {
+			if (q = strchr (p, '-')) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
@@ -1330,13 +1324,13 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 				return (0);
 			}
 			nbtpf += n2 - n1 + 1;
-			if ((p = strtok (NULL, ",")) != NULL) *(p - 1) = ',';
+			if (p = strtok (NULL, ",")) *(p - 1) = ',';
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		nbtpf = 0;
-		p = strtok (tmp_fseq, ",");
-		while (p != NULL) {
-			if ((q = strchr (p, '-')) != NULL) {
+		p = strtok (fseq, ",");
+		while (p) {
+			if (q = strchr (p, '-')) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				n1 = strtol (p, &dp, 10);
