@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.4 $ $Date: 2004/06/09 08:39:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.5 $ $Date: 2004/06/09 15:21:13 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -89,16 +89,17 @@ RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
 #if BuildOraCpp != YES
 #undef
 #define BuildOraCpp	YES
-#define UseOracle	YES
 #endif
 #endif
 #if BuildVdqmClient != YES
 #undef BuildVdqmClient
 #define BuildVdqmClient	YES
 #endif
+#if UseVmgr
 #if BuildVmgrClient != YES
 #undef BuildVmgrClient
 #define BuildVmgrClient	YES
+#endif
 #endif
 #if BuildDlfClient != YES
 #undef BuildDlfClient
@@ -203,6 +204,12 @@ VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
 
 #if BuildVolumeMgrClient
 VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
+#if UseCupv
+#if BuildCupvClient != YES
+#undef BuildCupvClient
+#define BuildCupvClient	YES
+#endif
+#endif
 #if BuildCommon != YES
 #undef BuildCommon
 #define BuildCommon	YES

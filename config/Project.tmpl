@@ -120,16 +120,16 @@ RTCOPYDIR = rtcopy
 #define BuildRfioClient YES
 #endif
 #if BuildRtcopyClient
+#if BuildOraCpp != YES
+#undef BuildOraCpp
+#define BuildOraCpp	YES
+#endif
 #if BuildLib != YES
 #undef BuildLib
 #define BuildLib        YES
 #endif
 #endif
 #if BuildRtcopyServer
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient	YES
-#endif
 #if BuildTapeClient != YES
 #undef BuildTapeClient
 #define BuildTapeClient	YES
@@ -265,6 +265,12 @@ DLFDIR = dlf
 
 #if BuildVolumeMgrClient || BuildVolumeMgrDaemon
 VMGRDIR = vmgr
+#if UseVmgr
+#if BuildCupvClient != YES
+#undef BuildCupvClient
+#define BuildCupvClient	YES
+#endif
+#endif
 #if BuildCommon != YES
 #undef BuildCommon
 #define BuildCommon     YES
