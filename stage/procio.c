@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.40 2000/09/28 12:50:19 jdurand Exp $
+ * $Id: procio.c,v 1.41 2000/09/30 09:06:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.40 $ $Date: 2000/09/28 12:50:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.41 $ $Date: 2000/09/30 09:06:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1494,12 +1494,19 @@ void procputreq(req_data, clienthost)
 				if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
 				if (stcp->t_or_d != 'm' && nhpssfiles > 0) continue;
 				if (stcp->t_or_d != 'h' && ncastorfiles > 0) continue;
-				for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-					if (strcmp (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, hsmfiles[ihsmfiles]) != 0) continue;
-					hsmfilesstcp[found++] = stcp;
-					break;
+				/* It can happen that we get twice the same HSM filename on the same stageput */
+				/* Neverthless the first one cannot be catched a second time because it will have */
+				/* to fulfill also the correction condition on its current status */
+				if ((stcp->status & 0xF) == STAGEOUT ||
+					(stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) {
+					for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+						if (strcmp (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, hsmfiles[ihsmfiles]) != 0)
+							continue;
+						hsmfilesstcp[found++] = stcp;
+						break;
+					}
+					if (found == nhsmfiles) break;
 				}
-				if (found == nhsmfiles) break;
 			} else {
 				if (stcp->t_or_d != 'd') continue;
 				if (strcmp (stcp->u1.d.xfile, externfile) != 0) continue;
@@ -1541,7 +1548,7 @@ void procputreq(req_data, clienthost)
 			char *user_stage = "stage";
 
 			if (found != nhsmfiles) {
-				sendrep (rpfd, MSG_ERR, "STG02 - You requested %d hsm files while I know %d of them\n",nhsmfiles,found);
+				sendrep (rpfd, MSG_ERR, "STG02 - You requested %d hsm files while I found %d of them that you currently can migrate\n",nhsmfiles,found);
 				c = USERR;
 				goto reply;
 			}
@@ -1558,13 +1565,6 @@ void procputreq(req_data, clienthost)
 			}
 
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-				if ((hsmfilesstcp[ihsmfiles]->status & 0xF) != STAGEOUT &&
-					(hsmfilesstcp[ihsmfiles]->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)) {
-					sendrep (rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles], "must match STAGEOUT and/or PUT_FAILED status");
-					stglogit (func, "hsmfilesstcp[ihsmfiles=%d]->status [0x%lx] & 0xF) gives 0x%lx != STAGEOUT [0x%lx] or STAGEOUT|PUT_FAILED [0x%lx]\n", ihsmfiles, hsmfilesstcp[ihsmfiles]->status, hsmfilesstcp[ihsmfiles]->status & 0xF, (unsigned long) STAGEOUT, (unsigned long) STAGEOUT|PUT_FAILED);
-					c = USERR;
-					goto reply;
-				}
 				/* If migration flag is set, then status must have flag CAN_BE_MIGR */
 				/* If not, then status must not have flag CAN_BE_MIGR */
 				if ((migrationflag != 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR) ||
