@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.8 $ $Date: 1999/11/05 10:01:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.9 $ $Date: 1999/11/18 12:48:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -886,7 +886,12 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
         volrec->drv = NULL;
     }
     if ( drvrec != NULL ) {
+        /*
+         * We need to flag the unit with unknown status until we here
+         * from it again.
+         */
         drvrec->drv.VolReqID = 0;
+        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
         drvrec->vol = NULL;
     }
     FreeDgnContext(&dgn_context);
@@ -1085,7 +1090,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
          * For security this status can only be set from
          * tape server.
          */
-        if ( strncmp(DrvReq->reqhost,drvrec->drv.server) != 0 ) {
+        if ( strcmp(DrvReq->reqhost,drvrec->drv.server) != 0 ) {
             log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s DOWN from %s\n",
                 DrvReq->drive,DrvReq->server,DrvReq->reqhost);
             FreeDgnContext(&dgn_context);
