@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.21 $ $Date: 2000/02/07 17:47:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.22 $ $Date: 2000/02/08 15:24:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,9 @@ buffer_table_t **databufs;
 
 extern int AbortFlag;
 int AbortFlag = 0;
+
+extern int SHIFTclient;
+int SHIFTclient = 0;
 
 /*
  * Set Debug flag if requested
@@ -778,9 +781,15 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * This is an old client
          */
+        SHIFTclient = 1;
         rtcp_log(LOG_INFO,"Running old (SHIFT) client request\n");
         rc = rtcp_RunOld(accept_socket,&hdr);
+
         (void)rtcp_CloseConnection(accept_socket);
+        if ( client != NULL ) {
+            free(client);
+            client = NULL;
+        }
         return(rc);
     }
 

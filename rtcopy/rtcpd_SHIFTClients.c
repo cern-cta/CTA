@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.11 $ $Date: 2000/01/21 15:56:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.12 $ $Date: 2000/02/08 15:24:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -293,6 +293,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             argv[argc] = NULL;
             rc = rtcpc_BuildReq(&((*req)->tape),argc,argv);
             free(msgbuf);
+            free(argv);
         } else {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() unknown request type 0x%x\n",
                 hdr->reqtype);
@@ -395,9 +396,17 @@ static int rtcp_SendRC(SOCKET *s,
     return(0);
 }
     
+int rtcpd_CleanUpSHIFT(shift_client_t **req, int status) {
+    if ( req == NULL || *req == NULL ) return(status);
+    rtcpc_FreeReqLists(&((*req)->tape));
+    free(*req);
+    *req = NULL;
+    return(status);
+}
+
 
 int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
-    int rc, retval, CLThId;
+    int rc, retval, status, CLThId;
     shift_client_t *req = NULL;
     tape_list_t *tl;
     file_list_t *fl;
@@ -411,13 +420,13 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     }
 
     rc = rtcp_GetOldCMsg(s,hdr,&req);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
 
     rc = rtcp_SendOldCAckn(s,hdr);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
 
     rc = rtcp_CheckClientHost(s,req);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
 
     if ( hdr->reqtype == RQST_INFO ) {
         rtcp_log(LOG_INFO,"info request by user %s (%d,%d) from %s\n",
@@ -426,21 +435,18 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         rc = rtcp_GetOldCinfo(hdr,req);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
-            return(-1);
+            return(rtcpd_CleanUpSHIFT(&req,-1));
         }
         rtcp_log(LOG_DEBUG,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
-        if ( rc == -1 ) return(-1);
 
-        return(0);
+        if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+
+        return(rtcpd_CleanUpSHIFT(&req,0));
     }
-    /*
-     * Kick off client listen thread to answer pings etc.
-     */
-    CLThId = rtcpd_ClientListen(*s);
-    if ( CLThId == -1 ) return(-1);
 
+    CLThId = -1;
     /*
      * Start the request
      */
@@ -456,25 +462,35 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
 #if !defined(_WIN32)
         if ( setgid(req->gid) == -1 ) {
             rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
-            return(-1);
+            return(rtcpd_CleanUpSHIFT(&req,-1));
         }
         if ( setuid(req->uid) == -1 ) {
             rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
-            return(-1);
+            return(rtcpd_CleanUpSHIFT(&req,-1));
         }
         if ( *req->acctstr != '\0' ) {
             (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
             if ( putenv(envacct) != 0 ) {
                 rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
-                return(-1);
+                return(rtcpd_CleanUpSHIFT(&req,-1));
             }
         }
 #endif /* !_WIN32 */
+
+        /*
+         * Kick off client listen thread to answer pings etc.
+         */
+        CLThId = rtcpd_ClientListen(*s);
+        if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
  
         rc = rtcpc(req->tape);
     }
     (void) rtcp_SendRC(s,hdr,&retval,req); 
 
-    return(rc);
+    rtcp_log = (void (*)(int, const char *, ...))log;
+
+    if ( CLThId != -1 ) (void)rtcpd_WaitCLThread(CLThId,&status);
+
+    return(rtcpd_CleanUpSHIFT(&req,rc));
 }
 
