@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.76 2001/06/22 10:09:49 jdurand Exp $
+ * $Id: procupd.c,v 1.77 2001/06/24 22:14:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.76 $ $Date: 2001/06/22 10:09:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.77 $ $Date: 2001/06/24 22:14:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -978,9 +978,11 @@ procupdreq(req_type, magic, req_data, clienthost)
 					} else {
 						struct stgcat_entry *save_stcp = stcp;
 						struct stgcat_entry save_stcp_rdonly;
+						struct stgcat_entry save_stcp_other_migration;
 						int save_status = stcp->status;
 
 						save_stcp_rdonly.reqid = 0;
+						save_stcp_other_migration.reqid = 0;
 						if ((save_stcp->t_or_d == 'h') && (ISSTAGEWRT(save_stcp) || ISSTAGEPUT(save_stcp)) && HAVE_SENSIBLE_STCP(save_stcp)) {
 							/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
 							/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
@@ -1000,29 +1002,44 @@ procupdreq(req_type, magic, req_data, clienthost)
 								if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
 									(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
 									(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
-									(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
-									(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0)) {
-									if (stcp_found == NULL) {
+									(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass)) {
+									if (strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0) {
 										/* We do the ++ because of the possible loop below */
 										stcp_found = stcp_search++;
 										break;
+									} else {
+										/* No matter if we overwrite more than one the content */
+										save_stcp_other_migration = *stcp_search;
 									}
 								}
 							}
-							if (save_stcp_rdonly.reqid == 0) {
+							if ((save_stcp_rdonly.reqid == 0) || (save_stcp_other_migration.reqid == 0)) {
 								/* We continue the search of a STAGEIN|STAGED|STAGE_RDONLY entry */
+								/* or the search of another migratio nentry */
 								for ( ; stcp_search < stce; stcp_search++) {
 									if (stcp_search->reqid == 0) break;
 									if ((save_stcp->poolname[0] != '\0') &&
 										(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
-									if ((stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) &&
-										((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+									if (save_stcp_rdonly.reqid == 0) {
+										if ((stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) &&
+											((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+												(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+												(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+												(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass))) {
+											save_stcp_rdonly = *stcp_search;
+										}
+									}
+									if (save_stcp_other_migration.reqid == 0) {
+										if (! ISCASTORBEINGMIG(stcp_search)) continue;
+										if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
 											(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
 											(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
-											(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass))) {
-										save_stcp_rdonly = *stcp_search;
-										break;
+											(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
+											(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) != 0)) {
+												save_stcp_other_migration = *stcp_search;
+										}
 									}
+									if ((save_stcp_rdonly.reqid != 0) && (save_stcp_other_migration.reqid != 0)) break;
 								}
 							}
 							if (stcp_found == NULL) {
@@ -1059,7 +1076,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								int continue_flag = 0;
 								/* The found element is not the STAGEWRT itself, or is the STAGEPUT */
 								/* this means it was a migration request */
-								if (ifileclass >= 0) {
+								if ((ifileclass >= 0) && (save_stcp_other_migration.reqid == 0)) {
 									time_t thistime = time(NULL);
 									int thisretenp = retenp_on_disk(ifileclass);
 
@@ -1088,16 +1105,21 @@ procupdreq(req_type, magic, req_data, clienthost)
 								}
 							} else {
 							delete_entry:
-								/* We can delete this entry */
-								if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0) < 0) {
-									sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
-												 "rfio_unlink", rfio_serror());
+								if (save_stcp_other_migration.reqid != 0) {
+									/* This is a migration callback and there is another migration on same file running */
+									delreq(stcp_found,0);
+								} else {
+									/* We can delete this entry */
+									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0) < 0) {
+										sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
+													 "rfio_unlink", rfio_serror());
+									}
 								}
 							}
 						}
 					continue_entry:
 						/* Suppose now that we have also found a stcp in read-only mode */
-						if (save_stcp_rdonly.reqid > 0) {
+						if ((save_stcp_rdonly.reqid > 0) && (save_stcp_other_migration.reqid == 0)) {
 							struct stgcat_entry *stcp_found_rdonly = NULL;
 							struct stgcat_entry *stcp_found_stageout = NULL;
 							/* We scan again the catalog to change the STAGEIN|STAGED|STAGE_RDONLY to STAGEIN|STAGED */
@@ -1144,7 +1166,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					}
 				} else {
 					struct stgcat_entry *save_stcp = stcp;
-					struct stgcat_entry *stcp_search, *stcp_found;
+					struct stgcat_entry *stcp_search, *stcp_found, *stcp_other_migration_found;
 
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 						update_migpool(&stcp,-1,0);
@@ -1155,21 +1177,33 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* We send the reply right now */
 					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
 					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
-					stcp_found = NULL;
+					stcp_found = stcp_other_migration_found = NULL;
 					for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 						if (stcp_search->reqid == 0) break;
 						if ((save_stcp->poolname[0] != '\0') &&
 							(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
-						if (stcp_search->status != (STAGEIN|STAGED|STAGE_RDONLY)) continue;
-						if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
-							(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
-							(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
-							(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass)) {
-							stcp_found = stcp_search;
-							break;
+                        if (stcp_found == NULL) {
+							if ((stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) &&
+								(strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+								(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+								(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+								(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass)) {
+								stcp_found = stcp_search;
+							}
 						}
+						if (stcp_other_migration_found == NULL) {
+							if (! ISCASTORBEINGMIG(stcp_search)) continue;
+							if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+								(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+								(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+								(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
+								(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) != 0)) {
+								stcp_other_migration_found = stcp_search;
+							}
+						}
+						if ((stcp_found != NULL) && (stcp_other_migration_found != NULL)) break;
 					}
-					if (stcp_found != NULL) {
+					if ((stcp_found != NULL) && (stcp_other_migration_found == NULL)) {
 						/* Here we are : the file has been migrated but has been accessed before the */
 						/* end of the migration in read-only mode */
 
@@ -1178,7 +1212,26 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* nbaccesses as well as created a new entry with one for nbaccesses */
 						stcp_found->status = (STAGEIN|STAGED);
 						if (stcp_found->t_or_d == 'h')
-							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
+							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname if any */
+						stcp_found->nbaccesses += (stcp->nbaccesses - 1);
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+						/* And we delete the now virtual STAGEIN|STAGED|STAGE_RDONLY entry */
+						/* Be aware that this can shift the whole catalog in memory - that's why */
+						/* it has to be done at the very end of current processing */
+						delreq(stcp,0);
+					} else if (stcp_found != NULL) {
+						/* The file has been migrated but has been accessed before the */
+						/* end of the migration in read-only mode and there is another migration running */
+
+                        /* We remove current migration stuff */
+						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
+						/* nbaccesses as well as created a new entry with one for nbaccesses */
+						if (stcp_found->t_or_d == 'h')
+							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname if any */
 						stcp_found->nbaccesses += (stcp->nbaccesses - 1);
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
@@ -1333,5 +1386,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Friday 22 June, 2001 at 12:08:59 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 24 June, 2001 at 23:44:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
