@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.33 2003/11/17 09:56:07 jdurand Exp $
+ * $Id: stage_util.c,v 1.34 2003/11/17 11:01:35 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.33 $ $Date: 2003/11/17 09:56:07 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.34 $ $Date: 2003/11/17 11:01:35 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -192,13 +192,17 @@ void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
 	struct stgpath_entry *stpp;
 	int (*funcrep) _PROTO((int *, int, ...));
 {
+	int save_serrno;
+
 	if ((funcrep == NULL) || (stpp == NULL)) return;
 
+	save_serrno = serrno;
 	funcrep(rpfd, MSG_OUT, "----------------------------------\n");
 	funcrep(rpfd, MSG_OUT, "Path entry  -   dump of reqid %d\n", stpp->reqid);
 	funcrep(rpfd, MSG_OUT, "----------------------------------\n");
 	DUMP_VAL(rpfd,stpp,reqid);
 	DUMP_STRING(rpfd,stpp,upath);
+	serrno = save_serrno;
 }
 
 void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
@@ -206,10 +210,11 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	struct stgcat_entry *stcp;
 	int (*funcrep) _PROTO((int *, int, ...));
 {
-	int i;
+	int i, save_serrno;
 
 	if ((funcrep == NULL) || (stcp == NULL)) return;
 
+	save_serrno = serrno;
 	funcrep(rpfd, MSG_OUT, "-------------------------------------\n");
 	funcrep(rpfd, MSG_OUT, "Catalog entry - dump of reqid %d\n", stcp->reqid);
 	funcrep(rpfd, MSG_OUT, "-------------------------------------\n");
@@ -287,28 +292,34 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_VAL(rpfd,stcp,u1.h.flag);
 		break;
 	}
+	serrno = save_serrno;
 }
 
 
 void DLL_DECL print_stpp(stpp)
 	struct stgpath_entry *stpp;
 {
+	int save_serrno;
+
 	if (stpp == NULL) return;
 
+	save_serrno = serrno;
 	fprintf(stdout, "----------------------------------\n");
 	fprintf(stdout, "Path entry  -   dump of reqid %d\n", stpp->reqid);
 	fprintf(stdout, "----------------------------------\n");
 	PRINT_VAL(stpp,reqid);
 	PRINT_STRING(stpp,upath);
+	serrno = save_serrno;
 }
 
 void DLL_DECL print_stcp(stcp)
 	struct stgcat_entry *stcp;
 {
-	int i;
+	int i, save_serrno;
 
 	if (stcp == NULL) return;
 
+	save_serrno = serrno;
 	fprintf(stdout, "-------------------------------------\n");
 	fprintf(stdout, "Catalog entry - dump of reqid %d\n", stcp->reqid);
 	fprintf(stdout, "-------------------------------------\n");
@@ -386,6 +397,7 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_VAL(stcp,u1.h.flag);
 		break;
 	}
+	serrno = save_serrno;
 }
 
 /* Idem than strtol() but returns 0 if OK, -1 if error, result in &ouput */
