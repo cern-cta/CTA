@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.1 2000/01/09 10:27:56 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.2 2000/01/09 11:41:48 jdurand Exp $
  */
 
 /* ============== */
@@ -12,6 +12,7 @@
 #include <unistd.h>           /* Getopt etc... */
 #include <stdlib.h>           /* atoi etc... */
 #include <errno.h>            /* errno etc... */
+#include <string.h>           /* memset etc... */
 
 /* ============= */
 /* Local headers */
@@ -35,10 +36,6 @@
 #define FILE_MODE ( S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH )
 #endif
 #define FREQUENCY 1000
-
-#ifndef MIN
-#define MIN(x,y) (x) < (y) ? (x) : (y)
-#endif
 
 #define CHECK_RAW_SIZE(member) {                                     \
   if (sizeof(stcp_castor.member) < sizeof(stcp_old.member)) {        \
@@ -95,15 +92,13 @@ int main(argc, argv)
   int help = 0;
   int skip_stgcat = 0;
   int skip_stgpath = 0;
-  int n_stgcat = -1;
-  int n_stgpath = -1;
   extern char *optarg;
   extern int optind, opterr, optopt;
   int errflg = 0;
   char tmpbuf[21];
   int answer;
 
-  while ((c = getopt(argc,argv,"hCLc:l:n:")) != EOF) {
+  while ((c = getopt(argc,argv,"hCLn:")) != EOF) {
     switch (c) {
     case 'h':
       help = 1;
@@ -113,12 +108,6 @@ int main(argc, argv)
       break;
     case 'L':
       skip_stgpath = 1;
-      break;
-    case 'c':
-      n_stgcat = atoi(optarg);
-      break;
-    case 'l':
-      n_stgpath = atoi(optarg);
       break;
     case 'n':
       frequency = atoi(optarg);
@@ -254,11 +243,15 @@ int main(argc, argv)
     if (convert_stgcat() != 0) {
       return(EXIT_FAILURE);
     }
+    close(stgcat_in_fd);
+    close(stgcat_out_fd);
   }
   if (skip_stgpath == 0) {
     if (convert_stgpath() != 0) {
       return(EXIT_FAILURE);
     }
+    close(stgpath_in_fd);
+    close(stgpath_out_fd);
   }
 
   return(EXIT_SUCCESS);
@@ -299,6 +292,9 @@ int convert_stgcat() {
     if (i == 0 || i % frequency == 0 || i == imax) {
       printf("--> (%5d/%5d) Doing reqid = %d\n",i,imax,stcp_old.reqid);
     }
+    memset((char *) &stcp_castor, 0, sizeof(struct stgcat_entry));
+    CHECK_VAR_SIZE(blksize);
+    stcp_castor.blksize        = stcp_old.blksize;
     CHECK_RAW_SIZE(filler);
     memcpy(stcp_castor.filler  , stcp_old.filler,sizeof(stcp_castor.filler));
     CHECK_RAW_SIZE(charconv);
@@ -427,6 +423,7 @@ int convert_stgpath() {
     if (i == 0 || i % frequency == 0 || i == imax) {
       printf("--> (%5d/%5d) Doing reqid = %d\n",i,imax,stcp_old.reqid);
     }
+    memset((char *) &stcp_castor, 0, sizeof(struct stgpath_entry));
     CHECK_VAR_SIZE(reqid);
     stcp_castor.reqid          = stcp_old.reqid;
     CHECK_STRING_SIZE(upath);
@@ -448,8 +445,6 @@ void shift_to_castor_usage() {
          "  -h           This help\n"
          "  -C           Skip stgcat conversion\n"
          "  -L           Skip stgpath conversion\n"
-         "  -c <number>  Do only <number> stgcat entries conversions\n"
-         "  -l <number>  Do only <number> stgpath entries conversions\n"
          "  -n <number>  Print output every <number> iterations. Default is %d.\n"
          "\n"
          "  This program will convert SHIFT stager catalogs to CASTOR ones. The SHIFT stager catalogs are typically <stgcat_in> == /usr/spool/stage/stgcat and <stgpath_in> == /usr/spool/stage/stgpath\n"
