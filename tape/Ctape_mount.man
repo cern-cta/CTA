@@ -1,8 +1,8 @@
-.\" $Id: Ctape_mount.man,v 1.4 1999/09/02 14:18:19 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" $RCSFile$$Revision: 1.5 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_MOUNT l "$Date: 1999/09/02 14:18:19 $"
+.TH CTAPE_MOUNT l "$Date: 1999/09/08 12:01:07 $"
 .SH NAME
 Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .SH SYNOPSIS
@@ -145,6 +145,9 @@ Operator cancel, access denied by TMS, wrong label type.
 .B EEXIST
 Path exists already.
 .TP
+.B EINVAL
+Bad parameter value.
+.TP
 .B SENOSHOST
 Host unknown.
 .TP
@@ -156,9 +159,6 @@ Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
-.TP
-.B ETPRM
-Bad parameter.
 .TP
 .B ETNDV
 Too many drives requested.
