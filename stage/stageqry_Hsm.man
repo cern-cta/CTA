@@ -1,10 +1,10 @@
-.\" $Id: stageqry_Hsm.man,v 1.7 2002/09/15 06:56:05 jdurand Exp $
+.\" $Id: stageqry_Hsm.man,v 1.8 2002/09/16 12:36:52 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.7 $ $Date: 2002/09/15 06:56:05 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.8 $ $Date: 2002/09/16 12:36:52 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY_HSM "3" "$Date: 2002/09/15 06:56:05 $" "CASTOR" "Stage Library Functions"
+.TH STAGEQRY_HSM "3" "$Date: 2002/09/16 12:36:52 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stageqry_Hsm \- Query the stager catalog about an HSM file
 .SH SYNOPSIS
@@ -25,85 +25,73 @@ The \fBstageqry_Hsm\fP API method queries the stager catalog for a given HSM
 There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP, see in the example below) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
 
 .SH PARAMETERS
-.TP 2.0i
-.BI flags
+.TP 1.5i
+.I flags
 Flags that are driving the search in the stager catalog. It can be zero or a bit-wise of the following values:
-.TP 2.0i
-.HP
+.RS
+.TP
 .I STAGE_DUMP
 A dump of the found catalog entries is written to the output.
 .TP
-.HP
 .I STAGE_NOREGEXP
 The HSM filename in input is not a regular expression. By default it is a regexp.
 .TP
-.HP
 .I STAGE_ALL
 Search over all entries. Default is to restrict to your group.
 .TP
-.HP
 .I STAGE_FILENAME
 The full HSM filename of found catalog entries is written to the output
 .TP
-.HP
 .I STAGE_LINKNAME
-Only the eventual links to found catalog entries in written to the output
+Only the eventual links to found catalog entries are written to the output
 .TP
-.HP
 .I STAGE_LONG
 Gives more details for each file: the login name, the group name of the user who requested the initial stage operation, the creation and the date of last access.
 .TP
-.HP
 .I STAGE_PATHNAME
 Gives the internal path for each found catalog entry.
 .TP
-.HP
 .I STAGE_SORTED
-List of staged files sorted in ascending order of last access time weighted by file size: W = atime \- (86400 * log (size / 1024)). There are six fields per file: date of last access, time of last access, size in Mbytes, number of accesses, internal path and user path.
+List of staged files sorted in ascending order of last access time weighted by file size: W = atime \- (86400 * log (size / 1024)). There are six fields per file: date of last access, time of last access, size in Mbytes, number of accesses, internal path and user link.
 .TP
-.HP
 .I STAGE_USER
 Restricts the query to files that belong to the requestor.
 .TP
-.HP
 .I STAGE_EXTENDED
 Adds  two  columns  to  the  output:  they give the request id and the internal pathname.
 .TP
-.HP
 .I STAGE_CLASS
 Gives CASTOR's file classes specifications. Please note  that  the  fileclasses  specifications listed will only be those that were concerned by any file that  was or is beeing migrated. In particular if a given entry is already STAGED when the stager daemon  starts  up  and  no new file, belonging to the same fileclass, appears to be or have been a candidate for migration up to when you run this stageqry_Hsm call, such a fileclass will not be listed.
 .TP
-.HP
 .I STAGE_RETENP
 Gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Expired. The CASTOR files lifetime can be changed using the \fBstagechng\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Expired.
 .TP
-.HP
 .I STAGE_MINTIME
 Gives current minimum time before migration. This concerns only entries that are in the CAN_BE_MIGR state.
 .TP
-.HP
 .I STAGE_NORETRY
 Prevent retry in case of communication failure with the stager daemon. Can be set using environment variable $STAGE_NORETRY with a non-wero value, or an entry 'STG NORETRY' with a non-null value in /etc/shift.conf.
+.RE
 .TP
-.BI hostname
+.I hostname
 Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
 .TP
-.BI poolname
+.I poolname
 Restrict search to a given poolname. Can be NULL.
 .TP
-.BI filename
+.I filename
 Gives the explicit filename you want to query for.
 .TP
-.BI nstcp_output
+.I nstcp_output
 Filled with the number of found records.
 .TP
-.BI stcp_output
+.I stcp_output
 Filled with the address of an array containg the found records. Up to the user to free it if necessary.
 .TP
-.BI nstpp_output
+.I nstpp_output
 Filled with the number of found records.
 .TP
-.BI stpp_output
+.I stpp_output
 Filled with the address of an array containg the link records. Only if STAGE_LINKNAME is used. Up to the user to free it if necessary.
 
 .SH EXAMPLE
