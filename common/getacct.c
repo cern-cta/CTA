@@ -1,6 +1,9 @@
 /*
- * $Id: getacct.c,v 1.3 1999/07/21 20:07:46 jdurand Exp $
+ * $Id: getacct.c,v 1.4 1999/07/22 12:31:14 obarring Exp $
  * $Log: getacct.c,v $
+ * Revision 1.4  1999/07/22 12:31:14  obarring
+ * Add _THREAD_SAFE for strtok_r on AIX
+ *
  * Revision 1.3  1999/07/21 20:07:46  jdurand
  * *** empty log message ***
  *
@@ -15,7 +18,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getacct.c,v 1.3 1999/07/21 20:07:46 jdurand Exp $";
+static char cvsId[] = "$Id: getacct.c,v 1.4 1999/07/22 12:31:14 obarring Exp $";
 #endif /* not lint */
 
 /*  getacct() - Getting the current account id  */
@@ -40,9 +43,9 @@ static char cvsId[] = "$Id: getacct.c,v 1.3 1999/07/21 20:07:46 jdurand Exp $";
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POXIS release
  */
-#if defined(_REENTRANT)
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif
+#endif /* _REENTRANT || _THREAD_SAFE */
 #else
 extern uid_t getuid();
 #endif
@@ -51,7 +54,7 @@ extern uid_t getuid();
 #include <Cglobals.h>
 #include "getacct.h"
 
-extern char *getacctent_r();
+extern char *getacctent();
 
 
 char    *getacct_r(resbuf,resbufsiz) 
@@ -61,9 +64,12 @@ size_t resbufsiz;
     char      *account = NULL;    /* Pointer to the account env variable  */
     struct passwd *pwd = NULL;        /* Pointer to the password entry    */
     char      buf[BUFSIZ];
-    char      *cprv, *rv, *last;
+    char      *cprv, *rv;
+#if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
+    char      *last = NULL;
+#endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
 
-    cprv = rv = last = NULL;
+    cprv = rv = NULL;
 
     /*
      * Get environment variable.
@@ -85,7 +91,7 @@ size_t resbufsiz;
      * Get account file entry
      */
 
-    cprv = getacctent_r(pwd, account, buf, (int)sizeof(buf));
+    cprv = getacctent(pwd, account, buf, (int)sizeof(buf));
 
     /*
      * Extract account id
