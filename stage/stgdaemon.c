@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.29 2000/05/16 09:58:30 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.30 2000/05/16 11:53:11 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.29 $ $Date: 2000/05/16 09:58:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.30 $ $Date: 2000/05/16 11:53:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1656,7 +1656,7 @@ upd_stageout(req_type, upath, subreqid)
 		stcp->status = STAGEPUT;
 	} else if (req_type == STAGEUPDC) {
 		if (stcp->status == STAGEOUT && stcp->t_or_d == 'm') {
-			if (stcp->size <= 0) {
+			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR is its size is zero */
 				if (delfile (stcp, 0, 1, 1, "stageupdc on zero-length to-be-migrated file ok", stcp->uid, stcp->gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
