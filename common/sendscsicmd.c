@@ -4,14 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.9 $ $Date: 2000/07/05 13:47:26 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.10 $ $Date: 2000/12/18 11:26:42 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
-/*	return	-5	if not supported on this platform
- *		-4	if SCSI error
- *		-3	if CAM error
- *		-2	if ioctl fails with errno
+/*	return	-5	if not supported on this platform (serrno = SEOPNOTSUP)
+ *		-4	if SCSI error (serrno = EIO)
+ *		-3	if CAM error (serrno = EIO)
+ *		-2	if ioctl fails with errno (serrno = errno)
  *		-1	if open/stat fails with errno (message fully formatted)
  *		 0	if successful with no data transfer
  *		>0	number of bytes transferred
@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.9 $ $Date: 
 #include <sys/stat.h>
 #endif
 #include "scsictl.h"
+#include "serrno.h"
 #if defined(TAPE)
 #include "Ctape.h"
 #define USRMSG(fmt,p,f,msg) \
@@ -228,6 +229,7 @@ char **msgaddr;
 	if (ioctl (tapefd, USCSICMD, &ucmd) < 0 &&
 	    (errno != EIO || ucmd.uscsi_status == 0)) {
 		*msgaddr = sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-2);
 	}
@@ -240,6 +242,7 @@ char **msgaddr;
 			*msgaddr = err_msgbuf;
 		} else
 			get_ss_msg (ucmd.uscsi_status, msgaddr);
+		serrno = EIO;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-4);
 	}
@@ -265,6 +268,7 @@ char **msgaddr;
 		strcpy (dspath, path);
 	} else {
 		if (stat (path, &sbuf) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, path, "stat", sys_errlist[errno]);
 #else
@@ -275,6 +279,7 @@ char **msgaddr;
 		}
 #if defined(IRIX64)
 		if (attr_get (path, "_devname", canonical_dev, &canonical_dev_len, 0) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, path, "attr_get", sys_errlist[errno]);
 #else
@@ -299,6 +304,7 @@ char **msgaddr;
 			(minor(sbuf.st_rdev) >> 5) & 0xF);
 #endif
 		if ((fd = open (dspath, O_RDWR|O_NDELAY)) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, dspath, "open", sys_errlist[errno]);
 #else
@@ -330,6 +336,7 @@ char **msgaddr;
 
 	if (ioctl (fd, DS_ENTER, &dsreq) < 0 ) {
 		*msgaddr = sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, dspath, "ioctl", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
@@ -348,6 +355,7 @@ char **msgaddr;
 				break;
 			}
 		}
+		serrno = EIO;
 		USRMSG (TP042, dspath, "ioctl", *msgaddr);
 		return (-3);
 	}
@@ -359,6 +367,7 @@ char **msgaddr;
 			*msgaddr = err_msgbuf;
 		} else
 			get_ss_msg (dsreq.ds_status, msgaddr);
+		serrno = EIO;
 		USRMSG (TP042, dspath, "ioctl", *msgaddr);
 		return (-4);
 	}
@@ -381,6 +390,7 @@ char **msgaddr;
 	sctl_io.max_msecs = timeout;
 	if (ioctl (tapefd, SIOC_IO, &sctl_io) < 0) {
 		*msgaddr = sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-2);
 	}
@@ -398,6 +408,7 @@ char **msgaddr;
 				break;
 			}
 		}
+		serrno = EIO;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-3);
 	}
@@ -409,6 +420,7 @@ char **msgaddr;
 			*msgaddr = err_msgbuf;
 		} else
 			get_ss_msg (sctl_io.cdb_status, msgaddr);
+		serrno = EIO;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-4);
 	}
@@ -424,6 +436,7 @@ char **msgaddr;
 	static char xmsgbuf[132];
 
 	if (stat (path, &sbuf) < 0) {
+		serrno = errno;
 #if defined(TAPE)
 		USRMSG (TP042, path, "stat", sys_errlist[errno]);
 #else
@@ -436,6 +449,7 @@ char **msgaddr;
 		fd = tapefd;
 	} else {
 		if ((fd = open ("/dev/cam", O_RDWR, 0)) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, "/dev/cam", "open", sys_errlist[errno]);
 #else
@@ -480,6 +494,7 @@ char **msgaddr;
 
 	if (ioctl(fd, UAGT_CAM_IO, (caddr_t)&ua_ccb) < 0) {
 		*msgaddr = sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, "/dev/cam", "ioctl", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
@@ -523,6 +538,7 @@ char **msgaddr;
 			strcat (xmsgbuf, rsq_failed_msg);
 			*msgaddr = xmsgbuf;
 		}
+		serrno = EIO;
 		USRMSG (TP042, "/dev/cam", "ioctl", *msgaddr);
 		return (-3);
 	}
@@ -539,6 +555,7 @@ char **msgaddr;
 			strcat (xmsgbuf, rsq_failed_msg);
 			*msgaddr = xmsgbuf;
 		}
+		serrno = EIO;
 		USRMSG (TP042, "/dev/cam", "ioctl", *msgaddr);
 		return (-4);
 	}
@@ -562,19 +579,21 @@ char **msgaddr;
 
 	if (sizeof(struct sg_header) + cdblen + buflen > SG_BIG_BUFF) {
 #if defined(TAPE)
-			sprintf (tp_err_msgbuf, "blocksize too large (max %d)\n",
-			    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
-			*msgaddr = tp_err_msgbuf;
+		sprintf (tp_err_msgbuf, "blocksize too large (max %d)\n",
+		    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
+		*msgaddr = tp_err_msgbuf;
 #else
-			sprintf (err_msgbuf, "blocksize too large (max %d)",
-			    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
-			*msgaddr = err_msgbuf;
+		sprintf (err_msgbuf, "blocksize too large (max %d)",
+		    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
+		*msgaddr = err_msgbuf;
 #endif
+		serrno = EINVAL;
 		return (-1);
 	}
 	if (sizeof(struct sg_header)+cdblen+buflen > sg_bufsiz) {
 		if (sg_bufsiz > 0) free (sg_buffer);
 		if ((sg_buffer = malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
+			serrno = errno;
 #if defined(TAPE)
 			sprintf (tp_err_msgbuf, TP005);
 			*msgaddr = tp_err_msgbuf;
@@ -591,6 +610,7 @@ char **msgaddr;
 		strcpy (sgpath, path);
 	} else {
 		if (stat (path, &sbuf) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, path, "stat", sys_errlist[errno]);
 #else
@@ -612,6 +632,7 @@ char **msgaddr;
 		fclose (sgf);
 		sprintf (sgpath, "/dev/sg%c", sg_index + 'a');
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
+			serrno = errno;
 #if defined(TAPE)
 			USRMSG (TP042, sgpath, "open", sys_errlist[errno]);
 #else
@@ -637,6 +658,7 @@ char **msgaddr;
 	}
 	if (write (fd, sg_buffer, n) < 0) {
 		*msgaddr = (char *) sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, sgpath, "write", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
@@ -644,6 +666,7 @@ char **msgaddr;
 	if ((n = read (fd, sg_buffer, sizeof(struct sg_header) +
 	    ((flags & SCSI_IN) ? buflen : 0))) < 0) {
 		*msgaddr = (char *) sys_errlist[errno];
+		serrno = errno;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
@@ -663,10 +686,12 @@ char **msgaddr;
 		sprintf (err_msgbuf, "%s ASC=%X ASCQ=%X",
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
 		*msgaddr = err_msgbuf;
+		serrno = EIO;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		return (-4);
 	} else if (sg_hd->result) {
 		*msgaddr = (char *) sys_errlist[sg_hd->result];
+		serrno = sg_hd->result;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		return (-2);
 	}
@@ -677,6 +702,7 @@ char **msgaddr;
 	return ((flags & SCSI_IN) ? n : buflen - resid);
 #else
 	*msgaddr = notsupp;
+	serrno = SEOPNOTSUP;
 	USRMSG (TP042, path, "ioctl", *msgaddr);
 	return (-5);
 #endif
