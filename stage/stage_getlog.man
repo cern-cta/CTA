@@ -1,0 +1,91 @@
+.\" $Id: stage_getlog.man,v 1.1 2002/09/08 06:53:59 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_getlog.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 06:53:59 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_GETLOG "3" "$Date: 2002/09/08 06:53:59 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_setlog \- Get receiving callback routine for error and output messages
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_getlog(void (**" logfunction 
+.BI ")(int " level ,
+.BI "char *" message "));"
+
+.SH DESCRIPTION
+The \fBstage_getlog\fP API method is querying the log callback of stage API.
+
+.SH PARAMETERS
+.BI logfunction
+is a pointer to a function pointer that accepts two parameters: the
+.BI level
+of the message, that can be MSG_ERR or MSG_OUT, and the
+.BI message
+itself.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stage_api.h>
+#include <serrno.h>
+
+void mystagelog _PROTO((int, char *));
+
+int main(argc,argv)
+     int argc;
+     char **argv;
+{
+  void (*myveriflog) _PROTO((int, char *));
+
+  if (stage_setlog(&mystagelog) != 0) {
+    fprintf(stderr,"### stage_setlog error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (stage_getlog(&myveriflog) != 0) {
+    fprintf(stderr,"### stage_getlog error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (myveriflog != mystagelog) {
+    fprintf(stderr,"### stage_getlog gives bad address\\n");
+    exit(EXIT_FAILURE);
+  }
+  exit(0);
+}
+
+void mystagelog(level,msg)
+     int level;
+     char *msg;
+{
+  fprintf(level == MSG_OUT ? stdout : stderr, "%s", msg);
+}
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+.TP
+.B SECTHREADERR
+Thread interface call error
+.TP
+.B SECTHREADINIT
+Cthread initialization error
+
+.SH SEE ALSO
+\fBstage_setlog\fP(3), \fBstage_seterrbuf\fP(3), \fBstage_setoutbuf\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
