@@ -66,7 +66,7 @@ const std::string castor::db::ora::OraCnvSvc::s_getIdStatementString =
 
 /// SQL statement for selecting next request to be processed
 const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
-  "BEGIN UPDATE rh_requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE status = 'NEW' AND rownum <=1 RETURNING ID INTO :result; END;";
+  "BEGIN getNRStatement(:1); END;";
 
 /// SQL statement for getting index of next request to be processed
 const std::string castor::db::ora::OraCnvSvc::s_getNBRStatementString =
@@ -250,16 +250,25 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
     }
   }
   try {
+    clog() << "Trying to find new requests" << std::endl;
     int nb = m_getNRStatement->executeUpdate();
     if (nb > 0) {
-      return new DbAddress(m_getNRStatement->getInt(1), "OraCnvSvc", castor::SVC_ORACNV);  
+      clog() << "Found a new requests : "
+             << m_getNRStatement->getInt(1) << std::endl;
+      return new DbAddress(m_getNRStatement->getInt(1),
+                           "OraCnvSvc", castor::SVC_ORACNV);
     }
   } catch (oracle::occi::SQLException e) {
+    if (1403 == e.getErrorCode()) {
+      clog() << "Found no requests." << std::endl;
+      return 0;
+    }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting next request id."
                     << std::endl << e.what();
     throw ex;
   }
+  clog() << "Found no new requests." << std::endl;
   return 0;
 }
 
@@ -268,6 +277,7 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
 // -----------------------------------------------------------------------
 unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
   throw (castor::exception::Exception) {
+  oracle::occi::ResultSet *rset;
   try {
     // Prepare statements
     if (0 == m_getNBRStatement) {
@@ -275,13 +285,17 @@ unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
         getConnection()->createStatement(s_getNBRStatementString);
     }
     // Get the id
-    oracle::occi::ResultSet *rset = m_getNBRStatement->executeQuery();
+    rset = m_getNBRStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_getNBRStatement->closeResultSet(rset);
       return 0;
     } else {
-      return rset->getInt(1);
+      unsigned int res = rset->getInt(1);
+      m_getNBRStatement->closeResultSet(rset);
+      return res;
     }
   } catch (oracle::occi::SQLException e) {
+    m_getNBRStatement->closeResultSet(rset);
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting number of request to process."
                     << std::endl << e.what();
@@ -307,6 +321,7 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
   throw (castor::exception::Exception) {
   // a null id has a null type
   if (0 == id) return 0;
+  oracle::occi::ResultSet *rset;
   try {
     // Check whether the statement is ok
     if (0 == m_getTypeStatement) {
@@ -315,14 +330,18 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
     }
     // Execute it
     m_getTypeStatement->setInt(1, id);
-    oracle::occi::ResultSet *rset = m_getTypeStatement->executeQuery();
+    rset = m_getTypeStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_getTypeStatement->closeResultSet(rset);
       castor::exception::NoEntry ex;
       ex.getMessage() << "No type found for id : " << id;
       throw ex;
     }
-    return rset->getInt(1);
+    const unsigned int res = rset->getInt(1);
+    m_getTypeStatement->closeResultSet(rset);
+    return res;
   } catch (oracle::occi::SQLException e) {
+    m_getTypeStatement->closeResultSet(rset);
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting type from id."
                     << std::endl << e.what();
