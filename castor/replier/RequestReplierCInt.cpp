@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/02 14:52:19 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/02 14:53:07 $ $Author: bcouturi $
  *
  * 
  *
@@ -131,7 +131,7 @@ extern "C" {
   
 
   //---------------------------------------------------------------------------
-  // Creplier_RequestReplier_termibate
+  // Creplier_RequestReplier_terminate
   //---------------------------------------------------------------------------
   int Creplier_RequestReplier_terminate(Creplier_RequestReplier_t *rr) {
     if (!checkRequestReplier(rr)) return -1;
