@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd_Disk.c,v 1.105 2002/11/19 16:09:48 jdurand Exp $
+ * $Id: rtcpd_Disk.c,v 1.106 2003/10/01 11:07:08 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.105 $ $Date: 2002/11/19 16:09:48 $ CERN IT-DS/HSM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.106 $ $Date: 2003/10/01 11:07:08 $ CERN IT-DS/HSM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -544,6 +544,7 @@ static int DiskFileClose(int disk_fd,
 
     save_rfio_errno = rfio_errno;
     save_serrno = serrno;
+
     serrno = rfio_errno = 0;
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
@@ -623,7 +624,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     char errmsgtxt[80] = {""};
     void *f77conv_context = NULL;
     diskIOstatus_t *diskIOstatus = NULL;
-    char *bufp;
+    char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -863,7 +864,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     DK_STATUS(RTCP_PS_NOBLOCKING);
                     if ( rc == -1 || rc != nb_bytes ) {
                         last_errno = errno;
-                        save_serrno = rfio_errno;
+                        save_serrno = rfio_serrno();
                         rtcp_log(LOG_ERR,"rfio_write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
                     }
                 } else {
@@ -880,7 +881,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         DK_STATUS(RTCP_PS_NOBLOCKING);
                         if ( status != 0 || irc != 0 ) {
                             last_errno = errno;
-                            save_serrno = rfio_errno;
+                            save_serrno = rfio_serrno();
                             rtcp_log(LOG_ERR,"rfio_xywrite(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
                             if ( status == ENOSPC || irc == ENOSPC )
                                 save_serrno = ENOSPC;
@@ -891,12 +892,13 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     lrecl = 0;
                 }
                 if ( rc != nb_bytes ) {
+                    strncpy(save_rfio_errmsg,rfio_serror(),CA_MAXLINELEN);
                     /*
                      * In case of ENOSPC we will have to return
                      * to ask the stager for a new path
                      */
                     rtcpd_AppendClientMsg(NULL, file,RT115,"CPTPDSK",
-                            rfio_serror());
+                            save_rfio_errmsg);
 
                     if ( save_serrno == ENOSPC || (save_serrno == 0 &&
                                                    last_errno == ENOSPC) ) {
@@ -1041,7 +1043,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     register int convert;
     register int debug = Debug;
     diskIOstatus_t *diskIOstatus = NULL;
-    char *bufp;
+    char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -1173,13 +1175,14 @@ static int DiskToMemory(int disk_fd, int pool_index,
         DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
             nb_bytes,filereq->file_path));
         rc = irc = 0;
+        errno = serrno = rfio_errno = 0;
         if ( (Uformat == FALSE) || ((convert & NOF77CW) != 0) ) {
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
             if ( nb_bytes > 0 ) rc = rfio_read(disk_fd,bufp,nb_bytes);
             else rc = nb_bytes;
             DK_STATUS(RTCP_PS_NOBLOCKING);
-            if ( rc == -1 ) save_serrno = rfio_errno;
+            if ( rc == -1 ) save_serrno = rfio_serrno();
         } else {
             /*
              * All U formats except U,bin
@@ -1191,7 +1194,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 status = rfio_xyread(file->FortranUnit,bufp,0,blksiz,
                                      &lrecl,"U",&irc);
                 DK_STATUS(RTCP_PS_NOBLOCKING);
-                save_serrno = rfio_errno;
+                save_serrno = rfio_serrno();
                 if ( irc == 2 ) break;
                 else if ( irc == SEBADFFORM ) {
                     (void)rtcpd_AppendClientMsg(NULL,file,RT106,"CPDSKTP");
@@ -1211,10 +1214,11 @@ static int DiskToMemory(int disk_fd, int pool_index,
             lrecl = 0;
         }
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): %s\n",
-                rfio_serror());
+            rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): errno = %d, serrno = %d, rfio_errno = %d\n",
+                errno,serrno,rfio_errno);
+            strncpy(save_rfio_errmsg,rfio_serror(),CA_MAXLINELEN);
             rtcpd_AppendClientMsg(NULL, file,RT112,"CPDSKTP",
-                rfio_serror());
+                save_rfio_errmsg);
             rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
             (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
