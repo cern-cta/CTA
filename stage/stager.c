@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.25 2000/03/31 08:23:18 jdurand Exp $
+ * $Id: stager.c,v 1.26 2000/03/31 08:28:26 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.25 $ $Date: 2000/03/31 08:23:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.26 $ $Date: 2000/03/31 08:28:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1375,14 +1375,15 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					break;
 				default:
 					q = fixed_stcs->u1.t.fseq + strlen (fixed_stcs->u1.t.fseq) - 1;
-					if ((trailing = *q) == '-') {
+					if ((trailing = *q) == '-')
 						*q = '\0';
-						isconcat = 1;
-					}
 					if (fixed_stce > (fixed_stcs+1)) {
 						nbtpf = fixed_stce - fixed_stcs - 1;
 					} else {
 						nbtpf = 0;
+					}
+					if (fixed_stce[strlen(fixed_stce->u1.t.fseq) - 1] == '-') {
+						isconcat = 1;
 					}
 					p = strtok ((fixed_stce-1)->u1.t.fseq, ",");
 					while (p != NULL) {
