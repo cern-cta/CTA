@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifymodel.man,v $ $Revision: 1.1 $ $Date: 2000/01/10 10:40:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifymodel.man,v $ $Revision: 1.2 $ $Date: 2000/01/10 10:47:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYMODEL l "$Date: 2000/01/10 10:40:11 $"
+.TH VMGR_MODIFYMODEL l "$Date: 2000/01/10 10:47:15 $"
 .SH NAME
 vmgr_modifymodel \- modify an existing model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -70,5 +70,4 @@ Communication error.
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(l) ,
-.BR vmgr_deletemodel(l) ,
 .B vmgr_entermodel(l)
