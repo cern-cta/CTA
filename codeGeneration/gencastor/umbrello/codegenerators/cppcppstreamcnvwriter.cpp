@@ -32,7 +32,7 @@ bool CppCppStreamCnvWriter::init(UMLClassifier* c, QString fileName) {
   // includes converter  header file and object header file
   m_includes.insert(QString("\"Stream") + m_classInfo->className + "Cnv.hpp\"");
   m_includes.insert(QString("\"") +
-                    findFileName(m_class,".h") + ".hpp\"");
+                    computeFileName(m_class,".h") + ".hpp\"");
   // calls the postinit of this class
   postinit(c, fileName);
   return true;

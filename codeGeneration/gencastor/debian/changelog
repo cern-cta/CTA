@@ -1,3 +1,17 @@
+gencastor (2.0-5) unstable; urgency=low
+      
+  * First new version after a long period of no release.
+    A lot of imrpovements were done. I won't list them
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 18 Mar 2005 14:25:00 +0200
+
+gencastor (2.0-5) unstable; urgency=low
+
+  * First new version after a long period of no release.
+    A lot of imrpovements were done. I won't list them
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 11 Feb 2005 15:51:00 +0200
+
 gencastor (2.0-4) unstable; urgency=low
 
   * Fix definitely generation of associations. This was still very messy

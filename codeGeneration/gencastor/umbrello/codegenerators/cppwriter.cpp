@@ -33,6 +33,7 @@
 
 CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   CppCastorWriter(parent, name), firstGeneration(true) {
+  std::cout << "Generation started !" << std::endl;
   // Create all needed generators
   hppw = new CppHClassWriter(m_doc, ".hpp file generator");
   hw = new CHClassWriter(m_doc, ".h file generator for C interfaces");
@@ -61,7 +62,6 @@ CppWriter::~CppWriter() {
   //delete odbccppw;
   delete streamhw;
   delete streamcppw;
-  std::cout << "Generation ended successfully !" << std::endl;
 }
 
 void CppWriter::configGenerator(CppBaseWriter *cg) {
@@ -71,7 +71,7 @@ void CppWriter::configGenerator(CppBaseWriter *cg) {
   cg->setHeadingFileDir(headingFileDir());
   cg->setModifyNamePolicy(modifyNamePolicy());
   cg->setOutputDirectory(outputDirectory());
-  cg->setOverwritePolicy(overwritePolicy());
+  cg->setOverwritePolicy(CodeGenerationPolicy::Ok);
 }
 
 void CppWriter::runGenerator(CppBaseWriter *cg,
@@ -84,6 +84,7 @@ void CppWriter::runGenerator(CppBaseWriter *cg,
 }
 
 void CppWriter::writeClass(UMLClassifier *c) {
+    
   if (firstGeneration) {
     configGenerator(hppw);
     configGenerator(hw);
@@ -104,7 +105,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   // build file name
-  QString fileName = findFileName(c,".cpp");
+  QString fileName = computeFileName(c,".cpp");
   if (!fileName) {
     emit codeGenerated(c, false);
     return;
@@ -274,6 +275,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   emit codeGenerated(c, true);
-
+  
 }
 

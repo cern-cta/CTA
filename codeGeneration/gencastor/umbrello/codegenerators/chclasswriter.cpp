@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/30 11:45:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/03/18 13:58:07 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -440,8 +440,10 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
                                     QValueList<QString>& alreadyGenerated) {
   // First this object methods
   QPtrList<UMLOperation> *opl;
-  opl = c->getFilteredOperationsList(Uml::Public);
+  opl = ClassifierInfo::getFilteredOperationsList(c, Uml::Public);
   writeOperations(*opl, stream, alreadyGenerated);
+  delete opl;
+  opl = 0;
 
   // Then the implemented interfaces methods
   for (UMLClassifier *interface = m_classInfo->allSuperclasses.first();
@@ -456,7 +458,7 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
     else
       com += " class";
     if (!c->getAbstract()) {
-      opl = interface->getFilteredOperationsList(Uml::Public, true);
+      opl = ClassifierInfo::getFilteredOperationsList(interface, Uml::Public, true);
       if (opl->count()) {
         writeHeaderComment(QString("Implementation") + com,
                            getIndent(), stream);
@@ -464,6 +466,7 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
         noTitle = false;
         writeOperations(*opl, stream, alreadyGenerated);
       }
+      delete opl;
     }
     ClassifierInfo aci(interface, m_doc);
     if ((aci.static_atpub.count() ||

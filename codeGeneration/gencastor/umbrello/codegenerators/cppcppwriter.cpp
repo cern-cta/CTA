@@ -28,7 +28,7 @@ bool CppCppWriter::init(UMLClassifier* c, QString fileName) {
   this->CppBaseWriter::init(c, fileName);
   // includes corresponding header file
   m_includes.insert(QString("\"") +
-                    findFileName(m_class,".h") + ".hpp\"");
+                    computeFileName(m_class,".h") + ".hpp\"");
   // calls the postinit of this class
   postinit(c, fileName);
   return true;

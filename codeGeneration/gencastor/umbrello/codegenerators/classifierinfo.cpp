@@ -29,6 +29,142 @@ ClassifierInfo::ClassifierInfo( UMLClassifier *classifier, UMLDoc *doc)
 
 ClassifierInfo::~ClassifierInfo() { }
 
+UMLClassifierList ClassifierInfo::findSuperClassConcepts
+(UMLClassifier *c) {
+  UMLAssociationList list = c->getSpecificAssocs(Uml::at_Generalization);
+	UMLClassifierList parentConcepts;
+	int myID = c->getID();
+  for (UMLAssociation *a = list.first(); a; a = list.next()) {
+    // Concepts on the "A" side inherit FROM this class
+    // as long as the ID of the role A class isnt US (in
+    // that case, the generalization describes how we inherit
+    // from another class).
+    // SO check for roleA id, it DOESNT match this concepts ID,
+    // then its a concept which inherits from us
+		if (a->getRoleId(B) != myID) {
+			UMLObject* obj = a->getObject(B);
+			UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+			if (concept)
+				parentConcepts.append(concept);
+		}
+	}
+	return parentConcepts;
+}
+
+UMLClassifierList ClassifierInfo::findSuperInterfaceConcepts
+(UMLClassifier *c) {
+  UMLClassifierList parentConcepts;
+  int myID = c->getID();
+  // First the realizations, ie the actual interface implementations
+  UMLAssociationList list = c->getRealizations();
+  for (UMLAssociation *a = list.first(); a; a = list.next()) {
+    // Concepts on the "B" side are parent (super) classes of this one
+    // So check for roleB id, it DOESNT match this concepts ID,
+    // then its a concept which we inherit from
+    if (a->getRoleId(B) != myID) {
+      UMLObject* obj = a->getObject(B);
+      UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+      if (concept)
+        parentConcepts.append(concept);
+    }
+  }
+  return parentConcepts;
+}
+
+UMLClassifierList ClassifierInfo::findAllSuperClassConcepts
+(UMLClassifier *c) {
+  UMLClassifierList result = findSuperClassConcepts(c);
+  UMLClassifierList inters = findSuperInterfaceConcepts(c);
+  for (UMLClassifier *a = inters.first();
+       0 != a;
+       a = inters.next()) {
+    result.append(a);
+  }
+  return result;
+}
+
+UMLClassifierList ClassifierInfo::findAllImplementedClasses
+(UMLClassifier *c) {
+  // first get the list of classes we inherit from
+  UMLClassifierList superint = findAllSuperClassConcepts(c);
+  // now recursively find which classes we implement
+  UMLClassifierList result(superint);
+  for (UMLClassifier *a = superint.first(); a; a = superint.next()) {
+    UMLClassifierList grandParents = findAllImplementedClasses(a);
+    for (UMLClassifier *b = grandParents.first(); b; b = grandParents.next()) {
+      if (result.find(b) < 0) result.append(b);
+    }
+  }
+  return result;
+}
+
+UMLClassifierList ClassifierInfo::findSuperAbstractConcepts
+(UMLClassifier *c) {
+  int myID = c->getID();
+  // First the interfaces
+  UMLClassifierList parentConcepts = findSuperInterfaceConcepts(c);
+  // Then add the generalizations of abstract objects
+  UMLAssociationList list = c->getSpecificAssocs(Uml::at_Generalization);
+  for (UMLAssociation *a = list.first(); a; a = list.next()) {
+    // Concepts on the "B" side are parent (super) classes of this one
+    // So check for roleB id, it DOESNT match this concepts ID,
+    // then its a concept which we inherit from
+    if (a->getRoleId(B) != myID) {
+      UMLObject* obj = a->getObject(B);
+      UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+      if (concept && concept->getAbstract())
+        parentConcepts.append(concept);
+    }
+  }
+  return parentConcepts;
+}
+
+UMLClassifierList ClassifierInfo::findImplementedAbstractConcepts
+(UMLClassifier *c) {
+  // first get the list of interfaces we inherit from
+  UMLClassifierList superint = findSuperAbstractConcepts(c);
+  // now recursively find which interfaces we implement
+  UMLClassifierList result(superint);
+  for (UMLClassifier *a = superint.first(); a; a = superint.next()) {
+    UMLClassifierList grandParents = findImplementedAbstractConcepts(a);
+    for (UMLClassifier *b = grandParents.first(); b; b = grandParents.next()) {
+      if (result.find(b) < 0) result.append(b);
+    }
+  }
+  return result;
+}
+
+UMLClassifierList ClassifierInfo::findAllImplementedAbstractConcepts
+(UMLClassifier *c) {
+  // first get the list of objects we inherit from
+  UMLClassifierList superint = findAllSuperClassConcepts(c);
+  // now recursively find which interfaces we implement
+  UMLClassifierList result;
+  for (UMLClassifier *a = superint.first(); a; a = superint.next()) {
+    if (a->getAbstract()) result.append(a);
+    UMLClassifierList grandParents = findImplementedAbstractConcepts(a);
+    for (UMLClassifier *b = grandParents.first(); b; b = grandParents.next()) {
+      if (result.find(b) < 0) result.append(b);
+    }
+  }
+  return result;
+}
+
+UMLOperationList*
+ClassifierInfo::getFilteredOperationsList
+(UMLClassifier *c, Scope permitScope, bool keepAbstractOnly) {
+  UMLOperationList baseList = c->getFilteredOperationsList(false);
+  QPtrList<UMLOperation>* operationList = new QPtrList<UMLOperation>;
+	for(UMLOperation* listItem = baseList.first(); listItem;
+	    listItem = baseList.next())  {
+    if (listItem->getScope() == permitScope &&
+        (!keepAbstractOnly || listItem->getAbstract())) {
+      operationList->append(listItem);
+    }
+	}
+	return operationList;
+}
+
 void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 
 	// make all QPtrLists autoDelete false
@@ -93,7 +229,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	superclasses.setAutoDelete(false);
 
   // list of all classes we inherit from (recursively built)
-	allSuperclasses = c->findAllImplementedClasses();
+	allSuperclasses = findAllImplementedClasses(c);
 	allSuperclasses.setAutoDelete(false);
   for (UMLClassifier *uc = allSuperclasses.first();
        0 != uc;
@@ -101,17 +237,17 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
     allSuperclassIds[uc->getID()] = true;
   }
 
-  superInterfaces = c->findSuperInterfaceConcepts(); // list of interfaces  we inherit from
+  superInterfaces = findSuperInterfaceConcepts(c); // list of interfaces  we inherit from
   superInterfaces.setAutoDelete(false);
 
-  superAbstracts = c->findSuperAbstractConcepts(); // list of interfaces/abstract classes  we inherit from
+  superAbstracts = findSuperAbstractConcepts(c); // list of interfaces/abstract classes  we inherit from
   superAbstracts.setAutoDelete(false);
 
-  implementedAbstracts = c->findImplementedAbstractConcepts(); // list of interfaces/abstract classes we directly implement
+  implementedAbstracts = findImplementedAbstractConcepts(c); // list of interfaces/abstract classes we directly implement
   implementedAbstracts.setAutoDelete(false);
 
   allImplementedAbstracts =
-    c->findAllImplementedAbstractConcepts(); // list of interfaces/abstract classes we implement
+    findAllImplementedAbstractConcepts(c); // list of interfaces/abstract classes we implement
   allImplementedAbstracts.setAutoDelete(false);
 
 	subclasses = c->getSubClasses();     // list of what inherits from us
@@ -137,7 +273,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	compositions = c->getCompositions();
 	compositions.setAutoDelete(false);
 
-	generalizations = c->getGeneralizations();
+	generalizations = c->getSpecificAssocs(Uml::at_Generalization);
 	generalizations.setAutoDelete(false);
 
 	realizations = c->getRealizations();

@@ -390,7 +390,7 @@ bool CppBaseWriter::init(UMLClassifier* c, QString fileName) {
   m_class = c;  
   // open the file
   std::cout << "Generating file " << fileName.ascii() << std::endl;
-  if (!openFile(m_file, fileName)) {
+  if (!openFile(m_file, fileName, IO_WriteOnly)) {
     std::cerr << "Unable to open file" << std::endl;
     return false;
   }
@@ -443,7 +443,7 @@ void CppBaseWriter::writeOperations
  QValueList<std::pair<QString, int> >& alreadyGenerated) {
   // First this object methods
   QPtrList<UMLOperation> *opl;
-  opl = c->getFilteredOperationsList(permitScope);
+  opl = ClassifierInfo::getFilteredOperationsList(c, permitScope);
   for (UMLOperation *op = opl->first();
        0 != op;
        op = opl->next()) {
@@ -467,7 +467,7 @@ void CppBaseWriter::writeOperations
         com += " interface";
       else
         com += " abstract class";
-      opl = interface->getFilteredOperationsList(permitScope, true);
+      opl = ClassifierInfo::getFilteredOperationsList(interface, permitScope, true);
       for (UMLOperation *op = opl->first();
            0 != op;
            op = opl->next()) {
@@ -482,6 +482,7 @@ void CppBaseWriter::writeOperations
                           &firstOp, com);
         }
       }
+      delete opl;
       if (!firstOp && isHeaderMethod) {
         writeHeaderComment(QString("End") + com,
                            getIndent(), stream);

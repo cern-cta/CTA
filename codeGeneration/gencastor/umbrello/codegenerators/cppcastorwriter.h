@@ -27,6 +27,19 @@ class CppCastorWriter : public SimpleCodeGenerator {
   virtual bool isType (QString & type) { return type == "CppWriter"; }
   virtual QString getLanguage() { return "Cpp"; }
 
+  /**
+   * Helper method for opening a file
+   * This is a replacement for CodeGenerator::openFile
+   * that is not able to cope with the mode
+   */
+  bool openFile (QFile & file, QString fileName, int mode);
+
+  /**
+   * computes a fileName for a given class and a given extension
+   * Written from the simpleCodeGenerator::findFileName method
+   */
+	QString computeFileName(UMLClassifier* concept, QString ext);
+
  protected:
   /**
    * Map of castor types with the associated include files

@@ -65,5 +65,6 @@ int main(int argc, char *argv[]) {
               << "syntax : " << argv[0] << " <xmi File>"
               << std::endl;
   }
+  std::cout << "Generation ended !" << std::endl;
   uml->close();
 }
