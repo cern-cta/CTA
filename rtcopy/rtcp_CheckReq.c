@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.32 $ $Date: 2000/04/20 08:26:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.33 $ $Date: 2000/05/04 08:32:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -391,6 +391,17 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
+
+#if defined(NS_ROOT)
+    /*
+     * Make sure that disk file names is not a CASTOR HSM file
+     */
+    if ( strncmp(filereq->file_path,NS_ROOT,strlen(NS_ROOT)) == 0 ) {
+        sprintf(errmsgtxt,RT152,CMD(mode));
+        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    }
+#endif /* NS_ROOT */
 
     /*
      * Tape file checks flag. Just set a default if not set.
