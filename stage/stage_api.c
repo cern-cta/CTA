@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.38 2002/03/05 14:44:03 jdurand Exp $
+ * $Id: stage_api.c,v 1.39 2002/03/25 17:24:24 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1155,6 +1155,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -1568,6 +1569,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
         (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -1918,6 +1920,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -2162,6 +2165,7 @@ int DLL_DECL stage_ping(flags,hostname)
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
   free(sendbuf);
