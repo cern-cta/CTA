@@ -1,5 +1,5 @@
 /*
- * $Id: remote.c,v 1.5 1999/12/09 13:39:42 jdurand Exp $
+ * $Id: remote.c,v 1.6 1999/12/10 19:40:38 baran Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:42 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.6 $ $Date: 1999/12/10 19:40:38 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,9 +70,9 @@ extern char *sys_errlist[];
  *                   1 if requestor is out of site
  *          -1 in case of an error
  */
-int     isremote(from_host, hostname)
+int     isremote(from_host, host_name)
 struct in_addr from_host;
-char *hostname ;
+char *host_name ;
 {
     char *p ;
     char local[CA_MAXHOSTNAMELEN+1];
@@ -128,7 +128,8 @@ char *hostname ;
     /*
      * getting local IP number
      */
-    gethostname(local,MAXHOSTNAMELEN);
+    gethostname(local, CA_MAXHOSTNAMELEN+1);
+     
     if ( (h=(struct hostent *)Cgethostbyname(local))==NULL) {
         log(LOG_ERR,"isremote(): gethostbyname() error\n");
         return -1 ;
@@ -137,8 +138,7 @@ char *hostname ;
     in.s_addr=ladd->adr_i ;
     log(LOG_DEBUG, "isremote(): Local host is %s\n",inet_ntoa( in ));
 
-
-    if ( hostname != NULL ) {
+    if ( host_name != NULL ) {
         FILE *fs;
         char *cp ;
         char s[MAXHOSTNAMELEN+1];
@@ -154,11 +154,11 @@ char *hostname ;
             sprintf (rthfile, "%s\\%s", p, strchr (path, '\\'));
         }
 #endif
-        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",hostname, rthfile);
+        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, rthfile);
         if ( (fs = fopen( rthfile, "r")) != NULL ) {
             while ( fgets(s,MAXHOSTNAMELEN+1,fs) != NULL ) {
                 if ( (cp= strtok(s," \n\t"))!=NULL ) {
-                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,hostname) ) {
+                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of external hosts\n",cp);
                         fclose(fs);
                         return 1;
@@ -171,7 +171,7 @@ char *hostname ;
                         else {
                             if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent))) {
                                 log(LOG_DEBUG,"Entry %s matches to %s\n",ent,inet_ntoa(from_host));
-                                log(LOG_INFO,"isremote(): %s is classified as remote\n",hostname);
+                                log(LOG_INFO,"isremote(): %s is classified as remote\n",host_name);
                                 fclose(fs) ;
                                 return 1 ;
                             }
@@ -192,11 +192,11 @@ char *hostname ;
             sprintf (lhfile, "%s\\%s", p, strchr (path, '\\'));
         }
 #endif
-        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",hostname, lhfile);
+        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, lhfile);
         if ( (fs = fopen( lhfile, "r")) != NULL ) {
             while ( fgets(s,MAXHOSTNAMELEN+1,fs) != NULL ) {
                 if ( (cp= strtok(s," \n\t")) != NULL ) {
-                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,hostname) ) {
+                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of local hosts\n",cp);
                         fclose(fs);
                         return 0;
@@ -209,7 +209,7 @@ char *hostname ;
                         else {
                             if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent) )) {
                                 log(LOG_DEBUG,"Entry %s matches to %s\n",ent,inet_ntoa(from_host));
-                                log(LOG_DEBUG,"isremote(): %s is classified as local\n",hostname);
+                                log(LOG_DEBUG,"isremote(): %s is classified as local\n",host_name);
                                 fclose (fs);
                                 return 0 ;
                             }
@@ -219,7 +219,7 @@ char *hostname ;
             }
             fclose(fs);
         }
-    } /* if ( hostname != NULL ) */
+    } /* if ( host_name != NULL ) */
 
     netw = inet_netof(from_host);
 #if defined(_WIN32)
