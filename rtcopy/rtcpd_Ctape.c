@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.42 $ $Date: 2000/08/25 08:38:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.43 $ $Date: 2000/09/13 14:00:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -585,7 +585,7 @@ int rtcpd_Position(tape_list_t *tape,
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             case ETFSQ:      /* Bad file sequence number */
-                if ( filereq->concat == CONCAT_TO_EOD ) {
+                if ( (filereq->concat & CONCAT_TO_EOD) != 0 ) {
                     /*
                      * We reached last tape file when concatenating
                      * to a disk file. This is not an error since
@@ -597,7 +597,7 @@ int rtcpd_Position(tape_list_t *tape,
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                     rc = 0;
                     break;
-                } else if ( filereq->concat == NOCONCAT_TO_EOD ) {
+                } else if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 ) {
                     /*
                      * The client asked to read until EOD and
                      * specified more disk files than there was 
