@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/14 08:16:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -53,6 +53,14 @@ castor::MsgSvc* castor::BaseObject::msgSvc()
 // svcs
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::svcs()
+  throw (castor::exception::Exception) {
+  return services();
+}
+
+//------------------------------------------------------------------------------
+// services
+//------------------------------------------------------------------------------
+castor::Services* castor::BaseObject::services()
   throw (castor::exception::Exception) {
   void **tls;
   getTLS((void **)&tls);
