@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.73 2001/02/02 12:30:31 jdurand Exp $
+ * $Id: poolmgr.c,v 1.74 2001/02/02 15:00:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.73 $ $Date: 2001/02/02 12:30:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.74 $ $Date: 2001/02/02 15:00:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2306,11 +2306,19 @@ int upd_fileclass(pool_p,stcp)
       return(-1);
     }
     /* We check that the number of tape pools is valid */
+    if (Cnsfileclass.nbtppools <= 0) {
+      sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns no tape pool - invalid fileclass - Please contact your admin");
+      return(-1);
+    }
+
     pi = Cnsfileclass.tppools;
     i = 0;
     while (*pi != '\0') {
-      i++;
       pi += (CA_MAXPOOLNAMELEN+1);
+      if (++i >= Cnsfileclass.nbtppools) {
+        /* We already have count as many tape pools as the fileclass specifies */
+        break;
+      }
     }
     if (i != Cnsfileclass.nbtppools) {
       sendrep (rpfd, MSG_ERR, STG127, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, i);
