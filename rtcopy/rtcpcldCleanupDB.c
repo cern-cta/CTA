@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/30 15:25:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/19 16:58:19 $ $Author: jdurand $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.3 $ $Date: 2004/06/30 15:25:39 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.4 $ $Date: 2004/07/19 16:58:19 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -91,6 +91,10 @@ int main(int argc, char *argv[])
   struct C_IAddress_t *iAddr;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   unsigned long key = 0;
+
+  /* Initializing the C++ log */
+  /* Necessary at start of program and after any fork */
+  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
   Coptind = 1;
   Copterr = 1;
