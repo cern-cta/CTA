@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.1 2001/01/31 19:03:46 jdurand Exp $
+ * $Id: stage_api.c,v 1.2 2001/02/01 08:03:55 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1062,5 +1062,46 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
   return (c == 0 ? 0 : -1);
 }
+
+int DLL_DECL stageqry_hsm_status(hostname,hsmname)
+     char *hostname;
+     char *hsmname;
+{
+  struct stgcat_entry stcp_input;
+  int nstcp_output;
+  struct stgcat_entry *stcp_output = NULL;
+  int stcp_status;
+
+  if ((hsmname == NULL) || (*hsmname == '\0')) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  if (strlen(hsmname) > 166) {
+    serrno = ENAMETOOLONG;
+    return(-1);
+  }
+
+  /* We build the full stageqry API request */
+  memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+  strcpy(stcp_input.u1.h.xfile,hsmname);
+  if (stage_qry_hsm(STAGE_ALL|STAGE_NOREGEXP,hostname,1,&stcp_input,&nstcp_output,&stcp_output,NULL,NULL) != 0) {
+    return(-1);
+  }
+  if (nstcp_output <= 0) {
+    serrno = ENOENT;
+    return(-1);
+  }
+  /* Because of STAGE_NOREGEXP flag, if there is output, it cannot be anything but one */
+  if ((nstcp_output != 1) || (stcp_output == NULL)) {
+    if (stcp_output != NULL) free(stcp_output);
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  stcp_status = stcp_output->status;
+  free(stcp_output);
+  return(stcp_status);
+}
+
+
 
 

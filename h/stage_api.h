@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.18 2001/01/31 19:07:33 jdurand Exp $
+ * $Id: stage_api.h,v 1.19 2001/02/01 08:03:51 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -316,6 +316,14 @@ EXTERN_C int DLL_DECL stage_qry _PROTO((char,                      /* t_or_d */
   stage_qry('d',flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
 #define stageqry_hsm(flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output) \
   stage_qry('m',flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
+
+EXTERN_C int DLL_DECL stageqry_hsm_status _PROTO((char *,                    /* hostname */
+                                                  char *                     /* hsm name */
+                                                  ));
+
+/* ----------------------------- */
+/* Shorthand STAGE_QRY interface */
+/* ----------------------------- */
 
 /* --------------------------- */
 /* Generic STAGE_PUT interface */
