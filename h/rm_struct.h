@@ -66,6 +66,8 @@ struct rmjob {
 	char fs[CA_MAXPATHLEN+1]; /* name of wished filesystem in which job must run */
 	u_signed64 processid; /* processid, the one receiving a signal if the job is killed */
 	char partitionmask[RM_MAXPARTITIONLEN+1]; /* partition mask */
+	char requestid[CUUID_STRING_LEN+1];
+	char subrequestid[CUUID_STRING_LEN+1];
 	struct rmjob *next;
 	struct rmjob *prev;
 };

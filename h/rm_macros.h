@@ -230,6 +230,8 @@
 	marshall_STRING(p, (rmjob)->fs);                    \
 	marshall_HYPER(p, (rmjob)->processid);              \
 	marshall_STRING(p, (rmjob)->partitionmask);         \
+	marshall_STRING(p, (rmjob)->requestid);             \
+	marshall_STRING(p, (rmjob)->subrequestid);          \
 }
 
 #define unmarshall_RMJOB(p, rmjob) {                      \
@@ -277,6 +279,8 @@
 	unmarshall_STRING(p, (rmjob)->fs);                    \
 	unmarshall_HYPER(p, (rmjob)->processid);              \
 	unmarshall_STRING(p, (rmjob)->partitionmask);         \
+	unmarshall_STRING(p, (rmjob)->requestid);             \
+	unmarshall_STRING(p, (rmjob)->subreqiestid);          \
 }
 
 #define overwrite_RMJOB(out,in) {                                                   \
@@ -324,6 +328,8 @@
     if ((in)->fs[0] != '\0') strcpy((out)->fs,(in)->fs);                            \
     if ((in)->processid > 0) (out)->processid = (in)->processid;                    \
     if ((in)->partitionmask[0] != '\0') strcpy((out)->partitionmask,(in)->partitionmask); \
+    if ((in)->requestid[0] != '\0') strcpy((out)->requestid,(in)->requestid); \
+    if ((in)->subrequestid[0] != '\0') strcpy((out)->subrequestid,(in)->subrequestid); \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -371,6 +377,8 @@
     if ((filter)->fs[0] != '\0' && strcmp((ref)->fs,(filter)->fs) != 0)                            status++;  \
     if ((filter)->processid > 0 && (ref)->processid != (filter)->processid)                        status++;  \
     if ((filter)->partitionmask[0] != '\0' && strcmp((ref)->partitionmask,(filter)->partitionmask) != 0) status++;  \
+    if ((filter)->requestid[0] != '\0' && strcmp((ref)->requestid,(filter)->requestid) != 0) status++;  \
+    if ((filter)->subrequestid[0] != '\0' && strcmp((ref)->subrequestid,(filter)->subrequestid) != 0) status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out) {   \
