@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.162 2002/02/11 17:31:10 jdurand Exp $
+ * $Id: procio.c,v 1.163 2002/02/12 12:34:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.162 $ $Date: 2002/02/11 17:31:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.163 $ $Date: 2002/02/12 12:34:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2285,17 +2285,127 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case STAGEOUT|PUT_FAILED:
 			case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
+			{
+				int save_stcp_status;
+				u_signed64 actual_size_block;
+				struct stat st;
+				int ifileclass;
+				struct pool *pool_p;
+				int okpoolname;
+				int ipoolname;
+				extern struct pool *pools;
+				extern int nbpool;
+
+				/* This work only for CASTOR files */
+				if (stcp->t_or_d != 'h') {
+					sendrep (rpfd, MSG_ERR, STG37);
+					global_c_stagewrt++;
+					c = USERR;
+					if (stgreq.t_or_d == 'h') {
+						goto stagewrt_continue_loop;
+					} else {
+						goto reply;
+					}
+				}
+
+				/* We need the address of the structure describing stcp->poolname */
+				for (ipoolname = 0, pool_p = pools; ipoolname < nbpool; ipoolname++, pool_p++) {
+					/* We search the pool structure for this stcp */
+					if (strcmp(stcp->poolname,pool_p->name) != 0) continue;
+					okpoolname = 1;
+					break;
+				}
+				if (okpoolname == 0) {
+					sendrep (rpfd, MSG_ERR, STG32, stcp->poolname);
+					global_c_stagewrt++;
+					c = USERR;
+					if (stgreq.t_or_d == 'h') {
+						goto stagewrt_continue_loop;
+					} else {
+						goto reply;
+					}
+				}
+				/* We need to know fileclass for our predicates */
+				if ((ifileclass = upd_fileclass(pool_p,stcp,0,0)) < 0) {
+					global_c_stagewrt++;
+					c = USERR;
+					if (stgreq.t_or_d == 'h') {
+						goto stagewrt_continue_loop;
+					} else {
+						goto reply;
+					}
+				}
+
+				/* We check stcp->ipath */
+				PRE_RFIO;
+				if (RFIO_STAT(stcp->ipath, &st) == 0) {
+					stcp->actual_size = st.st_size;
+					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
+						actual_size_block = stcp->actual_size;
+					}
+				} else {
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+					/* No block information - assume mismatch with actual_size will be acceptable */
+					actual_size_block = stcp->actual_size;
+				}
+
+				/* We force the tape pool if any (implying no extension of this record for eventual other copy)  */
+				/* Safe thing is to explicitely give a tape pool in arguments then - case of automatic */
+				/* migration */
+				strcpy(stcp->u1.h.tppool, stgreq.u1.h.tppool);
+
+				/* We simulate a STAGEOUT followed by a STAGEUPDC */
+				save_stcp_status = stcp->status;
+				stcp->status = STAGEOUT;
+				updfreespace (
+					stcp->poolname,
+					stcp->ipath,
+					(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
+					);
+				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
+				if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
+					if (c != CLEARED) {
+						/* Restore original status */
+						stcp->status = save_stcp_status;
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+						savereqs();
+					}
+					global_c_stagewrt++;
+					c = USERR;
+					if (stgreq.t_or_d == 'h') {
+						goto stagewrt_continue_loop;
+					} else {
+						goto reply;
+					}
+				}
+				stcp->status = STAGEOUT|CAN_BE_MIGR|BEING_MIGR;
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				stage_wrt_migration = 1;
 				save_stcp_for_Cns_creatx = *stcp;
 				have_save_stcp_for_Cns_creatx = 1;
-				delreq(stcp,0);
+
+				/* We update the fileclass within this migrator watch variables */
+				pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
+				pool_p->migr->fileclass_predicates[ifileclass].nbfiles_to_mig++;
+				pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
+				pool_p->migr->fileclass_predicates[ifileclass].space_to_mig += stcp->actual_size;
+				/* We update the migrator global watch variables */
+				pool_p->migr->global_predicates.nbfiles_beingmig++;
+				pool_p->migr->global_predicates.nbfiles_to_mig++;
+				pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
+				pool_p->migr->global_predicates.space_to_mig += stcp->actual_size;
+				stcp->filler[0] = 'm'; /* 'm' for 'putted in canbemigr (non-delayed) mode' */
+
 				break;
-			case STAGEOUT|CAN_BE_MIGR:
-			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
-			case STAGEPUT|CAN_BE_MIGR:
-			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = EBUSY;
-				goto reply;
+			}
 			case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
 				/* We accept a stagewrt request on a record waiting for it only if both tape pool matches */
 				/* and are non-null */
@@ -2320,6 +2430,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 				save_stcp_for_Cns_creatx = *stcp;
 				have_save_stcp_for_Cns_creatx = 1;
 				break;
+			case STAGEOUT|CAN_BE_MIGR:
+			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+			case STAGEPUT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+				sendrep (rpfd, MSG_ERR, STG37);
+				c = EBUSY;
+				goto reply;
 			case STAGEWRT:
 				if (stcp->t_or_d == 't' && *stcp->u1.t.fseq == 'n') {
 					save_stcp_for_Cns_creatx = *stcp;
