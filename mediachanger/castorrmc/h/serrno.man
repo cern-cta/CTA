@@ -1,0 +1,813 @@
+.\" $Id: serrno.man,v 1.1 2004/07/20 09:44:55 motiakov Exp $
+.\"
+.\" Man page for the CASTOR's error variable serrno
+.\"
+.TH SERRNO "3" "$Date: 2004/07/20 09:44:55 $" "CASTOR" "Castor Library Functions"
+.SH NAME
+\fBserrno\fP \- CASTOR internal error variable
+
+.SH SYNOPSIS
+.BI "#include <" serrno.h ">"
+
+.BI "extern int " serrno ";"
+.br
+.BI "extern char *sstrerror(int " serrno_value " );"
+.br
+.BI "extern void sperror(char * " message " );"
+
+.SH DESCRIPTION
+The \fBserrno\fP variable is the CASTOR's equivalent to system error variable \fBerrno\fP. This variable, accessible only trough CASTOR API's and related functions below is guaranteed to be thread-safe.
+.br
+The serrno variable is divided into common values and per package values, that are:
+.RS
+.TP 1.9i
+.B COPYTAPE
+.TP
+.B DB
+- Database
+.TP
+.B MSG
+- Message daemon
+.TP
+.B NS
+- Name server
+.TP
+.B RFIO
+- Remote File I/O
+.TP
+.B RTCOPY
+- Remote Tape Copy
+.TP
+.B STAGE
+- Stager
+.TP
+.B SYSREQ
+.TP
+.B TAPE
+- Tape operations
+.TP
+.B VMGR
+- Volume Manager
+.TP
+.B VDQM
+- Volume and Drive Queue Manager
+.TP
+.B RMC
+- Remote SCSI Media Changer Server
+.TP
+.B MON
+- Monitoring
+.TP
+.B UPV
+- User Privilege
+.TP
+.B DLF
+- Distributed Logging Facility
+.TP
+.B EXP
+- Expert Facility
+.RE
+
+.SH COMMON ERRORS
+The following error values might be returned by any package:
+.TP 1.9i
+.B SENOSHOST
+(1001) Host unknown
+.TP
+.B SENOSSERV
+(1002) Service unknown
+.TP
+.B SENOTRFILE
+(1003) Not a remote file
+.TP
+.B SETIMEDOUT
+(1004) Has timed out
+.TP
+.B SEBADFFORM
+(1005) Bad fortran format specifier
+.TP
+.B SEBADFOPT
+(1006) Bad fortran option specifier
+.TP
+.B SEINCFOPT
+(1007) Incompatible fortran options
+.TP
+.B SENAMETOOLONG
+(1008) File name too long
+.TP
+.B SENOCONFIG
+(1009) Can't open configuration file
+.TP
+.B SEBADVERSION
+(1010) Version ID mismatch
+.TP
+.B SEUBUF2SMALL
+(1011) User buffer too small
+.TP
+.B SEMSGINVRNO
+(1012) Invalid reply number
+.TP
+.B SEUMSG2LONG
+(1013) User message too long
+.TP
+.B SEENTRYNFND
+(1014) Entry not found
+.TP
+.B SEINTERNAL
+(1015) Internal error
+.TP
+.B SECONNDROP
+(1016) Connection closed by rem. end
+.TP
+.B SEBADIFNAM
+(1017) Can't get interface name
+.TP
+.B SECOMERR
+(1018) Communication error
+.TP
+.B SENOMAPDB
+(1019) Can't open mapping database
+.TP
+.B SENOMAPFND
+(1020) No user mapping
+.TP
+.B SERTYEXHAUST
+(1021) Retry count exhausted
+.TP
+.B SEOPNOTSUP
+(1022) Operation not supported
+.TP
+.B SEWOULDBLOCK
+(1023) Resource temporarily unavailable
+.TP
+.B SEINPROGRESS
+(1024) Operation now in progress
+.TP
+.B SECTHREADINIT
+(1025) Cthread initialization error
+.TP
+.B SECTHREADERR
+(1026) Thread interface call error
+.TP
+.B SESYSERR
+(1027) System error
+.TP
+.B SEADNSINIT
+(1028) adns_init() error
+.TP
+.B SEADNSSUBMIT
+(1029) adns_submit() error
+.TP
+.B SEADNS
+(1030) adns resolving error
+.TP
+.B SEADNSTOOMANY
+(1031) adns returned more than one entry
+.TP
+.B SENOTADMIN
+(1032) requestor is not administrator
+.TP
+.B SEUSERUNKN
+(1033) User unknown
+.TP
+.B SEDUPKEY
+(1034) Duplicate key value
+.TP
+.B SEENTRYEXISTS
+(1035) The entry already exists
+.TP
+.B SEGROUPUNKN
+(1036) Group Unknown
+.TP
+.B SECHECKSUM
+(1037) Bad checksum
+
+.SH COPYTAPE ERRORS
+None yet
+
+.SH DB ERRORS
+The following error values are returned only by the database package:
+.TP 1.9i
+.B EDB_A_ESESSION
+(1201) Cdb api           : invalid session
+.TP
+.B EDB_A_EDB
+(1202) Cdb api           : invalid db
+.TP
+.B EDB_A_EINVAL
+(1203) Cdb api           : invalid value
+.TP
+.B EDB_A_RESHOST
+(1204) Cdb api           : host res error
+.TP
+.B EDB_A_TOOMUCH
+(1205) Cdb api           : data size rejected
+.TP
+.B EDB_AS_SOCKET
+(1206) Cdb api    system : socket() error
+.TP
+.B EDB_AS_SOCKOPT
+(1207) Cdb api    system : [set/get]sockopt() error
+.TP
+.B EDB_AS_MALLOC
+(1208) Cdb api    system : malloc() error
+.TP
+.B EDB_A_NOERROR
+(1209) Cdb api           : no last error
+.TP
+.B EDB_A_IEINVAL
+(1200) Cdb api           : interface invalid value
+.TP
+.B EDB_AS_BIND
+(1201) Cdb api           : bind() error
+.TP
+.B EDB_AS_LISTEN
+(1202) Cdb api           : listen() error
+.TP
+.B EDB_AS_GETSOCKNAME
+(1203) Cdb api         : getsockname() error
+.TP
+.B EDB_AS_ACCEPT
+(1204) Cdb api           : accept() error
+.TP
+.B EDB_AS_GETPEERNAME
+(1205) Cdb api        : getpeername() error
+.TP
+.B EDB_A_WHOISIT
+(1206) Cdb api        : Connection from bad host
+.TP
+.B EDB_D_EINVAL
+(1220) Cdb daemon        : invalid value
+.TP
+.B EDB_D_EAGAIN
+(1221) Cdb daemon        : yet done
+.TP
+.B EDB_D_AUTH
+(1222) Cdb daemon        : unauthorized
+.TP
+.B EDB_D_LOGIN
+(1223) Cdb daemon        : login refused
+.TP
+.B EDB_D_PWDCORR
+(1224) Cdb daemon        : pwd file corrupted
+.TP
+.B EDB_D_ANA
+(1225) Cdb daemon        : db analysis error
+.TP
+.B EDB_D_HASHSIZE
+(1226) Cdb daemon        : bad hash size
+.TP
+.B EDB_D_UNKNOWN
+(1227) Cdb daemon        : unkn. db/table/key
+.TP
+.B EDB_D_NOLOCK
+(1228) Cdb daemon        : lock is required
+.TP
+.B EDB_D_CORRUPT
+(1229) Cdb daemon        : probably corrupted
+.TP
+.B EDB_D_TOOMUCH
+(1230) Cdb daemon        : data size rejected
+.TP
+.B EDB_D_ENOENT
+(1231) Cdb daemon        : no entry
+.TP
+.B EDB_D_ETYPE
+(1232) Cdb daemon        : unknown member type
+.TP
+.B EDB_D_EVALUE
+(1233) Cdb daemon        : unknown member val
+.TP
+.B EDB_D_NULLVALUE
+(1234) Cdb daemon        : null member value
+.TP
+.B EDB_D_LOCK
+(1235) Cdb daemon        : cannot gain lock
+.TP
+.B EDB_D_FREE
+(1236) Cdb daemon        : unsafe free attempt
+.TP
+.B EDB_D_SHUTDOWN
+(1237) Cdb daemon        : shutdown in progress
+.TP
+.B EDB_D_DEADLOCK
+(1238) Cdb daemon        : shutdown in progress
+.TP
+.B EDB_D_EXIST
+(1239) Cdb daemon        : yet exists
+.TP
+.B EDB_D_NOSPC
+(1240) Cdb daemon        : no more space
+.TP
+.B EDB_D_DUMPEND 
+(1241) Cdb daemon        : end of dump
+.TP
+.B EDB_D_UNIQUE
+(1242) Cdb daemon        : uniqued key yet exist
+.TP
+.B EDB_D_LISTEND
+(1243) Cdb daemon        : end of list
+.TP
+.B EDB_D_NOTDUMP
+(1244) Cdb daemon        : not in dump mode
+.TP
+.B EDB_D_DNSCHECK
+(1245) Cdb daemon        : double DNS check error
+.TP
+.B EDB_D_REJECTED
+(1246) Cdb daemon        : Connection rejected (not authorised)
+.TP
+.B EDB_D_INIT
+(1247) Cdb daemon        : init in progress
+.TP
+.B EDB_D_INCONST
+(1248) Cdb daemon        : Cdb daemon        : inconsistent request (unstop and no previous stop, unfreeze and no previous freeze)
+.TP
+.B EDB_D_FREEHASHSIZE
+(1249) Cdb daemon        : bad free hash size
+.TP
+.B EDB_DS_MALLOC
+(1250) Cdb daemon system : malloc() error
+.TP
+.B EDB_DS_CALLOC
+(1251) Cdb daemon system : calloc() error
+.TP
+.B EDB_DS_REALLOC
+(1252) Cdb daemon system : realloc() error
+.TP
+.B EDB_DS_OPEN
+(1253) Cdb daemon system : open() error
+.TP
+.B EDB_DS_FSTAT
+(1254) Cdb daemon system : fstat() error
+.TP
+.B EDB_DS_LSEEK
+(1255) Cdb daemon system : lseek() error
+.TP
+.B EDB_DS_READ
+(1256) Cdb daemon system : read() error
+.TP
+.B EDB_DS_WRITE
+(1257) Cdb daemon system : write() error
+.TP
+.B EDB_DS_RENAME
+(1258) Cdb daemon system : rename() error
+.TP
+.B EDB_DS_FTRUNC
+(1259) Cdb daemon system : ftruncate() error
+.TP
+.B EDB_DS_TMPNAM
+(1260) Cdb daemon system : tmpnam() error
+.TP
+.B EDB_DS_FCNTL
+(1261) Cdb daemon system : fcntl() error
+.TP
+.B EDB_DS_MKDIR
+(1262) Cdb daemon system : mkdir() error
+.TP
+.B EDB_DS_TIMES
+(1263) Cdb daemon system : times() error
+.TP
+.B EDB_DS_SYSCONF
+(1264) Cdb daemon system : sysconf() err/unav
+.TP
+.B EDB_DS_GETHOSTNAME
+(1265) Cdb daemon system : gethostname() error
+.TP
+.B EDB_DS_GETPEERNAME
+(1266) Cdb daemon system : getpeername() error
+.TP
+.B EDB_DS_INET_NTOA
+(1267) Cdb daemon system : getpeername() error
+.TP
+.B EDB_DS_REMOVE
+(1268) Cdb daemon system : remove() error
+.TP
+.B EDB_DS_SIGACTION
+(1269) Cdb daemon system : sigaction() error
+.TP
+.B EDB_DS_GETSOCKNAME
+(1270) Cdb daemon system : getsockname() error
+.TP
+.B EDB_DS_BIND
+(1271) Cdb daemon system : bind() error
+.TP
+.B EDB_DS_LISTEN
+(1272) Cdb daemon system : listen() error
+.TP
+.B EDB_DS_CONNECT
+(1273) Cdb daemon system : connect() error
+.TP
+.B EDB_DS_SOCKET
+(1274) Cdb daemon system : socket() error
+.TP
+.B EDB_DS_SOCKOPT
+(1275) Cdb daemon system : [set/get]sockopt() error
+.TP
+.B EDB_D_RESHOST
+(1276) Cdb daemon     : host res error 
+.TP EDB_D_REQSIZE
+.B 
+(1277) Cdb daemon     : request too big
+.TP
+.B EDB_C_EINVAL
+(1280) Cdb config        : invalid value
+.TP
+.B EDB_C_ENOENT
+(1281) Cdb config        : configuration error
+.TP
+.B EDB_C_TOOMUCH
+(1282) Cdb config        : conf. size rejected
+.TP
+.B EDB_CS_GETHOSTNAME
+(1283) Cdb config system : gethostname() error
+.TP
+.B EDB_NOMOREDB
+(1290) Cdb : nomoredb (the API retries automatically in such a case so you should never see this error number)
+
+.SH MSG ERRORS
+The following error values are returned only by the message package:
+.TP 1.9i
+.B EMSMSGU2REP
+(1301) msg daemon unable to reply
+.TP
+.B EMSMSGSYERR
+(1302) msg daemon system error
+.TP
+.B EMSNOPERM
+(1303) Permission denied
+
+.SH NS ERRORS
+The following error values are returned only by the name server package:
+.TP 1.9i
+.B ENSNACT
+(1401) name server not active or service being drained
+
+.SH RFIO ERRORS
+The following error values are returned only by the remote file I/O package:
+.TP 1.9i
+.B ERFNORCODE
+(1501) RFIO communication error
+.TP
+.B ERFHOSTREFUSED
+(1502) RFIO rejected connect attempt
+.TP
+.B ERFXHOST
+(1503) Cross-host link (rename())
+.TP
+.B ERFPROTONOTSUP
+(1504) RFIO protocol not supported
+
+.SH RTCOPY ERRORS
+The following error values are returned only by the remote tape copy package:
+.TP 1.9i
+.B ERTTMSERR
+(1601) TMS call failed
+.TP
+.B ERTBLKSKPD
+(1602) Blocks were skipped in file
+.TP
+.B ERTTPE_LSZ
+(1603) Blocks skipped and file truncated
+.TP
+.B ERTMNYPARY
+(1604) Too many skipped blocks
+.TP
+.B ERTLIMBYSZ
+(1605) File limited by size
+.TP
+.B ERTUSINTR
+(1606) Request interrupted by user
+.TP
+.B ERTOPINTR
+(1607) Request interrupted by operator
+.TP
+.B ERTNOTCLIST
+(1608) Request list is not circular
+.TP
+.B ERTBADREQ
+(1609) Bad request structure
+
+.SH STAGE ERRORS
+The following error values are returned only by the stager package:
+.TP 1.9i
+.B ESTCLEARED
+(1701) aborted by stageclr
+.TP
+.B ESTENOUGHF
+(1702) enough free space
+.TP
+.B ESTLNKNCR
+(1703) symbolic link not created
+.TP
+.B ESTLNKNSUP
+(1704) symbolic link not supported
+.TP
+.B ESTNACT
+(1705) Stager not active
+.TP
+.B ESTGROUP
+(1706) Your group is invalid
+.TP
+.B ESTGRPUSER
+(1707) No GRPUSER in configuration
+.TP
+.B ESTUSER
+(1708) Invalid user
+.TP
+.B ESTHSMHOST
+(1709) HSM HOST not specified
+.TP
+.B ESTTMSCHECK
+(1710) tmscheck error
+.TP
+.B ESTLINKNAME
+(1711) User link name processing error
+.TP
+.B ESTWRITABLE
+(1712) User path in a non-writable directory
+.TP
+.B ESTKILLED
+(1713) aborted by kill
+.TP
+.B ESTMEM
+(1714) request too long (api)
+.TP
+.B ESTCONF
+(1715) stage configuration error
+
+.SH SYSREQ ERRORS
+The following error value is returned only by the sysreq package:
+.TP 1.9i
+.B ESQTMSNOTACT
+(1801) TMS not active
+
+.SH TAPE ERRORS
+The following error values are returned only by the tape package:
+.TP 1.9i
+.B ETDNP
+(1901) daemon not available
+.TP
+.B ETSYS
+(1902) system error
+.TP
+.B ETPRM
+(1903) bad parameter
+.TP
+.B ETRSV
+(1904) reserv already issued
+.TP
+.B ETNDV
+(1905) too many drives requested
+.TP
+.B ETIDG
+(1906) invalid device group name
+.TP
+.B ETNRS
+(1907) reserv not done
+.TP
+.B ETIDN
+(1908) no drive with requested characteristics
+.TP
+.B ETLBL
+(1909) bad label structure
+.TP
+.B ETFSQ
+(1910) bad file sequence number
+.TP
+.B ETINTR
+(1911) interrupted by user
+.TP
+.B ETEOV
+(1912) EOV found in multivolume set
+.TP
+.B ETRLSP
+(1913) release pending
+.TP
+.B ETBLANK
+(1914) blank tape
+.TP
+.B ETCOMPA
+(1915) compatibility problem
+.TP
+.B ETHWERR
+(1916) device malfunction
+.TP
+.B ETPARIT
+(1917) parity error
+.TP
+.B ETUNREC
+(1918) unrecoverable media error
+.TP
+.B ETNOSNS
+(1919) no sense
+.TP
+.B ETRSLT
+(1920) reselect server
+.TP
+.B ETVBSY
+(1921) volume busy or inaccessible
+.TP
+.B ETDCA
+(1922) drive currently assigned
+.TP
+.B ETNRDY
+(1923) drive not ready
+.TP
+.B ETABSENT
+(1924) volume absent
+.TP
+.B ETARCH
+(1925) volume archived
+.TP
+.B ETHELD
+(1926) volume held or disabled
+.TP
+.B ETNXPD
+(1927) file not expired
+.TP
+.B ETOPAB
+(1928) operator cancel
+.TP
+.B ETVUNKN
+(1929) volume unknown
+.TP
+.B ETWLBL
+(1930) wrong label type
+.TP
+.B ETWPROT
+(1931) cartridge write protected
+.TP
+.B ETWVSN
+(1932) wrong vsn
+.TP
+.B ETBADMIR
+(1933) Tape has a bad MIR
+
+.SH VMGR ERRORS
+The following error values are returned only by the volume manager package:
+.TP 1.9i
+.B EVMGRNACT
+(2001) volume manager not active or service being drained
+
+.SH VDQM ERRORS
+The following error values are returned only by the volume and drive queue manager package:
+.TP 1.9i
+.B EVQSYERR
+(2101) Failed system call
+.TP
+.B EVQINCONSIST
+(2102) Internal DB inconsistency
+.TP
+.B EVQREPLICA
+(2103) DB replication failed
+.TP
+.B EVQNOVOL
+(2104) No volume request queued
+.TP
+.B EVQNODRV
+(2105) No free drive available
+.TP
+.B EVQNOSVOL
+(2106) Specified vol. req. not found
+.TP
+.B EVQNOSDRV
+(2107) Specified drv. req. not found
+.TP
+.B EVQALREADY
+(2108) Specified vol. req. already exists
+.TP
+.B EVQUNNOTUP
+(2109) Unit not up
+.TP
+.B EVQBADSTAT
+(2110) Bad unit status request
+.TP
+.B EVQBADID
+(2111) Incorrect vol.req or job ID
+.TP
+.B EVQBADJOBID
+(2112) Incorrect job ID
+.TP
+.B EVQNOTASS
+(2113) Unit not assigned
+.TP
+.B EVQBADVOLID
+(2114) Attempt to mount with wrong VOLID
+.TP
+.B EVQREQASS
+(2115) Attempt to delete an assigned req
+.TP
+.B EVQDGNINVL
+(2116) Vol. req. for non-existing DGN
+.TP
+.B EVQPIPEFULL
+(2117) Replication pipe is full
+.TP
+.B EVQHOLD
+(2118) Server is held
+.TP
+.B EVQEOQREACHED
+(2119) End of query reached
+
+.SH RMC ERRORS
+The following error values are returned only by the Remote SCSI media changer server package:
+.TP 1.9i
+.B ERMCNACT
+(2201) Remote SCSI media changer server not active or service being drained
+.TP
+.B ERMCRBTERR
+(2202) Remote SCSI media changer error
+.TP
+.B ERMCUNREC
+(2203) Remote SCSI media changer unrec. error
+.TP
+.B ERMCSLOWR
+(2204) Remote SCSI media changer error (slow retry)
+.TP
+.B ERMCFASTR
+(2205) Remote SCSI media changer error (fast retry)
+.TP
+.B ERMCDFORCE
+(2206) Remote SCSI media changer error (demount force)
+.TP
+.B ERMCDDOWN
+(2207) Remote SCSI media changer error (drive down)
+.TP
+.B ERMCOMSGN
+(2208) Remote SCSI media changer error (ops message)
+.TP
+.B ERMCOMSGS
+(2209) Remote SCSI media changer error (ops message + retry)
+.TP
+.B ERMCOMSGR
+(2210) Remote SCSI media changer error (ops message + wait)
+.TP
+.B ERMCUNLOAD
+(2211) Remote SCSI media changer error (unload + demount)
+
+.SH MON ERRORS
+The following error values are returned only by the Monitoring package:
+.TP 1.9i
+.B EMON_SYSTEM
+(2301) System error
+.TP
+.B EMON_NO_HOST
+(2302) Monitor Host not specified
+.TP
+.B EMON_NO_PORT
+(2303) Monitor Port not specified
+.TP
+.B EMON_NO_CLIENTPORT
+(2304) No port for client requests defined in the configuration
+
+.SH UPV ERRORS
+The following error values are returned only by the User Privilege Validation package:
+.TP 1.9i
+.B ECUPVNACT
+(2401) UPV not active or service being drained
+
+.SH DLF ERRORS
+The following error values are returned only by the Distributed Logging Facility package:
+.TP 1.9i
+.B EDLFNACT
+(2501) Logging facility not active or service being drained
+.TP
+.B EDLFNOFAC
+(2502) No such facility in the database
+.TP
+.B EDLFREFEXIST
+(2503) References exist
+.TP
+.B EDLFNOTFOUND
+(2504) Row was not found in the database
+.TP
+.B EDLFLOGFORMAT
+(2504) Log file format error
+
+.SH EXPERT ERRORS
+The following error values are returned only by the Expert Facility package:
+.TP 1.9i
+.B EEXPNACT
+(2901) Expert service not active
+.TP
+.B EEXPILLREQ
+(2902) Illegal request
+.TP
+.B EEXPNOCONFIG
+(2903) Can't open the configuration file
+.TP
+.B EEXPRQNOTFOUND
+(2904) Request wasn't found in the configuration file
+.TP
+.B EEXPCONFERR
+(2905) Configuration file format error
+.TP
+.B EEXPEXECV
+(2906) Can't launch execv()
+.TP
+.B EEXPCDWDIR
+(2907) Can't change to working directory
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
