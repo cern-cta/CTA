@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.62 $ $Date: 2000/04/17 16:01:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.63 $ $Date: 2000/04/18 09:50:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -822,6 +822,9 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
     }
 
     if ( lock != 0 ) {
+        /*
+         * Use a local wait list to improve readability of the code
+         */
         loc_wait_list = *(int **)wait_list;
         loc_next_entry = *next_entry;
         loc_wait_list[loc_next_entry] = *nb_waiters;
@@ -837,7 +840,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
                 *lockflag = lock;
                 (*nb_waiters)--;
-                for (i=0; i<proc_stat.nb_diskIO; i++) (*wait_list)[i]--;
+                for (i=0; i<proc_stat.nb_diskIO; i++) loc_wait_list[i]--;
                 (void)Cthread_cond_broadcast_ext(lockaddr);
                 (void)Cthread_mutex_unlock_ext(lockaddr);
                 return(-1);
@@ -845,7 +848,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
             rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() woke up with nb_waiters=%d, next_entry=%d, my_wait_entry=%d(0x%lx)\n",*nb_waiters,*next_entry,*my_wait_entry,my_wait_entry);
         }
         (*nb_waiters)--;
-        for (i=0; i<proc_stat.nb_diskIO; i++) (*wait_list)[i]--;
+        for (i=0; i<proc_stat.nb_diskIO; i++) loc_wait_list[i]--;
     }
     rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() change lock from %d to %d\n",
              *lockflag,lock);
