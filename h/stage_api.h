@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.5 2000/05/08 11:22:34 jdurand Exp $
+ * $Id: stage_api.h,v 1.6 2000/05/08 14:47:39 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -10,8 +10,8 @@
 #include <rtcp_api.h>
 
 struct stage_hsm {
-  char *xfile;
-  char *upath;
+  char *xfile;         /* Recommended size: (CA_MAXHOSTNAMELEN+MAXPATH)+1 */
+  char *upath;         /* Recommended size: (CA_MAXHOSTNAMELEN+MAXPATH)+1 */
   u_signed64 size;
   struct stage_hsm *next;
 };
@@ -28,6 +28,7 @@ EXTERN_C int  DLL_DECL  stage_errmsg _PROTO(());
 EXTERN_C int  DLL_DECL  stage_outmsg _PROTO(());
 EXTERN_C int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
 EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, char *, char *, int, int, char *, char *));
+EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, char *));
 EXTERN_C int  DLL_DECL  stage_xxx_hsm _PROTO((int, char *, int, char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
 
