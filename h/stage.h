@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.58 2001/06/20 13:18:59 jdurand Exp $
+ * $Id: stage.h,v 1.59 2001/06/20 13:28:34 jdurand Exp $
  */
 
 /*
@@ -34,6 +34,9 @@
 #undef ONE_DAY
 #endif
 #define ONE_DAY (3600 * 24)
+
+/* This macro returns real size on disk taking number of blocks used (using rfio_stat()) and filename */
+#define BLOCKS_TO_SIZE(blocks,ipath) (((u_signed64) blocks) * findblocksize(ipath))
 
 /* This macro returns TRUE is the file is an hpss one */
 #define ISHPSS(xfile)   (strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
