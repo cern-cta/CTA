@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2004/11/30 15:54:51 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2004/12/06 13:10:08 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -191,10 +191,12 @@ GLOBLIB += -L../shlib -lcastorCommonOra
 PROGS_C = ProgramTargetName(tpread) \
 	  ProgramTargetName(tpwrite) \
 	  ProgramTargetName(rtcpcldCleanupDB) \
+	  ProgramTargetName(MigHunter) \
 	  ProgramTargetName(dumptape) $(PROGS_RTSTAT)
 IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
 	   FileName($(BIN),ProgramTargetName(tpwrite)) \
 	   FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
+	   FileName($(BIN),ProgramTargetName(MigHunter)) \
 	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
 PROGS_D += ProgramTargetName(rtcpclientd) \
 	   ProgramTargetName(recaller) \
@@ -205,6 +207,7 @@ IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
 EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
 	   FileName($(EXPORTBIN),dumptape) \
 	   FileName($(EXPORTBIN),rtcpcldCleanupDB) \
+	   FileName($(EXPORTBIN),MigHunter) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
 	   FileName($(EXPORTBIN),recaller) \
 	   FileName($(EXPORTBIN),migrator) \
@@ -256,6 +259,7 @@ RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf \
 		rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
 RTCPCLD_MT_OBJS =	rtcpcldcommon_mt.Osuf
 RTCPCLD_CLEANUP_OBJS = rtcpcldCleanupDB.Osuf
+MIGHUNTER_OBJS =	MigHunter.Osuf
 DUMPTAPE_OBJS =	dumptape.Osuf
 #if BuildRtstat
 RTSTAT_OBJS = rtstat.Osuf
@@ -305,6 +309,8 @@ NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS)
 
 NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
+NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+
 NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
@@ -340,6 +346,7 @@ InstallProgram(rtcpclientd,$(BIN),root,bin,0750)
 InstallProgram(recaller,$(BIN),root,bin,0750)
 InstallProgram(migrator,$(BIN),root,bin,0750)
 InstallProgram(rtcpcldCleanupDB,$(BIN),root,bin,0750)
+InstallProgram(MigHunter,$(BIN),root,bin,0755)
 #if BuildRtstat
 InstallProgram(rtstat,$(BIN),root,bin,0755)
 #endif
@@ -389,6 +396,7 @@ IEXPORT(rtcpclientd,$(EXPORTBIN),750)
 IEXPORT(recaller,$(EXPORTBIN),750)
 IEXPORT(migrator,$(EXPORTBIN),750)
 IEXPORT(rtcpcldCleanupDB,$(EXPORTBIN),750)
+IEXPORT(MigHunter,$(EXPORTBIN),755)
 #if BuildRtstat
 IEXPORT(rtstat,$(EXPORTBIN),755)
 #endif
