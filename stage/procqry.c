@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.83 2002/03/26 09:10:13 jdurand Exp $
+ * $Id: procqry.c,v 1.84 2002/04/11 10:08:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.83 $ $Date: 2002/03/26 09:10:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.84 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -295,6 +295,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char timestr[64] ;    /* Time in its ASCII format             */
 	char timestr2[64] ;   /* Time in its ASCII format             */
 	char *dp;
+	int api_out = 0;
 
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;
@@ -313,6 +314,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
 	if (req_type > STAGE_00) {
+		api_out = 1;
 		if (magic == STGMAGIC) {
 			/* This is coming from the API */
 			unmarshall_LONG (rbp, gid);
@@ -341,7 +343,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
-		c = SYERR;
+		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
@@ -352,7 +354,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		/* This is coming from the API */
 		if (nstcp_input != 1) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 		memset((void *) &stcp_input, (int) 0, sizeof(struct stgcat_entry));
@@ -364,7 +366,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			unmarshall_STAGE_CAT(magic,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 			if (struct_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
-				c = SYERR;
+				c = SEINTERNAL;
 				goto reply;
 			}
 			logit[0] = '\0';
@@ -395,14 +397,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_ALLOCED) == STAGE_ALLOCED) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			afile = stcp_input.u1.d.xfile;
@@ -429,14 +431,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_EXTERNAL) == STAGE_EXTERNAL) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			xfile = stcp_input.u1.d.xfile;
@@ -479,7 +481,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 			if (t_or_d != 't') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -487,7 +489,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 				if ((nbtpf = unpackfseq (stcp_input.u1.t.fseq, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0) {
 					sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 			} else {
@@ -546,13 +548,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (stcp_input.t_or_d == 't') {
 				if ((side = stcp_input.u1.t.side) < 0) {
 					sendrep (rpfd, MSG_ERR, STG06, "u1.t.side (STAGE_SIDE in the flags)");
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 			} else {
 				/* Hmmm.... STAGE_SIDE flag and not a 't' request might indicate something more wrong than expected */
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_SIDE flag is valid only for t_or_d == 't'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -698,7 +700,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		errflg++;
 	}
 	if (errflg != 0) {
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 	c = 0;
@@ -709,7 +711,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		/* We run this procqry requests in a forked child */
 		if ((pid = fork ()) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
-			c = SYERR;
+			c = SESYSERR;
 			goto reply;
 		}
 #endif
@@ -779,7 +781,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							   0, 0
 #endif
 			) < 0)
-			c = SYERR;
+			c = SESYSERR;
 		goto reply;
 	}
 	if (Tflag) {
@@ -1061,7 +1063,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									 stcp->reqid, stcp->ipath)
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1078,7 +1080,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 get_retenp(stcp,timestr) == 0 ? timestr : "",
 									 stcp->reqid, stcp->ipath)
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1097,7 +1099,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									 stcp->reqid, stcp->ipath)
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1113,7 +1115,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 stcp->poolname,
 									 stcp->reqid, stcp->ipath)
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1134,7 +1136,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 get_retenp(stcp,timestr) == 0 ? timestr : "",
 									 get_mintime(stcp,timestr2) == 0 ? timestr2 : "")
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1149,7 +1151,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									 stcp->poolname, get_retenp(stcp,timestr) == 0 ? timestr : "")
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1167,7 +1169,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 stcp->poolname,
 									 get_mintime(stcp,timestr2) == 0 ? timestr2 : "")
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1182,7 +1184,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									 stcp->poolname)
 							< 0) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1215,7 +1217,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									  stcp->reqid, stcp->ipath)
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1236,7 +1238,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_retenp(stcp,timestr) == 0 ? timestr : "",
 									  stcp->reqid, stcp->ipath)
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1259,7 +1261,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									  stcp->reqid, stcp->ipath)
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1278,7 +1280,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  stcp->poolname,
 									  stcp->reqid, stcp->ipath)
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1303,7 +1305,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  get_retenp(stcp,timestr) == 0 ? timestr : "",
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "")
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1322,7 +1324,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  stcp->poolname,
 									  get_retenp(stcp,timestr) == 0 ? timestr : "")
 							 < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1342,7 +1344,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 									  stcp->poolname) < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					} else {
@@ -1358,7 +1360,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 									  p_stat, stcp->nbaccesses,
 									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
 									  stcp->poolname) < 0)) {
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 					}
@@ -1390,7 +1392,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].server,
 										 stcp->reqid, stcp->ipath
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1406,7 +1408,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].server,
 										 stcp->reqid, stcp->ipath
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1424,7 +1426,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].server,
 										 stcp->reqid, stcp->ipath
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1439,7 +1441,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].server,
 										 stcp->reqid, stcp->ipath
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1455,7 +1457,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 get_retenp(stcp,timestr) == 0 ? timestr : "",
 										 get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 										 stcp->reqid, stcp->ipath) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1466,7 +1468,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 stcp->poolname,
 										 get_retenp(stcp,timestr) == 0 ? timestr : "",
 										 stcp->reqid, stcp->ipath) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1479,7 +1481,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 stcp->poolname,
 										 get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
 										 stcp->reqid, stcp->ipath) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1488,7 +1490,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 										 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1509,7 +1511,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].Cnsfileclass.name,
 										 fileclasses[ifileclass].server
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1523,7 +1525,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].Cnsfileclass.name,
 										 fileclasses[ifileclass].server
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1539,7 +1541,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].Cnsfileclass.name,
 										 fileclasses[ifileclass].server
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1552,7 +1554,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 fileclasses[ifileclass].Cnsfileclass.name,
 										 fileclasses[ifileclass].server
 								) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1567,7 +1569,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 stcp->poolname,
 										 get_retenp(stcp,timestr) == 0 ? timestr : "",
 										 get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1577,7 +1579,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 										 stcp->poolname,
 										 get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1589,7 +1591,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 										 stcp->poolname,
 										 get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						} else {
@@ -1598,7 +1600,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 										 stcp->poolname) < 0) {
-								c = SYERR;
+								c = SESYSERR;
 								goto reply;
 							}
 						}
@@ -1610,19 +1612,19 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if ((stcp->t_or_d == 'a') || (stcp->t_or_d == 'd')) {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.d.xfile) < 0) {
-					c = SYERR;
+					c = SESYSERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'm') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.m.xfile) < 0) {
-					c = SYERR;
+					c = SESYSERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'h') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
 							 stcp->u1.h.xfile) < 0) {
-					c = SYERR;
+					c = SESYSERR;
 					goto reply;
 				}
 			}
@@ -1634,7 +1636,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						 stcp->user, stcp->group,
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 						 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
-				c = SYERR;
+				c = SESYSERR;
 				goto reply;
 			}
 			tm = localtime (&stcp->a_time);
@@ -1642,7 +1644,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						 "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
 						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 						 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
-				c = SYERR;
+				c = SESYSERR;
 				goto reply;
 			}
 		}
@@ -1655,7 +1657,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 	if (fseq_list != NULL) free(fseq_list);
 	if (argv != NULL) free (argv);
-	sendrep (rpfd, STAGERC, STAGEQRY, c);
+	sendrep (rpfd, STAGERC, STAGEQRY, magic, c);
 	if (pid == 0) {	/* we are in the child */
 		rfio_end();
 #ifdef USECDB
@@ -1666,7 +1668,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			stglogit(func, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
 		}
 #endif
-		exit (c);
+		exit (c ? SYERR : 0);
 	}
 }
 

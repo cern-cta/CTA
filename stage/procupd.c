@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.100 2002/04/09 07:36:47 jdurand Exp $
+ * $Id: procupd.c,v 1.101 2002/04/11 10:08:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.100 $ $Date: 2002/04/09 07:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.101 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -206,19 +206,19 @@ procupdreq(req_type, magic, req_data, clienthost)
 #endif
 		if (nstpp_input != 1) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d stgpath) - one only is supported\n", nstpp_input);
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 		if ((stpp_input = (struct stgpath_entry *) calloc(nstpp_input,sizeof(struct stgpath_entry))) == NULL) {
 			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
-			c = SYERR;
+			c = SESYSERR;
 			goto reply;
 		}
 		path_status = 0;
 		unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
 		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 		stglogit(func,"stpp[1/1] : %s\n",stpp_input[0].upath);
@@ -349,7 +349,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			errflg++;
 		}
 		if (errflg) {
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 	}
@@ -357,14 +357,14 @@ procupdreq(req_type, magic, req_data, clienthost)
     /* Protect agains specifying open and close at the same time */
 	if ((oflag + cflag + Oflag + Cflag) > 1) {
 		sendrep (rpfd, MSG_ERR, STG35, "-c [or -C]", "-o [or -O]");
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
-		c = SYERR;
+		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 	strncpy (save_group, gr->gr_name, CA_MAXGRPNAMELEN);
@@ -423,7 +423,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 				if (found != 1) {
 					sendrep (rpfd, MSG_ERR, STG22);
-					c = USERR;
+					c = ENOENT;
 					goto reply;
 				}
 				/* We have found a STAGEOUT or STAGEALLOC entry matching argv_i */
@@ -435,7 +435,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					(found_server == NULL) || (found_dirpath == NULL)) {
 					/* Strange - seems to not be in a known fs or a known pool - this is not legal */
 					sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 
@@ -458,12 +458,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 				if (strcmp (user, stcp->user)) {
 					sendrep (rpfd, MSG_ERR, STG37);
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 				if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-					c = SYERR;
+					c = SESYSERR;
 					goto reply;
 				}
 				c = 0;
@@ -534,7 +534,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						if (delfile (stcp, 1, 1, 1, "unknown filesystem", uid, gid, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						}
-						c = SYERR;
+						c = SESYSERR;
 						goto reply;
 					}
 
@@ -550,7 +550,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
 						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-							c = SYERR;
+							c = SESYSERR;
 							goto reply;
 						}
 						c = -1;
@@ -589,7 +589,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 				if (found != 1) {
 					sendrep (rpfd, MSG_ERR, STG22);
-					c = USERR;
+					c = ENOENT;
 					goto reply;
 				}
 
@@ -647,7 +647,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					(int) wqp->rtcp_gid);
 			wqp = wqp->next;
 		}
-		c = USERR;
+		c = ENOENT;
 		goto reply;
 	}
 	c = 0;
@@ -663,7 +663,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		if (callback_index >= wqp->save_nbsubreqid) {
 			/* False value */
 			sendrep (rpfd, MSG_ERR, STG22);
-			c = USERR;
+			c = ENOENT;
 			goto reply;
 		}
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
@@ -679,7 +679,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	if (! found_wfp) {
 		/* False value */
 		sendrep (rpfd, MSG_ERR, STG22);
-		c = USERR;
+		c = ENOENT;
 		goto reply;
 	}
 	subreqid = wfp->subreqid;
@@ -695,7 +695,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 	if (! found) {
 		sendrep (rpfd, MSG_ERR, STG22);
-		c = USERR;
+		c = ENOENT;
 		goto reply;
 	}
 #ifdef STAGER_DEBUG
@@ -767,7 +767,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* We are extending the number of files in this waiting member of the waitq */
 
 		if ((wfp_ok = add2wf(wqp)) == NULL) {
-			c = SYERR;
+			c = SESYSERR;
 			goto reply;
 		}
 		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem might have been realloced) */
@@ -804,7 +804,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 		/* We extend the others that are also waiting on wfp */
 		if (add2otherwf(wqp,fseq,wfp,wfp_ok) != 0) {
-			c = SYERR;
+			c = SESYSERR;
 			goto reply;
 		}
 		/* The memory may have been realloced, so we follow this eventual reallocation */
@@ -1041,7 +1041,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		char *new_server;
 		char *new_dirpath;
 
-		wqp->status = rc;
+		wqp->status = rc_shift2castor(STGMAGIC,rc);
 		if (rc != ENOSPC) {
 			goto reply;
 		}
@@ -1057,7 +1057,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			(found_server == NULL) || (found_dirpath == NULL)) {
 			/* Strange - seems to not be in a known fs or a known pool - this is not legal */
 			sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 
@@ -1107,7 +1107,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				if (delfile (stcp, 1, 0, 0, "unknown filesystem", uid, gid, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
-				c = SYERR;
+				c = SESYSERR;
 				goto reply;
 			}
 
@@ -1652,7 +1652,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			memcpy(wfp,wfp+1,sizeof(struct waitf));
 		}
 	}
-	if ((rc == MNYPARI) || ((wqp->nbdskf <= 0) && ((rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)))) wqp->status = rc;
+	if ((rc == MNYPARI) || ((wqp->nbdskf <= 0) && ((rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)))) wqp->status = rc_shift2castor(STGMAGIC,rc);
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
@@ -1699,7 +1699,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		wqp->clnreq_rpfd = rpfd;
 		cleanpool (wqp->waiting_pool);
 	} else {
-		sendrep (rpfd, STAGERC, STAGEUPDC, c);
+		sendrep (rpfd, STAGERC, STAGEUPDC, magic, c);
 	}
 }
 

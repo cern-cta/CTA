@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.8 2002/03/27 08:14:21 jdurand Exp $
+ * $Id: procping.c,v 1.9 2002/04/11 10:08:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.8 $ $Date: 2002/03/27 08:14:21 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.9 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,8 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	char hpss_aware = ' ';
 #endif
 	int verbose_flag = 0;
-
+	int api_out = 0;
+	
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
 	if (req_type > STAGE_00) {
@@ -90,10 +91,14 @@ void procpingreq(req_type, magic, req_data, clienthost)
 						 reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	
+	if (req_type > STAGE_00) {
+		api_out = 1;
+	}
+	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
-		rc = SYERR;
+		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 
@@ -125,7 +130,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	}
 
 	if (errflg != 0) {
-		rc = USERR;
+		rc = EINVAL;
 		goto reply;
 	}
 
@@ -140,6 +145,6 @@ void procpingreq(req_type, magic, req_data, clienthost)
 		sendrep (rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
 	}
 	reply:
-	sendrep (rpfd, STAGERC, STAGEPING, rc);
+	sendrep (rpfd, STAGERC, STAGEPING, magic, rc);
 	return;
 }
