@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.29 $ $Date: 2004/11/24 15:20:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Date: 2004/12/21 22:32:48 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -18,18 +18,13 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
+LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 LIBRARIES1 = $(RHORALIB)
 SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
-LIBRARIES2 = $(RHPROTOLIB)
-SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L.. -lshift
 
 ALL0=SharedLibraryTargetName(shift)
 #if BuildOraCpp
 ALL1=SharedLibraryTargetName(castorCommonOra)
-#endif
-#if BuildProtoCppStager
-ALL2=SharedLibraryTargetName(castorProto)
 #endif
 
 #if BuildSecurity
@@ -63,17 +58,14 @@ EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 
 #endif
 
-all:    $(ALL0) $(ALL1) $(ALL2) $(ALLSEC)
+all:    $(ALL0) $(ALL1) $(ALLSEC)
 
 INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
 INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
 #endif
-#if BuildProtoCppStager
-INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorProto))
-#endif
 
-install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALLSEC)
+install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
@@ -107,24 +99,11 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS1))
 	@-rm -rf tmp
 
-libcastorProto.so: $(LIBRARIES2)
-	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
-	@for i in $(LIBRARIES2) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS2))
-	@-rm -rf tmp
-
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
 libcastorCommonOra.dll:	$(LIBRARIES1)
-	@echo  making $@ in CurDir
-	link /dll /noentry /nologo /out:$@ $**
-
-libcastorProto.dll:	$(LIBRARIES2)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
@@ -158,11 +137,7 @@ MakeDepLibrary(common,common)
 
 MakeDepLibrary(rfio,rfio)
 
-MakeDepLibrary(sysreq,sysreq)
-
-#if BuildHpssClient
-MakeDepLibrary(hpss,hpss_common)
-#endif
+MakeDepLibrary(msg,msg)
 
 MakeDepLibrary(ns,ns)
 
@@ -193,6 +168,8 @@ MakeDepLibrary(expert,expert)
 MakeDepLibrary(db,db)
 
 MakeDepLibrary(monitor,monitor)
+
+MakeDepLibrary(rmc,rmc)
 
 #if BuildSecurity
 MakeDepLibrary(security,security)
