@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.10 $ $Date: 2001/01/30 08:21:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.11 $ $Date: 2001/02/20 15:05:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -166,9 +166,10 @@ int xflag;
 	else if (status & ARCHIVED) strcpy (p_stat, "ARCHIVED");
 	else strcpy (p_stat, "?");
 	u64 = ((u_signed64) free_space) * 1024;
-	printf ("%-6s %-6s %-6s %-8s %-2s %-15s %-7sB ",
-	    vid, vsn, dgn, density, lbltype, pool_name, u64tostru (u64, tmpbuf, 7));
+	printf ("%-6s %-6s %-6s %-8s %-2s ",
+	    vid, vsn, dgn, density, lbltype);
 	if (! xflag) {
+		printf ("%-15s %-7sB ", pool_name, u64tostru (u64, tmpbuf, 7));
 		ltime = (wtime < rtime) ? rtime : wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
@@ -177,8 +178,9 @@ int xflag;
 		} else
 			printf ("00000000 ");
 	} else {
-		printf ("%-6s %-2s %-12s %-25s %6d %5d %5d ",
-		    model, media_letter, manufacturer, sn, nbfiles, rcount, wcount);
+		printf ("%-6s %-2s %-12s %-25s %-15s %-7sB %6d %5d %5d ",
+		    model, media_letter, manufacturer, sn, pool_name,
+		    u64tostru (u64, tmpbuf, 7), nbfiles, rcount, wcount);
 		if (rtime) {
 			tm = localtime (&rtime);
 			printf ("%04d%02d%02d ",

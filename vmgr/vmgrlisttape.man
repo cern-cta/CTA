@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.3 $ $Date: 2001/01/30 08:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.4 $ $Date: 2001/02/20 15:05:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTTAPE 1 "$Date: 2001/01/30 08:20:56 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTTAPE 1 "$Date: 2001/02/20 15:05:03 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlisttape \- query the CASTOR Volume Manager about a tape or list all existing tapes
 .SH SYNOPSIS
@@ -79,9 +79,9 @@ free_space, last access (read or write) and status are given.
 vmgrlisttape -V RT0001
 RT0001 RT0001 9840R3 20GC     al default          20.00GB 00000000
 
-vmgrlisttape -V RT0001 -x
-RT0001 RT0001 9840R3 20GC     al default          20.00GB 9840   R STK \\
-        123456789                      0     0     0 00000000 00000000
+vmgrlisttape -V RT0003 -x
+RT0003 RT0003 9840R3 20GC     al 9840   R  STK          123456789 \\
+         default          17.14GB    237     4     1 20010130 20001211 DISABLED
 .ft
 .fi
 .SH EXIT STATUS
