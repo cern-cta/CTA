@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.14 2002/10/01 07:10:02 jdurand Exp $
+ * $Id: stager_tape.c,v 1.15 2002/12/11 08:38:28 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.14 $ $Date: 2002/10/01 07:10:02 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.15 $ $Date: 2002/12/11 08:38:28 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1541,7 +1541,7 @@ void stager_tape_log_callback(tapereq,filereq)
 		errno,
 		strerror(errno),
 		serrno,
-		strerror(serrno));
+		sstrerror(serrno));
 #else
 	/* We log every callback for log-survey and administration reason */
 	if (filereq->cprc == 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.234 2002/11/20 12:06:45 jdurand Exp $
+ * $Id: poolmgr.c,v 1.235 2002/12/11 08:38:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.234 $ $Date: 2002/11/20 12:06:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.235 $ $Date: 2002/12/11 08:38:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4352,7 +4352,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 						/* In the case of startup, the rwcounters on filesystem were not yet */
 						/* incremented for this stcp - so decrementing will cause an */
 						/* error */
-						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", strerror(save_serrno));
+						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(save_serrno));
 						if ((c = upd_stageout (STAGEUPDC, stcp->ipath, NULL, 0, stcp, 0, 1)) != 0) {
 							serrno = (c == CLEARED) ? ESTCLEARED : c;
 							if (serrno != ENOENT) return(-1);

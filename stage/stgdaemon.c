@@ -1601,7 +1601,7 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
 			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
 			serrno = SEUSERUNKN;
-			sendrep (&rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, user, func, sstrerror(serrno));
 			sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 			return;
 		}
@@ -1633,7 +1633,7 @@ void procinireq(req_type, magic_client, ipaddr, req_data, clienthost)
 					if (argv != NULL) free (argv);
 					stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
 					serrno = EACCES;
-					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, sstrerror(serrno));
 					sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 					return;
 				}
@@ -1731,7 +1731,7 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 			stglogit(func, "### Cannot Cgetpwnam(%s) (%s)\n",user, strerror(errno));
 			stglogit(func, "### Please check existence of \"%s\" in password file\n", user);
 			serrno = SEUSERUNKN;
-			sendrep (&rpfd, MSG_ERR, STG02, user, func, strerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, user, func, sstrerror(serrno));
 			sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 			return;
 		}
@@ -1763,7 +1763,7 @@ void procshutdownreq(req_type, magic_client, ipaddr, req_data, clienthost)
 					if (argv != NULL) free (argv);
 					stglogit (func, "[STAGESHUTDOWN_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
 					serrno = EACCES;
-					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, strerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG02, clienthost, func, sstrerror(serrno));
 					sendrep (&rpfd, STAGERC, req_type, magic_client, serrno);
 					return;
 				}

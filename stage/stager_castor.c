@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.32 2002/11/20 16:40:49 jdurand Exp $
+ * $Id: stager_castor.c,v 1.33 2002/12/11 08:38:28 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.32 $ $Date: 2002/11/20 16:40:49 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.33 $ $Date: 2002/12/11 08:38:28 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3396,7 +3396,7 @@ void stager_hsm_log_callback(tapereq,filereq)
 			errno,
 			strerror(errno),
 			serrno,
-			strerror(serrno));
+			sstrerror(serrno));
 #else
 	/* We log every callback for log-survey and administration reason */
 	if (filereq->cprc == 0) {
