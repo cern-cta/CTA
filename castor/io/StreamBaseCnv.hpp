@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/29 12:18:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -74,7 +74,18 @@ namespace castor {
        * the representation this converter can deal with
        */
       virtual const unsigned int repType() const;
-
+      
+      /**
+       * Removes a link from a parent to a child.
+       * This implementation always raises an exception
+       * since this method makes no sense for streaming.
+       * @param parent the parent
+       * @param child the child
+       * @exception Exception Always thrown, see above.
+       */
+      virtual void unlinkChild(const castor::IObject* parent,
+                               const castor::IObject* child)
+        throw (castor::exception::Exception);
 
     protected:
       

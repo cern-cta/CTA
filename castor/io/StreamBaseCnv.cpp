@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:37:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/29 12:18:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -69,6 +69,18 @@ const unsigned int castor::io::StreamBaseCnv::RepType() {
 // -----------------------------------------------------------------------
 inline const unsigned int castor::io::StreamBaseCnv::repType() const {
   return RepType();
+}
+
+// -----------------------------------------------------------------------
+// unlinkChild
+// -----------------------------------------------------------------------
+void castor::io::StreamBaseCnv::unlinkChild
+(const castor::IObject* parent,
+ const castor::IObject* child)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal e;
+  e.getMessage() << "unlinkChild should never be called while streaming.";
+  throw e;
 }
 
 //------------------------------------------------------------------------------

@@ -153,7 +153,18 @@ namespace castor {
          */
         castor::IObject* getObjFromId (unsigned long id,
                                        ObjectCatalog& newlyCreated)
-          throw (castor::exception::Exception);        
+          throw (castor::exception::Exception);
+
+        /**
+         * Removes a link from a parent to a child in the
+         * corresponding ORACLE table
+         * @param parent the parent
+         * @param child the child
+         * @exception Exception throws an Exception in case of error
+         */
+        void unlinkChild(const castor::IObject* parent,
+                         const castor::IObject* child)
+          throw (castor::exception::Exception);
 
       public:
 
@@ -164,7 +175,7 @@ namespace castor {
          */
         void registerCnv(castor::db::ora::OraBaseObj* cnv)
           throw() { m_registeredCnvs.insert(cnv); }
-        
+
         /**
          * unregistration of Oracle converters.
          */

@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IConverter.hpp"
 #include "castor/ICnvSvc.hpp"
+#include "castor/IObject.hpp"
 #include "castor/MsgSvc.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbAddress.hpp"
@@ -422,4 +424,17 @@ castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
     castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
     return createObj(&clientAd, newlyCreated);
   }
+}
+
+// -----------------------------------------------------------------------
+// unlinkChild
+// -----------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::unlinkChild
+(const castor::IObject* parent,
+ const castor::IObject* child)
+  throw (castor::exception::Exception) {
+  // Look for an adapted converter
+  // The converter is always valid if no exception is thrown
+  castor::IConverter* conv = converter(parent->type());
+  return conv->unlinkChild(parent, child);
 }
