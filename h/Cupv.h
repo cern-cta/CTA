@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv.h,v 1.1 2002/05/28 09:47:41 bcouturi Exp $
+ * $Id: Cupv.h,v 1.2 2002/06/07 16:04:20 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv.h,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:47:41 $ CERN IT-PDP/DM Ben Couturier
+ * @(#)$RCSfile: Cupv.h,v $ $Revision: 1.2 $ $Date: 2002/06/07 16:04:20 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_H
@@ -26,10 +26,10 @@
 #define LISTBUFSZ 3960
 #define LOGBUFSZ 1024
 #define PRTBUFSZ  180
-#define REPBUFSZ 3964	/* must be >= max volume manager reply size */
-#define REQBUFSZ  558	/* must be >= max volume manager request size */
+#define REPBUFSZ 3964	/* must be >= max UPV reply size */
+#define REQBUFSZ  820	/* must be >= max UPV request size */
 
-			/* volume manager request types */
+			/* UPV request types */
 
 #define CUPV_ADD	 0
 #define CUPV_DELETE	 1
@@ -39,14 +39,14 @@
 #define CUPV_SHUTDOWN	 5
 #define CUPV_ENDLIST	 6
 
-			/* volume manager reply types */
+			/* UPV reply types */
 
 #define	MSG_ERR		1
 #define	MSG_DATA	2
 #define	CUPV_RC		3
 #define	CUPV_IRC	4
 
-			/* volume manager messages */
+			/* UPV messages */
 
 #define CUP00	"CUP00 - User Privilege Validator not available on %s\n" 
 #define	CUP02	"CUP02 - %s error : %s\n" 
