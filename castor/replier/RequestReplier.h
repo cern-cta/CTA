@@ -105,4 +105,12 @@ void Creplier_RequestReplier_release(struct Creplier_RequestReplier_t *rr);
 const char* Creplier_RequestReplier_errorMsg
 (struct Creplier_RequestReplier_t* rr);
 
+/**
+ * Waits until all messages are sent
+ * @param rr the request replier instance
+ */
+int Creplier_RequestReplier_terminate(struct Creplier_RequestReplier_t *rr)
+
+
+
 #endif // REPLIER_REQUESTREPLIER_H
