@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.16 $ $Date: 2000/08/04 14:35:18 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.17 $ $Date: 2000/09/29 13:24:47 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -158,7 +158,7 @@ typedef struct rtcpFileRequest {
 typedef struct rtcpTapeRequest {
     char vid[CA_MAXVIDLEN+1];
     char vsn[CA_MAXVSNLEN+1];
-    char label[4];
+    char label[CA_MAXLBLTYPLEN+1];
     char dgn[CA_MAXDGNLEN+1];
     char devtype[CA_MAXDVTLEN+1];
     char density[CA_MAXDENLEN+1];
