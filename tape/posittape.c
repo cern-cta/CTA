@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.1 $ $Date: 1999/11/05 08:49:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.2 $ $Date: 1999/11/23 12:49:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -396,7 +396,7 @@ char *vol1, *hdr1, *hdr2;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
 		}
-		tplogit (func, "hdr1 = %s", hdr1);
+		tplogit (func, "hdr1 = %s\n", hdr1);
 		nohdr2 = 0;
 		if ((c = readlbl (tapefd, path, hdr2)) < 0) goto reply;
 		if (c == 0) {
@@ -405,7 +405,7 @@ char *vol1, *hdr1, *hdr2;
 				c = ETLBL;
 				goto reply;
 			}
-			tplogit (func, "hdr2 = %s", hdr2);
+			tplogit (func, "hdr2 = %s\n", hdr2);
 		}
 		if (c == 1) {
 			c = ETLBL;
