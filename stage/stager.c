@@ -1,9 +1,9 @@
 /*
- * $Id: stager.c,v 1.84 2000/07/28 08:30:31 jdurand Exp $
+ * $Id: stager.c,v 1.85 2000/08/15 09:40:06 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -16,19 +16,19 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.84 $ $Date: 2000/07/28 08:30:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.85 $ $Date: 2000/08/15 09:40:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
 #include <unistd.h>                 /* For getcwd() etc... */
-#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 #include <dirent.h>
 #endif
 #include <grp.h>
 #include <pwd.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
