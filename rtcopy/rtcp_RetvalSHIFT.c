@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.2 $ $Date: 2000/01/19 15:19:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.3 $ $Date: 2000/02/13 11:50:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -76,12 +76,14 @@ int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
             else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
             else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
             else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
+            else if ( (err->severity & RTCP_ENDVOL) != 0 ) retval = ENDVOL;
             else retval = UNERR;
         } else {
             if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
             else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
             else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
             else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
+            else if ( (err->severity & RTCP_ENDVOL) != 0 ) retval = ENDVOL;
             else retval = 0;
         }
     } else retval = 0;

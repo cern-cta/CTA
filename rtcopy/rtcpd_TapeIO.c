@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.14 $ $Date: 2000/02/01 13:17:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.15 $ $Date: 2000/02/13 11:50:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -722,16 +722,18 @@ int tread(int fd,char *ptr,int len,
         if ( rc == 0 ) {
             rtcp_log(LOG_DEBUG,"tread(%d,%s) check EOF/EOV\n",fd,filereq->tape_path);
             if ((rc = checkeofeov(fd, filereq->tape_path)) < 0) {
+                rtcp_log(LOG_DEBUG,"tread(%d,%s) checkeofeov() returns %d, serrno=%d\n",
+                         fd,filereq->tape_path,rc,serrno);
                 if (rc == -ETLBL) {
                     rtcpd_AppendClientMsg(NULL, file, RT128,"CPTPDSK");
-                    rtcpd_SetReqStatus(NULL,file,-rc,
-                        RTCP_FAILED | RTCP_USERR);
+                    rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_USERR);
                     rtcp_log(LOG_ERR,RT128,"CPTPDSK");
                 } else
-                    rtcpd_SetReqStatus(NULL,file,-rc,
-                    RTCP_FAILED | RTCP_UNERR);
+                    rtcpd_SetReqStatus(NULL,file,-rc,RTCP_FAILED | RTCP_UNERR);
                 return(-1);
             }
+            rtcp_log(LOG_DEBUG,"tread(%d,%s) checkeofeov() returns %d, serrno=%d\n",
+                     fd,filereq->tape_path,rc,serrno);
             if ( rc == 0 ) return(0);   /* end of file has been reached */
             file->eovflag= 1;           /* tape volume overflow */
             return(0);

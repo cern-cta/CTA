@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.28 $ $Date: 2000/02/11 10:49:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.29 $ $Date: 2000/02/13 11:50:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1256,17 +1256,37 @@ void *tapeIOthread(void *arg) {
                      * Release to unload but keep drive reservation.
                      */
                     if ( nexttape->next == tape ) {
-                         /*
-                          * There are no more volumes specified!
-                          */
-                         rtcpd_AppendClientMsg(NULL,nextfile,RT124,
-                               (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
-                         if ( nexttape->tapereq.mode == WRITE_ENABLE )
-                             serrno = ENOSPC;
-                         else
-                             serrno = EFBIG;
-                        rtcpd_SetReqStatus(NULL,nextfile,serrno,
-                                           RTCP_FAILED | RTCP_USERR);
+                        /*
+                         * There are no more volumes specified!
+                         * This is not an error for reading NL tapes, since we
+                         * can't distinguish between a physical EOV and
+                         * a double tape mark.
+                         */
+                        if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
+                            serrno = ETEOV;
+                            severity = RTCP_FAILED | RTCP_USERR;
+                        } else {
+                            if ( strcmp(nexttape->tapereq.label,"nl") == 0 ) {
+                                /*
+                                 * Set last buffer FULL and flag end of tape
+                                 * file to force disk IO to flush data and
+                                 * return normally.
+                                 */
+                                (void)Cthread_mutex_lock_ext(databufs[indxp]->lock);
+                                databufs[indxp]->flag = BUFFER_FULL;
+                                databufs[indxp]->end_of_tpfile = TRUE;
+                                (void)Cthread_mutex_unlock_ext(databufs[indxp]->lock);
+                                serrno = 0;
+                                severity = RTCP_OK;
+                            } else {
+                                serrno = ETEOV;
+                                severity = RTCP_FAILED | RTCP_ENDVOL;
+                            }
+                        }
+                        if ( (severity & RTCP_FAILED) != 0 )
+                            rtcpd_AppendClientMsg(NULL,nextfile,RT124,
+                                (mode == WRITE_ENABLE ? "CPDSKTP" : "CPTPDSK"));
+                        rtcpd_SetReqStatus(NULL,nextfile,serrno,severity);
                         rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
                             tellClient(&client_socket,NULL,nextfile,-1);

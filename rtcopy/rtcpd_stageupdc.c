@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.11 $ $Date: 2000/01/25 11:23:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.12 $ $Date: 2000/02/13 11:50:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ extern char *geterr();
 
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
-    int rc, retval, save_serrno, WaitTime, TransferTime;
+    int rc, status, retval, want_reply, save_serrno, WaitTime, TransferTime;
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
@@ -95,8 +95,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
 #if defined(USE_STAGEAPI)
     status = filereq->err.errorcode;
+    want_reply = 0 ;
     if ( filereq->proc_status == RTCP_POSITIONED ) {
-        if ( status != ETFSQ ) status = 0;
+        if ( status != ETFSQ && status != ETEOV ) status = 0;
+        if ( strcmp(filereq->file_path,".") == 0 ) want_reply = 1;
         rc = stage_updc_tppos(filereq->stageID,
                               status,
                               filereq->blocksize,
@@ -105,7 +107,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
                               filereq->tape_fseq,
                               filereq->recordlength,
                               filereq->recfm,
-                              newpath);
+                              newpath,
+                              want_reply);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
                      sstrerror(serrno));
@@ -119,6 +122,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
         rc = rtcp_RetvalSHIFT(tape,file,&retval);
         if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
         else nb_bytes = filereq->bytes_out;
+        if ( status == ENOSPC ) want_reply = 1;
+        strcpy(newpath,filereq->file_path);
 
         rc = stage_updc_filcp(filereq->stageID,
                               retval,
@@ -132,7 +137,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
                               filereq->tape_fseq,
                               filereq->recordlength,
                               filereq->recfm,
-                              filereq->file_path);
+                              newpath,
+                              want_reply);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
                      sstrerror(serrno));
@@ -205,6 +211,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     rc = PCLOSE(stgupdc_fd);
     signal(SIGCHLD,SIG_IGN);
+#endif /* !USE_STAGEAPI */
+
     if ( rc == 0 &&  tapereq->mode == WRITE_DISABLE && *newpath != '\0' && 
          strcmp(newpath,filereq->file_path) ) {
         rtcp_log(LOG_INFO,"New path obtained from stager: %s\n",
@@ -228,11 +236,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
         if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
              filereq->proc_status == RTCP_POSITIONED &&
              strcmp(filereq->file_path,".") == 0 ) {
-            rtcp_log(LOG_ERR,"rtcpd_stageupdc() no new path received\n");
+            rtcp_log(LOG_ERR,
+                    "rtcpd_stageupdc() deferred allocation and no new path received\n");
             return(-1);
         }
     }
-#endif /* !USE_STAGEAPI */
     return(0);
 }
 
