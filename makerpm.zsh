@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.1 2005/01/20 10:50:36 jdurand Exp $
+# $Id: makerpm.zsh,v 1.2 2005/01/20 10:53:16 jdurand Exp $
 
 set -vx
 
@@ -18,12 +18,10 @@ foreach this (castor-*_${MAJOR_CASTOR_VERSION}-${MINOR_CASTOR_VERSION}_*deb)
   dir=`echo $this | sed 's/\-[0-9].*//g' | sed 's/_/\-/g'`
   fakeroot rm -rf $dir
   fakeroot alien --to-rpm --generate --keep-version $this
-  pushd $dir
+  cd $dir
   spec=`find . -name "*.spec"`
   mv $spec $spec.orig
   grep -v "%dir" $spec.orig > $spec
   fakeroot rpmbuild -bb $spec
-  popd
+  cd ..
 end
-
-
