@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.4 1999/12/09 13:47:24 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.5 2000/01/03 17:40:33 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "stage.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.5 $ $Date: 2000/01/03 17:40:33 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -55,7 +55,6 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
     tape->actual_size =   stcp->actual_size;
     tape->c_time      =   stcp->c_time;
     tape->a_time      =   stcp->a_time;
-    memcpy(tape->filler,  stcp->filler,2);
     strcpy(tape->poolname,stcp->poolname);
     strcpy(tape->ipath,   stcp->ipath);
     strcpy(tape->group,   stcp->group);
@@ -74,7 +73,9 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
     disk->actual_size =   stcp->actual_size;
     disk->c_time      =   stcp->c_time;
     disk->a_time      =   stcp->a_time;
-    memcpy(disk->filler,  stcp->filler,2);
+    disk->lrecl       =   stcp->lrecl;
+    disk->blksize     =   stcp->blksize;
+    strcpy(disk->recfm,   stcp->recfm);
     strcpy(disk->poolname,stcp->poolname);
     strcpy(disk->ipath,   stcp->ipath);
     strcpy(disk->group,   stcp->group);
@@ -93,7 +94,6 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
     hsm->actual_size =   stcp->actual_size;
     hsm->c_time      =   stcp->c_time;
     hsm->a_time      =   stcp->a_time;
-    memcpy(hsm->filler,  stcp->filler,2);
     strcpy(hsm->poolname,stcp->poolname);
     strcpy(hsm->ipath,   stcp->ipath);
     strcpy(hsm->group,   stcp->group);
@@ -112,7 +112,6 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
     alloc->actual_size =   stcp->actual_size;
     alloc->c_time      =   stcp->c_time;
     alloc->a_time      =   stcp->a_time;
-    memcpy(alloc->filler,  stcp->filler,2);
     strcpy(alloc->poolname,stcp->poolname);
     strcpy(alloc->ipath,   stcp->ipath);
     strcpy(alloc->group,   stcp->group);
@@ -224,7 +223,6 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
     stcp->actual_size =   tape->actual_size;
     stcp->c_time      =   tape->c_time;
     stcp->a_time      =   tape->a_time;
-    memcpy(stcp->filler,  tape->filler,2);
     strcpy(stcp->poolname,tape->poolname);
     strcpy(stcp->ipath,   tape->ipath);
     strcpy(stcp->group,   tape->group);
@@ -242,7 +240,9 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
     stcp->actual_size =   disk->actual_size;
     stcp->c_time      =   disk->c_time;
     stcp->a_time      =   disk->a_time;
-    memcpy(stcp->filler,  disk->filler,2);
+    stcp->blksize     =   disk->blksize;
+    stcp->lrecl       =   disk->lrecl;
+    strcpy(stcp->recfm,   disk->recfm);
     strcpy(stcp->poolname,disk->poolname);
     strcpy(stcp->ipath,   disk->ipath);
     strcpy(stcp->group,   disk->group);
@@ -260,7 +260,6 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
     stcp->actual_size =   hsm->actual_size;
     stcp->c_time      =   hsm->c_time;
     stcp->a_time      =   hsm->a_time;
-    memcpy(stcp->filler,  hsm->filler,2);
     strcpy(stcp->poolname,hsm->poolname);
     strcpy(stcp->ipath,   hsm->ipath);
     strcpy(stcp->group,   hsm->group);
@@ -278,7 +277,6 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
     stcp->actual_size =   alloc->actual_size;
     stcp->c_time      =   alloc->c_time;
     stcp->a_time      =   alloc->a_time;
-    memcpy(stcp->filler,  alloc->filler,2);
     strcpy(stcp->poolname,alloc->poolname);
     strcpy(stcp->ipath,   alloc->ipath);
     strcpy(stcp->group,   alloc->group);

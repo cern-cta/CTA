@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.3 1999/12/10 18:31:14 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.4 2000/01/03 17:40:32 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -34,9 +34,8 @@ database stage {         /* STAGE Database Description */
     off_t actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
-    char filler[2];
     char poolname[CA_MAXPOOLNAMELEN+1];
-    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
@@ -63,19 +62,21 @@ database stage {         /* STAGE Database Description */
     int  size;           /* Size in MB of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
+    int blksize;         /* Maximum block size */
+    int  lrecl;          /* Record length */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
     off_t actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
-    char filler[2];
+    char recfm[CA_MAXRECFMLEN+1]; /* Record format */
     char poolname[CA_MAXPOOLNAMELEN+1];
-    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
-    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char Xparm[23];
     unique key stgcat_disk_per_reqid {
       order ascending;
@@ -94,9 +95,8 @@ database stage {         /* STAGE Database Description */
     off_t actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
-    char filler[2];
     char poolname[CA_MAXPOOLNAMELEN+1];
-    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
@@ -118,13 +118,12 @@ database stage {         /* STAGE Database Description */
     off_t actual_size;   /* Current size */
     time_t c_time;       /* Creation time */
     time_t a_time;       /* Access time */
-    char filler[2];
     char poolname[CA_MAXPOOLNAMELEN+1];
-    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
-    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     char Xparm[23];
     unique key stgcat_alloc_per_reqid {
       order ascending;
@@ -133,7 +132,7 @@ database stage {         /* STAGE Database Description */
   };
   table stgcat_link {
     int reqid;          /* Request (unique) ID */
-    char upath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char upath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
     unique key stgcat_link_per_reqid {
       order ascending;
       reqid;
