@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.21 2003/05/12 12:23:37 jdurand Exp $
+ * $Id: stage_messages.h,v 1.22 2003/05/13 09:34:32 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -97,7 +97,7 @@
 #define STG115  "STG115 - Reqid %d (%s) have no tape pool associated yet\n"
 #define STG116  "STG116 - Not all input records have a tape pool\n"
 #define STG117  "STG117 - Inputs No %d (%s) and %d (%s) differs vs. their tape pool (\"%s\" and \"%s\")\n"
-#define STG118  "STG118 - Warning, fileclasses %s and %s shared tape pool \"%s\" but have different %s values (%d and %d)\n"
+#define STG118  "STG118 - Error: fileclass %s and another previous one share tape pool \"%s\" but have different %s values (%d and %d)\n"
 #define STG119  "STG119 - Missing file path argument for HSM files %s\n"
 #define STG120  "STG120 - %s already has a tppool assigned (\"%s\") - not expanded with respect to its class %s@%s (classid %d)\n"
 #define STG121  "STG121 - No tape pool\n"
