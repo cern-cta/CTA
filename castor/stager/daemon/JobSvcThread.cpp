@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.3 2004/12/03 17:14:31 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.4 2004/12/06 16:01:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2004/12/03 17:14:31 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2004/12/06 16:01:39 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -494,7 +494,6 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
                         e.getMessage().str().c_str());
     if (req) delete req;
-    if (client) delete client;
     if (stgSvc) stgSvc->release();
     return -1;
   }
@@ -534,7 +533,6 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   // Cleanup
   if (req) delete req;
-  if (client) delete client;
   if (stgSvc) stgSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }
