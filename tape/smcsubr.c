@@ -1,19 +1,10 @@
 /*
- * $Id: smcsubr.c,v 1.1 1999/07/20 20:54:47 jdurand Exp $
- *
- * $Log: smcsubr.c,v $
- * Revision 1.1  1999/07/20 20:54:47  jdurand
- * Needed for the minimal CASTOR version of Ctape to compile
- *
- */
-
-/*
- * Copyright (C) 1998 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)smcsubr.c	1.6 11/26/98 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:29:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,9 +12,9 @@ static char sccsid[] = "@(#)smcsubr.c	1.6 11/26/98 CERN IT-PDP/DM Jean-Philippe 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include "../h/scsictl.h"
+#include "Ctape.h"
+#include "scsictl.h"
 #include "smc.h"
-#include "tape.h"
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
 static char *smc_msgaddr;
