@@ -210,8 +210,9 @@ int Csec_clear_context(Csec_context_t *ctx) {
 
   Csec_trace(func, "Clearing context\n");
   if (ctx->magic !=  CSEC_CONTEXT_MAGIC_CLIENT_1
-      && ctx->magic !=  CSEC_CONTEXT_MAGIC_CLIENT_1) {
+      && ctx->magic !=  CSEC_CONTEXT_MAGIC_SERVER_1) {
     Csec_trace(func, "Bad magic:%xd - Probably uninitialized context !\n");
+    return -1;
   }
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
