@@ -708,12 +708,16 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
 BEGIN
  -- First get the DiskCopy and see whether it already has a fileSystem
  -- associated (case of a multi segment file)
+ -- We also select on the DiskCopy status since we know it is
+ -- in WAITTAPERECALL status and there may be other ones
+ -- INVALID, GCCANDIDATE, DELETED, etc...
  SELECT DiskCopy.fileSystem, DiskCopy.path, DiskCopy.id, DiskCopy.CastorFile
    INTO fileSystemId, rpath, dci, castorFileId
    FROM TapeCopy, Segment, DiskCopy
     WHERE Segment.id = segmentId
      AND Segment.copy = TapeCopy.id
-     AND DiskCopy.castorfile = TapeCopy.castorfile;
+     AND DiskCopy.castorfile = TapeCopy.castorfile
+     AND DiskCopy.status = 4; -- WAITTAPERECALL
  -- Check if the DiskCopy had a FileSystem associated
  IF fileSystemId > 0 THEN
    BEGIN
