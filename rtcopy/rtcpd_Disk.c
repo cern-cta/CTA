@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.82 $ $Date: 2000/05/04 14:52:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.83 $ $Date: 2000/05/30 14:29:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1582,7 +1582,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
-    int rc, save_serrno, indxp, offset, last_file,end_of_tpfile, spill;
+    int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile, spill;
     int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex;
     register int Uformat;
     register int convert;
@@ -1610,7 +1610,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     /*
      * Loop over all file requests
      */
-    indxp = offset = 0;
+    indxp = offset = next_offset = 0;
     last_file = FALSE;
     prevfile = NULL;
     /*
@@ -1731,6 +1731,9 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             proc_cntl.nb_diskIOactive++;
             /*
              * Calculate nb buffers to be used for the next file.
+             * Don't touch this code unless you REALLY know what you are
+             * doing. Any mistake here may in the best case result in deadlocks
+	     * and in the worst case .... data corruption!
              */
             if ( tapereq->mode == WRITE_ENABLE ) {
                 /*
@@ -1738,7 +1741,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                  */
                 next_bufsz = rtcpd_CalcBufSz(nexttape,nextfile);
                 if ( (filereq->concat & CONCAT) != 0 ) 
-                    next_nb_bufs = (int)(((u_signed64)offset + 
+                    next_nb_bufs = (int)(((u_signed64)next_offset + 
                           nextfile->filereq.bytes_in) / (u_signed64)next_bufsz);
                 else 
                     next_nb_bufs = (int)(nextfile->filereq.bytes_in / 
@@ -1781,12 +1784,15 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
 
             /* 
              * Update offset in buffer table.
+             * Don't touch this code unless you REALLY know what you are
+             * doing. Any mistake here may in the best case result in deadlocks
+	     * and in the worst case .... data corruption!
              */
             if ( prevfile == NULL ) {
                 /*
                  * First file
                  */
-                indxp = offset = 0;
+                indxp = offset = next_offset = 0;
             } else {
                 prev_bufsz = rtcpd_CalcBufSz(nexttape,prevfile);
                 if ( tapereq->mode == WRITE_ENABLE ) 
@@ -1812,7 +1818,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                          * with a brand new buffer except if previous
                          * file was empty we re-use the previous buffer.
                          * Also true U-format files start with new buffer
-                         * since since in this case concatenation does 
+                         * since in this case concatenation does 
                          * not imply any problems with partial blocks.
                          */
                         rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): no concatenate (%d != %d), indxp %d\n",
@@ -1820,7 +1826,16 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
 
                         if ( prev_filesz != 0 ) 
                             indxp = (indxp + 1) % nb_bufs;
-                        offset = 0;
+                        offset = next_offset = 0;
+                        /*
+                         * If next file is concatenated we must provide
+                         * correct offset so that the next_nb_bufs calculation
+                         * in next iteration is correct.
+                         */
+                        if ( (nextfile->next->filereq.concat & CONCAT) != 0 &&
+                             (*nextfile->next->filereq.recfm != 'U' ||
+                              (nextfile->next->filereq.convert & NOF77CW) != 0) )
+                            next_offset = (int)(filereq->bytes_in/((u_signed64)next_bufsz));
                     } else {
                         /*
                          * On tape write we need offset if we are
@@ -1830,6 +1845,8 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                             nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq);
                         offset = (int)(((u_signed64)offset + prev_filesz) %
                                        ((u_signed64)prev_bufsz));
+                        next_offset = (int)(((u_signed64)offset + filereq->bytes_in) %
+                                            ((u_signed64)next_bufsz));
                     }
                 }
             }
