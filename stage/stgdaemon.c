@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.151 2001/11/05 15:36:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.152 2001/11/30 12:24:15 jdurand Exp $
  */
 
 /*
@@ -15,8 +15,9 @@
  * 
  */
 
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.151 $ $Date: 2001/11/05 15:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.152 $ $Date: 2001/11/30 12:24:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -84,9 +85,8 @@ struct winsize {
 #include "rfio_api.h"
 #include "net.h"
 #include "stage.h"
-#include "stage_api.h"
 #if SACCT
-#include "../h/sacct.h"
+#include "sacct.h"
 #endif
 #ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
@@ -100,6 +100,10 @@ struct winsize {
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "Castor_limits.h"
+#ifdef STAGE_CSETPROCNAME
+#define STAGE_CSETPROCNAME_FORMAT "%s PORT=%d NBCAT=%d NBPATH=%d QUEUED=%d FREE_FD=%d"
+#include "Csetprocname.h"
+#endif
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -243,12 +247,13 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
-extern void check_lifetime_on_disk _PROTO(());
+extern void check_delaymig _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int));
+extern char *findpoolname _PROTO((char *));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -258,9 +263,37 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 
+/*
+ * Number of reserved/used socket connections:
+ *
+ * one for the next request (to be available to answer to it!)
+ * one for the log
+ * two for the pipe() in fork_exec_stager
+ * As many as there are entries in the waitq
+ * nbpool for the rfio_mstat()
+ * nbpool for the rfio_munlink()
+ */
+extern int nbpool;
+static int nwaitq = 0;
+
+#define RESERVED_FD (4 + nwaitq + 2 * nbpool)
+#define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
+
+#ifdef STAGE_CSETPROCNAME
+static int stgdaemon_port = 0;
+static char sav_argv0[1024+1];
+#endif
+
+#ifdef STAGE_CSETPROCNAME
+int main(argc,argv,envp)
+		 int argc;
+		 char **argv;
+		 char **envp;
+#else
 int main(argc,argv)
 		 int argc;
 		 char **argv;
+#endif
 {
 	int c, l;
 	char *clienthost;
@@ -389,7 +422,20 @@ int main(argc,argv)
 		stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
     } else {
 		stglogit(func, "Setted environment variable %s\n", myenv);
-    }
+	}
+
+#ifdef STAGE_CSETPROCNAME
+#if linux
+    /* The standard 'functions' in /etc/rc.d on linux will work with "stgdaemon" */
+	strncpy(sav_argv0,"stgdaemon",1024);
+#else
+	strncpy(sav_argv0,argv[0],1024);
+#endif
+	sav_argv0[1024] = '\0';
+	if (Cinitsetprocname(argc,argv,envp) != 0) {
+		stglogit(func,"### Cinitsetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
+#endif
 
 	/* We get information on current uid/gid */
 	if ((this_passwd = Cgetpwuid(getuid())) == NULL) {
@@ -406,15 +452,15 @@ int main(argc,argv)
 	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d), pid=%d\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, (int) getpid());
 
 	/* We get information on generic stage:st uid/gid */
-	if ((this_passwd = Cgetpwnam("stage")) == NULL) {
-		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
-		stglogit(func, "### Please check existence of account \"%s\" in password file\n", "stage");
+	if ((this_passwd = Cgetpwnam(STAGERGENERICUSER)) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n",STAGERGENERICUSER,strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", STAGERGENERICUSER);
  		exit (SYERR);
 	}
 	stage_passwd = *this_passwd;
 	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
-		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, "stage");
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, STAGERGENERICUSER);
  		exit (SYERR);
 	}
 
@@ -455,8 +501,14 @@ int main(argc,argv)
 	if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
 		stglogit (func, STG148, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
 		sin.sin_port = htons((u_short) STAGE_PORT);
+#ifdef STAGE_CSETPROCNAME
+		stgdaemon_port = STAGE_PORT;
+#endif
 	} else {
 		sin.sin_port = sp->s_port;
+#ifdef STAGE_CSETPROCNAME
+		stgdaemon_port = ntohs(sp->s_port);
+#endif
 	}
 	sin.sin_family = AF_INET ;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -621,7 +673,6 @@ int main(argc,argv)
 #endif
 
 	/* remove uncompleted requests */
-	/* We optimize real time spent in rfio connection using rfio_mstat() */
 	for (stcp = stcs; stcp < stce; ) {
 		if (stcp->reqid == 0) {
 			break;
@@ -635,14 +686,15 @@ int main(argc,argv)
 				(stcp->status == (STAGEOUT|WAITING_NS)) ||
 				(stcp->status == (STAGEALLOC|WAITING_SPC))) {
 			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0, 0) < 0) { /* remove incomplete file */
-				stglogit (func, STG02, stcp->ipath, "rfio_unlink",
+				stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 									rfio_serror());
 				stcp++;
 			}
 		} else if ((stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
 			u_signed64 actual_size_block;
-			if (rfio_mstat (stcp->ipath, &st) == 0) {
+			PRE_RFIO;
+			if (RFIO_STAT(stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
@@ -653,7 +705,7 @@ int main(argc,argv)
 				}
 #endif
 			} else {
-				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				actual_size_block = stcp->actual_size;
 			}
@@ -688,9 +740,6 @@ int main(argc,argv)
 		} else stcp++;
 	}
 
-	/* We free rfio_mstat() permanent connections */
-	rfio_end();
-
 	/* Get default upd_fileclasses_int from configuration if any (not from getenv because conf is re-checked again) */
 	if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
 		if ((upd_fileclasses_int = atoi(upd_fileclasses_int_p)) <= 0) {
@@ -710,6 +759,7 @@ int main(argc,argv)
 
 	/* main loop */
 	while (1) {
+
 		int upd_fileclasses_int_old_value;
 
 		/* Before accept() we execute some automatic thing that are client disconnected */
@@ -730,7 +780,7 @@ int main(argc,argv)
 			stglogit(func, STG33, "upd_fileclasses_int update - value changed", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
 		}
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
-		check_lifetime_on_disk (); /* remove all CASTOR files that are out of disk retention time or */
+		check_delaymig (); /* move delay_migr to can_be_migr if any */
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
 		checkwaitingspc ();	/* check requests that are waiting for space */
@@ -746,7 +796,6 @@ int main(argc,argv)
 			reqid = initreq_reqid;
 			rpfd = initreq_rpfd;
 			c = updpoolconf (defpoolname, defpoolname_in, defpoolname_out);
-			/* We optimize real time spent in rfio connection using rfio_mstat() */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if ((stcp->status == STAGEIN) ||
@@ -754,7 +803,8 @@ int main(argc,argv)
 					(stcp->status == STAGEALLOC)) {
 					u_signed64 actual_size_block;
 
-					if (rfio_mstat (stcp->ipath, &st) == 0) {
+					PRE_RFIO;
+					if (RFIO_STAT(stcp->ipath, &st) == 0) {
 						stcp->actual_size = st.st_size;
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 							actual_size_block = stcp->actual_size;
@@ -765,7 +815,7 @@ int main(argc,argv)
 						}
 #endif
 					} else {
-						stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
+						stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = stcp->actual_size;
 					}
@@ -773,8 +823,6 @@ int main(argc,argv)
 							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 				}
 			}
-			/* We free rfio_mstat() permanent connections */
-			rfio_end();
 			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
 			sendrep (rpfd, STAGERC, STAGEINIT, c);
 			force_init = migr_init = 0;
@@ -782,6 +830,8 @@ int main(argc,argv)
 		}
 
 		if (FD_ISSET (stg_s, &readfd)) {
+			struct waitq *wqp;
+
 			if ((rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen)) < 0) {
 				stglogit (func, STG02, "", "accept",
 										sys_errlist[errno]);
@@ -792,13 +842,13 @@ int main(argc,argv)
 			/* any connection broken in the TCP/IP layer. If we find any fd in the waitq */
 			/* that is equal to what accept() have just give to us, this mean that we have */
 			/* to invalidate the fd with same value inside the waitq. Putting it to value -1 */
-			/* is enough : this found element in the waitq will then work in silent mode */
+			/* is enough : this found element in the waitq will then work in nowait mode */
 			/* Of course we do not have to do close(rqfd) since we just received it! */
 			for (wqp = waitqp; wqp; wqp = wqp->next) {
 				if (wqp->rpfd == rqfd) {
 					int sav_reqid = reqid;
 					reqid = wqp->reqid;
-					stglogit (func, "### STG02 - Socket fd %d taken over by new request - Moving to silent mode\n", wqp->rpfd);
+					stglogit (func, "### STG02 - Socket fd %d taken over by new request - Moving to nowait(->silent) mode\n", wqp->rpfd);
 					wqp->rpfd = -1;
 					reqid = sav_reqid;
 					/* In theory this cannot happen more than once - so we break now */
@@ -857,8 +907,7 @@ int main(argc,argv)
 						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
 						req_type == STAGE_WRT || req_type == STAGE_PUT) {
 						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
-							sendrep (rpfd, STAGERC, req_type,
-											 SHIFT_ESTNACT);
+							sendrep (rpfd, STAGERC, req_type, SHIFT_ESTNACT);
 							goto endreq;
 						}
 					}
@@ -883,6 +932,15 @@ int main(argc,argv)
 						}
 					}
 
+					if (FREE_FD <= 0) {
+						/* There is no more available free connections if we process this new one */
+						/* We are at the limit - Sorry we have to reject *
+						/* We count on the client retry some time later saying him we are not */
+						/* available for the moment - with ESTNACT */
+						sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
+						sendrep (rpfd, STAGERC, req_type, SHIFT_ESTNACT);
+						goto endreq;
+					}
 					switch (req_type) {
 					case STAGE_IN:
 					case STAGE_OUT:
@@ -953,6 +1011,11 @@ int main(argc,argv)
 		if (select (maxfds, &readfd, (fd_set *) NULL, (fd_set *) NULL, &timeval) < 0) {
 			FD_ZERO (&readfd);
 		}
+#ifdef STAGE_CSETPROCNAME
+        if (Csetprocname(STAGE_CSETPROCNAME_FORMAT, sav_argv0, stgdaemon_port, nbcat_ent, nbpath_ent, nwaitq, FREE_FD) != 0) {
+			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+		}
+#endif
 	}
 }
 
@@ -1062,7 +1125,6 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 	char *p;
 	int errflg = 0;
 	char *func = "stageinit";
-	struct hostent *hp_verif;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -1263,6 +1325,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 		}
 	}
 	*wfp = wqp->wf;
+    ++nwaitq;
 	return (wqp);
 }
 
@@ -1486,6 +1549,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 	/* try to create file */
 
 	(void) umask (stcp->mask);
+	PRE_RFIO;
 	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
 	(void) umask (0);
 	if (fd < 0) {
@@ -1523,6 +1587,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		/* try again to create file */
 
 		(void) umask (stcp->mask);
+		PRE_RFIO;
 		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
 		(void) umask (0);
 		if (fd < 0) {
@@ -1531,14 +1596,17 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (SYERR);
 		}
 	}
+	PRE_RFIO;
 	if (rfio_close(fd) != 0) {
 		stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
 	}
+	PRE_RFIO;
 	if (rfio_chown (stcp->ipath, stcp->uid, stcp->gid) < 0) {
 		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown", rfio_serror());
 		/* Here file has been created but we cannot chown... We erase the file */
-        if (rfio_unlink(stcp->ipath) != 0 && (errno != ENOENT && rfio_errno != ENOENT)) {
-			stglogit (func, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+		PRE_RFIO;
+        if (RFIO_UNLINK(stcp->ipath) != 0 && (errno != ENOENT && rfio_errno != ENOENT)) {
+			stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
         }
 		stcp->ipath[0] = '\0';
 		return (SYERR);
@@ -1676,6 +1744,10 @@ killallovl(sig)
 	/* We reply shutdown is ok */
 	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, c);
 
+	/* Reset the permanent RFIO connections */
+	rfio_end();
+	rfio_unend();
+
 	/* Global exit */
 	exit(0);
 }
@@ -1700,6 +1772,7 @@ void checkpoolstatus()
 				rpfd = wqp->rpfd;
 				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 					/* There is a coming shutdown */
+					sendrep (rpfd, MSG_ERR, STG162);
 					sendrep (rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
 					wqp->status = STAGESHUTDOWN;
 					continue;
@@ -1808,6 +1881,7 @@ void checkwaitingspc()
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
 			reqid = wqp->reqid;
+			sendrep (rpfd, MSG_ERR, STG162);
 			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			continue;
@@ -2201,6 +2275,7 @@ void checkwaitq()
 		reqid = wqp->reqid;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
+			sendrep (rpfd, MSG_ERR, STG162);
 			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			wqp1 = wqp;
@@ -2240,7 +2315,7 @@ void checkwaitq()
 				}
 				wqp->save_nbsubreqid = wqp->nbdskf;
 			}
-			fork_exec_stager (wqp);
+			fork_exec_stager (wqp); /* If this fails it will be retried at next loop */
 			wqp = wqp->next;
 		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
 							 (! *(wqp->waiting_pool) ||	/* has been freed or */
@@ -2299,7 +2374,7 @@ void checkwaitq()
 					if (delfile (stcp, 1, 0, 1, (wqp->status == REQKILD) ?
 											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0, 0) < 0)
 						stglogit (func, STG02, stcp->ipath,
-											"rfio_unlink", rfio_serror());
+											RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 					check_waiting_on_req (wfp->subreqid,
 							(wqp->status == REQKILD) ? KILLED : STG_FAILED);
 					break;
@@ -2415,6 +2490,7 @@ int create_dir(dirname, uid, gid, mask)
 		 mode_t mask;
 #endif
 {
+	PRE_RFIO;
 	if (rfio_mkdir (dirname, mask) < 0) {
 		if (errno == EEXIST || rfio_errno == EEXIST) {
 			return (0);
@@ -2424,6 +2500,7 @@ int create_dir(dirname, uid, gid, mask)
 			return (SYERR);
 		}
 	}
+	PRE_RFIO;
 	if (rfio_chown (dirname, uid, gid) < 0) {
 		sendrep (rpfd, MSG_ERR, STG02, dirname, "rfio_chown",
 						 rfio_serror());
@@ -2456,6 +2533,7 @@ void create_link(stcp, upath)
 		strcpy (stpp->upath, upath);
 	}
 	stpp->reqid = stcp->reqid;
+	PRE_RFIO;
 	if ((c = rfio_readlink (upath, lpath, sizeof(lpath))) > 0) {
 		lpath[c] = '\0';
 		if (strcmp (lpath, stcp->ipath) == 0) goto create_link_return;
@@ -2553,18 +2631,20 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			/* it's the last entry - we can remove the file and release the space */
 			/* or it's the last entry but another STAGED + STAGEIN */
 			if (! freersv) {
-				if (rfio_stat (stcp->ipath, &st) == 0) {
+				PRE_RFIO;
+				if (RFIO_STAT(stcp->ipath, &st) == 0) {
 					actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
 						actual_size_block = actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = actual_size;
 				}
 			}
-			if (rfio_unlink (stcp->ipath) == 0) {
+			PRE_RFIO;
+			if (RFIO_UNLINK(stcp->ipath) == 0) {
 #if SACCT
 				stageacct (STGFILC, byuid, bygid, "",
 									 reqid, 0, 0, 0, stcp, "");
@@ -2574,7 +2654,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				if (errno != EIO && rfio_errno != EIO)
 					return (-1);
 				else
-					stglogit (func, STG02, stcp->ipath, "rfio_unlink",
+					stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 										rfio_serror());
 			}
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
@@ -2601,6 +2681,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		setegid(bygid);
 		seteuid(byuid);
 		if (stcp->t_or_d == 'm') {
+			PRE_RFIO;
 			if (rfio_unlink (stcp->u1.m.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.m.xfile, by);
 			} else {
@@ -2731,13 +2812,14 @@ void delreqid(thisreqid,nodb_delete_flag)
 int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2];
+	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2], t_or_d;
 	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	char arg_api_flag[2];
-	int c, i;
+	int c, i, sav_ovl_pid;
 	static int pfd[2];
 	int pid;
 	char progfullpath[MAXPATH];
+	char progname[MAXPATH];
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 #ifdef __INSURE__
@@ -2746,10 +2828,32 @@ int fork_exec_stager(wqp)
 	FILE *f;
 #endif
 
+	/* We determine in advance the t_or_d to know which stager to fork_exec */
+	for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+		if (wfp->waiting_on_req > 0) continue;
+		if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
+		for (stcp = stcs; stcp < stce; stcp++)
+			if (stcp->reqid == wfp->subreqid) break;
+		t_or_d = stcp->t_or_d;
+		break;
+	}
+	/* We verify if this is a correct t_or_d */
+	switch (t_or_d) {
+	case 't':
+	case 'd':
+	case 'm':
+	case 'h':
+		break;
+	default:
+		sendrep (wqp->rpfd, MSG_ERR, "STG02 - Unknown request type '%c'\n", t_or_d);
+		return (SYERR);
+	}
+
 	if (pipe (pfd) < 0) {
 		sendrep (wqp->rpfd, MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
 		return (SYERR);
 	}
+
 #ifdef __INSURE__
 	if (tmpnam(tmpfile) == NULL) {
 		return (SYERR);
@@ -2767,6 +2871,7 @@ int fork_exec_stager(wqp)
 	fclose(f);
 #endif
 
+	sav_ovl_pid = wqp->ovl_pid;
 	wqp->ovl_pid = fork ();
 	pid = wqp->ovl_pid;
 	if (pid < 0) {
@@ -2774,6 +2879,7 @@ int fork_exec_stager(wqp)
 #ifdef __INSURE__
 		remove(tmpfile);
 #endif
+		wqp->ovl_pid = sav_ovl_pid;
 		return (SYERR);
 	} else if (pid == 0) {	/* we are in the child */
 #ifdef __INSURE__
@@ -2784,7 +2890,21 @@ int fork_exec_stager(wqp)
 			if (c != pfd[0] && c != wqp->rpfd) close (c);
 #endif
 		dup2 (pfd[0], 0);
-		sprintf (progfullpath, "%s/stager", BIN);
+		switch (t_or_d) {
+		case 't': /* Tape */
+			sprintf (progfullpath, "%s/stager_tape", BIN);
+			sprintf (progname, "%s", "stager_tape");
+			break;
+		case 'd': /* Disk */
+		case 'm': /* Non-CASTOR HSM */
+			sprintf (progfullpath, "%s/stager_disk", BIN);
+			sprintf (progname, "%s", "stager_disk");
+			break;
+		case 'h': /* CASTOR HSM */
+			sprintf (progfullpath, "%s/stager_castor", BIN);
+			sprintf (progname, "%s", "stager_castor");
+			break;
+		}
 		sprintf (arg_reqid, "%d", wqp->reqid);
 		sprintf (arg_key, "%d", wqp->key);
 		sprintf (arg_rpfd, "%d", wqp->rpfd);
@@ -2801,7 +2921,8 @@ int fork_exec_stager(wqp)
 		sprintf (arg_api_flag, "%d", wqp->api_out);
 
 #ifdef __INSURE__
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, tmpfile=%s, pid=%d\n",
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, tmpfile=%s, pid=%d\n",
+							progname,
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
@@ -2814,7 +2935,7 @@ int fork_exec_stager(wqp)
 							arg_api_flag,
 							tmpfile,
 							(int) getpid());
-		execl (progfullpath, "stager",
+		execl (progfullpath, progname,
 							arg_reqid,
 							arg_key, arg_rpfd,
 							arg_nbsubreqs,
@@ -2827,7 +2948,8 @@ int fork_exec_stager(wqp)
 							tmpfile,
 							NULL);
 #else
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, pid=%d\n",
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, pid=%d\n",
+							progname,
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
@@ -2839,7 +2961,7 @@ int fork_exec_stager(wqp)
 							arg_use_subreqid,
 							arg_api_flag,
 							(int) getpid());
-		execl (progfullpath, "stager",
+		execl (progfullpath, progname,
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
@@ -2885,7 +3007,9 @@ int fork_exec_stager(wqp)
 				stcp->uid = wqp->rtcp_uid;
 				stcp->gid = wqp->rtcp_gid;
 			}
+#ifndef __INSURE__
 			write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
+#endif
 			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
 				strcpy(stcp->user,save_user);
 				strcpy(stcp->group,save_group);
@@ -3002,12 +3126,18 @@ int req2argv(rbp, argvp)
 void rmfromwq(wqp)
 		 struct waitq *wqp;
 {
+	char *func = "rmfromwq";
+
 	if (wqp->prev) (wqp->prev)->next = wqp->next;
 	else waitqp = wqp->next;
 	if (wqp->next) (wqp->next)->prev = wqp->prev;
 	free (wqp->wf);
 	if (wqp->save_subreqid != NULL) free (wqp->save_subreqid);
 	free (wqp);
+	if (--nwaitq < 0) {
+		stglogit (func, "### nwaitq < 0 - reset to zero\n");
+		nwaitq = 0;
+	}
 }
 
 int savepath()
@@ -3183,13 +3313,14 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		u_signed64 actual_size_block;
 
-		if (rfio_stat (stcp->ipath, &st) == 0) {
+		PRE_RFIO;
+		if (RFIO_STAT(stcp->ipath, &st) == 0) {
 			stcp->actual_size = st.st_size;
 			if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 				actual_size_block = stcp->actual_size;
 			}
 		} else {
-			stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+			stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 			/* No block information - assume mismatch with actual_size will be acceptable */
 			actual_size_block = stcp->actual_size;
 		}
@@ -3207,7 +3338,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 							"upd_stageout update on zero-length to-be-migrated file ok",
 							stcp->uid, stcp->gid, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-									 "rfio_unlink", rfio_serror());
+									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				return(CLEARED);
 			} else {
@@ -3295,13 +3426,14 @@ int upd_staged(upath)
 		create_link (stcp, upath);
 
 	savereqs();
-	if (rfio_stat (stcp->ipath, &st) == 0) {
+	PRE_RFIO;
+	if (RFIO_STAT(stcp->ipath, &st) == 0) {
 		stcp->actual_size = st.st_size;
 		if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 			actual_size_block = stcp->actual_size;
 		}
 	} else {
-		stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+		stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 		/* No block information - assume mismatch with actual_size will be acceptable */
 		actual_size_block = stcp->actual_size;
     }
@@ -3464,5 +3596,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Monday 05 November, 2001 at 16:34:37 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 21 November, 2001 at 11:16:01 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
