@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 ## Cleanup of job output files
 #
@@ -17,3 +18,5 @@ if [ "${RUN_CLEANUP}" = "yes" ]; then
     ls -kts /var/spool/job | egrep '\.output$' | awk -vCLEANUP_MAX_SIZE_KB=${CLEANUP_MAX_SIZE_KB} '{t += $1} t > CLEANUP_MAX_SIZE_KB {system "rm -f " $2}'
   fi
 fi
+
+exit 0
