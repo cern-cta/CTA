@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.34 2002/02/15 18:02:31 jdurand Exp $
+ * $Id: stage_api.c,v 1.35 2002/02/20 15:42:12 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -151,6 +151,8 @@ int DLL_DECL rc_castor2shift(rc)
     return(USERR);
   case SESYSERR:
     return(SYERR);
+  case ESTNACT:
+    return(SHIFT_ESTNACT);
   case ESTKILLED:
     return(REQKILD);
   case ESTCLEARED:
@@ -211,7 +213,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
   int Tid = 0;
   u_signed64 uniqueid = 0;
-
+  int maxretry = MAXRETRY;
+  
   /* It is not allowed to have no input */
   if (nstcp_input <= 0) {
     serrno = EINVAL;
@@ -276,6 +279,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     return(-1);
   }
 
+  if ((flags & STAGE_NORETRY) == STAGE_NORETRY) maxretry = 0;
+  
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
       stage_errmsg(func, STG36, egid);
@@ -611,7 +616,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       break;
     }
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
-    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > maxretry) break;
+	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
   free(sendbuf);
