@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddressCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddressCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/25 16:53:09 $ $Author: sponcec3 $
  *
  * 
  *
@@ -63,16 +63,30 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cdb_DbAddress_getIAddress
+  // Cdb_DbAddress_getBaseAddress
   //----------------------------------------------------------------------------
   castor::BaseAddress* Cdb_DbAddress_getBaseAddress(castor::db::DbAddress* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cdb_DbAddress_fromIAddress
+  // Cdb_DbAddress_fromBaseAddress
   //----------------------------------------------------------------------------
   castor::db::DbAddress* Cdb_DbAddress_fromBaseAddress(castor::BaseAddress* obj) {
+    return dynamic_cast<castor::db::DbAddress*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cdb_DbAddress_getIAddress
+  //----------------------------------------------------------------------------
+  castor::IAddress* Cdb_DbAddress_getIAddress(castor::db::DbAddress* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cdb_DbAddress_fromIAddress
+  //----------------------------------------------------------------------------
+  castor::db::DbAddress* Cdb_DbAddress_fromIAddress(castor::IAddress* obj) {
     return dynamic_cast<castor::db::DbAddress*>(obj);
   }
 
