@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.3 $ $Date: 2003/11/03 09:30:49 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.4 $ $Date: 2003/11/06 07:33:18 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -84,5 +84,11 @@ EXTERN_C int DLL_DECL dlf_modifyfacility _PROTO((const char*, int));
 EXTERN_C int DLL_DECL dlf_modifytext _PROTO((const char*, int, const char*));
 EXTERN_C int DLL_DECL dlf_deletefacility _PROTO((const char*));
 EXTERN_C int DLL_DECL dlf_deletetext _PROTO((const char*, int));
+
+EXTERN_C int DLL_DECL dlf_errmsg _PROTO((const char *, ...));
+
+#if defined(_WIN32)
+EXTERN_C int DLL_DECL getopt _PROTO((int, const char **, const char *));
+#endif
 
 #endif /* _DLFAPI_H_ */
