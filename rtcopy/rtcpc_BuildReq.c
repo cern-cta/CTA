@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.35 $ $Date: 2000/12/12 12:57:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.36 $ $Date: 2001/01/28 10:32:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -66,7 +66,7 @@ static int rtcpc_diskfiles(int , const char *, tape_list_t **);
 #define BIND_OPT(X,Y,Z) {strcat(opts,#Z); optlist[X-'A'] = (int (*)(int , const char *, tape_list_t **))rtcpc_##Y##_opt;};
 #define OPT_MAX  'z'-'A'+1
 
-int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
+int DLL_DECL rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     static int (*optlist[OPT_MAX])(int, const char *, tape_list_t **);
     static int recursion_level = 0;
     char opts[OPT_MAX] = "";
@@ -169,6 +169,38 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     return(rc);
 }
 
+void rtcpc_InitReqStruct(rtcpTapeRequest_t *tapereq,
+                         rtcpFileRequest_t *filereq) {
+    if ( tapereq != NULL ) {
+        memset(tapereq,'\0',sizeof(rtcpTapeRequest_t));
+        tapereq->err.max_tpretry = -1;
+        tapereq->err.max_cpretry = -1;
+        tapereq->err.severity = RTCP_OK;
+    }
+    if ( filereq != NULL ) {
+        memset(filereq,'\0',sizeof(rtcpFileRequest_t));
+        filereq->VolReqID = -1;
+        filereq->jobID = -1;
+        filereq->stageSubreqID = -1;
+        filereq->position_method = -1;
+        filereq->tape_fseq = -1;
+        filereq->disk_fseq = -1;
+        filereq->blocksize = -1;
+        filereq->recordlength = -1;
+        filereq->retention = -1;
+        filereq->def_alloc = -1;
+        filereq->rtcp_err_action = -1;
+        filereq->tp_err_action = -1;
+        filereq->convert = -1;
+        filereq->check_fid = -1;
+        filereq->concat = -1;
+        filereq->err.max_tpretry = -1;
+        filereq->err.max_cpretry = -1;
+        filereq->err.severity = RTCP_OK;
+    }
+    return;
+}
+
 static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
                        int mode) {
     tape_list_t *tl;
@@ -179,9 +211,7 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     tl = (tape_list_t *)calloc(1,sizeof(tape_list_t));
     if ( tl == NULL ) return(-1);
     tl->tapereq.mode = mode;
-    tl->tapereq.err.max_tpretry = -1;
-    tl->tapereq.err.max_cpretry = -1;
-    tl->tapereq.err.severity = RTCP_OK;
+    rtcpc_InitReqStruct(&tl->tapereq,NULL);
     if ( *tape != NULL ) {
         CLIST_INSERT((*tape)->prev,tl);
     } else {
@@ -191,7 +221,8 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     return(0);
 }
 
-int rtcp_NewTapeList(tape_list_t **tape, tape_list_t **newtape,int mode) {
+int DLL_DECL rtcp_NewTapeList(tape_list_t **tape, tape_list_t **newtape,
+                              int mode) {
     return(newTapeList(tape,newtape,mode));
 }
 
@@ -212,24 +243,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     fl = (file_list_t *)calloc(1,sizeof(file_list_t));
     if ( fl == NULL ) return(-1);
     filereq = &fl->filereq;
-    filereq->VolReqID = -1;
-    filereq->jobID = -1;
-    filereq->stageSubreqID = -1;
-    filereq->position_method = -1;
-    filereq->tape_fseq = -1;
-    filereq->disk_fseq = -1;
-    filereq->blocksize = -1;
-    filereq->recordlength = -1;
-    filereq->retention = -1;
-    filereq->def_alloc = -1;
-    filereq->rtcp_err_action = -1;
-    filereq->tp_err_action = -1;
-    filereq->convert = -1;
-    filereq->check_fid = -1;
-    filereq->concat = -1;
-    filereq->err.max_tpretry = -1;
-    filereq->err.max_cpretry = -1;
-    filereq->err.severity = RTCP_OK;
+    rtcpc_InitReqStruct(NULL,filereq);
 
     /*
      * Insert at end of file request list
@@ -241,7 +255,8 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     return(0);
 }
 
-int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,int mode) {
+int DLL_DECL rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
+                              int mode) {
     return(newFileList(tape,newfile,mode));
 }
 
@@ -2153,7 +2168,7 @@ int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
 #define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
 #define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
 #endif
-int dumpTapeReq(tape_list_t *tl) {
+int DLL_DECL dumpTapeReq(tape_list_t *tl) {
     rtcpTapeRequest_t *tapereq;
     char indent[] = " ";
 
@@ -2183,9 +2198,16 @@ int dumpTapeReq(tape_list_t *tl) {
     DUMPINT(indent,tapereq->TEndMount);
     DUMPINT(indent,tapereq->TStartUnmount);
     DUMPINT(indent,tapereq->TEndUnmount);
+
+    DUMPSTR(indent,tapereq->err.errmsgtxt);
+    DUMPHEX(indent,tapereq->err.severity);
+    DUMPINT(indent,tapereq->err.errorcode);
+    DUMPINT(indent,tapereq->err.max_tpretry);
+    DUMPINT(indent,tapereq->err.max_cpretry);
+
     return(0);
 }
-int dumpFileReq(file_list_t *fl) {
+int DLL_DECL dumpFileReq(file_list_t *fl) {
     rtcpFileRequest_t *filereq;
     char indent[] = "    ";
 
@@ -2233,6 +2255,12 @@ int dumpFileReq(file_list_t *fl) {
     DUMPI64(indent,filereq->maxsize);
 
     DUMPI64(indent,filereq->startsize);
+
+    DUMPSTR(indent,filereq->err.errmsgtxt);
+    DUMPHEX(indent,filereq->err.severity);
+    DUMPINT(indent,filereq->err.errorcode);
+    DUMPINT(indent,filereq->err.max_tpretry);
+    DUMPINT(indent,filereq->err.max_cpretry);
 
     return(0);
 }
