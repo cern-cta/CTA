@@ -91,9 +91,9 @@ void castor::io::StreamGetUpdateStartResponseCnv::createRep(castor::IAddress* ad
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->id();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
-  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
@@ -106,15 +106,15 @@ castor::IObject* castor::io::StreamGetUpdateStartResponseCnv::createObj(castor::
   // create the new Object
   castor::rh::GetUpdateStartResponse* object = new castor::rh::GetUpdateStartResponse();
   // Now retrieve and set members
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   unsigned int errorCode;
   ad->stream() >> errorCode;
   object->setErrorCode(errorCode);
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   return object;
 }
 
