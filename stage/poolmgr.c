@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.216 2002/08/29 08:00:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.217 2002/09/18 04:59:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.216 $ $Date: 2002/08/29 08:00:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.217 $ $Date: 2002/09/18 04:59:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1742,7 +1742,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			sendrep (&rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
 			sendrep (&rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
 			sendrep (&rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
-			sendrep (&rpfd, MSG_OUT, "waiting_pool             %d\n", wqp->waiting_pool);
+			sendrep (&rpfd, MSG_OUT, "waiting_pool             %s\n", wqp->waiting_pool);
 			sendrep (&rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
 			sendrep (&rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
 			sendrep (&rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
