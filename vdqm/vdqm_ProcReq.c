@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.13 $ $Date: 2000/05/18 09:13:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.14 $ $Date: 2000/06/15 17:07:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -82,7 +82,7 @@ void *vdqm_ProcReq(void *arg) {
             hold = 0;
             rc = 1;
         }
-        if ( hold ) {
+        if ( hold && reqtype != VDQM_REPLICA ) {
             log(LOG_INFO,"vdqm_ProcReq(): server in HOLD\n");
             vdqm_SetError(EVQHOLD);
             rc = -1;
@@ -109,7 +109,7 @@ void *vdqm_ProcReq(void *arg) {
             case VDQM_REPLICA:
                 rc = vdqm_CheckReplicaHost(client_connection);
                 if ( rc == 0 ) rc = vdqm_LockAllQueues();
-                if ( rc == 0 ) rc = vdqm_DumpQueues(client_connection);
+                if ( rc == 0 && !hold ) rc = vdqm_DumpQueues(client_connection);
                 if ( rc == 0 )
                     rc = vdqm_AddReplica(client_connection,&hdr);
                 save_serrno = serrno;
@@ -124,7 +124,7 @@ void *vdqm_ProcReq(void *arg) {
                     }
                     (void)vdqm_CloseConn(client_connection);
                 }
-                (void)vdqm_UnlockAllQueues();
+                if ( !hold ) (void)vdqm_UnlockAllQueues();
                 (void)vdqm_ReturnPool(client_connection);
                 return((void *)&return_status);
                 break;
@@ -186,7 +186,9 @@ void *vdqm_ProcReq(void *arg) {
         }
         if ( rc == -1 ) {
             log(LOG_ERR,"vdqm_ProcReq(): request processing error\n");
-            (void)vdqm_AcknRollback(client_connection);
+            if ( reqtype == VDQM_PING ) 
+                (void) vdqm_AcknPing(client_connection,rc);
+            else (void)vdqm_AcknRollback(client_connection);
             rc = 0;
         } else {
             rc = vdqm_AcknCommit(client_connection);
