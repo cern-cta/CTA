@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.26 2000/09/27 17:53:57 jdurand Exp $
+ * $Id: procupd.c,v 1.27 2000/09/28 13:48:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.26 $ $Date: 2000/09/27 17:53:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.27 $ $Date: 2000/09/28 13:48:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -301,6 +301,8 @@ procupdreq(req_data, clienthost)
 		wfp_ok->subreqid = stcp_ok->reqid;
 		/* Current stcp become "<X>" */
 		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq));
+		/* and no longer has the filler[0] == 'c' */
+		stcp->filler[0] = '\0';
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
