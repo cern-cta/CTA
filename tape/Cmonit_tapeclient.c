@@ -75,16 +75,16 @@ int DLL_DECL Cmonit_send_tape_status(tape_table, nbtpdrives)
       marshall_LONG (sbp, tunp->uid);
       marshall_LONG (sbp, tunp->gid);
       marshall_LONG (sbp, tunp->jid);
-      marshall_STRING (sbp, tunp->dgn);
-      marshall_WORD (sbp, tunp->up);
+      marshall_STRING (sbp, tunp->dgn != NULL ? tunp->dgn : "");
+      marshall_WORD (sbp, tunp->up != NULL ? tunp->up : "");
       marshall_WORD (sbp, tunp->asn);
       marshall_LONG (sbp, tunp->asn_time);
-      marshall_STRING (sbp, tunp->drive);
+      marshall_STRING (sbp, tunp->drive != NULL ? tunp->drive : "");
       marshall_WORD (sbp, tunp->mode);
 /*        marshall_STRING (sbp, labels[tunp->lblcode]); */
       marshall_WORD (sbp, tunp->tobemounted);
-      marshall_STRING (sbp, tunp->vid);
-      marshall_STRING (sbp, tunp->vsn);
+      marshall_STRING (sbp, tunp->vid != NULL ? tunp->vid : "");
+      marshall_STRING (sbp, tunp->vsn != NULL ? tunp->vsn : "");
       if (tunp->filp) {
 	marshall_LONG (sbp, tunp->filp->cfseq);
       } else {
