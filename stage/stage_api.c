@@ -1,22 +1,10 @@
 /*
- * $Id: stage_api.c,v 1.27 2001/10/14 09:08:41 jdurand Exp $
+ * $Id: stage_api.c,v 1.28 2001/11/30 12:05:50 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
 #include <stddef.h>            /* For NULL definition */
 #include <string.h>
-#include "osdep.h"             /* For OS dependencies */
-#include "serrno.h"            /* For CASTOR's errno */
-#include "Castor_limits.h"     /* Get all hardcoded CASTOR constants */
-#include "stage.h"             /* To get the API req_type constants - bijection with stgdaemon */
-#include "marshall.h"          /* For marshalling macros */
-#include "stage_api.h"         /* For definitions */
-#include "Cpwd.h"              /* For CASTOR password functions */
-#include "Cgrp.h"              /* For CASTOR group functions */
-#include "rfio_api.h"          /* RFIO API */
-#include "u64subr.h"           /* u_signed 64 conversion routines */
-#include "Cglobals.h"          /* To get CthreadId */
-
 #include <errno.h>             /* For EINVAL */
 #if defined(_WIN32)
 #define W_OK 2
@@ -28,6 +16,19 @@
 #else
 #include <netinet/in.h>
 #endif
+
+#include "osdep.h"             /* For OS dependencies */
+#include "serrno.h"            /* For CASTOR's errno */
+#include "Castor_limits.h"     /* Get all hardcoded CASTOR constants */
+#include "marshall.h"          /* For marshalling macros */
+#include "Cpwd.h"              /* For CASTOR password functions */
+#include "Cgrp.h"              /* For CASTOR group functions */
+#include "rfio_api.h"          /* RFIO API */
+#include "u64subr.h"           /* u_signed 64 conversion routines */
+#include "Cglobals.h"          /* To get CthreadId */
+#include "stage_api.h"
+#include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
+#include "Ctape_constants.h"   /* For IGNOREEOI */
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
@@ -353,7 +354,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   sendbuf_size += LONGSIZE;                /* Mask */
   sendbuf_size += LONGSIZE;                /* Pid */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
-  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to "stage" in stgdaemon) */
+  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERGENERICUSER in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
   sendbuf_size += LONGSIZE;                /* openflags */
   sendbuf_size += LONGSIZE;                /* openmode */
@@ -542,7 +543,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   marshall_LONG (sbp, mask);                 /* umask */
   marshall_LONG (sbp, pid);                  /* pid */
   marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
-  marshall_STRING (sbp, User);               /* User internal path (default to "stage" in stgdaemon) */
+  marshall_STRING (sbp, User);               /* User internal path (default to STAGERGENERICUSER in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
   marshall_LONG (sbp, openflags);            /* openflags */
   marshall_LONG (sbp, openmode);             /* openmode */
@@ -580,6 +581,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* Dial with the daemon */
   while (1) {
+    int sav_serrno;
+
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) ||
@@ -589,6 +592,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       serrno = USERR;
       break;
     }
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -725,6 +729,7 @@ int stage_api_chkdirw(path)
   } else {
     sav = *p;
     *p = '\0';
+	PRE_RFIO;
     rc = rfio_access (path, W_OK);
     *p = sav;
     if (rc < 0)
@@ -950,6 +955,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
+  char *func = "stage_qry";
 
   /* It is not allowed to have anything else but one single entry in input */
   if (nstcp_input != 1) {
@@ -1103,6 +1109,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
     if ((c == 0) || (serrno == EINVAL)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -1396,7 +1403,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   sendbuf_size += LONGSIZE;                /* Mask */
   sendbuf_size += LONGSIZE;                /* Pid */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
-  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to "stage" in stgdaemon) */
+  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERGENERICUSER in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
   if (rcstatus >= 0) {
     sprintf (tmpbuf, "%d", rcstatus);
@@ -1476,7 +1483,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   marshall_LONG (sbp, mask);                 /* umask */
   marshall_LONG (sbp, pid);                  /* pid */
   marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
-  marshall_STRING (sbp, User);               /* User internal path (default to "stage" in stgdaemon) */
+  marshall_STRING (sbp, User);               /* User internal path (default to STAGERGENERICUSER in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
   if (rcstatus >= 0) {
     sprintf (tmpbuf, "%d", rcstatus);
@@ -1508,6 +1515,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -1851,6 +1859,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
