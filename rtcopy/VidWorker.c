@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:42 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:42 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -50,10 +50,10 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <vmgr_api.h>
+#include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <rtcp_api.h>
-#include <rtcpcldCatalog.h>
 #include <rtcpcld_constants.h>
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
@@ -121,7 +121,7 @@ static int processGetMoreWorkCallback(
    * We are called in a loop file-by-file. Since ach Catalogue lookup
    * may return more than one file we must maintain an internal
    * list of unprocessed files. The first thing to do is to
-   * check if that list.
+   * check if there are unprocessed files in that list.
    */
   if ( vidChildTape == NULL ) {
     rc = rtcp_NewTapeList(
@@ -219,7 +219,7 @@ static int processGetMoreWorkCallback(
         filereq->proc_status = RTCP_WAITING;
         rc = rtcpcld_setFileStatus(
                                    &fl->filereq,
-                                   TPFILEINFO_COPYRUNNING
+                                   SEGMENT_COPYRUNNING
                                    );
         if ( rc == -1 ) {
           (void)dlf_write(
@@ -289,7 +289,7 @@ static int processGetMoreWorkCallback(
     nbInProgress++;
     rc = rtcpcld_setFileStatus(
                                &fl->filereq,
-                               TPFILEINFO_COPYRUNNING
+                               SEGMENT_COPYRUNNING
                                );
     rc = 0;
   }
@@ -415,8 +415,8 @@ int rtcpcld_Callback(
      * to do.
      */
     if ( getMoreWork == 0 && filereq->proc_status == RTCP_FINISHED ) {
-      if ( filereq->cprc == 0 ) status = TPFILEINFO_FILECOPIED;
-      else status = TPFILEINFO_FAILED;
+      if ( filereq->cprc == 0 ) status = SEGMENT_FILECOPIED;
+      else status = SEGMENT_FAILED;
       rc = rtcpcld_setFileStatus(
                                  filereq,
                                  status
@@ -1088,6 +1088,7 @@ int main(
   char *vidChildFacility = RTCPCLIENTD_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   int i, vdqmVolReqID = -1, c, rc, mode = WRITE_DISABLE, modeSet = 0, side = 0;
   int save_serrno, retval, tStartRequest = 0;
+  ID_TYPE key = 0;
   /*
    * If we are started by the rtcpclientd, the main accept socket has been
    * duplicated to file descriptor 0
@@ -1126,7 +1127,7 @@ int main(
                   cmdline
                   );
 
-  while ( (c = Cgetopt(argc, argv, "V:g:i:l:d:s:S:U:u:T:rw")) != -1 ) {
+  while ( (c = Cgetopt(argc, argv, "V:g:i:k:l:d:s:S:U:u:T:rw")) != -1 ) {
     switch (c) {
     case 'V':
       /*
@@ -1150,6 +1151,9 @@ int main(
        */
       vdqmVolReqID = atoi(Coptarg);
       break;
+    case 'k':
+      key = atol(Coptarg);
+      rtcpcld_setTapeKey(key);
     case 'l':
       /*
        * Tape label type. If not provided, it will be taken from VMGR
