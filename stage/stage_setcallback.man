@@ -1,0 +1,96 @@
+.\" $Id: stage_setcallback.man,v 1.1 2002/10/04 13:07:38 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_setcallback.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 13:07:38 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_SETCALLBACK "3" "$Date: 2002/10/04 13:07:38 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_setcallback \- Implements a user routine for callback
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_setcallback (void (*function)(struct stgcat_entry *" stcp ", struct stgpath_entry *" stpp "));"
+
+.SH DESCRIPTION
+The \fBstage_setcallback\fP API method allows the user application to be notified each time there is a successful processing of part of the user's requests. For example, in case of a recall of 
+.I n
+files, the 
+.I function
+will be called at least
+.I n
+times.
+
+.SH PARAMETERS
+.TP 1.5i
+.I function
+Pointer to a function returning void, with two parameters that are a pointer to an
+.I stgcat_entry
+structure
+.IR ( stcp )
+and a pointer to an
+.I stgpath_entry
+structure
+.IR ( stpp )
+, respectively.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+\s-2
+#include <stdio.h>
+#include <stdlib.h>
+#include "stage_api.h"
+#include "serrno.h"
+
+void record_callback _PROTO((struct stgcat_entry *, struct stgpath_entry *));
+
+int main(argc,argv)
+	int argc;
+	char **argv;
+{
+  if (stage_setcallback(&record_callback) != 0) {
+	  fprintf(stderr,"stage_setcallback error: %s\\n", sstrerror(serrno));
+	  /* Utility function that converts stage serrno to a program exit code */
+	  exit(rc_castor2shift(serrno));
+  }
+
+  exit(0);
+}
+
+void record_callback(stcp,stpp)
+	struct stgcat_entry *stcp;
+	struct stgpath_entry *stpp;
+{
+	/* Let's print a dump of the structures */
+	if (stcp != NULL) print_stcp(stcp);
+	if (stpp != NULL) print_stpp(stpp);
+}
+\s+2
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+
+.SH NOTES
+When the callback is called, it is guaranteed that only one of the parameters
+.I stcp
+or
+.I stpp
+is not NULL.
+
+.SH SEE ALSO
+\fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3), \fBrc_castor2shift\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

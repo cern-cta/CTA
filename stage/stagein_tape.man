@@ -1,0 +1,532 @@
+.\" $Id: stagein_tape.man,v 1.1 2002/10/04 13:04:31 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stagein_tape.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 13:04:31 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGEIN_TAPE "3" "$Date: 2002/10/04 13:04:31 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stagein_tape \- Asks for one or more tape files to be staged on disk
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stagein_tape(u_signed64 " flags ,
+.BI "int " openflag ,
+.BI "char *" hostname ,
+.BI "char *" pooluser ,
+.BI "int " nstcp_input ,
+.BI "struct stgcat_entry *" stcp_input ,
+.BI "int *" nstcp_output ,
+.BI "struct stgcat_entry **" stcp_output ,
+.BI "int " nstpp_input ,
+.BI "struct stgpath_entry *" stpp_input ");"
+
+.SH DESCRIPTION
+The \fBstagein_tape\fP API method asks the stager catalog for one or more tape files to be staged on disk.
+There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP, see in the example below) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_REQID
+The member reqid of all 
+.I stcp_input
+structures given in input must match a known record having exactly this request id. Otherwise, even if it is set in the input structures, the reqid member will be ignored when processing the request.
+.TP
+.I STAGE_DEFERRED
+If data is to be read from tape, allocation will be differed, e.g. done only when the tape will be positionned.
+.TP
+.I STAGE_COFF
+Ask individual files to be staged separately on disk. Requires that there is a single
+.I stcp_input
+entry in input, and that the file sequence range ends with a '-' character.
+.TP
+.I STAGE_INFO
+Gives as an MSG_ERR (standard error by default, unless you use 
+.B stage_setlog
+function), as an option string, the main characteristics of the tape file just staged. This includes block size (-b), record format (\-F), file identifier (\-f), record length (\-L), full pathname of diskfile in the pool (\-P) and file sequence number (\-q). The line is prefixed by the string "STG47  \-  ".
+.TP
+.I STAGE_SILENT
+Print nothing (the log callback will never be notified either).
+.TP
+.I STAGE_NORETRY
+If data is to be read from tape, and there is a medium error, internal retries by the I/O process doing the read will be skipped. It does not prevent stager daemon to decide to do a retry, nevertheless. This flag also prevents client to keep retrying in any case. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_NOWAIT
+If data is to be read from tape, this will be done in the background, and client will get an immediate return with ok status.
+.RE
+.TP
+.I openflags
+Not meaningful here. Should be zero.
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I pooluser
+A file allocated in a pool will be stored in a subdirectory
+.I pooluser. This may also be specified thru the environment variable $STAGE_USER. The default subdirectory name is "stage". 
+.I pooluser
+must be a valid user name and belong to the same group as the requestor.
+.TP
+.I nstcp_input
+Number of stcp_input entries.
+.TP
+.I stcp_input
+Entries describing the files you want to be staged. The members of the 
+.I u1.t
+union of the
+.I stcp_input
+structures are important: they describe the data from tape you want to read. In particular:
+.RS
+.TP
+.I u1.t.vid[0]
+Volume Id. Other indexes are used only if you do Volume Spanning.
+.TP
+.I u1.t.fseq
+File sequence range.
+.TP
+.I u1.t.E_Tflags
+Action in case of error. This can be a logical or of the following constants:
+.RS
+.TP
+.I SKIPBAD
+asking to skip bad blocks
+.TP
+.I KEEPFILE
+to keep file in case of errors
+.TP
+.I IGNOREEOI
+to not take 2 consecutive TMs as EOI.
+.RE
+.TP
+Other fields you can use are:
+.TP
+.I recfm
+Record format. Usually it is 'F'.
+.TP
+.I size
+Limit disk file size to
+.I size
+bytes.
+.TP
+.I charconv
+Character conversion. A logical or of 
+.IR EBCCONV ,
+.IR FIXVAR ,
+and
+.I ASCCONV.
+.TP
+.I lrecl
+Record length, in bytes.
+.TP
+.I nread
+Number of blocks/records to be copied
+.TP
+.I poolname
+Explicit disk poolname
+.RE
+.TP
+.I nstcp_output
+Filled with the number of staged entries at return.
+.TP
+.I stcp_output
+Filled with the address of an array containg the staged entries at return. Up to the user to free it if necessary.
+.TP
+.I nstpp_input
+Filled with the number of stpp_input entries. If this number is positive it must match the number of stcp_input entries. Otherwise it should be zero.
+.TP
+.I stpp_input
+Array giving the list of link files that will be created each time one of the files described in stcp_input entries is staged on disk. Must be NULL or pointing to 
+.I nstpp_input
+entries.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+\s-2
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include "stage_api.h"
+#include "serrno.h"
+#include "osdep.h"
+struct stgcat_entry *stcp_output;
+int nstcp_output;
+
+#define VID "EK1196"
+
+void log_callback _PROTO((int, char *));
+void cleanup _PROTO((int));
+
+int main(argc,argv)
+	int argc;
+	char **argv;
+{
+	int rc;
+	int i;
+	struct stgcat_entry stcp[3];
+	/*
+	struct stgcat_entry *stcp_output = NULL;
+	int nstcp_output = 0;
+	*/	
+#if ! defined(_WIN32)
+	signal (SIGHUP, cleanup);
+#endif
+	signal (SIGINT, cleanup);
+#if ! defined(_WIN32)
+	signal (SIGQUIT, cleanup);
+#endif
+	signal (SIGTERM, cleanup);
+
+	memset(&(stcp[0]), 0, sizeof(struct stgcat_entry));
+	memset(&(stcp[1]), 0, sizeof(struct stgcat_entry));
+	memset(&(stcp[2]), 0, sizeof(struct stgcat_entry));
+
+	strcpy(stcp[0].u1.t.vid[0],VID);
+	strcpy(stcp[1].u1.t.vid[0],VID);
+	strcpy(stcp[2].u1.t.vid[0],VID);
+
+	strcpy(stcp[0].u1.t.fseq,"1");
+	strcpy(stcp[1].u1.t.fseq,"3");
+	strcpy(stcp[2].u1.t.fseq,"6");
+
+	strcpy(stcp[0].recfm,"F");
+	strcpy(stcp[1].recfm,"F");
+	strcpy(stcp[2].recfm,"F");
+
+	stcp[0].size = 1002191195;
+	stcp[1].size = 1002191200;
+	stcp[2].size = 189088000;
+	
+
+	stage_setlog((void (*) _PROTO((int, char *))) &log_callback);
+
+	if ((rc = stagein_tape((u_signed64) 0, /* flags */
+						   0, /* openflags */
+						   NULL, /* hostname */
+						   NULL, /* pooluser */
+						   3,  /* nstcp_input */
+						   &(stcp[0]), /* stcp_input */
+						   &nstcp_output, /* nstcp_output */
+						   &stcp_output, /* stcp_output */
+						   0, /* nstpp_input */
+						   NULL /* stpp_input */
+		)) != 0) {
+		fprintf(stderr,"stagein_tape: %s\\n", sstrerror(serrno));
+	} else {
+		for (i = 0; i < nstcp_output; i++) {
+			print_stcp(stcp_output+i);
+		}
+	}
+  
+	exit(rc != 0 ? rc_castor2shift(serrno) : 0);
+
+}
+
+void log_callback(level,message)
+	int level;
+	char *message;
+{
+	fprintf(stderr,"%s",message);
+	return;
+}
+
+void cleanup(sig)
+	int sig;
+{
+	stage_kill(sig);
+	exit(USERR);
+}
+\s+2
+.ft
+.LP
+.fi
+Producing the output:
+.ft CW
+.nf
+.sp
+\s-2
+selecting tape server ...
+* shd63 is a possible tape server.
+! selected tape server is shd63.
+
+
+ CPTPDSK - TAPE MOUNTED ON UNIT 98400391
+ CPTPDSK - RECORD FORMAT: F
+ CPTPDSK - BLOCK SIZE: 32760
+ CPTPDSK - RECORD LENGTH: 32760
+ CPTPDSK - MAX. SIZE OF FILE: 955 MB
+ CPTPDSK - END OF FILE
+ CPTPDSK - KBYTES RECEIVED BY HOST  : 871612
+ CPTPDSK - KBYTES READ BY TAPE DRIVE: 876455
+ CPTPDSK - COMPRESSION RATE ON TAPE : 0.994474
+
+
+ CPTPDSK - 892596943 BYTES COPIED
+ CPTPDSK - 27247 RECORDS COPIED
+ CPTPDSK - DATA TRANSFER BANDWIDTH (871676 Kbytes through eth0): 4897 KB/sec
+
+STG41 - stagein succeeded for file 1 on R08506, return code 0
+
+ CPTPDSK - TAPE MOUNTED ON UNIT 98400391
+ CPTPDSK - RECORD FORMAT: F
+ CPTPDSK - BLOCK SIZE: 32760
+ CPTPDSK - RECORD LENGTH: 32760
+ CPTPDSK - MAX. SIZE OF FILE: 955 MB
+ CPTPDSK - END OF FILE
+ CPTPDSK - KBYTES RECEIVED BY HOST  : 125999
+ CPTPDSK - KBYTES READ BY TAPE DRIVE: 126571
+ CPTPDSK - COMPRESSION RATE ON TAPE : 0.995481
+
+
+ CPTPDSK - 129089271 BYTES COPIED
+ CPTPDSK - 3941 RECORDS COPIED
+ CPTPDSK - DATA TRANSFER BANDWIDTH (126063 Kbytes through eth0): 8404 KB/sec
+
+STG41 - stagein succeeded for file 3 on R08506, return code 0
+
+ CPTPDSK - TAPE MOUNTED ON UNIT 98400391
+ CPTPDSK - RECORD FORMAT: F
+ CPTPDSK - BLOCK SIZE: 32760
+ CPTPDSK - RECORD LENGTH: 32760
+ CPTPDSK - MAX. SIZE OF FILE: 180 MB
+ CPTPDSK - END OF FILE
+ CPTPDSK - KBYTES RECEIVED BY HOST  : 3497
+ CPTPDSK - KBYTES READ BY TAPE DRIVE: 3318
+ CPTPDSK - COMPRESSION RATE ON TAPE : 1.053948
+
+
+ CPTPDSK - 3646383 BYTES COPIED
+ CPTPDSK - 112 RECORDS COPIED
+ CPTPDSK - DATA TRANSFER BANDWIDTH (3560 Kbytes through eth0): 3560 KB/sec
+
+STG41 - stagein succeeded for file 6 on R08506, return code 0
+
+-------------------------------------
+Catalog entry - dump of reqid 217
+-------------------------------------
+reqid                   :                  217
+blksize                 :                32760
+filler                  :                     
+charconv                :                    0 (hex) == <?>
+keep                    :                     
+lrecl                   :                32760
+nread                   :                    0
+poolname                :            castordev
+recfm                   :                    F
+size                    :           1002191195 (bytes)
+ipath                   : castordev:/tmp/stage_castordev/c3/stage/R08506.1.al
+t_or_d                  :                    t
+group                   :                   c3
+user                    :              jdurand
+uid                     :                27343
+gid                     :                 1028
+mask                    :                    2 (oct)
+status                  :                   31 (hex) == STAGEIN|STAGED
+actual_size             :            892596943
+c_time                  :           1033733488 (Oct  4 14:11:28)
+a_time                  :           1033733698 (Oct  4 14:14:58)
+nbaccesses              :                    1
+u1.t.den                :                 20GC
+u1.t.dgn                :                9840R
+u1.t.fid                :    RD/18/GALICE.ROOT
+u1.t.filstat            :                     
+u1.t.fseq               :                    1
+u1.t.lbl                :                   al
+u1.t.retentd            :                    0
+u1.t.side               :                    0
+u1.t.tapesrvr           :                     
+u1.t.E_Tflags           :                    0 (hex) == <?>
+u1.t.vid[0]             :               R08506
+u1.t.vsn[0]             :               R08506
+u1.t.vid[1]             :                     
+u1.t.vsn[1]             :                     
+u1.t.vid[2]             :                     
+u1.t.vsn[2]             :                     
+-------------------------------------
+Catalog entry - dump of reqid 218
+-------------------------------------
+reqid                   :                  218
+blksize                 :                32760
+filler                  :                     
+charconv                :                    0 (hex) == <?>
+keep                    :                     
+lrecl                   :                32760
+nread                   :                    0
+poolname                :            castordev
+recfm                   :                    F
+size                    :           1002191200 (bytes)
+ipath                   : castordev:/tmp/stage_castordev/c3/stage/R08506.3.al
+t_or_d                  :                    t
+group                   :                   c3
+user                    :              jdurand
+uid                     :                27343
+gid                     :                 1028
+mask                    :                    2 (oct)
+status                  :                   31 (hex) == STAGEIN|STAGED
+actual_size             :            129089271
+c_time                  :           1033733488 (Oct  4 14:11:28)
+a_time                  :           1033733713 (Oct  4 14:15:13)
+nbaccesses              :                    1
+u1.t.den                :                 20GC
+u1.t.dgn                :                9840R
+u1.t.fid                :    ITPCCLUSTERS.ROOT
+u1.t.filstat            :                     
+u1.t.fseq               :                    3
+u1.t.lbl                :                   al
+u1.t.retentd            :                    0
+u1.t.side               :                    0
+u1.t.tapesrvr           :                     
+u1.t.E_Tflags           :                    0 (hex) == <?>
+u1.t.vid[0]             :               R08506
+u1.t.vsn[0]             :               R08506
+u1.t.vid[1]             :                     
+u1.t.vsn[1]             :                     
+u1.t.vid[2]             :                     
+u1.t.vsn[2]             :                     
+-------------------------------------
+Catalog entry - dump of reqid 219
+-------------------------------------
+reqid                   :                  219
+blksize                 :                32760
+filler                  :                     
+charconv                :                    0 (hex) == <?>
+keep                    :                     
+lrecl                   :                32760
+nread                   :                    0
+poolname                :            castordev
+recfm                   :                    F
+size                    :            189088000 (bytes)
+ipath                   : castordev:/tmp/stage_castordev/c3/stage/R08506.6.al
+t_or_d                  :                    t
+group                   :                   c3
+user                    :              jdurand
+uid                     :                27343
+gid                     :                 1028
+mask                    :                    2 (oct)
+status                  :                   31 (hex) == STAGEIN|STAGED
+actual_size             :              3646383
+c_time                  :           1033733488 (Oct  4 14:11:28)
+a_time                  :           1033733735 (Oct  4 14:15:35)
+nbaccesses              :                    1
+u1.t.den                :                 20GC
+u1.t.dgn                :                9840R
+u1.t.fid                :    TSCLUSTERSV2.ROOT
+u1.t.filstat            :                     
+u1.t.fseq               :                    6
+u1.t.lbl                :                   al
+u1.t.retentd            :                    0
+u1.t.side               :                    0
+u1.t.tapesrvr           :                     
+u1.t.E_Tflags           :                    0 (hex) == <?>
+u1.t.vid[0]             :               R08506
+u1.t.vsn[0]             :               R08506
+u1.t.vid[1]             :                     
+u1.t.vsn[1]             :                     
+u1.t.vid[2]             :                     
+u1.t.vsn[2]             :                     
+\s+2
+.ft
+.LP
+.fi
+A second pass would return:
+.ft CW
+.nf
+.sp
+\s-2
+STG96 - R08506.1.al already staged, size = 892596943 (851.2 MB), nbaccess = 2
+STG96 - R08506.3.al already staged, size = 129089271 (123.1 MB), nbaccess = 2
+STG96 - R08506.6.al already staged, size = 3646383 (3.5 MB), nbaccess = 2
+\s+2
+.ft
+.LP
+.fi
+and again the dump of the same structures, with only the
+.I a_time
+member of the structures that changed.
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTLINKNAME
+User link name processing error
+.TP
+.B SEOPNOTSUP
+Operation not supported (should not happen)
+.TP
+.B ESTMEM
+Request too big
+.TP
+.B ENOENT
+No such file or directory
+.TP
+.B EISDIR
+Is a directory
+.TP
+.B SESYSERR
+System error
+.TP
+.B ESTCLEARED
+Request cleared
+.TP
+.B ESTKILLED
+Request killed
+.TP
+.B ENOSPC
+No space left on device
+.TP
+.B EBUSY
+Device or resource busy
+.TP
+.B ESTLNKNSUP
+Symbolic link not supported
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+A poolname other than the default can be specified either with environment variable $STAGE_POOL, or an entry 'STG POOL' in /etc/shift.conf
+
+.SH SEE ALSO
+\fBstagein\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstageclr_link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
