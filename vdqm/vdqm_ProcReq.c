@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2002 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.16 $ $Date: 2001/08/31 14:29:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.17 $ $Date: 2002/10/25 11:37:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -392,7 +392,7 @@ void *vdqm_OnRollbackThread(void *arg) {
     log(LOG_INFO,"vdqm_OnRollbackThread() started\n");
     rc = vdqm_OnRollback();
     log(LOG_ERR,"vdqm_OnRollbackThread() unexpected return from vdqm_OnRollback(), rc = %d\n",rc);
-    return((void *)return_status);
+    return((void *)&return_status);
 }
 int vdqm_StartRollbackThread() {
     int rc;
