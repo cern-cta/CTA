@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.96 2001/03/05 12:07:23 jdurand Exp $
+ * $Id: procio.c,v 1.97 2001/03/06 09:39:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.96 $ $Date: 2001/03/05 12:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.97 $ $Date: 2001/03/06 09:39:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1786,8 +1786,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
-						c = USERR;
-						goto reply;
+						/* We switch to the next disk file if there are */
+						/* c = USERR; */
+						/* goto reply; */
+						goto stagewrt_continue_loop;
 					}
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
 					stgreq.u1.h.fileid = Cnsfileid.fileid;
@@ -2047,6 +2049,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->nb_subreqs++;
 				wfp++;
 			}
+		stagewrt_continue_loop:
 			break;
 		case STAGECAT:
 			if ((p = findpoolname (upath)) != NULL) {
