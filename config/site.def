@@ -256,6 +256,7 @@
 #define UseLsfVersion	6
 #define UseExpert		YES
 #define UseMaui			YES
+#define UseStorageTank		NO
 
 /* 
  * The following flag enables rfio client interface
