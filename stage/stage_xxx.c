@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.9 2000/11/17 07:45:22 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.10 2000/12/12 08:56:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.9 $ $Date: 2000/11/17 07:45:22 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.10 $ $Date: 2000/12/12 08:56:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -259,11 +259,14 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
   hsm = hsmstruct;
   isize = 0;
   while (hsm != NULL) {
-    if ((u_signed64) (hsm->size / ONE_MB) > 0) {
+    int correct_size_MB;
+
+    if (hsm->size > 0) {
+      correct_size_MB = (int) ((hsm->size > ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
       if (isize++ == 0) {
         sendbuf_size += strlen("-s") + 1; /* -s option */
       }
-      u64tostr((u_signed64) (hsm->size / ONE_MB), tmpbuf, 0);
+      u64tostr((u_signed64) correct_size_MB, tmpbuf, 0);
       sendbuf_size += strlen(tmpbuf) + 1; /* -s value */
     }
     hsm = hsm->next;
@@ -377,12 +380,15 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
   hsm = hsmstruct;
   isize = 0;
   while (hsm != NULL) {
-    if ((u_signed64) (hsm->size / ONE_MB) > 0) {
+    int correct_size_MB;
+
+    if (hsm->size > 0) {
+      correct_size_MB = (int) ((hsm->size > ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
       if (isize++ == 0) {
         marshall_STRING (sbp,"-s");
         nargs += 2;
       }
-      u64tostr((u_signed64) (hsm->size / ONE_MB), tmpbuf, 0);
+      u64tostr((u_signed64) correct_size_MB, tmpbuf, 0);
       marshall_STRING (sbp, tmpbuf);
       if (isize > 1) {
         /* We remove the '\0' character between us and our previous... */
