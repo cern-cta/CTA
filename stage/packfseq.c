@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.12 2001/02/02 12:14:33 jdurand Exp $
+ * $Id: packfseq.c,v 1.13 2001/09/18 20:15:07 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.12 $ $Date: 2001/02/02 12:14:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.13 $ $Date: 2001/09/18 20:15:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include "stage.h"
+#include "stage_api.h"
 #include "osdep.h"
 #include <stdlib.h>
 
@@ -45,10 +46,10 @@ int packfseq(fseq_list, i, nbdskf, nbtpf, trailing, fseq, fseqsz)
 	else
 		strcpy (fseq, (char *) (fseq_list + nbtpf - 1));
 	if ((i == nbdskf - 1) && (nbdskf < nbtpf)) {
-		n1 = strtol ((char *) (fseq_list + i), &dp, 10);
+		stage_strtoi(&n1, (char *) (fseq_list + i), &dp, 10);
 		prev = n1;
 		for (j = i + 1; j < nbtpf; j++) {
-			n2 = strtol ((char *) (fseq_list + j), &dp, 10);
+			stage_strtoi(&n2, (char *) (fseq_list + j), &dp, 10);
 			if (n2 != prev && n2 != prev + 1) {
 				if (prev > n1) {
 					sprintf (fseq_tmp, "-%d", prev);
