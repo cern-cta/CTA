@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.8 $ $Date: 2001/01/30 06:33:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.9 $ $Date: 2001/02/01 08:53:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -130,6 +130,6 @@ u_signed64 tot_free_space;
 	printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",
 	    pool_name, sav_uidstr, sav_gidstr,
 	    u64tostru (capacity, tmpbuf, 8),
-	    u64tostru (tot_free_space, tmpbuf2, 8),
-	    (double)tot_free_space * 100. / (double)capacity);
+	    u64tostru (tot_free_space, tmpbuf2, 8), capacity ?
+	    (double)tot_free_space * 100. / (double)capacity : 0);
 }
