@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.3 $ $Date: 2000/05/05 16:10:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	lddisplay - load display on 3480 compatible drives */
@@ -70,7 +70,7 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 	int nb_sense_ret;
 	char sense[MAXSENSE];
 #endif
-	int tapefd;
+	int tapefd = -1;
 
 #if defined(_IBMR2)
 	if (strcmp (dvrname, "tape") == 0)
