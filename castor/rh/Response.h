@@ -62,4 +62,28 @@ struct Crh_Response_t* Crh_Response_fromIObject(struct C_IObject_t* obj);
  */
 int Crh_Response_print(struct Crh_Response_t* instance);
 
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_Response_errorCode(struct Crh_Response_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_Response_setErrorCode(struct Crh_Response_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_Response_errorMessage(struct Crh_Response_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_Response_setErrorMessage(struct Crh_Response_t* instance, const char* new_var);
+
 #endif // CASTOR_RH_RESPONSE_H

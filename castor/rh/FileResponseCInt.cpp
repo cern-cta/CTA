@@ -92,6 +92,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_errorCode(castor::rh::FileResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_setErrorCode(castor::rh::FileResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_errorMessage(castor::rh::FileResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_setErrorMessage(castor::rh::FileResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileResponse_setId
   //----------------------------------------------------------------------------
   int Crh_FileResponse_setId(castor::rh::FileResponse* instance,
@@ -173,39 +206,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_FileResponse_setFileSize(castor::rh::FileResponse* instance, u_signed64 new_var) {
     instance->setFileSize(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_errorCode
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_errorCode(castor::rh::FileResponse* instance, unsigned int* var) {
-    *var = instance->errorCode();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setErrorCode
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setErrorCode(castor::rh::FileResponse* instance, unsigned int new_var) {
-    instance->setErrorCode(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_errorMessage
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_errorMessage(castor::rh::FileResponse* instance, const char** var) {
-    *var = instance->errorMessage().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setErrorMessage
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setErrorMessage(castor::rh::FileResponse* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setErrorMessage(snew_var);
     return 0;
   }
 

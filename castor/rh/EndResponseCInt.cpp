@@ -92,6 +92,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_EndResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_errorCode(castor::rh::EndResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_setErrorCode(castor::rh::EndResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_errorMessage(castor::rh::EndResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_setErrorMessage(castor::rh::EndResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_EndResponse_setId
   //----------------------------------------------------------------------------
   int Crh_EndResponse_setId(castor::rh::EndResponse* instance,

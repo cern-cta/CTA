@@ -79,6 +79,34 @@ int Crh_FileResponse_print(struct Crh_FileResponse_t* instance);
  */
 int Crh_FileResponse_TYPE(int* ret);
 
+/*********************************************/
+/* Implementation of Response abstract class */
+/*********************************************/
+
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_FileResponse_errorCode(struct Crh_FileResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_FileResponse_setErrorCode(struct Crh_FileResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_FileResponse_errorMessage(struct Crh_FileResponse_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_FileResponse_setErrorMessage(struct Crh_FileResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/
@@ -142,30 +170,6 @@ int Crh_FileResponse_fileSize(struct Crh_FileResponse_t* instance, u_signed64* v
  * The size of the file considered
  */
 int Crh_FileResponse_setFileSize(struct Crh_FileResponse_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of errorCode
- * The error code in case of error
- */
-int Crh_FileResponse_errorCode(struct Crh_FileResponse_t* instance, unsigned int* var);
-
-/**
- * Set the value of errorCode
- * The error code in case of error
- */
-int Crh_FileResponse_setErrorCode(struct Crh_FileResponse_t* instance, unsigned int new_var);
-
-/**
- * Get the value of errorMessage
- * The error message in case of error
- */
-int Crh_FileResponse_errorMessage(struct Crh_FileResponse_t* instance, const char** var);
-
-/**
- * Set the value of errorMessage
- * The error message in case of error
- */
-int Crh_FileResponse_setErrorMessage(struct Crh_FileResponse_t* instance, const char* new_var);
 
 /**
  * Get the value of fileId

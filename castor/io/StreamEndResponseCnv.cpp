@@ -39,6 +39,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/EndResponse.hpp"
 #include "osdep.h"
+#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -86,6 +87,8 @@ void castor::io::StreamEndResponseCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
 }
 
@@ -99,6 +102,12 @@ castor::IObject* castor::io::StreamEndResponseCnv::createObj(castor::IAddress* a
   // create the new Object
   castor::rh::EndResponse* object = new castor::rh::EndResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

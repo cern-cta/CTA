@@ -33,7 +33,9 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::Response::Response() throw() {
+castor::rh::Response::Response() throw() :
+  m_errorCode(0),
+  m_errorMessage("") {
 };
 
 //------------------------------------------------------------------------------
@@ -54,6 +56,9 @@ void castor::rh::Response::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Output of all members
+  stream << indent << "errorCode : " << m_errorCode << std::endl;
+  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   alreadyPrinted.insert(this);
 }
 

@@ -60,4 +60,37 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Crh_Response_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_Response_errorCode(castor::rh::Response* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Response_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_Response_setErrorCode(castor::rh::Response* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Response_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_Response_errorMessage(castor::rh::Response* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Response_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_Response_setErrorMessage(castor::rh::Response* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
 } // End of extern "C"

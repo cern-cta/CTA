@@ -162,42 +162,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_errorCode
-       * The error code in case of error
-       * @return the value of m_errorCode
-       */
-      unsigned int errorCode() const {
-        return m_errorCode;
-      }
-
-      /**
-       * Set the value of m_errorCode
-       * The error code in case of error
-       * @param new_var the new value of m_errorCode
-       */
-      void setErrorCode(unsigned int new_var) {
-        m_errorCode = new_var;
-      }
-
-      /**
-       * Get the value of m_errorMessage
-       * The error message in case of error
-       * @return the value of m_errorMessage
-       */
-      std::string errorMessage() const {
-        return m_errorMessage;
-      }
-
-      /**
-       * Set the value of m_errorMessage
-       * The error message in case of error
-       * @param new_var the new value of m_errorMessage
-       */
-      void setErrorMessage(std::string new_var) {
-        m_errorMessage = new_var;
-      }
-
-      /**
        * Get the value of m_fileId
        * The castor file id identifying the file considered
        * @return the value of m_fileId
@@ -247,12 +211,6 @@ namespace castor {
 
       /// The size of the file considered
       u_signed64 m_fileSize;
-
-      /// The error code in case of error
-      unsigned int m_errorCode;
-
-      /// The error message in case of error
-      std::string m_errorMessage;
 
       /// The castor file id identifying the file considered
       u_signed64 m_fileId;

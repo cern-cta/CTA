@@ -42,8 +42,6 @@ castor::rh::FileResponse::FileResponse() throw() :
   m_status(0),
   m_castorFileName(""),
   m_fileSize(),
-  m_errorCode(0),
-  m_errorMessage(""),
   m_fileId(),
   m_subreqId(""),
   m_id() {
@@ -73,8 +71,6 @@ void castor::rh::FileResponse::print(std::ostream& stream,
   stream << indent << "status : " << m_status << std::endl;
   stream << indent << "castorFileName : " << m_castorFileName << std::endl;
   stream << indent << "fileSize : " << m_fileSize << std::endl;
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "subreqId : " << m_subreqId << std::endl;
   stream << indent << "id : " << m_id << std::endl;

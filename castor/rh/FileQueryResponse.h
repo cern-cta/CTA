@@ -79,6 +79,34 @@ int Crh_FileQueryResponse_print(struct Crh_FileQueryResponse_t* instance);
  */
 int Crh_FileQueryResponse_TYPE(int* ret);
 
+/*********************************************/
+/* Implementation of Response abstract class */
+/*********************************************/
+
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_FileQueryResponse_errorCode(struct Crh_FileQueryResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_FileQueryResponse_setErrorCode(struct Crh_FileQueryResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_FileQueryResponse_errorMessage(struct Crh_FileQueryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_FileQueryResponse_setErrorMessage(struct Crh_FileQueryResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

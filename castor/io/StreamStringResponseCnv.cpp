@@ -87,6 +87,8 @@ void castor::io::StreamStringResponseCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->content();
   ad->stream() << obj->id();
 }
@@ -101,6 +103,12 @@ castor::IObject* castor::io::StreamStringResponseCnv::createObj(castor::IAddress
   // create the new Object
   castor::rh::StringResponse* object = new castor::rh::StringResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   std::string content;
   ad->stream() >> content;
   object->setContent(content);

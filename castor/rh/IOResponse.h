@@ -137,30 +137,6 @@ int Crh_IOResponse_fileSize(struct Crh_IOResponse_t* instance, u_signed64* var);
 int Crh_IOResponse_setFileSize(struct Crh_IOResponse_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of errorCode
- * The error code in case of error
- */
-int Crh_IOResponse_errorCode(struct Crh_IOResponse_t* instance, unsigned int* var);
-
-/**
- * Set the value of errorCode
- * The error code in case of error
- */
-int Crh_IOResponse_setErrorCode(struct Crh_IOResponse_t* instance, unsigned int new_var);
-
-/**
- * Get the value of errorMessage
- * The error message in case of error
- */
-int Crh_IOResponse_errorMessage(struct Crh_IOResponse_t* instance, const char** var);
-
-/**
- * Set the value of errorMessage
- * The error message in case of error
- */
-int Crh_IOResponse_setErrorMessage(struct Crh_IOResponse_t* instance, const char* new_var);
-
-/**
  * Get the value of fileId
  * The castor file id identifying the file considered
  */
@@ -185,6 +161,34 @@ int Crh_IOResponse_subreqId(struct Crh_IOResponse_t* instance, const char** var)
  * string
  */
 int Crh_IOResponse_setSubreqId(struct Crh_IOResponse_t* instance, const char* new_var);
+
+/*********************************************/
+/* Implementation of Response abstract class */
+/*********************************************/
+
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_IOResponse_errorCode(struct Crh_IOResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_IOResponse_setErrorCode(struct Crh_IOResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_IOResponse_errorMessage(struct Crh_IOResponse_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_IOResponse_setErrorMessage(struct Crh_IOResponse_t* instance, const char* new_var);
 
 /***************************************/
 /* Implementation of IObject interface */

@@ -165,39 +165,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_IOResponse_errorCode
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_errorCode(castor::rh::IOResponse* instance, unsigned int* var) {
-    *var = instance->errorCode();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_IOResponse_setErrorCode
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_setErrorCode(castor::rh::IOResponse* instance, unsigned int new_var) {
-    instance->setErrorCode(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_IOResponse_errorMessage
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_errorMessage(castor::rh::IOResponse* instance, const char** var) {
-    *var = instance->errorMessage().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_IOResponse_setErrorMessage
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_setErrorMessage(castor::rh::IOResponse* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setErrorMessage(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_IOResponse_fileId
   //----------------------------------------------------------------------------
   int Crh_IOResponse_fileId(castor::rh::IOResponse* instance, u_signed64* var) {
@@ -227,6 +194,39 @@ extern "C" {
   int Crh_IOResponse_setSubreqId(castor::rh::IOResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setSubreqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_errorCode(castor::rh::IOResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setErrorCode(castor::rh::IOResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_errorMessage(castor::rh::IOResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setErrorMessage(castor::rh::IOResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
     return 0;
   }
 

@@ -87,6 +87,8 @@ void castor::io::StreamFileQueryResponseCnv::createRep(castor::IAddress* address
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->fileName();
   ad->stream() << obj->fileId();
   ad->stream() << obj->status();
@@ -108,6 +110,12 @@ castor::IObject* castor::io::StreamFileQueryResponseCnv::createObj(castor::IAddr
   // create the new Object
   castor::rh::FileQueryResponse* object = new castor::rh::FileQueryResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   std::string fileName;
   ad->stream() >> fileName;
   object->setFileName(fileName);

@@ -87,6 +87,8 @@ void castor::io::StreamFindReqResponseCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->reqId();
   ad->stream() << obj->id();
 }
@@ -101,6 +103,12 @@ castor::IObject* castor::io::StreamFindReqResponseCnv::createObj(castor::IAddres
   // create the new Object
   castor::rh::FindReqResponse* object = new castor::rh::FindReqResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);

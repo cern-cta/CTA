@@ -79,6 +79,34 @@ int Crh_RequestQueryResponse_print(struct Crh_RequestQueryResponse_t* instance);
  */
 int Crh_RequestQueryResponse_TYPE(int* ret);
 
+/*********************************************/
+/* Implementation of Response abstract class */
+/*********************************************/
+
+/**
+ * Get the value of errorCode
+ * The error code in case of error
+ */
+int Crh_RequestQueryResponse_errorCode(struct Crh_RequestQueryResponse_t* instance, unsigned int* var);
+
+/**
+ * Set the value of errorCode
+ * The error code in case of error
+ */
+int Crh_RequestQueryResponse_setErrorCode(struct Crh_RequestQueryResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_RequestQueryResponse_errorMessage(struct Crh_RequestQueryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * The error message in case of error
+ */
+int Crh_RequestQueryResponse_setErrorMessage(struct Crh_RequestQueryResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

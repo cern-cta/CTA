@@ -39,6 +39,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/AbortResponse.hpp"
 #include "osdep.h"
+#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -86,6 +87,8 @@ void castor::io::StreamAbortResponseCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->aborted();
   ad->stream() << obj->id();
 }
@@ -100,6 +103,12 @@ castor::IObject* castor::io::StreamAbortResponseCnv::createObj(castor::IAddress*
   // create the new Object
   castor::rh::AbortResponse* object = new castor::rh::AbortResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   bool aborted;
   ad->stream() >> aborted;
   object->setAborted(aborted);

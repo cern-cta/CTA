@@ -92,6 +92,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_errorCode(castor::rh::RequestQueryResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_setErrorCode(castor::rh::RequestQueryResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_errorMessage(castor::rh::RequestQueryResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_setErrorMessage(castor::rh::RequestQueryResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_RequestQueryResponse_setId
   //----------------------------------------------------------------------------
   int Crh_RequestQueryResponse_setId(castor::rh::RequestQueryResponse* instance,

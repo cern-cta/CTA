@@ -92,6 +92,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_errorCode(castor::rh::FindReqResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_setErrorCode(castor::rh::FindReqResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_errorMessage(castor::rh::FindReqResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_setErrorMessage(castor::rh::FindReqResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FindReqResponse_setId
   //----------------------------------------------------------------------------
   int Crh_FindReqResponse_setId(castor::rh::FindReqResponse* instance,

@@ -92,6 +92,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_errorCode(castor::rh::FileQueryResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setErrorCode(castor::rh::FileQueryResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_errorMessage(castor::rh::FileQueryResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setErrorMessage(castor::rh::FileQueryResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileQueryResponse_setId
   //----------------------------------------------------------------------------
   int Crh_FileQueryResponse_setId(castor::rh::FileQueryResponse* instance,

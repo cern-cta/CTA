@@ -87,11 +87,11 @@ void castor::io::StreamFileResponseCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->status();
   ad->stream() << obj->castorFileName();
   ad->stream() << obj->fileSize();
-  ad->stream() << obj->errorCode();
-  ad->stream() << obj->errorMessage();
   ad->stream() << obj->fileId();
   ad->stream() << obj->subreqId();
   ad->stream() << obj->id();
@@ -107,6 +107,12 @@ castor::IObject* castor::io::StreamFileResponseCnv::createObj(castor::IAddress* 
   // create the new Object
   castor::rh::FileResponse* object = new castor::rh::FileResponse();
   // Now retrieve and set members
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   unsigned int status;
   ad->stream() >> status;
   object->setStatus(status);
@@ -116,12 +122,6 @@ castor::IObject* castor::io::StreamFileResponseCnv::createObj(castor::IAddress* 
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);
-  unsigned int errorCode;
-  ad->stream() >> errorCode;
-  object->setErrorCode(errorCode);
-  std::string errorMessage;
-  ad->stream() >> errorMessage;
-  object->setErrorMessage(errorMessage);
   u_signed64 fileId;
   ad->stream() >> fileId;
   object->setFileId(fileId);
