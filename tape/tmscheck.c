@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 11:56:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.3 $ $Date: 1999/11/22 14:53:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -117,6 +117,7 @@ char *acctname;
 
 	tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
 	tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
+	tmslbl[2] = '\0';
 	if (*lbl) {
 		if (strcmp (lbl, "blp") && strcmp (lbl, tmslbl)) {
 			Ctape_errmsg (func, TP055, vid, lbl, tmslbl);
