@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/08 17:29:08 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/09 10:39:59 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.6 $
- * @date $Date: 2004/11/08 17:29:08 $
+ * @version $Revision: 1.7 $
+ * @date $Date: 2004/11/09 10:39:59 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.6 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.7 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -941,7 +941,7 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
  */
 #define ALLOC_STRUCT_LIST(STRCNAME)                    \
   EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME **ptr, int nb) {       \
-  struct stage_##STRCNAME **ptrlist;                                    \
+  struct stage_##STRCNAME *ptrlist;                                    \
   if (ptr == NULL || nb <=0) return -1; \
   ptrlist = (struct stage_##STRCNAME *)calloc(nb, sizeof(struct stage_##STRCNAME)); \
   if (ptrlist < 0) return -1; \
@@ -957,7 +957,7 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
   int i;                                                \
   if (ptr == NULL || nb <=0) return -1;                 \
   for (i=0; i<nb; i++) {                                \
-    if (ptr[i] != NULL) _free_##STRCNAME(ptr[i]);                        \
+    _free_##STRCNAME(&(ptr[i]));			\
    }                                                    \
    free(ptr);                                           \
    return 0; \
@@ -973,7 +973,7 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
  * Macro to declare a function that frees a list of STRCNAME structures
  */
 #define FREE_STRUCT_LIST_DECL(STRCNAME)                      \
-  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb);
+  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME *ptr, int nb);
 
 
 ALLOC_STRUCT_LIST_DECL(prepareToGet_filereq)
