@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.44 2003/10/31 16:48:09 jdurand Exp $
+ * $Id: stager_castor.c,v 1.45 2003/11/04 13:25:35 jdurand Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.44 $ $Date: 2003/10/31 16:48:09 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.45 $ $Date: 2003/11/04 13:25:35 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -69,6 +69,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.44 $ $Dat
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "stage_api.h"       /* For stage_updc_tppos() and stage_updc_filcp() */
+#include "Csnprintf.h"
 
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, char *, ...));
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
@@ -1754,15 +1755,7 @@ int stagein_castor_hsm_file() {
 			}
 			last_fseq_for_log = hsm_fseq[i];
 
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (this_string, "%s%d", this_cont, hsm_fseq[i]);
-#else
-#if defined(_WIN32)
-			_snprintf (this_string, CA_MAXFSEQLEN, "%s%d", this_cont, hsm_fseq[i]);
-#else
-			snprintf (this_string, CA_MAXFSEQLEN, "%s%d", this_cont, hsm_fseq[i]);
-#endif
-#endif
+			Csnprintf (this_string, CA_MAXFSEQLEN, "%s%d", this_cont, hsm_fseq[i]);
 			this_string[CA_MAXFSEQLEN] = '\0';
 			/* p_fseq points somewhere in fseq string */
 			if ((strlen(fseq_for_log) - strlen(p_fseq) + strlen(this_string)) <= 1024) {

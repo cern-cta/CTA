@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.43 2003/09/08 13:08:45 jdurand Exp $
+ * $Id: stglogit.c,v 1.44 2003/11/04 13:27:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.43 $ $Date: 2003/09/08 13:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.44 $ $Date: 2003/11/04 13:27:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.43 $ $Date: 20
 #include "stage_constants.h"
 #include "osdep.h"
 #include "Cglobals.h"
+#include "Csnprintf.h"
 
 extern int reqid;
 static int prtbuf_key = -1;
@@ -46,20 +47,11 @@ int stglogit(char *func, char *msg, ...) {
 	va_start(args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf+strlen(prtbuf), msg, args);
-#else
-		vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#endif
+		Cvsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
     }
 	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);
@@ -87,13 +79,8 @@ int stglogtppool(func,tppool)
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
-			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
-#else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
+	Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
 			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
-#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
 		write (fd_log, prtbuf, strlen(prtbuf));
@@ -178,13 +165,8 @@ char *stglogflags(func,logfile,flags)
 		/* Buffersize all the flags */
 		time (&current_time);		/* Get current time */
 		tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-		sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
-				 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#else
-		snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
+		Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
 				  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#endif
 	}
 	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
@@ -277,13 +259,8 @@ int stglogopenflags(func,flags)
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
-			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
+	Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
 			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
 	i = -1;
@@ -324,20 +301,11 @@ int stgmiglogit(char *func, char *msg, ...) {
 	va_start(args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf+strlen(prtbuf), msg, args);
-#else
-		vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#endif
+		Cvsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
     }
 	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);

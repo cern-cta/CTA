@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.50 $ $Date: 2003/08/26 14:10:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.51 $ $Date: 2003/11/04 13:26:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.50 $ $Date
 #include <serrno.h>
 #include <Castor_limits.h>
 #include <Cthread_api.h>
+#include <Csnprintf.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
 
@@ -2519,7 +2520,7 @@ static int vdqm_write_drv(int fd, vdqmDrvReq_t *drv) {
         return 0;
     }
 
-    rc = snprintf(buf, CA_MAXLINELEN, "%s %s %s\n", drv->dgn, drv->server, drv->drive);   
+    rc = Csnprintf(buf, CA_MAXLINELEN, "%s %s %s\n", drv->dgn, drv->server, drv->drive);   
     if (rc <= 0) {
         log(LOG_ERR,"vdqm_write_drv: Could not write to buffer\n");
         return -1;
@@ -2533,7 +2534,7 @@ static int vdqm_write_drv(int fd, vdqmDrvReq_t *drv) {
 
     /* Writing the dedication on another line */
     memset(buf, sizeof(buf), '\0');
-    rc = snprintf(buf, CA_MAXLINELEN, "%s\n", drv->dedicate);   
+    rc = Csnprintf(buf, CA_MAXLINELEN, "%s\n", drv->dedicate);   
     if (rc <= 0) {
         log(LOG_ERR,"vdqm_write_drv: Could not write to buffer\n");
         return -1;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.14 $ $Date: 2003/09/08 17:01:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.15 $ $Date: 2003/11/04 13:24:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.14 $ $Date
 #include "Cglobals.h"
 #include "stage_constants.h"
 #include "stage_struct.h"
+#include "Csnprintf.h"
 
 static int errbufp_key = 0;
 static int errbuflen_key = 0;
@@ -178,29 +179,13 @@ int DLL_DECL stage_errmsg(char *func, char *msg, ...) {
 	save_errno = errno;
 	va_start(args, msg);
 	if (func) {
-#if (defined(__osf__) && defined(__alpha))
-		sprintf (prtbuf, "%s: ", func);
-#else
-#if defined(_WIN32)
-		_snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
-#else
-		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
-#endif
-#endif
+		Csnprintf (prtbuf, PRTBUFSZ, "%s: ", func);
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
     }
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf + strlen(prtbuf), msg, args);
-#else
-#if defined(_WIN32)
-		_vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#else
-		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#endif
-#endif
+		Cvsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
 
@@ -242,29 +227,13 @@ int DLL_DECL stage_outmsg(char *func, char *msg, ...) {
 	va_start(args,msg);
 
 	if (func) {
-#if (defined(__osf__) && defined(__alpha))
-		sprintf (prtbuf, "%s: ", func);
-#else
-#if defined(_WIN32)
-		_snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
-#else
-		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
-#endif
-#endif
+		Csnprintf (prtbuf, PRTBUFSZ, "%s: ", func);
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
     }
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf + strlen(prtbuf), msg, args);
-#else
-#if defined(_WIN32)
-		_vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#else
-		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#endif
-#endif
+		Cvsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
 

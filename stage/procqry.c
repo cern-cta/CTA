@@ -61,6 +61,7 @@ static char sccsid[] = "@(#)procqry.c,v 1.105 2002/10/30 16:21:09 CERN IT-PDP/DM
 #include "Castor_limits.h"
 #include "u64subr.h"
 #include "net.h"
+#include "Csnprintf.h"
 
 void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
@@ -1027,11 +1028,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID[/%d].%d */
 
 			if ((stcp->u1.t.side > 0) && (display_side_flag)) {
-#if (defined(__osf__) && defined(__alpha))
-				sprintf(vid_and_side, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
-#else
-				snprintf(vid_and_side, CA_MAXVIDLEN+1+10+1, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
-#endif
+				Csnprintf(vid_and_side, CA_MAXVIDLEN+1+10+1, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
 			} else {
 				strcpy(vid_and_side, stcp->u1.t.vid[0]);
 			}

@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.31 2003/11/03 06:35:17 jdurand Exp $
+ * $Id: stage_util.c,v 1.32 2003/11/04 13:25:17 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.31 $ $Date: 2003/11/03 06:35:17 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.32 $ $Date: 2003/11/04 13:25:17 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.31 $ $Date: 
 #include "stage_api.h"
 #include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
 #include "Ctape_constants.h"   /* For NOTRLCHK */
+#include "Csnprintf.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -471,15 +472,7 @@ void DLL_DECL stage_util_retenp(this,timestr)
 	*p = '\0';
 	for (i = 0; i < 5; i++) {
 		if (this >= allunits[i]) {
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (p, allformats[i], this / allunits[i]);
-#else
-#if defined(_WIN32)
-			_snprintf (p, 64 - strlen(timestr), allformats[i], this / allunits[i]);
-#else
-			snprintf (p, 64 - strlen(timestr), allformats[i], this / allunits[i]);
-#endif
-#endif
+			Csnprintf (p, 64 - strlen(timestr), allformats[i], this / allunits[i]);
 			timestr[64-1] = '\0';
 			if (strlen(timestr) >= 64) return;
 			p += strlen(p);

@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.32 2003/09/14 05:59:35 jdurand Exp $
+ * $Id: sendrep.c,v 1.33 2003/11/04 13:24:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.32 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.33 $ $Date: 2003/11/04 13:24:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.32 $ $Date: 200
 #include "net.h"
 #include "osdep.h"
 #include "stage_api.h"
+#include "Csnprintf.h"
 
 int iserrmsg _PROTO((char *));
 int sendrep _PROTO((int *, int, ...));
@@ -79,11 +80,7 @@ int sendrep(int *rpfd, int rep_type, ...) {
 	case MSG_ERR:
 	case RTCOPY_OUT:
 		msg = va_arg (args, char *);
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf, msg, args);
-#else
-		vsnprintf (prtbuf, PRTBUFSZ, msg, args);
-#endif
+		Cvsnprintf (prtbuf, PRTBUFSZ, msg, args);
 		prtbuf[PRTBUFSZ-1] = '\0';
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);

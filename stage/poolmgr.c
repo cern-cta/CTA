@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.249 2003/09/14 05:59:35 jdurand Exp $
+ * $Id: poolmgr.c,v 1.250 2003/11/04 13:23:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.249 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.250 $ $Date: 2003/11/04 13:23:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.249 $ $Date: 20
 #endif
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Csnprintf.h"
 
 #ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
@@ -5235,15 +5236,7 @@ void stglogfileclass(Cnsfileclass)
 			strncpy (sav_uidstr, pw->pw_name, (size_t) CA_MAXUSRNAMELEN);
 			sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
 		} else {
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (sav_uidstr, "%-8u", sav_uid);
-#else
-#if defined(_WIN32)
-			_snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
-#else
-			snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
-#endif
-#endif
+			Csnprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
 			sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
 		}
 	}
@@ -5255,15 +5248,7 @@ void stglogfileclass(Cnsfileclass)
 			strncpy (sav_gidstr, gr->gr_name, (size_t) 6);
 			sav_gidstr[6] = '\0';
 		} else {
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (sav_gidstr, "%-6u", sav_gid);
-#else
-#if defined(_WIN32)
-			_snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
-#else
-			snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
-#endif
-#endif
+			Csnprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
 			sav_gidstr[6] = '\0';
 		}
 	}
@@ -5343,15 +5328,7 @@ void printfileclass(rpfd,fileclass)
 			strncpy (sav_uidstr, pw->pw_name, (size_t) CA_MAXUSRNAMELEN);
 			sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
 		} else {
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (sav_uidstr, "%-8u", sav_uid);
-#else
-#if defined(_WIN32)
-			_snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
-#else
-			snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
-#endif
-#endif
+			Csnprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
 			sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
 		}
 	}
@@ -5363,15 +5340,7 @@ void printfileclass(rpfd,fileclass)
 			strncpy (sav_gidstr, gr->gr_name, (size_t) 6);
 			sav_gidstr[6] = '\0';
 		} else {
-#if (defined(__osf__) && defined(__alpha))
-			sprintf (sav_gidstr, "%-6u", sav_gid);
-#else
-#if defined(_WIN32)
-			_snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
-#else
-			snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
-#endif
-#endif
+			Csnprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
 			sav_gidstr[6] = '\0';
 		}
 	}

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.19 $ $Date: 2003/10/31 13:21:50 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.20 $ $Date: 2003/11/04 13:24:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -31,6 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.19 $ $Date: 
 #include <Ctape_constants.h>
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Csnprintf.h"
 
 #define BUF_SIZE     30
 #define BUF_ID_SIZE   100
@@ -440,17 +441,9 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size) {
 
     /* Printing the user name in the buffer */
     if (uname == NULL) {
-#ifdef _WIN32
-        ret = _snprintf(buf, buf_size, "%d,", uid);
-#else
-        ret = snprintf(buf, buf_size, "%d,", uid);
-#endif
+        ret = Csnprintf(buf, buf_size, "%d,", uid);
     } else {
-#ifdef _WIN32
-        ret = _snprintf(buf, buf_size, "%s,", uname);
-#else
-        ret = snprintf(buf, buf_size, "%s,", uname);
-#endif
+        ret = Csnprintf(buf, buf_size, "%s,", uname);
     }
     nb_chars += ret;
 
@@ -461,17 +454,9 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size) {
     
     /* Printing the group name */
     if (gname == NULL) {
-#ifdef _WIN32
-        ret = _snprintf(buf + nb_chars, buf_size - nb_chars, "%d", gid);
-#else
-        ret = snprintf(buf + nb_chars, buf_size - nb_chars, "%d", gid);
-#endif
+        ret = Csnprintf(buf + nb_chars, buf_size - nb_chars, "%d", gid);
     } else {
-#ifdef _WIN32
-        ret = _snprintf(buf + nb_chars, buf_size - nb_chars, "%s", gname);
-#else
-        ret = snprintf(buf + nb_chars, buf_size - nb_chars, "%s", gname);
-#endif
+        ret = Csnprintf(buf + nb_chars, buf_size - nb_chars, "%s", gname);
     }
 
     /* In all cases set the last buffer char to '\0' to be sure */

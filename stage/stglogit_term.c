@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit_term.c,v 1.9 2003/09/09 15:39:43 jdurand Exp $
+ * $Id: stglogit_term.c,v 1.10 2003/11/04 13:28:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 15:39:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.10 $ $Date: 2003/11/04 13:28:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -19,6 +19,8 @@ static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.9 $ $Date
 #include <time.h>
 #include <stdarg.h>
 #include "stage_constants.h"
+#include "Csnprintf.h"
+
 extern int reqid;
 
 int stglogit(char *func, char *msg, ...) {
@@ -30,20 +32,11 @@ int stglogit(char *func, char *msg, ...) {
 	va_start (args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-#if (defined(__osf__) && defined(__alpha))
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	Csnprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#else
-	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-#endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
-#if (defined(__osf__) && defined(__alpha))
-		vsprintf (prtbuf+strlen(prtbuf), msg, args);
-#else
-		vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
-#endif
+		Cvsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
     }
 	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.20 2003/09/08 16:56:23 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.21 2003/11/04 13:27:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.20 $ $Date: 2003/09/08 16:56:23 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.21 $ $Date: 2003/11/04 13:27:29 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.20 $ $Dat
 #include <log.h>                /* logging options and definitions      */
 #include "stage_api.h"          /* For seteuid/setegid macro on hpux */
 #include "osdep.h"
+#include "Csnprintf.h"
 
 extern int rpfd;
 extern int sendrep _PROTO((int *, int, ...));
@@ -61,11 +62,7 @@ void stager_usrmsg(int level, char *format, ...) {
 
 	va_start(args, format);
 
-#if (defined(__osf__) && defined(__alpha))
-	vsprintf(line,format,args);
-#else
-	vsnprintf(line,BUFSIZ,format,args);
-#endif
+	Cvsnprintf(line,BUFSIZ,format,args);
 	line[BUFSIZ-1] = '\0';
 #ifdef STAGER_DEBUG
     /* In debug mode - we always want to have all messages in stager log-file */

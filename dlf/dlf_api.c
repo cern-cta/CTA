@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.5 $ $Date: 2003/11/03 09:38:34 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.6 $ $Date: 2003/11/04 13:22:30 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -53,6 +53,7 @@ parameter value.
 #include <netinet/in.h>
 #include <netdb.h>
 #include <Cnetdb.h>
+#include <Csnprintf.h>
 #ifndef _WIN32
 #include <sys/time.h>          /* For time_t */
 #else
@@ -595,7 +596,7 @@ char DLL_DECL * dlf_format_str(char *buf, int buf_len, const char *fmt, ...) {
   int nb;
 
   va_start( ap, fmt );
-  nb = vsnprintf (buf, buf_len, fmt, ap);
+  nb = Cvsnprintf (buf, buf_len, fmt, ap);
   va_end( ap );
   /* If the output was truncated put terminating zero at the end of the string.
      We don't check here whether the output was truncated, just put zero. */
@@ -634,7 +635,7 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
   /* Format time */
 
   localtime_r((time_t*)&cur_time.tv_sec, &tmres);
-  n = snprintf (log_message->time, DLF_TIMESTRLEN + 1, time_fmt, 
+  n = Csnprintf (log_message->time, DLF_TIMESTRLEN + 1, time_fmt, 
 		tmres.tm_year + 1900, tmres.tm_mon + 1, tmres.tm_mday,
 		tmres.tm_hour, tmres.tm_min, tmres.tm_sec);
   log_message->time_usec = cur_time.tv_usec;
@@ -763,7 +764,7 @@ dlf_log_message_t *msg;
      if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
        return (-1);
 
-     n = snprintf
+     n = Csnprintf
        (prtbuf, sizeof(prtbuf), fmt1, 
         msg->time, msg->time_usec, msg->hostname,
         ((sev_name =
@@ -781,22 +782,22 @@ dlf_log_message_t *msg;
      for (p = msg->param_list.head; p != NULL; p = p->next) {
 	  switch(p->type) {
 	    case DLF_MSG_PARAM_STR:
-	      n = snprintf (prtbuf, sizeof(prtbuf), fmt2, p->name, p->strval);
+	      n = Csnprintf (prtbuf, sizeof(prtbuf), fmt2, p->name, p->strval);
 	      break;
 	    case DLF_MSG_PARAM_TPVID:
-	      n = snprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, p->strval);
+	      n = Csnprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, p->strval);
 	      break;
 	    case DLF_MSG_PARAM_INT64:
-	      n = snprintf (prtbuf, sizeof(prtbuf), fmt3, p->name, p->numval);
+	      n = Csnprintf (prtbuf, sizeof(prtbuf), fmt3, p->name, p->numval);
 	      break;
 	    case DLF_MSG_PARAM_UUID:
-	      n = snprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, 
+	      n = Csnprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, 
                       dlf_uuid2hex(*((Cuuid_t*)p->strval),
                                    uuidhex,
                                    sizeof(uuidhex)));
 	      break;
 	    case DLF_MSG_PARAM_DOUBLE:
-	      n = snprintf (prtbuf, sizeof(prtbuf), fmt4, p->name, p->dval);
+	      n = Csnprintf (prtbuf, sizeof(prtbuf), fmt4, p->name, p->dval);
 	      break;
 	    default:
 	      serrno = SEINTERNAL;
@@ -860,7 +861,7 @@ dlf_log_message_t *msg;
 		   how to transfer floating point numbers over the network */
 		size += sizeof(U_BYTE)
 		     + strlen(p->name) + 1
-  		     + snprintf ((char*)p->strval, DLF_MAXSTRVALLEN, "%f", p->dval) + 1;
+  		     + Csnprintf ((char*)p->strval, DLF_MAXSTRVALLEN, "%f", p->dval) + 1;
 		break;
 	      case DLF_MSG_PARAM_UUID:
 		size += sizeof(U_BYTE)
@@ -1193,7 +1194,7 @@ Cuuid_t uuid;
     return (-1);
   }
   i = log_message->next_subreq_idx++;
-  n = snprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
+  n = Csnprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
   memcpy (param_p->strval, &uuid, sizeof(Cuuid_t));
   param_p->type = DLF_MSG_PARAM_UUID;
   dlf_add_to_param_list (&log_message->param_list, param_p);
@@ -1219,7 +1220,7 @@ const char *tape_vid;
     return (-1);
   }
   i = log_message->next_tapevid_idx++;
-  n = snprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
+  n = Csnprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
   strcpy (param_p->strval, tape_vid);
   param_p->type = DLF_MSG_PARAM_TPVID;
   dlf_add_to_param_list (&log_message->param_list, param_p);
