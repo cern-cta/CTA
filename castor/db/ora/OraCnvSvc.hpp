@@ -162,13 +162,6 @@ namespace castor {
 
       private:
 
-        /**
-         * gets the current time stamp
-         */
-        std::string getTimestamp();
-
-      private:
-
         /// Oracle user name
         std::string m_user;
 

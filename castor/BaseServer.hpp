@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 09:41:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -38,8 +38,6 @@ namespace castor {
    * Static method used to pass to Cpool_assign
    */
   void *staticProcessRequest(void *param);
-
-  std::string getTimestamp();
 
   /**
    * Basic CASTOR multithreaded server.

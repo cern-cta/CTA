@@ -138,22 +138,6 @@ const unsigned int castor::db::ora::OraCnvSvc::REPTYPE() {
   return castor::REP_ORACLE;
 }
 
-//------------------------------------------------------------------------------
-// Utility function to get the current timestamp
-//------------------------------------------------------------------------------
-std::string castor::db::ora::OraCnvSvc::getTimestamp() {
-  struct tm tmstruc, *tm;
-  time_t current_time;
-  (void) time (&current_time);
-  (void) localtime_r (&current_time, &tmstruc);
-  tm = &tmstruc;
-  std::ostringstream buf;
-  buf << std::setw(2) <<tm->tm_mon+1 << "/" << tm->tm_mday << " "
-      << tm->tm_hour << ":" <<  tm->tm_min << ":" << tm->tm_sec
-      << " " << Cthread_self() << " ";
-  return buf.str();
-}
-
 // -----------------------------------------------------------------------
 // getConnection
 // -----------------------------------------------------------------------
@@ -166,8 +150,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   if (0 == m_connection) {
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    msgSvc()->stream() << getTimestamp()
-                       << " Created new Oracle connection : "
+    msgSvc()->stream() << " Created new Oracle connection : "
                        << std::ios::hex << m_connection
                        << std::ios::dec << std::endl;
     //oracle::occi::Statement* stmt = m_connection->createStatement

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 09:41:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -134,7 +134,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   castor::rh::Request* fr =
     dynamic_cast<castor::rh::Request*>(obj);
 
-  clog() << castor::getTimestamp() << " Processing request" << std::endl;
+  clog() << " Processing request" << std::endl;
 
   MessageAck ack;
   try {
@@ -148,12 +148,8 @@ void *castor::rh::Server::processRequest(void *param) throw() {
              << std::endl << e.getMessage() << std::endl;
     }
 
-    clog() << castor::getTimestamp() << " Got request from client "
-           << ((ip & 0xFF000000) >> 24) << "."
-           << ((ip & 0x00FF0000) >> 16) << "."
-           << ((ip & 0x0000FF00) >> 8) << "."
-           << ((ip & 0x000000FF)) << ":" << port
-           << std::endl;
+    clog() << " Got request from client "
+           << castor::ip << ip << ":" << port << std::endl;
     castor::rh::Client *client =
       dynamic_cast<castor::rh::Client *>(fr->client());
     client->setIpAddress(ip);
@@ -170,7 +166,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     ack.setErrorMessage(e.getMessage().str());
   }
 
-  clog() << castor::getTimestamp() << "Sending reply to client !" << std::endl;
+  clog() << "Sending reply to client !" << std::endl;
 
   try {
     sock->sendObject(ack);
@@ -193,7 +189,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
   // Stores it into Oracle
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   svcs()->createRep(&ad, fr, true);
-  clog() << castor::getTimestamp() << " request stored in Oracle, id "
+  clog() << " request stored in Oracle, id "
          << fr->id() << std::endl;
   // Send an UDP message to the stager
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -216,7 +212,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
     close(fd);
     return;
   }
-  //  clog() << castor::getTimestamp() << "UDP notification sent" << std::endl;
+  //  clog() << "UDP notification sent" << std::endl;
   close(fd);
 }
 

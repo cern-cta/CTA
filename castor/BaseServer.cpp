@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/28 09:41:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,27 +55,6 @@ int castor::BaseServer::start() {
   }
   return serverMain();
 }
-
-//------------------------------------------------------------------------------
-// Utility function to get the current timestamp
-//------------------------------------------------------------------------------
-std::string castor::getTimestamp() {
-  struct tm tmstruc, *tm;
-  time_t current_time;
-
-  (void) time (&current_time);
-  (void) localtime_r (&current_time, &tmstruc);
-  tm = &tmstruc;
-
-  std::ostringstream buf;
-
-  buf << std::setw(2) <<tm->tm_mon+1 << "/" << tm->tm_mday << " "
-      << tm->tm_hour << ":" <<  tm->tm_min << ":" << tm->tm_sec
-      << " " << Cthread_self() << " ";
-  return buf.str();
-
-}
-
 
 //------------------------------------------------------------------------------
 // serverMain
