@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.13 2000/09/01 13:14:17 jdurand Exp $
+ * $Id: stagealloc.c,v 1.14 2000/09/11 15:26:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.13 $ $Date: 2000/09/01 13:14:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.14 $ $Date: 2000/09/11 15:26:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,9 +22,6 @@ static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.13 $ $Date: 
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
-#include <sys/stat.h>
-#include <dirent.h>
-#include <sys/uio.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
