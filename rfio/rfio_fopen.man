@@ -1,8 +1,11 @@
-.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 13:37:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\"
+.\" $Id: rfio_fopen.man,v 1.2 2000/07/07 13:40:27 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 13:40:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FOPEN 3 "$Date: 2000/07/07 13:37:46 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FOPEN 3 "$Date: 2000/07/07 13:40:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fopen \- opens a file
 .SH SYNOPSIS
