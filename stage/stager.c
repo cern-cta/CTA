@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.76 2000/06/13 11:01:26 jdurand Exp $
+ * $Id: stager.c,v 1.77 2000/06/13 14:58:11 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.76 $ $Date: 2000/06/13 11:01:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.77 $ $Date: 2000/06/13 14:58:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -758,7 +758,7 @@ int stagein_castor_hsm_file() {
 		while (1) {
 			/* Wait for the corresponding tape to be available */
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] [%s] Calling vmgr_querytape(vid,vdn,dgn,aden,lbltype,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm);
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] [%s] Calling vmgr_querytape(vid,vdn,dgn,aden,lbltype,model,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm);
 #endif
 			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, model, NULL, NULL,
 								NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == 0) {
@@ -775,10 +775,7 @@ int stagein_castor_hsm_file() {
 		strcpy(last_vid,vid);
 
 		/* We grab the optimal blocksize */
-		if ((devinfo = Ctape_devinfo(model)) == NULL) {
-			sendrep (rpfd, MSG_ERR, STG02, vid, "Ctape_devinfo",sstrerror (serrno));
-			RETURN (SYERR);
-		}
+		devinfo = Ctape_devinfo(model);
 	}
 
 	/* Build the request from where we found vid (included) up to our next (excluded) */
@@ -972,6 +969,7 @@ int stagewrt_castor_hsm_file() {
 	char tmpbuf[21];
 	extern char* poolname2tapepool _PROTO((char *));
 	unsigned char blockid[4];
+    struct devinfo *devinfo;
 #ifdef SKIP_TAPE_POOL_TURNAROUND
     char tape_pool_first[CA_MAXPOOLNAMELEN + 1];
 #endif
@@ -1100,7 +1098,7 @@ int stagewrt_castor_hsm_file() {
 
 #ifdef STAGER_DEBUG
         sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] "
-                "Calling vmgr_gettape(%s,%s,NULL,vid,vsn,dgn,aden,lbltype,&fseq,&estimated_free_space)\n",
+                "Calling vmgr_gettape(%s,%s,NULL,vid,vsn,dgn,aden,lbltype,model,&fseq,&estimated_free_space)\n",
                 tape_pool != NULL ? tape_pool : "NULL", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0));
 #endif
         if (vmgr_gettape (
@@ -1112,6 +1110,7 @@ int stagewrt_castor_hsm_file() {
                           dgn,                    /* dgn       (output)              */
                           aden,                   /* density   (output)              */
                           lbltype,                /* lbltype   (output)              */
+                          model,                  /* model     (output)              */
                           &fseq,                  /* fseq      (output)              */
                           &estimated_free_space   /* freespace (output)              */
                           ) == 0) {
@@ -1132,6 +1131,9 @@ int stagewrt_castor_hsm_file() {
         sleep(10);
       }
       /* From now on, "vid" is in status TAPE_BUSY */
+
+      /* We grab the optimal blocksize */
+      devinfo = Ctape_devinfo(model);
       
       /* We check which hsm files are concerned */
       i = 0;
@@ -1140,6 +1142,8 @@ int stagewrt_castor_hsm_file() {
       stcp_start = stcp_end = NULL;
 
       for (stcp = stcs; stcp < stce; stcp++, i++) {
+        /* We always force the blocksize while migrating */
+        stcp->blksize = devinfo->defblksize;
         if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
           /* Yet transfered */
           continue;
