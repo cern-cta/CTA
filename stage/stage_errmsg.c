@@ -4,11 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.5 $ $Date: 2000/03/23 01:41:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.6 $ $Date: 2000/03/27 09:14:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <stdarg.h>         /* _WIN32's UNIX compatibility */
+#endif
 #include <varargs.h>
 #include <sys/types.h>
 #include <stdlib.h>
