@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.17 $ $Date: 2004/08/20 13:16:43 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.18 $ $Date: 2005/02/04 08:25:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -955,7 +955,9 @@ dlf_log_message_t *msg;
 #if !defined(_WIN32)
 	struct flock64 fl_struct;
 #endif
-	char prtbuf[1024];
+	char prtbuf[DLF_PRTBUF_LEN + 2];
+	int restsize = DLF_PRTBUF_LEN;
+	char *bufpos;
 	char *txt;
 	char *sev_name;
 	dlf_msg_param_t *p;
@@ -973,23 +975,8 @@ dlf_log_message_t *msg;
 	        if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
 		     return (-1);
 	}
-#if !defined(_WIN32)
-	/* Lock file */
-	if (!write_to_stdout) {
-	        fl_struct.l_type = F_WRLCK;
-	        fl_struct.l_whence = SEEK_SET;
-	        fl_struct.l_start = 0;
-	        fl_struct.l_len = 0;
-	        fl_struct.l_pid = 0;
-	
-	        if (fcntl(fd, F_SETLKW64, &fl_struct) < 0) {
-		     close(fd);
-		     return (-1);
-		}
-	}
-#endif
 	n = Csnprintf
-		(prtbuf, sizeof(prtbuf), fmt1, 
+		(prtbuf, restsize, fmt1, 
 		msg->time, msg->time_usec, msg->hostname,
 		((sev_name =
 		dlf_get_severity_name(msg->severity)) != NULL) ? sev_name : "Unknown",
@@ -1000,56 +987,46 @@ dlf_log_message_t *msg;
 		dlf_uuid2hex(msg->request_id, uuidhex, sizeof(uuidhex)),
 		msg->ns_fileid.server,
 		msg->ns_fileid.fileid);
-	/* Go to the end of the file */
-	if (!write_to_stdout) {
-	        if ((lseek (fd, 0, SEEK_END)) < 0) {
-		  close(fd);
-		  return (-1);
-		}
-	}
-	written = write (fd, prtbuf, n);
-	if (written < n) {
+	if (n >= restsize) { /* Buffer too small */
 	        if (!write_to_stdout) close(fd);
-		return (-1);
+	        return (-1);
 	}
+	restsize -= n;
+	bufpos = prtbuf + n;
 	for (p = msg->param_list.head; p != NULL; p = p->next) {
 		switch(p->type) {
 		case DLF_MSG_PARAM_STR:
-			n = Csnprintf (prtbuf, sizeof(prtbuf), fmt2, p->name, p->strval);
+			n = Csnprintf (bufpos, restsize, fmt2, p->name, p->strval);
 			break;
 		case DLF_MSG_PARAM_TPVID:
-			n = Csnprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, p->strval);
+			n = Csnprintf (bufpos, restsize, fmt5, p->name, p->strval);
 			break;
 		case DLF_MSG_PARAM_INT64:
-			n = Csnprintf (prtbuf, sizeof(prtbuf), fmt3, p->name, p->numval);
+			n = Csnprintf (bufpos, restsize, fmt3, p->name, p->numval);
 			break;
 		case DLF_MSG_PARAM_UUID:
-			n = Csnprintf (prtbuf, sizeof(prtbuf), fmt5, p->name, 
+			n = Csnprintf (bufpos, restsize, fmt5, p->name, 
 				dlf_uuid2hex(*((Cuuid_t*)p->strval),
 				uuidhex,
 				sizeof(uuidhex)));
 			break;
 		case DLF_MSG_PARAM_DOUBLE:
-			n = Csnprintf (prtbuf, sizeof(prtbuf), fmt4, p->name, p->dval);
+			n = Csnprintf (bufpos, restsize, fmt4, p->name, p->dval);
 			break;
 		default:
 			serrno = SEINTERNAL;
 			if (!write_to_stdout) close(fd);
 			return (-1);
 		}
-		written = write (fd, prtbuf, n);
-		if (written < n) {
+		if (n >= restsize) { /* buffer too small */
 		        if (!write_to_stdout) close(fd);
 			return (-1);
 		}
+		restsize -= n;
+		bufpos += n;
 	}
-	write (fd, "\n", 1);
-#if !defined(_WIN32)
-	/* Flush buffers */
-	fsync (fd);
-	/* Unlock the file */
-#endif
-	/* Lock is removed when file is closed */
+	n = Csnprintf (bufpos, restsize, "\n");
+	write (fd, prtbuf, bufpos - prtbuf + 1);
 	if (!write_to_stdout) close(fd);
 	return (0);
 }
