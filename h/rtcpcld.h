@@ -211,9 +211,10 @@ int rtcpcld_getTapesToDo _PROTO((
                                  tape_list_t ***,
                                  int *
                                  ));
-int rtcpcld_getSegmentsToDo _PROTO((
-                                    tape_list_t *
-                                    ));
+int rtcpcld_getSegmentToDo _PROTO((
+                                   tape_list_t *,
+                                   file_list_t **
+                                   ));
 int rtcpcld_getTapeCopyNumber _PROTO((
                                       file_list_t *,
                                       int *
