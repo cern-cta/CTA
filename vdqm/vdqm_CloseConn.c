@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_CloseConn.c,v 1.2 1999/07/29 09:17:50 obarring Exp $
+ * $Id: vdqm_CloseConn.c,v 1.3 1999/09/01 15:07:11 obarring Exp $
  * $Log: vdqm_CloseConn.c,v $
+ * Revision 1.3  1999/09/01 15:07:11  obarring
+ * Fix sccsid string
+ *
  * Revision 1.2  1999/07/29 09:17:50  obarring
  * Replace TABs with 4 SPACEs
  *
@@ -19,7 +22,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: vdqm_CloseConn.c,v 1.2 1999/07/29 09:17:50 obarring Exp $";
+static char sccsid[] = "@(#)$Id: vdqm_CloseConn.c,v 1.3 1999/09/01 15:07:11 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>

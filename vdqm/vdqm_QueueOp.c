@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_QueueOp.c,v 1.2 1999/07/31 14:49:55 obarring Exp $
+ * $Id: vdqm_QueueOp.c,v 1.3 1999/09/01 15:11:06 obarring Exp $
  * $Log: vdqm_QueueOp.c,v $
+ * Revision 1.3  1999/09/01 15:11:06  obarring
+ * Fix sccsid string
+ *
  * Revision 1.2  1999/07/31 14:49:55  obarring
  * Set error codes for exceptions
  *
@@ -19,7 +22,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id";
+static char sccsid[] = "@(#)$Id: vdqm_QueueOp.c,v 1.3 1999/09/01 15:11:06 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>

@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_PoolOp.c,v 1.2 1999/07/29 09:36:15 obarring Exp $
+ * $Id: vdqm_PoolOp.c,v 1.3 1999/09/01 15:09:23 obarring Exp $
  * $Log: vdqm_PoolOp.c,v $
+ * Revision 1.3  1999/09/01 15:09:23  obarring
+ * Fix sccsid string
+ *
  * Revision 1.2  1999/07/29 09:36:15  obarring
  * Replace TABs with 4 SPACEs
  *
@@ -19,7 +22,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id";
+static char cvsId[] = "@(#)$Id: vdqm_PoolOp.c,v 1.3 1999/09/01 15:09:23 obarring Exp $";
 #endif /* not lint */
 
 #if defined(_WIN32)

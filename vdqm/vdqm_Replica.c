@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_Replica.c,v 1.1 1999/07/27 09:21:39 obarring Exp $
+ * $Id: vdqm_Replica.c,v 1.2 1999/09/01 15:11:46 obarring Exp $
  * $Log: vdqm_Replica.c,v $
+ * Revision 1.2  1999/09/01 15:11:46  obarring
+ * Fix sccsid string
+ *
  * Revision 1.1  1999/07/27 09:21:39  obarring
  * First version
  *
@@ -16,7 +19,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id";
+static char sccsid[] = "@(#)$Id: vdqm_Replica.c,v 1.2 1999/09/01 15:11:46 obarring Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
