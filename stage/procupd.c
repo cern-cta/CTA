@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.98 2002/03/05 14:44:03 jdurand Exp $
+ * $Id: procupd.c,v 1.99 2002/03/08 13:08:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.98 $ $Date: 2002/03/05 14:44:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.99 $ $Date: 2002/03/08 13:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -67,7 +67,7 @@ extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO((int));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
-extern int updfreespace _PROTO((char *, char *, signed64));
+extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
@@ -518,7 +518,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* This is for the return here at the end of the routine */
 					c = 0;
 				} else if (c) {
-					updfreespace (stcp->poolname, stcp->ipath,
+					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 								(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 					delreq(stcp,0);
 					goto reply;
@@ -1090,7 +1090,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
 			return;
 		} else if (c) {
-			updfreespace (stcp->poolname, stcp->ipath,
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 			delreq(stcp,0);
 			wqp->status = c;
@@ -1643,7 +1643,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if (wqp->Upluspath && *((wfp+1)->upath) &&
 					strcmp (stcp->ipath, (wfp+1)->upath))
 				create_link (stcp, (wfp+1)->upath);
-			updfreespace (stcp->poolname, stcp->ipath,
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			check_waiting_on_req (subreqid, STAGED);
 		}

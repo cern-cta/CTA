@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.39 2002/03/05 14:44:03 jdurand Exp $
+ * $Id: procalloc.c,v 1.40 2002/03/08 13:08:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.39 $ $Date: 2002/03/05 14:44:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.40 $ $Date: 2002/03/08 13:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ extern struct stgdb_fd dbfd;
 
 void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
-extern int updfreespace _PROTO((char *, char *, signed64));
+extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
@@ -215,7 +215,7 @@ void procallocreq(req_data, clienthost)
 		wqp->nb_clnreq++;
 		cleanpool (stcp->poolname);
 	} else if (c) {
-		updfreespace (stcp->poolname, stcp->ipath,
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 									(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 		delreq (stcp,1);
 		goto reply;
@@ -254,7 +254,7 @@ void procallocreq(req_data, clienthost)
 					break;
 			}
 			if (! wfp->waiting_on_req)
-				updfreespace (stcp->poolname, stcp->ipath,
+				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 											(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 			delreq (stcp,0);
 		}

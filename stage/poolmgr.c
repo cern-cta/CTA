@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.188 2002/03/04 11:07:50 jdurand Exp $
+ * $Id: poolmgr.c,v 1.189 2002/03/08 13:08:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.188 $ $Date: 2002/03/04 11:07:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.189 $ $Date: 2002/03/08 13:08:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -159,7 +159,7 @@ void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, int *, char *, int, int));
 void rwcountersfs _PROTO((char *, char *, int, int));
 void getdefsize _PROTO((char *, int *));
-int updfreespace _PROTO((char *, char *, signed64));
+int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 void redomigpool _PROTO(());
 int updpoolconf _PROTO((char *, char *, char *));
 int getpoolconf _PROTO((char *, char *, char *));
@@ -1683,9 +1683,11 @@ getdefsize(poolname, size)
 	*size = pool_p->defsize;
 }
 int
-updfreespace(poolname, ipath, incr)
+updfreespace(poolname, ipath, reject_overflow, elemp_free, incr)
 	char *poolname;
 	char *ipath;
+	int reject_overflow;
+	u_signed64 *elemp_free;
 	signed64 incr;
 {
 	struct pool_element *elemp;
@@ -1707,7 +1709,7 @@ updfreespace(poolname, ipath, incr)
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	if (i == nbpool) return (0);	/* old entry; pool does not exist */
-	for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++)
+	for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
 		if (p) {
 			if (strcmp (server, elemp->server) ||
 				strncmp (p + 1, elemp->dirpath, strlen (elemp->dirpath)) ||
@@ -1720,9 +1722,14 @@ updfreespace(poolname, ipath, incr)
 			strcpy (path, elemp->dirpath);
 			break;
 		}
+	}
 	if (j < pool_p->nbelem) {
+		u_signed64 elemp_old_free = elemp->free;
+		u_signed64 pool_p_old_free = pool_p->free;
+
 		elemp->free += incr;
 		pool_p->free += incr;
+		if (((pool_p->free > pool_p->capacity) || ((elemp->free > elemp->capacity))) && (reject_overflow)) goto rejected_overflow;
 		if (pool_p->free > pool_p->capacity) {
 			if (incr >= 0) {
 				stglogit ("selectfs", "### Warning, pool_p->free > pool_p->capacity. pool_p->free set to pool_p->capacity\n");
@@ -1746,7 +1753,18 @@ updfreespace(poolname, ipath, incr)
 				  u64tostr((u_signed64) (incr < 0 ? -incr : incr), tmpbuf1, 0),
 				  u64tostr(elemp->free, tmpbuf2, 0),
 				  u64tostr(pool_p->free, tmpbuf3, 0));
+		goto selectfs_ok;
+	  rejected_overflow:
+		elemp->free = elemp_old_free;
+		pool_p->free = pool_p_old_free;
+		stglogit ("updfreespace", "### %s incr=%s%s but elemp->free=%s : overflow rejected\n",
+				  path, (incr < 0 ? "-" : ""),
+				  u64tostr((u_signed64) (incr < 0 ? -incr : incr), tmpbuf1, 0),
+				  u64tostr(elemp->free, tmpbuf2, 0));
+		if (elemp_free != NULL) *elemp_free = elemp->free;
+		return(-1);
 	}
+  selectfs_ok:
 	return (0);
 }
 

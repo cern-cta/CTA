@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.24 2002/03/04 17:40:09 jdurand Exp $
+ * $Id: procfilchg.c,v 1.25 2002/03/08 13:08:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.24 $ $Date: 2002/03/04 17:40:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.25 $ $Date: 2002/03/08 13:08:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -80,7 +80,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int)
 extern void redomigpool _PROTO(());
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
-extern int updfreespace _PROTO((char *, char *, signed64));
+extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -563,6 +563,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						updfreespace (
 							stcp->poolname,
 							stcp->ipath,
+							0,
+							NULL,
 							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
 							);
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);

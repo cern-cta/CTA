@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.180 2002/03/07 08:42:43 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.181 2002/03/08 13:08:50 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.180 $ $Date: 2002/03/07 08:42:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.181 $ $Date: 2002/03/08 13:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -232,7 +232,7 @@ extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *, int, int));
-extern int updfreespace _PROTO((char *, char *, signed64));
+extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern void procupdreq _PROTO((int, int, char *, char *));
 int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
@@ -773,7 +773,7 @@ int main(argc,argv)
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				actual_size_block = stcp->actual_size;
 			}
-			updfreespace (stcp->poolname, stcp->ipath,
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			stcp++;
@@ -871,7 +871,7 @@ int main(argc,argv)
 						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = stcp->actual_size;
 					}
-					updfreespace (stcp->poolname, stcp->ipath,
+					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 				}
 			}
@@ -2759,7 +2759,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				/* This is a file coming from (automatic or not) migration */
 				update_migpool(&stcp,-1,0);
 			}
-			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ?
 						((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size_block)));
 		} else {
 			/* We neverthless take into account the migration counters */
@@ -3541,7 +3541,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			/* No block information - assume mismatch with actual_size will be acceptable */
 			actual_size_block = stcp->actual_size;
 		}
-		updfreespace (stcp->poolname, stcp->ipath,
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) actual_size_block));
 		rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 	}
@@ -3602,6 +3602,7 @@ int upd_staged(upath)
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	u_signed64 actual_size_block;
+	u_signed64 elemp_free;
 	struct stat st;
 
 	found = 0;
@@ -3665,8 +3666,28 @@ int upd_staged(upath)
 		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
-	updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
+	/* We instruct updfreespace() that we reject overflow */
+	if (updfreespace (stcp->poolname, stcp->ipath, 1, (u_signed64 *) &elemp_free, 
+					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)) != 0) {
+		u_signed64 elemp_free_plus_blocks;
+		int sav_stcp_size = stcp->size;
+
+		/* There is overflow - this mean that incrementing elemp->free and pool_p->free by */
+		/* (actual_size_block - stcp->size * ONE_MB) would have make free space > capacity... */
+		/* We give it another try by reajusting stcp->size to the exact value v.s. elemp_free */
+		/* We have to make sure that elemp_free + (actual_size_block - stcp->size * ONE_MB) >= 0 */
+		/* e.g. stcp->size * ONE_MB <= elemp_free + actual_size_block */
+		elemp_free_plus_blocks = elemp_free + actual_size_block;
+
+		/* The following have to underestimate as less as possible the size */
+		/* Note that in rfio/rfcp.c there is almost the same line, but then there is a +1 to overestimate */
+		/* as less as possible the size...! */
+		stcp->size = (int) ((elemp_free_plus_blocks > ONE_MB) ? (((elemp_free_plus_blocks - ((elemp_free_plus_blocks / ONE_MB) * ONE_MB)) == 0) ? (elemp_free_plus_blocks / ONE_MB) : ((elemp_free / ONE_MB))) : 0);
+		sendrep (rpfd, MSG_ERR, "STG02 - %s : Filesystem too low in space, underestimating initial allocated size from %dM to %dM\n",  stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, sav_stcp_size, stcp->size);
+		/* Give it another try, then allowing overflow in order to allow user to continue */
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
+					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
+	}
 	return (0);
 }
 
