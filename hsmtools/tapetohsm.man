@@ -1,0 +1,130 @@
+.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.1 $ $Date: 2001/03/28 05:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TAPETOHSM 1 "$Date" CASTOR "vmgr Administrator Commands"
+.SH NAME
+tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
+.SH SYNOPSIS
+.B tapetohsm
+[
+.BI -d " density"
+]
+.BI -g " dgn"
+[
+.BI -i
+] [
+.BI -l " lbltype"
+] [
+.BI -M " hsm_path_name"
+] [
+.BI -P " poolname"
+] [
+.BI -q " file_sequence_number"
+] [
+.BI -s " size"
+]
+.BI -V " vid"
+[
+.BI -v " vsn"
+] [
+.BI --ml " media_letter"
+]
+.BI --mo " model"
+[
+.BI --po " poolname"
+] [
+.BI --verbose
+]
+.SH DESCRIPTION
+.B tapetohsm
+catalogs in the CASTOR Name Server files from a non HSM tape.
+.TP
+.I density
+The supported alphanumeric densities are:
+.br
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+.TP
+.I dgn
+The device group name must be a member of an installation defined set of
+"device groups".
+.TP
+.I lbltype
+may be
+.BR al ,
+.B nl
+or
+.BR sl .
+Default is
+.BR al .
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I vsn
+specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+.LP
+Only
+.IR vid ,
+.I dgn
+and
+.I model
+are mandatory. The other tape fields can be set later.
+The file segment attributes can be given on the command line (one file only)
+or in a directive file.
+.SH EXAMPLE
+.nf
+.ft CW
+tapetohsm -V RT0001 -d 20GC -l al -g 9840R3 --model 9840 --verbose \\
+	-M /castor/cern.ch/user/b/baud/RT0001.dat -q 1 -s 111111
+
+tapetohsm -V RT0001 -d 20GC -l al -g 9840R3 --model 9840 --verbose \\
+	-i < tapetohsm.inp
+.ft
+.fi
+where tapetohsm.inp contains:
+.nf
+.ft CW
+-q 1 -s 1111111 -M /castor/cern.ch/user/b/baud/RT0001/file1
+-q 2 -s 2222222 -M /castor/cern.ch/user/b/baud/RT0001/file2
+-q 3 -s 3333333 -M /castor/cern.ch/user/b/baud/RT0001/file3
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_creat(3) ,
+.BR Cns_setfsize(3) ,
+.BR Cns_setsegattrs(3) ,
+.BR vmgr_updatetape(3) ,
+.B vmgrentertape(1)
