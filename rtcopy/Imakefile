@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2005/03/11 09:46:50 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2005/03/11 11:14:48 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -232,8 +232,8 @@ EPROGS_C += FileName($(EXPORTBIN),rtcpcldCleanupDB) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
 	   FileName($(EXPORTBIN),recaller) \
 	   FileName($(EXPORTBIN),migrator)
-MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX))
-EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX)))
+MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX)) FileName($(MANDIR),rtcpcldCleanupDB.$(MANSUFFIX))
+EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpcldCleanupDB.$(MANSUFFIX)))
 #endif
 
 #if BuildMonitorLibrary
@@ -390,6 +390,8 @@ IMANPAGE(tpwrite,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dumptape,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(rtcpd,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(killjid,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(rtcpclientd,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(rtcpcldCleanupDB,$(MANDIR),$(MANSUFFIX))
 #if BuildRtstat
 IMANPAGE(rtstat,$(MANDIR),$(MANSUFFIX))
 #endif
@@ -414,6 +416,8 @@ EMANPAGE(tpwrite,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(dumptape,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(rtcpd,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(killjid,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(rtcpclientd,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(rtcpcldCleanupDB,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #if BuildRtstat
 EMANPAGE(rtstat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #endif
