@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.5 2002/02/18 09:34:13 jdurand Exp $
+ * $Id: munlink.c,v 1.6 2002/02/18 10:10:49 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.5 $ $Date: 2002/02/18 09:34:13 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.6 $ $Date: 2002/02/18 10:10:49 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -38,7 +38,7 @@ static int rfio_unend_this _PROTO((int,int));
 int DLL_DECL rfio_munlink(file)
      char *file ;
 {
-  int rt ,rc ,i ,fd, rfindex, Tid;
+  int rt ,rc ,fd, rfindex, Tid;
   char *host , *filename ;
 
   INIT_TRACE("RFIO_TRACE");
@@ -395,9 +395,7 @@ static int rfio_munlink_findentry(hostname,Tid)
 
 int DLL_DECL rfio_munlink_reset()
 {
-  int i,Tid, j=0 ;
-  char buf[256];
-  char *p=buf ;
+  int i,Tid;
   int rc = 0;
 
   INIT_TRACE("RFIO_TRACE");

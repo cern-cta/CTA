@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.21 2002/02/18 09:47:11 jdurand Exp $
+ * $Id: mstat.c,v 1.22 2002/02/18 10:10:49 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.21 $ $Date: 2002/02/18 09:47:11 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.22 $ $Date: 2002/02/18 10:10:49 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -458,9 +458,7 @@ static int rfio_mstat_findentry(hostname,Tid)
 
 int DLL_DECL rfio_mstat_reset()
 {
-  int i,Tid, j=0 ;
-  char buf[256];
-  char *p=buf ;
+  int i,Tid;
   int rc = 0;
 
   INIT_TRACE("RFIO_TRACE");
