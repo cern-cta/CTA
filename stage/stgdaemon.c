@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.112 2001/03/05 12:07:24 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.113 2001/03/05 12:17:36 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.112 $ $Date: 2001/03/05 12:07:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.113 $ $Date: 2001/03/05 12:17:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2255,7 +2255,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			}
 		}
 		if ((found == 0) ||
-			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && 
+			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) &&
 				(
 				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
 				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
@@ -2337,7 +2337,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		}
 	}
 	if (delreqflg) {
-		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && 
+		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) &&
 				(
 				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
 				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
