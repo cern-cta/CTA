@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.17 $ $Date: 2001/05/21 11:07:18 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.18 $ $Date: 2001/06/17 14:04:28 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -222,8 +222,9 @@ struct rfiostat	{
 #define fwrite          rfio_fwrite
 #define fread           rfio_fread
 #define fseek           rfio_fseek
-/* The following clashes with struct stat in sys/stat.h */
-/* #define stat            rfio_stat                    */
+#define stat(X,Y)       rfio_stat(X,Y)
+#define chdir           rfio_chdir
+#define getcwd          rfio_getcwd
 #define open            rfio_open
 #define close           rfio_close
 #define write           rfio_write
