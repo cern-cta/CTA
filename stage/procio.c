@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.92 2001/02/16 09:39:47 jdurand Exp $
+ * $Id: procio.c,v 1.93 2001/02/22 10:53:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.92 $ $Date: 2001/02/16 09:39:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.93 $ $Date: 2001/02/22 10:53:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1756,8 +1756,8 @@ void procioreq(req_type, req_data, clienthost)
 				if (forced_Cns_creatx != 0) {
 					mode_t okmode;
 
-					if ((api_out == 0) || (openmode == 0)) {
-						okmode = (07777 & ~ stgreq.mask);
+					if (api_out == 0) {
+						okmode = ( 0777 & ~ stgreq.mask);
 					} else {
 						okmode = (07777 & (openmode & ~ stgreq.mask));
 					}
@@ -3326,8 +3326,8 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 	setegid(stcp->gid);
 	seteuid(stcp->uid);
-	if ((api_out == 0) || (openmode == 0)) {
-		okmode = (07777 & ~ stcp->mask);
+	if (api_out == 0) {
+		okmode = ( 0777 & ~ stcp->mask);
 	} else {
 		okmode = (07777 & (openmode & ~ stcp->mask));
 	}
