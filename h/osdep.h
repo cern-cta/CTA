@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.7 $ $Date: 1999/11/08 07:48:09 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.8 $ $Date: 1999/11/21 14:09:33 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -113,16 +113,18 @@ typedef u_signed64 U_HYPER;
 /* If your externalized function do not return int    */
 /* but another type, you must get inspired by the     */
 /* following declaration of int and change       */
-#ifdef DLL_DECL
+#if defined(DLL_DECL)
 #undef DLL_DECL
 #endif
-#if !(defined(_WIN32) && defined(_DLL))
+#if !defined(_WIN32)
 #define DLL_DECL
 #else
-#ifdef _EXPORTING
-#define DLL_DECL __declspec(dllexport) __cdecl
+#if defined(_EXPORTING) && defined(_DLL)
+#define DLL_DECL __declspec(dllexport) 
+#elif defined(_IMPORTING)
+#define DLL_DECL __declspec(dllimport)
 #else
-#define DLL_DECL __declspec(dllimport) __cdecl
+#define DLL_DECL
 #endif
 #endif
 
