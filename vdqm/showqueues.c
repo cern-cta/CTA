@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.7 $ $Date: 2000/06/25 10:30:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.8 $ $Date: 2000/06/26 13:00:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.7 $ $Date: 2
 char strftime_format[] = "%b %d %H:%M:%S";
 
 int main(int argc, char *argv[]) {
-    int rc, c;
+    int rc, c, last_id;
     int give_jid = 1;
     time_t now;
     struct tm *tp;
@@ -76,14 +76,16 @@ int main(int argc, char *argv[]) {
      */
     rc = 0;
     tmp = NULL;
+    last_id = 0;
     do {
        if ( tmp == NULL ) 
            tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
        strcpy(tmp->drvreq.dgn,dgn);
        if ( *server != '\0' ) strcpy(tmp->drvreq.server,server); 
        rc = vdqm_NextDrive(&nw,&tmp->drvreq);
-       if ( rc != -1 && *tmp->drvreq.server != '\0' && *tmp->drvreq.drive != '\0' ) {
+       if ( rc != -1 && *tmp->drvreq.server != '\0' && *tmp->drvreq.drive != '\0' && (tmp->drvreq.DrvReqID != last_id) ) {
            CLIST_INSERT(reqlist,tmp); 
+           last_id = tmp->drvreq.DrvReqID;
            tmp = NULL;
        }
     } while (rc != -1);
@@ -94,13 +96,16 @@ int main(int argc, char *argv[]) {
      */
     rc = 0;
     tmp = NULL;
+    last_id = 0;
     do {
        if ( tmp == NULL )
            tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
        strcpy(tmp->volreq.dgn,dgn);
        if ( *server != '\0' ) strcpy(tmp->volreq.server,server);
        rc = vdqm_NextVol(&nw,&tmp->volreq);
-       if ( rc != -1 && tmp->volreq.VolReqID > 0 ) {
+       if ( rc != -1 && tmp->volreq.VolReqID > 0 && 
+            (tmp->volreq.VolReqID != last_id) ) {
+           last_id = tmp->volreq.VolReqID;
            CLIST_ITERATE_BEGIN(reqlist,tmp1) {
                if ( tmp->volreq.VolReqID == tmp1->drvreq.VolReqID ) {
                    tmp1->volreq = tmp->volreq;
