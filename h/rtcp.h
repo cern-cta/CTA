@@ -106,6 +106,7 @@ typedef struct rtcpFileRequest {
                                         */
     u_signed64 bytes_from_host;        /* Bytes written to tape including
                                         * the label.
+                                        */
     u_signed64 nbrecs;                 /* Number of records copied */
 
     /*
