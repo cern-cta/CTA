@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/18 12:55:26 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include "castor/rh/StageInRequest.hpp"
-#include "castor/rh/File.hpp"
+#include "castor/stager/StageInRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
@@ -33,7 +33,6 @@
 #include "castor/db/DbAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 #include <iostream>
@@ -43,7 +42,7 @@ int main (int argc, char** argv) {
   castor::BaseObject::initLog("", castor::SVC_STDMSG);
 
   // Prepare a request
-  castor::rh::StageInRequest* fr = new castor::rh::StageInRequest();
+  castor::stager::StageInRequest* fr = new castor::stager::StageInRequest();
   
   castor::rh::Client *cl = new castor::rh::Client();
   cl->setIpAddress(0606);
@@ -51,15 +50,15 @@ int main (int argc, char** argv) {
   cl->setRequest(fr);
   fr->setClient(cl);
 
-  castor::rh::File* f1 = new castor::rh::File();
-  f1->setName("First test File");
-  fr->addFiles(f1);
-  f1->setRequest(fr);
+  castor::stager::SubRequest* s1 = new castor::stager::SubRequest();
+  s1->setFileName("First test SubRequest");
+  fr->addSubRequests(s1);
+  s1->setRequest(fr);
 
-  castor::rh::File* f2 = new castor::rh::File();
-  f2->setName("2nd test File");
-  fr->addFiles(f2);
-  f2->setRequest(fr);
+  castor::stager::SubRequest* s2 = new castor::stager::SubRequest();
+  s2->setFileName("2nd test SubRequest");
+  fr->addSubRequests(s2);
+  s2->setRequest(fr);
 
   // Get a Services instance
   castor::Services* svcs = new castor::Services();
@@ -67,7 +66,9 @@ int main (int argc, char** argv) {
   // Stores the request
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   try {
-    svcs->createRep(&ad, fr, true);
+    svcs->createRep(&ad, fr, false);
+    svcs->fillRep(&ad, fr, castor::OBJ_SubRequest, false);
+    svcs->fillRep(&ad, fr, castor::OBJ_IClient, true);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createRep : "
               << sstrerror(e.code()) << std::endl
@@ -80,10 +81,12 @@ int main (int argc, char** argv) {
 
   // Retrieves it in a separate object
   castor::db::DbAddress ad2(fr->id(), "OraCnvSvc", castor::SVC_ORACNV);
-  castor::rh::FileRequest* fr2;
+  castor::stager::Request* fr2;
   try{
     castor::IObject* fr2Obj = svcs->createObj(&ad2);
-    fr2 = dynamic_cast<castor::rh::FileRequest*>(fr2Obj);
+    svcs->fillObj(&ad2, fr2Obj, castor::OBJ_SubRequest);
+    svcs->fillObj(&ad2, fr2Obj, castor::OBJ_IClient);
+    fr2 = dynamic_cast<castor::stager::Request*>(fr2Obj);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createObj : "
               << sstrerror(e.code()) << std::endl
@@ -100,17 +103,18 @@ int main (int argc, char** argv) {
   castor::ObjectSet alreadyPrinted2;
   std::cout << "Finally :" << std::endl;
   fr2->print(std::cout, "  ", alreadyPrinted2);
-
+  
   // Now modify the first object
-  fr->removeFiles(f2);
-  castor::rh::File* f3 = new castor::rh::File();
-  f3->setName("3rd test File");
-  fr->addFiles(f3);
-  f3->setRequest(fr);
+  fr->removeSubRequests(s2);
+  castor::stager::SubRequest* s3 = new castor::stager::SubRequest();
+  s3->setFileName("3rd test SubRequest");
+  fr->addSubRequests(s3);
+  s3->setRequest(fr);
 
   // update the database
   try {
-    svcs->updateRep(&ad, fr);
+    svcs->updateRep(&ad, fr, false);
+    svcs->fillRep(&ad, fr, castor::OBJ_SubRequest, true);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in updateRep : "
               << sstrerror(e.code()) << std::endl
@@ -124,6 +128,7 @@ int main (int argc, char** argv) {
   // And update the second representation of the object
   try {
     svcs->updateObj(&ad, fr2);
+    svcs->fillObj(&ad, fr2, castor::OBJ_SubRequest);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in updateObj : "
               << sstrerror(e.code()) << std::endl
