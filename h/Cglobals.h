@@ -1,5 +1,14 @@
 /*
- * $Id: Cglobals.h,v 1.1 1999/07/20 15:08:37 obarring Exp $
+ * $Id: Cglobals.h,v 1.2 1999/07/30 15:59:10 obarring Exp $
+ * $Log: Cglobals.h,v $
+ * Revision 1.2  1999/07/30 15:59:10  obarring
+ * Add copyright notice
+ *
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
  */
 
 #ifndef _CASTOR_GLOBALS_H
@@ -28,11 +37,14 @@
 
 #if defined(__STDC__)
 EXTERN_C void DLL_DECL Cglobals_init(int (*)(int *, void **),
-                                     int (*)(int *, void *));
+                                     int (*)(int *, void *),
+                                     int (*)(void));
 EXTERN_C void DLL_DECL Cglobals_get(int *, void **, size_t size);
+EXTERN_C void DLL_DECL Cglobals_getTid(int *);
 #else /* __STDC__ */
 EXTERN_C void DLL_DECL Cglobals_init();
 EXTERN_C void DLL_DECL Cglobals_get();
+EXTERN_C void DLL_DECL Cglobals_getTid();
 #endif /* __STDC__ */
 
 #endif /* _CASTOR_GLOBALS_H */

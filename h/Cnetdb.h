@@ -1,6 +1,9 @@
 /*
- * $Id: Cnetdb.h,v 1.2 1999/07/30 15:58:06 obarring Exp $
+ * $Id: Cnetdb.h,v 1.3 1999/07/30 15:59:39 obarring Exp $
  * $Log: Cnetdb.h,v $
+ * Revision 1.3  1999/07/30 15:59:39  obarring
+ * Add copyright notice
+ *
  * Revision 1.2  1999/07/30 15:58:06  obarring
  * Add __STDC__ compilation branch for __h_errno() declaration
  *
@@ -8,6 +11,12 @@
  * First version
  *
  */
+
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
 
 #ifndef _CNETDB_H
 #define _CNETDB_H

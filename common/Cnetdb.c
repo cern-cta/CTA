@@ -1,13 +1,22 @@
 /*
- * $Id: Cnetdb.c,v 1.1 1999/07/30 15:03:55 obarring Exp $
+ * $Id: Cnetdb.c,v 1.2 1999/07/30 16:00:41 obarring Exp $
  * $Log: Cnetdb.c,v $
+ * Revision 1.2  1999/07/30 16:00:41  obarring
+ * Add copyright notice
+ *
  * Revision 1.1  1999/07/30 15:03:55  obarring
  * First version
  *
  */
 
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+
 #ifndef lint
-static char cvsId[] = "$Id: Cnetdb.c,v 1.1 1999/07/30 15:03:55 obarring Exp $";
+static char cvsId[] = "$Id: Cnetdb.c,v 1.2 1999/07/30 16:00:41 obarring Exp $";
 #endif /* not lint */
 
 #if defined(_WIN32)
