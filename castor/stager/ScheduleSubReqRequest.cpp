@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequest.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 08:55:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -86,20 +86,6 @@ void castor::stager::ScheduleSubReqRequest::print() const {
 //------------------------------------------------------------------------------
 int castor::stager::ScheduleSubReqRequest::TYPE() {
   return OBJ_ScheduleSubReqRequest;
-}
-
-//------------------------------------------------------------------------------
-// setId
-//------------------------------------------------------------------------------
-void castor::stager::ScheduleSubReqRequest::setId(u_signed64 id) {
-  m_id = id;
-}
-
-//------------------------------------------------------------------------------
-// id
-//------------------------------------------------------------------------------
-u_signed64 castor::stager::ScheduleSubReqRequest::id() const {
-  return m_id;
 }
 
 //------------------------------------------------------------------------------

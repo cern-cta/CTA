@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageReleaseFilesRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageReleaseFilesRequest_setId(castor::stager::StageReleaseFilesRequest* instance,
-                                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageReleaseFilesRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageReleaseFilesRequest_id(castor::stager::StageReleaseFilesRequest* instance,
-                                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageReleaseFilesRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageReleaseFilesRequest_type(castor::stager::StageReleaseFilesRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StageReleaseFilesRequest_clone(castor::stager::StageReleaseFilesRequest* instance,
                                              castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageReleaseFilesRequest_id(castor::stager::StageReleaseFilesRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageReleaseFilesRequest_setId(castor::stager::StageReleaseFilesRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

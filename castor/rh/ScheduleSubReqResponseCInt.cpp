@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponseCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponseCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/30 08:57:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -128,24 +128,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_setId(castor::rh::ScheduleSubReqResponse* instance,
-                                       u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_id(castor::rh::ScheduleSubReqResponse* instance,
-                                    u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_ScheduleSubReqResponse_type
   //----------------------------------------------------------------------------
   int Crh_ScheduleSubReqResponse_type(castor::rh::ScheduleSubReqResponse* instance,
@@ -160,6 +142,22 @@ extern "C" {
   int Crh_ScheduleSubReqResponse_clone(castor::rh::ScheduleSubReqResponse* instance,
                                        castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_ScheduleSubReqResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_ScheduleSubReqResponse_id(castor::rh::ScheduleSubReqResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_ScheduleSubReqResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_ScheduleSubReqResponse_setId(castor::rh::ScheduleSubReqResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

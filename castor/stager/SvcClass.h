@@ -76,18 +76,6 @@ int Cstager_SvcClass_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_SvcClass_setId(struct Cstager_SvcClass_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_SvcClass_id(struct Cstager_SvcClass_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_SvcClass_type(struct Cstager_SvcClass_t* instance,
@@ -150,6 +138,18 @@ int Cstager_SvcClass_defaultFileSize(struct Cstager_SvcClass_t* instance, u_sign
  * explicitely given (ie size given was 0)
  */
 int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_SvcClass_id(struct Cstager_SvcClass_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_SvcClass_setId(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_TapePool_t* object to the tapePools list

@@ -84,17 +84,6 @@ namespace castor {
       /* Implementation of IObject abstract class */
       /********************************************/
       /**
-       * Sets the id of the object
-       * @param id The new id
-       */
-      virtual void setId(u_signed64 id);
-
-      /**
-       * gets the id of the object
-       */
-      virtual u_signed64 id() const;
-
-      /**
        * Gets the type of the object
        */
       virtual int type() const;
@@ -199,7 +188,23 @@ namespace castor {
         m_subreqId = new_var;
       }
 
-    private:
+      /**
+       * Get the value of m_id
+       * The id of this object
+       * @return the value of m_id
+       */
+      u_signed64 id() const {
+        return m_id;
+      }
+
+      /**
+       * Set the value of m_id
+       * The id of this object
+       * @param new_var the new value of m_id
+       */
+      void setId(u_signed64 new_var) {
+        m_id = new_var;
+      }
 
     private:
 

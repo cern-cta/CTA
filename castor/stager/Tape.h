@@ -78,18 +78,6 @@ int Cstager_Tape_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_Tape_setId(struct Cstager_Tape_t* instance,
-                       u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_Tape_id(struct Cstager_Tape_t* instance,
-                    u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_Tape_type(struct Cstager_Tape_t* instance,
@@ -180,6 +168,18 @@ int Cstager_Tape_vwAddress(struct Cstager_Tape_t* instance, const char** var);
  * Vid worker address for killing requests
  */
 int Cstager_Tape_setVwAddress(struct Cstager_Tape_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_Tape_id(struct Cstager_Tape_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_Tape_setId(struct Cstager_Tape_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of stream

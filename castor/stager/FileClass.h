@@ -74,18 +74,6 @@ int Cstager_FileClass_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_FileClass_setId(struct Cstager_FileClass_t* instance,
-                            u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_FileClass_id(struct Cstager_FileClass_t* instance,
-                         u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_FileClass_type(struct Cstager_FileClass_t* instance,
@@ -144,5 +132,17 @@ int Cstager_FileClass_nbCopies(struct Cstager_FileClass_t* instance, unsigned in
  * The number of copies on tape for a file of this FileClass
  */
 int Cstager_FileClass_setNbCopies(struct Cstager_FileClass_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_FileClass_id(struct Cstager_FileClass_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_FileClass_setId(struct Cstager_FileClass_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_FILECLASS_H

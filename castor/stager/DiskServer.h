@@ -75,18 +75,6 @@ int Cstager_DiskServer_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_DiskServer_setId(struct Cstager_DiskServer_t* instance,
-                             u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_DiskServer_id(struct Cstager_DiskServer_t* instance,
-                          u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_DiskServer_type(struct Cstager_DiskServer_t* instance,
@@ -109,6 +97,18 @@ int Cstager_DiskServer_name(struct Cstager_DiskServer_t* instance, const char** 
  * Name of the DiskServer
  */
 int Cstager_DiskServer_setName(struct Cstager_DiskServer_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_DiskServer_id(struct Cstager_DiskServer_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_DiskServer_setId(struct Cstager_DiskServer_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_FileSystem_t* object to the fileSystems list

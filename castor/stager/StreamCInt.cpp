@@ -82,24 +82,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Stream_setId
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_setId(castor::stager::Stream* instance,
-                           u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Stream_id
-  //----------------------------------------------------------------------------
-  int Cstager_Stream_id(castor::stager::Stream* instance,
-                        u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Stream_type
   //----------------------------------------------------------------------------
   int Cstager_Stream_type(castor::stager::Stream* instance,
@@ -130,6 +112,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Stream_setInitialSizeToTransfer(castor::stager::Stream* instance, u_signed64 new_var) {
     instance->setInitialSizeToTransfer(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_id
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_id(castor::stager::Stream* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setId
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setId(castor::stager::Stream* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

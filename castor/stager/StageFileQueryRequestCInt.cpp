@@ -306,24 +306,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageFileQueryRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageFileQueryRequest_setId(castor::stager::StageFileQueryRequest* instance,
-                                          u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageFileQueryRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageFileQueryRequest_id(castor::stager::StageFileQueryRequest* instance,
-                                       u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageFileQueryRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageFileQueryRequest_type(castor::stager::StageFileQueryRequest* instance,
@@ -338,6 +320,22 @@ extern "C" {
   int Cstager_StageFileQueryRequest_clone(castor::stager::StageFileQueryRequest* instance,
                                           castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageFileQueryRequest_id(castor::stager::StageFileQueryRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageFileQueryRequest_setId(castor::stager::StageFileQueryRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

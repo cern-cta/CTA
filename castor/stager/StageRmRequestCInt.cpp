@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageRmRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageRmRequest_setId(castor::stager::StageRmRequest* instance,
-                                   u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageRmRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageRmRequest_id(castor::stager::StageRmRequest* instance,
-                                u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageRmRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageRmRequest_type(castor::stager::StageRmRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StageRmRequest_clone(castor::stager::StageRmRequest* instance,
                                    castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRmRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageRmRequest_id(castor::stager::StageRmRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRmRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageRmRequest_setId(castor::stager::StageRmRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

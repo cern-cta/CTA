@@ -259,18 +259,6 @@ int Cstager_StageReleaseFilesRequest_setClient(struct Cstager_StageReleaseFilesR
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageReleaseFilesRequest_setId(struct Cstager_StageReleaseFilesRequest_t* instance,
-                                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageReleaseFilesRequest_id(struct Cstager_StageReleaseFilesRequest_t* instance,
-                                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageReleaseFilesRequest_type(struct Cstager_StageReleaseFilesRequest_t* instance,
@@ -281,5 +269,17 @@ int Cstager_StageReleaseFilesRequest_type(struct Cstager_StageReleaseFilesReques
  */
 int Cstager_StageReleaseFilesRequest_clone(struct Cstager_StageReleaseFilesRequest_t* instance,
                                            struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageReleaseFilesRequest_id(struct Cstager_StageReleaseFilesRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageReleaseFilesRequest_setId(struct Cstager_StageReleaseFilesRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGERELEASEFILESREQUEST_H

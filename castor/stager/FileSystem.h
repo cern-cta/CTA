@@ -77,18 +77,6 @@ int Cstager_FileSystem_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_FileSystem_setId(struct Cstager_FileSystem_t* instance,
-                             u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_FileSystem_id(struct Cstager_FileSystem_t* instance,
-                          u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_FileSystem_type(struct Cstager_FileSystem_t* instance,
@@ -143,6 +131,18 @@ int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const c
  * Set the value of mountPoint
  */
 int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_FileSystem_id(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_FileSystem_setId(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of diskPool

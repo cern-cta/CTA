@@ -107,6 +107,18 @@ int Cstager_TapeCopyForMigration_copyNb(struct Cstager_TapeCopyForMigration_t* i
 int Cstager_TapeCopyForMigration_setCopyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_TapeCopyForMigration_id(struct Cstager_TapeCopyForMigration_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_TapeCopyForMigration_setId(struct Cstager_TapeCopyForMigration_t* instance, u_signed64 new_var);
+
+/**
  * Add a struct Cstager_Stream_t* object to the stream list
  */
 int Cstager_TapeCopyForMigration_addStream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t* obj);

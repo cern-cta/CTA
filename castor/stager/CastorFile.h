@@ -77,18 +77,6 @@ int Cstager_CastorFile_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_CastorFile_setId(struct Cstager_CastorFile_t* instance,
-                             u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_CastorFile_id(struct Cstager_CastorFile_t* instance,
-                          u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
@@ -135,6 +123,18 @@ int Cstager_CastorFile_fileSize(struct Cstager_CastorFile_t* instance, u_signed6
  * Size of the file
  */
 int Cstager_CastorFile_setFileSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_CastorFile_id(struct Cstager_CastorFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_CastorFile_setId(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of svcClass

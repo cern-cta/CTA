@@ -77,18 +77,6 @@ int Cstager_DiskCopy_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_DiskCopy_setId(struct Cstager_DiskCopy_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_DiskCopy_id(struct Cstager_DiskCopy_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_DiskCopy_type(struct Cstager_DiskCopy_t* instance,
@@ -123,6 +111,18 @@ int Cstager_DiskCopy_diskcopyId(struct Cstager_DiskCopy_t* instance, const char*
  * The Cuuid identifying the DiskCopy, stored as a human readable string
  */
 int Cstager_DiskCopy_setDiskcopyId(struct Cstager_DiskCopy_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_DiskCopy_id(struct Cstager_DiskCopy_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_DiskCopy_setId(struct Cstager_DiskCopy_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list

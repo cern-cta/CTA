@@ -323,24 +323,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageUpdateNextRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateNextRequest_setId(castor::stager::StageUpdateNextRequest* instance,
-                                           u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageUpdateNextRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateNextRequest_id(castor::stager::StageUpdateNextRequest* instance,
-                                        u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageUpdateNextRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateNextRequest_type(castor::stager::StageUpdateNextRequest* instance,
@@ -355,6 +337,22 @@ extern "C" {
   int Cstager_StageUpdateNextRequest_clone(castor::stager::StageUpdateNextRequest* instance,
                                            castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateNextRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateNextRequest_id(castor::stager::StageUpdateNextRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateNextRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateNextRequest_setId(castor::stager::StageUpdateNextRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

@@ -112,18 +112,6 @@ int Crh_FileResponse_setErrorMessage(struct Crh_FileResponse_t* instance, const 
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_FileResponse_setId(struct Crh_FileResponse_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_FileResponse_id(struct Crh_FileResponse_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_FileResponse_type(struct Crh_FileResponse_t* instance,
@@ -196,5 +184,17 @@ int Crh_FileResponse_subreqId(struct Crh_FileResponse_t* instance, const char** 
  * string
  */
 int Crh_FileResponse_setSubreqId(struct Crh_FileResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_FileResponse_id(struct Crh_FileResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_FileResponse_setId(struct Crh_FileResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_FILERESPONSE_H

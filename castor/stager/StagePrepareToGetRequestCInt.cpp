@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StagePrepareToGetRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StagePrepareToGetRequest_setId(castor::stager::StagePrepareToGetRequest* instance,
-                                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StagePrepareToGetRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StagePrepareToGetRequest_id(castor::stager::StagePrepareToGetRequest* instance,
-                                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StagePrepareToGetRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StagePrepareToGetRequest_type(castor::stager::StagePrepareToGetRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StagePrepareToGetRequest_clone(castor::stager::StagePrepareToGetRequest* instance,
                                              castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToGetRequest_id(castor::stager::StagePrepareToGetRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToGetRequest_setId(castor::stager::StagePrepareToGetRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

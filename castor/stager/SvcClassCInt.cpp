@@ -80,24 +80,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setId
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setId(castor::stager::SvcClass* instance,
-                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_id
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_id(castor::stager::SvcClass* instance,
-                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_type
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_type(castor::stager::SvcClass* instance,
@@ -178,6 +160,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_setDefaultFileSize(castor::stager::SvcClass* instance, u_signed64 new_var) {
     instance->setDefaultFileSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_id
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_id(castor::stager::SvcClass* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setId
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setId(castor::stager::SvcClass* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

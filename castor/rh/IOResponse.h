@@ -162,6 +162,18 @@ int Crh_IOResponse_subreqId(struct Crh_IOResponse_t* instance, const char** var)
  */
 int Crh_IOResponse_setSubreqId(struct Crh_IOResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_IOResponse_id(struct Crh_IOResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_IOResponse_setId(struct Crh_IOResponse_t* instance, u_signed64 new_var);
+
 /*********************************************/
 /* Implementation of Response abstract class */
 /*********************************************/

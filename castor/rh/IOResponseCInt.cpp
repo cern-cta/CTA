@@ -198,6 +198,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_IOResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_id(castor::rh::IOResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_setId(castor::rh::IOResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_IOResponse_errorCode
   //----------------------------------------------------------------------------
   int Crh_IOResponse_errorCode(castor::rh::IOResponse* instance, unsigned int* var) {

@@ -307,24 +307,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_setId(castor::stager::StageRequestQueryRequest* instance,
-                                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_id(castor::stager::StageRequestQueryRequest* instance,
-                                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageRequestQueryRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageRequestQueryRequest_type(castor::stager::StageRequestQueryRequest* instance,
@@ -356,6 +338,22 @@ extern "C" {
   int Cstager_StageRequestQueryRequest_setParameter(castor::stager::StageRequestQueryRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setParameter(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_id(castor::stager::StageRequestQueryRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_setId(castor::stager::StageRequestQueryRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

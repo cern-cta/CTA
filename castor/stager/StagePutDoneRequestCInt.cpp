@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StagePutDoneRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StagePutDoneRequest_setId(castor::stager::StagePutDoneRequest* instance,
-                                        u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StagePutDoneRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StagePutDoneRequest_id(castor::stager::StagePutDoneRequest* instance,
-                                     u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StagePutDoneRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StagePutDoneRequest_type(castor::stager::StagePutDoneRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StagePutDoneRequest_clone(castor::stager::StagePutDoneRequest* instance,
                                         castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_id(castor::stager::StagePutDoneRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_setId(castor::stager::StagePutDoneRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

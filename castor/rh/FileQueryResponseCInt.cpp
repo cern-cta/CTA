@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileQueryResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_FileQueryResponse_setId(castor::rh::FileQueryResponse* instance,
-                                  u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileQueryResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_FileQueryResponse_id(castor::rh::FileQueryResponse* instance,
-                               u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_FileQueryResponse_type
   //----------------------------------------------------------------------------
   int Crh_FileQueryResponse_type(castor::rh::FileQueryResponse* instance,
@@ -287,6 +269,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_FileQueryResponse_setNbAccesses(castor::rh::FileQueryResponse* instance, unsigned int new_var) {
     instance->setNbAccesses(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_id(castor::rh::FileQueryResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setId(castor::rh::FileQueryResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
  *
  * 
  *
@@ -84,17 +84,6 @@ namespace castor {
       /* Implementation of IObject abstract class */
       /********************************************/
       /**
-       * Sets the id of the object
-       * @param id The new id
-       */
-      virtual void setId(u_signed64 id);
-
-      /**
-       * gets the id of the object
-       */
-      virtual u_signed64 id() const;
-
-      /**
        * Gets the type of the object
        */
       virtual int type() const;
@@ -107,7 +96,23 @@ namespace castor {
       /*********************************/
       /* End of IObject abstract class */
       /*********************************/
-    private:
+      /**
+       * Get the value of m_id
+       * The id of this object
+       * @return the value of m_id
+       */
+      u_signed64 id() const {
+        return m_id;
+      }
+
+      /**
+       * Set the value of m_id
+       * The id of this object
+       * @param new_var the new value of m_id
+       */
+      void setId(u_signed64 new_var) {
+        m_id = new_var;
+      }
 
     private:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequest.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqRequest.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 08:55:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -229,18 +229,6 @@ int Cstager_ScheduleSubReqRequest_setClient(struct Cstager_ScheduleSubReqRequest
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_ScheduleSubReqRequest_setId(struct Cstager_ScheduleSubReqRequest_t* instance,
-                                        u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_ScheduleSubReqRequest_id(struct Cstager_ScheduleSubReqRequest_t* instance,
-                                     u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_ScheduleSubReqRequest_type(struct Cstager_ScheduleSubReqRequest_t* instance,
@@ -289,5 +277,17 @@ int Cstager_ScheduleSubReqRequest_fileSystem(struct Cstager_ScheduleSubReqReques
  * The mount point of the selected filesystem for the given SubRequest
  */
 int Cstager_ScheduleSubReqRequest_setFileSystem(struct Cstager_ScheduleSubReqRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_ScheduleSubReqRequest_id(struct Cstager_ScheduleSubReqRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_ScheduleSubReqRequest_setId(struct Cstager_ScheduleSubReqRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_SCHEDULESUBREQREQUEST_H

@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_RequestQueryResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_RequestQueryResponse_setId(castor::rh::RequestQueryResponse* instance,
-                                     u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_RequestQueryResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_RequestQueryResponse_id(castor::rh::RequestQueryResponse* instance,
-                                  u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_RequestQueryResponse_type
   //----------------------------------------------------------------------------
   int Crh_RequestQueryResponse_type(castor::rh::RequestQueryResponse* instance,
@@ -222,6 +204,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_RequestQueryResponse_setModificationTime(castor::rh::RequestQueryResponse* instance, u_signed64 new_var) {
     instance->setModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_id(castor::rh::RequestQueryResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_RequestQueryResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_RequestQueryResponse_setId(castor::rh::RequestQueryResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

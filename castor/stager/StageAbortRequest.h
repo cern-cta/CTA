@@ -259,18 +259,6 @@ int Cstager_StageAbortRequest_setClient(struct Cstager_StageAbortRequest_t* inst
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageAbortRequest_setId(struct Cstager_StageAbortRequest_t* instance,
-                                    u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageAbortRequest_id(struct Cstager_StageAbortRequest_t* instance,
-                                 u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageAbortRequest_type(struct Cstager_StageAbortRequest_t* instance,
@@ -281,5 +269,17 @@ int Cstager_StageAbortRequest_type(struct Cstager_StageAbortRequest_t* instance,
  */
 int Cstager_StageAbortRequest_clone(struct Cstager_StageAbortRequest_t* instance,
                                     struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageAbortRequest_id(struct Cstager_StageAbortRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageAbortRequest_setId(struct Cstager_StageAbortRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGEABORTREQUEST_H

@@ -112,18 +112,6 @@ int Crh_RequestQueryResponse_setErrorMessage(struct Crh_RequestQueryResponse_t* 
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_RequestQueryResponse_setId(struct Crh_RequestQueryResponse_t* instance,
-                                   u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_RequestQueryResponse_id(struct Crh_RequestQueryResponse_t* instance,
-                                u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_RequestQueryResponse_type(struct Crh_RequestQueryResponse_t* instance,
@@ -182,5 +170,17 @@ int Crh_RequestQueryResponse_modificationTime(struct Crh_RequestQueryResponse_t*
  * Time of the last modification of the request
  */
 int Crh_RequestQueryResponse_setModificationTime(struct Crh_RequestQueryResponse_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_RequestQueryResponse_id(struct Crh_RequestQueryResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_RequestQueryResponse_setId(struct Crh_RequestQueryResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_REQUESTQUERYRESPONSE_H

@@ -77,18 +77,6 @@ int Cstager_TapeCopy_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_TapeCopy_setId(struct Cstager_TapeCopy_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_TapeCopy_id(struct Cstager_TapeCopy_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
@@ -111,6 +99,18 @@ int Cstager_TapeCopy_copyNb(struct Cstager_TapeCopy_t* instance, unsigned int* v
  * The copy number allows to identify the different copies on tape of a single file
  */
 int Cstager_TapeCopy_setCopyNb(struct Cstager_TapeCopy_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_TapeCopy_id(struct Cstager_TapeCopy_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_TapeCopy_setId(struct Cstager_TapeCopy_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_Stream_t* object to the stream list

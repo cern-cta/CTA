@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_AbortResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_AbortResponse_setId(castor::rh::AbortResponse* instance,
-                              u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_AbortResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_AbortResponse_id(castor::rh::AbortResponse* instance,
-                           u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_AbortResponse_type
   //----------------------------------------------------------------------------
   int Crh_AbortResponse_type(castor::rh::AbortResponse* instance,
@@ -173,6 +155,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_AbortResponse_setAborted(castor::rh::AbortResponse* instance, bool new_var) {
     instance->setAborted(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_AbortResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_AbortResponse_id(castor::rh::AbortResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_AbortResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_AbortResponse_setId(castor::rh::AbortResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

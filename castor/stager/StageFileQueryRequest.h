@@ -239,18 +239,6 @@ int Cstager_StageFileQueryRequest_setClient(struct Cstager_StageFileQueryRequest
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageFileQueryRequest_setId(struct Cstager_StageFileQueryRequest_t* instance,
-                                        u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageFileQueryRequest_id(struct Cstager_StageFileQueryRequest_t* instance,
-                                     u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageFileQueryRequest_type(struct Cstager_StageFileQueryRequest_t* instance,
@@ -261,5 +249,17 @@ int Cstager_StageFileQueryRequest_type(struct Cstager_StageFileQueryRequest_t* i
  */
 int Cstager_StageFileQueryRequest_clone(struct Cstager_StageFileQueryRequest_t* instance,
                                         struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageFileQueryRequest_id(struct Cstager_StageFileQueryRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageFileQueryRequest_setId(struct Cstager_StageFileQueryRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGEFILEQUERYREQUEST_H

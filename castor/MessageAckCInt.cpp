@@ -77,24 +77,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // C_MessageAck_setId
-  //----------------------------------------------------------------------------
-  int C_MessageAck_setId(castor::MessageAck* instance,
-                         u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // C_MessageAck_id
-  //----------------------------------------------------------------------------
-  int C_MessageAck_id(castor::MessageAck* instance,
-                      u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // C_MessageAck_type
   //----------------------------------------------------------------------------
   int C_MessageAck_type(castor::MessageAck* instance,
@@ -175,6 +157,22 @@ extern "C" {
   int C_MessageAck_setRequestId(castor::MessageAck* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setRequestId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_MessageAck_id
+  //----------------------------------------------------------------------------
+  int C_MessageAck_id(castor::MessageAck* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_MessageAck_setId
+  //----------------------------------------------------------------------------
+  int C_MessageAck_setId(castor::MessageAck* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

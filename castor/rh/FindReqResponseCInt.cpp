@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FindReqResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_FindReqResponse_setId(castor::rh::FindReqResponse* instance,
-                                u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FindReqResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_FindReqResponse_id(castor::rh::FindReqResponse* instance,
-                             u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_FindReqResponse_type
   //----------------------------------------------------------------------------
   int Crh_FindReqResponse_type(castor::rh::FindReqResponse* instance,
@@ -174,6 +156,22 @@ extern "C" {
   int Crh_FindReqResponse_setReqId(castor::rh::FindReqResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_id(castor::rh::FindReqResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_setId(castor::rh::FindReqResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

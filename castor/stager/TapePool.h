@@ -75,18 +75,6 @@ int Cstager_TapePool_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_TapePool_setId(struct Cstager_TapePool_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_TapePool_id(struct Cstager_TapePool_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_TapePool_type(struct Cstager_TapePool_t* instance,
@@ -109,6 +97,18 @@ int Cstager_TapePool_name(struct Cstager_TapePool_t* instance, const char** var)
  * Name of this pool
  */
 int Cstager_TapePool_setName(struct Cstager_TapePool_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_TapePool_id(struct Cstager_TapePool_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_TapePool_setId(struct Cstager_TapePool_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_SvcClass_t* object to the svcClasses list

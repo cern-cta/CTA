@@ -140,6 +140,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_id
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setId(castor::stager::DiskCopyForRecall* instance, u_signed64 new_var) {
+    instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_addSubRequests
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_addSubRequests(castor::stager::DiskCopyForRecall* instance, castor::stager::SubRequest* obj) {

@@ -259,18 +259,6 @@ int Cstager_StagePutRequest_setClient(struct Cstager_StagePutRequest_t* instance
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StagePutRequest_setId(struct Cstager_StagePutRequest_t* instance,
-                                  u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StagePutRequest_id(struct Cstager_StagePutRequest_t* instance,
-                               u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StagePutRequest_type(struct Cstager_StagePutRequest_t* instance,
@@ -281,5 +269,17 @@ int Cstager_StagePutRequest_type(struct Cstager_StagePutRequest_t* instance,
  */
 int Cstager_StagePutRequest_clone(struct Cstager_StagePutRequest_t* instance,
                                   struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StagePutRequest_id(struct Cstager_StagePutRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StagePutRequest_setId(struct Cstager_StagePutRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGEPUTREQUEST_H

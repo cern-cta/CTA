@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageUpdateRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateRequest_setId(castor::stager::StageUpdateRequest* instance,
-                                       u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageUpdateRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateRequest_id(castor::stager::StageUpdateRequest* instance,
-                                    u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageUpdateRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateRequest_type(castor::stager::StageUpdateRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StageUpdateRequest_clone(castor::stager::StageUpdateRequest* instance,
                                        castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_id(castor::stager::StageUpdateRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setId(castor::stager::StageUpdateRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

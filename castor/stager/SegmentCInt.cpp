@@ -80,24 +80,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Segment_setId
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setId(castor::stager::Segment* instance,
-                            u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_id
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_id(castor::stager::Segment* instance,
-                         u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Segment_type
   //----------------------------------------------------------------------------
   int Cstager_Segment_type(castor::stager::Segment* instance,
@@ -290,6 +272,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Segment_setSeverity(castor::stager::Segment* instance, int new_var) {
     instance->setSeverity(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_id
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_id(castor::stager::Segment* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setId
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setId(castor::stager::Segment* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

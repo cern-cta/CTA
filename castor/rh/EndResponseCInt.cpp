@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_EndResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_EndResponse_setId(castor::rh::EndResponse* instance,
-                            u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_EndResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_EndResponse_id(castor::rh::EndResponse* instance,
-                         u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_EndResponse_type
   //----------------------------------------------------------------------------
   int Crh_EndResponse_type(castor::rh::EndResponse* instance,
@@ -157,6 +139,22 @@ extern "C" {
   int Crh_EndResponse_clone(castor::rh::EndResponse* instance,
                             castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_id(castor::rh::EndResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_setId(castor::rh::EndResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

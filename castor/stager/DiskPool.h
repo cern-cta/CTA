@@ -76,18 +76,6 @@ int Cstager_DiskPool_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_DiskPool_setId(struct Cstager_DiskPool_t* instance,
-                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_DiskPool_id(struct Cstager_DiskPool_t* instance,
-                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_DiskPool_type(struct Cstager_DiskPool_t* instance,
@@ -110,6 +98,18 @@ int Cstager_DiskPool_name(struct Cstager_DiskPool_t* instance, const char** var)
  * Name of this pool
  */
 int Cstager_DiskPool_setName(struct Cstager_DiskPool_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_DiskPool_id(struct Cstager_DiskPool_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_DiskPool_setId(struct Cstager_DiskPool_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_FileSystem_t* object to the fileSystems list

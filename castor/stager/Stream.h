@@ -77,18 +77,6 @@ int Cstager_Stream_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_Stream_setId(struct Cstager_Stream_t* instance,
-                         u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_Stream_id(struct Cstager_Stream_t* instance,
-                      u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_Stream_type(struct Cstager_Stream_t* instance,
@@ -111,6 +99,18 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_Stream_id(struct Cstager_Stream_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_Stream_setId(struct Cstager_Stream_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_TapeCopy_t* object to the tapeCopy list

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/23 08:35:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
  *
  * 
  *
@@ -80,20 +80,6 @@ void castor::stager::StageUpdateFileStatusRequest::print() const {
 //------------------------------------------------------------------------------
 int castor::stager::StageUpdateFileStatusRequest::TYPE() {
   return OBJ_StageUpdateFileStatusRequest;
-}
-
-//------------------------------------------------------------------------------
-// setId
-//------------------------------------------------------------------------------
-void castor::stager::StageUpdateFileStatusRequest::setId(u_signed64 id) {
-  m_id = id;
-}
-
-//------------------------------------------------------------------------------
-// id
-//------------------------------------------------------------------------------
-u_signed64 castor::stager::StageUpdateFileStatusRequest::id() const {
-  return m_id;
 }
 
 //------------------------------------------------------------------------------

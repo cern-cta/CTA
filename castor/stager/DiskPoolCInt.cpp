@@ -80,24 +80,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskPool_setId
-  //----------------------------------------------------------------------------
-  int Cstager_DiskPool_setId(castor::stager::DiskPool* instance,
-                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_DiskPool_id
-  //----------------------------------------------------------------------------
-  int Cstager_DiskPool_id(castor::stager::DiskPool* instance,
-                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_DiskPool_type
   //----------------------------------------------------------------------------
   int Cstager_DiskPool_type(castor::stager::DiskPool* instance,
@@ -129,6 +111,22 @@ extern "C" {
   int Cstager_DiskPool_setName(castor::stager::DiskPool* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskPool_id
+  //----------------------------------------------------------------------------
+  int Cstager_DiskPool_id(castor::stager::DiskPool* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskPool_setId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskPool_setId(castor::stager::DiskPool* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

@@ -133,24 +133,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_Client_setId
-  //----------------------------------------------------------------------------
-  int Crh_Client_setId(castor::rh::Client* instance,
-                       u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_Client_id
-  //----------------------------------------------------------------------------
-  int Crh_Client_id(castor::rh::Client* instance,
-                    u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_Client_type
   //----------------------------------------------------------------------------
   int Crh_Client_type(castor::rh::Client* instance,
@@ -197,6 +179,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_Client_setPort(castor::rh::Client* instance, unsigned short new_var) {
     instance->setPort(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_id
+  //----------------------------------------------------------------------------
+  int Crh_Client_id(castor::rh::Client* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_setId
+  //----------------------------------------------------------------------------
+  int Crh_Client_setId(castor::rh::Client* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

@@ -112,18 +112,6 @@ int Crh_FindReqResponse_setErrorMessage(struct Crh_FindReqResponse_t* instance, 
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_FindReqResponse_setId(struct Crh_FindReqResponse_t* instance,
-                              u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_FindReqResponse_id(struct Crh_FindReqResponse_t* instance,
-                           u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_FindReqResponse_type(struct Crh_FindReqResponse_t* instance,
@@ -146,5 +134,17 @@ int Crh_FindReqResponse_reqId(struct Crh_FindReqResponse_t* instance, const char
  * The Cuuid identifying the request, given as a human readable string
  */
 int Crh_FindReqResponse_setReqId(struct Crh_FindReqResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_FindReqResponse_id(struct Crh_FindReqResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_FindReqResponse_setId(struct Crh_FindReqResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_FINDREQRESPONSE_H

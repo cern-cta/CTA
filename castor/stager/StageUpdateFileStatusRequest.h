@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/23 15:02:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
  *
  * 
  *
@@ -259,18 +259,6 @@ int Cstager_StageUpdateFileStatusRequest_setClient(struct Cstager_StageUpdateFil
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageUpdateFileStatusRequest_setId(struct Cstager_StageUpdateFileStatusRequest_t* instance,
-                                               u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageUpdateFileStatusRequest_id(struct Cstager_StageUpdateFileStatusRequest_t* instance,
-                                            u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageUpdateFileStatusRequest_type(struct Cstager_StageUpdateFileStatusRequest_t* instance,
@@ -281,5 +269,17 @@ int Cstager_StageUpdateFileStatusRequest_type(struct Cstager_StageUpdateFileStat
  */
 int Cstager_StageUpdateFileStatusRequest_clone(struct Cstager_StageUpdateFileStatusRequest_t* instance,
                                                struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageUpdateFileStatusRequest_id(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageUpdateFileStatusRequest_setId(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGEUPDATEFILESTATUSREQUEST_H

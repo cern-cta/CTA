@@ -122,6 +122,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_id
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_id(castor::stager::TapeCopyForMigration* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_setId
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_setId(castor::stager::TapeCopyForMigration* instance, u_signed64 new_var) {
+    instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_addStream
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_addStream(castor::stager::TapeCopyForMigration* instance, castor::stager::Stream* obj) {

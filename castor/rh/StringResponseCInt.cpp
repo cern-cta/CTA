@@ -125,24 +125,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_StringResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_StringResponse_setId(castor::rh::StringResponse* instance,
-                               u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_StringResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_StringResponse_id(castor::rh::StringResponse* instance,
-                            u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_StringResponse_type
   //----------------------------------------------------------------------------
   int Crh_StringResponse_type(castor::rh::StringResponse* instance,
@@ -174,6 +156,22 @@ extern "C" {
   int Crh_StringResponse_setContent(castor::rh::StringResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setContent(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StringResponse_id
+  //----------------------------------------------------------------------------
+  int Crh_StringResponse_id(castor::rh::StringResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StringResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_StringResponse_setId(castor::rh::StringResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

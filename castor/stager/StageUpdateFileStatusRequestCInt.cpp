@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
  *
  * 
  *
@@ -337,24 +337,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageUpdateFileStatusRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateFileStatusRequest_setId(castor::stager::StageUpdateFileStatusRequest* instance,
-                                                 u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageUpdateFileStatusRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageUpdateFileStatusRequest_id(castor::stager::StageUpdateFileStatusRequest* instance,
-                                              u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageUpdateFileStatusRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateFileStatusRequest_type(castor::stager::StageUpdateFileStatusRequest* instance,
@@ -369,6 +351,22 @@ extern "C" {
   int Cstager_StageUpdateFileStatusRequest_clone(castor::stager::StageUpdateFileStatusRequest* instance,
                                                  castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_id(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setId(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

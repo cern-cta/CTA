@@ -113,18 +113,6 @@ int Crh_EndResponse_setErrorMessage(struct Crh_EndResponse_t* instance, const ch
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_EndResponse_setId(struct Crh_EndResponse_t* instance,
-                          u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_EndResponse_id(struct Crh_EndResponse_t* instance,
-                       u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_EndResponse_type(struct Crh_EndResponse_t* instance,
@@ -135,5 +123,17 @@ int Crh_EndResponse_type(struct Crh_EndResponse_t* instance,
  */
 int Crh_EndResponse_clone(struct Crh_EndResponse_t* instance,
                           struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_EndResponse_id(struct Crh_EndResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_EndResponse_setId(struct Crh_EndResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_ENDRESPONSE_H

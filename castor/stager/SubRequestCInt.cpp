@@ -82,24 +82,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SubRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_setId(castor::stager::SubRequest* instance,
-                               u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SubRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_id(castor::stager::SubRequest* instance,
-                            u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SubRequest_type
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_type(castor::stager::SubRequest* instance,
@@ -213,6 +195,22 @@ extern "C" {
   int Cstager_SubRequest_setSubreqId(castor::stager::SubRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setSubreqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setId(castor::stager::SubRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

@@ -114,18 +114,6 @@ int Crh_Client_setRequest(struct Crh_Client_t* instance, struct Cstager_Request_
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_Client_setId(struct Crh_Client_t* instance,
-                     u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_Client_id(struct Crh_Client_t* instance,
-                  u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_Client_type(struct Crh_Client_t* instance,
@@ -158,5 +146,17 @@ int Crh_Client_port(struct Crh_Client_t* instance, unsigned short* var);
  * Set the value of port
  */
 int Crh_Client_setPort(struct Crh_Client_t* instance, unsigned short new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_Client_id(struct Crh_Client_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_Client_setId(struct Crh_Client_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_CLIENT_H

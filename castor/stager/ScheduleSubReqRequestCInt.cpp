@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequestCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 08:55:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -291,24 +291,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setId(castor::stager::ScheduleSubReqRequest* instance,
-                                          u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_id(castor::stager::ScheduleSubReqRequest* instance,
-                                       u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_ScheduleSubReqRequest_type
   //----------------------------------------------------------------------------
   int Cstager_ScheduleSubReqRequest_type(castor::stager::ScheduleSubReqRequest* instance,
@@ -373,6 +355,22 @@ extern "C" {
   int Cstager_ScheduleSubReqRequest_setFileSystem(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setFileSystem(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ScheduleSubReqRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_ScheduleSubReqRequest_id(castor::stager::ScheduleSubReqRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ScheduleSubReqRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_ScheduleSubReqRequest_setId(castor::stager::ScheduleSubReqRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

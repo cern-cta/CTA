@@ -79,18 +79,6 @@ int Cstager_Segment_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_Segment_setId(struct Cstager_Segment_t* instance,
-                          u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_Segment_id(struct Cstager_Segment_t* instance,
-                       u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_Segment_type(struct Cstager_Segment_t* instance,
@@ -219,6 +207,18 @@ int Cstager_Segment_severity(struct Cstager_Segment_t* instance, int* var);
  * Set the value of severity
  */
 int Cstager_Segment_setSeverity(struct Cstager_Segment_t* instance, int new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_Segment_id(struct Cstager_Segment_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_Segment_setId(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of tape

@@ -306,24 +306,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageFindRequestRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_StageFindRequestRequest_setId(castor::stager::StageFindRequestRequest* instance,
-                                            u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageFindRequestRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_StageFindRequestRequest_id(castor::stager::StageFindRequestRequest* instance,
-                                         u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageFindRequestRequest_type
   //----------------------------------------------------------------------------
   int Cstager_StageFindRequestRequest_type(castor::stager::StageFindRequestRequest* instance,
@@ -338,6 +320,22 @@ extern "C" {
   int Cstager_StageFindRequestRequest_clone(castor::stager::StageFindRequestRequest* instance,
                                             castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_id(castor::stager::StageFindRequestRequest* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setId(castor::stager::StageFindRequestRequest* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

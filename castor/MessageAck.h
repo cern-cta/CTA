@@ -73,18 +73,6 @@ int C_MessageAck_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int C_MessageAck_setId(struct C_MessageAck_t* instance,
-                       u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int C_MessageAck_id(struct C_MessageAck_t* instance,
-                    u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int C_MessageAck_type(struct C_MessageAck_t* instance,
@@ -143,5 +131,17 @@ int C_MessageAck_requestId(struct C_MessageAck_t* instance, const char** var);
  * Cuuid associated to the request in case there was no error
  */
 int C_MessageAck_setRequestId(struct C_MessageAck_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int C_MessageAck_id(struct C_MessageAck_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int C_MessageAck_setId(struct C_MessageAck_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_MESSAGEACK_H

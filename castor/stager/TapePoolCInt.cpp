@@ -80,24 +80,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_setId
-  //----------------------------------------------------------------------------
-  int Cstager_TapePool_setId(castor::stager::TapePool* instance,
-                             u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapePool_id
-  //----------------------------------------------------------------------------
-  int Cstager_TapePool_id(castor::stager::TapePool* instance,
-                          u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_TapePool_type
   //----------------------------------------------------------------------------
   int Cstager_TapePool_type(castor::stager::TapePool* instance,
@@ -129,6 +111,22 @@ extern "C" {
   int Cstager_TapePool_setName(castor::stager::TapePool* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapePool_id
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_id(castor::stager::TapePool* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapePool_setId
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_setId(castor::stager::TapePool* instance, u_signed64 new_var) {
+    instance->setId(new_var);
     return 0;
   }
 

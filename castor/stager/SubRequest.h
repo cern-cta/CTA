@@ -77,18 +77,6 @@ int Cstager_SubRequest_TYPE(int* ret);
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_SubRequest_setId(struct Cstager_SubRequest_t* instance,
-                             u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_SubRequest_id(struct Cstager_SubRequest_t* instance,
-                          u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_SubRequest_type(struct Cstager_SubRequest_t* instance,
@@ -175,6 +163,18 @@ int Cstager_SubRequest_subreqId(struct Cstager_SubRequest_t* instance, const cha
  * The Cuuid identifying the SubRequest, stored as a human readable string
  */
 int Cstager_SubRequest_setSubreqId(struct Cstager_SubRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_SubRequest_id(struct Cstager_SubRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_SubRequest_setId(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of diskcopy

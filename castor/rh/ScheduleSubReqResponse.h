@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ScheduleSubReqResponse.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/30 08:57:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -114,18 +114,6 @@ int Crh_ScheduleSubReqResponse_setErrorMessage(struct Crh_ScheduleSubReqResponse
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_ScheduleSubReqResponse_setId(struct Crh_ScheduleSubReqResponse_t* instance,
-                                     u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_ScheduleSubReqResponse_id(struct Crh_ScheduleSubReqResponse_t* instance,
-                                  u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_ScheduleSubReqResponse_type(struct Crh_ScheduleSubReqResponse_t* instance,
@@ -136,6 +124,18 @@ int Crh_ScheduleSubReqResponse_type(struct Crh_ScheduleSubReqResponse_t* instanc
  */
 int Crh_ScheduleSubReqResponse_clone(struct Crh_ScheduleSubReqResponse_t* instance,
                                      struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_ScheduleSubReqResponse_id(struct Crh_ScheduleSubReqResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_ScheduleSubReqResponse_setId(struct Crh_ScheduleSubReqResponse_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of diskCopy

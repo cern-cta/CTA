@@ -254,18 +254,6 @@ int Cstager_StageGetNextRequest_setClient(struct Cstager_StageGetNextRequest_t* 
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageGetNextRequest_setId(struct Cstager_StageGetNextRequest_t* instance,
-                                      u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageGetNextRequest_id(struct Cstager_StageGetNextRequest_t* instance,
-                                   u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageGetNextRequest_type(struct Cstager_StageGetNextRequest_t* instance,
@@ -276,5 +264,17 @@ int Cstager_StageGetNextRequest_type(struct Cstager_StageGetNextRequest_t* insta
  */
 int Cstager_StageGetNextRequest_clone(struct Cstager_StageGetNextRequest_t* instance,
                                       struct C_IObject_t* ret);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageGetNextRequest_id(struct Cstager_StageGetNextRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageGetNextRequest_setId(struct Cstager_StageGetNextRequest_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_STAGEGETNEXTREQUEST_H

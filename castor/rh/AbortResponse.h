@@ -112,18 +112,6 @@ int Crh_AbortResponse_setErrorMessage(struct Crh_AbortResponse_t* instance, cons
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_AbortResponse_setId(struct Crh_AbortResponse_t* instance,
-                            u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_AbortResponse_id(struct Crh_AbortResponse_t* instance,
-                         u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_AbortResponse_type(struct Crh_AbortResponse_t* instance,
@@ -146,5 +134,17 @@ int Crh_AbortResponse_aborted(struct Crh_AbortResponse_t* instance, int* var);
  * Whether the abort took place or not
  */
 int Crh_AbortResponse_setAborted(struct Crh_AbortResponse_t* instance, int new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_AbortResponse_id(struct Crh_AbortResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_AbortResponse_setId(struct Crh_AbortResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_ABORTRESPONSE_H

@@ -112,18 +112,6 @@ int Crh_StringResponse_setErrorMessage(struct Crh_StringResponse_t* instance, co
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_StringResponse_setId(struct Crh_StringResponse_t* instance,
-                             u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_StringResponse_id(struct Crh_StringResponse_t* instance,
-                          u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_StringResponse_type(struct Crh_StringResponse_t* instance,
@@ -146,5 +134,17 @@ int Crh_StringResponse_content(struct Crh_StringResponse_t* instance, const char
  * Content of the response
  */
 int Crh_StringResponse_setContent(struct Crh_StringResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_StringResponse_id(struct Crh_StringResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_StringResponse_setId(struct Crh_StringResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_STRINGRESPONSE_H

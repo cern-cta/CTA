@@ -112,18 +112,6 @@ int Crh_FileQueryResponse_setErrorMessage(struct Crh_FileQueryResponse_t* instan
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Crh_FileQueryResponse_setId(struct Crh_FileQueryResponse_t* instance,
-                                u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Crh_FileQueryResponse_id(struct Crh_FileQueryResponse_t* instance,
-                             u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Crh_FileQueryResponse_type(struct Crh_FileQueryResponse_t* instance,
@@ -230,5 +218,17 @@ int Crh_FileQueryResponse_nbAccesses(struct Crh_FileQueryResponse_t* instance, u
  * Number of accesses to the file
  */
 int Crh_FileQueryResponse_setNbAccesses(struct Crh_FileQueryResponse_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Crh_FileQueryResponse_id(struct Crh_FileQueryResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Crh_FileQueryResponse_setId(struct Crh_FileQueryResponse_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_RH_FILEQUERYRESPONSE_H

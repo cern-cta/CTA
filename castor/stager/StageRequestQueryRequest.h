@@ -240,18 +240,6 @@ int Cstager_StageRequestQueryRequest_setClient(struct Cstager_StageRequestQueryR
 /***************************************/
 
 /**
- * Sets the id of the object
- */
-int Cstager_StageRequestQueryRequest_setId(struct Cstager_StageRequestQueryRequest_t* instance,
-                                           u_signed64 id);
-
-/**
- * gets the id of the object
- */
-int Cstager_StageRequestQueryRequest_id(struct Cstager_StageRequestQueryRequest_t* instance,
-                                        u_signed64* ret);
-
-/**
  * Gets the type of the object
  */
 int Cstager_StageRequestQueryRequest_type(struct Cstager_StageRequestQueryRequest_t* instance,
@@ -276,6 +264,18 @@ int Cstager_StageRequestQueryRequest_parameter(struct Cstager_StageRequestQueryR
  * things, e.g. a filename, a reqid, a usertag or a fileid
  */
 int Cstager_StageRequestQueryRequest_setParameter(struct Cstager_StageRequestQueryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of id
+ * The id of this object
+ */
+int Cstager_StageRequestQueryRequest_id(struct Cstager_StageRequestQueryRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of id
+ * The id of this object
+ */
+int Cstager_StageRequestQueryRequest_setId(struct Cstager_StageRequestQueryRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of status
