@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.16 2001/03/28 18:04:23 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.17 2001/04/29 08:54:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.16 $ $Date: 2001/03/28 18:04:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.17 $ $Date: 2001/04/29 08:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -215,14 +215,16 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	link_rc = 0;
 	if ((p = getenv ("STAGE_PORT")) == NULL &&
 		(p = getconfent("STG", "PORT",0)) == NULL) {
-		if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
-			stage_errmsg (func, STG09, STG, "not defined in /etc/services");
-			serrno = SENOSSERV;
-			SEND2STGD_API_RETURN(-1);
+		if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
+			if ((stg_service = STAGE_PORT) <= 0) {
+				stage_errmsg (func, STG09, STAGE_NAME, "service from environment or configuration is <= 0");
+				serrno = SENOSSERV;
+				SEND2STGD_API_RETURN(-1);
+			}
 		}
 	} else {
 		if ((stg_service = atoi(p)) <= 0) {
-			stage_errmsg (func, STG09, STG, "service from environment or configuration is <= 0");
+			stage_errmsg (func, STG09, STAGE_NAME, "service from environment or configuration is <= 0");
 			serrno = SENOSSERV;
 			SEND2STGD_API_RETURN(-1);
 		}
@@ -243,7 +245,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		SEND2STGD_API_RETURN(-1);
 	}
 	sin.sin_family = AF_INET;
-	sin.sin_port = (stg_service > 0 ? stg_service : sp->s_port);
+	sin.sin_port = (stg_service > 0 ? htons((u_short) stg_service) : sp->s_port);
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.130 2001/04/07 10:20:42 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.131 2001/04/29 08:54:16 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.130 $ $Date: 2001/04/07 10:20:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.131 $ $Date: 2001/04/29 08:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -444,13 +444,14 @@ int main(argc,argv)
 		stglogit (func, STG02, "", "socket", sys_errlist[errno]);
 		exit (CONFERR);
 	}
-	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
-		stglogit (func, STG09, STG, "not defined in /etc/services");
- 		exit (CONFERR);
-	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
+	if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
+		stglogit (func, STG144, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
+		sin.sin_port = htons((u_short) STAGE_PORT);
+	} else {
+		sin.sin_port = sp->s_port;
+	}
 	sin.sin_family = AF_INET ;
-	sin.sin_port = sp->s_port;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (stg_s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
