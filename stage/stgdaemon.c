@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.124 2001/03/22 14:05:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.125 2001/03/22 14:57:21 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.124 $ $Date: 2001/03/22 14:05:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.125 $ $Date: 2001/03/22 14:57:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2277,6 +2277,12 @@ void create_link(stcp, upath)
 	if (! found) {
 		if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
 			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			if (serrno == EDB_D_UNIQUE) {
+				/* Entry yet exist with this pathname in the DB */
+				if (stgdb_upd_stgpath(&dbfd,stpp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+			}
 		}
 	} else if (found_reqid != stcp->reqid) {
 		/* The link name is the same, but the reqid is not ! */
