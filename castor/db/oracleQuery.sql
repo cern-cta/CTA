@@ -135,7 +135,7 @@ BEGIN
   NULL;
 END;
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(255), status NUMBER);
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER);
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
@@ -144,7 +144,7 @@ CREATE OR REPLACE PROCEDURE scheduleSubRequest(subreqId IN INTEGER, fileSystemId
                                                diskCopyId OUT INTEGER, path OUT VARCHAR,
                                                status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
   castorFileId INTEGER;
-  unusedPATH VARCHAR(255);
+  unusedPATH VARCHAR(2048);
 BEGIN
  diskCopyId := 0;
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
