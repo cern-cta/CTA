@@ -1,14 +1,14 @@
 /*
- * $Id: rfio_errno.h,v 1.5 2000/09/03 07:46:37 baud Exp $
+ * $Id: rfio_errno.h,v 1.6 2001/06/17 14:06:24 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * $RCSfile: rfio_errno.h,v $ $Revision: 1.5 $ $Date: 2000/09/03 07:46:37 $
+ * $RCSfile: rfio_errno.h,v $ $Revision: 1.6 $ $Date: 2001/06/17 14:06:24 $
  */
 
 /* rfio_errno.h   Thread safe rfio_errno  */
@@ -19,7 +19,7 @@
 #ifndef _OSDEP_H_INCLUDED_
 #include <osdep.h>                  /* EXTERN_C, DLL_DECL and _PROTO */
 #endif
-#include <sys/types.h>              /* For size_t                    */
+#include <stddef.h>                 /* For size_t                    */
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE) || \
    (defined(_WIN32) && (defined(_MT) || defined(_DLL)))
