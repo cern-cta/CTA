@@ -1,0 +1,71 @@
+.\" @(#)$RCSfile: tpstat.man,v $ $Revision: 1.1 $ $Date: 1999/10/19 05:16:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPSTAT l "$Date: 1999/10/19 05:16:06 $"
+.SH NAME
+tpstat \- give the status of all tape drives
+.SH SYNOPSIS
+.B tpstat
+.RB [ hostname ]
+.SH DESCRIPTION
+.B tpstat
+gives the status of all tape drives on the localhost or
+.I hostname
+in tabular form:
+.HP
+userid	login name if the drive is assigned.
+.HP
+jid	process id of the login shell. It is equal to the
+process group id for the Bourne shell.
+.HP
+dgn	device group name to which belongs the tape drive.
+.HP
+stat	drive status:
+.br
+	idle	drive is free for use
+.br
+	assn	drive is assigned to a job
+.br
+	down	drive has been configured down and cannot be used.
+.br
+	wdwn	drive currently assigned to a job, but a tpconfig down was issued
+.HP
+dvn	device name as it appears in operator mount messages.
+.HP
+r	ring status:
+.br
+	i	write enable
+.br
+	o	write disable
+.HP
+l	label type:
+.br
+	a	AL
+.br
+	n	NL
+.br
+	s	SL
+.br
+	b	BLP
+.HP
+vsn	volume serial number
+.HP
+vid	visual identifier
+.HP
+tm	timestamp of drive assignment
+
+.SH EXAMPLE
+.nf
+.cs R 20
+userid     jid  dgn        stat dvn                 rl  vsn    vid
+toto     16280  DLT        assn dlt01@shd34         os EF1234 EF1234 06:56:04
+                DLT        idle dlt02@shd34                          
+                DLT        idle dlt03@shd34                          
+.cs R
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Ctape_status(l)

@@ -1,0 +1,45 @@
+.\" @(#)$RCSfile: tpconfig.man,v $ $Revision: 1.1 $ $Date: 1999/10/19 05:15:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPCONFIG l "$Date: 1999/10/19 05:15:26 $"
+.SH NAME
+tpconfig \- configure tape drive up/down
+.SH SYNOPSIS
+.B tpconfig
+.I drive_name drive_status
+.RI [ reason ]
+.SH DESCRIPTION
+.B tpconfig
+configures drive up or down. This tells the tape daemon if the drive
+can be allocated or not. The list of drive names may be found by using
+.BR tpstat .
+The
+.B tpconfig
+command is restricted to privileged users such as root and operator.
+.TP 1.2i
+.I drive_name
+may be either a simple drive name if the program is executed on the tape server
+itself or drivename@hostname.
+.TP 1.2i
+.I drive_status
+can be
+.B up
+or
+.BR down .
+.TP
+.I reason
+is an optional alphanumeric string.
+
+.SH EXAMPLE
+.nf
+.cs R 24
+tpconfig dlt02@shd34 up cleaned
+.cs R
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Ctape_config(l) ,
+.B Ctape_status(l)
