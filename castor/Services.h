@@ -113,6 +113,6 @@ int C_Services_createObj(struct C_Services_t* svcs,
  * by the caller.
  * @return the error message
  */
-const char* msg C_Services_errorMsg(struct C_Services_t* svcs);
+const char* C_Services_errorMsg(struct C_Services_t* svcs);
 
 #endif // CASTOR_SERVICES_H
