@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.12 $ $Date: 2000/11/22 08:29:43 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.13 $ $Date: 2001/01/18 16:02:53 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -23,7 +23,14 @@ static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.12 $ $Da
 #include <sys/types.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 #endif
+
+#if defined(SOLARIS)
+#include <sys/filio.h>
+#endif /* SOLARIS */
+
 #include "net.h"
 #include "serrno.h"
 #include "socket_timeout.h"
@@ -50,6 +57,82 @@ int      _net_writable();
 Sigfunc *_netsignal();
 #endif
 #endif
+
+int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
+     SOCKET fd;
+     struct sockaddr *addr;
+     size_t addr_size;
+     int timeout;
+{
+  int rc, nonblocking;
+#ifndef _WIN32
+  Sigfunc *sigpipe;            /* Old SIGPIPE handler */
+#endif
+
+
+#ifndef _WIN32
+  /* In any case we catch and trap SIGPIPE */
+  if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
+    return(-1);
+  }
+#endif
+
+  rc = 0;
+  if ( timeout >= 0 )  {
+    nonblocking = 1;
+#ifndef _WIN32
+    rc = ioctl(fd,FIONBIO,&nonblocking);
+#else /* _WIN32 */
+    rc = ioctlsocket(fd,FIONBIO,&nonblocking);
+#endif /* _WIN32 */
+    if ( rc == SOCKET_ERROR ) {
+      serrno = 0;
+    } 
+  } else {
+    nonblocking = 0;
+  }
+
+  if ( rc != -1 ) {
+    rc = connect(fd,addr,addr_size);
+    if ( timeout >= 0 ) {
+#ifndef _WIN32
+      if ( rc == -1 && errno != EINPROGRESS ) {
+        serrno = 0;
+      } else rc = 0;
+#else /* _WIN32 */
+      if ( rc == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK ) {
+          serrno = 0;
+      } else rc = 0;
+#endif /* _WIN32 */
+    } /* timeout >= 0 */
+  }
+
+  if ( timeout >= 0 && rc != -1 ) {
+    for (;;) {
+      rc = _net_connectable(fd, timeout);
+      if ( rc == -1 && errno == EINTR ) continue;
+      else break;
+    }
+  }
+
+#ifndef _WIN32
+  /* Restore previous handlers */
+  _netsignal(SIGPIPE, sigpipe);
+#endif
+  /* Restore blocking socket if connect was successful */
+  if ( timeout >= 0 && rc == 0 ) {
+      nonblocking = 0;
+#ifndef _WIN32
+      rc = ioctl(fd,FIONBIO,&nonblocking);
+#else /* _WIN32 */
+      rc = ioctlsocket(fd,FIONBIO,&nonblocking);
+#endif /* _WIN32 */
+      if ( rc == SOCKET_ERROR ) serrno = 0;
+  }
+
+  return(rc);
+}
+
 
 ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
      SOCKET fd;
@@ -285,3 +368,84 @@ int _net_readable(fd, timeout)
   /* Will return > 0 if the descriptor is readable */
   return(select(fd + 1, &rset, NULL, NULL, &tv));
 }
+
+int _net_connectable(fd, timeout)
+     SOCKET fd;
+     int timeout;
+{
+  fd_set wset, eset;
+  struct timeval tv;
+  int rc, errval, errval_len;
+
+  FD_ZERO(&wset);
+  FD_SET(fd,&wset);
+
+  FD_ZERO(&eset);
+  FD_SET(fd,&eset);
+
+  tv.tv_sec = timeout;
+  tv.tv_usec = 0;
+
+  /* Will return > 0 if the descriptor is connected */
+  rc = select(fd + 1, NULL, &wset, &eset, &tv);
+
+  /*
+   * Timeout ?
+   */
+  if ( rc == 0 ) {
+      serrno = SETIMEDOUT;
+#if defined(_WIN32)
+      /*
+       * Make sure an error value is set
+       */
+      WSASetLastError(WSAETIMEDOUT);
+#endif /* _WIN32 */
+      return(-1);
+  }
+
+  /*
+   * Other error ?
+   */
+  if ( rc < 0 ) {
+      serrno = 0;
+      return(-1);
+  }
+
+  /*
+   * Check if a socket error was reported. Connection errors
+   * are reported through socket layer errors since the connect is
+   * non-blocking. In this case, select() has returned a positive
+   * value indicating that a socket was ready for writing. Note that
+   * most systems seem to require that one always checks the socket 
+   * error for the connect() completion. Some systems (Windows) sets 
+   * the exception set to indicate that there was an error.
+   */
+  errval_len = sizeof(errval);
+  if ( getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&errval, (int *)&errval_len) == -1 ) {
+      serrno = 0;
+      return(-1);
+  }
+
+  if ( (FD_ISSET(fd,&wset)) && (errval == 0) ) return(0);
+  /*
+   * For Windows it may happen that the getsockopt returns zero
+   * error value despite that the write set has not been set.
+   * Flag that an error occurred with SECOMERR. On windows we must
+   * set a valid socket error since WSAGetLastError() might be called.
+   * A good guess value is connection refused.
+   */
+  if ( errval == 0 ) {
+      errval = SECOMERR;
+#if defined(_WIN32)
+      /*
+       * Make sure an error value is set
+       */
+      WSASetLastError(WSAECONNREFUSED);
+#endif /* _WIN32 */
+  }
+  serrno = errval;
+  return(-1);
+}
+
+
+
