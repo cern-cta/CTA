@@ -23,6 +23,7 @@ case "$1" in
     configure)
 
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --add $servicename
+	[ -x /usr/sbin/update-rc.d ] && /usr/sbin/update-rc.d $servicename defaults >/dev/null
 
 	if [ "$2" = "" ] ; then
 	    action="start"
