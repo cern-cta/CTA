@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/07/29 15:17:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/07/30 09:11:42 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.25 $ $Date: 2004/07/29 15:17:10 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.26 $ $Date: 2004/07/30 09:11:42 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -649,6 +649,7 @@ static int addSegment(
     return(-1);
   }
   CLIST_INSERT(tpList->segments, rtcpcldSegm);
+  rtcpcldSegm->diskFseq = file->filereq.disk_fseq;
   Cstager_Segment_setFseq(
                           rtcpcldSegm->segment,
                           file->filereq.tape_fseq
@@ -718,6 +719,69 @@ static int addSegment(
                            );
 
   if ( newSegm != NULL ) *newSegm = rtcpcldSegm;
+  return(0);
+}
+
+static int findInFileList(
+                          fileList,
+                          diskFseq,
+                          file
+                          )
+     file_list_t *fileList,**file;
+     int diskFseq;
+{
+  file_list_t *fl;
+  int found = 0;
+  if ( fileList == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  if ( file != NULL ) *file = NULL;
+  CLIST_ITERATE_BEGIN(fileList,fl) 
+    {
+      if ( fl->filereq.disk_fseq == diskFseq ) {
+        found = 1;
+        break;
+      }
+    }
+  CLIST_ITERATE_END(fileList,fl);
+  if ( (found == 1) && (file != NULL) ) *file = fl;
+  return(found);
+}
+
+static int updateSegmList(
+                         tpList,
+                         newFileList
+                         )
+     RtcpcldTapeList_t *tpList;
+     file_list_t *newFileList;
+{
+  RtcpcldSegmentList_t *segment;
+  file_list_t *fl;
+  int rc, moreToDo = 1;
+  if ( tpList == NULL || newFileList == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  rtcp_log(LOG_DEBUG,"updateSegmList() called\n");
+
+  while ( moreToDo == 1 ) {
+    moreToDo = 0;
+    CLIST_ITERATE_BEGIN(tpList->segments,segment) 
+      {
+        rc = findInFileList(newFileList,segment->diskFseq,&fl);
+        if ( rc == -1 ) return(-1);
+        if ( rc == 1 ) segment->file = fl;
+        else {
+          rtcp_log(LOG_DEBUG,"updateSegmList() segment for diskFseq=%d removed\n",segment->diskFseq);
+          Cstager_Segment_delete(segment->segment);
+          CLIST_DELETE(tpList->segments,segment);
+          moreToDo = 1;
+          break;
+        }
+      }
+    CLIST_ITERATE_END(tpList->segments,segment);
+  }
   return(0);
 }
 
@@ -1064,8 +1128,13 @@ static int getUpdates(
                 if ( rc == -1 ) {
                   save_serrno = serrno;
                 } else {
-                  rc = doFullUpdate(tpIterator,tape);
-                  if ( rc == -1 ) save_serrno = serrno;
+                  rc = updateSegmList(tpIterator,tape->file);
+                  if ( rc == -1 ) {
+                    save_serrno = serrno;
+                  } else {
+                    rc = doFullUpdate(tpIterator,tape);
+                    if ( rc == -1 ) save_serrno = serrno;
+                  }
                 }
                 if ( rc == -1 ) serrno = save_serrno;
                 return(rc);
@@ -1239,6 +1308,14 @@ int rtcpcldc_appendFileReqs(tape,file)
     serrno = ENOENT;
     return(-1);
   }
+  rc = updateSegmList(tpList,file);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("updateSegmList()");
+    save_serrno = serrno;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
   CLIST_ITERATE_BEGIN(file,fl) 
     {
       fl->filereq.err.severity = fl->filereq.err.severity &
@@ -1251,7 +1328,7 @@ int rtcpcldc_appendFileReqs(tape,file)
                       tpList,
                       fl,
                       NULL,
-					  NULL
+                      NULL
                       );
       if ( rc == -1 ) {
         LOG_FAILED_CALL("addSegment()");
