@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.46 $ $Date: 2000/03/24 18:15:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.47 $ $Date: 2000/03/28 09:10:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -304,7 +304,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
             if ( fidstr != NULL &&
                  strlen(fidstr)+strlen(filereq->fid)+2 < CA_MAXLINELEN )
                 sprintf(&fidstr[strlen(fidstr)],":%s",filereq->fid);
-            if ( szstr != NULL && strlen(szstr)+12 < CA_MAXLINELEN )
+            if ( (filereq->concat & CONCAT) == 0 && szstr != NULL && 
+                 strlen(szstr)+12 < CA_MAXLINELEN )
                 sprintf(&szstr[strlen(szstr)],":%d",
                         (int)(filereq->maxsize/(1024*1024)));
             if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
@@ -315,6 +316,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
                 } else {
                     if ( qstr[strlen(qstr)-1] != '-' )
                         sprintf(&qstr[strlen(qstr)],",");
+                    else if ( fseq > 0 ) 
+                        sprintf(&qstr[strlen(qstr)],"%d,",fseq);
                     sprintf(&qstr[strlen(qstr)],"%d",filereq->tape_fseq);
                 }
                 fseq = filereq->tape_fseq;
@@ -1155,6 +1158,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
                               RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
                 tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
                 tapereq->err.severity = tapereq->err.severity & ~RTCP_RETRY_OK;
+                tapereq->err.severity = tapereq->err.severity & ~RTCP_LOCAL_RETRY;
                 tapereq->err.severity |= severity;
             } else { 
                 tapereq->err.severity |= severity;
@@ -1171,6 +1175,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
                               RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
                 filereq->err.severity = filereq->err.severity & ~RTCP_OK;
                 filereq->err.severity = filereq->err.severity & ~RTCP_RETRY_OK;
+                filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
                 filereq->err.severity |= severity;
             } else {
                 filereq->err.severity |= severity;
