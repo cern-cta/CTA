@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.37 2000/09/20 11:18:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.38 2000/09/27 08:00:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.37 $ $Date: 2000/09/20 11:18:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.38 $ $Date: 2000/09/27 08:00:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ void cvtdbl2str _PROTO((double, char *));
 void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
-void update_migpool _PROTO((struct stgcat_entry *, int, int));
+int update_migpool _PROTO((struct stgcat_entry *, int));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct migrator *));
 int migpoolfiles _PROTO((struct migrator *));
@@ -1215,13 +1215,22 @@ void procmigpoolreq(req_data, clienthost)
 	free (argv);
 }
 
-void update_migpool(stcp,flag,isauto)
+/* Flag means :                                       */
+/*  1             file put in stack can_be_migr       */
+/* -1             file removed from stack can_be_migr */
+/* Returns: 0 (OK) or -1 (NOT OK) */
+int update_migpool(stcp,flag)
 	struct stgcat_entry *stcp;
     int flag;
-    int isauto;
 {
 	int i, ipool;
 	struct pool *pool_p;
+
+	if (flag != 1 && flag != -1) {
+		sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error : flag != 1 && flag != -1\n");
+		serrno = EINVAL;
+		return(-1);
+	}
 
 	/* We check that this poolname exist */
 	ipool = -1;
@@ -1233,38 +1242,47 @@ void update_migpool(stcp,flag,isauto)
 	}
 	if (ipool < 0) {
 		sendrep (rpfd, MSG_ERR, STG32, stcp->poolname); /* Not in the list of pools */
-	} else {
-		/* We check that this pool have a migrator */
-		if (pool_p->migr != NULL) {
-			if (pool_p->migr->nbfiles_canbemig < 0) {
-				stglogit ("update_migpool", "Internal error for pool %s, nbfiles_canbemig < 0 (resetted to 0)\n",
-							stcp->poolname);
-				/* This should never happen but who knows */
-				pool_p->migr->nbfiles_canbemig = 0;
-			}
-			if (flag < 0 && stcp->filler[1] == 'h') {
-				/* This is from a return of automatic migration */
-				if (pool_p->migr->nbfiles_canbemig-- < 0) {
-					stglogit ("update_migpool", "Internal error for pool %s, nbfiles_canbemig < 0 after migration OK (resetted to 0)\n",
-							stcp->poolname);
-					pool_p->migr->nbfiles_canbemig = 0;
-				}
-				if (pool_p->migr->space_canbemig < stcp->actual_size) {
-					stglogit ("update_migpool", "Internal error for pool %s, space_canbemig < stcp->actual_size after migration OK (resetted to 0)\n",
-						stcp->poolname);
-					pool_p->migr->space_canbemig = 0;
-				} else {
-					pool_p->migr->space_canbemig -= stcp->actual_size;
-				}
-				stcp->filler[1] = '\0';
-			} else if (flag > 0 && isauto != 0) {
-				/* This is to add an entry for a next automatic migration */
-				pool_p->migr->nbfiles_canbemig++;
-				pool_p->migr->space_canbemig += stcp->actual_size;
-				stcp->filler[1] = 'h';
-			}
-		}
+		serrno = EINVAL;
+		return(-1);
 	}
+	/* We check that this pool have a migrator */
+	if (pool_p->migr == NULL) {
+		return(0);
+	}
+
+	switch (flag) {
+	case -1:
+		if (stcp->filler[0] != 'm') {
+			/* This is a return from explicit migration */
+			return(0);
+		}
+		/* This is from a return from automatic migration */
+		if (pool_p->migr->nbfiles_canbemig-- < 0) {
+			sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)\n",
+					stcp->poolname);
+			pool_p->migr->nbfiles_canbemig = 0;
+		}
+		if (pool_p->migr->space_canbemig < stcp->actual_size) {
+			sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, space_canbemig < stcp->actual_size after automatic migration OK (resetted to 0)\n",
+				stcp->poolname);
+			pool_p->migr->space_canbemig = 0;
+		} else {
+			pool_p->migr->space_canbemig -= stcp->actual_size;
+		}
+		stcp->filler[0] = '\0';
+		break;
+	case 1:
+		/* This is to add an entry for the next automatic migration */
+		pool_p->migr->nbfiles_canbemig++;
+		pool_p->migr->space_canbemig += stcp->actual_size;
+		stcp->filler[0] = 'm';
+		break;
+	default:
+		sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error : flag != 1 && flag != -1\n");
+		serrno = EINVAL;
+		return(-1);
+	}
+	return(0);
 }
 
 /* If poolname == NULL this the following routine will check ALL the pools */
@@ -1507,7 +1525,7 @@ int migpoolfiles(migr_p)
               seteuid(0);
               setegid(itype != 0 ? scc->stcp->gid : stpasswd->pw_gid);
               seteuid(itype != 0 ? scc->stcp->uid : stpasswd->pw_uid);
-              rc = stage_put_hsm(NULL, files);
+              rc = stage_put_hsm(NULL, 1, files);
               free(files);
               free (scs);
               exit(rc != 0 ? SYERR : 0);
