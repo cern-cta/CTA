@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/27 15:05:04 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/28 08:10:08 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/27 15:05:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/28 08:10:08 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -98,6 +98,7 @@ int migratorCallbackFileCopied(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
+  file_list_t *file;
   int rc, save_serrno;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid;
@@ -125,10 +126,7 @@ int migratorCallbackFileCopied(
                             );
   if ( blkid == NULL ) blkid = strdup("unknown");
 
-  if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
-       ((filereq->cprc < 0) && 
-        ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
-        (filereq->err.errorcode == ENOSPC)) ) {
+  if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ) {
     rc = rtcpcld_updateTape(
                             tape,
                             filereq,
@@ -215,9 +213,15 @@ int migratorCallbackFileCopied(
       LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
       return(-1);
     }
+    rc = rtcpcld_findFile(tape,filereq,&file);
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_findFile()");
+      return(-1);
+    }
+    rtcpcld_cleanupFile(file);
   } else {
     /*
-     * Segment failed with something else than ENOSPC
+     * Segment failed
      */
     rc = rtcpcld_updcMigrFailed(
                                 tape,
