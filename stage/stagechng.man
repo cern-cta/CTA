@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.5 2001/07/24 07:42:32 jdurand Exp $
+.\" $Id: stagechng.man,v 1.6 2001/07/24 07:57:35 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.5 $ $Date: 2001/07/24 07:42:32 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.6 $ $Date: 2001/07/24 07:57:35 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2001/07/24 07:42:32 $"
+.TH STAGECHNG l "$Date: 2001/07/24 07:57:35 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
@@ -83,7 +83,7 @@ This may also be specified thru the environment variable STAGE_POOL.
 Forces the search to this internal request id.
 .TP
 .BI \--retenp " retenp"
-Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, on decrease it. Unit is in day.
+Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Unit is in day.
 .TP
 .BI \--status " status"
 Sets the internal status. Only
