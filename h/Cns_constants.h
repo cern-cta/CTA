@@ -1,5 +1,5 @@
 /*
- * Cns_constants.h,v 1.10 2001/04/29 16:00:59 baud Exp
+ * $Id: Cns_constants.h,v 1.2 2004/08/12 14:01:03 motiakov Exp $
  */
 
 /*
@@ -18,10 +18,9 @@
 #define DIRXSIZE (HYPERSIZE+WORDSIZE+LONGSIZE+LONGSIZE+LONGSIZE+HYPERSIZE+TIME_TSIZE+TIME_TSIZE+TIME_TSIZE+WORDSIZE+BYTESIZE)
 
 #ifdef CSEC
-#define CNS_PORT 5510
-#else
-#define CNS_PORT 5010
+#define SCNS_PORT 5510
 #endif
+#define CNS_PORT 5010
 
 		/* constants used for setting retention period on disk */
 
