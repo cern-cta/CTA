@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.4 $ $Date: 1999/11/11 06:53:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.5 $ $Date: 1999/11/16 16:11:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -206,7 +206,7 @@ reply:
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
  
-	c = send2tpd (NULL, sendbuf, NULL, (int *)0);
+	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
 	if (c < 0) c = -c;
 	exit (c);
 }
