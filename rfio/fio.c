@@ -1,14 +1,14 @@
 /*
- * $Id: fio.c,v 1.3 1999/12/09 13:46:43 jdurand Exp $
+ * $Id: fio.c,v 1.4 2001/05/11 07:50:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fio.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:43 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: fio.c,v $ $Revision: 1.4 $ $Date: 2001/05/11 07:50:50 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /*      fortran.c    C callable Fortran I/O                     */
@@ -73,8 +73,6 @@ static int lun2fd[MAXFTNLUN];  /* Fortran logical units to file descr. mapping *
 static int lun2reclen[MAXFTNLUN];
 static int tested = 0 ;	/* Test is_usf() done ? */
 
-extern int errno;
-			 
 int usf_open(unit, file,append,trunc)
 
 int 	*unit;
