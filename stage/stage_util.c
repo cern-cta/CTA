@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.25 2002/09/13 09:49:38 jdurand Exp $
+ * $Id: stage_util.c,v 1.26 2002/09/25 10:46:22 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.25 $ $Date: 2002/09/13 09:49:38 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.26 $ $Date: 2002/09/25 10:46:22 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.25 $ $Date: 
 #include "serrno.h"
 #include "stage_api.h"
 #include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
+#include "Ctape_constants.h"   /* For NOTRLCHK */
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -65,6 +66,14 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define PRINT_VALCHARCONV(st,member) { \
 	char charconvstring[1024]; \
 	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) st->member) == 0 ? charconvstring : "<?>"); \
+}
+#define DUMP_VALE_TFLAGS(rpfd,st,member) { \
+	char E_Tflagsstring[1024]; \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_E_Tflags2string((char *) E_Tflagsstring, (int) 1024, (int) st->member) == 0 ? E_Tflagsstring : "<?>"); \
+}
+#define PRINT_VALE_TFLAGS(st,member) { \
+	char E_Tflagsstring[1024]; \
+	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_E_Tflags2string((char *) E_Tflagsstring, (int) 1024, (int) st->member) == 0 ? E_Tflagsstring : "<?>"); \
 }
 #define DUMP_TIME(rpfd,st,member) {                                         \
     char tmpbuf[21];                                                        \
@@ -232,7 +241,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_VAL(rpfd,stcp,u1.t.retentd);
 		DUMP_VAL(rpfd,stcp,u1.t.side);
 		DUMP_STRING(rpfd,stcp,u1.t.tapesrvr);
-		DUMP_CHAR(rpfd,stcp,u1.t.E_Tflags);
+        DUMP_VALE_TFLAGS(rpfd,stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
 			switch (i) {
 			case 0:
@@ -331,7 +340,7 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_VAL(stcp,u1.t.retentd);
 		PRINT_VAL(stcp,u1.t.side);
 		PRINT_STRING(stcp,u1.t.tapesrvr);
-		PRINT_CHAR(stcp,u1.t.E_Tflags);
+        PRINT_VALE_TFLAGS(stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
 			switch (i) {
 			case 0:
@@ -677,6 +686,48 @@ int DLL_DECL stage_util_charconv2string(output, maxsize, charconv)
 			}
 			if (strlen(thisp) > (maxsize - 1 - strlen(charconv2name[i].name) - 1)) break;
 			strcat(thisp, charconv2name[i].name);
+		}
+	}
+
+	if (! *thisp) {
+		serrno = ENOENT;
+	}
+	return(*thisp != '\0' ? 0 : -1);
+}
+
+int DLL_DECL stage_util_E_Tflags2string(output, maxsize, E_Tflags)
+	char *output;
+	size_t maxsize;
+	int E_Tflags;
+{
+	char *thisp;
+	int i;
+
+	struct flag2name E_Tflags2name[] = { /* Must be ANDed with 0xF */
+		{ SKIPBAD    , "SKIPBAD"  },
+		{ KEEPFILE   , "KEEPFILE" },
+		{ NOTRLCHK   , "NOTRLCHK" },
+        { 0          , NULL      }
+	};
+
+	if (output == NULL) {
+		serrno = EFAULT;
+		return(-1);
+	}
+
+	thisp = output;
+	*thisp = '\0';
+
+	i = -1;
+	while (1) {
+		if (E_Tflags2name[++i].name == NULL) break;
+		if ((E_Tflags & E_Tflags2name[i].flag) == E_Tflags2name[i].flag) {
+			if (strlen(output) > (maxsize - 3)) break;
+			if (*thisp != '\0') {
+				strcat(thisp, "|");
+			}
+			if (strlen(thisp) > (maxsize - 1 - strlen(E_Tflags2name[i].name) - 1)) break;
+			strcat(thisp, E_Tflags2name[i].name);
 		}
 	}
 
