@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.5 $ $Date: 2001/02/21 06:05:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.6 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentermodel - enter a new model of cartridge */
@@ -12,7 +12,6 @@ static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.5 $ $Dat
 #include <sys/types.h>
 #include "Cgetopt.h"
 #include "serrno.h"
-#include "u64subr.h"
 #include "vmgr_api.h"
 main(argc, argv)
 int argc;
@@ -28,14 +27,11 @@ char **argv;
 		{"ml", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
 		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
 		{"mo", REQUIRED_ARGUMENT, 0, OPT_MODEL},
-		{"native_capacity", REQUIRED_ARGUMENT, 0, OPT_NATIVE_CAPACITY},
-		{"nc", REQUIRED_ARGUMENT, 0, OPT_NATIVE_CAPACITY},
 		{0, 0, 0, 0}
 	};
 	int media_cost = 0;
 	char *media_letter = NULL;
 	char *model = NULL;
-	int native_capacity = 0;
 
 	Copterr = 1;
 	Coptind = 1;
@@ -55,9 +51,6 @@ char **argv;
                 case OPT_MODEL:
 			model = Coptarg;
                         break;
-		case OPT_NATIVE_CAPACITY:
-			native_capacity = strutou64 (Coptarg) / ONE_MB;
-			break;
                 case '?':
                         errflg++;
                         break;
@@ -69,13 +62,12 @@ char **argv;
                 errflg++;
         }
         if (errflg) {
-                fprintf (stderr, "usage: %s %s%s", argv[0],
-		    "--mo model [--ml media_letter] [--mc media_cost]\n",
-		    "--nc native_capacity\n");
+                fprintf (stderr, "usage: %s %s", argv[0],
+		    "--mo model [--ml media_letter] [--mc media_cost]\n");
                 exit (USERR);
         }
  
-	if (vmgr_entermodel (model, media_letter, native_capacity, media_cost) < 0) {
+	if (vmgr_entermodel (model, media_letter, media_cost) < 0) {
 		fprintf (stderr, "vmgrentermodel %s: %s\n", model, sstrerror(serrno));
 		exit (USERR);
 	}

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querymodel.man,v $ $Revision: 1.5 $ $Date: 2002/05/30 10:12:09 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_querymodel.man,v $ $Revision: 1.6 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYMODEL 3 "$Date: 2002/05/30 10:12:09 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYMODEL 3 "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querymodel \- query about a model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -12,7 +12,6 @@ vmgr_querymodel \- query about a model of cartridge in the CASTOR Volume Manager
 .sp
 .BI "int vmgr_querymodel (const char *" model ,
 .BI "char *" media_letter ,
-.BI "int *" native_capacity ,
 .BI "int *" media_cost )
 .SH DESCRIPTION
 .B vmgr_querymodel
@@ -26,10 +25,6 @@ It must be at most CA_MAXMODELLEN characters long.
 is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 ),
 "J" for IBM 3590, "R" for STK 9840.
-.TP
-.I native_capacity
-in Mbytes.
-For a multi-sided media like DVD, the native capacity corresponds to one side.
 .TP
 .I media_cost
 in Swiss Francs.

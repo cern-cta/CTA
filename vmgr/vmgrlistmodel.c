@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.7 $ $Date: 2001/02/21 06:05:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.8 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
@@ -19,7 +19,6 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.7 $ $Date
 #endif
 #include "Cgetopt.h"
 #include "serrno.h"
-#include "u64subr.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
 main(argc, argv)
@@ -41,8 +40,6 @@ char **argv;
 	int media_cost;
 	char media_letter[CA_MAXMLLEN+1] = " ";
 	char *model = NULL;
-	int native_capacity;
-	char tmpbuf[8];
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -80,8 +77,7 @@ char **argv;
 	}
 #endif
 	if (model) {
-		if (vmgr_querymodel (model, media_letter, &native_capacity,
-		    &media_cost) < 0) {
+		if (vmgr_querymodel (model, media_letter, &media_cost) < 0) {
 			fprintf (stderr, "vmgrlistmodel %s: %s\n", model,
 			    (serrno == ENOENT) ? "No such model" : sstrerror(serrno));
 #if defined(_WIN32)
@@ -89,15 +85,12 @@ char **argv;
 #endif
 			exit (USERR);
 		}
-		printf ("%-6s %-2s %-7s %d\n", model, media_letter,
-		    u64tostru ((u_signed64)native_capacity * ONE_MB, tmpbuf, 7),
-		    media_cost);
+		printf ("%-6s %-2s %d\n", model, media_letter, media_cost);
 	} else {
 		flags = VMGR_LIST_BEGIN;
 		while ((lp = vmgr_listmodel (flags, &list)) != NULL) {
-			printf ("%-6s %-2s %-7s %d\n", lp->m_model, lp->m_media_letter,
-			    u64tostru ((u_signed64)lp->native_capacity * ONE_MB, tmpbuf, 7),
-			    lp->media_cost_GB);
+			printf ("%-6s %-2s %d\n", lp->m_model, lp->m_media_letter,
+			    lp->media_cost);
 			flags = VMGR_LIST_CONTINUE;
 		}
 		(void) vmgr_listmodel (VMGR_LIST_END, &list);

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listmodel.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listmodel.c,v $ $Revision: 1.3 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listmodel - list cartridge model entries */
@@ -79,7 +79,7 @@ vmgr_listmodel(int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC);
+		marshall_LONG (sbp, VMGR_MAGIC2);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
@@ -121,8 +121,7 @@ vmgr_listmodel(int flags, vmgr_list *listp)
 		while (nbentries--) {
 			unmarshall_STRING (rbp, lp->m_model);
 			unmarshall_STRING (rbp, lp->m_media_letter);
-			unmarshall_LONG (rbp, lp->native_capacity);
-			unmarshall_LONG (rbp, lp->media_cost_GB);
+			unmarshall_LONG (rbp, lp->media_cost);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.4 $ $Date: 2000/07/07 06:08:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.5 $ $Date: 2003/10/29 07:48:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
-/*      vmgr_enterdenmap - enter a new triplet model/media_letter/density */
+/*      vmgr_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
 #include <errno.h>
 #include <sys/types.h>
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.4 $ $D
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_enterdenmap(const char *model, char *media_letter, char *density)
+vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
 {
 	int c;
 	char func[17];
@@ -62,7 +62,7 @@ vmgr_enterdenmap(const char *model, char *media_letter, char *density)
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_ENTDENMAP);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -79,6 +79,7 @@ vmgr_enterdenmap(const char *model, char *media_letter, char *density)
 		marshall_STRING (sbp, " ");
 	}
 	marshall_STRING (sbp, density);
+	marshall_LONG (sbp, native_capacity);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

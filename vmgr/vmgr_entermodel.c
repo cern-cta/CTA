@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.5 $ $Date: 2000/07/07 06:08:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.6 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entermodel - enter a new model of cartridge */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.5 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entermodel(const char *model, char *media_letter, int native_capacity, int media_cost)
+vmgr_entermodel(const char *model, char *media_letter, int media_cost)
 {
 	int c;
 	char func[16];
@@ -61,7 +61,7 @@ vmgr_entermodel(const char *model, char *media_letter, int native_capacity, int 
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_ENTMODEL);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -77,7 +77,6 @@ vmgr_entermodel(const char *model, char *media_letter, int native_capacity, int 
 	} else {
 		marshall_STRING (sbp, " ");
 	}
-	marshall_LONG (sbp, native_capacity);
 	marshall_LONG (sbp, media_cost);
  
 	msglen = sbp - sendbuf;

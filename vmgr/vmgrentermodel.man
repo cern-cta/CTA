@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.5 $ $Date: 2002/08/23 12:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.6 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERMODEL 1 "$Date: 2002/08/23 12:43:06 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERMODEL 1 "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -13,7 +13,6 @@ vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .BI --ml " media_letter"
 ]
 .BI --mo " model"
-.BI --nc " native_capacity"
 .SH DESCRIPTION
 .B vmgrentermodel
 enters a new model of cartridge in the CASTOR Volume Manager.
@@ -29,19 +28,14 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
-.TP
-.I native_capacity
-in bytes. The number may also have a suffix M or G to indicate Mbyte and
-Gbyte respectively.
-For a multi-sided media like DVD, the native capacity corresponds to one side.
 .LP
 This command requires ADMIN privilege in the Cupv database.
 .SH EXAMPLES
 .nf
 .ft CW
-vmgrentermodel --mo SD3 --ml C --nc 50G --mc 48
-vmgrentermodel --mo 3590 --ml J --nc 10G --mc 45
-vmgrentermodel --mo DLT --nc 10G --mc 51
+vmgrentermodel --mo SD3 --ml C --mc 48
+vmgrentermodel --mo 3590 --ml J --mc 45
+vmgrentermodel --mo DLT --mc 51
 .ft
 .fi
 .SH EXIT STATUS

@@ -1,75 +1,79 @@
-.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.3 $ $Date: 2002/05/30 10:17:53 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.4 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTDENMAP 1 "$Date: 2002/05/30 10:17:53 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTDENMAP 1 "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
-vmgrlistdenmap \- list all existing triplets model/media_letter/density in the CASTOR Volume Manager
+vmgrlistdenmap \- list all existing quadruplets model/media_letter/density/capacity
+in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B vmgrlistdenmap
 .SH DESCRIPTION
 .B vmgrlistdenmap
-lists all existing triplets model/media_letter/density in the CASTOR Volume
-Manager in tabular form:
+lists all existing quadruplets model/media_letter/density/capacity in the CASTOR
+Volume Manager in tabular form:
 .HP 1.2i
 model		model of cartridge.
 .HP
 media_letter	media identification letter.
 .HP
 density		alphanumeric density.
+.HP
+capacity		native capacity (without compression).
+For a multi-sided media like DVD, the native capacity corresponds to one side.
 .SH EXAMPLES
 .nf
 .ft CW
 vmgrlistdenmap
-3480     38000
-3480     38KC
-3490   E 38KD
-3490   E 38KDC
-3590   J 10G
-3590   J 10GC
-3590E  K 40G
-3590E  K 40GC
-8200     8200
-8500     8200
-8500     8200C
-8500     8500
-8500     8500C
-9840   R 20G
-9840   R 20GC
-9940   P 60G
-9940   P 60GC
-DAT120   DDS
-DAT120   DDSC
-DLT2     10G
-DLT2     10GC
-DLT4     10G
-DLT4     10GC
-DLT4     20G
-DLT4     20GC
-DLT7   D 10G
-DLT7   D 10GC
-DLT7   D 20G
-DLT7   D 20GC
-DLT7   D 35G
-DLT7   D 35GC
-DLT8   D 10G
-DLT8   D 10GC
-DLT8   D 20G
-DLT8   D 20GC
-DLT8   D 35G
-DLT8   D 35GC
-DLT8   D 40G
-DLT8   D 40GC
-LTO1   L 100G
-LTO1   L 100GC
-SD1M     RAW
-SD1L     RAW
-SD3S   A 10G
-SD3S   A 10GC
-SD3M   B 25G
-SD3M   B 25GC
-SD3L   C 50G
-SD3L   C 50GC
+3480     38000    200.00M
+3480     38KC     200.00M
+3490   E 38KD     800.00M
+3490   E 38KDC    800.00M
+3590   J 10G       10.00G
+3590   J 10GC      10.00G
+3590   J 20G       20.00G
+3590   J 20GC      20.00G
+3590E  K 20G       20.00G
+3590E  K 20GC      20.00G
+3590E  K 40G       40.00G
+3590E  K 40GC      40.00G
+8200     8200       2.00G
+8200     8200C      2.00G
+8200     8500       5.00G
+8200     8500C      5.00G
+9840   R 20G       20.00G
+9840   R 20GC      20.00G
+9940   P 60G       60.00G
+9940   P 60GC      60.00G
+9940   P 200G     200.00G
+9940   P 200GC    200.00G
+CT3    D 10G       10.00G
+CT3    D 10GC      10.00G
+CT4    D 20G       20.00G
+CT4    D 20GC      20.00G
+CT4    D 35G       35.00G
+CT4    D 35GC      35.00G
+CT4    D 40G       40.00G
+CT4    D 40GC      40.00G
+DAT120   DDS        4.00G
+DAT120   DDSC       4.00G
+DAT60    DDS        1.30G
+DAT60    DDSC       1.30G
+DAT90    DDS        2.00G
+DAT90    DDSC       2.00G
+DVD      FMT        4.70G
+LTO1   L 100G     100.00G
+LTO1   L 100GC    100.00G
+SD1M     RAW       43.00G
+SD1L     RAW       96.00G
+SD3S   A 10G       10.00G
+SD3S   A 10GC      10.00G
+SD3M   B 25G       25.00G
+SD3M   B 25GC      25.00G
+SD3L   C 50G       50.00G
+SD3L   C 50GC      50.00G
+SDLT   S 110G     110.00G
+SDLT   S 110GC    110.00G
 .ft
 .fi
 .SH EXIT STATUS

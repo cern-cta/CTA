@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listdenmap.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listdenmap.c,v $ $Revision: 1.3 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
-/*      vmgr_listdenmap - list triplets model/media_letter/density */
+/*      vmgr_listdenmap - list quadruplets model/media_letter/density/capacity */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -79,7 +79,7 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC);
+		marshall_LONG (sbp, VMGR_MAGIC2);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
@@ -122,6 +122,7 @@ vmgr_listdenmap(int flags, vmgr_list *listp)
 			unmarshall_STRING (rbp, lp->md_model);
 			unmarshall_STRING (rbp, lp->md_media_letter);
 			unmarshall_STRING (rbp, lp->md_density);
+			unmarshall_LONG (rbp, lp->native_capacity);
 			lp++;
 		}
 		unmarshall_WORD (rbp, listp->eol);

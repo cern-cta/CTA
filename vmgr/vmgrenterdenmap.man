@@ -1,19 +1,23 @@
-.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.4 $ $Date: 2002/08/23 12:43:05 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.5 $ $Date: 2003/10/29 07:48:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERDENMAP 1 "$Date: 2002/08/23 12:43:05 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERDENMAP 1 "$Date: 2003/10/29 07:48:58 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
-vmgrenterdenmap \- enter a new triplet model/media_letter/density in the CASTOR
-Volume Manager
+vmgrenterdenmap \- enter a new quadruplet model/media_letter/density/capacity
+in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B vmgrenterdenmap
 .BI -d " density"
+[
 .BI --ml " media_letter"
+]
 .BI --mo " model"
+.BI --nc " native_capacity"
 .SH DESCRIPTION
 .B vmgrenterdenmap
-enters a new triplet model/media_letter/density in the CASTOR Volume Manager.
+enters a new quadruplet model/media_letter/density/capacity in the CASTOR Volume
+Manager.
 .TP
 .I density
 is alphanumeric. It must be at most CA_MAXDENLEN characters long.
@@ -44,13 +48,18 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I native_capacity
+in bytes. The number may also have a suffix M or G to indicate Mbyte and
+Gbyte respectively.
+For a multi-sided media like DVD, the native capacity corresponds to one side.
 .LP
 This command requires ADMIN privilege in the Cupv database.
 .SH EXAMPLES
 .nf
 .ft CW
-vmgrenterdenmap --mo 9840 --ml R -d 20GC
-vmgrenterdenmap --mo 8500 -d 8500C
+vmgrenterdenmap --mo 9840 --ml R -d 20GC --nc 20G
+vmgrenterdenmap --mo 8500 -d 8500C --nc 5G
 .ft
 .fi
 .SH EXIT STATUS

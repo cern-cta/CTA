@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.7 $ $Date: 2001/01/19 11:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.8 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querymodel - query about a model of cartridge */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.7 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int *media_cost)
+vmgr_querymodel(const char *model, char *media_letter, int *media_cost)
 {
 	int c;
 	char func[16];
@@ -65,7 +65,7 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_QRYMODEL);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -93,9 +93,6 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 		unmarshall_STRING (rbp, tmpbuf);
 		if (media_letter)
 			strcpy (media_letter, tmpbuf);
-		unmarshall_LONG (rbp, n);
-		if (native_capacity)
-			*native_capacity = n;
 		unmarshall_LONG (rbp, n);
 		if (media_cost)
 			*media_cost = n;
