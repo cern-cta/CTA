@@ -1,10 +1,10 @@
-.\" $Id: stage_out_disk.man,v 1.1 2002/10/08 13:43:54 jdurand Exp $
+.\" $Id: stage_out_disk.man,v 1.2 2002/10/08 15:39:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_out_disk.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 13:43:54 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_out_disk.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 15:39:28 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_OUT_DISK "3" "$Date: 2002/10/08 13:43:54 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_OUT_DISK "3" "$Date: 2002/10/08 15:39:28 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_out_disk \- Allocate space and store the option values in the stgdaemon catalog for use by stageput or stageupdc later.
 
@@ -224,12 +224,12 @@ int main(argc,argv)
 		stpp_input
 		) != 0) {
 		fprintf(stderr,"stage_out_disk error: %s\\n", sstrerror(serrno));
-		/* Avoid unnecessary messaged from the stage_clr_link */
+		/* Avoid unnecessary messaged from the stage_clr_Link */
 		cleanup_mode = 1;
 		/* Let's be kind and remove the links */
 		/* Stager will otherwise remind them for a long time */
 		for (i = 0; i < nstpp_input; i++) {
-			stage_clr_link((u_signed64) 0, NULL, 1, &(stpp_input[i]));
+			stage_clr_Link((u_signed64) 0, NULL, stpp_input[i].upath);
 		}
 		free(stcp_input);
 		free(stpp_input);
@@ -246,8 +246,8 @@ int main(argc,argv)
 	/* Let's be kind and remove the links */
 	/* Stager will otherwise remind them for a long time */
 	for (i = 0; i < nstpp_input; i++) {
-		if (stage_clr_link((u_signed64) 0, NULL, 1, &(stpp_input[i])) != 0) {
-			fprintf(stderr,"stage_clr_link error: %s\\n", sstrerror(serrno));
+		if (stage_clr_Link((u_signed64) 0, NULL, stpp_input[i].upath) != 0) {
+			fprintf(stderr,"stage_clr_Link error: %s\\n", sstrerror(serrno));
 		}
 	}
 
@@ -267,12 +267,12 @@ void cleanup(sig)
 	/* I/O process will then be signalled on the hostname where is */
 	/* running the dameon */
 	stage_kill(sig);
-	/* Avoid unnecessary messaged from the stage_clr_link */
+	/* Avoid unnecessary messaged from the stage_clr_Link */
 	cleanup_mode = 1;
 	/* Let's be kind and remove the links */
 	/* Stager will otherwise remind them for a long time */
 	for (i = 0; i < nstpp_input; i++) {
-		stage_clr_link((u_signed64) 0, NULL, 1, &(stpp_input[i]));
+		stage_clr_Link((u_signed64) 0, NULL, stpp_input[i].upath);
 	}
 	exit(EXIT_FAILURE);
 }
@@ -461,7 +461,7 @@ Host not known
 A poolname other than the default can be specified either with environment variable $STAGE_POOL, or an entry 'STG POOL' in /etc/shift.conf
 
 .SH SEE ALSO
-\fBstageout\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstage_clr_link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
+\fBstageout\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstage_clr_Link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,10 +1,10 @@
-.\" $Id: stage_out_tape.man,v 1.1 2002/10/08 13:43:54 jdurand Exp $
+.\" $Id: stage_out_tape.man,v 1.2 2002/10/08 15:39:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_out_tape.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 13:43:54 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_out_tape.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 15:39:28 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_OUT_TAPE "3" "$Date: 2002/10/08 13:43:54 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_OUT_TAPE "3" "$Date: 2002/10/08 15:39:28 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_out_tape \- Asks for one or more tape files to be created on disk, later to be written with stageput
 .SH SYNOPSIS
@@ -197,7 +197,7 @@ Host not known
 A poolname other than the default can be specified either with environment variable $STAGE_POOL, or an entry 'STG POOL' in /etc/shift.conf
 
 .SH SEE ALSO
-\fBstageout\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstage_clr_link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
+\fBstageout\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstage_clr_Link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
