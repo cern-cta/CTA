@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.54 2002/05/06 17:17:15 jdurand Exp $
+ * $Id: procclr.c,v 1.55 2002/05/15 14:08:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.54 $ $Date: 2002/05/06 17:17:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.55 $ $Date: 2002/05/15 14:08:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,6 +39,39 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.54 $ $Date: 200
 #include "Cgetopt.h"
 #include "rfio_api.h"
 #include "serrno.h"
+#ifdef STAGER_DEBUG
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/times.h>
+struct _stage_times {
+	struct tms tms;
+	clock_t     time;
+};
+typedef struct _stage_times _stage_times_t;
+#define STAGE_TIME_START(comment) { \
+	char *thisfile = __FILE__; \
+	int thisline = __LINE__; \
+    char *thiscomment = comment; \
+    _stage_times_t _stage_times_start; \
+	_stage_times_t _stage_times_end; \
+	long clktck; \
+	_stage_times_start.time = times(&_stage_times_start.tms);
+#define STAGE_TIME_END \
+	_stage_times_end.time = times(&_stage_times_end.tms); \
+	clktck = sysconf(_SC_CLK_TCK); \
+	stglogit("timer", "[%s] Between %s:%d and %s:%d, timer gives:\n", thiscomment, thisfile, thisline, __FILE__, __LINE__); \
+	stglogit("timer", "[%s] Real Time : %7.2f (%ld ticks)\n", thiscomment, (_stage_times_end.time - _stage_times_start.time) / (double) clktck, (long) (_stage_times_end.time - _stage_times_start.time) ); \
+	stglogit("timer", "[%s] User Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
+	stglogit("timer", "[%s] Sys  Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
+}
+#else
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
+#endif
+#else
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
+#endif
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -486,7 +519,10 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				c = EBUSY;
 				goto reply;
 			}
-			if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
+			STAGE_TIME_START("check_delete");
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+			STAGE_TIME_END;
+			if (i > 0) {
 				c = i;
 				goto reply;
 			}
@@ -506,7 +542,10 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						c = EBUSY;
 						goto reply;
 					}
-					if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
+					STAGE_TIME_START("check_delete");
+					i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+					STAGE_TIME_END;
+					if (i > 0) {
 						c = i;
 						goto reply;
 					}
@@ -566,7 +605,10 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				c = ENOUGHF;
 				goto reply;
 			}
-			if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
+ 			STAGE_TIME_START("check_delete");
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+ 			STAGE_TIME_END;
+			if (i > 0) {
 				c = i;
 				goto reply;
 			}
