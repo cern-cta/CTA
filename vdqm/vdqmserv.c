@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.9 $ $Date: 2000/03/08 16:51:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.10 $ $Date: 2000/03/10 18:48:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.9 $ $Date: 200
 
 #include <stdlib.h>
 #include <errno.h>
+#include <signal.h>
 #if defined(VDQMSERV)
 #if !defined(_WIN32)
 #include <regex.h>
@@ -42,6 +43,8 @@ int main() {
 
     vdqm_shutdown = vdqm_restart = 0;
     (void) Cinitdaemon("vdqm",NULL);
+
+    signal(SIGPIPE,SIG_IGN);
     initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
 #if defined(__DATE__) && defined (__TIME__)
     log(LOG_INFO,"******* VDQM server generated at %s %s.\n",

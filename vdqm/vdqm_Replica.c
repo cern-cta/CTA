@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.8 $ $Date: 2000/03/10 15:59:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.9 $ $Date: 2000/03/10 18:48:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -69,7 +69,7 @@ typedef struct ReqPipe {
 static struct vdqmReplicationPipe {
     void *lock;
     int nb_piped;
-    ReqPipe_t *pipe;
+    ReqPipe_t pipe[VDQM_REPLICA_PIPELEN];
 } ReplicationPipe;
 
 /*
@@ -421,12 +421,6 @@ static int InitReplicaList() {
             return(-1);
         }
     }
-    ReplicationPipe.pipe = (ReqPipe_t *)calloc(1,VDQM_REPLICA_PIPELEN*sizeof(ReqPipe_t));
-    if ( ReplicationPipe.pipe == NULL ) {
-        log(LOG_ERR,"InitReplicaList() calloc(): %s\n",
-            sstrerror(errno));
-        return(-1);
-    }
     return(0);
 }
 
@@ -464,7 +458,6 @@ static int FindReplicaRecord(vdqmReplica_t *Replica, vdqmReplicaList_t **rpl) {
 }
 
 static int NewReplicaRecord(vdqmReplicaList_t **rpl) {
-    int save_errno;
 
     if ( rpl == NULL || *rpl != NULL ) {
         serrno = EINVAL;
@@ -478,6 +471,7 @@ static int NewReplicaRecord(vdqmReplicaList_t **rpl) {
 static int CheckReplica(vdqmReplica_t *Replica) {
     int rc;
     char *p, *q;
+    char *last = NULL;
 
     if ( Replica == NULL ) return(-1);
     log(LOG_DEBUG,"CheckReplica() check %s\n",Replica->host);
@@ -486,25 +480,18 @@ static int CheckReplica(vdqmReplica_t *Replica) {
         log(LOG_ERR,"CheckReplica() no replica host configured!\n");
         return(-1);
     }
-    if ( (q = strstr(p,Replica->host)) == NULL ) {
+
+    q = strtok(p," \t");
+    while ( q != NULL ) {
+        if ( strcmp(q,Replica->host) == 0  ) break;
+        q = strtok(NULL," \t");
+    }
+    if ( q == NULL ) {
         log(LOG_ERR,"CheckReplica() host %s is not configured as replica\n",
             Replica->host);
         return(-1);
     }
 
-    if ( q != p && *(q-1) != ' ' && *(q-1) != '\t' ) {
-        log(LOG_ERR,"CheckReplica() host %s is not configured as replica\n",
-            Replica->host);
-        return(-1);
-    }
-    p = q;
-    q = strpbrk(p," \t");
-    if ( q != NULL ) *q = '\0';
-    if ( strcmp(p,Replica->host) != 0 ) {
-        log(LOG_ERR,"CheckReplica() host %s is not configured as replica\n",
-            Replica->host);
-        return(-1);
-    }
     return(0);
 }
 
@@ -872,6 +859,7 @@ void *vdqm_ReplicaListenThread(void *arg) {
         retry_replication--;
         if ( retry_replication > 0 ) sleep(retry_time);
     } /* while ( retry_replication > 0 ) */
+    if ( nw != NULL ) free(nw);
     replication_ON = 0;
     hold = 0;
     log(LOG_INFO,"vdqm_ReplicaListenThread() exits because retry limit exhausted\n");
