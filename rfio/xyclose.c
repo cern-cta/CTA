@@ -1,5 +1,5 @@
 /*
- * $Id: xyclose.c,v 1.4 2000/05/29 16:42:07 obarring Exp $
+ * $Id: xyclose.c,v 1.5 2004/11/29 22:26:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyclose.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:07 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: xyclose.c,v $ $Revision: 1.5 $ $Date: 2004/11/29 22:26:45 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* xyclose.c    Remote File I/O - Close a Fortran Logical Unit          */
@@ -30,8 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: xyclose.c,v $ $Revision: 1.4 $ $Date: 2000
 
 extern int DLL_DECL switch_close();
 
-int
-rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
+int DLL_DECL rfio_xyclose(lun, chopt, irc)   /* close a remote fortran logical unit  */
 int     lun;
 char    *chopt;
 int     *irc;
