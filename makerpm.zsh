@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.5 2005/01/23 15:24:03 jdurand Exp $
+# $Id: makerpm.zsh,v 1.6 2005/01/24 10:02:28 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -48,7 +48,8 @@ foreach this (castor-*_${a}.${b}.${c}-${d}_*deb)
     init=`basename $initscript`
   echo "
 %post
-chkconfig --add $init
+# Commented on CERN/IT/FIO request
+# chkconfig --add $init
 if [ \"\$1\" = \"1\" ]; then
   # This is a first install
   service $init condrestart
@@ -58,6 +59,7 @@ fi
 if [ \"\$1\" = \"0\" ]; then
   # This is a removal
   service $init stop
+  # Does not hurt
   chkconfig --del $init
 fi
 
