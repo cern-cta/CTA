@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.8 $ $Date: 1999/11/12 08:48:53 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.9 $ $Date: 1999/11/12 10:38:27 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -211,8 +211,8 @@ struct confq {		/* config queue */
 	struct confq *next;
 	struct confq *prev;
 	int	ovly_pid;
-	char	dgn[CA_MAXDGNLEN+1];
 	int	status;
+	int	ux;		/* index in drive table tptab */
 };
 struct rlsq {		/* rls queue */
 	struct rlsq *next;
