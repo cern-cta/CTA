@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/08 14:39:39 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/08 15:34:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -658,6 +658,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   }
   
   cr.client = *cl;
+  cr.client.setRequest(0);
   cr.response = buffer;
   cr.isLast = isLastResponse;
 
