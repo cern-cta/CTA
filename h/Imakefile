@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2005/01/13 15:40:16 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/01/14 11:32:25 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -33,10 +33,10 @@ ICOMMON_H = \
 	 FileName($(DESTDIR),socket_timeout.h) FileName($(DESTDIR),trace.h) \
 	 FileName($(DESTDIR),u64subr.h) FileName($(DESTDIR),ypgetacctent.h) \
 	 FileName($(TOPINCLUDE),shift.h) \
-	 FileName($(TOPINCLUDE),stager_api.h) \
-	 FileName($(TOPINCLUDE),stager_admin_api.h) \
-	 FileName($(TOPINCLUDE),stager_client_api.h) \
-	 FileName($(TOPINCLUDE),stager_service_api.h)
+	 FileName($(DESTDIR),stager_api.h) \
+	 FileName($(DESTDIR),stager_admin_api.h) \
+	 FileName($(DESTDIR),stager_client_api.h) \
+	 FileName($(DESTDIR),stager_service_api.h)
 ECOMMON_H = \
 	 $(EXPORTH)/Castor_limits.h $(EXPORTH)/Cgetopt.h \
 	 $(EXPORTH)/sacct.h \
