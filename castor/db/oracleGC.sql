@@ -83,7 +83,7 @@ BEGIN
   END LOOP;
 END;
 
-/* Used to delte rows IN NbTapeCopiesInFS whenever a
+/* Used to delete rows IN NbTapeCopiesInFS whenever a
    Stream is deleted */
 CREATE OR REPLACE TRIGGER tr_Stream_Delete
 BEFORE DELETE ON Stream
