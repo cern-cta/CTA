@@ -1273,7 +1273,7 @@ END;
 
 /* PL/SQL method implementing selectFiles2Delete */
 CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(DiskServerId IN NUMBER,
+(DiskServerName IN VARCHAR,
  GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
   files "numList";
 BEGIN
@@ -1282,7 +1282,7 @@ BEGIN
     FROM DiskCopy, FileSystem, DiskServer
    WHERE DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.DiskServer = DiskServer.id
-     AND DiskServer.name = DiskServer
+     AND DiskServer.name = DiskServerName
      AND DiskCopy.status = 8 -- GC_CANDIDATE
      FOR UPDATE;
   IF files.COUNT > 0 THEN
