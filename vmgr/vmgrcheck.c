@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.4 $ $Date: 2003/10/14 12:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.5 $ $Date: 2003/11/06 12:41:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -53,8 +53,8 @@ vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_
 				return (EINVAL);
 			sleep (60);
 		}
-		if ((pool_uid && pool_uid != uid && uid != 0) ||
-		    (pool_gid && pool_gid != gid && gid != 0) ||
+		if (((pool_uid && pool_uid != uid && uid != 0) ||
+		    (pool_gid && pool_gid != gid && gid != 0)) &&
 		    (Cupv_check (uid, gid, clienthost, "TAPE_SERVERS", P_ADMIN) &&
 		    Cupv_check (uid, gid, clienthost, NULL, P_ADMIN)))
 			return (EACCES);
