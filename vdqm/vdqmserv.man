@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.3 $ $Date: 2002/05/14 14:44:56 $ CERN IT-ADC Olof Barring
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.4 $ $Date: 2003/01/23 17:30:25 $ CERN IT-ADC Olof Barring
 .\" Copyright (C) 2001 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMSERV 1 "$Date: 2002/05/14 14:44:56 $" CASTOR "VDQM server daemon"
+.TH VDQMSERV 1 "$Date: 2003/01/23 17:30:25 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserv \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -25,6 +25,10 @@ The \fBvdqmserv\fP
 listens to a well-known port number configured through the \fBvdqm\fP
 service (tcp) in the "/etc/services" file
 on all client and server hosts.
+.PP
+By default, the \fBvdqmserv\fP
+only accepts request from clients from the same network (e.g. 137.138). To accepts requests from clients on other networks, a "/etc/shift.localhost" file must be created, with one line per network authorized, containing the IP of the network.
+
 .PP
 Because of its high importance for the functioning of the CASTOR tape
 services the \fBvdqmserv\fP
@@ -100,13 +104,14 @@ set the VDQM thread pool size (default is 10 worker threads).
 .B RTCP_PORT, RTCOPY_PORT, RTCOPYPORT
 override the default port number used by VDQM to contact the tape
 mover (RTCOPY server).
-.TP
 
 .SH FILES
-.TB 1.5i
-.TP
+.TP 1.5i
 .B /etc/shift.conf
 CASTOR configuration file
+.TP
+.B /etc/shift.localhost
+Contains the list of networks from which the requests are accepted
 .TP
 .B /usr/spool/vdqm/vdqm.log
 VDQM server log file
