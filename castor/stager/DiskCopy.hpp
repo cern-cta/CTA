@@ -29,7 +29,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/stager/DiskCopyStatusCode.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -160,7 +160,7 @@ namespace castor {
        * Get the value of m_status
        * @return the value of m_status
        */
-      DiskCopyStatusCode status() const {
+      DiskCopyStatusCodes status() const {
         return m_status;
       }
 
@@ -168,7 +168,7 @@ namespace castor {
        * Set the value of m_status
        * @param new_var the new value of m_status
        */
-      void setStatus(DiskCopyStatusCode new_var) {
+      void setStatus(DiskCopyStatusCodes new_var) {
         m_status = new_var;
       }
 
@@ -186,7 +186,7 @@ namespace castor {
 
       CastorFile* m_castorFile;
 
-      DiskCopyStatusCode m_status;
+      DiskCopyStatusCodes m_status;
 
     }; // end of class DiskCopy
 

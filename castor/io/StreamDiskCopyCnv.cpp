@@ -39,7 +39,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskCopyStatusCode.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
 #include <string>
@@ -113,7 +113,7 @@ castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* addr
   object->setId(id);
   int status;
   ad->stream() >> status;
-  object->setStatus((castor::stager::DiskCopyStatusCode)status);
+  object->setStatus((castor::stager::DiskCopyStatusCodes)status);
   return object;
 }
 

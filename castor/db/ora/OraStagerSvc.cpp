@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/20 10:23:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/20 14:15:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -32,6 +32,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -75,8 +76,8 @@ const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatement
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
-  "SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_CastorFile.fileId, \
-   rh_CastorFile.nsHost, rh_CastorFile.fileSize, rh_TapeCopy.id \
+  "SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCopy.path, \
+   rh_CastorFile.fileId, rh_CastorFile.nsHost, rh_CastorFile.fileSize, rh_TapeCopy.id \
    FROM rh_DiskServer, rh_FileSystem, rh_DiskCopy, rh_CastorFile, rh_TapeCopy, rh_Stream2TapeCopy \
    WHERE rh_DiskServer.id = rh_FileSystem.diskserver \
    AND rh_FileSystem.id = rh_DiskCopy.filesystem \
@@ -197,13 +198,16 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
   castor::stager::TapeCopyForMigration* result =
     new castor::stager::TapeCopyForMigration();
   result->setDiskServer(rset->getString(1));
-  std::string mountPoint = rset->getString(2);
-  std::string path = rset->getString(3);
-  result->setPath(mountPoint + path);
-  result->setCastorFileID((u_signed64)rset->getDouble(4));
-  result->setNsHost(rset->getString(5));
-  result->setFileSize((u_signed64)rset->getDouble(6));
-  result->setId((u_signed64)rset->getDouble(7));
+  result->setMountPoint(rset->getString(2));
+  castor::stager::DiskCopy* diskCopy =
+    new castor::stager::DiskCopy();
+  diskCopy->setPath(rset->getString(3));
+  diskCopy->setId((u_signed64)rset->getDouble(4));
+  result->setDiskCopy(diskCopy);
+  result->setCastorFileID((u_signed64)rset->getDouble(5));
+  result->setNsHost(rset->getString(6));
+  result->setFileSize((u_signed64)rset->getDouble(7));
+  result->setId((u_signed64)rset->getDouble(8));
   m_bestTapeCopyForStreamStatement->closeResultSet(rset);
   // Fill result for TapeCopy, Segments and Tape
   cnvSvc()->updateObj(result);

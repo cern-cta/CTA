@@ -36,6 +36,9 @@ namespace castor {
 
   namespace stager {
 
+    // Forward declarations
+    class DiskCopy;
+
     /**
      * class TapeCopyForMigration
      * This class is a wrapper around a Tape Copy that represents a TapCopy ready for
@@ -74,21 +77,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_path
-       * The path of the file to be migrated on the disk server
-       * @return the value of m_path
+       * Get the value of m_mountPoint
+       * The mountpoint of the filesystem where the file to be migrated resides
+       * @return the value of m_mountPoint
        */
-      std::string path() const {
-        return m_path;
+      std::string mountPoint() const {
+        return m_mountPoint;
       }
 
       /**
-       * Set the value of m_path
-       * The path of the file to be migrated on the disk server
-       * @param new_var the new value of m_path
+       * Set the value of m_mountPoint
+       * The mountpoint of the filesystem where the file to be migrated resides
+       * @param new_var the new value of m_mountPoint
        */
-      void setPath(std::string new_var) {
-        m_path = new_var;
+      void setMountPoint(std::string new_var) {
+        m_mountPoint = new_var;
       }
 
       /**
@@ -145,13 +148,29 @@ namespace castor {
         m_fileSize = new_var;
       }
 
+      /**
+       * Get the value of m_diskCopy
+       * @return the value of m_diskCopy
+       */
+      DiskCopy* diskCopy() const {
+        return m_diskCopy;
+      }
+
+      /**
+       * Set the value of m_diskCopy
+       * @param new_var the new value of m_diskCopy
+       */
+      void setDiskCopy(DiskCopy* new_var) {
+        m_diskCopy = new_var;
+      }
+
     private:
 
       /// The disk server on which the file to be migrated resides
       std::string m_diskServer;
 
-      /// The path of the file to be migrated on the disk server
-      std::string m_path;
+      /// The mountpoint of the filesystem where the file to be migrated resides
+      std::string m_mountPoint;
 
       /// The castorFile ID of the file to migrate
       u_signed64 m_castorFileID;
@@ -161,6 +180,8 @@ namespace castor {
 
       /// The size of the file to migrate
       u_signed64 m_fileSize;
+
+      DiskCopy* m_diskCopy;
 
     }; // end of class TapeCopyForMigration
 

@@ -35,10 +35,11 @@
 castor::stager::TapeCopyForMigration::TapeCopyForMigration() throw() :
   TapeCopy(),
   m_diskServer(""),
-  m_path(""),
+  m_mountPoint(""),
   m_castorFileID(),
   m_nsHost(""),
-  m_fileSize() {
+  m_fileSize(),
+  m_diskCopy(0) {
 };
 
 //------------------------------------------------------------------------------

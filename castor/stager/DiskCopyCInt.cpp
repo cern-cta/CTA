@@ -28,7 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskCopyStatusCode.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
 
@@ -158,7 +158,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_DiskCopy_status
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopy_status(castor::stager::DiskCopy* instance, castor::stager::DiskCopyStatusCode* var) {
+  int Cstager_DiskCopy_status(castor::stager::DiskCopy* instance, castor::stager::DiskCopyStatusCodes* var) {
     *var = instance->status();
     return 0;
   }
@@ -166,7 +166,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_DiskCopy_setStatus
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopy_setStatus(castor::stager::DiskCopy* instance, castor::stager::DiskCopyStatusCode new_var) {
+  int Cstager_DiskCopy_setStatus(castor::stager::DiskCopy* instance, castor::stager::DiskCopyStatusCodes new_var) {
     instance->setStatus(new_var);
     return 0;
   }

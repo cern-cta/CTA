@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_TapeCopy_t;
 
@@ -72,16 +73,16 @@ int Cstager_TapeCopyForMigration_diskServer(struct Cstager_TapeCopyForMigration_
 int Cstager_TapeCopyForMigration_setDiskServer(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
 
 /**
- * Get the value of path
- * The path of the file to be migrated on the disk server
+ * Get the value of mountPoint
+ * The mountpoint of the filesystem where the file to be migrated resides
  */
-int Cstager_TapeCopyForMigration_path(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
+int Cstager_TapeCopyForMigration_mountPoint(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
 
 /**
- * Set the value of path
- * The path of the file to be migrated on the disk server
+ * Set the value of mountPoint
+ * The mountpoint of the filesystem where the file to be migrated resides
  */
-int Cstager_TapeCopyForMigration_setPath(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
+int Cstager_TapeCopyForMigration_setMountPoint(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
 
 /**
  * Get the value of castorFileID
@@ -118,5 +119,15 @@ int Cstager_TapeCopyForMigration_fileSize(struct Cstager_TapeCopyForMigration_t*
  * The size of the file to migrate
  */
 int Cstager_TapeCopyForMigration_setFileSize(struct Cstager_TapeCopyForMigration_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of diskCopy
+ */
+int Cstager_TapeCopyForMigration_diskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of diskCopy
+ */
+int Cstager_TapeCopyForMigration_setDiskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 #endif // CASTOR_STAGER_TAPECOPYFORMIGRATION_H

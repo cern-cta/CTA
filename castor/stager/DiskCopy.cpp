@@ -42,7 +42,7 @@ castor::stager::DiskCopy::DiskCopy() throw() :
   m_id(),
   m_fileSystem(0),
   m_castorFile(0),
-  m_status(DiskCopyStatusCode(0)) {
+  m_status(DiskCopyStatusCodes(0)) {
 };
 
 //------------------------------------------------------------------------------

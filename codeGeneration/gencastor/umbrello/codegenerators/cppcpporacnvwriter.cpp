@@ -1590,7 +1590,10 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (isEnum(as->remotePart.typeName)) {
+      writeSingleSetIntoStatement("update", as->remotePart, n, true);
+      n++;
+    } else if (as->type.multiRemote == MULT_ONE) {
       *m_stream << getIndent()
                 << "m_insertStatement->setDouble("
                 << n << ", ";

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/DiskCopyStatusCode.h
+ *                      castor/stager/DiskCopyStatusCodes.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,24 +17,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyStatusCode.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_DISKCOPYSTATUSCODE_H
-#define CASTOR_STAGER_DISKCOPYSTATUSCODE_H
+#ifndef CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP
+#define CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
-// enum DiskCopyStatusCode
-// Possible status codes for a DiskCopy
-//------------------------------------------------------------------------------
+#ifdef __cplusplus
+namespace castor {
 
-#define Cstager_DiskCopyStatusCode_t DiskCopyStatusCode
+  namespace stager {
 
-#include "DiskCopyStatusCode.hpp"
+#endif
+    /**
+     * enum DiskCopyStatusCodes
+     * Possible status codes for a DiskCopy
+     */
+    enum DiskCopyStatusCodes {
+      DISKCOPY_STAGED = 0,
+      DISKCOPY_WAITDISK2DISKCOPY = 1,
+      DISKCOPY_WAITTAPERECALL = 2,
+      DISKCOPY_DELETED = 3,
+      DISKCOPY_FAILED = 4,
+      DISKCOPY_WAITFS = 5,
+      DISKCOPY_STAGEOUT = 6,
+      DISKCOPY_INVALID = 7
+    }; // end of enum DiskCopyStatusCodes
 
-#endif // CASTOR_STAGER_DISKCOPYSTATUSCODE_H
+#ifdef __cplusplus
+  }; // end of namespace stager
+
+}; // end of namespace castor
+
+#endif
+#endif // CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP

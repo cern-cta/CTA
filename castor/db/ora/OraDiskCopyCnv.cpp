@@ -39,7 +39,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskCopyStatusCode.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 
 //------------------------------------------------------------------------------
@@ -80,6 +80,10 @@ const std::string castor::db::ora::OraDiskCopyCnv::s_deleteTypeStatementString =
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateSubRequestStatementString =
 "UPDATE rh_DiskCopy SET  = : 1 WHERE id = :2";
 
+/// SQL update statement for member 
+const std::string castor::db::ora::OraDiskCopyCnv::s_updateTapeCopyForMigrationStatementString =
+"UPDATE rh_DiskCopy SET  = : 1 WHERE id = :2";
+
 /// SQL update statement for member fileSystem
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateFileSystemStatementString =
 "UPDATE rh_DiskCopy SET fileSystem = : 1 WHERE id = :2";
@@ -100,6 +104,7 @@ castor::db::ora::OraDiskCopyCnv::OraDiskCopyCnv() :
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_updateSubRequestStatement(0),
+  m_updateTapeCopyForMigrationStatement(0),
   m_updateFileSystemStatement(0),
   m_updateCastorFileStatement(0) {}
 
@@ -124,6 +129,7 @@ void castor::db::ora::OraDiskCopyCnv::reset() throw() {
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_updateSubRequestStatement);
+    deleteStatement(m_updateTapeCopyForMigrationStatement);
     deleteStatement(m_updateFileSystemStatement);
     deleteStatement(m_updateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -135,6 +141,7 @@ void castor::db::ora::OraDiskCopyCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_updateSubRequestStatement = 0;
+  m_updateTapeCopyForMigrationStatement = 0;
   m_updateFileSystemStatement = 0;
   m_updateCastorFileStatement = 0;
 }
@@ -559,7 +566,7 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setPath(rset->getString(1));
     object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -607,7 +614,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
     object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

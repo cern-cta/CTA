@@ -28,7 +28,7 @@
 #define CASTOR_STAGER_DISKCOPY_H
 
 // Include Files and Forward declarations for the C world
-#include "castor/stager/DiskCopyStatusCode.h"
+#include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
@@ -127,11 +127,11 @@ int Cstager_DiskCopy_setCastorFile(struct Cstager_DiskCopy_t* instance, struct C
 /**
  * Get the value of status
  */
-int Cstager_DiskCopy_status(struct Cstager_DiskCopy_t* instance, enum Cstager_DiskCopyStatusCode_t* var);
+int Cstager_DiskCopy_status(struct Cstager_DiskCopy_t* instance, enum Cstager_DiskCopyStatusCodes_t* var);
 
 /**
  * Set the value of status
  */
-int Cstager_DiskCopy_setStatus(struct Cstager_DiskCopy_t* instance, enum Cstager_DiskCopyStatusCode_t new_var);
+int Cstager_DiskCopy_setStatus(struct Cstager_DiskCopy_t* instance, enum Cstager_DiskCopyStatusCodes_t new_var);
 
 #endif // CASTOR_STAGER_DISKCOPY_H
