@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.118 $ $Release$ $Date: 2005/01/31 11:12:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.119 $ $Release$ $Date: 2005/01/31 11:19:37 $ $Author: jdurand $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1005,7 +1005,7 @@ castor::db::ora::OraStagerSvc::requestToDo
         if (types.begin() != it) stmtString << ", ";
         stmtString << *it;
       }
-      stmtString << ") ORDER BY RequestsStatus.id;"
+      stmtString << ") FOR UPDATE ORDER BY RequestsStatus.id;"
                  << "UPDATE RequestsStatus SET status = 'PROCESSING'"
                  << " WHERE ROWID = rid RETURNING id INTO :1;"
                  << "EXCEPTION WHEN NO_DATA_FOUND THEN :1 := 0;"
