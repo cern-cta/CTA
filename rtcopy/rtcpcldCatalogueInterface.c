@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.81 $ $Release$ $Date: 2004/11/25 13:29:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.82 $ $Release$ $Date: 2004/11/26 10:02:13 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.81 $ $Release$ $Date: 2004/11/25 13:29:10 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.82 $ $Release$ $Date: 2004/11/26 10:02:13 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -77,6 +77,7 @@ WSADATA wsadata;
 #include <castor/stager/TapeCopy.h>
 #include <castor/stager/TapeCopyForMigration.h>
 #include <castor/stager/DiskCopy.h>
+#include <castor/stager/DiskCopyForRecall.h>
 #include <castor/stager/DiskCopyStatusCodes.h>
 #include <castor/stager/CastorFile.h>
 #include <castor/stager/TapePool.h>
@@ -1183,10 +1184,9 @@ static int nextSegmentToRecall(
     return(-1);
   }
   
-  Cstager_DiskCopyForRecall_getDiskCopy(
-                                        recallCandidate,
-                                        &diskCopy
-                                        );
+  diskCopy = Cstager_DiskCopyForRecall_getDiskCopy(
+                                                   recallCandidate
+                                                   );
   Cstager_DiskCopy_path(
                         diskCopy,
                         (CONST char **)&pathName
