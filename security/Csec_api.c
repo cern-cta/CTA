@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Csec_api.c,v 1.14 2004/08/27 14:34:01 motiakov Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -224,8 +224,7 @@ int Csec_clear_context(Csec_context_t *ctx) {
       (*(ctx->Csec_delete_creds))(ctx);
   }
   if (ctx->shhandle != NULL)
-    dlclose(ctx->shhandle);
-
+    Csec_unload_shlib(ctx);
   if (ctx->protocols != NULL) {
     free(ctx->protocols);
   }
@@ -684,7 +683,7 @@ char *Csec_server_get_service_name(Csec_context_t *ctx) {
 
   CHECKCTX_EXT(ctx,func,NULL);
   if(Csec_check_shlib_loaded(ctx)) {
-    return -1;
+    return NULL;
   }
 
   if (ctx->flags & CSEC_CTX_SERVICE_NAME_SET) {
