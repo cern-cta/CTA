@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.10 2002/01/28 12:23:09 jdurand Exp $
+ * $Id: stage_messages.h,v 1.11 2002/01/30 10:25:43 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -138,7 +138,7 @@
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 #define STG157  "STG157 - HSM File %s was renamed to %s (fileid %s@%s), input updated\n"
 #define STG158  "STG158 - %s : Fileclass %s@%s (classid %d) retention period %d is overwriten to %d v.s. %d seconds lifetime\n"
-#define STG159  "STG159 - Tape pools differ : \"%s\" v.s. \"%s\"\n"
+#define STG159  "STG159 - %s : Tape pools differ : \"%s\" v.s. \"%s\" - Catalog updated\n"
 #define STG160  "STG160 - Reaching system maximum number of file descriptors (%ld) - Please wait\n"
 #define STG161  "STG161 - Stage not available or in pause mode - Please wait\n"
 #define STG162  "STG162 - Stage will shutdown - Please retry later\n"
