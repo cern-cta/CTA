@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.207 2003/03/11 17:07:53 jdurand Exp $
+ * $Id: procio.c,v 1.208 2003/04/17 08:57:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.207 $ $Date: 2003/03/11 17:07:53 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.208 $ $Date: 2003/04/17 08:57:57 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -207,6 +207,7 @@ int create_hsm_entry _PROTO(());
 #else
 int create_hsm_entry _PROTO((int *, struct stgcat_entry *, int, mode_t, int));
 #endif
+int checkpath _PROTO((char *, char *));
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int stglogopenflags _PROTO((char *, u_signed64));
@@ -4978,17 +4979,29 @@ int check_hsm_type(arg,nhpssfiles,ncastorfiles,nexplevel,nuserlevel,t_or_d)
 	} else if (((*ncastorfiles) > 0)) {
 		/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
 		if (t_or_d != NULL) *t_or_d = 'h';
+		/* Check length */
 		if (strlen(arg) > STAGE_MAX_HSMLENGTH) {
 			serrno = SENAMETOOLONG;
 			sendrep (&rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 			return(EINVAL);
 		}
+		/* Remove characters that are causing trouble */
+		if (checkpath(arg,arg) < 0) {
+			sendrep (&rpfd, MSG_ERR, STG02, arg, "checkpath", sstrerror(serrno));
+			return(EINVAL);
+		}
 	} else {
 		/* It is a HPSS request, so stgreq.t_or_d is set to 'm' */
 		if (t_or_d != NULL) *t_or_d = 'm';
+		/* Check length */
 		if (strlen(arg) > STAGE_MAX_HSMLENGTH) {
 			serrno = SENAMETOOLONG;
 			sendrep (&rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+			return(EINVAL);
+		}
+		/* Remove characters that are causing trouble */
+		if (checkpath(arg,arg) < 0) {
+			sendrep (&rpfd, MSG_ERR, STG02, arg, "checkpath", sstrerror(serrno));
 			return(EINVAL);
 		}
 	}
@@ -5355,4 +5368,64 @@ int stage_access(uid,gid,amode,st)
 	} else {
 		return (0);
 	}
+}
+
+/* Returns -1 if error, 0 if string not changed, 1 if string changed */
+int checkpath(output,input)
+	char *output;
+	char *input;
+{
+	char *dup, *p;
+	int rc;
+	size_t dupsize;
+
+	if (input == NULL) {
+		serrno = EINVAL;
+		rc = -1;
+		goto checkpath_return;
+	}
+	
+	if ((p = dup = strdup(input)) == NULL) {
+		serrno = SEINTERNAL;
+		rc = -1;
+		goto checkpath_return;
+	}
+	
+	/*
+	 * Removes multiple occurences of '/' character
+	 */
+	
+	rc = 0;
+	while ((p = strchr(p,'/')) != NULL) {
+		/* 'p' points to a '/' */
+		size_t psize;
+		if ((psize = strspn(p++,"/")) > 1) {
+			/* And there is 'psize' of them */
+			--psize;
+			/* We copy the rest of the string keeping the first one */
+			memmove(p,&(p[psize]),strlen(&(p[psize])) + 1);
+			rc = 1;
+		} else {
+			++p;
+		}
+	}
+	/* Any eventual trailing space ? */
+	dupsize = strlen(dup);
+	if ((dupsize > 0) && (dup[dupsize-1] == '/')) {
+		serrno = EINVAL;
+		rc = -1;
+		goto checkpath_return;
+	}
+	if (rc == 1) {
+		sendrep (&rpfd, MSG_ERR, "%s changed to %s\n", input, dup);
+	}
+	if (output != NULL) {
+		/* User has to provide enough space for it */
+		/* We do memmove() because output and input can be same area */
+		memmove(output,dup,++dupsize);
+	}
+	free(dup);
+
+  checkpath_return:
+	return(rc);
 }
