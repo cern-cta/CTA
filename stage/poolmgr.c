@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.112 2001/03/13 08:06:31 jdurand Exp $
+ * $Id: poolmgr.c,v 1.113 2001/03/13 18:52:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.112 $ $Date: 2001/03/13 08:06:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.113 $ $Date: 2001/03/13 18:52:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1877,7 +1877,7 @@ int update_migpool(stcp,flag,immediate)
                    i,
                    stcp_ok->u1.h.tppool);
           /* We prepare the 'immediate' switch below because we can do this now and only now */
-          if (immediate == 2) {
+          if (immediate >= 1) {
             if (stcp_ok->status != (STAGEPUT|CAN_BE_MIGR)) stcp_ok->status |= BEING_MIGR;
           }
 #ifdef USECDB
@@ -1898,7 +1898,7 @@ int update_migpool(stcp,flag,immediate)
                    i,
                    (*stcp)->u1.h.tppool);
           /* We prepare the 'immediate' switch below because we can do this now and only now */
-          if (immediate == 2) {
+          if (immediate >= 1) {
             if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
           }
 #ifdef USECDB
@@ -1920,7 +1920,7 @@ int update_migpool(stcp,flag,immediate)
       /* We flag this (*stcp) as a candidate for migration */
       (*stcp)->status |= CAN_BE_MIGR;
       /* We prepare the 'immediate' switch below because we can do this now and only now */
-      if (immediate == 2) {
+      if (immediate >= 1) {
         if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
       }
 #ifdef USECDB
