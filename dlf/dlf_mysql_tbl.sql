@@ -3,7 +3,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.2 $ $Date: 2003/12/01 14:25:59 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.3 $ $Date: 2003/12/28 11:54:40 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility MySQL tables.
 
@@ -14,6 +14,12 @@ CREATE TABLE dlf_host_map (
 	host_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	host_name VARCHAR(64),
 	KEY host_name_idx(host_name)
+) TYPE = InnoDB;
+
+CREATE TABLE dlf_ns_host_map (
+	ns_host_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	ns_host_name VARCHAR(64),
+	KEY ns_host_name_idx(ns_host_name)
 ) TYPE = InnoDB;
 
 CREATE TABLE dlf_messages (
@@ -27,12 +33,15 @@ CREATE TABLE dlf_messages (
 	msg_no SMALLINT UNSIGNED,
 	pid INT,
 	thread_id INT,
-	ns_invariant BIGINT UNSIGNED,
+	ns_host_id INT UNSIGNED,
+	ns_file_id BIGINT UNSIGNED,
 	INDEX host_id_idx(host_id),
+	INDEX ns_host_id_idx(ns_host_id),
 	KEY time_idx (time),
 	KEY fac_idx (facility),
-	KEY ns_inv_idx (ns_invariant),
-	FOREIGN KEY (host_id) REFERENCES dlf_host_map(host_id)
+	KEY ns_inv_idx (ns_file_id),
+	FOREIGN KEY (host_id) REFERENCES dlf_host_map(host_id),
+	FOREIGN KEY (ns_host_id) REFERENCES dlf_ns_host_map(ns_host_id)
 ) TYPE = InnoDB;
 
 CREATE TABLE dlf_num_param_values (

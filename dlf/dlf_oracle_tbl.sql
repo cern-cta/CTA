@@ -2,18 +2,25 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.2 $ $Date: 2003/12/08 06:28:10 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.3 $ $Date: 2003/12/28 11:54:40 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
 
 CREATE SEQUENCE message_seq;
 CREATE SEQUENCE host_seq;
+CREATE SEQUENCE ns_host_seq;
 
 CREATE TABLE dlf_host_map (
 	host_id NUMBER,
 	host_name VARCHAR2(64),
 	UNIQUE(host_id),
 	UNIQUE(host_name));
+
+CREATE TABLE dlf_ns_host_map (
+	ns_host_id NUMBER,
+	ns_host_name VARCHAR2(64),
+	UNIQUE(ns_host_id),
+	UNIQUE(ns_host_name));
 
 CREATE TABLE dlf_messages (
 	msg_seq_no NUMBER,
@@ -26,8 +33,8 @@ CREATE TABLE dlf_messages (
 	msg_no NUMBER(5),
 	pid NUMBER(10),
 	thread_id NUMBER(10),
-	ns_invariant NUMBER);
-
+	ns_host_id NUMBER,
+	ns_file_id NUMBER);
 
 CREATE TABLE dlf_num_param_values (
 	msg_seq_no NUMBER,
@@ -67,7 +74,8 @@ CREATE TABLE dlf_tape_ids (
 
 ALTER TABLE dlf_messages
          ADD CONSTRAINT pk_msg_no PRIMARY KEY (msg_seq_no)
-         ADD CONSTRAINT fk_hid FOREIGN KEY (host_id) REFERENCES dlf_host_map(host_id);
+         ADD CONSTRAINT fk_hid FOREIGN KEY (host_id) REFERENCES dlf_host_map(host_id)
+         ADD CONSTRAINT fk_ns_hid FOREIGN KEY (ns_host_id) REFERENCES dlf_ns_host_map(ns_host_id);
 ALTER TABLE dlf_num_param_values 
          ADD CONSTRAINT fk_msg_np FOREIGN KEY (msg_seq_no) REFERENCES dlf_messages(msg_seq_no);
 ALTER TABLE dlf_str_param_values 
