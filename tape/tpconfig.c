@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.3 $ $Date: 1999/11/12 13:57:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.4 $ $Date: 2000/04/12 11:45:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
@@ -84,6 +84,7 @@ char	**argv;
 	}
 #endif
 	if (Ctape_config (argv[1], status, reason) < 0) {
+		fprintf (stderr, TP009, argv[1], sstrerror(serrno));
 		if (serrno == EINVAL || serrno == ETIDN)
 			exit (USERR);
 		else
