@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.10 $ $Date: 2000/04/27 16:17:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.11 $ $Date: 2000/05/26 08:28:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -185,11 +185,13 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
 
     if ( subtype == RTCPEMSG && *errmsgtxt == '\0' ) {
         if ( AbortFlag == 0 ) {
-            rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPEMSG) without msg txt\n");
+            rtcp_log(LOG_ERR,"%s\n","rtcp_WriteAccountRecord(RTCPEMSG) without msg txt");
             return(-1);
         } else {
-            if ( AbortFlag == 1 ) sprintf(errmsgtxt,"request aborted by user\n");
-            if ( AbortFlag == 2 ) sprintf(errmsgtxt,"request aborted by operator\n");
+            if ( AbortFlag == 1 ) sprintf(errmsgtxt,"%s\n",
+                                          "request aborted by user");
+            if ( AbortFlag == 2 ) sprintf(errmsgtxt,"%s\n",
+                                          "request aborted by operator");
         }
     }
 
