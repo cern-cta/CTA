@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 12:34:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.2 $ $Date: 1999/10/21 06:23:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpstat - tape status display */
@@ -13,6 +13,9 @@ static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.1 $ $Date: 1999/
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "Ctape_api.h"
 
 main(argc, argv)
