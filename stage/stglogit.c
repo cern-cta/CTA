@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.13 2001/01/31 19:00:12 jdurand Exp $
+ * $Id: stglogit.c,v 1.14 2001/02/02 16:53:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.14 $ $Date: 2001/02/02 16:53:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,9 +50,10 @@ int stglogit(va_alist) va_dcl
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
-	fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
-	write (fd_log, prtbuf, strlen(prtbuf));
-	close (fd_log);
+	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
+		write (fd_log, prtbuf, strlen(prtbuf));
+		close (fd_log);
+	}
 	return(0);
 }
 
@@ -119,9 +120,10 @@ int stglogflags(va_alist) va_dcl
 	}
 	if (something_to_print != 0) {
 		strcat(prtbuf, "\n");
-		fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
-		write (fd_log, prtbuf, strlen(prtbuf));
-		close (fd_log);
+		if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
+			write (fd_log, prtbuf, strlen(prtbuf));
+			close (fd_log);
+		}
 	}
 	return(0);
 }
@@ -145,9 +147,10 @@ int stgmiglogit(va_alist) va_dcl
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
-	fd_log = open (MIGLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
-	write (fd_log, prtbuf, strlen(prtbuf));
-	close (fd_log);
+	if ((fd_log = open (MIGLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
+		write (fd_log, prtbuf, strlen(prtbuf));
+		close (fd_log);
+	}
 	return(0);
 }
 
