@@ -3,7 +3,7 @@
 
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
-CREATE TABLE CastorVersion (version VARCHAR(2048));
+CREATE TABLE CastorVersion (version VARCHAR2(2048));
 INSERT INTO CastorVersion VALUES ('2.0.0.3');
 
 /* Indexes related to CastorFiles */
@@ -109,10 +109,10 @@ END;
 
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
-                                                  diskServerName OUT VARCHAR, mountPoint OUT VARCHAR,
-                                                  path OUT VARCHAR, dci OUT INTEGER,
+                                                  diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
+                                                  path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
-                                                  nsHost OUT VARCHAR, fileSize OUT INTEGER,
+                                                  nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
  fileSystemId INTEGER;
  deviation NUMBER;
@@ -143,8 +143,8 @@ BEGIN
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
-CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR,
-                                                     rmountPoint OUT VARCHAR, rpath OUT VARCHAR,
+CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
+                                                     rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
                                                      dci OUT INTEGER) AS
  fileSystemId NUMBER;
  deviation NUMBER;
@@ -198,9 +198,9 @@ END;
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR2(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR2(2048), diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE "strList" IS TABLE OF VARCHAR(2048) index by binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -249,8 +249,8 @@ END;
 
 /* Build diskCopy path from fileId */
 CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
-                                                nsHost IN VARCHAR,
-                                                path OUT VARCHAR) AS
+                                                nsHost IN VARCHAR2,
+                                                path OUT VARCHAR2) AS
 BEGIN
   path := CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
                         CONCAT(TO_CHAR(fid), '@')),
@@ -260,12 +260,12 @@ END;
 /* PL/SQL method implementing getUpdateStart */
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
-         dci OUT INTEGER, rpath OUT VARCHAR,
+         dci OUT INTEGER, rpath OUT VARCHAR2,
          rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
-  nh VARCHAR(2048);
+  nh VARCHAR2(2048);
   unused CastorFile%ROWTYPE;
 BEGIN
  -- Get and uid, gid
@@ -353,7 +353,7 @@ END;
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
-         rdcPath OUT VARCHAR) AS
+         rdcPath OUT VARCHAR2) AS
 BEGIN
  -- Get diskCopy Id
  SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
@@ -401,10 +401,10 @@ END;
 CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
                                                srId IN INTEGER,
                                                dcId OUT INTEGER) AS
-  rpath VARCHAR(2048);
+  rpath VARCHAR2(2048);
   nbRes INTEGER;
   fid INTEGER;
-  nh VARCHAR(2048);
+  nh VARCHAR2(2048);
   unused CastorFile%ROWTYPE;
 BEGIN
  -- Lock the access to the CastorFile
@@ -453,7 +453,7 @@ END;
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  fId OUT NUMBER,
-                                                 nh OUT VARCHAR,
+                                                 nh OUT VARCHAR2,
                                                  userId OUT INTEGER,
                                                  groupId OUT INTEGER) AS
   nc INTEGER;
@@ -492,7 +492,7 @@ END;
 
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
-                                              nh IN VARCHAR,
+                                              nh IN VARCHAR2,
                                               sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
@@ -543,13 +543,13 @@ END;
 /* PL/SQL method implementing bestFileSystemForJob */
 CREATE OR REPLACE PROCEDURE bestFileSystemForJob
 (fileSystems IN castor."strList", machines IN castor."strList",
- minFree IN INTEGER, rMountPoint OUT VARCHAR,
- rDiskServer OUT VARCHAR) AS
+ minFree IN INTEGER, rMountPoint OUT VARCHAR2,
+ rDiskServer OUT VARCHAR2) AS
  ds NUMBER;
  fs NUMBER;
  dev NUMBER;
  TYPE cursorContent IS RECORD
-   (mountPoint VARCHAR(2048), dsName VARCHAR(2048),
+   (mountPoint VARCHAR2(2048), dsName VARCHAR2(2048),
     dsId NUMBER, fsId NUMBER, deviation NUMBER);
  TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
  c1 AnyCursor;
