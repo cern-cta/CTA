@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.70 2003/09/08 15:49:41 jdurand Exp $
+ * $Id: procclr.c,v 1.71 2004/01/19 10:41:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.70 $ $Date: 2003/09/08 15:49:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.71 $ $Date: 2004/01/19 10:41:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -168,6 +168,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 	int t_or_d, nstcp_input, nstpp_input;
+	struct stgcat_entry stcp_input;
+	struct stgpath_entry stpp_input;
 	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 	int save_rpfd;
 	char trailing;
@@ -232,8 +234,6 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	group[CA_MAXGRPNAMELEN] = '\0';
 	if (req_type > STAGE_00) {
 		u_signed64 flags;
-		struct stgcat_entry stcp_input;
-		struct stgpath_entry stpp_input;
 
 		unmarshall_HYPER (rbp, stage_uniqueid);
 		unmarshall_HYPER (rbp, flags);
