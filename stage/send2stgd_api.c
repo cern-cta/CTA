@@ -741,7 +741,7 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	}
 
 	/* We reorder output structures to match input structures original order */
-	for (i = 0; i < nstcp_input; i++) {
+	for (i = 0; i < *nstcp_output; i++) {
 		struct stgcat_entry dummy;
 
 		if (seen[i] != i) {
