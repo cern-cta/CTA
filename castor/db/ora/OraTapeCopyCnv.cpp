@@ -262,8 +262,10 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
       m_insertStreamStatement->setDouble(2, (*it)->id());
       m_insertStreamStatement->executeUpdate();
     } else {
-      std::set<int>::iterator item = streamList.find((*it)->id());
-      streamList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = streamList.find((*it)->id())) != streamList.end()) {
+        streamList.erase(item);
+      }
     }
   }
   // Delete old links
@@ -303,7 +305,6 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_TapeCopy);
     } else {
-      std::set<int>::iterator item = segmentsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSegmentStatement) {
         m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
@@ -312,7 +313,10 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
       m_remoteUpdateSegmentStatement->setDouble(1, obj->id());
       m_remoteUpdateSegmentStatement->setDouble(2, (*it)->id());
       m_remoteUpdateSegmentStatement->executeUpdate();
-      segmentsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = segmentsList.find((*it)->id())) != segmentsList.end()) {
+        segmentsList.erase(item);
+      }
     }
   }
   // Delete old links

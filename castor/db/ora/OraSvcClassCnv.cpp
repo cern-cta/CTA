@@ -242,8 +242,10 @@ void castor::db::ora::OraSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* 
       m_insertTapePoolStatement->setDouble(2, (*it)->id());
       m_insertTapePoolStatement->executeUpdate();
     } else {
-      std::set<int>::iterator item = tapePoolsList.find((*it)->id());
-      tapePoolsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = tapePoolsList.find((*it)->id())) != tapePoolsList.end()) {
+        tapePoolsList.erase(item);
+      }
     }
   }
   // Delete old links
@@ -289,8 +291,10 @@ void castor::db::ora::OraSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* 
       m_insertDiskPoolStatement->setDouble(2, (*it)->id());
       m_insertDiskPoolStatement->executeUpdate();
     } else {
-      std::set<int>::iterator item = diskPoolsList.find((*it)->id());
-      diskPoolsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = diskPoolsList.find((*it)->id())) != diskPoolsList.end()) {
+        diskPoolsList.erase(item);
+      }
     }
   }
   // Delete old links

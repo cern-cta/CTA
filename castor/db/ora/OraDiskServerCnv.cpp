@@ -212,7 +212,6 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_DiskServer);
     } else {
-      std::set<int>::iterator item = fileSystemsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateFileSystemStatement) {
         m_remoteUpdateFileSystemStatement = createStatement(s_remoteUpdateFileSystemStatementString);
@@ -221,7 +220,10 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
       m_remoteUpdateFileSystemStatement->setDouble(1, obj->id());
       m_remoteUpdateFileSystemStatement->setDouble(2, (*it)->id());
       m_remoteUpdateFileSystemStatement->executeUpdate();
-      fileSystemsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = fileSystemsList.find((*it)->id())) != fileSystemsList.end()) {
+        fileSystemsList.erase(item);
+      }
     }
   }
   // Delete old links

@@ -255,7 +255,6 @@ void castor::db::ora::OraStagePrepareToUpdateRequestCnv::fillRepSubRequest(casto
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileRequest);
     } else {
-      std::set<int>::iterator item = subRequestsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSubRequestStatement) {
         m_remoteUpdateSubRequestStatement = createStatement(s_remoteUpdateSubRequestStatementString);
@@ -264,7 +263,10 @@ void castor::db::ora::OraStagePrepareToUpdateRequestCnv::fillRepSubRequest(casto
       m_remoteUpdateSubRequestStatement->setDouble(1, obj->id());
       m_remoteUpdateSubRequestStatement->setDouble(2, (*it)->id());
       m_remoteUpdateSubRequestStatement->executeUpdate();
-      subRequestsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = subRequestsList.find((*it)->id())) != subRequestsList.end()) {
+        subRequestsList.erase(item);
+      }
     }
   }
   // Delete old links

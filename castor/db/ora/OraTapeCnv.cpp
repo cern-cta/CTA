@@ -312,7 +312,6 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_Tape);
     } else {
-      std::set<int>::iterator item = segmentsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSegmentStatement) {
         m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
@@ -321,7 +320,10 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
       m_remoteUpdateSegmentStatement->setDouble(1, obj->id());
       m_remoteUpdateSegmentStatement->setDouble(2, (*it)->id());
       m_remoteUpdateSegmentStatement->executeUpdate();
-      segmentsList.erase(item);
+      std::set<int>::iterator item;
+      if ((item = segmentsList.find((*it)->id())) != segmentsList.end()) {
+        segmentsList.erase(item);
+      }
     }
   }
   // Delete old links

@@ -1547,12 +1547,6 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
-  *m_stream << getIndent()
-            << fixTypeName("set", "", "")
-            << "<int>::iterator item = "
-            << as->remotePart.name
-            << "List.find((*it)->id());"
-            << endl;
   if (as->type.multiLocal == MULT_ONE &&
       !as->remotePart.abstract) {
     *m_stream << getIndent()
@@ -1581,9 +1575,21 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << "Statement->executeUpdate();"
               << endl;
   }
+  *m_stream << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int>::iterator item;" << endl
+            << getIndent() << "if ((item = "
+            << as->remotePart.name
+            << "List.find((*it)->id())) != "
+            << as->remotePart.name
+            << "List.end()) {"
+            << endl;
+  m_indent++;
   *m_stream << getIndent() << as->remotePart.name
             << "List.erase(item);"
             << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
