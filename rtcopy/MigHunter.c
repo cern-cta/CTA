@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/07 16:52:41 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/07 18:36:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/07 16:52:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/07 18:36:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -486,6 +486,7 @@ int tapePoolCreator(
       }
       continue;
     }
+    memset(&fileClass,'\0',sizeof(fileClass));
     rc = Cns_queryclass(
                         fileId.server,
                         statbuf.fileclass,
@@ -532,6 +533,7 @@ int tapePoolCreator(
         }
       }
     }
+    if ( fileClass.tppools != NULL ) free(fileClass.tppools);
   }
   rc = C_Services_commit(dbSvc,iAddr);
   if ( rc == -1 ) {
@@ -578,7 +580,7 @@ int getStreamsForSvcClass(
       return(-1);
     }
   }
-  free(tapePoolArray);
+  if ( tapePoolArray != NULL ) free(tapePoolArray);
   return(0);
 }
 
@@ -858,6 +860,7 @@ int addTapeCopyToStreams(
       LOG_SYSCALL_ERR("Cns_statx()");
     }
   }
+  memset(&fileClass,'\0',sizeof(fileClass));
   rc = Cns_queryclass(
                       fileId.server,
                       statbuf.fileclass,
@@ -886,6 +889,7 @@ int addTapeCopyToStreams(
       if ( streamArray != NULL ) free(streamArray);
     }
   }
+  if ( fileClass.tppools != NULL ) free(fileClass.tppools);
   if ( tapePoolArray != NULL ) free(tapePoolArray);
   return(0);
 }
