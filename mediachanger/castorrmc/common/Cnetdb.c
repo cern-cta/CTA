@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.5 $ $Date: 1999/12/14 17:05:06 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.6 $ $Date: 1999/12/15 06:14:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -245,7 +245,7 @@ const char *proto;
     Cglobals_get(&servent_key,(void **)&result,sizeof(struct servent));
     Cglobals_get(&servdata_key,(void **)&buffer,bufsize);
 
-    if ( result == (struct hostent *)NULL || buffer == (char *)NULL ) {
+    if ( result == (struct servent *)NULL || buffer == (char *)NULL ) {
         return(NULL);
     }
     rc = getservbyname_r(name,proto,result,buffer,bufsize,&sp);
