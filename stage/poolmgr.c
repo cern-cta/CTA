@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.28 2000/06/16 14:34:58 jdurand Exp $
+ * $Id: poolmgr.c,v 1.29 2000/06/19 13:42:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.28 $ $Date: 2000/06/16 14:34:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.29 $ $Date: 2000/06/19 13:42:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,6 +46,11 @@ static char strftime_format[] = "%b %d %H:%M:%S";
 #else /* _WIN32 */
 static char strftime_format[] = "%b %e %H:%M:%S";
 #endif /* _WIN32 */
+
+#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+/* Surpringly, on Silicon Graphics, strdup declaration depends on non-obvious macros */
+extern char *strdup(CONST char *);
+#endif
 
 extern char *getconfent();
 extern char defpoolname[];
