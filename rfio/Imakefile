@@ -304,7 +304,7 @@ EPROGS = FileName($(EXPORTBIN),rfiod)
 #endif
 
 SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
-		rfio_call64.Osuf rfio_fcalls.Osuf switch_req.Osuf \
+		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
 		rfioacct.Osuf
 

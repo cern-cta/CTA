@@ -83,6 +83,9 @@ extern int peer_uid;
 extern int peer_gid;
 #endif
 
+/* Context for the open/firstwrite/close handlers */
+void *handler_context;
+
 
 #include <fcntl.h>
 
@@ -253,6 +256,20 @@ static int      iobufsiz= 0;            /* Current io buffer size       */
 
 extern char *forced_filename;
 #define CORRECT_FILENAME(filename) (forced_filename != NULL ? forced_filename : filename)
+
+
+#if !defined(HPSS)
+/* Warning : the new sequential transfer mode cannot be used with 
+several files open at a time (because of those global variables)*/
+#if !defined(_WIN32)    /* moved to global structure */
+static int data_sock;   /* Data socket */
+static int ctrl_sock;  /* the control socket */
+static int first_write;
+static int first_read;
+static int byte_read_from_network;
+static struct rfiostat myinfo;
+#endif   /* WIN32 */
+#endif /* HPSS */
 
 /************************************************************************/
 /*                                                                      */
@@ -1800,9 +1817,25 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          else
             log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
-      }
+       }
       else
       {
+	 int rc;
+	 char *pfn;
+	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
+			       ntohopnflg(flags),
+			       mode,
+			       uid,
+			       gid,
+			       &pfn,
+			       &handler_context);
+	 if (rc < 0) {
+	   char alarmbuf[1024];
+	   sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
+	   log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	   rcode = serrno;
+           rfio_alrm(rcode,alarmbuf) ;
+	 }
          fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode) ;
          log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(filename), flags, mode, fd);
          if (fd < 0) {
@@ -1811,9 +1844,11 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
            status= -1 ;
            rcode= errno ;
            log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno)) ;
+	   if(pfn != NULL) free (pfn);
            rfio_alrm(rcode,alarmbuf) ;
          }
          else {
+	   if(pfn != NULL) free (pfn);
            /*
             * Getting current offset
             */
@@ -1868,6 +1903,11 @@ struct rfiostat * infop ;
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
+
+   if (first_write) {
+     first_write = 0;
+     rfio_handle_firstwrite(handler_context);
+   }
 
    /*
     * Receiving request,
@@ -2302,6 +2342,10 @@ struct rfiostat * infop ;
       infop->seekop, infop->presop) ;
    log(LOG_INFO,"rclose(%d,%d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
+
+   rfio_handle_close(handler_context);
+   
+
 #if defined(HPSS)
    status = rhpss_close(fd,s,0,0);
 #else /* HPSS */
@@ -3648,19 +3692,6 @@ int gid;
 }
 #endif /* WIN32 */
 
-  
-#if !defined(HPSS)
-/* Warning : the new sequential transfer mode cannot be used with 
-several files open at a time (because of those global variables)*/
-#if !defined(_WIN32)    /* moved to global structure */
-static int data_sock;   /* Data socket */
-static int ctrl_sock;  /* the control socket */
-static int first_write;
-static int first_read;
-static int byte_read_from_network;
-static struct rfiostat myinfo;
-#endif   /* WIN32 */
-#endif /* HPSS */
 
 int  sropen_v3(s, rt, host, bet)
 #if defined(_WIN32)
@@ -3913,6 +3944,22 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        }  else
 #endif
        {
+	 int rc;
+	 char *pfn;
+	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
+			       ntohopnflg(flags),
+			       mode,
+			       uid,
+			       gid,
+			       &pfn,
+			       &handler_context);
+	 if (rc < 0) {
+	   char alarmbuf[1024];
+	   sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename)) ;
+	   log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	   rcode = serrno;
+           rfio_alrm(rcode,alarmbuf) ;
+	 }
          fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode);
 #if defined(_WIN32)
          _setmode( fd, _O_BINARY );        /* default is text mode  */
@@ -3924,9 +3971,11 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
             status= -1 ;
             rcode= errno ;
             log(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno)) ;
+	    if (pfn != NULL) free(pfn);
             /* rfio_alrm(rcode,alarmbuf) ; */
          }
          else  {
+	   if (pfn != NULL) free(pfn);
             /*
              * Getting current offset
              */
@@ -4203,6 +4252,9 @@ struct rfiostat *infop;
    log(LOG_INFO,"%s bytes read and %s bytes written\n",
       u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
    log(LOG_INFO, "rclose_v3(%d, %d)\n",s, fd) ;
+
+   rfio_handle_close(handler_context);
+
 #if defined(HPSS)
    status = rhpss_close(fd,s,0,0);
 #else /* HPSS */
@@ -4866,7 +4918,7 @@ struct rfiostat *infop;
       char *p;
       
       first_write = 0;
-
+      rfio_handle_firstwrite(handler_context);
 #if !defined(HPSS)
       if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
          if (atoi(p) > 0)
