@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.9 2004/12/07 11:49:55 obarring Exp $
+ * $Id: connect.c,v 1.10 2004/12/08 10:24:35 bcouturi Exp $
  */
 
 /*
@@ -35,7 +35,7 @@ char *rfio_lasthost _PROTO(()); /* returns last succesfully connected host     *
 int rfio_newhost _PROTO((char *)); /* returns last succesfully connected host     */
 
 /** Parses the node name to check whether it contains the port number as well */
-static int nodeHasPort(char *node, char *host, int *port) {
+int rfio_nodeHasPort(char *node, char *host, int *port) {
   char *pos;
   char *nodecp;
   int tmpport;
@@ -107,7 +107,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    {
      int rc;
      
-     rc = nodeHasPort(node, tmphost, &port);
+     rc = rfio_nodeHasPort(node, tmphost, &port);
      if (rc == 1) {
        TRACE(2, "rfio", "rfio_connect: Hostname includes port(%s, %s, %d)",
              node, tmphost, port);
