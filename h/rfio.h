@@ -1,9 +1,9 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.23 $ $Date: 2001/11/07 12:00:18 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.24 $ $Date: 2002/02/26 07:51:05 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -120,6 +120,7 @@ typedef struct {
 	struct	iobuf _iobuf ; 	/* I/O buffer                           */
 	int 	lseekhow ;	/* Buffered lseek type ( -1 if none )	*/
 	int	lseekoff ;	/* Buffered lseek offset		*/
+	int	socset ;	/* Socket options set (bol)		*/
 	/*
 	 * Preseek operations.
 	 * field 'preseek' takes the following values:
