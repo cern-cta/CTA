@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.21 2002/06/12 05:45:13 jdurand Exp $
+ * $Id: stager_castor.c,v 1.22 2002/06/12 06:19:39 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.21 $ $Date: 2002/06/12 05:45:13 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.22 $ $Date: 2002/06/12 06:19:39 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -87,6 +87,7 @@ int build_rtcpcreq _PROTO((int *, tape_list_t ***, struct stgcat_entry *, struct
 char *hsmpath _PROTO((struct stgcat_entry *));
 int hsmidx_vs_ipath _PROTO((char *));
 int hsmidx _PROTO((struct stgcat_entry *));
+int hsm_is_ignored _PROTO((struct stgcat_entry *));
 void free_rtcpcreq _PROTO((tape_list_t ***));
 int stager_hsm_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 void stager_hsm_log_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
@@ -844,6 +845,24 @@ int hsmidx(stcp)
 		/* if hsm_ignore[] != 0 this mean we have to ignore it */
 		/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
 		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
+		if (strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0) {
+			return(i);
+		}
+	}
+
+	return(-1);
+}
+
+/* This routine will return the index in the nbcat_ent entries of an HSM file       */
+/* provided the associated hsm_ignored[] is != 0                                    */
+int hsmidx_is_ignored(stcp)
+	struct stgcat_entry *stcp;
+{
+	struct stgcat_entry *stcx;
+	int i;
+
+	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
+		if (hsm_ignore[i] == 0) continue;
 		if (strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0) {
 			return(i);
 		}
@@ -2542,16 +2561,18 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			RESTORE_EID;
 			return(-1);
 		}
-		if (hsm_ignore[ihsm] != 0) continue;
 		if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
 			if ((ihsm = hsmidx(stcp)) < 0) {
-				serrno = SEINTERNAL;
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
-				RESTORE_EID;
-				return(-1);
+				if ((ihsm = hsmidx_is_ignored(stcp)) < 0) {
+					serrno = SEINTERNAL;
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
+					RESTORE_EID;
+					return(-1);
+				}
 			}
 		}
+		if (hsm_ignore[ihsm] != 0) continue;
 		if (hsm_totalsize[ihsm] == 0) {
 			serrno = SEINTERNAL;
 			SAVE_EID;
