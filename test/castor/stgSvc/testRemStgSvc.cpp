@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testRemStgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/26 17:39:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testRemStgSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/01 09:14:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -108,7 +108,9 @@ int main (int argc, char** argv) {
   
   // Fill the database with them
   castor::Services* svcs = castor::BaseObject::services();
-  castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("OraCnvSvc");
+  ad.setCnvSvcType(castor::SVC_ORACNV);
   try {
     svcs->createRep(&ad, sr, false);
     svcs->fillRep(&ad, sr, castor::OBJ_CastorFile, false);
@@ -121,18 +123,18 @@ int main (int argc, char** argv) {
               << e.getMessage().str() << std::endl;
     // release everything
     svcs->rollback(&ad);
-    delete cf;
-    delete dc;
-    delete sr;
-    delete fs;
-    delete ds;
+    if (0 != cf) delete cf;
+    if (0 != dc) delete dc;
+    if (0 != sr) delete sr;
+    if (0 != fs) delete fs;
+    if (0 != ds) delete ds;
     return 1;
   }
 
   // Test RemoteStagerSvc
 
   // placeholders for the result
-  castor::stager::DiskCopy* result;
+  castor::stager::DiskCopy* result = 0;
   std::list<castor::stager::DiskCopyForRecall*> sources;
   // Build a response Handler
   ScheduleSubReqResponseHandler rh(&result, sources);
@@ -166,11 +168,11 @@ int main (int argc, char** argv) {
   }
   
   // cleanup memory
-  delete cf;
-  delete dc;
-  delete sr;
-  delete fs;
-  delete ds;
-  delete result;
+  if (0 != cf) delete cf;
+  if (0 != dc) delete dc;
+  if (0 != sr) delete sr;
+  if (0 != fs) delete fs;
+  if (0 != ds) delete ds;
+  if (0 != result) delete result;
   
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 13:30:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/01 09:14:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,6 @@
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IService.hpp"
@@ -83,7 +82,9 @@ int main (int argc, char** argv) {
   castor::Services* svcs = castor::BaseObject::services();
 
   // Stores the tapes
-  castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("OraCnvSvc");
+  ad.setCnvSvcType(castor::SVC_ORACNV);
   try {
     svcs->createRep(&ad, t1, false);
     svcs->fillRep(&ad, t1, castor::OBJ_Segment, false);
