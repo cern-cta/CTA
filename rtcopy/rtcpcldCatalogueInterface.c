@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/07/29 12:47:45 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/07/30 12:30:47 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/07/29 12:47:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/07/30 12:30:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1597,6 +1597,11 @@ int rtcpcld_updateVIDStatus(
   
   Cstager_Tape_status(tapeItem,&cmpStatus);
   if ( fromStatus == cmpStatus ) {
+    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+    if ( rc == -1 ) return(-1);
+
+    iAddr = C_BaseAddress_getIAddress(baseAddr);
+    iObj = Cstager_Tape_getIObject(tapeItem);
     Cstager_Tape_setStatus(tapeItem,toStatus);
     rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
     if ( rc == -1 ) {
@@ -1909,6 +1914,11 @@ int rtcpcld_updateVIDFileStatus(
   }
   if ( segments != NULL ) free(segments);
   if ( updated == 1 ) {
+    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+    if ( rc == -1 ) return(-1);
+
+    iAddr = C_BaseAddress_getIAddress(baseAddr);
+    iObj = Cstager_Tape_getIObject(tapeItem);
     rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
     if ( rc == -1 ) {
       save_serrno = serrno;
