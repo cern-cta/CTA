@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/10/25 16:41:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/10/27 07:58:20 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/10/25 16:41:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/10/27 07:58:20 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1012,12 +1012,131 @@ static int compareSegments(
   return(rc);
 }
 
+static int nextSegmentToDo(
+                           tape
+                           )
+     tape_list_t *tape;
+{
+  struct Cstager_IStagerSvc_t *stgsvc = NULL;
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_DiskCopyForRecall_t *recallCandidate = NULL;
+  struct Cstager_DiskCopy_t *diskCopy = NULL;
+  char *diskServerName = NULL, *mountPointName = NULL, *pathName = NULL;
+  file_list_t *file = NULL;
+  int rc, save_serrno;
+
+  /*
+   * Only recalls, please!
+   */  
+  if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  rc = rtcpcld_nextFileToRecall(tape,&file);
+  if ( (rc != 1) || (file == NULL) ) {
+    serrno = ENOENT;
+    return(-1);
+  }
+
+  if ( file->dbRef == NULL ) {
+    rc = updateSegmentFromDB(file);
+    if ( rc == -1 ) return(-1);
+    if ( (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+  }
+  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+
+  rc = getStgSvc(&stgsvc);
+  if ( rc == -1 || stgsvc == NULL ) return(-1);
+  
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    return(-1);
+  }
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  recallCandidate = NULL;
+  rc = Cstager_IStagerSvc_bestFileSystemForSegment(
+                                                   stgsvc,
+                                                   segment,
+                                                   &recallCandidate
+                                                   );
+  if ( rc == -1 ) {
+    char *_dbErr = NULL;
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cstager_IStagerSvc_bestFileSystemForSegment()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);      
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+  Cstager_DiskCopyForRecall_diskCopy(
+                                     recallCandidate,
+                                     &diskCopy
+                                     );
+  Cstager_DiskCopy_path(
+                        diskCopy,
+                        (CONST char **)&pathName
+                        );
+  Cstager_DiskCopyForRecall_mountPoint(
+                                       recallCandidate,
+                                       (CONST char **)&mountPointName
+                                       );
+  Cstager_DiskCopyForRecall_diskServer(
+                                       recallCandidate,
+                                       (CONST char **)&diskServerName
+                                       );
+  if ( (pathName == NULL) ||
+       (mountPointName == NULL) ||
+       (diskServerName == NULL) ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  
+  if ( (strlen(pathName)+
+        strlen(mountPointName)+1+
+        strlen(diskServerName)+2) > sizeof(file->filereq.file_path)-1 ) {
+    serrno = E2BIG;
+    return(-1);
+  }
+  return(0);
+}
+
 /**
- * This method is only called from methods used by the recaller/migrator.
- * Query database for tape copies or segments to be processed for a tape.
- * The tape request is updated with new segments (duplicates are checked
- * before adding a new filereq). It is the caller's responsability to free
- * the new file_list_t members.
+ * This method is only called from methods used by the recaller.
+ * It first checks the file list for any remaining unprocessed segment.
+ * If one is found, it calls bestFileSystemForSegment(), completes
+ * the file request with a complete path and returns.
+ * If there are no more unprocessed segments left, the catalogue
+ * is queried for new segments to be processed for the tape using the
+ * segmentsForTape() method. New file list items are created for the
+ * new segments and finally bestFileSystemForSegment() is called for
+ * the first segment (in tape fseq order).
  */
 static int procSegmentsForTape(
                                tape
@@ -1056,11 +1175,6 @@ static int procSegmentsForTape(
   }
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  rc = verifyTape(tape);
-  if ( rc == -1 ) {
-    C_IAddress_delete(iAddr);
-    return(-1);
-  }
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
 
   rc = Cstager_IStagerSvc_segmentsForTape(
@@ -1121,26 +1235,6 @@ static int procSegmentsForTape(
                            segmArray[i],
                            &fseq
                            );
-      if ( (tape->tapereq.mode == WRITE_ENABLE) &&
-           (prevFseq > 0) &&
-           (fseq != prevFseq+1) ) {
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_SYSTEM,
-                        RTCPCLD_MSG_OUTOFSEQ,
-                        (struct Cns_fileid *)NULL,
-                        2,
-                        "FSEQ",
-                        DLF_MSG_PARAM_INT,
-                        fseq,
-                        "PREV_FSEQ",
-                        DLF_MSG_PARAM_INT,
-                        prevFseq
-                        );
-        break;
-      }
-      prevFseq = fseq;
-      
       if ( nsHost != NULL ) strncpy(
                                     fileid.server,
                                     nsHost,
@@ -1304,11 +1398,6 @@ int procTapeCopiesForStream(
     return(-1);
   }
 
-  rc = verifyTape(tape);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-
   rc = getStgSvc(&stgsvc);
   if ( rc != -1 ) getDbSvc(&svcs);
   if ( rc == -1 || stgsvc == NULL || svcs == NULL || *svcs == NULL ) return(-1);
@@ -1319,6 +1408,11 @@ int procTapeCopiesForStream(
   }
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
+  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   Cstager_Tape_stream(tp,&stream);
 
@@ -1567,10 +1661,15 @@ int rtcpcld_getSegmentsToDo(
                             )
      tape_list_t *tape;
 {
+  int rc;
+
   if ( tape == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
+
+  rc = verifyTape(tape);
+  if ( rc == -1 ) return(-1);
   
   if ( tape->tapereq.mode == WRITE_DISABLE ) {
     return(procSegmentsForTape(tape));
@@ -2055,11 +2154,11 @@ int rtcpcld_updcFileMigrated(
    * We can only update catalogue if all tape copies associated
    * with this castor file has been written to tape.
    */
-  Cstager_CastorFile_copies(
-                            castorFile,
-                            &tapeCopyArray,
-                            &nbTapeCopies
-                            );
+  Cstager_CastorFile_tapeCopies(
+                                castorFile,
+                                &tapeCopyArray,
+                                &nbTapeCopies
+                                );
   
   /*
    * Update status of this tape copy (otherwise the check below
@@ -2506,7 +2605,7 @@ int rtcpcld_setVidWorkerAddress(
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
-  struct Cstager_Tape_t *tapeItem = NULL;
+  struct Cstager_Tape_t *tp = NULL;
   char myHost[CA_MAXHOSTNAMELEN+1], vwAddress[CA_MAXHOSTNAMELEN+12];
   int rc = 0, save_serrno;
   ID_TYPE _key = 0;
@@ -2521,23 +2620,27 @@ int rtcpcld_setVidWorkerAddress(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
+  if ( (tape->dbRef == NULL) || 
+       ((tp = tape->dbRef->row) == NULL) ) {
     rc = updateTapeFromDB(tape);
     if ( (rc == 0) && (tape->dbRef != NULL) ) {
-      tapeItem = (struct Cstager_Tape_t *)tape->dbRef->row;
+      tp = (struct Cstager_Tape_t *)tape->dbRef->row;
     }
   }
 
-  if ( rc != 1 || tapeItem == NULL ) {
+  if ( tp == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_INTERNAL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tape->tapereq.vid,
                     "REASON",
                     DLF_MSG_PARAM_STR,
-                    "Tape request could not be found in internal list",
+                    "Error getting tape from DB",
                     RTCPCLD_LOG_WHERE
                     );
     serrno = SEINTERNAL;
@@ -2550,8 +2653,8 @@ int rtcpcld_setVidWorkerAddress(
   }
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
-  iObj = Cstager_Tape_getIObject(tapeItem);
-  Cstager_Tape_id(tapeItem,&_key);
+  iObj = Cstager_Tape_getIObject(tp);
+  Cstager_Tape_id(tp,&_key);
   rc = C_Services_updateObj(*svcs,iAddr,iObj);
   if ( rc == -1 ) {
     char *_dbErr = NULL;
@@ -2581,8 +2684,8 @@ int rtcpcld_setVidWorkerAddress(
     serrno = save_serrno;
     return(-1);
   }
-  Cstager_Tape_setVwAddress(tapeItem,vwAddress);
-  Cstager_Tape_id(tapeItem,&_key);
+  Cstager_Tape_setVwAddress(tp,vwAddress);
+  Cstager_Tape_id(tp,&_key);
   rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
     char *_dbErr = NULL;
