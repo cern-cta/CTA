@@ -877,6 +877,7 @@ int stagewrt_castor_hsm_file() {
         stcp_end = stce;
       }
       if (istart < 0 || iend < 0) {
+        i = 0;
         /* Impossible to satisfy entirely this request for the first file - it will probably be fragmented */
         for (stcp = stcs; stcp < stce; stcp++, i++) {
           if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
