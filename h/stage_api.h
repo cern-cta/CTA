@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.38 2001/03/28 14:01:06 jdurand Exp $
+ * $Id: stage_api.h,v 1.39 2001/06/20 13:53:33 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -203,36 +203,36 @@ typedef struct stage_hsm stage_hsm_t;
 /* =========================================================================== */
 /* ======================= DEFINITION OF API FLAGS =========================== */
 /* =========================================================================== */
-#define STAGE_DEFERRED    0x00000001    /* -A deferred  [stage_iowc]           */
-#define STAGE_GRPUSER     0x00000002    /* -G           [stage_iowc,stage_qry] */
-#define STAGE_COFF        0x00000004    /* -c off       [stage_iowc]           */
-#define STAGE_UFUN        0x00000008    /* -U           [stage_iowc]           */
-#define STAGE_INFO        0x00000010    /* -z           [stage_iowc]           */
-#define STAGE_ALL         0x00000020    /* -a           [stage_qry]            */
-#define STAGE_LINKNAME    0x00000040    /* -L           [stage_qry,stage_clr]  */
-#define STAGE_LONG        0x00000080    /* -l           [stage_qry]            */
-#define STAGE_PATHNAME    0x00000100    /* -P           [stage_qry,stage_clr]  */
-#define STAGE_SORTED      0x00000200    /* -S           [stage_qry]            */
-#define STAGE_STATPOOL    0x00000400    /* -s           [stage_qry]            */
-#define STAGE_TAPEINFO    0x00000800    /* -T           [stage_qry]            */
-#define STAGE_USER        0x00001000    /* -u           [stage_qry]            */
-#define STAGE_EXTENDED    0x00002000    /* -x           [stage_qry]            */
-#define STAGE_ALLOCED     0x00004000    /* -A           [stage_qry]            */
-#define STAGE_FILENAME    0x00008000    /* -f           [stage_qry]            */
-#define STAGE_EXTERNAL    0x00010000    /* -I           [stage_qry]            */
-#define STAGE_MULTIFSEQ   0x00020000    /* -Q           [stage_qry]            */
-#define STAGE_MIGRULES    0x00040000    /* --migrator   [stage_qry]            */
-#define STAGE_SILENT      0x00080000    /* --silent     [stage_iowc]           */
-#define STAGE_NOWAIT      0x00100000    /* --nowait     [stage_iowc]           */
-#define STAGE_NOREGEXP    0x00200000    /* --noregexp   [stage_qry]            */
-#define STAGE_DUMP        0x00400000    /* --dump       [stage_qry]            */
-#define STAGE_CLASS       0x00800000    /* --fileclass  [stage_qry]            */
-#define STAGE_QUEUE       0x01000000    /* --queue      [stage_qry]            */
-#define STAGE_COUNTERS    0x02000000    /* --counters   [stage_qry]            */
-#define STAGE_NOHSMCREAT  0x04000000    /* --nohsmcreat [stage_iowc]           */
-#define STAGE_CONDITIONAL 0x08000000    /* -c           [stage_clr]            */
-#define STAGE_FORCE       0x10000000    /* -F           [stage_clr]            */
-#define STAGE_REMOVEHSM   0x20000000    /* -remove_from_hsm [stage_clr]        */
+#define STAGE_DEFERRED    0x000000001    /* -A deferred  [stage_iowc]           */
+#define STAGE_GRPUSER     0x000000002    /* -G           [stage_iowc,stage_qry] */
+#define STAGE_COFF        0x000000004    /* -c off       [stage_iowc]           */
+#define STAGE_UFUN        0x000000008    /* -U           [stage_iowc]           */
+#define STAGE_INFO        0x000000010    /* -z           [stage_iowc]           */
+#define STAGE_ALL         0x000000020    /* -a           [stage_qry]            */
+#define STAGE_LINKNAME    0x000000040    /* -L           [stage_qry,stage_clr]  */
+#define STAGE_LONG        0x000000080    /* -l           [stage_qry]            */
+#define STAGE_PATHNAME    0x000000100    /* -P           [stage_qry,stage_clr]  */
+#define STAGE_SORTED      0x000000200    /* -S           [stage_qry]            */
+#define STAGE_STATPOOL    0x000000400    /* -s           [stage_qry]            */
+#define STAGE_TAPEINFO    0x000000800    /* -T           [stage_qry]            */
+#define STAGE_USER        0x000001000    /* -u           [stage_qry]            */
+#define STAGE_EXTENDED    0x000002000    /* -x           [stage_qry]            */
+#define STAGE_ALLOCED     0x000004000    /* -A           [stage_qry]            */
+#define STAGE_FILENAME    0x000008000    /* -f           [stage_qry]            */
+#define STAGE_EXTERNAL    0x000010000    /* -I           [stage_qry]            */
+#define STAGE_MULTIFSEQ   0x000020000    /* -Q           [stage_qry]            */
+#define STAGE_MIGRULES    0x000040000    /* --migrator   [stage_qry]            */
+#define STAGE_SILENT      0x000080000    /* --silent     [stage_iowc]           */
+#define STAGE_NOWAIT      0x000100000    /* --nowait     [stage_iowc]           */
+#define STAGE_NOREGEXP    0x000200000    /* --noregexp   [stage_qry]            */
+#define STAGE_DUMP        0x000400000    /* --dump       [stage_qry]            */
+#define STAGE_CLASS       0x000800000    /* --fileclass  [stage_qry]            */
+#define STAGE_QUEUE       0x001000000    /* --queue      [stage_qry]            */
+#define STAGE_COUNTERS    0x002000000    /* --counters   [stage_qry]            */
+#define STAGE_NOHSMCREAT  0x004000000    /* --nohsmcreat [stage_iowc]           */
+#define STAGE_CONDITIONAL 0x008000000    /* -c           [stage_clr]            */
+#define STAGE_FORCE       0x010000000    /* -F           [stage_clr]            */
+#define STAGE_REMOVEHSM   0x020000000    /* -remove_from_hsm [stage_clr]        */
 
 /* For stage_qry only */
 /* ------------------ */
@@ -450,14 +450,17 @@ EXTERN_C int DLL_DECL stageupdc _PROTO((u_signed64,               /* flags */
 /* Not available yet - only old protocol */
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
 
-/* --------------------------- */
-/* Utilities used by the API   */
-/* --------------------------- */
+/* ------------------------------------------ */
+/* Utilities used by the API (stage_util.c)   */
+/* ------------------------------------------ */
 EXTERN_C int  DLL_DECL  send2stgd _PROTO((char *, int, u_signed64, char *, int, int, char *, int, int, struct stgcat_entry *, int *, struct stgcat_entry **, int *, struct stgpath_entry **));
 /* Compatibility mode */
 EXTERN_C int  DLL_DECL  send2stgd_compat _PROTO((char *, char *, int, int, char *, int)); /* Old version without forking */
 EXTERN_C void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
 
+/* ------------------------------------------- */
+/* Utilities used by the API (stage_usrmsg.c)  */
+/* ------------------------------------------- */
 EXTERN_C int  DLL_DECL  stage_seterrbuf _PROTO((char *, int));
 EXTERN_C int  DLL_DECL  stage_setoutbuf _PROTO((char *, int));
 #ifndef SWIG
