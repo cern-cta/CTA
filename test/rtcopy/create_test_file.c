@@ -1,10 +1,14 @@
 /*
+ * $Id: create_test_file.c,v 1.2 2000/03/30 14:50:56 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: create_test_file.c,v $ $Revision: 1.1 $ $Date: 2000/03/05 09:30:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: create_test_file.c,v $ $Revision: 1.2 $ $Date: 2000/03/30 14:50:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
