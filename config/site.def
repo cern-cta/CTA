@@ -181,9 +181,9 @@
 #define BuildCopytapeServer	NO
 #define BuildCupvClient		YES
 #define BuildCupvDaemon		NO
-#define BuildDbClient		YES
-#define BuildDbDaemon		YES
-#define BuildExamples		YES
+#define BuildDbClient		NO
+#define BuildDbDaemon		NO
+#define BuildExamples		NO
 #define	BuildHpssClient		NO
 #define	BuildHpssServer		NO
 #define BuildHsmTools		NO
@@ -242,9 +242,9 @@
 #define	UseHpss			NO
 #define UseMtx			NO
 #define UseMySQL		NO
-#define UseOracle		NO
+#define UseOracle		YES
 #define UseRaima		NO
-#define UseStageCdb		YES
+#define UseStageCdb		NO
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
