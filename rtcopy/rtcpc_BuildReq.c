@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.32 $ $Date: 2000/08/04 14:38:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.33 $ $Date: 2000/09/13 09:27:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1869,7 +1869,24 @@ static int rtcpc_diskfiles(int mode,
                 serrno = EINVAL;
                 return(-1);
             }
-            fl->prev->filereq.concat = CONCAT_TO_EOD;
+            /*
+             * CONCAT_TO_EOD implies concatenation starting from the last
+             * specified tape file (e.g. from tape file 3 if -q 1,3-). However,
+             * we may very well already be concatenating from a previously
+             * specified tape file, e.g.
+             * tpread -V AA0000 -q 1,4,7- disk_file1 disk_file2
+             * where the concatenation starts with tape file 4.
+             * We cannot therefore not override CONCAT for the last file 
+             * element. The concat flag for the three file elements of the
+             * above request should be:
+             * NOCONCAT, NOCONCAT, CONCAT|CONCAT_TO_EOD
+             */
+            if ( fl->prev->filereq.concat == -1 ||
+                 (fl->prev->filereq.concat & CONCAT) == 0 )
+                fl->prev->filereq.concat = CONCAT_TO_EOD;
+            else
+                fl->prev->filereq.concat |= CONCAT_TO_EOD;
+
             CLIST_DELETE(tl->file,fl);
             free(fl);
             fl = tl->file->prev;
@@ -1909,9 +1926,12 @@ static int rtcpc_diskfiles(int mode,
                     break;
                 }
                 /*
-                 * Don't override CONCAT_TO_EOD if set
-                 */
+                 * Both CONCAT and CONCAT_TO_EOD are allowed for
+                 * the last file element (see discussion above).
+                 */ 
                 if ( filereq->concat == -1 ) filereq->concat = CONCAT;
+                else if ( (filereq->concat & CONCAT_TO_EOD) != 0 )
+                    filereq->concat |= CONCAT;
                 strcpy(filereq->file_path,last_filename);
             } else {
                 if ( last_filename != NULL &&
