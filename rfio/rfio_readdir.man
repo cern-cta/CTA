@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_readdir.man,v 1.3 2000/07/07 14:28:27 jdurand Exp $
+.\" $Id: rfio_readdir.man,v 1.4 2001/05/13 07:40:02 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_readdir.man,v $ $Revision: 1.3 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_readdir.man,v $ $Revision: 1.4 $ $Date: 2001/05/13 07:40:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_READDIR 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_READDIR 3 "$Date: 2001/05/13 07:40:02 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_readdir \- read directory opened by
 .B rfio_opendir
@@ -27,8 +27,9 @@ entry.
 .I dirp
 specifies the pointer value returned by
 .BR rfio_opendir .
-.SH NOTE
+.SH NOTES
 Only the fields d_name, d_reclen and on some platforms d_namlen are filled.
+For CASTOR directories, a multi-threaded application will need to initialize itself the Cthread (CASTOR Thread Interface) library ; this is done by including "shift/Cthread_api.h" and calling the function Cthread_init() at the beginning. Otherwise accessing CASTOR directories will not be thread-safe. See \fBCthread\fP(3).
 .SH RETURN VALUE
 This routine returns a pointer to a structure containing the current directory
 entry if the operation was successful or NULL if the end of the directory was
