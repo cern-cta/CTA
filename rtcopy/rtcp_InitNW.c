@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 11:46:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.4 $ $Date: 1999/12/14 17:27:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -26,6 +26,7 @@ WSADATA wsadata;
 #endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
+#include <Cnetdb.h>
 #include <log.h>
 #include <net.h>
 #include <osdep.h>
@@ -99,7 +100,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
             rtcp_port = atoi(p);
         } else if ( (p = getconfent("RTCOPY","PORT",0)) != (char *)NULL ) {
             rtcp_port = atoi(p);
-        } else if ( (sp = getservbyname("rtcopy","tcp")) != (struct servent *)NULL ) {
+        } else if ( (sp = Cgetservbyname("rtcopy","tcp")) != (struct servent *)NULL ) {
             rtcp_port = (int)ntohs(sp->s_port);
         } else {
 #if defined(RTCOPY_PORT)
