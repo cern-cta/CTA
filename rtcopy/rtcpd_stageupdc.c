@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.33 $ $Date: 2000/03/29 16:46:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.34 $ $Date: 2000/03/30 06:33:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -98,6 +98,7 @@ int rtcpd_LockForTpPos(const int lock) {
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
     int rc, status, retval, save_serrno, WaitTime, TransferTime;
+    file_list_t *fl;
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
@@ -187,8 +188,29 @@ int rtcpd_stageupdc(tape_list_t *tape,
             }
         } 
 
+        nb_bytes = 0;
         if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
-        else nb_bytes = filereq->bytes_out;
+        else {
+            if ( (filereq->concat & (CONCAT|CONCAT_TO_EOD)) == 0 ) {
+                nb_bytes = filereq->bytes_out;
+            } else {
+                /*
+                 * If concatenating to disk we have to give the total
+                 * size (stager only deals with disk files).
+                 */
+                fl = file;
+                while ( (fl->filereq.concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) {
+                    nb_bytes += fl->filereq.bytes_out;
+                    if ( fl == tape->file ) break;
+                    fl = fl->prev;
+                } 
+                /*
+                 * First file in a normal concatenation is not "concatenated".
+                 */
+                if ( (filereq->concat & CONCAT) != 0 ) 
+                    nb_bytes += fl->filereq.bytes_out;
+            }
+        }
 
         if ( (filereq->proc_status == RTCP_POSITIONED &&
               ((filereq->err.errorcode == ENOSPC && 
