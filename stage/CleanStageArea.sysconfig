@@ -1,7 +1,7 @@
 #
-# $Id: CleanStageArea.sysconfig,v 1.1 2003/11/06 10:47:36 jdurand Exp $
+# $Id: CleanStageArea.sysconfig,v 1.2 2004/11/17 08:42:39 jdurand Exp $
 #
-# @(#)$RCSfile: CleanStageArea.sysconfig,v $ $Revision: 1.1 $ $Date: 2003/11/06 10:47:36 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: CleanStageArea.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/11/17 08:42:39 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should CleanStageArea run?
 # any string but "yes" will equivalent to "NO"
@@ -14,4 +14,8 @@ RUN_CLEANSTAGEAREA="yes"
 # Say "yes" if you want so. For Safety I comment the line below AND I put
 # NO as default...
 #REMOVE_FROM_HSM=NO
+#
+# should the garbage collector do himself the clear from disk?
+# any string but "yes" will equivalent to "NO"
+# UNLINK_DIRECTLY="yes"
 
