@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.12 2000/04/07 14:06:45 baud Exp $
+ * $Id: Ctape_api.h,v 1.13 2000/04/12 13:05:58 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.12 $ $Date: 2000/04/07 14:06:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.13 $ $Date: 2000/04/12 13:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -44,8 +44,8 @@ struct drv_status {		/* tape status reply entry */
 	uid_t	uid;
 	int	jid;		/* process-group-id */
 	char	dgn[CA_MAXDGNLEN+1];	/* device group name */
-	int	status;		/* drive status: down = 0, up = 1 */
-	int	asn;		/* assign flag: assigned = 1 */
+	short	status;		/* drive status: down = 0, up = 1 */
+	short	asn;		/* assign flag: assigned = 1 */
 	time_t	asn_time;	/* timestamp of drive assignment */
 	char	drive[CA_MAXUNMLEN+1];	/* drive name */
 	int	mode;		/* WRITE_DISABLE or WRITE_ENABLE */
