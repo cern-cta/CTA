@@ -232,7 +232,8 @@ int main(argc, argv)
 
 	(void) umask (stcs->mask);
 
-	signal (SIGINT, stagekilled);
+	signal (SIGINT, stagekilled);        /* If client died */
+	signal (SIGTERM, stagekilled);       /* If killed from administrator */
 	if (nretry) sleep (RETRYI);
 
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
