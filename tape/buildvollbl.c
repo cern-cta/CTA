@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:44:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildvollbl - build VOL1 */

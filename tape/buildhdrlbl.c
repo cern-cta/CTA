@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:40:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildhdrlbl - build HDR1 and HDR2 from tpmnt parameters */
