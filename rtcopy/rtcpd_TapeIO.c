@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 17:10:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 12:05:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -701,6 +701,7 @@ int tread(int fd,char *ptr,int len,
             }
             if ( rc == 0 ) return(0);   /* end of file has been reached */
             file->eovflag= 1;           /* tape volume overflow */
+            return(0);
         } else
             return(rc);
     } else {
