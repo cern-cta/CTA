@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.69 2000/10/09 06:24:31 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.70 2000/10/09 07:06:57 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.69 $ $Date: 2000/10/09 06:24:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.70 $ $Date: 2000/10/09 07:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -811,15 +811,9 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 				goto add2otherwf_return;
 			}
 			if (wqp->concat_off_fseq > 0) {
-				/* If this request is also a "-c off", we extend it as it if */
-				/* were the original that has already been extended with add2wf */
-
-				/* Please note that a "-c off" request waiting on another "-c off" request impose that */
-				/* necessarly this found wfp is the last one of this waiting files. Otherwise it is a */
-				/* bug. */
+				/* We change this "-c off" waiting request only if the found index */
+				/* is the very last one in the queue. */
 				if (wfp != &(wqp->wf[wqp->nbdskf - 1])) {
-					sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : your \"-c off\" request waits on another \"-c off\" one, but the found waiting element is not the last one\n");
-					rc = -1;
 					goto add2otherwf_return;
 				}
 				/* If the file sequence of this "-c off" callback is higher or equal to the one */
