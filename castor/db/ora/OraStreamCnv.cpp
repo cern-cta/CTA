@@ -309,12 +309,12 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
   if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     u_signed64 tapeId = (u_signed64)rset->getDouble(1);
     if (0 != tapeId &&
-        0 == obj->tape() ||
-        obj->tape()->id() != tapeId) {
+        (0 == obj->tape() ||
+         obj->tape()->id() != tapeId)) {
       if (0 == m_deleteTapeStatement) {
         m_deleteTapeStatement = createStatement(s_deleteTapeStatementString);
       }
-      m_deleteTapeStatement->setDouble(1, obj->tape()->id());
+      m_deleteTapeStatement->setDouble(1, tapeId);
       m_deleteTapeStatement->executeUpdate();
     }
   }
