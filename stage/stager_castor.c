@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.23 2002/06/21 16:49:58 jdurand Exp $
+ * $Id: stager_castor.c,v 1.24 2002/07/01 12:51:21 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.23 $ $Date: 2002/06/21 16:49:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.24 $ $Date: 2002/07/01 12:51:21 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1309,7 +1309,8 @@ int stagein_castor_hsm_file() {
 		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
 			u_signed64 virtual_size;
 			u_signed64 previous_virtual_size;
-
+			int do_not_process_any_other_segment;
+			
 			/* We search at which segment to start the transfer. It depends on the size */
 			/* yet transfered and the size of each of the segments for file No i */
 			virtual_size = previous_virtual_size = 0;
@@ -1365,7 +1366,30 @@ int stagein_castor_hsm_file() {
 			
 			/* We have found hsm_vid[i]/hsm_side[i] */
 			/* We check if other HSM files also requires this tape */
-			if (stcp != (stce - 1)) {
+
+			/* But we must be careful: if current file cannot be staged using one single segment AND */
+			/* if asyncrhoneous callback is disabled (use_subreqid == 0) then we cannot continue with */
+			/* any other file: the order of the command must be followed exaxctly. */
+			/* For example, suppose that file i   is on tape t1 fseq f1 */
+			/*                                               t2 fseq f2 */
+			/*                           file i+n is on tape t1 fseq f2 */
+			/* Then we cannot optimize the recall like this: t1.[f1,f2] + t2.f2 */
+			/* because file i+n (e.g. t1.f2) would then be staged before file i (e.g. t1.f2 + t2.f2) */
+
+			/* This logic of making current non-totally-transfered file will be exactly the next transfered */
+			/* one in case of asyncrhroneous callback disabled is extended to any number of segments, that is */
+			/* If current file, No i, by definition not yet totally transfered because we are here indeed, */
+			/* will NOT be totally staged using the segment hsm_segments[i][hsm_oksegment[i]] then we cannot */
+			/* go further */
+
+			do_not_process_any_other_segment = 0;
+			if (! use_subreqid) {
+				if (hsm_segments[i][hsm_oksegment[i]].segsize < (hsm_totalsize[i] - hsm_transferedsize[i])) {
+					do_not_process_any_other_segment = 1;
+				}
+			}
+
+			if ((do_not_process_any_other_segment == 0) && (stcp != (stce - 1))) {
 				stcp++;
 				last_found = i;
 				for (j = i + 1; stcp < stce; stcp++, j++) {
