@@ -411,7 +411,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " WHERE " << firstRole << " = :1\";"
+                << " WHERE " << firstRole << " = :1 FOR UPDATE\";"
                 << endl << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
@@ -432,7 +432,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "\"SELECT id from "
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " WHERE " << as->localPart.name
-                  << " = :1\";" << endl << endl
+                  << " = :1 FOR UPDATE\";" << endl << endl
                   << getIndent()
                   << "/// SQL delete statement for member "
                   << as->remotePart.name
