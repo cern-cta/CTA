@@ -125,7 +125,7 @@ int Csec_server_lookup_protocols(long client_address,
     p = CSEC_DEFAULT_MECHS;
   }
 
-  buf = (char *)malloc(strlen(p));
+  buf = (char *)malloc(strlen(p)+1);
   if (NULL == buf) {
     return -1;
   }

@@ -168,7 +168,8 @@ int Csec_acquire_creds_impl(ctx, service_name, is_client)
     name_buf.length = strlen(service_name) + 1;
     name_buf.value = malloc(name_buf.length);
     strncpy(name_buf.value, service_name, strlen(service_name) );
-    
+    ((char *)name_buf.value)[name_buf.length -1] = '\0';
+
     maj_stat = gss_import_name(&min_stat, &name_buf,
 			       (gss_OID) GSS_C_NT_USER_NAME, &server_name);
     /* Releasing the buffer as it has now been use to create the gss_name_t.

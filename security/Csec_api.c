@@ -299,7 +299,7 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
 {
   char *func = "Csec_server_establish_context_ext";
 
-  Csec_trace(func, "Client establishing context\n");
+  Csec_trace(func, "Server establishing context\n");
 
   /* Checking the status of the context */
   if (ctx == NULL) {
@@ -578,6 +578,10 @@ int Csec_acquire_creds(Csec_context_t *ctx) {
      every time for the moment */
   char *func = "Csec_acquire_creds";
   int rc;
+
+  if(Csec_check_shlib_loaded(ctx)<0) {
+    return -1;
+  }
   
   if (ctx->Csec_acquire_creds != NULL) {
     Csec_trace(func, "Acquiting creds for service %s\n", Csec_server_get_service_name(ctx));
@@ -594,6 +598,8 @@ int Csec_acquire_creds(Csec_context_t *ctx) {
     /* XX What error should be returned here ? */
     return -1;
   }
+
+  return -1;
 }
 
 /**
@@ -676,10 +682,18 @@ char *Csec_server_get_service_name(Csec_context_t *ctx) {
   char *func = "Csec_server_get_service_name";
 
   CHECKCTX_EXT(ctx,func,NULL);
+  if(Csec_check_shlib_loaded(ctx)) {
+    return -1;
+  }
+
   if (ctx->flags & CSEC_CTX_SERVICE_NAME_SET) {
     return ctx->local_name;
   } else {
-    return NULL;
+    if (Csec_server_set_service_name(ctx)<0) {
+      return NULL;
+    } else {
+      return ctx->local_name;
+    }
   }
 }
 
@@ -789,3 +803,41 @@ Csec_context_t *Csec_get_default_context() {
   return &(thip->default_context);
 }
 
+
+/**
+ * Checks that the plugin has been loaded properly
+ */
+int Csec_check_shlib_loaded(Csec_context_t *ctx) {
+  char *func = "Csec_check_shlib_loaded";
+
+  if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
+    serrno = ESEC_CTX_NOT_INITIALIZED;
+    return -1;
+  }
+  
+  if (!(ctx->flags & CSEC_CTX_SERVICE_TYPE_SET)) {
+    serrno =  ESEC_NO_SVC_TYPE;
+    Csec_errmsg(func, "Service type not set");
+    return -1;
+  }
+  
+  /* Checking whether the list of protocols has been loaded */
+  if (!(ctx->flags & CSEC_CTX_PROTOCOL_LOADED)) {
+    int rc;
+    rc = Csec_client_lookup_protocols(&(ctx->protocols), &(ctx->nb_protocols));
+    if (rc != 0) {
+      /* Csec_client_lookup_protocols already sets the serrno etc... */
+      return rc;
+    }
+    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;    
+  }
+  
+  /* Checking whther the shared lib is already loaded ! */
+  if (!(ctx->flags & CSEC_CTX_SHLIB_LOADED)) {
+    if (Csec_get_shlib(ctx) == NULL) {
+      return -1;
+    }
+  }
+  return 0;
+
+}

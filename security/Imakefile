@@ -46,7 +46,7 @@ SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf $(SEC
 #endif
 
 CSEC_MECHLIST=CSEC_Mechlist
-CFLAGS = $(DFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
+CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
 LDFLAGS = SecLibsDir SecLibs
 
 COMM######################### DEPENDENCY LIBRARIES ###############

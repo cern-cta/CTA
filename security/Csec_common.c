@@ -66,7 +66,7 @@ int Csec_setup_trace() {
 
 int Csec_trace(char *func, char *msg, ...) {
   va_list args;
-  char prtbuf[SECPRTBUFSZ];
+  char prtbuf[SECPRTBUFSZ+1];
   struct Csec_api_thread_info *thip;
   int funlen;
 
