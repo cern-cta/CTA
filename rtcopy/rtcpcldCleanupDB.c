@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/29 13:31:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/02 11:29:45 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.6 $ $Date: 2004/10/29 13:31:58 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.7 $ $Date: 2004/11/02 11:29:45 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
   dbSvc = NULL;
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
-    fprintf(stderr,"rtcpcld_getDbSvc()",sstrerror(serrno));
+    fprintf(stderr,"rtcpcld_getDbSvc(): %s",sstrerror(serrno));
     return(-1);
   }
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
   
     rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
     if ( rc == -1 ) {
-      fprintf(stderr,"C_BaseAddress_create()",sstrerror(serrno));
+      fprintf(stderr,"C_BaseAddress_create(): %s",sstrerror(serrno));
       return(1);
     }
   } else {
