@@ -23,11 +23,11 @@ struct passwd
 	char* pw_shell;
 };
 
-struct passwd* getpwent(void);
-void           setpwent(void);
-void           endpwent(void);
+EXTERN_C struct passwd DLL_DECL *getpwent _PROTO((void));
+EXTERN_C void          DLL_DECL  setpwent _PROTO((void));
+EXTERN_C void          DLL_DECL  endpwent _PROTO((void));
 
-struct passwd* getpwuid(uid_t user_Id);
-struct passwd* getpwnam(char* user_Name);
+EXTERN_C struct passwd DLL_DECL *getpwuid _PROTO((uid_t));
+EXTERN_C struct passwd DLL_DECL *getpwnam _PROTO((char *));
 
 #endif /* __win32_pwd_h */
