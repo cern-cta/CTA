@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/09/30 14:02:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -82,7 +82,7 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
     writeCastsDecls(*m_stream);
     QValueList<QString> alreadyGeneratedMethods;
     writeOperations(c, *m_stream, alreadyGeneratedMethods);
-    writeHeaderAccessorMethodDecl(c, *m_stream);
+    writeHeaderAccessorMethodDecl(c, m_classInfo, *m_stream);
   }
 }
 
@@ -226,17 +226,18 @@ void CHClassWriter::writeCastDecl(QTextStream &stream,
 // writeHeaderAccessorMethodDecl
 //=============================================================================
 void CHClassWriter::writeHeaderAccessorMethodDecl(UMLClassifier *c,
+                                                  ClassifierInfo *classInfo,
                                                   QTextStream &stream) {
   // static public attributes
-  writeAttributeMethods(m_classInfo->static_atpub, stream);
-  writeAttributeMethods(m_classInfo->atpub, stream);
+  writeAttributeMethods(classInfo->static_atpub, stream);
+  writeAttributeMethods(classInfo->atpub, stream);
   // associations
   writeAssociationMethods
-    (m_classInfo->plainAssociations, c->getID(), stream);
+    (classInfo->plainAssociations, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->aggregations, c->getID(), stream);
+    (classInfo->aggregations, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->compositions, c->getID(), stream);
+    (classInfo->compositions, c->getID(), stream);
 }
 
 //=============================================================================
@@ -451,19 +452,34 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
   // Then the implemented interfaces methods
   if (!c->getAbstract()) {
     for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
-         interface !=0;
+         interface != 0;
          interface = m_classInfo->implementedAbstracts.next()) {
+      QString com = " of " + interface->getName();
+      if (m_classInfo->isInterface)
+        com += " interface";
+      else
+        com += " abstract class";
       opl = interface->getFilteredOperationsList(Uml::Public, true);
-      if(opl->count()) {
-        QString com = " of " + interface->getName();
-        if (m_classInfo->isInterface)
-          com += " interface";
-        else
-          com += " abstract class";
+      bool noTitle = true;
+      if (opl->count()) {
         writeHeaderComment(QString("Implementation") + com,
                            getIndent(), stream);
+        stream << endl;
+        noTitle = false;
         writeOperations(*opl, stream, alreadyGenerated);
       }
+      ClassifierInfo aci(interface, m_doc);
+      if ((aci.static_atpub.count() ||
+           aci.atpub.count() ||
+           aci.plainAssociations.count() ||
+           aci.aggregations.count() ||
+           aci.compositions.count()) &&
+          noTitle) {
+        writeHeaderComment(QString("Implementation") + com,
+                           getIndent(), stream);
+        stream << endl;    
+      }
+      writeHeaderAccessorMethodDecl(interface, &aci, *m_stream);
     }
   }
 }

@@ -381,6 +381,10 @@ void CppCppClassWriter::writeFullPrint(CppBaseWriter* obj,
       (obj, stream);
     return;
   }
+  // First the object type
+  stream << obj->getIndent() << "stream << indent << \"[# "
+         << obj->classInfo()->className
+         << " #]\" << std::endl;" << endl;
   // Deal with circular dependencies
   stream << obj->getIndent()
          << "if (alreadyPrinted.find(this) != alreadyPrinted.end()) {"

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/09/30 14:02:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -51,7 +51,7 @@ void CCClassWriter::writeClass(UMLClassifier *c) {
   writeCasts(*m_stream, c);
   QValueList<QString> alreadyGeneratedMethods;
   writeOperations(c, *m_stream, alreadyGeneratedMethods);
-  writeHeaderAccessorMethod(c, *m_stream);
+  writeHeaderAccessorMethod(c, m_classInfo, *m_stream);
   m_indent--;
   *m_stream << "} // End of extern \"C\"" << endl;
 }
@@ -191,17 +191,18 @@ void CCClassWriter::writeCast(QTextStream &stream,
 // writeHeaderAccessorMethodDecl
 //=============================================================================
 void CCClassWriter::writeHeaderAccessorMethod(UMLClassifier *c,
+                                              ClassifierInfo *classInfo,
                                               QTextStream &stream) {
   // static public attributes
-  writeAttributeMethods(m_classInfo->static_atpub, stream);
-  writeAttributeMethods(m_classInfo->atpub, stream);
+  writeAttributeMethods(classInfo->static_atpub, stream);
+  writeAttributeMethods(classInfo->atpub, stream);
   // associations
   writeAssociationMethods
-    (m_classInfo->plainAssociations, c->getID(), stream);
+    (classInfo->plainAssociations, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->aggregations, c->getID(), stream);
+    (classInfo->aggregations, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->compositions, c->getID(), stream);
+    (classInfo->compositions, c->getID(), stream);
 }
 
 //=============================================================================
@@ -499,6 +500,8 @@ void CCClassWriter::writeOperations(UMLClassifier *c,
          interface = m_classInfo->implementedAbstracts.next()) {
       opl = interface->getFilteredOperationsList(Uml::Public, true);
       writeOperations(*opl, stream, alreadyGenerated);
+      ClassifierInfo aci(interface, m_doc);
+      writeHeaderAccessorMethod(interface, &aci, *m_stream);
     }
   }
 }

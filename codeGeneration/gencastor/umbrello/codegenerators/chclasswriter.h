@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.h,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/09/28 14:45:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -98,6 +98,7 @@ class CHClassWriter : public CppBaseWriter {
    * Writes all accessor methods for attributes and associations
    */
   void writeHeaderAccessorMethodDecl(UMLClassifier *c,
+                                     ClassifierInfo *classInfo,
                                      QTextStream &stream);
 
 	/**
