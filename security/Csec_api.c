@@ -52,6 +52,19 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 #define CHECKCTX(CTX,FUNC) if(check_ctx(CTX, FUNC)<0) return -1;
 int Cdomainname(char *name, int namele);
 
+struct _serv_table {
+    char* name;
+    int   type;
+};
+
+static struct _serv_table service_table[] = {
+    {"host", CSEC_SERVICE_TYPE_HOST},
+    {"castor-central", CSEC_SERVICE_TYPE_CENTRAL},
+    {"castor-disk", CSEC_SERVICE_TYPE_DISK},
+    {"castor-tape", CSEC_SERVICE_TYPE_TAPE},
+    {"", 0}
+};
+
 /*****************************************************************
  *                                                               *
  *               CONTEXT INITIALIZATION FUNCTIONS                *
@@ -549,6 +562,28 @@ char *Csec_server_get_service_name(Csec_context_t *ctx) {
   }
 }
 
+int Csec_client_get_service_type (Csec_context_t *ctx) {
+  char *func = "Csec_client_get_service_type";
+  char *p;
+  int i;
+  int found;
+
+  p = Csec_client_get_service_name(ctx);
+  if (p == NULL) return (-1); /* Service name not set */
+  found = 0;
+  for (i = 0; *service_table[i].name != '\0'; i++) {
+    if (strstr(p, service_table[i].name) != NULL) {
+      found++;
+      break;
+    }
+  }
+  if (found) return (service_table[i].type);
+  else return (-1);
+}
+
+
+
+
 /**
  * Returns the user name of the client connecting to the server.
  */
@@ -592,6 +627,36 @@ char *Csec_server_get_client_username(Csec_context_t *ctx, int *uid, int *gid) {
   return ctx->peer_username;
 }
 
+/**
+ * Returns the principal or DN of the client connecting to the server.
+ */
+char *Csec_server_get_client_name(Csec_context_t *ctx) {
+  char *func = "Csec_server_get_client_name";
+  return ctx->peer_name;
+}
+
+int Csec_server_is_castor_service (Csec_context_t *ctx) {
+  char *func = "Csec_server_is_castor_service";
+  char *p;
+  int i;
+  int found;
+
+  p = Csec_server_get_client_name(ctx);
+  Csec_trace(func, "Client DN: %s\n", p);
+  if (p == NULL) return (-1); /* Client name not set */
+  found = 0;
+  for (i = 0; *service_table[i].name != '\0'; i++) {
+    if (strstr(p, service_table[i].name) != NULL) {
+      found++;
+      break;
+    }
+  }
+  if (found) {
+    Csec_trace(func, "Client is castor service type: %d\n",service_table[i].type); 
+    return (service_table[i].type);
+  }
+  else return (-1);
+}
 
 /* Csec_get_default_context - Returns a pointer to a default per thread context */
 Csec_context_t *Csec_get_default_context() {
