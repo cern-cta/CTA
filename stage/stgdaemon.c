@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.223 2002/09/23 11:16:14 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.224 2002/09/23 12:28:37 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.223 $ $Date: 2002/09/23 11:16:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.224 $ $Date: 2002/09/23 12:28:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -499,11 +499,13 @@ int main(argc,argv)
 	/* Check existence of config file right now */
 	if (stat (stgconfigfile, &st) != 0) {
 		fprintf(stderr, STG02, stgconfigfile, "stat", strerror(errno));
-		++errflg;
+		fprintf(stderr, "Exit.\n");
+		exit(1);
 	}
 
 	if (errflg != 0) {
-		printf("### Cgetopt error\n");
+		fprintf(stderr, "### Cgetopt error\n");
+		fprintf(stderr, "Exit.\n");
 		exit(1);
 	}
 
