@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.26 $ $Date: 2000/02/28 17:56:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.27 $ $Date: 2000/02/29 17:27:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1758,7 +1758,8 @@ n",
                  * "something" (unknown to VDQM) mounted. We have to wait
                  * for the unmount before resetting the status.
                  */
-                if ( !(DrvReq->status & VDQM_FORCE_UNMOUNT) ) {
+                if ( !(DrvReq->status & VDQM_FORCE_UNMOUNT) &&
+                     !(drvrec->drv.status & VDQM_FORCE_UNMOUNT) ) {
                     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
                     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
                     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
