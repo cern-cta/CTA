@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.7 $ $Date: 2000/01/17 08:20:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.8 $ $Date: 2000/01/17 18:06:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -196,7 +196,11 @@ int rtcpd_Reserve(tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_Reserve() Ctape_reserve(): %s\n",
             CTP_ERRTXT);
-        rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_FAILED);
+        if ( save_serrno == ETNDV ) {
+            rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_RESELECT_SERV);
+        } else {
+            rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_FAILED);
+        }
         rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
         return(-1);
     }
@@ -325,6 +329,8 @@ int rtcpd_Mount(tape_list_t *tape) {
             severity = RTCP_FAILED | RTCP_USERR;
             break;
         case ETNDV:
+            severity = RTCP_RESELECT_SERV;
+            break;
         case ETIDG:
         case ETNRS:
             severity = RTCP_FAILED | RTCP_SEERR;
