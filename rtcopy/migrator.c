@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/11 16:18:24 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:54:45 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/11 16:18:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:54:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -85,11 +85,143 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            rtcpTapeRequest_t *, 
                                            rtcpFileRequest_t *
                                            ));
-
-static int callbackThreadPool = -1;
-
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
+
+static tape_list_t *tape = NULL;
+
+int migratorCallbackFileCopied(
+                               tapereq,
+                               filereq
+                               ) 
+     rtcpTapeRequest_t *tapereq;
+     rtcpFileRequest_t *filereq;
+{
+  int rc, save_serrno;
+  struct Cns_fileid *castorFileId = NULL;
+  char *blkid;
+
+  if ( tapereq == NULL || filereq == NULL ) {
+    (void)dlf_write(
+                    childUuid,
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "ERROR_STRING",
+                    DLF_MSG_PARAM_STR,
+                    "Invalid parameter",
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  (void)rtcpcld_getFileId(filereq,&castorFileId);
+  blkid = rtcp_voidToString(
+                            (void *)filereq->blockid,
+                            sizeof(filereq->blockid)
+                            );
+  if ( blkid == NULL ) blkid = strdup("unknown");
+
+  if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
+       ((filereq->cprc < 0) && 
+        ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
+        (filereq->err.errorcode == ENOSPC)) ) {
+    rc = rtcpcld_updateTape(
+                            tape,
+                            filereq,
+                            0,
+                            0
+                            );
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_FAILEDVMGRUPD,
+                      (struct Cns_fileid *)castorFileId,
+                      RTCPCLD_NB_PARAMS+6,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "SIDE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->side,
+                      "MODE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->mode,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "BLOCKID",
+                      DLF_MSG_PARAM_STR,
+                      blkid,
+                      "ERROR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      (void)rtcpcld_updcMigrFailed(
+                                   tape,
+                                   filereq
+                                   );
+      serrno = save_serrno;
+      return(-1);
+    }
+    
+    rc = rtcpcld_updateNsSegmentAttributes(tape,filereq);
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_FAILEDNSUPD,
+                      (struct Cns_fileid *)castorFileId,
+                      RTCPCLD_NB_PARAMS+6,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "SIDE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->side,
+                      "MODE",
+                      DLF_MSG_PARAM_INT,
+                      tapereq->mode,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "BLOCKID",
+                      DLF_MSG_PARAM_STR,
+                      blkid,
+                      "ERROR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      (void)rtcpcld_updcMigrFailed(
+                                   tape,
+                                   filereq
+                                   );
+      serrno = save_serrno;
+      return(-1);
+    }
+  }
+
+  return(0);
+}
+
+int migratorCallbackMoreWork(
+                             tapereq,
+                             filereq
+                             )
+     rtcpTapeRequest_t *tapereq;
+     rtcpFileRequest_t *filereq;
+{
+  int rc = 0;
+  
+  return(rc);
+}
 
 int migratorCallback(
                      tapereq,
@@ -98,73 +230,150 @@ int migratorCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  char buf[1024];
-  fprintf(stdout,"file name for %s.%d ?\n",
-          tapereq->vid,filereq->tape_fseq);
-  fflush(stdout);
-  scanf("%s",buf);
-  if ( (*buf == '\0') || (strcmp(buf,".") == 0) ) {
-    filereq->proc_status = RTCP_FINISHED;
-  } else {
-    strcpy(filereq->file_path,buf);
-    filereq->proc_status = RTCP_WAITING;
-    strcpy(filereq->recfm,"F");
-    filereq->concat = NOCONCAT;
-    filereq->convert = ASCCONV;
-    filereq->def_alloc = 0;
+  int rc = 0, save_serrno, msgNo, level = DLF_LVL_SYSTEM;
+  struct Cns_fileid *castorFileId = NULL;
+  char *blkid, *func;
+
+  if ( tapereq == NULL || filereq == NULL ) {
+    (void)dlf_write(
+                    childUuid,
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "ERROR_STRING",
+                    DLF_MSG_PARAM_STR,
+                    "Invalid parameter",
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = EINVAL;
+    return(-1);
   }
-  return(0);
-}
 
-/** myDispatch() - FILE request dispatch function to be used by RTCOPY API
- *
- * @param func - function to be dispatched
- * @param arg - pointer to opaque function argument
- *
- * myDispatch() creates a thread for dispatching the processing of FILE request
- * callbacks in the extended RTCOPY API. This allows for handling weakly
- * blocking callbacks like tppos to not be serialized with potentially strongly
- * blocking callbascks like filcp or request for more work.
- * 
- * Note that the Cthread_create_detached() API cannot be passed directly in
- * the RTCOPY API because it is a macro and not a proper function prototype.
- *
- * @return -1 = error otherwise the Cthread id (>=0)
- */
-int myDispatch(
-               func,
-               arg
-               )
-     void *(*func)(void *);
-     void *arg;
-{
-  return(Cpool_assign(
-                      callbackThreadPool,
-                      func,
-                      arg,
-                      -1
-                      ));  
-}
+  (void)rtcpcld_getFileId(filereq,&castorFileId);
+  blkid = rtcp_voidToString(
+                            (void *)filereq->blockid,
+                            sizeof(filereq->blockid)
+                            );
+  if ( blkid == NULL ) blkid = strdup("unknown");
 
-static int initThreadPool() 
-{
-  int poolsize;
-  char *p;
-
-  if ( (p = getenv("MIGRATOR_THREAD_POOL")) != (char *)NULL ) {
-    poolsize = atoi(p);
-  } else if ( ( p = getconfent("MIGRATOR","THREAD_POOL",0)) != (char *)NULL ) {
-    poolsize = atoi(p);
-  } else {
-#if defined(RTCPD_THREAD_POOL)
-    poolsize = RTCPD_THREAD_POOL;
-#else /* RTCPD_THREAD_POOL */
-    poolsize = 3;         /* Set some reasonable default */
-#endif /* RTCPD_TRHEAD_POOL */
+  switch (filereq->proc_status) {
+  case RTCP_POSITIONED:
+      msgNo = RTCPCLD_MSG_CALLBACK_POS;
+      func = "processTapePositionCallback";
+      break;
+  case RTCP_FINISHED:
+    msgNo = RTCPCLD_MSG_CALLBACK_CP;
+    func = "processFileCopyCallback";
+    rc = migratorCallbackFileCopied(
+                                    tapereq,
+                                    filereq
+                                    );
+    break;
+  case RTCP_REQUEST_MORE_WORK:
+    msgNo = RTCPCLD_MSG_CALLBACK_GETW;
+    func = "processGetMoreWorkCallback";
+    if ( filereq->cprc == 0 ) {
+      rc = migratorCallbackMoreWork(
+                                    tapereq,
+                                    filereq
+                                    );
+    }
+    break;
+  default:
+    msgNo = RTCPCLD_MSG_INTERNAL;
+    level = DLF_LVL_ERROR;
+    func = "unprocessedCallback";
+    if ( (tapereq->tprc != 0) ||
+         (filereq->cprc != 0) ) {
+      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      func = "processFileCopyCallback";
+      rc = migratorCallbackFileCopied(
+                                      tapereq,
+                                      filereq
+                                      );
+    }
+    break;
   }
-  callbackThreadPool = Cpool_create(poolsize,&poolsize);
-  if ( (callbackThreadPool == -1) || (poolsize <= 0) ) return(-1);
-  return(0);
+
+  if ( msgNo > 0 ) {
+    if ( (tapereq->tprc == 0) && (filereq->cprc == 0) ) {
+      (void)dlf_write(
+                      childUuid,
+                      level,
+                      msgNo,
+                      castorFileId,
+                      6,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      tapereq->rtcpReqId,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      filereq->stgReqId,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "BLKID",
+                      DLF_MSG_PARAM_STR,
+                      (blkid != NULL ? blkid : "unknown"),
+                      "STATUS",
+                      DLF_MSG_PARAM_INT,
+                      filereq->proc_status
+                      );
+    } else {
+      int tmpRC;
+      rtcpErrMsg_t *err;
+      if ( filereq->cprc != 0 ) {
+        tmpRC = filereq->cprc;
+        err = &(filereq->err);
+      } else {
+        tmpRC = tapereq->tprc;
+        err = &(tapereq->err);
+      }
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_ERROR,
+                      msgNo,
+                      castorFileId,
+                      10,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tapereq->vid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      tapereq->rtcpReqId,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      filereq->stgReqId,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      filereq->tape_fseq,
+                      "BLKID",
+                      DLF_MSG_PARAM_STR,
+                      (blkid != NULL ? blkid : "unknown"),
+                      "STATUS",
+                      DLF_MSG_PARAM_INT,
+                      filereq->proc_status,
+                      (filereq->cprc != 0 ? "CPRC" : "TPRC"),
+                      DLF_MSG_PARAM_INT,
+                      tmpRC,
+                      "ERROR_CODE",
+                      DLF_MSG_PARAM_INT,
+                      err->errorcode,
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      err->errmsgtxt,
+                      "RTCP_SEVERITY",
+                      DLF_MSG_PARAM_INT,
+                      err->severity
+                      );
+    }
+  }
+  if ( blkid != NULL ) free(blkid);
+  return(rc);
 }
 
 int main(
@@ -174,8 +383,7 @@ int main(
      int argc;
      char **argv;
 {
-  tape_list_t *tape = NULL;
-  char *vidChildFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
+  char *migratorFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   SOCKET sock = 0;
   int rc, c, i, save_serrno;
 
@@ -194,10 +402,10 @@ int main(
                );
   
   /*
-   * Initialise DLF
+   * Initialise DLF for our facility
    */
   (void)rtcpcld_initLogging(
-                            vidChildFacility
+                            migratorFacility
                             );
   cmdline[0] = '\0';
   c=0;
@@ -224,7 +432,19 @@ int main(
   rc = rtcp_NewTapeList(&tape,NULL,WRITE_ENABLE);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcp_NewTapeList()");
-    return(-1);
+    return(1);
+  }
+
+  rc = rtcpcld_initLocks(tape);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_initLocks()");
+    return(1);
+  }
+
+  rc = rtcpcld_initNsInterface();
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_initNsInterface()");
+    return(1);
   }
 
   rc = rtcpcld_parseWorkerCmd(
@@ -234,14 +454,14 @@ int main(
                               &sock
                               );
   if ( rc == 0 ) {
-    rc = initThreadPool();
+    rc = rtcpcld_initThreadPool(WRITE_ENABLE);
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("initThreadPool()");
     } else {
       rc = rtcpcld_runWorker(
                              tape,
                              &sock,
-                             myDispatch,
+                             rtcpcld_myDispatch,
                              migratorCallback
                              );
     }
