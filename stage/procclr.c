@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.34 2001/07/12 11:07:30 jdurand Exp $
+ * $Id: procclr.c,v 1.35 2001/09/18 20:36:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.34 $ $Date: 2001/07/12 11:07:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.35 $ $Date: 2001/09/18 20:36:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -73,6 +73,7 @@ extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int stglogflags _PROTO(());
+extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 
@@ -81,6 +82,8 @@ int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, in
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 extern u_signed64 stage_uniqueid;
+
+int nbtpf;
 
 void procclrreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -124,6 +127,9 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	int t_or_d, nstcp_input, nstpp_input;
 	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 	int save_rpfd;
+	char trailing;
+	fseq_elem *fseq_list = NULL;
+	int inbtpf;
 
 	c = 0;
 	save_rpfd = rpfd;
@@ -151,7 +157,6 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	}
 	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
 	group[CA_MAXGRPNAMELEN] = '\0';
-
 	if (req_type > STAGE_00) {
 		u_signed64 flags;
 		struct stgcat_entry stcp_input;
@@ -175,6 +180,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			c = USERR;
 			goto reply;
         }
+		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
+			if (t_or_d != 't') {
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
+				c = USERR;
+				goto reply;
+			}
+		}
 		/* We makes sure there is only one entry input, of any type, so no memory allocation needed */
 		if (nstcp_input > 0) {
 			memset((void *) &stcp_input, (int) 0, sizeof(struct stgcat_entry));
@@ -207,7 +219,17 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				break;
 			case 't':
 				if (stcp_input.u1.t.lbl[0] != '\0') lbl = stcp_input.u1.t.lbl;
-				if (stcp_input.u1.t.fseq[0] != '\0') fseq = stcp_input.u1.t.fseq;
+				if (stcp_input.u1.t.fseq[0] != '\0') {
+					if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
+						if ((nbtpf = unpackfseq (stcp_input.u1.t.fseq, STAGECLR, &trailing, &fseq_list, 0, NULL)) == 0) {
+							sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
+							c = USERR;
+							goto reply;
+						}
+					} else {
+						fseq = stcp_input.u1.t.fseq;
+					}
+				}
 				for (i = 0; i < MAXVSN; i++) {
 					if (stcp_input.u1.t.vid[i][0] != '\0') {
 						strcpy (vid[numvid], stcp_input.u1.t.vid[i]);
@@ -227,7 +249,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				}
 			}
-        } else {
+		} else {
 			int path_status = 0;
 			unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input));
 			if (path_status != 0) {
@@ -259,7 +281,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 
 		Coptind = 1;
 		Copterr = 0;
-		while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != -1) {
+		while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:Q:q:r:V:")) != -1) {
 			switch (c) {
 			case 'c':
 				cflag++;
@@ -286,7 +308,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				mfile = Coptarg;
 				break;
 			case 'm':
-				gc_stop_thresh = strtol (Coptarg, &dp, 10);
+				stage_strtoi(&gc_stop_thresh, Coptarg, &dp, 10);
 				if (*dp != '\0' || gc_stop_thresh > 100) {
 					sendrep (rpfd, MSG_ERR, STG06, "-m");
 					errflg++;
@@ -311,6 +333,11 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			case 'q':	/* file sequence number(s) */
 				fseq = Coptarg;
 				break;
+			case 'Q':	/* file sequence range */
+				/* compute number of tape files */
+				if ((nbtpf = unpackfseq (Coptarg, STAGECLR, &trailing, &fseq_list, 0, NULL)) == 0)
+					errflg++;
+				break;
 			case 'r':
 				/* Coptarg is equal to emove_from_hsm */
 				/* because we only allows this in the stageclr command line */
@@ -331,6 +358,11 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	/* -L linkname and -remove_from_hsm is not allowed */
 	if (linkname && rflag)
 		errflg++;
+
+	if ((fseq != NULL) && (fseq_list != NULL)) {
+		sendrep (rpfd, MSG_ERR, STG35, "-q", "-Q");
+		errflg++;
+    }
 
 	if (errflg) {
 		c = USERR;
@@ -387,8 +419,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			for (stcp = stcs; stcp < stce; stcp++) {
 				int thisnextreqid;
 				if (stcp->reqid == 0) break;
-                /* We keep in mind what would be the next reqid */
-				thisnextreqid = (stcp+1)->reqid;
+				/* We keep in mind what would be the next reqid */
+				thisnextreqid = (stcp < (stce - 1)) ? (stcp+1)->reqid : 0;
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
@@ -406,6 +438,11 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 				}
+				if (thisnextreqid == 0) {
+					/* By definition we just have processed the last of the entries */
+					break;
+				}
+				/* By definition we know that there is something after : we can check the content of *(stcp+1) */
 				if (thisnextreqid == (stcp+1)->reqid) {
 					/* The catalog has not been shifted - we can continue unless end of the catalog */
 					if (thisnextreqid == 0) break;
@@ -447,6 +484,11 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			if (fseq) {
 				if (stcp->t_or_d != 't') continue;
 				if (strcmp (fseq, stcp->u1.t.fseq)) continue;
+			}
+			if (fseq_list) {
+				for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+					if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+				if (inbtpf == nbtpf) continue;
 			}
 			if (xfile) {
 				if (stcp->t_or_d != 'd') continue;
@@ -509,6 +551,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	}
  reply:
 	if (argv != NULL) free (argv);
+	if (fseq_list != NULL) free(fseq_list);
 	rpfd = save_rpfd;
 	sendrep (rpfd, STAGERC, STAGECLR, c);
 }
@@ -533,7 +576,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	 *		>0	in case of error
 	 */
 
-	if (strcmp (group, STGGRP) && strcmp (group, stcp->group) && uid != 0) {
+	if (strcmp (group, STGGRP) && strcmp (group, stcp->group) && (uid != 0)) {
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
 		return (USERR);
 	}
@@ -551,7 +594,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 							 rfio_serror());
 			return (USERR);
 		}
-	} else if ((stcp->status & 0xF) == STAGEOUT || (stcp->status & 0xF) == STAGEALLOC) {
+	} else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
