@@ -1,4 +1,4 @@
-COMM       $Id: Imakefile,v 1.4 2004/07/09 14:49:53 jdurand Exp $
+COMM       $Id: Imakefile,v 1.5 2005/01/23 10:21:41 jdurand Exp $
 COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
@@ -13,7 +13,7 @@ ICONFIG_OBJS = FileName($(CONFIGDIR),castor) FileName($(CONFIGDIR),castor_compil
 
 all:
 
-install: $(CONFIGDIR) $(ICONFIG_OBJS)
+install: $(DESTDIR)$(CONFIGDIR) $(ICONFIG_OBJS)
 
 export:
 
@@ -29,7 +29,7 @@ Makefiles:
 
 clean:
 
-MakeDir($(CONFIGDIR),root,bin,0755)
+MakeDir($(DESTDIR)$(CONFIGDIR),root,bin,0755)
 
 InstallNonExecFile(castor,$(CONFIGDIR),root,bin,0644)
 InstallNonExecFile(castor_compiler,$(CONFIGDIR),root,bin,0644)

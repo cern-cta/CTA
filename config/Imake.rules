@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.9 $ $Date: 2005/01/19 18:04:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.10 $ $Date: 2005/01/23 10:21:41 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -13,7 +13,7 @@
 #if defined(__STDC__)
 #define ManPageTargetName(name,dir,suffix)dir/name.suffix##castor
 #else
-#define ManPageTargetName(name,dir,suffix)dir/name.suffix/**/castor
+#define ManPageTargetName(name,dir,suffix)$(DESTDIR)dir/name.suffix/**/castor
 #endif
 #endif
 
@@ -51,10 +51,10 @@ dir/name.suffix:	name.man	@@\
 
 #define IEXPORT(name,dir,mode) \
 dir/name: name  @@\
-	@(if [ ! -d dir ]; then mkdir -p dir ; fi ; ) @@\
-	@cp name dir/name @@\
-	@chmod mode dir/name @@\
-	@echo dir/name installed
+	@(if [ ! -d $(DESTDIR)dir ]; then mkdir -p $(DESTDIR)dir ; fi ; ) @@\
+	@cp name $(DESTDIR)dir/name @@\
+	@chmod mode $(DESTDIR)dir/name @@\
+	@echo $(DESTDIR)dir/name installed
 
 #define LinkFile(tofile,fromfile) \
 tofile: fromfile				@@\
@@ -168,18 +168,18 @@ name:: cond						@@\
 #if linux
 #ifndef InstallTarget
 #define InstallTarget(file,owner,group,mode,dest)	@@\
-dest/file: file						@@\
-	install -o owner -g group -m mode $? dest
+dest/file: file				@@\
+	install -o owner -g group -m mode $? $(DESTDIR)dest
 #endif
 #else
 #ifndef InstallTarget
 #define InstallTarget(file,owner,group,mode,dest)	@@\
-dest/file: file						@@\
-	-mv $@ dest/OLD$?				@@\
-	cp $? $@					@@\
-	chown owner $@					@@\
-	chgrp group $@					@@\
-	chmod mode $@
+dest/file: file				@@\
+	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
+	cp $? $(DESTDIR)$@				@@\
+	chown owner $(DESTDIR)$@			@@\
+	chgrp group $(DESTDIR)$@			@@\
+	chmod mode $(DESTDIR)$@
 #endif
 #endif
 
@@ -187,18 +187,18 @@ dest/file: file						@@\
 #ifndef InstallLibrary
 #define InstallLibrary(libname,dest,owner,group,mode)	@@\
 dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
-	install -o owner -g group -m mode $? dest
+	install -o owner -g group -m mode $? $(DESTDIR)dest
 #endif
 #else
 #ifndef InstallLibrary
 #define InstallLibrary(libname,dest,owner,group,mode)	@@\
 dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
-	-mv $@ dest/OLD$?				@@\
-	cp $? $@					@@\
-	@$(RANLIB) $(LIB)/$?				@@\
-	chown owner $@					@@\
-	chgrp group $@					@@\
-	chmod mode $@
+	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
+	cp $? $(DESTDIR)$@				@@\
+	@$(RANLIB) $(DESTDIR)$(LIB)/$?			@@\
+	chown owner $(DESTDIR)$@			@@\
+	chgrp group $(DESTDIR)$@			@@\
+	chmod mode $(DESTDIR)$@
 #endif
 #endif
 
@@ -212,21 +212,21 @@ InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,maj,min,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	install $? $@.maj.min				@@\
-	RemoveFile($@.maj)					@@\
-	ln -s $?.maj.min $@.maj					@@\
-	RemoveFile($@)					@@\
-	ln -s $?.maj $@
+	install $? $(DESTDIR)$@.maj.min		@@\
+	RemoveFile($(DESTDIR)$@.maj)			@@\
+	ln -s $?.maj.min $(DESTDIR)$@.maj		@@\
+	RemoveFile($(DESTDIR)$@)			@@\
+	ln -s $?.maj $(DESTDIR)$@
 #endif
 #else
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,maj,min,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	cp $? $@.maj.min				@@\
-	RemoveFile($@.maj)				@@\
-	ln -s $?.maj.min $@.maj				@@\
-	RemoveFile($@)					@@\
-	ln -s $?.maj $@
+	cp $? $(DESTDIR)$@.maj.min			@@\
+	RemoveFile($(DESTDIR)$@.maj)			@@\
+	ln -s $?.maj.min $(DESTDIR)$@.maj		@@\
+	RemoveFile($(DESTDIR)$@)			@@\
+	ln -s $?.maj $(DESTDIR)$@
 #endif
 #endif
 
@@ -234,15 +234,15 @@ dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
 #ifndef MakeDir
 #define MakeDir(dirname,owner,group,mode)		@@\
 dirname:						@@\
-	-install -d dirname -o owner -g group -m mode
+	-install -d $(DESTDIR)dirname -o owner -g group -m mode
 #endif
 #else
 #ifndef MakeDir
 #define MakeDir(dirname,owner,group,mode)		@@\
 dirname:						@@\
-	-mkdir -p $@					@@\
-	chown owner $@					@@\
-	chgrp group $@					@@\
-	chmod mode $@
+	-mkdir -p $(DESTDIR)$@				@@\
+	chown owner $(DESTDIR)$@			@@\
+	chgrp group $(DESTDIR)$@			@@\
+	chmod mode $(DESTDIR)/$@
 #endif
 #endif

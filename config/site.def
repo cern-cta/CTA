@@ -33,7 +33,7 @@
 #define CupvConfigFile	/etc/castor/CUPVCONFIG
 #endif
 #define CupvHost	"castorcupv"
-#define PolicySpool	$(DESTDIR)/etc/castor/expert
+#define PolicySpool	/etc/castor/expert
 #define CupvSpool	/var/spool/upv
 #define RmMasterSpool	/var/spool/rmmaster
 #if defined(_WIN32)
@@ -55,37 +55,37 @@
 #endif
 #define DbSpool	/var/spool/db
 #define DomainName	cern.ch
-#define FilManDir       $(DESTDIR)/usr/share/man/man4
+#define FilManDir       /usr/share/man/man4
 #define FilManSuffix    4
 #define HsmToolsSpool	/var/spool/hsmtools
 #if defined(_WIN32)
 #define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
 #else
-#define InstallConfigDir	$(DESTDIR)/etc/sysconfig
+#define InstallConfigDir	/etc/sysconfig
 #endif
 #if defined(_WIN32)
 #define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
 #else
-#define InstallBinDir	$(DESTDIR)/usr/bin
+#define InstallBinDir	/usr/bin
 #endif
 #if defined(_WIN32)
 #define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
 #else
-#define InstallIncludeDir       $(DESTDIR)/usr/include
+#define InstallIncludeDir       /usr/include
 #endif
 #if defined(_WIN32)
 #define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
 #else
-#define InstallLibDir	$(DESTDIR)/usr/lib
+#define InstallLibDir	/usr/lib
 #endif
-#define LibManDir       $(DESTDIR)/usr/share/man/man3
+#define LibManDir       /usr/share/man/man3
 #define LibManSuffix    3
 #if defined(_WIN32)
 #define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
 #else
 #define LocalHostsList  /etc/castor/shift.localhosts
 #endif
-#define ManDir  $(DESTDIR)/usr/share/man/man1
+#define ManDir  /usr/share/man/man1
 #define ManSuffix       1
 #if defined(_WIN32)
 #define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
