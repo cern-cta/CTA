@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.19 2002/01/25 11:46:40 jdurand Exp $
+ * $Id: procfilchg.c,v 1.20 2002/01/25 13:33:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.19 $ $Date: 2002/01/25 11:46:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.20 $ $Date: 2002/01/25 13:33:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -384,11 +384,11 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (poolflag < 0) { /* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) {
 				c = USERR;
 				goto reply;
 			}
-			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			/* We check if the name of this file in the name server is really the one we have in input */
 			if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
 				if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
