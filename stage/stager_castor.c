@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.34 2002/12/16 15:04:42 jdurand Exp $
+ * $Id: stager_castor.c,v 1.35 2002/12/18 17:43:18 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.34 $ $Date: 2002/12/16 15:04:42 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.35 $ $Date: 2002/12/18 17:43:18 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1971,7 +1971,7 @@ int stagein_castor_hsm_file() {
 int stagewrt_castor_hsm_file() {
 	int fseq;
 	int i;
-	struct stat statbuf;
+	struct stat64 statbuf;
 	int rtcp_rc;
 	struct stgcat_entry *stcp = stcs;
 	char *castor_hsm = NULL;
