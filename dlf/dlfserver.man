@@ -1,9 +1,9 @@
 .lf 1 dlfserver.man
-.\" @(#)$RCSfile: dlfserver.man,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:08:06 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: dlfserver.man,v $ $Revision: 1.2 $ $Date: 2004/07/06 12:46:45 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2003 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH DLFSERVER 1 "$Date: 2003/08/20 13:08:06 $" CASTOR "DLF Administrator Commands"
+.TH DLFSERVER 1 "$Date: 2004/07/06 12:46:45 $" CASTOR "DLF Administrator Commands"
 .SH NAME
 dlfserver \- start the CASTOR Distributed Logging Facility server
 .SH SYNOPSIS
@@ -88,10 +88,11 @@ database and must be readable/writable only by root.
 It contains a single line in the format:
 .RS
 .HP
-username/password@server
+username/password@serv
 .RE
 where 'username' and 'password' are the credentials to login to the database
-instance identified by 'server'.
+instance identified by 'serv' which is the name of the server in case of MySQL,
+or the name of the service in case of ORACLE.
 .SH FILES
 .TP 1.5i
 .B /etc/DLFCONFIG
