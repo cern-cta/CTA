@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 15:53:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/18 22:33:42 $ $Author: jdurand $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.9 $ $Date: 2004/06/18 15:53:09 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.10 $ $Date: 2004/06/18 22:33:42 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -210,7 +210,7 @@ static int updateOldStgCat(tape,file)
     if ( status == ERTLIMBYSZ || status == ERTBLKSKPD ||
          status == ERTMNYPARY ) status = 0;
     if ( (filereq->proc_status == RTCP_POSITIONED) && (status == 0) ) {
-      rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+      rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s,NULL,-1)\n",
                filereq->stageID,
                filereq->stageSubreqID,
                status,
@@ -230,7 +230,9 @@ static int updateOldStgCat(tape,file)
                             filereq->tape_fseq,
                             filereq->recordlength,
                             recfm,
-                            newpath);
+                            newpath,
+							NULL,
+							-1);
       save_serrno = serrno;
       if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
