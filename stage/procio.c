@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.77 2001/02/01 18:09:27 jdurand Exp $
+ * $Id: procio.c,v 1.78 2001/02/02 12:16:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.77 $ $Date: 2001/02/01 18:09:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.78 $ $Date: 2001/02/02 12:16:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -89,7 +89,11 @@ extern u_signed64 stage_uniqueid;
 extern void getdefsize _PROTO((char *, int *));
 int check_hsm_type _PROTO((char *, int *, int *, int *, int *, char *));
 int check_hsm_type_light _PROTO((char *, char *));
+#ifdef hpux
+int create_hsm_entry _PROTO(());
+#else
 int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
+#endif
 extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
 extern int req2argv _PROTO((char *, char ***));
