@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.76 $ $Date: 2001/01/28 10:42:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.77 $ $Date: 2001/05/18 07:34:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ static int WaitDiskIO() {
              proc_cntl.diskIOfinished,proc_cntl.nb_diskIOactive);
     while ( proc_cntl.diskIOfinished == 0 || proc_cntl.nb_diskIOactive > 0 ) {
         if ( (rtcpd_CheckProcError() &
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+              (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
             (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             return(0);
         }
@@ -1116,8 +1116,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          if ( (severity & RTCP_LOCAL_RETRY) != 0 ) { \
              if ( mode == WRITE_ENABLE ) \
                  rtcpd_SetProcError(RTCP_RETRY_OK|severity); \
-             else \
+             else { \
                  rtcpd_WaitProcStatus(RTCP_LOCAL_RETRY); \
+                 if ( nextfile->filereq.stageSubreqID != -1 ) WaitDiskIO(); \
+             } \
          } \
          if ( AbortFlag != 0 ) { \
              if ( mode == WRITE_DISABLE ) { \
@@ -1637,7 +1639,7 @@ void *tapeIOthread(void *arg) {
     /*
      * Wait for disk IO to finish before releasing the drive. This is to
      * prevent slow disk IO from piling up with too many large rtcopy 
-     * on a single server.
+     * on a single server. Also, one of the disk I/O may have hit an ENOSPC.
      */
     rc = WaitDiskIO();
     CHECK_PROC_ERR(nexttape->prev,NULL,"WaitDiskIO() error");
