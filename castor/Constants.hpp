@@ -147,7 +147,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[72];
+  extern const char* ObjectsIdStrings[73];
 
   /**
    * Names of the differents Services, used to display
