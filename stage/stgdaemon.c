@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.9 1999/12/10 18:32:52 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.10 1999/12/13 07:55:52 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.10 $ $Date: 1999/12/13 07:55:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -236,8 +236,12 @@ main()
     strcpy (db_pwd, p_p);
   }
 
+  /* Remember it for the future */
+  dbfd.username = db_user;
+  dbfd.password = db_pwd;
+
   /* Log to the database server */
-  if (stgdb_login(db_user,db_pwd,&dbfd) != 0) {
+  if (stgdb_login(&dbfd) != 0) {
     stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
     exit(SYERR);
   }
