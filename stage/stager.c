@@ -912,6 +912,7 @@ int stagewrt_castor_hsm_file() {
         /* This cannot be */
         serrno = SEINTERNAL;
         sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Cannot find where to begin",sstrerror(serrno));
+        Flags = 0;
         RETURN (USERR);
       }
 
@@ -928,6 +929,7 @@ int stagewrt_castor_hsm_file() {
       
       /* We "interrogate" for the number of structures */
       if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+        Flags = 0;
         RETURN (USERR);
       }
       
@@ -935,6 +937,7 @@ int stagewrt_castor_hsm_file() {
       if (nrtcpcreqs != 1) {
         serrno = SEINTERNAL;
         sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Number of rtcpc structures different vs. deterministic value of 1",sstrerror(serrno));
+        Flags = 0;
         RETURN (USERR);
       }
 
@@ -988,6 +991,7 @@ int stagewrt_castor_hsm_file() {
             /* Tape info very probably inconsistency with, for ex., TMS */
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
+            Flags = 0;
             RETURN(USERR);
           }
 		}
@@ -1017,6 +1021,7 @@ int stagewrt_castor_hsm_file() {
         }
       }
 	}
+    Flags = 0;
 	RETURN (0);
 }
 
