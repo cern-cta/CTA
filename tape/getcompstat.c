@@ -4,10 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.9 $ $Date: 2000/03/11 14:24:20 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.10 $ $Date: 2000/05/03 06:40:39 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
