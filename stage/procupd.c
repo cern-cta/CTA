@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.40 2000/11/22 11:15:20 jdurand Exp $
+ * $Id: procupd.c,v 1.41 2000/11/25 11:17:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.40 $ $Date: 2000/11/22 11:15:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.41 $ $Date: 2000/11/25 11:17:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,7 +43,6 @@ void update_hsm_a_time _PROTO((struct stgcat_entry *));
 
 extern char *optarg;
 extern int optind;
-extern char *rfio_serror();
 extern char func[16];
 extern int reqid;
 extern int rpfd;
@@ -494,7 +493,9 @@ procupdreq(req_data, clienthost)
 		wqp->status = rc;
 		if (rc != ENOSPC) goto reply;
 		if (*stcp->poolname == '\0' ||
-				stcp->status == STAGEWRT || ((stcp->status & 0xF) == STAGEPUT) ||
+				stcp->status == STAGEWRT ||
+				(stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR) ||
+				((stcp->status & 0xF) == STAGEPUT) ||
 				wqp->nb_clnreq++ > MAXRETRY) {
 			c = ENOSPC;
 			goto reply;
@@ -557,7 +558,9 @@ procupdreq(req_data, clienthost)
 	wqp->nb_subreqs--;
 	wqp->nbdskf--;
 	rpfd = wqp->rpfd;
-	if (stcp->status == STAGEWRT || ((stcp->status & 0xF) == STAGEPUT)) {
+	if ((stcp->status == STAGEWRT) ||
+		((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ||
+		((stcp->status & 0xF) == STAGEPUT)) {
 		n = 1;
 		if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
 			n += wqp->nbdskf;
@@ -569,11 +572,18 @@ procupdreq(req_data, clienthost)
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (! stcp->keep && stcp->nbaccesses <= 1) {
-				if (stcp->status == STAGEWRT && stcp->poolname[0] == '\0')
+				if ((stcp->status == STAGEWRT ||
+					((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
+					stcp->poolname[0] == '\0')
 					delreq (stcp,0);
-				else if (delfile (stcp, 0, 1, 1, stcp->status == STAGEWRT ? "stagewrt ok" : (((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok"), uid, gid, 0) < 0) {
+				else if (delfile (stcp, 0, 1, 1,
+						stcp->status == STAGEWRT ? "stagewrt ok" :
+							(((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ? "migration stagewrt ok" :
+								(((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok")), uid, gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
+					/* For migration files, delfile will call update_migpool(stcp,-1) that will */
+					/* remove the BEING_MIGR flag */
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 					stcp->status |= STAGED;
 					update_hsm_a_time(stcp);
@@ -585,6 +595,7 @@ procupdreq(req_data, clienthost)
 				}
 			} else {
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					/* update_migpool(stcp,-1) will remove the BEING_MIGR flag */
 					update_migpool(stcp,-1);
 					stcp->status &= ~CAN_BE_MIGR;
 				}
@@ -630,16 +641,33 @@ procupdreq(req_data, clienthost)
 	if (rc == MNYPARI) wqp->status = rc;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
-      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
-        for (stcp = stcs; stcp < stce; stcp++) {
-          if (wfp->subreqid == stcp->reqid) {
-            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
-            break;
-          }
-        }
-      }
-    }
+		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
+		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wfp->subreqid == stcp->reqid) {
+					switch (stcp->t_or_d) {
+					case 't':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'd':
+					case 'a':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'm':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'h':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					default:
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						break;
+					}
+					break;
+				}
+			}
+		}
+	}
 #endif
  reply:
 	free (argv);
@@ -670,9 +698,14 @@ void update_hsm_a_time(stcp)
 		Cnsfileid.fileid = stcp->u1.h.fileid;
 		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf) == 0) {
 			stcp->a_time = Cstatbuf.mtime;
+		} else {
+			stglogit (func, STG02, stcp->u1.h.xfile, "Cns_stats", sstrerror(serrno));
 		}
 		break;
 	default:
 		break;
 	}
 }
+
+
+
