@@ -1,14 +1,10 @@
 /*
- * $Id: rtcp_CheckReq.c,v 1.51 2002/11/19 16:09:48 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.51 $ $Date: 2002/11/19 16:09:48 $ CERN IT-DS/HSM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.52 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -47,6 +43,7 @@ extern char *geterr();
 #include <rfio_errno.h>
 #include <Cthread_api.h>
 #include <vdqm_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #if defined(RTCP_SERVER)
@@ -56,6 +53,9 @@ extern char *geterr();
 #endif /* RTCP_SERVER */
 #include <Ctape_api.h>
 #include <serrno.h>
+int rtcp_CheckReqStructures _PROTO((SOCKET *,
+                                          rtcpClientInfo_t *,
+                                          tape_list_t *));
 
 #if defined(RTCP_SERVER)
 #define SET_REQUEST_ERR(X,Z) {\
@@ -169,6 +169,11 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
     return(rc);
 }
 
+#define DEBUG_CHKFILE(X) { \
+    rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) check %s %d\n", \
+        filereq->tape_fseq,filereq->file_path,#X,filereq->X); \
+    }
+
 static int rtcp_CheckFileReq(file_list_t *file) {
     tape_list_t *tape = NULL;
     file_list_t *tmpfile;
@@ -191,8 +196,17 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     mode = tape->tapereq.mode;
 
     /*
+     * Ignore placeholder requests used by client to flag
+     * the possible intention to later add more requests for
+     * this volume
+     */
+    DEBUG_CHKFILE(proc_status);
+    if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) return(0);
+
+    /*
      * Retry limits
      */
+    DEBUG_CHKFILE(err.max_tpretry);
     if ( filereq->err.max_tpretry <= 0 ) {
         if ( filereq->err.errorcode > 0 ) serrno = filereq->err.errorcode;
         else serrno = SERTYEXHAUST;
@@ -200,6 +214,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
+    DEBUG_CHKFILE(err.max_cpretry);
     if ( filereq->err.max_cpretry <= 0 ) {
         if ( filereq->err.errorcode > 0 ) serrno = filereq->err.errorcode;
         else serrno = SERTYEXHAUST;
@@ -210,6 +225,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Deferred allocation only valid with stager
      */
+    DEBUG_CHKFILE(def_alloc);
     if ( filereq->def_alloc == -1 ) filereq->def_alloc = 0;
     if ( filereq->def_alloc != 0 && *filereq->stageID == '\0' ) {
         serrno = EINVAL;
@@ -221,9 +237,11 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Error action
      */
+    DEBUG_CHKFILE(rtcp_err_action);
     if ( filereq->rtcp_err_action == -1 ) 
         filereq->rtcp_err_action = KEEPFILE;
 
+    DEBUG_CHKFILE(tp_err_action);
     if ( filereq->tp_err_action == -1 )
         filereq->tp_err_action = 0;
 
@@ -237,6 +255,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Record conversion
      */
+    DEBUG_CHKFILE(convert);
     if ( filereq->convert == -1 ) filereq->convert = ASCCONV;
     if ( (filereq->convert & EBCCONV) == 0 ) filereq->convert |= ASCCONV;
     if ( !VALID_CONVERT(filereq) ) {
@@ -249,6 +268,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Position method. If not set try to default to TPPOSIT_FSEQ.
      */
+    DEBUG_CHKFILE(position_method);
     if ( filereq->position_method != TPPOSIT_FSEQ &&
          filereq->position_method != TPPOSIT_FID &&
          filereq->position_method != TPPOSIT_EOI &&
@@ -266,6 +286,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * Concatenation of files on disk or tape. If not set,
      * try to set it...
      */
+    DEBUG_CHKFILE(concat);
     if ( filereq->concat == -1 ) {
         rtcp_log(LOG_DEBUG,"Concatenation switch not set. Trying to set it\n");
         if ( mode == WRITE_DISABLE && file->prev != file ) {
@@ -294,6 +315,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Tape files must be in sequence on write
      */
+    DEBUG_CHKFILE(tape_fseq);
     if ( mode == WRITE_ENABLE && file != tape->file && 
          (filereq->concat & NOCONCAT) != 0 &&
          (filereq->position_method == TPPOSIT_FSEQ) &&
@@ -392,6 +414,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Record format.
      */
+    DEBUG_CHKFILE(recfm);
     if ( *filereq->recfm != '\0' &&
          strcmp(filereq->recfm,"F") != 0 &&
          strcmp(filereq->recfm,"FB") != 0 &&
@@ -419,6 +442,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * Blocksize and record length
      * Client is not allowed to specify 0.
      */
+    DEBUG_CHKFILE(blocksize);
     if ( filereq->blocksize == 0 ) {
         serrno = EINVAL;
         sprintf(errmsgtxt,RT104,CMD(mode));
@@ -450,11 +474,13 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Retention date. If not set we put it to zero.
      */
+    DEBUG_CHKFILE(retention);
     if ( filereq->retention < 0 ) filereq->retention = 0;
 
     /*
      * Disk file name must have been specified
      */
+    DEBUG_CHKFILE(file_path);
     if ( *filereq->file_path == '\0' ) {
         serrno = EINVAL;
         if ( *file->prev->filereq.file_path == '\0' )
@@ -479,6 +505,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Tape file checks flag. Just set a default if not set.
      */
+    DEBUG_CHKFILE(check_fid);
     if ( filereq->check_fid < 0 ) {
         if ( mode == WRITE_ENABLE ) filereq->check_fid = NEW_FILE;
         else filereq->check_fid = CHECK_FILE;
@@ -493,6 +520,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Check that disk file exists and fill in its size. 
          * Check and signal eventual truncation.
          */
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) stat64() remote file\n",
+            filereq->tape_fseq,filereq->file_path);
         rfio_errno = serrno = 0;
         rc = rfio_mstat64(filereq->file_path,&st);
         if ( rc == -1 ) {
@@ -505,6 +534,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Is it a director?
          */
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
+            filereq->tape_fseq,filereq->file_path,st.st_mode);
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
             serrno = EISDIR;
             sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
@@ -514,6 +545,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_size=%d\n",
+            filereq->tape_fseq,filereq->file_path,(int)st.st_size);
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;
@@ -522,6 +555,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         }
 
         filereq->bytes_in = (u_signed64)st.st_size;
+
+        DEBUG_CHKFILE(offset);
         if ( filereq->offset > 0 ) {
              if ( filereq->bytes_in <= filereq->offset ) {
                  sprintf(errmsgtxt,RT121,CMD(mode));
@@ -530,6 +565,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                  if ( rc == -1 ) return(rc);
              } else filereq->bytes_in -= filereq->offset;
         }
+        DEBUG_CHKFILE(maxsize);
         if ( filereq->maxsize > 0 ) {
             /*
              * Calculate start size if we are concatenating
@@ -562,6 +598,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * done before so skip that for the time being. However,
          * if it exists we must check that it is not a directory!.
          */
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpread) stat64() remote file\n",
+            filereq->tape_fseq,filereq->file_path);
         if ( strcmp(filereq->file_path,".") == 0 ) {
             if ( *filereq->stageID == '\0' ||
                  filereq->def_alloc == 0 ) {
@@ -580,6 +618,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             }
             rfio_errno = serrno = 0;
             rc = rfio_mstat64(filereq->file_path,&st);
+            if ( rc != -1 ) rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
+                filereq->tape_fseq,filereq->file_path,st.st_mode);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 serrno = EISDIR;
                 sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
@@ -620,8 +660,33 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             }
         }
     }
+    rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) all checks finished, return %d\n",
+        filereq->tape_fseq,filereq->file_path,rc);
     return(rc);
 }
+
+#if defined(RTCP_SERVER)
+/*
+ * Externalised file request check for the server. Needed
+ * when receiving request updates upon RTCP_REQUEST_MORE_WORK
+ * processing status
+ */
+int rtcpd_CheckFileReq(file_list_t *file) {
+    rtcpFileRequest_t *filereq;
+    int rc = 0;
+
+    if ( file == NULL ) return(-1);
+    filereq = &file->filereq;
+    if ( filereq->proc_status != RTCP_FINISHED ) {
+        if ( filereq->err.max_tpretry == -1 )
+            filereq->err.max_tpretry = max_tpretry;
+        if ( filereq->err.max_cpretry == -1 )
+            filereq->err.max_cpretry = max_cpretry;
+        rc = rtcp_CheckFileReq(file);
+    }
+    return(rc);
+}
+#endif /* RTCP_SERVER */
 
 
 int rtcp_CheckReq(SOCKET *client_socket, 

@@ -1,14 +1,10 @@
 /*
- * $Id: rtcpd_Disk.c,v 1.106 2003/10/01 11:07:08 obarring Exp $
- */
-
-/*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.106 $ $Date: 2003/10/01 11:07:08 $ CERN IT-DS/HSM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.107 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -52,6 +48,7 @@ extern char *geterr();
 #include <Cpool_api.h>
 #include <vdqm_api.h>
 #include <Ctape_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
@@ -544,7 +541,6 @@ static int DiskFileClose(int disk_fd,
 
     save_rfio_errno = rfio_errno;
     save_serrno = serrno;
-
     serrno = rfio_errno = 0;
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
@@ -1718,7 +1714,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
     int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile, spill;
-    int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex;
+    int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex, mode;
     register int Uformat;
     register int convert;
     register int debug = Debug;
@@ -1782,6 +1778,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     proc_cntl.nb_diskIOactive = 0;
     proc_cntl.nb_reserved_bufs = 0;
     nexttape = tape;
+    mode = tape->tapereq.mode;
     /*
      * We don't loop over volumes since volume spanning is only allowed
      * for last tape file in the request and the file must start in the 
@@ -1790,6 +1787,78 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     tapereq = &nexttape->tapereq;
     CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
         end_of_tpfile = FALSE;
+        thIndex = -1;
+
+        /*
+         * Leading I/O thread must always check if clients wishes
+         * to append more work. Trailing I/O thread must always
+         * wait for leading I/O thread to do this check in case
+         * they have reached the same file request.
+         */
+        if ( mode == WRITE_ENABLE ) {
+            /*
+             * Grab a free socket
+             */
+            thIndex = Cpool_next_index(poolID);
+            if ( thIndex == -1 ) {
+                save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL, nextfile, "Error assigning thread: %s\n",
+                    sstrerror(save_serrno));
+                rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                   RTCP_SYERR | RTCP_RESELECT_SERV);
+
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                proc_cntl.diskIOfinished = 1;
+                (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
+                         sstrerror(save_serrno));
+                serrno = save_serrno;
+                return(-1);
+            }
+            rtcp_log(LOG_INFO,"rtcpd_StartDiskIO() check with client for more work. Use socket %d\n",
+                thargs[thIndex].client_socket);
+            rc = rtcpd_checkMoreWork(&(thargs[thIndex].client_socket),
+                nexttape,nextfile);
+            if ( rc == -1 ) {
+                save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL, nextfile, "Error requesting client for more work: %s\n",
+                    sstrerror(save_serrno));
+                rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                   RTCP_USERR | RTCP_FAILED);
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                proc_cntl.diskIOfinished = 1;
+                (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_checkMoreWork(): %s\n",
+                         sstrerror(save_serrno));
+                serrno = save_serrno;
+                return(-1);
+            }
+            if ( rc == 1 ) break;
+        } else {
+            rtcp_log(LOG_INFO,"rtcpd_StartDiskIO() end of filereqs. Wait for tapeIO to check for more work\n");
+            rc = rtcpd_waitMoreWork(nextfile);
+            if ( rc == -1 ) {
+                save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL, nextfile, "Error waiting for client to request more work: %s\n",
+                    sstrerror(save_serrno));
+                rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                   RTCP_USERR | RTCP_FAILED);
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                proc_cntl.diskIOfinished = 1;
+                (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_waitMoreWork(): %s\n",
+                         sstrerror(save_serrno));
+                serrno = save_serrno;
+                return(-1);
+            }
+            /*
+             * Break out if there is nothing more to do
+             */
+            if ( rc == 1 ) break;
+        }
 
         filereq = &nextfile->filereq;
         Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
@@ -1813,7 +1882,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 serrno = save_serrno;
                 return(-1);
             }
-            if ( tapereq->mode == WRITE_ENABLE ) 
+            if ( mode == WRITE_ENABLE ) 
                 filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
 
             /*
@@ -1831,7 +1900,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             /*
              * Did the tape end with previous file ?
              */
-            if ( tapereq->mode == WRITE_DISABLE && prevfile != NULL &&
+            if ( mode == WRITE_DISABLE && prevfile != NULL &&
                  (prevfile->filereq.concat & (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) !=0 ) {
                 rtcpd_CheckReqStatus(prevfile->tape,prevfile,NULL,&severity);
                 if ( (severity & RTCP_EOD) != 0 ) {
@@ -1855,17 +1924,17 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              * the remainin data in memory to disk.
              */
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): nb_reserver_bufs=%d, nb_bufs=%d, mode=%d, diskIOstarted=%d, tapeIOfinished=%d, blocksize=%d\n",
-                    proc_cntl.nb_reserved_bufs,nb_bufs,tapereq->mode,
+                    proc_cntl.nb_reserved_bufs,nb_bufs,mode,
                     proc_cntl.diskIOstarted,proc_cntl.tapeIOfinished,
                     filereq->blocksize);
             while ( (proc_cntl.diskIOstarted == 0) ||
                     (proc_cntl.nb_reserved_bufs >= nb_bufs &&
-                     (tapereq->mode == WRITE_ENABLE || 
-                      (tapereq->mode == WRITE_DISABLE &&
+                     (mode == WRITE_ENABLE || 
+                      (mode == WRITE_DISABLE &&
                        proc_cntl.tapeIOfinished == 0 &&
                        prevfile != NULL &&
                        prevfile->end_index < 0))) ||
-                    ((tapereq->mode == WRITE_ENABLE) &&
+                    ((mode == WRITE_ENABLE) &&
                      (filereq->blocksize <= 0) &&
                      ((filereq->concat & NOCONCAT) != 0)) ) {
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d, diskIOstarted=%d\n",
@@ -1898,7 +1967,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 /*
                  * Did the tape end with previous file ?
                  */
-                if ( tapereq->mode == WRITE_DISABLE && prevfile != NULL &&
+                if ( mode == WRITE_DISABLE && prevfile != NULL &&
                      (prevfile->filereq.concat & (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) !=0 ) {          
                     rtcpd_CheckReqStatus(prevfile->tape,prevfile,NULL,&severity);
                     if ( (severity & RTCP_EOD) != 0 ) {
@@ -1921,7 +1990,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              * doing. Any mistake here may in the best case result in deadlocks
              * and in the worst case .... data corruption!
              */
-            if ( tapereq->mode == WRITE_ENABLE ) {
+            if ( mode == WRITE_ENABLE ) {
                 /*
                  * On tape write we know the next file size
                  */
@@ -1981,13 +2050,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 indxp = offset = next_offset = 0;
             } else {
                 prev_bufsz = rtcpd_CalcBufSz(nexttape,prevfile);
-                if ( tapereq->mode == WRITE_ENABLE ) 
+                if ( mode == WRITE_ENABLE ) 
                     prev_filesz = prevfile->filereq.bytes_in;
                 else 
                     prev_filesz = prevfile->filereq.bytes_out;
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev. file size %d, buffer sz %d, indxp %d\n",
                         (int)prev_filesz,prev_bufsz,indxp);
-                if ( tapereq->mode == WRITE_ENABLE ) 
+                if ( mode == WRITE_ENABLE ) 
                     indxp = (indxp + (int)(((u_signed64)offset + prev_filesz) /
                             ((u_signed64)prev_bufsz)));
                 else
@@ -1996,7 +2065,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                         indxp);
 
                 indxp = indxp % nb_bufs;
-                if ( tapereq->mode == WRITE_ENABLE ) {
+                if ( mode == WRITE_ENABLE ) {
                     if ( (filereq->concat & NOCONCAT) != 0 ||
                        ((Uformat == TRUE) && ((convert & NOF77CW) == 0)) ) {
                         /*
@@ -2040,7 +2109,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             /*
              * Get next thread index and fill in thread args
              */
-            thIndex = Cpool_next_index(poolID);
+            if ( thIndex < 0 ) thIndex = Cpool_next_index(poolID);
             if ( thIndex == -1 ) {
                 save_serrno = serrno;
                 rtcpd_AppendClientMsg(NULL, nextfile, "Error assigning thread: %s\n",
@@ -2085,7 +2154,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              * Have we reached End Of Data on tape in a CONCAT_TO_EOD or
              * NOCONCAT_TO_EOD request ?
              */
-            if ( tapereq->mode == WRITE_DISABLE &&
+            if ( mode == WRITE_DISABLE &&
                 (filereq->err.severity & RTCP_EOD) != 0 ) break;
 
         } else { /* if ( ... ) */

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.16 $ $Date: 2003/09/15 06:55:28 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.17 $ $Date: 2004/02/12 15:59:08 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -35,23 +35,29 @@ extern char *geterr();
 #include <Castor_limits.h>
 #include <log.h>
 #include <net.h>
+#include <Cuuid.h>
 #include <osdep.h>
 #include <Cglobals.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #if defined(RTCP_SERVER)
 #include <rtcp_server.h>
+char *rtcpd_logfile = RTCOPY_LOGFILE;
 #endif /* RTCP_SERVER */
 
 #define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
 #define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}
 
+#if !defined(linux)
+extern char *sys_errlist[];
+#endif /* linux */
+
 static int errmsg_key = -1;
 static int out_key = -1;
 static int err_key = -1;
 static int client_socket_key = -1;
-extern int tpread_command;
 int tpread_command = FALSE;
+int loglevel = LOG_INFO;
 
 void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
 
@@ -117,7 +123,6 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
 int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     char *p = NULL;
     char **msgbuf_p = NULL;
-    int loglevel = LOG_INFO;
     FILE **out_p, **err_p;
     SOCKET **client_socket_p;
 
@@ -128,12 +133,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     }
 #if defined(RTCP_SERVER)
     if ( out == NULL && err == NULL ) {
-        initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
-        /*
-         * Must set world write because RTCOPY must run with real uid/gid
-         * which is required by Ctape
-         */
-	setlogbits(0666);
+        initlog("rtcopyd",loglevel,rtcpd_logfile);
         if ( msgbuf == NULL && client_socket == NULL ) {
             rtcp_log = (void (*)(int, const char *, ...))log;
             RESTORE_ERRNO;
@@ -164,6 +164,28 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     rtcp_log = (void (*)(int, const char *, ...))rtcpc_SetErrTxt;
     RESTORE_ERRNO;
     return(0);
+}
+
+/*
+ * Useful routine for printing binary quantities (e.g. uuids)
+ * The returned string must be free'd by the caller
+ */
+char *rtcp_voidToString(void *in, int len) {
+    int i, j, printlen;
+    u_char *c;
+    char *str, *buf = NULL;
+
+    printlen = 2*len + len/4 + 1;
+    buf = (char *)malloc(printlen);
+    if ( buf == NULL ) return(NULL);
+    c = (u_char *)in;
+    str = buf;
+    for ( i=0; i<len; i++ ) {
+         sprintf(buf,"%.2x",*c++);
+         buf += 2;
+         if ( ((i+1) % 4 == 0) && (i+1 < len) ) *buf++ = '-';
+    }
+    return(str);
 }
 
 #if defined(RTCP_SERVER)

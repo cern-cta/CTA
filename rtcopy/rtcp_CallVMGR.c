@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.4 $ $Date: 2002/06/19 13:08:25 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.5 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.4 $ $Date
 #include "net.h"
 #include "Castor_limits.h"
 #include "log.h"
+#include <Cuuid.h>
 #include "rtcp_constants.h"
 #include "rtcp.h"
 #if defined(RTCP_SERVER)

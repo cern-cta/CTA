@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.5 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.6 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.5 $ $
 #include <string.h>
 #include <errno.h>
 #include <serrno.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 
 #define SWAPIT(X) { int __a; \

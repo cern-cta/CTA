@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.40 $ $Date: 2001/09/19 06:32:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.41 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.40 $ $Da
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_api.h>
@@ -1674,53 +1675,7 @@ static int rtcpc_x_opt(int mode,
 static int rtcpc_X_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
-    char *p, *q, *local_value,vmsopt[RTCP_VMSOPTLEN+1];
-    tape_list_t *tl;
-    file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
-    rtcpFileRequest_t *filereq;
-
-    if ( value == NULL ) {
-        serrno = EINVAL;
-        return(-1);
-    }
-
-    if ( *tape == NULL ) {
-        rc = newTapeList(tape,NULL,mode);
-        if ( rc == -1 ) return(-1);
-    }
-
-    local_value = (char *)malloc(strlen(value)+1);
-    if ( local_value == NULL ) {
-        serrno = errno;
-        return(-1);
-    }
-    strcpy(local_value,value);
-    q = p = local_value;
-
-    rc = 0;
-    tl = *tape;
-
-    tapereq = &tl->tapereq;
-    
-    CLIST_ITERATE_BEGIN(tl->file,fl) {
-        filereq = &fl->filereq;
-        /*
-        * Set option if not already set
-        */
-        if ( *filereq->vmsopt == '\0' ) {
-            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
-            if ( p != NULL ) strcpy(vmsopt,p);
-            strcpy(filereq->vmsopt,vmsopt);
-            if ( q != NULL ) {
-                p = q;
-                p++;
-            }
-        }
-    } CLIST_ITERATE_END(tl->file,fl);
-    free(local_value);
-    return(rc);
+    return(0);
 }
 
 static int rtcpc_Z_opt(int mode, 
@@ -2162,6 +2117,9 @@ int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
 
 #define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,X);}
 #define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: %d\n",Y,#X,X);}
+#define DUMPULONG(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %lu\n",Y,#X,X);}
+#define DUMPBLKID(Y,X) {rtcp_log(LOG_DEBUG,"%s%s: %d:%d:%d:%d\n",Y,#X,(int)X[0],(int)X[1],(int)X[2],(int)X[3]);}
+#define DUMPUUID(Y,X) {char *__p; rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,((__p = CuuidToString(X)) == NULL ? "(null)" : __p));if ( __p != NULL ) free(__p);} 
 #define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%x\n",Y,#X,X);}
 #if defined(_WIN32)
 #define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %I64u\n",Y,#X,(u_signed64)X);}
@@ -2173,6 +2131,10 @@ int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
 #define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
 #define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
 #endif
+static char *CuuidToString(Cuuid_t *uuid) {
+    return(rtcp_voidToString((void *)uuid,sizeof(Cuuid_t)));
+}
+
 int DLL_DECL dumpTapeReq(tape_list_t *tl) {
     rtcpTapeRequest_t *tapereq;
     char indent[] = " ";
@@ -2203,6 +2165,7 @@ int DLL_DECL dumpTapeReq(tape_list_t *tl) {
     DUMPINT(indent,tapereq->TEndMount);
     DUMPINT(indent,tapereq->TStartUnmount);
     DUMPINT(indent,tapereq->TEndUnmount);
+    DUMPUUID(indent,&(tapereq->rtcpReqId));
 
     DUMPSTR(indent,tapereq->err.errmsgtxt);
     DUMPHEX(indent,tapereq->err.severity);
@@ -2226,7 +2189,6 @@ int DLL_DECL dumpFileReq(file_list_t *fl) {
     DUMPSTR(indent,filereq->fid);
     DUMPSTR(indent,filereq->ifce);
     DUMPSTR(indent,filereq->stageID);
-    DUMPSTR(indent,filereq->vmsopt);
     DUMPINT(indent,filereq->VolReqID);
     DUMPINT(indent,filereq->jobID);
     DUMPINT(indent,filereq->position_method);
@@ -2250,7 +2212,7 @@ int DLL_DECL dumpFileReq(file_list_t *fl) {
     DUMPINT(indent,filereq->TEndTransferDisk);
     DUMPINT(indent,filereq->TStartTransferTape);
     DUMPINT(indent,filereq->TEndTransferTape);
-    DUMPINT(indent,(unsigned long)*filereq->blockid);
+    DUMPBLKID(indent,filereq->blockid);
 
     DUMPI64(indent,filereq->bytes_in);
     DUMPI64(indent,filereq->bytes_out);
@@ -2260,6 +2222,13 @@ int DLL_DECL dumpFileReq(file_list_t *fl) {
     DUMPI64(indent,filereq->maxsize);
 
     DUMPI64(indent,filereq->startsize);
+
+    DUMPSTR(indent,filereq->castorSegAttr.nameServerHostName);
+    DUMPSTR(indent,filereq->castorSegAttr.segmCksumAlgorithm);
+    DUMPULONG(indent,filereq->castorSegAttr.segmCksum);
+    DUMPI64(indent,filereq->castorSegAttr.castorFileId);
+
+    DUMPUUID(indent,&(filereq->stgReqId));
 
     DUMPSTR(indent,filereq->err.errmsgtxt);
     DUMPHEX(indent,filereq->err.severity);

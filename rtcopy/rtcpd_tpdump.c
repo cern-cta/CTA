@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.13 $ $Date: 2001/08/17 13:58:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.14 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,6 +41,7 @@ extern char *geterr();
 #include <Ctape_constants.h>
 #include <Ctape.h>
 #include <Ctape_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.14 $ $Date: 2001/08/21 11:55:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.15 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -35,6 +35,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.14 $ $Dat
 #include <Ctape_api.h>
 #include <serrno.h>
 #include <log.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>

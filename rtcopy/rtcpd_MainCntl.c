@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.90 $ $Date: 2003/10/01 11:03:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.91 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -42,6 +42,7 @@ extern char *geterr();
 #include <trace.h>
 #include <osdep.h>
 #include <net.h>
+#include <Cuuid.h>
 #include <Cthread_api.h>
 #include <vdqm_api.h>
 #include <rtcp_constants.h>
@@ -59,6 +60,8 @@ extern struct group *getgrent();
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
 extern char *getconfent(const char *, const char *, int);
+
+extern char *rtcpd_logfile;
 
 extern int Debug;
 int Debug = FALSE;
@@ -102,11 +105,12 @@ int ENOSPC_occurred = FALSE;
  * Set Debug flag if requested
  */
 static void rtcpd_SetDebug() {
+    if ( Debug == TRUE ) return;
     Debug = FALSE;
     if ( getenv("RTCOPY_DEBUG") != NULL ||
          getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
     else NOTRACE;                 /* Switch off tracing */
-    if ( Debug == TRUE ) initlog("rtcopyd",LOG_DEBUG,RTCOPY_LOGFILE);
+    if ( Debug == TRUE ) initlog("rtcopyd",LOG_DEBUG,rtcpd_logfile);
     return;
 }
 
@@ -152,8 +156,10 @@ static int rtcpd_ChkNewAcct(char *acctstr,struct passwd *pwd,gid_t gid) {
 int rtcpd_CheckClient(int _uid, int _gid, char *name, 
                       char *acctstr, int *rc) {
     struct passwd *pw;
+#if !defined(_WIN32)
     struct group *gr;
     char **gr_mem;
+#endif /* _WIN32 */
     uid_t uid;
     gid_t gid;
 
@@ -614,8 +620,8 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                  * already in rtcp_CheckReq() since disk file sizes are
                  * all known. Therefor we cannot reset that status here. 
                  */
-                if ( !(mode == WRITE_ENABLE &&
-                       filereq->err.severity == RTCP_OK | RTCP_LIMBYSZ) ) {
+                if ( !((mode == WRITE_ENABLE) &&
+                       (filereq->err.severity == (RTCP_OK | RTCP_LIMBYSZ))) ) {
                     filereq->err.severity = RTCP_OK;
                     filereq->err.errorcode = 0;
                 }
@@ -634,7 +640,8 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                  * successfully. If not, we must reset the status of all
                  * files in this concatenation.
                  */
-                if ( filereq->proc_status != RTCP_FINISHED ) {
+                if ( filereq->proc_status != RTCP_FINISHED &&
+                     filereq->proc_status != RTCP_REQUEST_MORE_WORK ) {
                     rtcp_log(LOG_DEBUG,"rtcpd_ResetRequest() reset filereq(%d,%d,%s,concat:%d)\n",
                          filereq->tape_fseq,filereq->disk_fseq,
                          filereq->file_path,filereq->concat);
@@ -671,160 +678,68 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
     return(0);
 }
 
+#define INITLOCK(X,Y) { \
+    rc = Cthread_mutex_lock((void*)&(X));\
+    if ( rc == -1 ) {\
+        rtcp_log(LOG_ERR,\
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(%s): %s\n",\
+            #X,sstrerror(serrno));\
+        return(-1);\
+    }\
+    rc = Cthread_mutex_unlock((void*)&(X));\
+    if ( rc == -1 ) {\
+        rtcp_log(LOG_ERR,\
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(%s): %s\n",\
+            #X,sstrerror(serrno));\
+        return(-1);\
+    }\
+    (Y) = Cthread_mutex_lock_addr((void*)&(X));\
+    if ( (Y) == NULL ) {\
+        rtcp_log(LOG_ERR,\
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(%s): %s\n",\
+            #X,sstrerror(serrno));\
+        return(-1);\
+    }}
+
 static int rtcpd_InitProcCntl() {
     int rc;
 
     /*
      * Initialize global processing control variables
      */
-    rc = Cthread_mutex_lock(&proc_cntl);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock(proc_cntl): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    rc = Cthread_mutex_unlock(&proc_cntl);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_unlock(proc_cntl): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    /*
-     * Get direct pointer to Cthread structure to allow for
-     * low overhead locks
-     */
-    proc_cntl.cntl_lock = Cthread_mutex_lock_addr(&proc_cntl);
-    if ( proc_cntl.cntl_lock == NULL ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(proc_cntl): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl,proc_cntl.cntl_lock);
 
     /*
      * Initialize global error processing control variable
      */
-    rc = Cthread_mutex_lock(&proc_cntl.ProcError);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock(ProcError): %s\n",
-            sstrerror(serrno));    
-        return(-1);
-    }
-    rc = Cthread_mutex_unlock(&proc_cntl.ProcError);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_unlock(ProcError): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    /*
-     * Get direct pointer to Cthread structure to allow for
-     * low overhead locks
-     */
-    proc_cntl.ProcError_lock = Cthread_mutex_lock_addr(&proc_cntl.ProcError);
-    if ( proc_cntl.ProcError_lock == NULL ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(ProcError): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl.ProcError,proc_cntl.ProcError_lock);
 
     /*
      * Initialize global request status processing control variable
      */
-    rc = Cthread_mutex_lock(&proc_cntl.ReqStatus);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock(ReqStatus): %s\n",
-            sstrerror(serrno));    
-        return(-1);
-    }
-    rc = Cthread_mutex_unlock(&proc_cntl.ReqStatus);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_unlock(ReqStatus): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    /*
-     * Get direct pointer to Cthread structure to allow for
-     * low overhead locks
-     */
-    proc_cntl.ReqStatus_lock = Cthread_mutex_lock_addr(&proc_cntl.ReqStatus);
-    if ( proc_cntl.ReqStatus_lock == NULL ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(ReqStatus): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl.ReqStatus,proc_cntl.ReqStatus_lock);
 
     /*
      * Initialize exclusive lock for disk file append access.
-     */ 
-    rc = Cthread_mutex_lock(&proc_cntl.DiskFileAppend); 
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock(DiskFileAppend): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    rc = Cthread_mutex_unlock(&proc_cntl.DiskFileAppend);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_unlock(DiskFileAppend): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    /*
-     * Get direct pointer to Cthread structure to allow for
-     * low overhead locks
      */
-    proc_cntl.DiskFileAppend_lock = Cthread_mutex_lock_addr(&proc_cntl.DiskFileAppend);
-    if ( proc_cntl.DiskFileAppend_lock == NULL ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(DiskFileAppend_lock): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl.DiskFileAppend,proc_cntl.DiskFileAppend_lock);
 
     /*
      * Initialize exclusive lock for stage_updc_tppos() 
      */
-    rc = Cthread_mutex_lock(&proc_cntl.TpPos);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock(TpPos): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
-    rc = Cthread_mutex_unlock(&proc_cntl.TpPos);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_unlock(TpPos): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl.TpPos,proc_cntl.TpPos_lock);
+
     /*
-     * Get direct pointer to Cthread structure to allow for
-     * low overhead locks
+     * Initialize global request list lock
      */
-    proc_cntl.TpPos_lock = Cthread_mutex_lock_addr(&proc_cntl.TpPos);
-    if ( proc_cntl.TpPos_lock == NULL ) {
-        rtcp_log(LOG_ERR,
-            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(TpPos): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    }
+    INITLOCK(proc_cntl.requestMoreWork,proc_cntl.requestMoreWork_lock);
 
     return(0);
 }
 
 int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr, 
                         int *nb_waiters, int *next_entry, int **wait_list) {
-    int rc, severity, i, *my_wait_entry;
+    int rc, i, *my_wait_entry;
     int *loc_wait_list, loc_next_entry;
 
     if ( lockflag == NULL || lockaddr == NULL || nb_waiters == NULL ||
@@ -1049,23 +964,20 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      */
                     if ( tapereq->mode == WRITE_DISABLE ||
                         (filereq->concat & CONCAT) == 0 ) {
+                        time_t endxfer;
+                        time_t startxfer;
                         
-		      {
-			time_t endxfer;
-			time_t startxfer;
-
-			endxfer = (time_t)max(
-					      (time_t)filereq->TEndTransferDisk,
-					      (time_t)filereq->TEndTransferTape);
-    
-			startxfer =  (time_t)max(
-						 (time_t)filereq->TStartTransferDisk,
-						 (time_t)filereq->TStartTransferTape);
-    
-			if (endxfer > 0 && startxfer > 0) {
-			  Ttransfer +=  ( endxfer - startxfer );
-			}
-		      }
+                        endxfer = (time_t)max(
+                            (time_t)filereq->TEndTransferDisk,
+                            (time_t)filereq->TEndTransferTape);
+                        
+                        startxfer =  (time_t)max(
+                            (time_t)filereq->TStartTransferDisk,
+                            (time_t)filereq->TStartTransferTape);
+                        
+                        if (endxfer > 0 && startxfer > 0) {
+                            Ttransfer +=  ( endxfer - startxfer );
+                        }
                     }
 
                     if ( tapereq->mode == WRITE_ENABLE &&
@@ -1150,6 +1062,11 @@ void rtcpd_BroadcastException() {
     (void)Cthread_cond_broadcast_ext(proc_cntl.TpPos_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.TpPos_lock);
 
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to requestMoreWork_lock\n");
+    (void)Cthread_mutex_lock_ext(proc_cntl.requestMoreWork_lock);
+    (void)Cthread_cond_broadcast_ext(proc_cntl.requestMoreWork_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.requestMoreWork_lock);
+
     /*
      * Finally, signal all data buffers. Since those conditions also protects
      * the memory buffers (in addition to being semaphores), this could 
@@ -1178,7 +1095,7 @@ void rtcpd_BroadcastException() {
 }
 
 static int rtcpd_ProcError(int *code) {
-    int rc = 0;
+    int rc;
 
     if ( AbortFlag != 0 && code == NULL ) {
         return(proc_cntl.ProcError);
@@ -1207,7 +1124,7 @@ static int rtcpd_ProcError(int *code) {
 }
 
 void rtcpd_SetProcError(int code) {
-    int set_code, rc, i;
+    int set_code, rc;
 
     set_code = code;
     rtcp_log(LOG_DEBUG,"rtcpd_SetProcError(%d) called\n",set_code);
@@ -1284,7 +1201,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
     file_list_t *fl;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
-    int rc,i;
+    int rc;
 
     rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() status=%d, severity=%d\n",
              status,severity);
@@ -1399,25 +1316,403 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
     return;
 }
 
+static int lockMoreWork() {
+    int rc;
+    rc = Cthread_mutex_lock_ext(proc_cntl.requestMoreWork_lock);
+    if ( (rc == -1) || (rtcpd_CheckProcError() &
+        (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+        rtcp_log(LOG_ERR,"lockMoreWork(): Cthread_mutex_lock_ext(requestMoreWork_lock): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(0);
+}
+
+static int unlockMoreWork() {
+    int rc;
+    rc = Cthread_mutex_unlock_ext(proc_cntl.requestMoreWork_lock);
+    if ( (rc == -1) || (rtcpd_CheckProcError() &
+        (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+        rtcp_log(LOG_ERR,"unlockMoreWork(): Cthread_mutex_unlock_ext(requestMoreWork_lock): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(0);
+}
+
+int rtcpd_checkMoreWork(SOCKET *client_socket,
+                        tape_list_t *tl,
+                        file_list_t *fl) {
+    int rc = 0;
+
+    if ( proc_cntl.checkForMoreWork == 0 ) return(0);
+    if ( lockMoreWork() == -1 ) return(-1);
+    if ( fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK ) {
+        rc = tellClient(client_socket,tl,fl,0);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_checkMoreWork() tellClient(): %s\n",
+                sstrerror(serrno));
+            (void)unlockMoreWork();
+            return(-1);
+
+        } else if ( (rtcpd_CheckProcError() &
+            (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+            (void)unlockMoreWork();
+            /*
+             * Not our error, some other thread has failed
+             */
+            return(0);
+        } else {
+            rc = Cthread_cond_broadcast_ext(proc_cntl.requestMoreWork_lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"rtcpd_checkMoreWork() Cthread_cond_broadcast_ext(): %s\n",
+                    sstrerror(serrno));
+                (void)unlockMoreWork();
+                return(-1);
+            }
+        }
+    }
+    if ( (proc_cntl.requestMoreWork == 0) && 
+         (fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) rc = 1;
+    if ( unlockMoreWork() == -1 ) return(-1);
+    return(rc);
+}
+
+int rtcpd_waitMoreWork(file_list_t *fl) {
+    int rc = 0;
+
+    if ( proc_cntl.checkForMoreWork == 0 ) return(0);
+    if ( lockMoreWork() == -1 ) return(-1);
+    /*
+     * wait for leading I/O thread to update the request list
+     */
+    while ( (proc_cntl.requestMoreWork != 0 ) &&
+            (fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) {
+        rc = Cthread_cond_wait_ext(proc_cntl.requestMoreWork_lock);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_waitMoreWork() Cthread_cond_wait_ext(): %s\n",
+                sstrerror(serrno));
+            (void)unlockMoreWork();
+            /*
+             * Our error
+             */
+            return(-1);
+        } else if ( (rtcpd_CheckProcError() &
+             (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+            (void)unlockMoreWork();
+            /*
+             * Not our error, some other thread has failed
+             */
+            return(0);
+        } 
+    }
+    if ( (proc_cntl.requestMoreWork == 0) && 
+         (fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) rc = 1;
+
+    if ( unlockMoreWork() == -1 ) return(-1);
+    return(rc);
+}
+
+int rtcpd_GetRequestList(SOCKET *client_socket,
+                         rtcpClientInfo_t *client,
+                         rtcpTapeRequest_t *vdqm_tapereq,
+                         tape_list_t **rootTape,
+                         file_list_t *startFile) {
+    tape_list_t *tape, *nexttape = NULL;
+    file_list_t *nextfile = NULL;
+    rtcpTapeRequest_t tapereq;
+    rtcpFileRequest_t filereq;
+    rtcpClientInfo_t savedClient;
+    rtcpDumpTapeRequest_t dumpreq;
+    rtcpHdr_t hdr;
+    char acctstr[7] = "", *tmp;
+    int rc, save_serrno, reqtype, tot_reqlen, insertNew, allFilesOK = 1;
+    extern int client_magic;
+
+    if ( client_socket == NULL || rootTape == NULL ||
+        (vdqm_tapereq != NULL && client == NULL) ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    rtcp_log(LOG_DEBUG,"rtcpd_GetRequestList() called with client_socket %d, tape=%p, file=%p\n",
+        *client_socket, rootTape, startFile);
+    /*
+     * Loop to get the full request.
+     */
+    rc = reqtype = tot_reqlen = 0;
+    tape = *rootTape;
+    if ( tape != NULL ) nexttape = tape->prev;
+    if ( startFile != NULL ) nextfile = startFile;
+    if ( vdqm_tapereq != NULL ) {
+        Cuuid_create(&(vdqm_tapereq->rtcpReqId)); 
+        tapereq = *vdqm_tapereq;
+    } else memset(&tapereq,'\0',sizeof(tapereq));
+
+    if ( client != NULL ) savedClient = *client;
+
+    memset(&hdr,'\0',sizeof(hdr));
+    proc_cntl.requestMoreWork = 0;
+    while ( reqtype != RTCP_NOMORE_REQ  ) {
+        if ( tot_reqlen > RTCP_MAX_REQUEST_LENGTH ) {
+            save_serrno = serrno;
+            rtcp_log(
+                     LOG_ERR,
+                     "rtcpd_GetRequestList() request too long! (%d > %d)\n",
+                     tot_reqlen,
+                     RTCP_MAX_REQUEST_LENGTH
+                     );
+            rc = -1;
+            break;
+        }
+        memset(&filereq,'\0',sizeof(filereq));
+        filereq.err.severity = RTCP_OK;
+        rc = rtcp_RecvReq(
+                          client_socket,
+                          &hdr,
+                          client,
+                          &tapereq,
+                          &filereq
+                          );
+        if ( rc == -1 ) {
+            save_serrno = serrno;
+            rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvReq(): %s\n",
+                     sstrerror(serrno));
+            break;
+        }
+        reqtype = hdr.reqtype;
+        rtcp_log(
+                 LOG_DEBUG,
+                 "rtcpd_GetRequestList() received 0x%x request\n",
+                 reqtype
+                 );
+        if ( client_magic == 0 ) client_magic = hdr.magic;
+        if ( reqtype == RTCP_DUMPTAPE_REQ ) {
+            rc = rtcp_RecvTpDump(client_socket,&dumpreq);
+            if ( rc == -1 ) {
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvTpDump(): %s\n",
+                         sstrerror(serrno));
+                break;
+            }
+            if ( nexttape == NULL ) {
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() invalid request sequence\n");
+                rc = -1;
+                save_serrno = EINVAL;
+                break;
+            }
+            nexttape->dumpreq = dumpreq;
+        }
+
+        rtcp_log(LOG_DEBUG,"rtcpd_GetRequestList() send 0x%x acknowledge\n",reqtype);
+        rc = rtcp_SendAckn(client_socket,reqtype);
+        if ( rc == -1 ) {
+            save_serrno = serrno;
+            rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_SendAckn(): %s\n",
+                sstrerror(serrno));
+            break;
+        }
+        /*
+         * If client updates its callback port, we don't need to do anything. The client
+         * structure has already been updated in rtcp_RecvReq()
+         */
+        if ( reqtype == VDQM_CLIENTINFO ) {
+            if ( client == NULL ) {
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() unexpected VDQM_CLIENTINFO request\n");
+                save_serrno = SEINTERNAL;
+                rc = -1;
+                break;
+            }
+            /*
+             * Client has opened a new listen port. This is normal
+             * for a rtcpclientd daemon, since it uses the same
+             * port for all VDQM requests
+             */
+            rtcp_log(LOG_INFO,"rtcpd_GetRequestList(), received new client address %s:%d (old %s:%d)\n",
+                client->clienthost,client->clientport,
+                savedClient.clienthost,savedClient.clientport);
+            /*
+             * Check if client is still OK.
+             */
+            rc = rtcpd_CheckClient((int)client->uid,(int)client->gid,
+                client->name,acctstr,NULL);
+            if ( rc == -1 || client->uid != savedClient.uid || client->gid != savedClient.gid ) {
+                /*
+                 * Client not authorised
+                 */
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() %s(%d,%d)@%s not authorised\n",
+                    client->name,client->uid,client->gid,client->clienthost);
+                save_serrno = EACCES;
+                break;
+            }
+            rc = rtcpd_ConnectToClient(client_socket,
+                                       client->clienthost,
+                                       &client->clientport);
+            if ( rc == -1 ) {
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_ConnectToClient(): %s\n",sstrerror(serrno));
+                break;
+            }
+        }
+        if ( reqtype == RTCP_TAPE_REQ || reqtype == RTCP_TAPEERR_REQ ) {
+            /*
+             * If the vid is empty, the client requests to see the original VDQM tapereq
+             */
+            if ( tapereq.vid[0] == '\0' ) {
+                vdqm_tapereq->VolReqID = client->VolReqID;
+                rc = rtcp_SendReq(client_socket,&hdr,NULL,vdqm_tapereq,NULL);
+                if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_SendReq(): %s\n",
+                        sstrerror(serrno));
+                    serrno = SEINTERNAL;
+                    break;
+                }
+                rc = rtcp_RecvAckn(client_socket,hdr.reqtype);
+                if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvAckn(): %s\n",
+                        sstrerror(serrno));
+                    serrno = SEINTERNAL;
+                    break;
+                }
+                continue;
+            }
+            /*
+             * Tape request, copy and add to global tape list
+             */
+            nexttape = (tape_list_t *)calloc(1,sizeof(tape_list_t));
+            if ( nexttape == NULL ) {
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() calloc(): %s\n",
+                    sstrerror(errno));
+                rc = -1;
+                break;
+            }
+            tot_reqlen += sizeof(tape_list_t);
+            if ( vdqm_tapereq != NULL ) tapereq.rtcpReqId = vdqm_tapereq->rtcpReqId;
+            tmp = rtcp_voidToString((void *)&tapereq.rtcpReqId,sizeof(Cuuid_t));
+            rtcp_log(LOG_INFO,"rtcpd_GetRequestList(): assigned RTCOPY request id %s\n",(tmp == NULL ? "(null)" : tmp));
+            if ( tmp != NULL ) free(tmp);
+            tapereq.TStartRtcpd = (int)time(NULL);
+            nexttape->tapereq = tapereq;
+            nexttape->tapereq.err.severity = nexttape->tapereq.err.severity &
+                                             ~RTCP_RESELECT_SERV;
+            CLIST_INSERT(tape,nexttape);
+            if ( tapereq.VolReqID != client->VolReqID ) {
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() wrong VolReqID %d, should be %d\n",
+                    tapereq.VolReqID, client->VolReqID);
+                rc = -1;
+                save_serrno = EINVAL;
+                break;
+            }
+            if ( tape == NULL ) tape = nexttape;
+            rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, unit %s, VolReqID=%d,mode=%d\n",
+                tapereq.vid,tapereq.dgn,tapereq.unit,tapereq.VolReqID,
+                tapereq.mode);
+        }
+        if ( reqtype == RTCP_FILE_REQ || reqtype == RTCP_FILEERR_REQ ) {
+            /*
+             * File request, copy and add to list anchored with
+             * last tape list element. First check that request
+             * sequence is OK.
+             */
+            if ( nexttape == NULL ) {
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() invalid request sequence\n");
+                rc = -1;
+                save_serrno = EINVAL;
+                break;
+            }
+            /*
+             * If client previously requested more work we
+             * re-use the placeholder structure since one of the
+             * I/O threads might be waiting for it.
+             */
+            insertNew = 0;
+            if ( (nextfile == NULL) || (nextfile->filereq.proc_status != RTCP_REQUEST_MORE_WORK) ) {
+                nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
+                insertNew = 1;
+            }
+            if ( nextfile == NULL ) {
+                save_serrno = errno;
+                rtcp_log(LOG_ERR,"rtcpd_GetRequestList() calloc(): %s\n",
+                    sstrerror(errno));
+                rc = -1;
+                break;
+            }
+            tot_reqlen += sizeof(file_list_t);
+            nextfile->end_index = -1;
+            nextfile->filereq = filereq;
+            if ( (nextfile->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) {
+                /*
+                 * vdqm_tapereq is non-NULL only at startup when the
+                 * original request is being received. To avoid locking
+                 * requestMoreWork, we use the non-synchronised flag
+                 * checkForMoreWork to indicate that the original request
+                 * contained a request for more work. This flag should
+                 * never be altered afterwards. The semaphore requestMoreWork
+                 * is used to flag that the client has requested to be
+                 * called for more work once we finished with the current
+                 * filereq list.
+                 */
+                if ( vdqm_tapereq != NULL ) proc_cntl.checkForMoreWork = 1;
+                proc_cntl.requestMoreWork = 1;
+            }
+            nextfile->filereq.err.severity = nextfile->filereq.err.severity &
+                                             ~RTCP_RESELECT_SERV; 
+            if ( !VALID_PROC_STATUS(nextfile->filereq.proc_status) ) {
+                rtcp_log(LOG_DEBUG,"   Reset invalide processing status 0x%x to RTCP_WAITING (0x%x)\n",
+                    nextfile->filereq.proc_status,RTCP_WAITING);
+                nextfile->filereq.proc_status = RTCP_WAITING;
+            }
+            nextfile->tape = nexttape;
+            if ( insertNew == 1 ) CLIST_INSERT(nexttape->file,nextfile);
+            /*
+             * If there already is a tape root provided by the caller
+             * it means that we are receiving request updates during runtime
+             * as a response to a RTCP_REQUEST_MORE_WORK processing status.
+             * In that case we must check the received file requests one by
+             * one.
+             */
+            if ( startFile != NULL ) {
+                rc = rtcpd_CheckFileReq(nextfile);
+                if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_CheckFileReq(): %s\n",
+                        sstrerror(errno));
+                    /*
+                     * We cannot break here because the client is in a loop
+                     * sending us new requests. We first have to receive all requests
+                     * and then tell the client that one (or several) of them failed.
+                     */
+                    allFilesOK = 0;
+                }
+            }
+            rtcp_log(LOG_DEBUG,"   File: %s, FSEQ %d, Blksz %d, proc_status %d\n",
+                filereq.file_path,filereq.tape_fseq,filereq.blocksize,
+                filereq.proc_status);
+            nextfile = NULL;
+        }
+    } /* End while ( reqtype != RTCP_NOMORE_REQ ) */
+    *rootTape = tape;
+    if ( allFilesOK == 0 ) return(-1);
+    if ( rc == -1 ) serrno = save_serrno;
+    return(rc);
+}
 
 int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpTapeRequest_t tapereq;
     rtcpFileRequest_t filereq;
-    rtcpDumpTapeRequest_t dumpreq;
     rtcpHdr_t hdr;
     SOCKET *client_socket = NULL;
     rtcpClientInfo_t *client = NULL;
-    tape_list_t *tape, *nexttape;
-    file_list_t *nextfile;
-    int rc, retry, reqtype, errmsglen, tot_reqlen, status, save_errno, CLThId;
-    char *errmsg, *msgtxtbuf;
+    tape_list_t *tape;
+    int rc, retry, reqtype, errmsglen, status, CLThId;
+    char *errmsg;
     static int thPoolId = -1;
     static int thPoolSz = -1;
-    struct passwd *pwd;
     char *cmd = NULL;
     char acctstr[7] = "";
+#if !defined(_WIN32)
     char envacct[20];
-    extern int client_magic;
+    int save_errno;
+#endif /* _WIN32 */
 
 #if !defined(_WIN32)
     (void)setpgrp();
@@ -1437,6 +1732,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     memset(&tapereq,'\0',sizeof(tapereq));
     memset(&filereq,'\0',sizeof(tapereq));
+    memset(&hdr,'\0',sizeof(hdr));
     rc = rtcp_RecvReq(accept_socket,
                       &hdr,
                       client,
@@ -1561,108 +1857,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rc = rtcpd_InitProcCntl();
 
     /*
-     * Loop to get the full request
+     * Get the full request from client
      */
-    rc = 0;
-    reqtype = 0;
     tape = NULL;
-    tot_reqlen = 0;
-    while ( reqtype != RTCP_NOMORE_REQ  ) {
-        if ( tot_reqlen > RTCP_MAX_REQUEST_LENGTH ) {
-            rtcp_log(LOG_ERR,"rtcpd_MainCntl() request too long! (%d > %d)\n",
-                     tot_reqlen,RTCP_MAX_REQUEST_LENGTH);
-            rc = -1;
-            break;
-        }
-        memset(&filereq,'\0',sizeof(filereq));
-        filereq.err.severity = RTCP_OK;
-        rc = rtcp_RecvReq(client_socket,
-            &hdr,client,&tapereq,&filereq);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_RecvReq(): %s\n",
-                     sstrerror(serrno));
-            break;
-        }
-        reqtype = hdr.reqtype;
-        if ( client_magic == 0 ) client_magic = hdr.magic;
-        if ( reqtype == RTCP_DUMPTAPE_REQ ) {
-            rc = rtcp_RecvTpDump(client_socket,&dumpreq);
-            if ( rc == -1 ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_RecvTpDump(): %s\n",
-                         sstrerror(serrno));
-                break;
-            }
-            if ( nexttape == NULL ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() invalid request sequence\n");
-                rc = -1;
-                break;
-            }
-            nexttape->dumpreq = dumpreq;
-        }
-        rc = rtcp_SendAckn(client_socket,reqtype);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_SendAckn(): %s\n",
-                sstrerror(serrno));
-            serrno = SEINTERNAL;
-            break;
-        }
-        if ( reqtype == RTCP_TAPE_REQ || reqtype == RTCP_TAPEERR_REQ ) {
-            /*
-             * Tape request, copy and add to global tape list
-             */
-            nexttape = (tape_list_t *)calloc(1,sizeof(tape_list_t));
-            if ( nexttape == NULL ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() calloc(): %s\n",
-                    sstrerror(errno));
-                rc = -1;
-                break;
-            }
-            tot_reqlen += sizeof(tape_list_t);
-            tapereq.TStartRtcpd = (int)time(NULL);
-            nexttape->tapereq = tapereq;
-            nexttape->tapereq.err.severity = nexttape->tapereq.err.severity &
-                                             ~RTCP_RESELECT_SERV;
-            CLIST_INSERT(tape,nexttape);
-            if ( tapereq.VolReqID != client->VolReqID ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() wrong VolReqID %d, should be %d\n",
-                    tapereq.VolReqID, client->VolReqID);
-                rc = -1;
-                break;
-            }
-            rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, unit %s, VolReqID=%d,mode=%d\n",
-                tapereq.vid,tapereq.dgn,tapereq.unit,tapereq.VolReqID,
-                tapereq.mode);
-        }
-        if ( reqtype == RTCP_FILE_REQ || reqtype == RTCP_FILEERR_REQ ) {
-            /*
-             * File request, copy and add to list anchored with
-             * last tape list element
-             */
-            nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
-            if ( nextfile == NULL ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() calloc(): %s\n",
-                    sstrerror(errno));
-                rc = -1;
-                break;
-            }
-            tot_reqlen += sizeof(file_list_t);
-            nextfile->end_index = -1;
-            nextfile->filereq = filereq;
-            nextfile->filereq.err.severity = nextfile->filereq.err.severity &
-                                             ~RTCP_RESELECT_SERV; 
-            if ( nexttape == NULL ) {
-                rtcp_log(LOG_ERR,"rtcpd_MainCntl() invalid request sequence\n");
-                rc = -1;
-                break;
-            }
-            if ( !VALID_PROC_STATUS(nextfile->filereq.proc_status) )
-                nextfile->filereq.proc_status = RTCP_WAITING;
-            CLIST_INSERT(nexttape->file,nextfile);
-            rtcp_log(LOG_DEBUG,"   File: %s, FSEQ %d, Blksz %d\n",
-                filereq.file_path,filereq.tape_fseq,filereq.blocksize);
-            nextfile->tape = nexttape;
-        }
-    } /* End while ( reqtype != RTCP_NOMORE_REQ ) */
+    rc = rtcpd_GetRequestList(client_socket, client, &tapereq, &tape, NULL);
 
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() request loop finished with error\n");
@@ -1689,7 +1887,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDR);
 
     cmd = rtcp_cmds[tapereq.mode];
-
+            
     /*
      * On UNIX: set client UID/GID
      */
@@ -1750,7 +1948,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rc = rtcpd_drvinfo(tape);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
-                sstrerror(serrno));
+            sstrerror(serrno));
     }
 
     /*

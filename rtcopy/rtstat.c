@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 1996-2001 by CERN/CN/PDP/DM
+* Copyright (C) 1996-2004 by CERN IT
 * All rights reserved
 */
 
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)rtstat.c,v 1.12 2002/10/09 07:13:26 CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.15 $ $Date: 2004/02/12 15:59:08 $ CERN IT/ADC Claire Redmond";
 #endif /* not lint */
 
 #if !defined(_WIN32)
@@ -36,6 +36,7 @@ static char sccsid[] = "@(#)rtstat.c,v 1.12 2002/10/09 07:13:26 CERN IT-PDP/DM C
 #endif /* VDQM */
 #include <Cregexp.h>
 #include <rfio_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <sys/times.h>

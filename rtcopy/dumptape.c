@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000-2001 by CERN IT-PDP/DM
+ * Copyright (C) 2000-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dumptape.c,v $ $Revision: 1.2 $ $Date: 2001/08/17 13:38:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: dumptape.c,v $ $Revision: 1.3 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -20,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: dumptape.c,v $ $Revision: 1.2 $ $Date: 200
 #include <Castor_limits.h>
 #include <net.h>
 #include <log.h>
+#include <Cuuid.h>
 #include <Ctape_api.h>
 #include <rtcp_api.h>
 

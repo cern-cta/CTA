@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.7 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.8 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -29,6 +29,7 @@ WSADATA wsadata;
 #include <Cnetdb.h>
 #include <log.h>
 #include <net.h>
+#include <Cuuid.h>
 #include <osdep.h>
 #include <serrno.h>
 
@@ -37,8 +38,9 @@ WSADATA wsadata;
 
 typedef enum rtcp_type {client,server} rtcp_type_t;
 
+int use_port = -1;
 
-int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
+int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *serviceName, char *cfgName) {
     struct sockaddr_in sin ; /* Internet address */
     struct servent *sp ;   /* Service entry */
     extern char * getconfent() ;
@@ -46,6 +48,9 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
     char *p ;
     int rtcp_port = -1;
     int rcode,rc,len;
+    char *localServiceName = "rtcopy";
+    char *localCfgName = "RTCOPY";
+    char portEnv[CA_MAXLINELEN+1];
     
     if ( ListenSocket == NULL || (*ListenSocket != NULL && 
         **ListenSocket != INVALID_SOCKET )) {
@@ -58,6 +63,9 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
     }
 
     if ( port != NULL ) *port = rtcp_port;
+
+    if ( serviceName != NULL ) localServiceName = serviceName;
+    if ( cfgName != NULL ) localCfgName = cfgName;
 
 #if defined(_WIN32)
     /*
@@ -81,6 +89,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
     
     if ( (*ListenSocket = (SOCKET *)calloc(1,sizeof(SOCKET))) == NULL ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() calloc(): %s",sstrerror(errno));
+        serrno = SESYSERR;
         return(-1);
     }
     **ListenSocket = INVALID_SOCKET;
@@ -96,11 +105,12 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
          *        (5) -1 : return error
          */
 #if !defined(DEBUG) && !defined(_DEBUG)
-        if ( (p = getenv("RTCOPY_PORT")) != (char *)NULL ) {
+        sprintf(portEnv,"%s_PORT",localCfgName);
+        if ( (p = getenv(portEnv)) != (char *)NULL ) {
             rtcp_port = atoi(p);
-        } else if ( (p = getconfent("RTCOPY","PORT",0)) != (char *)NULL ) {
+        } else if ( (p = getconfent(localCfgName,"PORT",0)) != (char *)NULL ) {
             rtcp_port = atoi(p);
-        } else if ( (sp = Cgetservbyname("rtcopy","tcp")) != (struct servent *)NULL ) {
+        } else if ( (sp = Cgetservbyname(localServiceName,"tcp")) != (struct servent *)NULL ) {
             rtcp_port = (int)ntohs(sp->s_port);
         } else {
 #if defined(RTCOPY_PORT)
@@ -110,6 +120,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
 #else /* !DEBUG && !_DEBUG */
         rtcp_port = RTCOPY_PORT_DEBUG;
 #endif /* !DEBUG && !_DEBUG */
+        if ( use_port > 0 ) rtcp_port = use_port;
     } else {
         /* 
          * Client just wants to listen to an arbitrary port
@@ -119,12 +130,14 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
 
     if ( rtcp_port < 0 ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() rtcp_port = %d\n",rtcp_port);
+        serrno = SEINTERNAL;
         return(-1);
     }
     
     **ListenSocket = socket(AF_INET,SOCK_STREAM,0);
     if ( **ListenSocket == INVALID_SOCKET ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() socket(): %s\n",neterror());
+        serrno = SECOMERR;
         return(-1);
     }
 
@@ -144,11 +157,13 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
     rc = bind(**ListenSocket, (struct sockaddr *)&sin, sizeof(sin));
     if ( rc == SOCKET_ERROR ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() bind(): %s\n",neterror());
+        serrno = SECOMERR;
         return(-1);
     }
     
     if ( listen(**ListenSocket,RTCOPY_BACKLOG) == SOCKET_ERROR ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() listen(): %s\n",neterror());
+        serrno = SECOMERR;
         return(-1);
     }
     if ( type == client ) {
@@ -156,6 +171,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
         rc = getsockname(**ListenSocket,(struct sockaddr *)&sin,&len);
         if ( rc == SOCKET_ERROR ) {
             rtcp_log(LOG_ERR,"rtcp_InitNW() getsockname(): %s\n",neterror());
+            serrno = SECOMERR;
             return(-1);
         }
         rtcp_port = ntohs(sin.sin_port);
@@ -170,7 +186,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
  */
 int rtcpd_InitNW(SOCKET **ListenSocket) {
     rtcp_type_t type = server;
-    return(rtcp_InitNW(ListenSocket,NULL,type));
+    return(rtcp_InitNW(ListenSocket,NULL,type,NULL,NULL));
 }
 
 /*
@@ -178,7 +194,14 @@ int rtcpd_InitNW(SOCKET **ListenSocket) {
  */
 int rtcpc_InitNW(SOCKET **ListenSocket, int *port) {
     rtcp_type_t type = client;
-    return(rtcp_InitNW(ListenSocket,port,type));
+    return(rtcp_InitNW(ListenSocket,port,type,NULL,NULL));
+}
+
+int rtcpcld_InitNW(SOCKET **rtcpdCallback) {
+    int rc;
+    rtcp_type_t type = server;
+    rc = rtcp_InitNW(rtcpdCallback,NULL,type,"rtcpcld","RTCPCLD");
+    return(rc);
 }
 
 /*

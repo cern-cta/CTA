@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.12 $ $Date: 2001/08/17 13:58:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.13 $ $Date: 2004/02/12 15:59:08 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -33,6 +33,7 @@ extern char *geterr();
 #include <osdep.h>
 #include <net.h>
 #include <vdqm_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>

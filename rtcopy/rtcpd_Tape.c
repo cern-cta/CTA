@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.85 $ $Date: 2003/11/10 10:10:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.86 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,6 +41,7 @@ extern char *geterr();
 #include <Cthread_api.h>
 #include <vdqm_api.h>
 #include <Ctape_api.h>
+#include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
@@ -461,9 +462,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             }
 
 #ifdef MONITOR  /* Monitoring Code */
+ 
             {
                 int forceSend;
-	      
+      
                 if (file == NULL || filereq == NULL) {
                     rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
                 } else {
@@ -471,6 +473,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
                 }
             }
+
 #endif /* End Monitoring Code */
       
 
@@ -888,10 +891,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     databufs[i]->nbrecs++;
                 }
 
-#ifdef MONITOR	/* Monitoring Code */
+#ifdef MONITOR  /* Monitoring Code */
                 {
                     int forceSend;
-  
+
                     if (file == NULL || filereq == NULL) {
                         rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
                     } else {
@@ -899,8 +902,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                                     (file->tapebytes_sofar ==  filereq->bytes_in);
                         rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
                     }
-               }
-#endif		/* End of Monitoring Code */
+                }
+#endif          /* End of Monitoring Code */
 
                 TP_SIZE(rc);
             } /* End of for (j=...) */
@@ -1153,7 +1156,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              if ( mode == WRITE_ENABLE ) { \
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
                  tmpfile = nextfile; \
-                 if ( rc != -1 && (nextfile->next->filereq.concat & CONCAT) != 0 ) { \
+                 if ( (rc != -1) && (nextfile != NULL) && (nextfile->next->filereq.concat & CONCAT) != 0 ) { \
                      while (tmpfile->next!=nexttape->file && \
                             (tmpfile->next->filereq.concat & CONCAT) != 0 && \
                             *tmpfile->filereq.err.errmsgtxt == '\0' ) \
@@ -1301,7 +1304,7 @@ void *tapeIOthread(void *arg) {
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
-
+	
 #ifdef MONITOR /* Monitoring - Loop to count the number of files in the request */
         nb_files = 0;
         last_qty_sent = 0;
@@ -1312,12 +1315,30 @@ void *tapeIOthread(void *arg) {
 #endif /* End Monitoring */
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
- 
 #ifdef MONITOR
             current_file++;
-#endif	    /* End Monitoring */
-
+#endif  /* MONITOR */
+ 
             mode = nexttape->tapereq.mode;
+            /*
+             * Leading I/O thread must always check if clients wishes
+             * to append more work. Trailing I/O thread must always
+             * wait for leading I/O thread to do this check in case
+             * they have reached the same file request.
+             */
+            if ( mode == WRITE_DISABLE ) {
+                rtcp_log(LOG_INFO,"tapeIOthread() check with client for more work. Use socket %d\n",
+                    client_socket);
+                rc = rtcpd_checkMoreWork(&client_socket, nexttape, nextfile);
+                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_checkMoreWork() error");
+                if ( rc == 1 ) break;
+            } else {
+                rtcp_log(LOG_INFO,"tapeIOthread() end of filereqs. Wait for diskIO to check for more work\n");
+                rc = rtcpd_waitMoreWork(nextfile);
+                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_waitMoreWork() error");
+                if ( rc == 1 ) break;
+            }
+
             if ( mode == WRITE_DISABLE ) nextfile->filereq.err.severity =
                 nextfile->filereq.err.severity & ~RTCP_LOCAL_RETRY;
             /*

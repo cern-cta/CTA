@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.53 $ $Date: 2003/07/14 11:30:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.54 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -44,6 +44,7 @@ extern char *geterr();
 #include <vdqm_api.h>
 #include <Ctape_api.h>
 #include <stage.h>
+#include <Cuuid.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
