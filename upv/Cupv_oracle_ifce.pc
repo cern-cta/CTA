@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.3 $ $Date: 2002/06/04 13:43:57 $ CERN IT-PDP/DM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.4 $ $Date: 2002/06/05 11:50:44 $ CERN IT-PDP/DM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -302,10 +302,11 @@ struct Cupv_userpriv *priv_entry;
 }
 
 
-Cupv_list_privilege_entry(dbfd, bol, priv_entry, endlist, dblistptr)
+Cupv_list_privilege_entry(dbfd, bol, priv_entry, filter, endlist, dblistptr)
 struct Cupv_dbfd *dbfd;
 int bol;
 struct Cupv_userpriv *priv_entry;
+struct Cupv_userpriv *filter;
 int endlist;
 DBLISTPTR *dblistptr;
 {
@@ -313,19 +314,23 @@ DBLISTPTR *dblistptr;
   struct sqlca sqlca;
   int lensrc = 0, lentgt = 0;
 
-  lensrc = strlen(priv_entry->srchost);
-  lentgt = strlen(priv_entry->tgthost);
+  strcpy(func, "list_priv");
 
+/*    Cupvlogit(func,"FILTER: <%d> <%d> <%s> <%s> <%d>\n", filter->uid, filter->gid, */
+/*  	    filter->srchost, filter->tgthost, filter->privcat); */
+
+  lensrc = strlen(filter->srchost);
+  lentgt = strlen(filter->tgthost);
 	
   EXEC SQL DECLARE list_priv_cursor CURSOR FOR 
     SELECT 
     U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT 
     FROM USER_PRIVILEGE 
-    WHERE ( (:priv_entry->uid = -1) OR (U_ID = :priv_entry->uid)) 
-    AND  ( (:priv_entry->gid = -1) OR (G_ID = :priv_entry->gid)) 
-    AND  ( ( :lensrc = 0) OR (SRC_HOST LIKE :priv_entry->srchost)) 
-    AND  ( ( :lentgt = 0) OR (TGT_HOST LIKE :priv_entry->tgthost))   
-    AND  ( (:priv_entry->privcat = -1) OR (PRIV_CAT = :priv_entry->privcat)) 
+    WHERE ( (:filter->uid = -1) OR (U_ID = :filter->uid)) 
+    AND  ( (:filter->gid = -1) OR (G_ID = :filter->gid)) 
+    AND  ( ( :lensrc = 0) OR (SRC_HOST LIKE :filter->srchost)) 
+    AND  ( ( :lentgt = 0) OR (TGT_HOST LIKE :filter->tgthost))   
+    AND  ( (:filter->privcat = -1) OR (PRIV_CAT = :filter->privcat)) 
     ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;   
 
   strcpy (func, "Cupv_list_priv_entry");

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:57 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.2 $ $Date: 2002/06/05 11:50:44 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -48,7 +48,7 @@ Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
 #endif
 
 
-	if (src == NULL || tgt == NULL) {
+	if (src == NULL || tgt == NULL  || strlen(src) == 0 || strlen(tgt) == 0) {
 		serrno = EINVAL;
 		return (-1);
 	}
