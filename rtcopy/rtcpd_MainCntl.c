@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.27 $ $Date: 2000/02/29 15:16:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.28 $ $Date: 2000/03/02 17:18:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1032,6 +1032,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     tape = NULL;
     while ( reqtype != RTCP_NOMORE_REQ  ) {
         memset(&filereq,'\0',sizeof(filereq));
+        filereq.err.severity = RTCP_OK;
         rc = rtcp_RecvReq(client_socket,
             &hdr,client,&tapereq,&filereq);
         if ( rc == -1 ) {

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.15 $ $Date: 2000/03/01 10:40:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.16 $ $Date: 2000/03/02 17:18:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -83,6 +83,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     tapereq = &tape->tapereq;
 
     rc = save_serrno = 0;
+    *newpath = '\0';
     /*
      * Check if this is a stage request
      */
