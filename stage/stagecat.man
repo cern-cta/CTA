@@ -1,10 +1,10 @@
-.\" $Id: stagecat.man,v 1.14 2002/10/27 23:29:12 jdurand Exp $
+.\" $Id: stagecat.man,v 1.15 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.14 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.15 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECAT "1" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage User Commands"
+.TH STAGECAT "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 
@@ -60,6 +60,8 @@ when the data was copied from tape to disk. Only digits followed by eventual uni
 1	Bad parameter.
 .br
 2	System error.
+.br
+3	Unknown error.
 .br
 198	Stager not active
 

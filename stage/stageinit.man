@@ -1,10 +1,10 @@
-.\" $Id: stageinit.man,v 1.12 2002/10/03 13:59:33 jdurand Exp $
+.\" $Id: stageinit.man,v 1.13 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.12 $ $Date: 2002/10/03 13:59:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.13 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEINIT "1" "$Date: 2002/10/03 13:59:33 $" "CASTOR" "Stage Administrator Commands"
+.TH STAGEINIT "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage Administrator Commands"
 .SH NAME
 stageinit \- tells stgdaemon to reread the pool configuration file
 .SH SYNOPSIS
@@ -54,6 +54,8 @@ configuration file
 1	Command aborted or another stageinit is pending.
 .br
 2	System error.
+.br
+3	Unknown error.
 .br
 4	Configuration error.
 .br

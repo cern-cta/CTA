@@ -1,10 +1,10 @@
-.\" $Id: stageping.man,v 1.8 2002/10/27 23:29:12 jdurand Exp $
+.\" $Id: stageping.man,v 1.9 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.8 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.9 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2001-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEPING "1" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage User Commands"
+.TH STAGEPING "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageping \- ping the stager daemon
 .SH SYNOPSIS
@@ -42,6 +42,8 @@ There will be no retry in case of any failure. Can be set using environment vari
 1	Bad parameter.
 .br
 2	System error.
+.br
+3	Unknown error.
 .br
 198	Stager not active
 

@@ -1,10 +1,10 @@
-.\" $Id: stagewrt.man,v 1.25 2002/10/27 23:29:13 jdurand Exp $
+.\" $Id: stagewrt.man,v 1.26 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.25 $ $Date: 2002/10/27 23:29:13 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.26 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEWRT "1" "$Date: 2002/10/27 23:29:13 $" "CASTOR" "Stage User Commands"
+.TH STAGEWRT "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -121,6 +121,8 @@ stagewrt \-M /castor/cern.ch/... diskfile
 1	Bad parameter.
 .br
 2	System error.
+.br
+3	Unknown error.
 .br
 16	EBUSY: Device or resource busy.
 .br

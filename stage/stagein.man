@@ -1,10 +1,10 @@
-.\" $Id: stagein.man,v 1.26 2002/10/30 16:24:55 jdurand Exp $
+.\" $Id: stagein.man,v 1.27 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.26 $ $Date: 2002/10/30 16:24:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.27 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEIN "1" "$Date: 2002/10/30 16:24:55 $" "CASTOR" "Stager User Commands"
+.TH STAGEIN "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or from disk to disk
 .SH SYNOPSIS
@@ -167,6 +167,8 @@ stagein \-\-rdonly \-A deferred \\
 1	Bad parameter.
 .br
 2	System error.
+.br
+3	Unknown error.
 .br
 16	EBUSY: Device or resource busy.
 .br

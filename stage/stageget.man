@@ -1,10 +1,10 @@
-.\" $Id: stageget.man,v 1.9 2002/10/27 23:29:12 jdurand Exp $
+.\" $Id: stageget.man,v 1.10 2002/12/13 15:31:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.9 $ $Date: 2002/10/27 23:29:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.10 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEGET "1" "$Date: 2002/10/27 23:29:12 $" "CASTOR" "Stage User Commands"
+.TH STAGEGET "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS
@@ -80,6 +80,8 @@ MyDice_XXX
 1	Bad parameter.
 .br
 2	System error.
+.br
+3	Unknown error.
 
 .SH SEE ALSO
 \fBstage_other_options\fP(1)
