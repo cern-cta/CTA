@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 09:41:02 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.8 $ $Date: 2000/02/09 18:34:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -85,7 +85,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         /*
          * tpread/tpwrite command output for client log messages.
          */
-        if ( (strncmp(msgbuf," CP",3) != 0 &&
+        if ( level == LOG_INFO && (strncmp(msgbuf," CP",3) != 0 &&
              *msgbuf != '\0' && *msgbuf != '\n') ) {
             if (tpread_command == TRUE ) log(LOG_INFO,msgbuf);
             return;
@@ -95,8 +95,10 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         else if ( err_p != NULL && *err_p != NULL ) 
             fprintf( *err_p,msgbuf);
 
-        if ( client_socket_p != NULL && *client_socket_p != NULL )
+        if ( client_socket_p != NULL && *client_socket_p != NULL ) {
+            if ( level <= LOG_ERR ) log(level,msgbuf);
             rtcp_ClientMsg(*client_socket_p,msgbuf);
+        }
     }
     return;
 }
@@ -112,10 +114,12 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
         loglevel = atoi(p);
     }
 #if defined(RTCP_SERVER)
-    if ( msgbuf == NULL && out == NULL && err == NULL && client_socket == NULL ) {
+    if ( out == NULL && err == NULL ) {
         initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
-        rtcp_log = (void (*)(int, const char *, ...))log;
-        return(0);
+        if ( msgbuf == NULL && client_socket == NULL ) {
+            rtcp_log = (void (*)(int, const char *, ...))log;
+            return(0);
+        }
     }
 #endif /* RTCP_SERVER */
     if ( p == NULL ) {

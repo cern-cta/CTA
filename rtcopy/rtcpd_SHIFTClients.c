@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.12 $ $Date: 2000/02/08 15:24:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.13 $ $Date: 2000/02/09 18:34:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -223,6 +223,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
     char **argv = NULL;
     char *p;
     char *msgbuf = NULL;
+    char *msgtxtbuf = NULL;
     static char commands[][20]={"tpread","tpwrite","dumptape"};
 
     if ( s == NULL || *s == INVALID_SOCKET || 
@@ -262,6 +263,8 @@ static int rtcp_GetOldCMsg(SOCKET *s,
                 hdr->len);
             return(-1);
         }
+        rc = rtcp_SendOldCAckn(s,hdr);
+        if ( rc == -1 ) return(-1);
 
         p = msgbuf;
         unmarshall_STRING(p,(*req)->name);
@@ -291,7 +294,11 @@ static int rtcp_GetOldCMsg(SOCKET *s,
              */
             for (i=1;i<argc; i++) unmarshall_STRING_nc(p,argv[i]);
             argv[argc] = NULL;
+            msgtxtbuf = (char *)calloc(1,RTCP_SHIFT_BUFSZ);
+            rtcp_InitLog(msgtxtbuf,NULL,NULL,s);
             rc = rtcpc_BuildReq(&((*req)->tape),argc,argv);
+            rtcp_InitLog(NULL,NULL,NULL,NULL);
+            free(msgtxtbuf);
             free(msgbuf);
             free(argv);
         } else {
@@ -300,7 +307,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             serrno = SEINTERNAL;
             return(-1);
         }
-    }
+    } else rc = rtcp_SendOldCAckn(s,hdr);
     return(rc);
 }
 
@@ -369,12 +376,12 @@ static int rtcp_SendRC(SOCKET *s,
     char msgbuf[4*LONGSIZE], *p;
 
     if ( s == NULL || *s == INVALID_SOCKET || hdr == NULL || 
-         status == NULL || req == NULL ) {
+         status == NULL ) {
         serrno = EINVAL;
         return;
     }
 
-    if ( req->tape != NULL ) {
+    if ( req != NULL && req->tape != NULL ) {
         rc = rtcp_RetvalSHIFT(req->tape,NULL,&retval);
         if ( rc == -1 ) retval = UNERR;
         *status = retval;
@@ -396,10 +403,14 @@ static int rtcp_SendRC(SOCKET *s,
     return(0);
 }
     
-int rtcpd_CleanUpSHIFT(shift_client_t **req, int status) {
+int rtcpd_CleanUpSHIFT(shift_client_t **req, char **buf, int status) {
     if ( req == NULL || *req == NULL ) return(status);
     rtcpc_FreeReqLists(&((*req)->tape));
     free(*req);
+    if ( buf != NULL && *buf != NULL ) {
+        free(*buf);
+        buf = NULL;
+    }
     *req = NULL;
     return(status);
 }
@@ -412,21 +423,28 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
-    char client_msg_buf[256],envacct[20];
+    char envacct[20];
+    char *client_msg_buf = NULL;
 
     if ( s == NULL || hdr == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
 
-    rc = rtcp_GetOldCMsg(s,hdr,&req);
-    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+    client_msg_buf = (char *)calloc(1,RTCP_SHIFT_BUFSZ);
 
-    rc = rtcp_SendOldCAckn(s,hdr);
-    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+    rtcp_log(LOG_DEBUG,"rtcp_RunOld() Get SHIFT request\n");
+
+    rc = rtcp_GetOldCMsg(s,hdr,&req);
+    rtcp_log(LOG_DEBUG,"rtcp_RunOld() rtcp_GetOldCMsg(): rc=%d\n",rc);
+    if ( rc == -1 ) {
+        retval = USERR;
+        if ( hdr->reqtype != RQST_INFO ) (void) rtcp_SendRC(s,hdr,&retval,NULL);
+        return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
+    }
 
     rc = rtcp_CheckClientHost(s,req);
-    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+    if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
 
     if ( hdr->reqtype == RQST_INFO ) {
         rtcp_log(LOG_INFO,"info request by user %s (%d,%d) from %s\n",
@@ -435,15 +453,15 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         rc = rtcp_GetOldCinfo(hdr,req);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
-            return(rtcpd_CleanUpSHIFT(&req,-1));
+            return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }
         rtcp_log(LOG_DEBUG,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
 
-        if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+        if ( rc == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
 
-        return(rtcpd_CleanUpSHIFT(&req,0));
+        return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,0));
     }
 
     CLThId = -1;
@@ -462,17 +480,17 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
 #if !defined(_WIN32)
         if ( setgid(req->gid) == -1 ) {
             rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
-            return(rtcpd_CleanUpSHIFT(&req,-1));
+            return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }
         if ( setuid(req->uid) == -1 ) {
             rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
-            return(rtcpd_CleanUpSHIFT(&req,-1));
+            return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }
         if ( *req->acctstr != '\0' ) {
             (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
             if ( putenv(envacct) != 0 ) {
                 rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
-                return(rtcpd_CleanUpSHIFT(&req,-1));
+                return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
             }
         }
 #endif /* !_WIN32 */
@@ -481,7 +499,7 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
          * Kick off client listen thread to answer pings etc.
          */
         CLThId = rtcpd_ClientListen(*s);
-        if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,-1));
+        if ( CLThId == -1 ) return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
  
         rc = rtcpc(req->tape);
     }
@@ -490,7 +508,6 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     rtcp_log = (void (*)(int, const char *, ...))log;
 
     if ( CLThId != -1 ) (void)rtcpd_WaitCLThread(CLThId,&status);
-
-    return(rtcpd_CleanUpSHIFT(&req,rc));
+    return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,rc));
 }
 
