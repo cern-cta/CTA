@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:00 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:07:35 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:07:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -138,7 +138,7 @@ int rtcpcld_findRunningTpCopy(
       found = -1;
     } else {
       segment = (struct Cstager_Segment_t *)file->dbRef->row;
-      Cstager_Segment_tapeCopy(segment,tpCopy);
+      Cstager_Segment_copy(segment,tpCopy);
     }
   }
 
@@ -175,8 +175,6 @@ int rtcpcld_initNsInterface()
 {
   char *p;
 
-  if ( initLocks() == -1 ) return(-1);
-  
   if ( ((p = getenv("STAGE_USE_CHECKSUM")) != NULL) ||
        ((p = getconfent("STG","USE_CHECKSUM",0)) != NULL) ) {
     if ( strcmp(p,"NO") == 0 ) use_checksum = 0;
@@ -591,14 +589,18 @@ int rtcpcld_updateNsSegmentAttributes(
     LOG_SYSCALL_ERR("Cstager_Segment_create()");
     return(-1);
   }
-  Cstager_Segment_setTapeCopy(segment,tpCopy);
-  Cstager_TapeCopy_addSegment(tpCopy,segment);
+  Cstager_Segment_setCopy(segment,tpCopy);
+  Cstager_TapeCopy_addSegments(tpCopy,segment);
 
-  rc = rtcpcld_findTape(tapereq,&tp);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("rtcpcld_findTape()");
-    return(-1);
+  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
+    rc = rtcpcld_updateTapeFromDB(tape);
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_updateTapeFromDB()");
+      return(-1);
+    }
   }
+  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+  
   Cstager_Segment_setTape(segment,tp);
   Cstager_Tape_addSegments(tp,segment);
 
@@ -640,42 +642,34 @@ int rtcpcld_updateNsSegmentAttributes(
   return(rc);
 }
 
-int rtcpcld_checkSegment(
-                         tapereq,
-                         filereq
-                         )
-     rtcpTapeRequest_t *tapereq;
+int rtcpcld_checkNsSegment(
+                           tape,
+                           filereq
+                           )
+     tape_list_t *tape;
      rtcpFileRequest_t *filereq;
 {
   int rc = 0, nbSegms = 0, i, found = 0, save_serrno;
-  file_list_t file;
-  struct Cstager_Tape_t *tp = NULL;
-  struct Cstager_Segment_t *segment = NULL;
+  file_list_t *file;
   struct Cns_segattrs *currentSegattrs, newSegattrs;
   struct Cns_fileid *castorFileId = NULL;
+  rtcpTapeRequest_t *tapereq;
   char *blkid = NULL, *p;
   
-  if ( filereq == NULL ) {
+  if ( (tape == NULL) || (filereq == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
+  tapereq = &(tape->tapereq);
 
-  rc = rtcpcld_findTape(tapereq,&tp);
+  file = NULL;
+  rc = rtcpcld_findFile(
+                        tape,
+                        filereq,
+                        &file
+                        );
   if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("rtcpcld_findTape()");
-    return(-1);
-  }
-
-  
-  file.filereq = *filereq;
-  rc = rtcpcld_findSegmentFromFile(
-                                   &file,
-                                   tp,
-                                   &segment,
-                                   NULL
-                                   );
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("rtcpcld_findTape()");
+    LOG_SYSCALL_ERR("rtcpcld_findFile()");
     return(-1);
   }
 
@@ -713,13 +707,17 @@ int rtcpcld_checkSegment(
     found = 1;
   }
 
+  /* 
+   * String representation of the blockid used for logging purpose only
+   */
+  blkid = rtcp_voidToString(
+                            (void *)filereq->blockid,
+                            sizeof(filereq->blockid)
+                            );
+  if ( blkid == NULL ) blkid = strdup("unknown");
+  
   if ( found == 0 ) {
-    blkid = rtcp_voidToString(
-                              (void *)filereq->blockid,
-                              sizeof(filereq->blockid)
-                              );
-    if ( blkid == NULL ) blkid = strdup("unknown");
-    (void)dlf_write(
+     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_NSSEGNOTFOUND,
@@ -748,15 +746,6 @@ int rtcpcld_checkSegment(
     return(-1);
   }
 
-  /* 
-   * String representation of the blockid used for logging purpose only
-   */
-  blkid = rtcp_voidToString(
-                            (void *)filereq->blockid,
-                            sizeof(filereq->blockid)
-                            );
-  if ( blkid == NULL ) blkid = strdup("unknown");
-  
   if ( (use_checksum == 1) &&
        (filereq->castorSegAttr.segmCksumAlgorithm[0] != '\0') ) {
     if ( (currentSegattrs[i].checksum_name[0] == '\0') ||
