@@ -80,7 +80,7 @@ char *recfm;
 	}
 
 	if (errflg) {
-		serrno = ETPRM;
+		serrno = EINVAL;
 		return (-1);
 	}
  
