@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2004/07/27 15:35:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2004/07/30 10:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -35,19 +35,29 @@ ALL2=SharedLibraryTargetName(castorProto)
 #if BuildSecurity
 
 ALLSEC=SharedLibraryTargetName(Csec_plugin_ID)
+INSTALLSEC=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
+EXPORTSEC=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
 
 #if UseGSI
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_GSI)
+INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
+EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
 
 #endif
 
 #if UseKRB5
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB5)
+INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
+EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
+
 
 #endif
 
 #if UseKRB4
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB4)
+INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
+EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
+
 
 #endif
 
@@ -63,7 +73,7 @@ INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
 INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorProto))
 #endif
 
-install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2)
+install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
@@ -73,7 +83,7 @@ EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorProto)
 #endif
 
-export: $(EXPORT0) $(EXPORT1) $(EXPORT2)
+export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORTSEC)
 
 exportman: 
 
