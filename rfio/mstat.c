@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.26 2002/05/24 06:46:21 baud Exp $
+ * $Id: mstat.c,v 1.27 2002/09/02 15:28:07 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.26 $ $Date: 2002/05/24 06:46:21 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.27 $ $Date: 2002/09/02 15:28:07 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -38,6 +38,7 @@ EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
 static int rfio_mstat_findentry _PROTO((char *,int));
 static int rfio_end_this _PROTO((int,int));
+extern int rfio_newhost _PROTO((char *));
 
 int DLL_DECL rfio_mstat(file,statb)
      char *file ;
@@ -92,6 +93,7 @@ int DLL_DECL rfio_mstat(file,statb)
       /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
       /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
       /* itself calling netclose(fd) */
+      rfio_errno = 0;
       fd=rfio_connect(host,&rt) ;
       if ( fd < 0 ) {
         END_TRACE();
@@ -110,7 +112,7 @@ int DLL_DECL rfio_mstat(file,statb)
           rc = rfio_smstat(fd,filename,statb,RQST_STAT_SEC) ;
         else
           rc = rfio_smstat(fd,filename,statb,RQST_STAT);
-        if ( rc != -1 ) {
+        if ( (rc != -1) || (rc == -1 && rfio_errno != 0) ) {
           TRACE(2,"rfio","rfio_mstat() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
           netclose(fd);
         }
@@ -419,6 +421,8 @@ static int rfio_mstat_findentry(hostname,Tid)
   for (i = 0; i < MAXMCON; i++) {
     if ((strcmp(mstat_tab[i].host,hostname) == 0) && (mstat_tab[i].Tid == Tid)) {
       rc = i;
+      /* Lie to rfio_lasthost() */
+      rfio_newhost(hostname);
       goto _rfio_mstat_findentry_return;
     }
   }
