@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.67 2000/05/18 16:41:56 jdurand Exp $
+ * $Id: stager.c,v 1.68 2000/05/22 06:00:31 jdurand Exp $
  */
 
 /*
@@ -14,9 +14,12 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.67 $ $Date: 2000/05/18 16:41:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.68 $ $Date: 2000/05/22 06:00:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
+#ifndef _WIN32
+#include <unistd.h>                 /* For getcwd() etc... */
+#endif
 #include <grp.h>
 #include <pwd.h>
 #include <sys/types.h>
@@ -66,6 +69,7 @@ int stager_client_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int isuserlevel _PROTO((char *));
 int getnamespace _PROTO((char *, char *));
+void init_nfsroot_and_hostname _PROTO(());
 
 int Aflag;                          /* Allocation flag */
 int Migrationflag;                  /* Migration flag */
@@ -88,22 +92,20 @@ char *fid = NULL;                   /* File ID */
 int nrtcpcreqs;                     /* Number of rtcpcreq structures in circular list */
 tape_list_t **rtcpcreqs = NULL;     /* rtcp request itself (circular list) */
 
-u_signed64 *hsm_totalsize = NULL;        /* Total size per hsm file */
-u_signed64 *hsm_transferedsize = NULL;   /* Yet transfered size per hsm file */
-int *hsm_fseg = NULL;                    /* Current segment */
-u_signed64 *hsm_fsegsize = NULL;         /* Current segment size */
-int *hsm_fseq = NULL;                    /* Current file sequence on current tape (vid) */
-char **hsm_vid = NULL;                   /* Current vid pointer or NULL if not in current rtcpc request */
-char putenv_string[CA_MAXHOSTNAMELEN + 10]; /* "CNS_HOST=%s" where %s max length is CA_MAXHOSTNAMELEN */
-char cns_error_buffer[512];
-char vmgr_error_buffer[512];
-char stager_error_buffer[512];
-char stager_output_buffer[512];
-int Flags = 0;                       /* TAPE flag for vmgr_updatetape */
-int stagewrt_nomoreupdatetape = 0;   /* Flag to tell that the last updatetape from callback already did the job */
-struct passwd *stpasswd;             /* Generic uid/gid stage:st */
-int nuserlevel = 0;         /* Number of user-level files */
-int nexplevel = 0;         /* Number of experiment-level files */
+u_signed64 *hsm_totalsize = NULL;   /* Total size per hsm file */
+u_signed64 *hsm_transferedsize = NULL; /* Yet transfered size per hsm file */
+int *hsm_fseg = NULL;               /* Current segment */
+u_signed64 *hsm_fsegsize = NULL;    /* Current segment size */
+int *hsm_fseq = NULL;               /* Current file sequence on current tape (vid) */
+char **hsm_vid = NULL;              /* Current vid pointer or NULL if not in current rtcpc request */
+char cns_error_buffer[512];         /* Cns error buffer */
+char vmgr_error_buffer[512];        /* Vmgr error buffer */
+int Flags = 0;                      /* Tape flag for vmgr_updatetape */
+int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback already did the job */
+struct passwd *stpasswd;            /* Generic uid/gid stage:st */
+int nuserlevel = 0;                 /* Number of user-level files */
+int nexplevel = 0;                  /* Number of experiment-level files */
+char nfsroot[MAXPATH];              /* Current RFIO's NFSROOT for shift-like path parsing */
 
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
@@ -248,6 +250,7 @@ int main(argc, argv)
 
 #ifdef __INSURE__
 	if ((f = fopen(tmpfile,"r")) == NULL) {
+		free(stcs);
 		exit (SYERR);
 	}
 	fread(stcp,sizeof(struct stgcat_entry),nbcat_ent,f);
@@ -265,24 +268,47 @@ int main(argc, argv)
 	close (0);
 #endif
 
-	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
+	/* Initialize RFIO's NFSROOT and hostname */
+	init_nfsroot_and_hostname();
 
-    /* Add hostname to all ipath'es if needed */
-    {
-      char *host;
-      char *filename;
-      char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+	/* Add hostname to all ipath'es if needed */
+	{
+		char *host;
+		char *filename;
+		char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 
-      for (stcp = stcs; stcp < stce; stcp++) {
-        rfio_parseln (stcp->ipath, &host, &filename, NORDLINKS);
-        if (host == NULL) {
-          strcpy(ipath,hostname);
-          strcat(ipath,":");
-          strcat(ipath,stcp->ipath);
-          strcpy(stcp->ipath,ipath);
-        }
-      }
-    }
+		for (stcp = stcs; stcp < stce; stcp++) {
+			rfio_parseln (stcp->ipath, &host, &filename, NORDLINKS);
+			if (host == NULL) {
+				if (! *nfsroot ||
+						strncmp (stcp->ipath, nfsroot, strlen (nfsroot)) != 0 ||
+						*(stcp->ipath + strlen(nfsroot)) != '/')  {
+					/* not /shift syntax */
+					strcpy(ipath,hostname);
+					strcat(ipath,":");
+					strcat(ipath,stcp->ipath);
+				} else {
+					/* /shift syntax : we get the second component as a hostname */
+					char *shifthost;
+
+					if ((shifthost = strchr(stcp->ipath + strlen(nfsroot) + 1, '/')) != NULL) {
+						/* There is a second component, global syntax is then /shift/host/... */
+						*shifthost = '\0';
+						strcpy(ipath,stcp->ipath + strlen(nfsroot) + 1);
+						strcat(ipath,":");
+						*shifthost = '/';
+						strcat(ipath,stcp->ipath);
+					} else {
+						/* No second component (strange !) */
+						strcpy(ipath,hostname);
+						strcat(ipath,":");
+						strcat(ipath,stcp->ipath);
+					}
+				}
+				strcpy(stcp->ipath,ipath);
+			}
+		}
+	}
 
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 1);
@@ -308,6 +334,7 @@ int main(argc, argv)
       if ((nhpss == 0 && ncastor == 0) ||
           (nhpss  > 0 && ncastor  > 0)) {
         sendrep(rpfd, MSG_ERR, "### Recognized %d HPSS files, %d CASTOR files\n",nhpss,ncastor);
+		free(stcs);
         exit(SYERR);
       }
     }
@@ -329,15 +356,18 @@ int main(argc, argv)
         if (stcp == stcs) {
           if (getnamespace(previousnamespace,stcp->u1.m.xfile) != 0) {
             sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",stcp->u1.m.xfile);
+			free(stcs);
             exit(SYERR);
           }
         } else {
           if (getnamespace(currentnamespace,stcp->u1.m.xfile) != 0) {
             sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",stcp->u1.m.xfile);
+			free(stcs);
             exit(SYERR);
           }
           if (strcmp(previousnamespace,currentnamespace) != 0) {
             sendrep(rpfd, MSG_ERR, "### Cannot mix namespaces (/%s/ and /%s/)\n",previousnamespace,currentnamespace);
+			free(stcs);
             exit(SYERR);
           }
           strcpy(previousnamespace,currentnamespace);
@@ -347,11 +377,13 @@ int main(argc, argv)
           (nuserlevel  > 0 && nexplevel  > 0)) {
         sendrep(rpfd, MSG_ERR, "### Found %d user-level files, %d experiment-level files\n",
                 nuserlevel,nexplevel);
+		free(stcs);
         exit(SYERR);
       }
       /* We get information on generic stage:st uid/gid */
       if ((stpasswd = getpwnam("stage")) == NULL) {
         sendrep(rpfd, MSG_ERR, "### Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+		free(stcs);
         exit(SYERR);
       }
       /* For exp level, we will use the last of the entries */
@@ -378,6 +410,7 @@ int main(argc, argv)
             exit (SYERR);
           }
         }
+		free(stcs);
 		exit((exit_code >> 8) & 0xFF);
 	}
 
@@ -404,6 +437,7 @@ int main(argc, argv)
 			vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0 ||
 			stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
 			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
+			free(stcs);
 			exit(SYERR);
 		}
 #endif
@@ -424,6 +458,7 @@ int main(argc, argv)
 		}
 	}
 
+	free(stcs);
 	exit (c);
 }
 
@@ -549,17 +584,6 @@ char *hsmpath(stcp)
 			/* to connect directly to this host. No need to do a putenv ourself. */
 			end_host_hsm[0] = save_char;
 			return(stcp->u1.m.xfile);
-			/*
-#ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_ERR, "[DEBUG-XXX] Will set environment variable CNS_HOST=%s\n",host_hsm);
-#endif
-			strcpy(putenv_string,"CNS_HOST=");
-			strcat(putenv_string,host_hsm);
-			if (putenv(putenv_string) != 0) {
-				sendrep(rpfd, MSG_ERR, "### putenv(%s) error in stager (%s)\n",putenv_string,strerror(errno));
-				exit(SYERR);
-			}
-			*/
 		} else {
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_ERR, "[DEBUG-XXX] Hsm Host %s is incompatible with a /castor file. Default CNS_HOST (from shift.conf) will apply\n",host_hsm);
@@ -2261,3 +2285,18 @@ int stager_client_callback(tapereq,filereq)
 
   return(0);
 }
+
+void init_nfsroot_and_hostname()
+{
+	extern char *getconfent _PROTO((char *, char *, int));
+	int n = 0;
+	char *p;
+
+	if (p = getconfent ("RFIO", "NFS_ROOT", 0))
+		strcpy (nfsroot, p);
+	else
+		nfsroot[0] = '\0';
+	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
+}
+
+
