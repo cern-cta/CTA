@@ -66,9 +66,10 @@ void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int, int, int, int));
-extern signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
-extern signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
-extern signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
+extern char *findpoolname _PROTO((char *));
+extern signed64 get_stageout_retenp_raw _PROTO((struct stgcat_entry *));
+extern signed64 get_stagealloc_retenp_raw _PROTO((struct stgcat_entry *));
+extern signed64 get_put_failed_retenp_raw _PROTO((struct stgcat_entry *));
 int get_retenp _PROTO((struct stgcat_entry *, char *));
 int get_mintime _PROTO((struct stgcat_entry *, char *));
 
@@ -80,19 +81,15 @@ extern int sendrep _PROTO((int *, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int isvalidpool _PROTO((char *));
+extern int havemetapool _PROTO((char *, char *));
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern void print_pool_utilization _PROTO((int *, char *, char *, char *, char *, int, int, int, int));
-extern int nextreqid _PROTO(());
-extern int savereqs _PROTO(());
-extern int cleanpool _PROTO((char *));
-extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern int mintime_beforemigr _PROTO((int));
 extern int get_mintime _PROTO((struct stgcat_entry *, char *));
-extern char *findpoolname _PROTO((char *));
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -100,7 +97,7 @@ extern char *sys_errlist[];
 extern char defpoolname[];
 extern char defpoolname_in[];
 extern char defpoolname_out[];
-extern char func[16];
+extern char func[];
 extern int nbcat_ent;
 extern int reqid;
 extern int rpfd;
@@ -123,6 +120,7 @@ extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
 extern int nbpool;
 
+static int is_metapool;
 static int nbtpf;
 static int noregexp_flag;
 static int reqid_flag;
@@ -308,6 +306,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	mintime_flag = 0;
     format_flag = 0;
 
+	is_metapool = 0;
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -474,7 +473,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if (stcp_input.poolname[0] != '\0') {
 			/* Implicit -p option */
 			if (strcmp (stcp_input.poolname, "NOPOOL") == 0 ||
-				isvalidpool (stcp_input.poolname)) {
+				isvalidpool (stcp_input.poolname) ||
+				(is_metapool = ismetapool  (stcp_input.poolname))) {
 				strcpy (poolname, stcp_input.poolname);
 			} else {
 				sendrep (&rpfd, MSG_ERR, STG32, stcp_input.poolname);
@@ -597,7 +597,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-					isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg) ||
+					(is_metapool = ismetapool  (Coptarg))) {
 					strcpy (poolname, Coptarg);
 				} else {
 					sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
@@ -792,7 +793,11 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((stcp->status & 0xF0) == WAITING_REQ) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
-		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+		} else if (is_metapool && ! havemetapool(stcp->poolname,poolname)) {
+			continue;
+		} else if ((! is_metapool) && *poolname && strcmp (poolname, stcp->poolname)) {
+			continue;
+		}
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
 		if (side_flag) {
@@ -1702,7 +1707,11 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		if ((stcp->status & 0xF0) != STAGED) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
-		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+		} else if (is_metapool && ! havemetapool(stcp->poolname,poolname)) {
+			continue;
+		} else if ((! is_metapool) && *poolname && strcmp (poolname, stcp->poolname)) {
+			continue;
+		}
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
 		if (side_flag) {
@@ -1840,7 +1849,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 								   (!  ISCASTORMIG (stcp) ) &&
 								   (!  ISSTAGED    (stcp) ) &&
 								   (!  ISPUT_FAILED(stcp) ) &&
-								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) &&
+								   (  (stageout_retenp = get_stageout_retenp_raw(stcp)) >= 0) &&
 								   (  (thistime - stcp->a_time) > stageout_retenp));
 		*/
 		/*
@@ -1848,12 +1857,12 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 									 (!  ISCASTORMIG (stcp) ) &&
 									 (!  ISSTAGED    (stcp) ) &&
 									 (!  ISPUT_FAILED(stcp) ) &&
-									 (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) &&
+									 (  (stagealloc_retenp = get_stagealloc_retenp_raw(stcp)) >= 0) &&
 									 (  (thistime - stcp->a_time) > stagealloc_retenp));
 		*/
 		isput_failed_expired = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								   ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
-								   (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
+								   (  (put_failed_retenp = get_put_failed_retenp_raw(stcp)) >= 0) && /* And with a ret. period */
 								   (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got expired */
 		isother_ok = ISSTAGED(stcp);
 		/*
@@ -1862,7 +1871,11 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		if (! (isput_failed_expired || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
-		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+		} else if (is_metapool && ! havemetapool(stcp->poolname,poolname)) {
+			continue;
+		} else if ((! is_metapool) && *poolname && strcmp (poolname, stcp->poolname)) {
+			continue;
+		}
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
 		if (side_flag) {
@@ -1917,8 +1930,8 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 				if (strcmp(p, mfile) != 0) continue;
 			}
 		}
-		if (stcp->t_or_d == 'h') {
-			/* We explicitely exclude all CASTOR HSM files that have enough retention period on disk */
+		if (stcp->t_or_d == 'h' && ISSTAGED(stcp)) {
+			/* We explicitely exclude all STAGED CASTOR HSM files that have enough retention period on disk */
 			int thisretenp;
 
 			save_rpfd = rpfd;
@@ -1932,7 +1945,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			if (thisretenp == INFINITE_LIFETIME) continue;
 			if (thisretenp != AS_LONG_AS_POSSIBLE) {
 				/* Not a default lifetime - either user defined, or group specific  - always checked */
-				if (((int) (this_time - stcp->a_time)) <= thisretenp) continue; /* Lifetime not exceeded ? */
+				if (this_time <= thisretenp) continue; /* Lifetime not exceeded ? */
 			}
 		}
 		if (stcp->ipath[0] != '\0') {
@@ -2076,7 +2089,11 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		if ((stcp->status & 0xF0) != STAGED) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
-		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+		} else if (is_metapool && ! havemetapool(stcp->poolname,poolname)) {
+			continue;
+		} else if ((! is_metapool) && *poolname && strcmp (poolname, stcp->poolname)) {
+			continue;
+		}
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
 		if (stcp->t_or_d != 't') continue;
@@ -2117,7 +2134,7 @@ int get_retenp(stcp,timestr)
 	switch (stcp->status) {
 	case STAGEOUT:
 		/* stageout entry */
-		if ((this_retenp = get_stageout_retenp(stcp)) >= 0) {
+		if ((this_retenp = get_stageout_retenp_raw(stcp)) >= 0) {
 			/* There is a stageout retention period */
 			if ((this_time - stcp->a_time) > this_retenp) {
 				strcpy(timestr,"Expired");
@@ -2139,7 +2156,7 @@ int get_retenp(stcp,timestr)
 		break;
 	case STAGEALLOC:
 		/* stagealloc entry */
-		if ((this_retenp = get_stagealloc_retenp(stcp)) >= 0) {
+		if ((this_retenp = get_stagealloc_retenp_raw(stcp)) >= 0) {
 			/* There is a stagealloc retention period */
 			if ((this_time - stcp->a_time) > this_retenp) {
 				strcpy(timestr,"Expired");
@@ -2162,7 +2179,7 @@ int get_retenp(stcp,timestr)
 	case STAGEOUT|PUT_FAILED:
 	case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
 		/* put_failed entry (castor or not) */
-		if ((this_retenp = get_put_failed_retenp(stcp)) >= 0) {
+		if ((this_retenp = get_put_failed_retenp_raw(stcp)) >= 0) {
 			/* There is a put_failed retention period */
 			if ((this_time - stcp->a_time) > this_retenp) {
 				strcpy(timestr,"Expired");
@@ -2214,19 +2231,11 @@ int get_retenp(stcp,timestr)
 					strcpy(timestr,"INFINITE_LIFETIME");
 					break;
 				default:
-					if ((this_time - stcp->a_time) > this_retenp) {
+					if (this_time > this_retenp) {
 						strcpy(timestr,"Expired");
 					} else {
-						time_t dummy_retenp;
-						if ((INT_MAX - this_retenp) < stcp->a_time) {
-							/* Overflow */
-							this_retenp = INT_MAX;
-						} else {
-							this_retenp += stcp->a_time;
-						}
-						dummy_retenp = (time_t) this_retenp;
 						/* Retention period not yet expired */
-						stage_util_time(dummy_retenp,timestr);
+						stage_util_time((time_t) this_retenp,timestr);
 					}
 					break;
 				}
@@ -2251,7 +2260,7 @@ int get_mintime(stcp,timestr)
 
 	if (stcp->t_or_d != 'h') return(-1);
 
-	/* Depending of the status of the stcp we will return the correct current retention period on disk */
+	/* Depending of the status of the stcp we will return the correct current mintime before migration */
 	switch (stcp->status) {
 	case STAGEOUT|CAN_BE_MIGR:
 		/* CASTOR entry */
