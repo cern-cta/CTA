@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.1 $ $Date: 2004/08/05 15:40:07 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.2 $ $Date: 2004/09/06 14:35:56 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -270,8 +270,10 @@ int rtcpd_waitMoreWork _PROTO((file_list_t *fl));
 
 #if defined(CTAPE_DUMMIES)
 int  DLL_DECL  stage_setlog _PROTO((void (*) _PROTO((int, char *))));
+/*
 int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
 int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
+*/
 #endif /* CTAPE_DUMMIES */
 
 #ifdef MONITOR
