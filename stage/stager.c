@@ -885,6 +885,7 @@ int stagewrt_castor_hsm_file() {
             continue;
           }
           stcp_start = stcp_end = stcp;
+          stcp_end++;
           istart = iend = i;
           break;
         }
