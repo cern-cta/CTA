@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.155 2001/10/07 07:13:08 jdurand Exp $
+ * $Id: stager.c,v 1.156 2001/10/08 09:03:30 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.155 $ $Date: 2001/10/07 07:13:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.156 $ $Date: 2001/10/08 09:03:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3617,12 +3617,15 @@ int stager_hsm_callback(tapereq,filereq)
 			if (stager_client_callback_i == iend) {
 				stagewrt_nomoreupdatetape = 1;
 			}
-			if (filereq->host_bytes > 0 && filereq->bytes_out > 0) {
+			if (filereq->bytes_out > 0) {
 				compression_factor = filereq->host_bytes * 100 / filereq->bytes_out;
+			} else {
+				compression_factor = 0;
 			}
+
 			Flags = tape_flag;
 
-			if ((filereq->bytes_in > 0) && (filereq->host_bytes > 0) && (filereq->bytes_out > 0)) {
+			if (filereq->bytes_in > 0) {
 				/* gcc compiler bug - fixed or forbidden register was spilled. */
 				/* This may be due to a compiler bug or to impossible asm      */
 				/* statements or clauses.                                      */
@@ -4079,6 +4082,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Sunday 07 October, 2001 at 09:12:22 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 08 October, 2001 at 11:02:34 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
