@@ -102,6 +102,7 @@ void castor::io::StreamStagePutDoneRequestCnv::createRep(castor::IAddress* addre
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
+  ad->stream() << obj->parentUuid();
   ad->stream() << obj->id();
 }
 
@@ -145,6 +146,9 @@ castor::IObject* castor::io::StreamStagePutDoneRequestCnv::createObj(castor::IAd
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
+  std::string parentUuid;
+  ad->stream() >> parentUuid;
+  object->setParentUuid(parentUuid);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -224,6 +224,20 @@ int Cstager_ReqIdRequest_setClient(struct Cstager_ReqIdRequest_t* instance, stru
 /***************************************/
 
 /**
+ * Get the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_ReqIdRequest_parentUuid(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_ReqIdRequest_setParentUuid(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of parent
  */
 int Cstager_ReqIdRequest_parent(struct Cstager_ReqIdRequest_t* instance, struct Cstager_FileRequest_t** var);

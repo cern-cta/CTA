@@ -97,6 +97,26 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_parentUuid
+       * The UUID of the parent request. This is used by clients to build the request and
+       * is converted to a link to an existing FileRequest in the stager
+       * @return the value of m_parentUuid
+       */
+      std::string parentUuid() const {
+        return m_parentUuid;
+      }
+
+      /**
+       * Set the value of m_parentUuid
+       * The UUID of the parent request. This is used by clients to build the request and
+       * is converted to a link to an existing FileRequest in the stager
+       * @param new_var the new value of m_parentUuid
+       */
+      void setParentUuid(std::string new_var) {
+        m_parentUuid = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -131,6 +151,9 @@ namespace castor {
       }
 
     private:
+
+      /// The UUID of the parent request. This is used by clients to build the request and is converted to a link to an existing FileRequest in the stager
+      std::string m_parentUuid;
 
       /// The id of this object
       u_signed64 m_id;

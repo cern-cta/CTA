@@ -37,6 +37,7 @@
 //------------------------------------------------------------------------------
 castor::stager::ReqIdRequest::ReqIdRequest() throw() :
   Request(),
+  m_parentUuid(""),
   m_parent(0) {
 };
 
@@ -60,6 +61,8 @@ void castor::stager::ReqIdRequest::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->Request::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "parentUuid : " << m_parentUuid << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Parent : " << std::endl;
   if (0 != m_parent) {

@@ -128,6 +128,20 @@ int Cstager_StageAbortRequest_subRequests(struct Cstager_StageAbortRequest_t* in
 /*************************************************/
 
 /**
+ * Get the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StageAbortRequest_parentUuid(struct Cstager_StageAbortRequest_t* instance, const char** var);
+
+/**
+ * Set the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StageAbortRequest_setParentUuid(struct Cstager_StageAbortRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of parent
  */
 int Cstager_StageAbortRequest_parent(struct Cstager_StageAbortRequest_t* instance, struct Cstager_FileRequest_t** var);

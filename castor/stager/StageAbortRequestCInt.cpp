@@ -155,6 +155,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_parentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageAbortRequest_parentUuid(castor::stager::StageAbortRequest* instance, const char** var) {
+    *var = instance->parentUuid().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_setParentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageAbortRequest_setParentUuid(castor::stager::StageAbortRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setParentUuid(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StageAbortRequest_parent
   //----------------------------------------------------------------------------
   int Cstager_StageAbortRequest_parent(castor::stager::StageAbortRequest* instance, castor::stager::FileRequest** var) {

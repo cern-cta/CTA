@@ -271,6 +271,20 @@ int Cstager_StagePutDoneRequest_clone(struct Cstager_StagePutDoneRequest_t* inst
                                       struct C_IObject_t* ret);
 
 /**
+ * Get the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StagePutDoneRequest_parentUuid(struct Cstager_StagePutDoneRequest_t* instance, const char** var);
+
+/**
+ * Set the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StagePutDoneRequest_setParentUuid(struct Cstager_StagePutDoneRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

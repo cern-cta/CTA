@@ -277,6 +277,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_parentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_parentUuid(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->parentUuid().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setParentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setParentUuid(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setParentUuid(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_ReqIdRequest_parent
   //----------------------------------------------------------------------------
   int Cstager_ReqIdRequest_parent(castor::stager::ReqIdRequest* instance, castor::stager::FileRequest** var) {

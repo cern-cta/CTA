@@ -39,6 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StagePutDoneRequest::StagePutDoneRequest() throw() :
   FileRequest(),
+  m_parentUuid(""),
   m_id(0),
   m_parent(0) {
 };
@@ -64,6 +65,7 @@ void castor::stager::StagePutDoneRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->FileRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "parentUuid : " << m_parentUuid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Parent : " << std::endl;

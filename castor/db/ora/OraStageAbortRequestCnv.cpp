@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraStageAbortRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_insertStatementString =
-"INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12,:13) RETURNING id INTO :14";
+"INSERT INTO StageAbortRequest (parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12,:13,:14) RETURNING id INTO :15";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementStr
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
+"SELECT parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateStatementString =
-"UPDATE StageAbortRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10 WHERE id = :11";
+"UPDATE StageAbortRequest SET parentUuid = :1, flags = :2, userName = :3, euid = :4, egid = :5, mask = :6, pid = :7, machine = :8, svcClassName = :9, userTag = :10, reqId = :11 WHERE id = :12";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_storeTypeStatementString =
@@ -451,7 +451,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjFileRequest(castor::stager
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 parentId = (u_signed64)rset->getDouble(12);
+  u_signed64 parentId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -489,7 +489,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjSvcClass(castor::stager::S
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -527,7 +527,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjIClient(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(14);
+  u_signed64 clientId = (u_signed64)rset->getDouble(15);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -565,7 +565,7 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(14, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -574,21 +574,22 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setDouble(1, obj->flags());
-    m_insertStatement->setString(2, obj->userName());
-    m_insertStatement->setInt(3, obj->euid());
-    m_insertStatement->setInt(4, obj->egid());
-    m_insertStatement->setInt(5, obj->mask());
-    m_insertStatement->setInt(6, obj->pid());
-    m_insertStatement->setString(7, obj->machine());
-    m_insertStatement->setString(8, obj->svcClassName());
-    m_insertStatement->setString(9, obj->userTag());
-    m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(1, obj->parentUuid());
+    m_insertStatement->setDouble(2, obj->flags());
+    m_insertStatement->setString(3, obj->userName());
+    m_insertStatement->setInt(4, obj->euid());
+    m_insertStatement->setInt(5, obj->egid());
+    m_insertStatement->setInt(6, obj->mask());
+    m_insertStatement->setInt(7, obj->pid());
+    m_insertStatement->setString(8, obj->machine());
+    m_insertStatement->setString(9, obj->svcClassName());
+    m_insertStatement->setString(10, obj->userTag());
+    m_insertStatement->setString(11, obj->reqId());
+    m_insertStatement->setDouble(12, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(14));
+    obj->setId((u_signed64)m_insertStatement->getDouble(15));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -615,6 +616,7 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
+                    << "  parentUuid : " << obj->parentUuid() << std::endl
                     << "  flags : " << obj->flags() << std::endl
                     << "  userName : " << obj->userName() << std::endl
                     << "  euid : " << obj->euid() << std::endl
@@ -650,17 +652,18 @@ void castor::db::ora::OraStageAbortRequestCnv::updateRep(castor::IAddress* addre
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setDouble(1, obj->flags());
-    m_updateStatement->setString(2, obj->userName());
-    m_updateStatement->setInt(3, obj->euid());
-    m_updateStatement->setInt(4, obj->egid());
-    m_updateStatement->setInt(5, obj->mask());
-    m_updateStatement->setInt(6, obj->pid());
-    m_updateStatement->setString(7, obj->machine());
-    m_updateStatement->setString(8, obj->svcClassName());
-    m_updateStatement->setString(9, obj->userTag());
-    m_updateStatement->setString(10, obj->reqId());
-    m_updateStatement->setDouble(11, obj->id());
+    m_updateStatement->setString(1, obj->parentUuid());
+    m_updateStatement->setDouble(2, obj->flags());
+    m_updateStatement->setString(3, obj->userName());
+    m_updateStatement->setInt(4, obj->euid());
+    m_updateStatement->setInt(5, obj->egid());
+    m_updateStatement->setInt(6, obj->mask());
+    m_updateStatement->setInt(7, obj->pid());
+    m_updateStatement->setString(8, obj->machine());
+    m_updateStatement->setString(9, obj->svcClassName());
+    m_updateStatement->setString(10, obj->userTag());
+    m_updateStatement->setString(11, obj->reqId());
+    m_updateStatement->setDouble(12, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -772,17 +775,18 @@ castor::IObject* castor::db::ora::OraStageAbortRequestCnv::createObj(castor::IAd
     // create the new Object
     castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
     // Now retrieve and set members
-    object->setFlags((u_signed64)rset->getDouble(1));
-    object->setUserName(rset->getString(2));
-    object->setEuid(rset->getInt(3));
-    object->setEgid(rset->getInt(4));
-    object->setMask(rset->getInt(5));
-    object->setPid(rset->getInt(6));
-    object->setMachine(rset->getString(7));
-    object->setSvcClassName(rset->getString(8));
-    object->setUserTag(rset->getString(9));
-    object->setReqId(rset->getString(10));
-    object->setId((u_signed64)rset->getDouble(11));
+    object->setParentUuid(rset->getString(1));
+    object->setFlags((u_signed64)rset->getDouble(2));
+    object->setUserName(rset->getString(3));
+    object->setEuid(rset->getInt(4));
+    object->setEgid(rset->getInt(5));
+    object->setMask(rset->getInt(6));
+    object->setPid(rset->getInt(7));
+    object->setMachine(rset->getString(8));
+    object->setSvcClassName(rset->getString(9));
+    object->setUserTag(rset->getString(10));
+    object->setReqId(rset->getString(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -828,17 +832,18 @@ void castor::db::ora::OraStageAbortRequestCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::StageAbortRequest* object = 
       dynamic_cast<castor::stager::StageAbortRequest*>(obj);
-    object->setFlags((u_signed64)rset->getDouble(1));
-    object->setUserName(rset->getString(2));
-    object->setEuid(rset->getInt(3));
-    object->setEgid(rset->getInt(4));
-    object->setMask(rset->getInt(5));
-    object->setPid(rset->getInt(6));
-    object->setMachine(rset->getString(7));
-    object->setSvcClassName(rset->getString(8));
-    object->setUserTag(rset->getString(9));
-    object->setReqId(rset->getString(10));
-    object->setId((u_signed64)rset->getDouble(11));
+    object->setParentUuid(rset->getString(1));
+    object->setFlags((u_signed64)rset->getDouble(2));
+    object->setUserName(rset->getString(3));
+    object->setEuid(rset->getInt(4));
+    object->setEgid(rset->getInt(5));
+    object->setMask(rset->getInt(6));
+    object->setPid(rset->getInt(7));
+    object->setMachine(rset->getString(8));
+    object->setSvcClassName(rset->getString(9));
+    object->setUserTag(rset->getString(10));
+    object->setReqId(rset->getString(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

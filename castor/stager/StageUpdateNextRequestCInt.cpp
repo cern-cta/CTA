@@ -110,6 +110,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StageUpdateNextRequest_parentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateNextRequest_parentUuid(castor::stager::StageUpdateNextRequest* instance, const char** var) {
+    *var = instance->parentUuid().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateNextRequest_setParentUuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateNextRequest_setParentUuid(castor::stager::StageUpdateNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setParentUuid(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StageUpdateNextRequest_parent
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateNextRequest_parent(castor::stager::StageUpdateNextRequest* instance, castor::stager::FileRequest** var) {

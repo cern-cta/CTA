@@ -98,6 +98,20 @@ int Cstager_StagePutNextRequest_TYPE(int* ret);
 /*************************************************/
 
 /**
+ * Get the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StagePutNextRequest_parentUuid(struct Cstager_StagePutNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of parentUuid
+ * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
+ */
+int Cstager_StagePutNextRequest_setParentUuid(struct Cstager_StagePutNextRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of parent
  */
 int Cstager_StagePutNextRequest_parent(struct Cstager_StagePutNextRequest_t* instance, struct Cstager_FileRequest_t** var);

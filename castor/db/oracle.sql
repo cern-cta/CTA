@@ -91,7 +91,7 @@ CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 
 /* SQL statements for type StagePutDoneRequest */
 DROP TABLE StagePutDoneRequest;
-CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
+CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), parentUuid VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
 
 /* SQL statements for type StageUpdateFileStatusRequest */
 DROP TABLE StageUpdateFileStatusRequest;
@@ -119,19 +119,19 @@ CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), e
 
 /* SQL statements for type StageAbortRequest */
 DROP TABLE StageAbortRequest;
-CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE StageGetNextRequest;
-CREATE TABLE StageGetNextRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StagePutNextRequest */
 DROP TABLE StagePutNextRequest;
-CREATE TABLE StagePutNextRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageUpdateNextRequest */
 DROP TABLE StageUpdateNextRequest;
-CREATE TABLE StageUpdateNextRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Tape */
 DROP TABLE Tape;
@@ -214,7 +214,7 @@ ALTER TABLE Stream2TapeCopy
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.3');
+INSERT INTO CastorVersion VALUES ('2.0.0.4');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);

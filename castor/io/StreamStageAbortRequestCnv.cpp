@@ -92,6 +92,7 @@ void castor::io::StreamStageAbortRequestCnv::createRep(castor::IAddress* address
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->parentUuid();
   ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
@@ -115,6 +116,9 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::createObj(castor::IAddr
   // create the new Object
   castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
   // Now retrieve and set members
+  std::string parentUuid;
+  ad->stream() >> parentUuid;
+  object->setParentUuid(parentUuid);
   u_signed64 flags;
   ad->stream() >> flags;
   object->setFlags(flags);

@@ -4,7 +4,7 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.3');
+INSERT INTO CastorVersion VALUES ('2.0.0.4');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
