@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.10 $ $Date: 2001/03/09 10:58:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.11 $ $Date: 2001/04/03 07:38:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -190,7 +190,11 @@ int DLL_DECL stage_errmsg(va_alist)
 #if (defined(__osf__) && defined(__alpha))
 		sprintf (prtbuf, "%s: ", func);
 #else
+#if defined(_WIN32)
+		_snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#else
 		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#endif
 #endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
@@ -200,7 +204,11 @@ int DLL_DECL stage_errmsg(va_alist)
 #if (defined(__osf__) && defined(__alpha))
 		vsprintf (prtbuf + strlen(prtbuf), msg, args);
 #else
+#if defined(_WIN32)
+		_vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#else
 		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#endif
 #endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
@@ -251,7 +259,11 @@ int DLL_DECL stage_outmsg(va_alist)
 #if (defined(__osf__) && defined(__alpha))
 		sprintf (prtbuf, "%s: ", func);
 #else
+#if defined(_WIN32)
+		_snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#else
 		snprintf (prtbuf, PRTBUFSZ, "%s: ", func);
+#endif
 #endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	} else {
@@ -261,7 +273,11 @@ int DLL_DECL stage_outmsg(va_alist)
 #if (defined(__osf__) && defined(__alpha))
 		vsprintf (prtbuf + strlen(prtbuf), msg, args);
 #else
+#if defined(_WIN32)
+		_vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#else
 		vsnprintf (prtbuf + strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+#endif
 #endif
 		prtbuf[PRTBUFSZ-1] = '\0';
 	}
