@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/26 15:43:38 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ICONVERTER_H
-#define CASTOR_ICONVERTER_H 1
+#ifndef CASTOR_ICONVERTER_HPP
+#define CASTOR_ICONVERTER_HPP 1
 
 // Include Files
 #include <map>
@@ -147,4 +147,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_ICONVERTER_H
+#endif // CASTOR_ICONVERTER_HPP

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 06:56:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -36,9 +36,9 @@ typedef struct Cdb_DbAddress_t Cdb_DbAddress_t;
  * constructor
  */
 int Cdb_DbAddress_create(const unsigned long id,
-			 const char* cnvSvcName,
-			 const unsigned int cnvSvcType,
-			 Cdb_DbAddress_t** addr);
+                         const char* cnvSvcName,
+                         const unsigned int cnvSvcType,
+                         Cdb_DbAddress_t** addr);
 
 /*
  * destructor

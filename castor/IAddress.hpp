@@ -24,8 +24,8 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_IADDRESS_H
-#define CASTOR_IADDRESS_H 1
+#ifndef CASTOR_IADDRESS_HPP
+#define CASTOR_IADDRESS_HPP 1
 
 // Include Files
 #include <string>
@@ -86,4 +86,4 @@ namespace castor {
  */
 std::ostream& operator<<(std::ostream& s, const castor::IAddress& addr);
 
-#endif // CASTOR_IADDRESS_H
+#endif // CASTOR_IADDRESS_HPP

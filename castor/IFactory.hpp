@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IFactory.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:43:38 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_IFACTORY_H
-#define CASTOR_IFACTORY_H 1
+#ifndef CASTOR_IFACTORY_HPP
+#define CASTOR_IFACTORY_HPP 1
 
 // Include Files
 #include <string>
@@ -54,4 +54,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_IFACTORY_H
+#endif // CASTOR_IFACTORY_HPP

@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SvcFactory.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SvcFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_SVCFACTORY_H
-#define CASTOR_SVCFACTORY_H 1
+#ifndef CASTOR_SVCFACTORY_HPP
+#define CASTOR_SVCFACTORY_HPP 1
 
 // Include Files
 #include "ISvcFactory.hpp"
@@ -76,4 +76,4 @@ inline const unsigned int castor::SvcFactory<Service>::id() const {
   return Service::ID();
 }
 
-#endif // CASTOR_SVCFACTORY_H
+#endif // CASTOR_SVCFACTORY_HPP

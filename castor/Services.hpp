@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_SERVICES_H
-#define CASTOR_SERVICES_H 1
+#ifndef CASTOR_SERVICES_HPP
+#define CASTOR_SERVICES_HPP 1
 
 //Include Files
 #include <map>
@@ -58,7 +58,7 @@ namespace castor {
      * is created.
      */
     IService* service (const std::string name,
-                       const unsigned int id = 0);
+                       const unsigned int id = 0) throw();
 
     /**
      * gets a conversion service by name.
@@ -66,13 +66,13 @@ namespace castor {
      * is created.
      */
     ICnvSvc* cnvService (const std::string name,
-                         const unsigned int id = 0);
+                         const unsigned int id = 0) throw();
 
     /**
      * removes reference to a service. This means that it will be
      * recreated using the factory if ever needed
      */
-    void removeService(const std::string name);
+    void removeService(const std::string name) throw();
 
     /**
      * create foreign representation from a C++ Object
@@ -158,4 +158,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_SERVICES_H
+#endif // CASTOR_SERVICES_HPP
