@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.9 $ $Date: 2000/06/15 12:16:50 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.10 $ $Date: 2000/08/23 14:00:30 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -220,7 +220,7 @@ char *host_name ;
 
     netw = inet_netof(from_host);
 #if defined(_WIN32)
-    log(LOG_INFO, "inet_netof() returned %u", netw);
+    log(LOG_DEBUG, "inet_netof() returned %u\n", netw);
 #endif   
     adr.adr_i=from_host.s_addr;
     log(LOG_DEBUG, "isremote(): Client host is %s\n",inet_ntoa( from_host )) ;
