@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.35 $ $Date: 2000/03/02 12:03:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.36 $ $Date: 2000/03/02 14:35:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -671,7 +671,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              */
             if ( Uformat == TRUE ) rc = rtcpd_AdmUformatInfo(file,i);
 
-            for (j=*firstblk; j*blksiz < databufs[i]->length; j++) {
+            for (j=*firstblk; last_sz+blksiz < databufs[i]->length; j++) {
                 /*
                  * Max size may have been exceeded even before we
                  * read any data at all. This happens when we are 
@@ -705,7 +705,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  */
                 TP_STATUS(RTCP_PS_READ);
                 rc = tread(tape_fd,
-                           databufs[i]->buffer + j*blksiz,
+                           databufs[i]->buffer + last_sz,
                            nb_bytes,
                            tape,
                            file);
@@ -742,6 +742,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     lrecl = rc;
                     filereq->recordlength = lrecl;
                 }
+
                 last_sz += rc;
                 file->tapebytes_sofar += rc;
                 if ( lrecl > 0 && rc/lrecl > 0 ) filereq->nbrecs += rc/lrecl;
@@ -870,6 +871,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  return(-1);
              }
              proc_cntl.nb_reserved_bufs = 0;
+             file->end_index = *indxp;
              /*
               * Signal to main thread that we changed cntl info
               */

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.40 $ $Date: 2000/03/02 11:48:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.41 $ $Date: 2000/03/02 14:35:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1710,47 +1710,20 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             } else {
                 prev_bufsz = rtcpd_CalcBufSz(nexttape,prevfile);
                 if ( tapereq->mode == WRITE_ENABLE ) 
-                if ( tapereq->mode == WRITE_ENABLE )
+                    prev_filesz = prevfile->filereq.bytes_in;
                 else 
-                else
+                    prev_filesz = prevfile->filereq.bytes_out;
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev. file size %d, buffer sz %d, indxp %d\n",
                         (int)prev_filesz,prev_bufsz,indxp);
                 if ( tapereq->mode == WRITE_ENABLE ) 
-                indxp = (indxp + (int)(((u_signed64)offset + prev_filesz) /
-                        ((u_signed64)prev_bufsz)));
+                    indxp = (indxp + (int)(((u_signed64)offset + prev_filesz) /
+                            ((u_signed64)prev_bufsz)));
+                else
+                    indxp = prevfile->end_index;
+                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new indxp %d\n",
                         indxp);
 
-                if ( tapereq->mode == WRITE_DISABLE ) {
-                    /*
-                     * On tape read we need to check if the tape mark 
-                     * of previous file was detected in the next buffer. 
-                     * This can happen if the last block of file ended 
-                     * up as the last block of a buffer. 
-                     */
-                    spill=prev_bufsz-(int)(prev_filesz%(u_signed64)prev_bufsz);
-                    rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev sz %d, prev. bufsz %d, spill %d, blksiz %d, indxp %d\n",
-                     (int)prev_filesz,prev_bufsz,spill,
-                      prevfile->filereq.blocksize,indxp);
                 indxp = indxp % nb_bufs;
-                    if ( spill < prevfile->filereq.blocksize ) indxp++;
-                    rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() New indxp %d\n",indxp);
-                    /*
-                     * On tape read we always start with a brand
-                     * new buffer. If previous file was empty we should also
-                     * increment since the tape IO has already marked the
-                     * current (empty) buffer as full (virtually, that is) and
-                     * step to next.
-                     * Note, if last file was limited by size and ended on a
-                     * buffer border (spill == prev_bufsz), we have already
-                     * positioned to next buffer. 
-                     */
-                    rtcpd_CheckReqStatus(NULL,prevfile,NULL,&severity);
-
-                    if ( prev_filesz == 0 ||
-                         !((severity & (RTCP_LIMBYSZ | RTCP_TPE_LSZ)) != 0 &&
-                            spill == prev_bufsz) ) indxp++;
-                    offset = 0;
-                }
                 if ( tapereq->mode == WRITE_ENABLE ) {
                     if ( (filereq->concat & NOCONCAT) != 0 ||
                        ((Uformat == TRUE) && ((convert & NOF77CW) == 0)) ) {
