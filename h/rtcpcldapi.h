@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 07:33:20 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/24 14:39:39 $ $Author: obarring $
  *
  * 
  *
@@ -76,6 +76,10 @@
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+
+/** Toggle on/off DLF logging in rtcpcldCatalogueInterface.c
+ */
+EXTERN_C int dontLog;
 
 /** Client callback before and after each file copy
  *
