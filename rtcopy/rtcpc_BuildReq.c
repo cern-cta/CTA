@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.39 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.40 $ $Date: 2001/09/19 06:32:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2194,7 +2194,7 @@ int DLL_DECL dumpTapeReq(tape_list_t *tl) {
     DUMPINT(indent,tapereq->mode);
     DUMPINT(indent,tapereq->start_file);
     DUMPINT(indent,tapereq->end_file);
-    DUMPINT(indent,tapereq->partition);
+    DUMPINT(indent,tapereq->side);
     DUMPINT(indent,tapereq->tprc);
     DUMPINT(indent,tapereq->TStartRequest);
     DUMPINT(indent,tapereq->TEndRequest);

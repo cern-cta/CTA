@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.9 $ $Date: 2001/07/25 06:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.10 $ $Date: 2001/09/19 06:34:18 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL 3 "$Date: 2001/07/25 06:08:48 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_LABEL 3 "$Date: 2001/09/19 06:34:18 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -13,7 +13,7 @@ the existing label checked and a new label written
 .sp
 .BI "int Ctape_label (char *" path ,
 .BI "char *" vid ,
-.BI "int " partition ,
+.BI "int " side ,
 .BI "char *" dgn ,
 .BI "char *" density ,
 .BI "char *" drive ,
@@ -43,8 +43,10 @@ internally using tempnam().
 is the volume visual identifier.
 It must be at most six characters long and is converted to upper case.
 .TP
-.I partition
-is currently ignored.
+.I side
+is an integer specifying the side number.
+This field is only used if the specified device offers several sides,
+for example a DVD.
 .TP
 .I dgn
 The device group name must be a member of an installation defined set of

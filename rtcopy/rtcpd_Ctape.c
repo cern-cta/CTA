@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.58 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.59 $ $Date: 2001/09/19 06:32:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -349,7 +349,7 @@ int rtcpd_Mount(tape_list_t *tape) {
         rtcp_log(LOG_DEBUG,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
                  filereq->tape_path,
                  tapereq->vid,
-                 tapereq->partition,
+                 tapereq->side,
                  tapereq->dgn,
                  tapereq->density,
                  tapereq->unit,
@@ -372,7 +372,7 @@ int rtcpd_Mount(tape_list_t *tape) {
         tapereq->TStartMount = (int)time(NULL);
         rc = Ctape_mount(filereq->tape_path,
                          (*tapereq->vid != '\0' ? tapereq->vid : NULL),
-                         tapereq->partition,
+                         tapereq->side,
                          (*tapereq->dgn != '\0' ? tapereq->dgn : NULL),
                          (*tapereq->density != '\0' ? tapereq->density : NULL),
                          (*tapereq->unit != '\0' ? tapereq->unit : NULL),

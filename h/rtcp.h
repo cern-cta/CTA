@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.17 $ $Date: 2000/09/29 13:24:47 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.18 $ $Date: 2001/09/19 06:31:41 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -169,7 +169,7 @@ typedef struct rtcpTapeRequest {
     int mode;                           /* WRITE_DISABLE or WRITE_ENABLE */
     int start_file;                     /* Start file if mapped VID */
     int end_file;                       /* End file if mapped VID */
-    int partition;                      /* Partition number */
+    int side;                           /* Disk side number */
     int tprc;                           /* Return code from last Ctape */                                       
     int TStartRequest;                  /* Start time of request (set by client) */
     int TEndRequest;                    /* End time of request (set by client) */
