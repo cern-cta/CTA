@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.17 2000/03/27 09:06:06 jdurand Exp $
+ * $Id: send2stgd.c,v 1.18 2000/04/03 09:35:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.17 $ $Date: 2000/03/27 09:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.18 $ $Date: 2000/04/03 09:35:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -66,6 +66,8 @@ int rc_shift2castor(rc)
 		return(EINVAL);
 	case SYERR:
 		return(SESYSERR);
+	case SHIFT_ESTNACT:
+		return(ESTNACT);
 	default:
 		return(rc);
 	}

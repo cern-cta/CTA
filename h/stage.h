@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.15 2000/03/23 08:21:26 jdurand Exp $
+ * $Id: stage.h,v 1.16 2000/04/03 09:35:14 jdurand Exp $
  */
 
 /*
@@ -31,6 +31,8 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STG	"stage"	/* service name in /etc/services */
+
+#define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - remapped in send2stgd */
 
 #define UPPER(s) \
 	{ \

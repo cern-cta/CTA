@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.22 2000/03/23 01:41:59 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.23 2000/04/03 09:35:17 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.22 $ $Date: 2000/03/23 01:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.23 $ $Date: 2000/04/03 09:35:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -517,7 +517,7 @@ main(argc,argv)
 						if (initreq_reqid ||
 								stat (NOMORESTAGE, &st) == 0) {
 							sendrep (rpfd, STAGERC, req_type,
-											 ESTNACT);
+											 SHIFT_ESTNACT);
 							goto endreq;
 						}
 					if (getpeername (rqfd, (struct sockaddr*)&from,
