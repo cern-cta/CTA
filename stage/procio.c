@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.126 2001/06/07 15:16:33 jdurand Exp $
+ * $Id: procio.c,v 1.127 2001/06/07 15:19:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.126 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.127 $ $Date: 2001/06/07 15:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1494,7 +1494,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					 * is known to the stager.
 					 */
 					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0, 1) < 0) {
-						int save_serrno = rfio_serrnor();
+						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR,
 										 STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
