@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/03 10:59:41 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/03 14:42:10 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.33 $ $Date: 2004/08/03 10:59:41 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.34 $ $Date: 2004/08/03 14:42:10 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -2004,6 +2004,24 @@ int rtcpcldc(tape)
     if ( rc == -1 ) {
       LOG_FAILED_CALL("rtcpc_EndOfRequest()","");
       save_serrno = serrno;
+    }
+
+    if ( (rc == 0) && (rtcpcldTpList->oldStatus == TAPE_FINISHED) ) {
+      rtcp_log(LOG_INFO,
+               "rtcpcldc() premature end of request forced by server\n");
+      CLIST_ITERATE_BEGIN(tape->file,fl) 
+        {
+          if ( fl->filereq.proc_status < RTCP_FINISHED ) {
+            fl->filereq.err.errorcode = ERTMORETODO;
+            fl->filereq.err.severity = RTCP_RESELECT_SERV;
+            strcpy(fl->filereq.err.errmsgtxt,
+                   sstrerror(fl->filereq.err.errorcode));
+            save_serrno = ERTMORETODO;
+            rc = -1;
+          }
+        }
+      CLIST_ITERATE_END(tape->file,fl);
+      if ( rc == -1 ) break;
     }
     (void)Cmutex_unlock(tape);
     if ( rc == 1 ) break;
