@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.127 2001/06/07 15:19:28 jdurand Exp $
+ * $Id: procio.c,v 1.128 2001/06/07 15:20:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.127 $ $Date: 2001/06/07 15:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.128 $ $Date: 2001/06/07 15:20:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2175,7 +2175,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						int save_serrno = serrno;
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
-						c = (api_out != 0) ? serrno : USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
