@@ -9,6 +9,8 @@
 #include "marshall.h"
 #include "serrno.h"
 
+#define RM_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
+
 #define INIT_HOST(thishost) {                               \
 	(thishost)->s_addr = clientAddress.sin_addr.s_addr;     \
 	(thishost)->nbrestart = nbrestart;                      \
@@ -243,6 +245,10 @@
 	if ((rmjob)->clientStructLenWithNullByte > 0) marshall_STRING(p, (rmjob)->clientStruct); \
 	marshall_STRING(p, (rmjob)->hostlist);              \
 	marshall_STRING(p, (rmjob)->rfs);                   \
+	if (magic >= RMMAGIC02) {                           \
+	  marshall_HYPER(p, (rmjob)->castorFileId);         \
+	  marshall_STRING(p, (rmjob)->castorNsHost);        \
+	}                                                   \
 }
 
 #define unmarshall_RMJOB(p, rmjob, status) {                  \
@@ -305,6 +311,10 @@
         }                                                     \
 	unmarshall_STRING(p, (rmjob)->hostlist);              \
 	unmarshall_STRING(p, (rmjob)->rfs);                   \
+	if (magic >= RMMAGIC02) {                             \
+	  unmarshall_HYPER(p, (rmjob)->castorFileId);         \
+	  unmarshall_STRING(p, (rmjob)->castorNsHost);        \
+	}                                                     \
 }
 
 #define overwrite_RMJOB(out,in,status) {                                            \
@@ -366,6 +376,8 @@
     }                                                         \
     if ((in)->hostlist[0] != '\0') strcpy((out)->hostlist,(in)->hostlist);          \
     if ((in)->rfs[0] != '\0') strcpy((out)->rfs,(in)->rfs);                         \
+    if ((in)->castorFileId != 0) (out)->castorFileId = (in)->castorFileId;             \
+    if ((in)->castorNsHost[0] != '\0') strcpy((out)->castorNsHost,(in)->castorNsHost); \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -419,6 +431,8 @@
     if ((filter)->clientStruct != NULL && memcmp((ref)->clientStruct, (filter)->clientStruct, (filter)->clientStructLenWithNullByte) != 0) status++;  \
     if ((filter)->hostlist[0] != '\0' && strcmp((ref)->hostlist,(filter)->hostlist) != 0)          status++;  \
     if ((filter)->rfs[0] != '\0' && strcmp((ref)->rfs,(filter)->rfs) != 0)                         status++;  \
+    if ((filter)->castorFileId != 0 && (ref)->castorFileId != (filter)->castorFileId) status++;               \
+    if ((filter)->castorNsHost[0] != '\0' && strcmp((ref)->castorNsHost,(filter)->castorNsHost) != 0) status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
