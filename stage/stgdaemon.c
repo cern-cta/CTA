@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.249 $ $Date: 2004/01/28 13:48:16 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.250 $ $Date: 2004/03/02 09:19:48 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3012,6 +3012,7 @@ void checkwaitq()
 				   wqp->status != USERR   && wqp->status != EINVAL &&
 				   wqp->status != CLEARED && wqp->status != ESTCLEARED &&
 				   wqp->status != REQKILD && wqp->status != ESTKILLED &&
+				   wqp->status != CHECKSUMERR && wqp->status != SECHECKSUM &&
 				   wqp->nretry < (wqp->noretry ? 0 : MAXRETRY)) {
 			if (wqp->nretry)
 				sendrep (&(wqp->rpfd), MSG_ERR, STG43, wqp->nretry);
