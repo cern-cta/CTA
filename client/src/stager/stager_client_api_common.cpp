@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.4 2004/11/25 13:23:18 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.5 2004/12/01 10:02:21 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/25 13:23:18 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.5 $ $Date: 2004/12/01 10:02:21 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -43,7 +43,7 @@ int _free_prepareToGet_fileresp (struct stage_prepareToGet_fileresp  *ptr) {
   return 0; 
 }
 
-int _free_get_fileresp (struct stage_get_fileresp  *ptr){ 
+int _free_io_fileresp (struct stage_io_fileresp  *ptr){ 
   if (ptr->castor_filename != NULL) free (ptr->castor_filename);
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->server != NULL) free (ptr->server);
@@ -64,14 +64,22 @@ int _free_prepareToPut_fileresp (struct stage_prepareToPut_fileresp  *ptr){
   free(ptr);
   return 0; 
 }
-int _free_put_fileresp (struct stage_put_fileresp  *ptr){ 
+
+int _free_prepareToUpdate_filereq (struct stage_prepareToUpdate_filereq  *ptr) { 
   if (ptr->protocol != NULL) free (ptr->protocol);
-  if (ptr->server != NULL) free (ptr->server);
+  if (ptr->filename != NULL) free (ptr->filename);
+  free(ptr);
+  return 0; 
+}
+
+int _free_prepareToUpdate_fileresp (struct stage_prepareToUpdate_fileresp  *ptr) { 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }
+
+
 
 int _free_filereq (struct stage_filereq  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
@@ -131,10 +139,11 @@ int _free_findrequest_resp (struct stage_findrequest_resp  *ptr){
 
 ALLOC_STRUCT_LIST(prepareToGet_filereq)
 ALLOC_STRUCT_LIST(prepareToGet_fileresp)
-ALLOC_STRUCT_LIST(get_fileresp)
+ALLOC_STRUCT_LIST(io_fileresp)
 ALLOC_STRUCT_LIST(prepareToPut_filereq)
 ALLOC_STRUCT_LIST(prepareToPut_fileresp)
-ALLOC_STRUCT_LIST(put_fileresp)
+ALLOC_STRUCT_LIST(prepareToUpdate_filereq)
+ALLOC_STRUCT_LIST(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST(filereq)
 ALLOC_STRUCT_LIST(fileresp)
 ALLOC_STRUCT_LIST(updateFileStatus_filereq)
@@ -147,10 +156,11 @@ ALLOC_STRUCT_LIST(findrequest_resp)
 
 FREE_STRUCT_LIST(prepareToGet_filereq)
 FREE_STRUCT_LIST(prepareToGet_fileresp)
-FREE_STRUCT_LIST(get_fileresp)
+FREE_STRUCT_LIST(io_fileresp)
 FREE_STRUCT_LIST(prepareToPut_filereq)
 FREE_STRUCT_LIST(prepareToPut_fileresp)
-FREE_STRUCT_LIST(put_fileresp)
+FREE_STRUCT_LIST(prepareToUpdate_filereq)
+FREE_STRUCT_LIST(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST(filereq)
 FREE_STRUCT_LIST(fileresp)
 FREE_STRUCT_LIST(updateFileStatus_filereq)

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.8 2004/11/25 13:23:57 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.9 2004/12/01 10:02:21 bcouturi Exp $
  */
 
 /*
@@ -8,12 +8,13 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.8 $ $Date: 2004/11/25 13:23:57 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.9 $ $Date: 2004/12/01 10:02:21 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
 /* System headers */
 /* ============== */
+#include <sys/types.h>
 
 /* ============= */
 /* Local headers */
@@ -163,8 +164,8 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 EXTERN_C int DLL_DECL stage_put(const char *userTag,
 				const char *protocol,
 				const char *filename,
-				int mode,
-				struct stage_put_fileresp ** response,
+				mode_t mode,
+				struct stage_io_fileresp ** response,
 				char **requestId,
 				struct stage_options* opts) {
   
@@ -217,8 +218,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 
     // Creating the file response
     // Same size as requests as we only do files for the moment
-    *response = (struct stage_put_fileresp *) 
-      malloc(sizeof(struct stage_put_fileresp));
+    *response = (struct stage_io_fileresp *) 
+      malloc(sizeof(struct stage_io_fileresp));
     
     if (*response == NULL) {
       serrno = ENOMEM;
