@@ -42,8 +42,10 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
  
 void resetid(uid_t *u, gid_t *g, struct Cns_srv_thread_info *thip) {
 #ifdef CSEC
-  *u = thip->Csec_uid;
-  *g = thip->Csec_gid;
+  if (thip->Csec_service_type < 0) {
+    *u = thip->Csec_uid;
+    *g = thip->Csec_gid;
+  }
 #endif
 }
 

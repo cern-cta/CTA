@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.1 $ $Date: 2004/07/15 16:20:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:11:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -34,8 +34,10 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
  
 void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
 #ifdef CSEC
-  *u = thip->Csec_uid;
-  *g = thip->Csec_gid;
+  if (thip->Csec_service_type < 0) {
+    *u = thip->Csec_uid;
+    *g = thip->Csec_gid;
+  }
 #endif
 }
 

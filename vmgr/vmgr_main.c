@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.1 $ $Date: 2004/07/15 16:20:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:11:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -228,11 +228,26 @@ void *arg;
 	  thip->s = -1;
 	  return (NULL);
 	}
-	Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid));
-	vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
-		Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
-		thip->Csec_uid,
-		thip->Csec_gid);
+	/* Connection could be done from another castor service */
+	if ((c = Csec_server_is_castor_service(&(thip->sec_ctx))) >= 0) {
+	  vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
+	  thip->Csec_service_type = c;
+	}
+	else {
+	  if (Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid)) != NULL) {
+	    vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
+		      Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		      thip->Csec_uid,
+		      thip->Csec_gid);
+	    thip->Csec_service_type = -1;
+	  }
+	  else {
+	    vmgrlogit(func, "CSEC: Can't get client username\n");
+	    netclose (thip->s);
+	    return (NULL);
+	  }
+	}
+
 #endif
 
 	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)

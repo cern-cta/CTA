@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_procreq.c,v $ $Revision: 1.1 $ $Date: 2004/07/16 12:30:19 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_procreq.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:10:17 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 #include <errno.h>
@@ -35,8 +35,10 @@ extern int always_reply_yes;
  
 void resetid(uid_t *u, gid_t *g, struct Cupv_srv_thread_info *thip) {
 #ifdef CSEC
-  *u = thip->Csec_uid;
-  *g = thip->Csec_gid;
+  if (thip->Csec_service_type < 0) {
+    *u = thip->Csec_uid;
+    *g = thip->Csec_gid;
+  }
 #endif
 }
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.1 $ $Date: 2004/07/16 12:30:19 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:10:17 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -253,11 +253,25 @@ void *arg;
 	  thip->s = -1;
 	  return (NULL);
 	}
-	Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid));
-	Cupvlogit(func, "CSEC: Client is %s (%d/%d)\n",
-		Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
-		thip->Csec_uid,
-		thip->Csec_gid);
+	/* Connection could be done from another castor service */
+	if ((c = Csec_server_is_castor_service(&(thip->sec_ctx))) >= 0) {
+	  Cupvlogit(func, "CSEC: Client is castor service type: %d\n", c);
+	  thip->Csec_service_type = c;
+	}
+	else {
+	  if (Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid)) != NULL) {
+	    Cupvlogit(func, "CSEC: Client is %s (%d/%d)\n",
+		      Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		      thip->Csec_uid,
+		      thip->Csec_gid);
+	    thip->Csec_service_type = -1;
+	  }
+	  else {
+	    Cupvlogit(func, "CSEC: Can't get client username\n");
+	    netclose (thip->s);
+	    return (NULL);
+	  }
+	}
 #endif
 
 	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)

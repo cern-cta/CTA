@@ -255,11 +255,25 @@ void *arg;
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  return NULL;
 	}
-	Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid));
-	nslogit(func, "CSEC: Client is %s (%d/%d)\n",
-		Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
-		thip->Csec_uid,
-		thip->Csec_gid);
+	/* Connection could be done from another castor service */
+	if ((c = Csec_server_is_castor_service(&(thip->sec_ctx))) >= 0) {
+	  nslogit(func, "CSEC: Client is castor service type: %d\n", c);
+	  thip->Csec_service_type = c;
+	}
+	else {
+	  if (Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid)) != NULL) {
+	    nslogit(func, "CSEC: Client is %s (%d/%d)\n",
+		    Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		    thip->Csec_uid,
+		    thip->Csec_gid);
+	    thip->Csec_service_type = -1;
+	  }
+	  else {
+	    nslogit(func, "CSEC: Can't get client username\n");
+	    netclose (thip->s);
+	    return (NULL);
+	  }
+	}
 		
 #endif
 
