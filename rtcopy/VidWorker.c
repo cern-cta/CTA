@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/08/03 16:06:45 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/08/11 12:02:28 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/08/03 16:06:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/08/11 12:02:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -455,9 +455,9 @@ int rtcpcld_Callback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  char *func, *vid = "", *blkid = NULL, *disk_path = ".";
+  char *func, *vid = "", *blkid = NULL, *disk_path = ".", *errmsgtxt = "";
   int fseq = -1, proc_status = -1, msgNo = -1, rc, status, getMoreWork = 0;
-  int cprc = -1;
+  int cprc = -1, severity = RTCP_OK, errorcode=0;
   struct Cns_fileid fileId;
   Cuuid_t stgUuid, rtcpUuid;
 
@@ -574,37 +574,80 @@ int rtcpcld_Callback(
     proc_status = filereq->proc_status;
     disk_path = filereq->file_path;
     cprc = filereq->cprc;
+    errmsgtxt = filereq->err.errmsgtxt;
+    errorcode = filereq->err.errorcode;
+    severity = filereq->err.severity;
   } /* if ( filereq != NULL ) */
 
   if ( msgNo > 0 ) {
-    (void)dlf_write(
-                    childUuid,
-                    DLF_LVL_SYSTEM,
-                    msgNo,
-                    &fileId,
-                    7,
-                    "",
-                    DLF_MSG_PARAM_TPVID,
-                    vid,
-                    "",
-                    DLF_MSG_PARAM_UUID,
-                    rtcpUuid,
-                    "",
-                    DLF_MSG_PARAM_UUID,
-                    stgUuid,
-                    "FSEQ",
-                    DLF_MSG_PARAM_INT,
-                    fseq,
-                    "BLKID",
-                    DLF_MSG_PARAM_STR,
-                    (blkid != NULL ? blkid : "unknown"),
-                    "STATUS",
-                    DLF_MSG_PARAM_INT,
-                    proc_status,
-                    "CPRC",
-                    DLF_MSG_PARAM_INT,
-                    cprc
-                    );
+    if ( cprc == 0 ) {
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_SYSTEM,
+                      msgNo,
+                      &fileId,
+                      7,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      vid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      rtcpUuid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      stgUuid,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      fseq,
+                      "BLKID",
+                      DLF_MSG_PARAM_STR,
+                      (blkid != NULL ? blkid : "unknown"),
+                      "STATUS",
+                      DLF_MSG_PARAM_INT,
+                      proc_status,
+                      "CPRC",
+                      DLF_MSG_PARAM_INT,
+                      cprc
+                      );
+    } else {
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_SYSTEM,
+                      msgNo,
+                      &fileId,
+                      10,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      vid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      rtcpUuid,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      stgUuid,
+                      "FSEQ",
+                      DLF_MSG_PARAM_INT,
+                      fseq,
+                      "BLKID",
+                      DLF_MSG_PARAM_STR,
+                      (blkid != NULL ? blkid : "unknown"),
+                      "STATUS",
+                      DLF_MSG_PARAM_INT,
+                      proc_status,
+                      "CPRC",
+                      DLF_MSG_PARAM_INT,
+                      cprc,
+                      "ERROR_CODE",
+                      DLF_MSG_PARAM_INT,
+                      errorcode,
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      errmsgtxt,
+                      "RTCP_SEVERITY",
+                      DLF_MSG_PARAM_INT,
+                      severity
+                      );
+    }
   }
   if ( blkid != NULL ) free(blkid);
   return(0);
