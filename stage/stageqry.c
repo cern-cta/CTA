@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.28 2002/04/30 13:08:54 jdurand Exp $
+ * $Id: stageqry.c,v 1.29 2002/09/26 09:15:05 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.28 $ $Date: 2002/04/30 13:08:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.29 $ $Date: 2002/09/26 09:15:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -31,13 +32,25 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.28 $ $Date: 20
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "serrno.h"
+#include "u64subr.h"
 
-extern	char	*getconfent();
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+#define THEMAX(a,b) ((a) > (b) ? (a) : (b))
 
-EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
+
 void usage _PROTO((char *));
+void log_callback _PROTO((int, char *));
+void record_callback _PROTO((struct stgcat_entry *, struct stgpath_entry *));
 void cleanup _PROTO((int));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+int funcrep _PROTO((int *, int, ...));
+#else
+int funcrep _PROTO(());
+#endif
+
 int noregexp_flag = 0;
 int reqid_flag = 0;
 int dump_flag = 0;
@@ -49,33 +62,34 @@ int retenp_flag = 0;
 int mintime_flag = 0;
 int side_flag = 0;
 int display_side_flag = 0;
+int output_flag = 0;
+int format_flag = 0;
+FILE *output_fd = NULL;
+int output_fd_toclean = 0;
+char *format = NULL;
+int noheader_flag = 0;
+int doneheader = 0;
+int withna_flag = 0;
+int withunit_flag = 0;
+int withstatusnumber_flag = 0;
+int withtimenumber_flag = 0;
+int check_format_string = 0;
 
 int main(argc, argv)
-		 int	argc;
-		 char	**argv;
+	int	argc;
+	char	**argv;
 {
-	int Aflag = 0;
-	int c, i;
+	int c;
 	int errflg = 0;
-	int Gflag = 0;
-	gid_t gid;
-	struct group *gr;
-	int Mflag = 0;
-	int msglen;
-	int ntries = 0;
-	int nstg161 = 0;
 	int numvid;
-	char *p;
-	struct passwd *pw;
-	char *q;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
-	uid_t uid;
-	char vid[MAXVSN][7];
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
+	struct stgcat_entry stcp;
+    u_signed64 flags = 0;
+    int nstcp_output = 0;
+    struct stgcat_entry *stcp_output = NULL;
+    int nstpp_output = 0;
+	int have_parsed_side = 0;
+    struct stgpath_entry *stpp_output = NULL;
 	static struct Coptions longopts[] =
 	{
 		{"allocated",          REQUIRED_ARGUMENT,  NULL,      'A'},
@@ -110,82 +124,132 @@ int main(argc, argv)
 		{"display_side",       NO_ARGUMENT, &display_side_flag, 1},
 		{"ds",                 NO_ARGUMENT, &display_side_flag, 1},
 		{"mintime",            NO_ARGUMENT,  &mintime_flag,     1},
+        {"output",             REQUIRED_ARGUMENT, &output_flag, 1},
+        {"format",             REQUIRED_ARGUMENT, &format_flag, 1},
+        {"noheader",           NO_ARGUMENT, &noheader_flag,     1},
+        {"withna",             NO_ARGUMENT, &withna_flag,       1},
+        {"withunit",           NO_ARGUMENT, &withunit_flag,     1},
+        {"withstatusnumber",   NO_ARGUMENT, &withstatusnumber_flag, 1},
+        {"withtimenumber",     NO_ARGUMENT, &withtimenumber_flag, 1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
-	uid = getuid();
-	gid = getgid();
-#if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
-		fprintf (stderr, STG52);
-		exit (USERR);
-	}
-#endif
+	memset(&stcp,0,sizeof(struct stgcat_entry));
+    /* In case it is an HSM request we make sure retenp_on_disk and mintime_before_migr are not logged for nothing */
 	numvid = 0;
-	Coptind = 1;
+    Coptind = 1;
 	Copterr = 1;
 	while ((c = Cgetopt_long (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'A':
-			Aflag = 1;
+			if (stcp.t_or_d != '\0' && stcp.t_or_d != 'a') {
+				++errflg;
+			} else {
+				stcp.t_or_d = 'a';
+				strncpy(stcp.u1.d.xfile,Coptarg,(CA_MAXHOSTNAMELEN+MAXPATH));
+			}
 			break;
 		case 'a':
+			flags |= STAGE_ALL;
 			break;
 		case 'f':
+			flags |= STAGE_FILENAME;
 			break;
 		case 'G':
-			Gflag++;
-			if ((gr = Cgetgrgid (gid)) == NULL) {
-				if (errno != ENOENT) fprintf (stderr, STG33, "Cgetgrgid", strerror(errno));
-				fprintf (stderr, STG36, gid);
-				exit (SYERR);
-			}
-			if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) {
-				fprintf (stderr, STG10, gr->gr_name);
-				errflg++;
-			} else {
-				if ((pw = Cgetpwnam (p)) == NULL) {
-					if (errno != ENOENT) fprintf (stderr, STG33, "Cgetpwnam", strerror(errno));
-					fprintf (stderr, STG11, p);
-					errflg++;
-				}
-			}
+			flags |= STAGE_GRPUSER;
 			break;
 		case 'h':
 			stghost = Coptarg;
 			break;
 		case 'I':
+			flags |= STAGE_EXTERNAL;
 			break;
 		case 'L':
+			flags |= STAGE_LINKNAME;
 			break;
 		case 'l':
+			flags |= STAGE_LONG;
 			break;
 		case 'M':
-			Mflag = 1;
+			if (stcp.t_or_d != '\0' && stcp.t_or_d != 'm') {
+				++errflg;
+			} else {
+				stcp.t_or_d = 'm';
+				strncpy(stcp.u1.m.xfile,Coptarg,STAGE_MAX_HSMLENGTH);
+				/* In case it is an HSM request we make sure retenp_on_disk and mintime_before_migr are not logged for nothing */
+				/* Check how is defined the structure stgcat_entry and you will see that there is no problem to initialize */
+				/* the follozing values even if they are not in same union... */
+				stcp.u1.h.retenp_on_disk = -1;
+				stcp.u1.h.mintime_beforemigr = -1;
+			}
 			break;
 		case 'P':
+			flags |= STAGE_PATHNAME;
 			break;
 		case 'p':
+			strncpy(stcp.poolname,Coptarg,CA_MAXPOOLNAMELEN); /* Next characters guaranteed '\0' because of the memset */
 			break;
 		case 'q':
+			if (stcp.t_or_d != '\0' && stcp.t_or_d != 't') {
+				++errflg;
+			} else {
+				stcp.t_or_d = 't';
+				strncpy(stcp.u1.t.fseq, Coptarg, CA_MAXFSEQLEN);
+			}
 			break;
 		case 'Q':
+			flags |= STAGE_MULTIFSEQ;
 			break;
 		case 'S':
+			flags |= STAGE_SORTED;
 			break;
 		case 's':
+			flags |= STAGE_STATPOOL;
 			break;
 		case 'T':
+			flags |= STAGE_TAPEINFO;
 			break;
 		case 'u':
+			flags |= STAGE_USER;
 			break;
 		case 'V':
-			errflg += getlist_of_vid ("-V", vid, &numvid);
+			if (stcp.t_or_d != '\0' && stcp.t_or_d != 't') {
+				++errflg;
+			} else {
+				stcp.t_or_d = 't';
+				errflg += getlist_of_vid ("-V", stcp.u1.t.vid, &numvid);
+			}
 			break;
 		case 'x':
+			flags |= STAGE_EXTENDED;
 			break;
 		case 0:
 			/* Here are the long options */
+			if (reqid_flag && ! stcp.reqid) {
+				stcp.reqid = atoi(Coptarg);
+			}
+			if (side_flag && ! have_parsed_side) {
+				if ((stcp.t_or_d != '\0' && stcp.t_or_d != 't')) {
+					++errflg;
+				} else {
+					stcp.t_or_d = 't';
+					stcp.u1.t.side = atoi(Coptarg);
+				}
+			}
+			if (output_flag && ! output_fd) {
+				if (strcmp(Coptarg,"stdout") == 0) {
+					output_fd = stdout;
+				} else if (strcmp(Coptarg, "stderr") == 0) {
+					output_fd = stderr;
+				} else if ((output_fd = fopen(Coptarg,"w")) == NULL) {
+					fprintf(stderr,"%s: fopen error: %s\n", Coptarg, strerror(errno));
+					exit(USERR);
+					output_fd_toclean = 1;
+				}
+			}
+			if (format_flag && ! format) {
+				format = Coptarg;
+			}
 			break;
 		case '?':
 			errflg++;
@@ -194,98 +258,851 @@ int main(argc, argv)
 			errflg++;
 			break;
 		}
-        if (errflg != 0) break;
+		if (errflg != 0) break;
 	}
+
+    if (reqid_flag) flags |= STAGE_REQID;
+    if (noregexp_flag) flags |= STAGE_NOREGEXP;
+    if (dump_flag) flags |= STAGE_DUMP;
+    if (migrator_flag) flags |= STAGE_MIGRULES;
+    if (class_flag) flags |= STAGE_CLASS;
+    if (queue_flag) flags |= STAGE_QUEUE;
+    if (counters_flag) flags |= STAGE_COUNTERS;
+    if (retenp_flag) flags |= STAGE_RETENP;
+    if (display_side_flag) flags |= STAGE_DISPLAY_SIDE;
+    if (mintime_flag) flags |= STAGE_MINTIME;
+    if (side_flag) flags |= STAGE_SIDE;
+
 	if (argc > Coptind) {
 		fprintf (stderr, STG16);
 		errflg++;
 	}
 
-	if (Aflag && Mflag)
-		errflg++;
-
 	if (errflg != 0) {
 		usage (argv[0]);
-		exit (USERR);
-	}
+        if (output_fd_toclean) fclose(output_fd);
+		exit (USERR);	
+    }
 
-	/* Build request header */
+    if ((flags & STAGE_STATPOOL) == STAGE_STATPOOL) {
+		/* When querying the pool statistics --format and al. options are meaningless */
+		format = NULL;
+		flags &= ~STAGE_FORMAT;
+    }
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, STGMAGIC);
-	marshall_LONG (sbp, STAGEQRY);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
+    if (format) {
+		check_format_string = 1;
+		record_callback(NULL,NULL);
+		if (check_format_string != 0) {
+			usage (argv[0]);
+			if (output_fd_toclean) fclose(output_fd);
+			exit (USERR);
+		}
+		flags |= STAGE_FORMAT; /* hint for the stgdaemon */
+    }
 
-	/* Build request body */
+    if (stage_setlog((void (*) _PROTO((int, char *))) &log_callback) != 0) {
+		stage_errmsg(NULL, STG02, "stageqry", "stage_setlog", sstrerror(serrno));
+		if (output_fd_toclean) fclose(output_fd);
+		exit(rc_castor2shift(serrno));
+    }
 
-	if ((pw = Cgetpwuid (uid)) == NULL) {
-		char uidstr[8];
-		if (errno != ENOENT) fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
-		sprintf (uidstr, "%d", uid);
-		p = uidstr;
-		fprintf (stderr, STG11, p);
-		exit (SYERR);
-	}
-	marshall_STRING (sbp, pw->pw_name);	/* login name */
-	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, argc);
-	for (i = 0; i < argc; i++)
-		marshall_STRING (sbp, argv[i]);
-	
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
-	
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, STG51);
-		exit (SYERR);
-	}
-#endif
-	
+    if (stage_setcallback(&record_callback) != 0) {
+		stage_errmsg(NULL, STG02, "stageqry", "stage_setcallback", sstrerror(serrno));
+		if (output_fd_toclean) fclose(output_fd);
+		exit(rc_castor2shift(serrno));
+    }
+
 #if !defined(_WIN32)
-	signal (SIGHUP, cleanup);
+    signal (SIGHUP, cleanup);
 #endif
-	signal (SIGINT, cleanup);
+    signal (SIGINT, cleanup);
 #if !defined(_WIN32)
-	signal (SIGQUIT, cleanup);
+    signal (SIGQUIT, cleanup);
 #endif
-	signal (SIGTERM, cleanup);
-	
-	while (1) {
-		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == EINVAL) break;
-		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
-		sleep (RETRYI);
-	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
-	exit (c == 0 ? 0 : rc_castor2shift(serrno));
+    signal (SIGTERM, cleanup);
+
+    if ((c = stage_qry(stcp.t_or_d,
+                       flags,
+                       stghost,
+                       stcp.t_or_d ? 1 : 0,
+                       stcp.t_or_d ? &stcp : NULL,
+                       &nstcp_output, &stcp_output,
+                       &nstpp_output, &stpp_output)) != 0) {
+		/* Unless ENOENT, there is a real error */
+		/* For backward compatibility ENOENT is not considered a failure in the command-line */
+		if (serrno == ENOENT) {
+			c = 0;
+		} else {
+			stage_errmsg(NULL, STG02, "stageqry", "stage_qry", sstrerror(serrno));
+		}
+    }
+    if (stcp_output != NULL) free(stcp_output);
+    if (stpp_output != NULL) free(stpp_output);
+
+    if (output_fd_toclean) fclose(output_fd);
+    exit((c == 0) ? 0 : rc_castor2shift(serrno));
 }
 
 void cleanup(sig)
-		 int sig;
+	int sig;
 {
 	signal (sig, SIG_IGN);
-	
+        
 #if defined(_WIN32)
 	WSACleanup();
 #endif
+	if (output_fd_toclean) fclose(output_fd);
 	exit (USERR);
 }
 
 void usage(cmd)
-		 char *cmd;
+	char *cmd;
 {
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s",
-					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n"
-					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range]\n"
-					 "[-S] [-s] [-T] [-u] [-V visual_identifier(s)] [-x]\n"
-					 "[--class] [--counters] [--dump] [--retenp] [--migrator] [--mintime] [--noregexp]\n"
-					 "[--queue] [--reqid reqid]\n"
-					 "[--display_side or --ds] [--side sidenumber]\n");
+	fprintf (stderr, "usage: %s [options] where options are:\n%s",
+			 cmd,
+			 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host]\n"
+			 "[-I external_filename] [-L] [-l] [-P] [-p pool]\n"
+			 "[-q file_sequence_number(s)] [-Q file_sequence_range]\n"
+			 "[-S] [-s] [-T] [-u] [-V visual_identifier(s)] [-x]\n"
+			 "[--class] [--counters] [--display_side or --ds] [--dump]\n"
+			 "[--format formatstring] [--migrator] [--mintime]\n"
+			 "[--noheader] [--noregexp] [--output filename]\n"
+			 "[--queue] [--reqid reqid] [--retenp] [--side sidenumber]\n"
+			 "[--withna] [--withstatusnumber] [--withtimenumber] [--withunit]\n"
+		);
 }
+
+void log_callback(level,message)
+	int level;
+	char *message;
+{
+	if (format == NULL) {
+		if (level == MSG_ERR) {
+			fprintf(output_fd != NULL ? output_fd : stderr, "%s", message);
+		} else {
+			fprintf(output_fd != NULL ? output_fd : stdout, "%s", message);
+		}
+	} else {
+		if (level == MSG_ERR) {
+			fprintf(output_fd != NULL ? output_fd : stderr, "%s", message);
+		}
+	}
+}
+
+void record_callback(stcp,stpp)
+	struct stgcat_entry *stcp;
+	struct stgpath_entry *stpp;
+{
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+	char *p, *q, *qnext;
+	FILE *fd = output_fd != NULL ? output_fd : stdout;
+	int dospace = 0;
+	char *thespace = " ";
+	char *thena = withna_flag ? "N/A" : "";
+#define FPRINTF if (! check_format_string) fprintf
+
+	if ((stcp == NULL) && (stpp == NULL)) {
+		if (! check_format_string) {
+			return;
+		}
+		/* We are running in the check_format_string mode */
+	}
+
+	if (! format) {
+		return;
+	}
+
+	if (stcp != NULL || check_format_string) {
+    
+		/* format contain the list of members to print out */
+		/* format is like: member1,member2,member3,...,membern */
+		/* format can contain: */
+	  redo_parse:
+		if ((p = strdup(format)) == NULL) {
+			stage_errmsg(NULL, STG02, "stageqry", "strdup", strerror(errno));
+			if (output_fd_toclean) fclose(output_fd);
+			exit(USERR);
+		}
+    
+		q = strtok (p,",");
+		while (q != NULL) {
+			qnext = strtok(NULL, ",");
+			if (dospace == 1) FPRINTF(fd,thespace);
+			/* ----------------------------------- */
+			if (strcmp (q, "blksize") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%7s" : "%s","blksize");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					FPRINTF(fd,qnext ? "%7d" : "%d",stcp->blksize);
+				} else {
+					FPRINTF(fd,qnext ? "%7s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "charconv") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-8s" : "%s","charconv");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					char charconvstring[1024];
+					FPRINTF(fd,qnext ? "%-8s" : "%s",stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) stcp->charconv) == 0 ? charconvstring : thena);
+				} else {
+					FPRINTF(fd,qnext ? "%-8s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "keep") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-4s" : "%s","keep");
+					goto next_token;
+				}
+				FPRINTF(fd,qnext ? "%-4s" : "%s",stcp->keep ? "K" : thena);
+				/* ----------------------------------- */
+			} else if (strcmp (q, "lrecl") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%7s" : "%s","lrecl");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					FPRINTF(fd,qnext ? "%7d" : "%d",stcp->lrecl);
+				} else {
+					FPRINTF(fd,qnext ? "%7s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "nread") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,"%7s","nread");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					FPRINTF(fd,"%7d",stcp->nread);
+				} else {
+					FPRINTF(fd,"%7s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "poolname") == 0) {
+				int themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("poolname"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"poolname");
+					} else {
+						FPRINTF(fd,"%-s","poolname");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->poolname[0] != '\0' ? stcp->poolname : thena);
+				} else {
+					FPRINTF(fd,"%-s",stcp->poolname[0] != '\0' ? stcp->poolname : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "recfm") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-5s" : "%s","recfm");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					FPRINTF(fd,qnext ? "%-5s" : "%s",stcp->recfm[0] != '\0' ? stcp->recfm : thena);
+				} else {
+					FPRINTF(fd,qnext ? "%-5s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "size") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				char tmpbuf[21];
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					if (withunit_flag) {
+						FPRINTF(fd,"%8s","size");
+					} else {
+						FPRINTF(fd,"%20s","size");
+					}
+					goto next_token;
+				}
+				if (withunit_flag) {
+					FPRINTF(fd,"%8s",u64tostru(stcp->size,tmpbuf,8));
+				} else {
+					FPRINTF(fd,"%20s",u64tostr(stcp->size,tmpbuf,20));
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "ipath") == 0) {
+				int themax = THEMAX((CA_MAXHOSTNAMELEN+MAXPATH),THEMAX(strlen("ipath"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"ipath");
+					} else {
+						FPRINTF(fd,"%s","ipath");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->ipath[0] != '\0' ? stcp->ipath : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->ipath[0] != '\0' ? stcp->ipath : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "t_or_d") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-6s" : "%s","t_or_d");
+					goto next_token;
+				}
+				if (stcp->t_or_d) {
+					FPRINTF(fd,qnext ? "%-6c" : "%c",stcp->t_or_d);
+				} else {
+					FPRINTF(fd,qnext ? "%-6s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "group") == 0) {
+				int themax = THEMAX(CA_MAXGRPNAMELEN,THEMAX(strlen("group"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"group");
+					} else {
+						FPRINTF(fd,"%s","group");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->group[0] != '\0' ? stcp->group : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->group[0] != '\0' ? stcp->group : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "user") == 0) {
+				int themax = THEMAX(CA_MAXUSRNAMELEN,THEMAX(strlen("user"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"user");
+					} else {
+						FPRINTF(fd,"%s","user");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->user[0] != '\0' ? stcp->user : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->user[0] != '\0' ? stcp->user : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "uid") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-10s" : "%s","uid");
+					goto next_token;
+				}
+				if (stcp->uid) {
+					FPRINTF(fd,qnext ? "%-10d" : "%d",stcp->uid);
+				} else {
+					FPRINTF(fd,qnext ? "%-10s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "gid") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-10s" : "%s","gid");
+					goto next_token;
+				}
+				if (stcp->gid) {
+					FPRINTF(fd,qnext ? "%-10d" : "%d",stcp->gid);
+				} else {
+					FPRINTF(fd,qnext ? "%-10s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "mask") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%11s" : "%s","mask");
+					goto next_token;
+				}
+				if (stcp->mask) {
+					char dummy[12];
+					sprintf(dummy, "0%o", stcp->mask);
+					FPRINTF(fd,qnext ? "%11s" : "%s",dummy);
+				} else {
+					FPRINTF(fd,qnext ? "%11s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "reqid") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%10s" : "%s","reqid");
+					goto next_token;
+				}
+				if (stcp->reqid) {
+					FPRINTF(fd,qnext ? "%10d" : "%d",stcp->reqid);
+				} else {
+					FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "status") == 0) {
+				if (withstatusnumber_flag) {
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						FPRINTF(fd,qnext ? "%10s" : "%s","status");
+						goto next_token;
+					}
+					if (stcp->reqid) {
+						FPRINTF(fd,qnext ? "%10d" : "%d",stcp->status);
+					} else {
+						FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+					}
+				} else {
+					/* Short version of status user-friendly */
+					char p_stat[13];
+					char s_stat[5][9] = {"", "STAGEIN", "STAGEOUT", "STAGEWRT", "STAGEPUT"};
+					char l_stat[5][12] = {"", "STAGED_LSZ", "STAGED_TPE", "", "CAN_BE_MIGR"};
+					char x_stat[7][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED"};
+					int themax;
+
+					if (stcp->status & 0xF0)
+						if (((stcp->status & STAGED_LSZ) == STAGED_LSZ) ||
+							((stcp->status & STAGED_TPE) == STAGED_TPE))
+							strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+						else
+							strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
+					else if (stcp->status & 0xF00)
+						if (ISCASTORBEINGMIG(stcp))
+							strcpy( p_stat, "BEING_MIGR");
+						else if (ISCASTORWAITINGMIG(stcp))
+							strcpy( p_stat, "WAITING_MIGR");
+						else
+							strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+					else if (stcp->status == STAGEALLOC)
+						strcpy (p_stat, "STAGEALLOC");
+					else if (ISCASTORWAITINGNS(stcp))
+						strcpy( p_stat, "WAITING_NS");
+					else
+						strcpy (p_stat, s_stat[stcp->status]);
+
+					themax = THEMAX(12,THEMAX(strlen("status"),strlen(thena)));
+
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						/* Unless last token we have to reserve space */
+						if (qnext) {
+							FPRINTF(fd,"%-*s",themax,"status");
+						} else {
+							FPRINTF(fd,"%s","status");
+						}
+						goto next_token;
+					}
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,p_stat);
+					} else {
+						FPRINTF(fd,"%s",p_stat);
+					}
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "actual_size") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				char tmpbuf[21];
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					if (withunit_flag) {
+						FPRINTF(fd,"%11s","actual_size");
+					} else {
+						FPRINTF(fd,"%20s","actual_size");
+					}
+					goto next_token;
+				}
+				if (withunit_flag) {
+					FPRINTF(fd,"%11s",u64tostru(stcp->size,tmpbuf,8));
+				} else {
+					FPRINTF(fd,"%20s",u64tostr(stcp->size,tmpbuf,20));
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "c_time") == 0) {
+				if (withtimenumber_flag) {
+					/* We always force number of characters - more pretty - not consuming (small length) */
+					char tmpbuf[21];
+          
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						FPRINTF(fd,"%20s","c_time");
+						goto next_token;
+					}
+					FPRINTF(fd,"%20s",u64tostr((u_signed64) stcp->c_time,tmpbuf,20));
+				} else {
+					/* In practice it will not exceed 15 characters */
+					char timestr[64];
+
+					stage_util_time((time_t) stcp->c_time, timestr);
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						FPRINTF(fd,"%-15s","c_time");
+						goto next_token;
+					}
+					FPRINTF(fd,"%-15s",timestr);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "a_time") == 0) {
+				if (withtimenumber_flag) {
+					/* We always force number of characters - more pretty - not consuming (small length) */
+					char tmpbuf[21];
+          
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						FPRINTF(fd,"%20s","a_time");
+						goto next_token;
+					}
+					FPRINTF(fd,"%20s",u64tostr((u_signed64) stcp->a_time,tmpbuf,20));
+				} else {
+					/* In practice it will not exceed 15 characters */
+					char timestr[64];
+
+					stage_util_time((time_t) stcp->a_time, timestr);
+					if ((! noheader_flag) && (! doneheader)) {
+						/* Do first the header */
+						FPRINTF(fd,"%-15s","a_time");
+						goto next_token;
+					}
+					FPRINTF(fd,"%-15s",timestr);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "nbaccesses") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%10s" : "%s","nbaccesses");
+					goto next_token;
+				}
+				FPRINTF(fd,qnext ? "%10d" : "%d",stcp->nbaccesses);
+				/* ----------------------------------- */
+			} else if (strcmp (q, "den") == 0) {
+				int themax = THEMAX(CA_MAXDENLEN,THEMAX(strlen("den"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"den");
+					} else {
+						FPRINTF(fd,"%s","den");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "dgn") == 0) {
+				int themax = THEMAX(CA_MAXDGNLEN,THEMAX(strlen("dgn"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"dgn");
+					} else {
+						FPRINTF(fd,"%s","dgn");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "fid") == 0) {
+				int themax = THEMAX(CA_MAXFIDLEN,THEMAX(strlen("fid"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"fid");
+					} else {
+						FPRINTF(fd,"%s","fid");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "filstat") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-7s" : "%s","filstat");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't' && stcp->u1.t.filstat != '\0') {
+					FPRINTF(fd,qnext ? "%-7c" : "%c",stcp->u1.t.filstat);
+				} else {
+					FPRINTF(fd,qnext ? "%-7s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "fseq") == 0) {
+				int themax = THEMAX(CA_MAXFSEQLEN,THEMAX(strlen("fseq"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%*s",themax,"fseq");
+					} else {
+						FPRINTF(fd,"%s","fseq");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "lbl") == 0) {
+				int themax = THEMAX(CA_MAXLBLTYPLEN,THEMAX(strlen("lbl"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"lbl");
+					} else {
+						FPRINTF(fd,"%s","lbl");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "retentd") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%10s" : "%s","retentd");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't' && stcp->u1.t.retentd != 0) {
+					FPRINTF(fd,qnext ? "%10d" : "%d",stcp->u1.t.retentd);
+				} else {
+					FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "side") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%2s" : "%s","side");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					FPRINTF(fd,qnext ? "%2d" : "%d",stcp->u1.t.side);
+				} else {
+					FPRINTF(fd,qnext ? "%2s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "tapesrvr") == 0) {
+				int themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("tapesrvr"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"tapesrvr");
+					} else {
+						FPRINTF(fd,"%s","tapesrvr");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "E_Tflags") == 0) {
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,qnext ? "%-16s" : "%s","E_Tflags");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 't') {
+					char E_Tflagsstring[1024];
+					FPRINTF(fd,qnext ? "%-16s" : "%s",stage_util_E_Tflags2string((char *) E_Tflagsstring, (int) 1024, (int) stcp->u1.t.E_Tflags) == 0 ? E_Tflagsstring : thena);
+				} else {
+					FPRINTF(fd,qnext ? "%-16s" : "%s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "vid") == 0) {
+				/* In practice there is never more than one VID, so we say CA_MAXVIDLEN instead of MAXVSN*CA_MAXVIDLEN */
+				int themax = THEMAX(CA_MAXVIDLEN,THEMAX(strlen("vid"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"vid");
+					} else {
+						FPRINTF(fd,"%s","vid");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "vsn") == 0) {
+				/* In practice there is never more than one VSN, so we say CA_MAXVSNLEN instead of MAXVSN*CA_MAXVSNLEN */
+				int themax = THEMAX(CA_MAXVSNLEN,THEMAX(strlen("vsn"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"vsn");
+					} else {
+						FPRINTF(fd,"%s","vsn");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "xfile") == 0) {
+				int themax = THEMAX(STAGE_MAX_HSMLENGTH,THEMAX(strlen("xfile"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"xfile");
+					} else {
+						FPRINTF(fd,"%s","xfile");
+					}
+					goto next_token;
+				}
+				/* Formally stcp->u1.d.xfile, stcp->u1.h.xfile and stcp->u1.m.xfile points to exactly the same address */
+				/* In fact the xfile member have no meaning only when we talk about tape files */
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "server") == 0) {
+				int themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("server"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"server");
+					} else {
+						FPRINTF(fd,"%s","server");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "fileid") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				char tmpbuf[21];
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,"%20s","fileid");
+					goto next_token;
+				}
+				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.fileid != '\0' ? u64tostr(stcp->u1.h.fileid,tmpbuf,20) : thena);
+				/* ----------------------------------- */
+			} else if (strcmp (q, "fileclass") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,"%9s","fileclass");
+					goto next_token;
+				}
+				if (stcp->t_or_d == 'h' && stcp->u1.h.fileclass != 0) {
+					FPRINTF(fd,"%9d",stcp->u1.h.fileclass);
+				} else {
+					FPRINTF(fd,"%9s",thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "tppool") == 0) {
+				int themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("tppool"),strlen(thena)));
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					/* Unless last token we have to reserve space */
+					if (qnext) {
+						FPRINTF(fd,"%-*s",themax,"tppool");
+					} else {
+						FPRINTF(fd,"%s","tppool");
+					}
+					goto next_token;
+				}
+				if (qnext) {
+					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
+				} else {
+					FPRINTF(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
+				}
+				/* ----------------------------------- */
+			} else if (strcmp (q, "retenp_on_disk") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				char tmpbuf[21];
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,"%20s","retenp_on_disk");
+					goto next_token;
+				}
+				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.retenp_on_disk >= 0 ? u64tostr(stcp->u1.h.retenp_on_disk,tmpbuf,20) : thena);
+				/* ----------------------------------- */
+			} else if (strcmp (q, "mintime_beforemigr") == 0) {
+				/* We always force number of characters - more pretty - not consuming (small length) */
+				char tmpbuf[21];
+				if ((! noheader_flag) && (! doneheader)) {
+					/* Do first the header */
+					FPRINTF(fd,"%20s","mintime_beforemigr");
+					goto next_token;
+				}
+				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.mintime_beforemigr >= 0 ? u64tostr(stcp->u1.h.mintime_beforemigr,tmpbuf,20) : thena);
+				/* ----------------------------------- */
+			} else {
+				stage_errmsg(NULL, STG02, "stageqry", "--format", q);
+				FPRINTF(fd,"\n");
+				free(p);
+				if (output_fd_toclean) fclose(output_fd);
+				exit(USERR);
+			}
+		  next_token:
+			dospace = 1;
+			q = qnext;
+		}
+		FPRINTF(fd,"\n");
+		free(p);
+		if (! check_format_string) {
+			if ((! noheader_flag) && (! doneheader)) {
+				/* We did the header, we will now have to do the first line */
+				dospace = -1;
+				doneheader = 1;
+				goto redo_parse;
+			}
+		}
+	}
+	if (check_format_string) {
+		check_format_string = 0;
+	}
+}
+
