@@ -1,10 +1,10 @@
-.\" $Id: stage_struct.man,v 1.7 2002/09/17 07:53:23 jdurand Exp $
+.\" $Id: stage_struct.man,v 1.8 2002/09/17 12:14:14 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.7 $ $Date: 2002/09/17 07:53:23 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.8 $ $Date: 2002/09/17 12:14:14 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_STRUCT "3" "$Date: 2002/09/17 07:53:23 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_STRUCT "3" "$Date: 2002/09/17 12:14:14 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage structures \- Definition of the stager structures used by daemon and clients
 .SH SYNOPSIS
@@ -340,7 +340,7 @@ gives the side in case multi-side media
 forces use of a tape server 
 .TP
 .BI E_Tflags
-is be a logical or of:
+is a logical or of:
 .RS
 .BI SKIPBAD
 to skip bad blocks
