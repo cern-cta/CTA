@@ -155,7 +155,7 @@ static int CheckDgn(char *dgn) {
     }
     found = 0;
     CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
-        if ( !strcmp(tmp->dgn,dgn) ) {
+        if ( !strcmp(tmp->dgn,dgn) && tmp->drv_queue != NULL ) {
             found = 1;
             break;
         }
@@ -1283,7 +1283,7 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
 
 int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     dgn_element_t *dgn_context;
-    vdqm_volrec_t *volrec;
+    vdqm_volrec_t *volrec, *newvolrec;
     vdqm_drvrec_t *drvrec;
     int rc;
     
@@ -1351,6 +1351,11 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
      * We don't allow client to set priority
      */
     volrec->vol.priority = VDQM_PRIORITY_NORMAL;
+    /*
+     * Remember the new volume record to assure replica is updated about it.
+     */
+     newvolrec = volrec;
+
     
     /*
      * Add the record to the volume queue
@@ -1416,6 +1421,11 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
             }
        } /* end of for (;;) */
     }
+    /*
+     * Always update replica for this volume record (update status may have
+     * been temporary reset by SelectVolAndDrv()).
+     */
+    newvolrec->update = 1;
     FreeDgnContext(&dgn_context);
     return(0);
 }
@@ -1607,7 +1617,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             drvrec->drv.status |= VDQM_UNIT_FREE;
         drvrec->drv.status |= DrvReq->status;
     } else {
-        if ( !(drvrec->drv.status & VDQM_UNIT_UP) ) {
+        if ( drvrec->drv.status & VDQM_UNIT_DOWN ) {
             /*
              * Unit must be up before anything else is allowed
              */
@@ -1615,7 +1625,12 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             FreeDgnContext(&dgn_context);
             vdqm_SetError(EVQUNNOTUP);
             return(-1);
-        }
+        } 
+        /*
+         * If the unit is not DOWN, it must be UP! Make sure it's the case.
+         * This is to facilitate the repair after a VDQM server crash.
+         */
+        drvreq->drv.status |= VDQM_UNIT_UP;
         if ( DrvReq->status & VDQM_UNIT_BUSY ) {
             /*
              * Consistency check
