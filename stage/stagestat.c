@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.33 2002/06/20 12:05:18 jdurand Exp $
+ * $Id: stagestat.c,v 1.34 2002/07/26 12:22:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.33 $ $Date: 2002/06/20 12:05:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.34 $ $Date: 2002/07/26 12:22:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -424,6 +424,7 @@ int main(argc, argv)
 			nrecok++;
 	    } else if (rp.subtype == STGCMDS) {
 			num_fork_exec_stager++;
+			nrecok++;
 		} else if (rp.subtype == STGCMDS) { /* stager started */
 			nrecok++;
 		} else if (rp.subtype == STGFILS && (rp.req_type == STAGEIN)) {
