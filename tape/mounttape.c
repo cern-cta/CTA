@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.21 $ $Date: 2000/03/28 14:13:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.22 $ $Date: 2000/04/07 09:05:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -100,6 +100,7 @@ char	**argv;
 	int tpmode;
 	char tpvsn[CA_MAXVSNLEN+1];
 	int ux;
+	int vbsyretry;
 	int vdqm_rc;
 	int vdqm_reqid;
 	int vdqm_status;
@@ -175,12 +176,14 @@ char	**argv;
 #endif
 
 #ifdef TMS
-	c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive);
-	if (c != 0) {
-		if (c == ETVBSY)
+	vbsyretry = 0;
+	while ((c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive)) == ETVBSY &&
+	    vbsyretry++ == 0) {
 			n = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
-		goto reply;
+		sleep (10);
 	}
+	if (c)
+		goto reply;
 #endif
 
 	/* build mount message */
