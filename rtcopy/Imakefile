@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2004/07/28 15:55:58 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2004/08/03 15:41:38 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -162,6 +162,10 @@ MONITORFLAG=
 
 CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CallTMS.c
 
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+LDLIBS+= -ldl
+#endif  
 COMM######################### FLAGS ##############################
 DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DRTCOPY_LOGFILE=\"$(LOGFILE)\" \
@@ -174,7 +178,7 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 $(RTCPFLAG) $(TMSFLG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) \
 	 $(ACCTFILE)  $(MONITORFLAG) $(RTCPCLDFLAGS)
 
-CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS)
+CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 DEPLIB += DepSharedLibraryTargetName(shlib,shift)
