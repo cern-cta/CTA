@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.28 2000/10/17 14:40:47 jdurand Exp $
+ * $Id: stage.h,v 1.29 2000/11/06 14:46:06 jdurand Exp $
  */
 
 /*
@@ -126,6 +126,7 @@
 #define	STAGED_TPE	0x200	/* blocks with parity error have been skipped */
 #define	CAN_BE_MIGR	0x400	/* file can be migrated */
 #define	LAST_TPFILE	0x1000	/* last file on this tape */
+#define	BEING_MIGR	0x2000	/* file being migrated */
 
 			/* stage daemon messages */
 
@@ -365,6 +366,8 @@ struct migrator {
 	time_t	migreqtime;
 	int	nbfiles_canbemig;	/* number of files that can be migrated */
 	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
+	int	nbfiles_beingmig;	/* number of files that is being migrated */
+	u_signed64	space_beingmig;		/* total amount of data that is being migrated */
 	/* Predefined policy parameters that decide if the migrator have to be launched */
 	char	migp_name[CA_MAXMIGPNAMELEN+1];
 	struct migpolicy *migp;

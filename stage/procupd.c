@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.36 2000/11/03 09:49:07 jdurand Exp $
+ * $Id: procupd.c,v 1.37 2000/11/06 14:46:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.36 $ $Date: 2000/11/03 09:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.37 $ $Date: 2000/11/06 14:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,7 +60,7 @@ extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
-extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern void update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 
 #define IS_RC_OK(rc) (rc == 0)
@@ -581,8 +581,8 @@ procupdreq(req_data, clienthost)
 				}
 			} else {
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					update_migpool(stcp,-1,-1);
 					stcp->status &= ~CAN_BE_MIGR;
-					update_migpool(stcp,-1);
 				}
 				stcp->status |= STAGED;
 				update_hsm_a_time(stcp);

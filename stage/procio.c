@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.55 2000/11/06 11:46:42 jdurand Exp $
+ * $Id: procio.c,v 1.56 2000/11/06 14:46:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.55 $ $Date: 2000/11/06 11:46:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.56 $ $Date: 2000/11/06 14:46:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int,
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
-extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern void update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 
 #ifdef MIN
@@ -659,6 +659,7 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
 						stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
 						switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
+							case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
 							case STAGEPUT|CAN_BE_MIGR:
 								/* And is busy with respect to our knowledge */
 								sendrep (rpfd, MSG_ERR, STG37);
@@ -923,6 +924,7 @@ void procioreq(req_type, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			case STAGEOUT|CAN_BE_MIGR:
+			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
 			case STAGEPUT|CAN_BE_MIGR:
 				sendrep (rpfd, MSG_ERR, STG37);
 				c = EBUSY;
@@ -997,6 +999,8 @@ void procioreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 				break;
+			/* Please note : If status is STAGEOUT|CAN_BE_MIGR|BEING_MIGR it is refused */
+			/*               upper in this source */
 			case STAGEOUT:
 			case STAGEOUT|CAN_BE_MIGR:
 			case STAGEOUT|WAITING_SPC:
@@ -1014,7 +1018,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
 					/* This is a file to delete from automatic migration */
-					update_migpool(stcp,-1);
+					update_migpool(stcp,-1,0);
 				}
 				break;
 			default:
@@ -1605,7 +1609,7 @@ void procputreq(req_data, clienthost)
 					goto reply;
 				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					hsmfilesstcp[ihsmfiles]->status = STAGEPUT | CAN_BE_MIGR;
+					hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					hsmfilesstcp[ihsmfiles]->a_time = time (0);
 				} else {
 					int save_status;
@@ -1793,8 +1797,8 @@ void procputreq(req_data, clienthost)
 					break;
 			}
 			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+				update_migpool(stcp,-1,-1);
 				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-				update_migpool(stcp,-1);
 			} else {
 				stcp->status = STAGEOUT|PUT_FAILED;
 			}

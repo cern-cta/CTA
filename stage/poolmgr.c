@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.45 2000/10/26 17:10:06 jdurand Exp $
+ * $Id: poolmgr.c,v 1.46 2000/11/06 14:46:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.45 $ $Date: 2000/10/26 17:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.46 $ $Date: 2000/11/06 14:46:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ struct sigaction sa_poolmgr;
 void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
-int update_migpool _PROTO((struct stgcat_entry *, int));
+int update_migpool _PROTO((struct stgcat_entry *, int, int));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct migrator *));
 int migpoolfiles _PROTO((struct migrator *));
@@ -910,6 +910,8 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 			sendrep (rpfd, MSG_OUT, "MIGRATOR %s MIGPOLICY %s\n",migr_p->name,migr_p->migp->name);
 			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->nbfiles_canbemig);
 			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->space_canbemig, tmpbuf, 0));
+			sendrep (rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->nbfiles_beingmig);
+			sendrep (rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->space_beingmig, tmpbuf, 0));
 			if (migr_p->migreqtime > 0) {
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
 				localtime_r(&(migr_p->migreqtime),&tmstruc);
@@ -1248,10 +1250,13 @@ void procmigpoolreq(req_data, clienthost)
 /* Flag means :                                       */
 /*  1             file put in stack can_be_migr       */
 /* -1             file removed from stack can_be_migr */
+/* Being means :                                      */
+/*  1             Remove file from stack being_migr if any */
 /* Returns: 0 (OK) or -1 (NOT OK) */
-int update_migpool(stcp,flag)
+int update_migpool(stcp,flag,Being)
 	struct stgcat_entry *stcp;
     int flag;
+    int Being;
 {
 	int i, ipool;
 	struct pool *pool_p;
@@ -1282,11 +1287,11 @@ int update_migpool(stcp,flag)
 
 	switch (flag) {
 	case -1:
-		if (stcp->filler[0] != 'm') {
-			/* This is a return from explicit migration */
+		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
+			/* This is a not a return from automatic migration */
 			return(0);
 		}
-		/* This is from a return from automatic migration */
+		/* This is a return from automatic migration */
 		if (pool_p->migr->nbfiles_canbemig-- < 0) {
 			sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)\n",
 					stcp->poolname);
@@ -1299,13 +1304,27 @@ int update_migpool(stcp,flag)
 		} else {
 			pool_p->migr->space_canbemig -= stcp->actual_size;
 		}
-		stcp->filler[0] = '\0';
+		if (Being) {
+			if ((stcp->status & BEING_MIGR) == BEING_MIGR) stcp->status &= ~BEING_MIGR;
+			if (pool_p->migr->nbfiles_beingmig-- < 0) {
+				sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)\n",
+						stcp->poolname);
+				pool_p->migr->nbfiles_beingmig = 0;
+			}
+			if (pool_p->migr->space_beingmig < stcp->actual_size) {
+				sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, space_beingmig < stcp->actual_size after automatic migration OK (resetted to 0)\n",
+					stcp->poolname);
+				pool_p->migr->space_beingmig = 0;
+			} else {
+				pool_p->migr->space_beingmig -= stcp->actual_size;
+			}
+		}
 		break;
 	case 1:
 		/* This is to add an entry for the next automatic migration */
 		pool_p->migr->nbfiles_canbemig++;
 		pool_p->migr->space_canbemig += stcp->actual_size;
-		stcp->filler[0] = 'm';
+		stcp->status |= CAN_BE_MIGR;
 		break;
 	default:
 		sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error : flag != 1 && flag != -1\n");
@@ -1366,7 +1385,31 @@ int migrate_files(migr_p)
 	} else if (pid == 0) {  /* we are in the child */
       exit(migpoolfiles(migr_p));
 	} else {  /* we are in the parent */
-      stglogit (func, "execing migrator %s, pid=%d\n",migr_p->name,pid);
+      int okpoolname;
+      int ipoolname;
+      char tmpbuf[21];
+
+      /* We remember all the entries that will be treated in this migration */
+      for (stcp = stcs; stcp < stce; stcp++) {
+        if (stcp->reqid == 0) break;
+        if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
+        if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
+        okpoolname = 0;
+		/* Does it belong to a pool managed by this migrator ? */
+		for (ipoolname = 0; ipoolname < migr_p->nbpool; ipoolname++) {
+          if (strcmp (migr_p->poolp[ipoolname]->name, stcp->poolname)) continue;
+          okpoolname = 1;
+		}
+		if (okpoolname == 0) continue;
+        stcp->status |= BEING_MIGR;
+		migr_p->nbfiles_beingmig++;
+		migr_p->space_beingmig += stcp->actual_size;
+      }
+      stglogit (func, "execing migrator %s for %d HSM files (total of %s), pid=%d\n",
+                migr_p->name,
+                migr_p->nbfiles_beingmig,
+                u64tostru(migr_p->space_beingmig, tmpbuf, 0),
+                pid);
       migr_p->migreqtime = time (0);
 	}
     return (0);
