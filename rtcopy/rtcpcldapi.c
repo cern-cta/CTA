@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.64 $ $Release$ $Date: 2004/09/27 11:04:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.65 $ $Release$ $Date: 2004/09/27 12:22:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.64 $ $Date: 2004/09/27 11:04:22 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.65 $ $Date: 2004/09/27 12:22:40 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1549,7 +1549,7 @@ void rtcpcldc_cleanup(
 int rtcpcldc(tape)
      tape_list_t *tape;
 {
-  struct C_IObject_t *tapeIObj = NULL;
+  struct C_IObject_t *iObj = NULL;
   struct C_Services_t **dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
@@ -1689,6 +1689,26 @@ int rtcpcldc(tape)
        currentStatus != TAPE_WAITMOUNT &&
        currentStatus != TAPE_MOUNTED ) {
     Cstager_Tape_setStatus(clientCntx->currentTp,TAPE_PENDING);
+    iObj = Cstager_Tape_getIObject(clientCntx->currentTp);
+    rc = C_Services_updateRepNoRec(*dbSvc,iAddr,iObj,0);
+    if ( rc == -1 ) {
+      LOG_FAILED_CALL("C_Services_updateRepNoRec()",
+                      C_Services_errorMsg(*dbSvc));
+      if ( serrno == 0 ) serrno = errno;
+      save_serrno = serrno;
+      rtcp_log(LOG_ERR,"C_Services_updateRepNoRec() DB error: %s\n",
+               Cstager_IStagerSvc_errorMsg(stgSvc));
+      strncpy(tape->tapereq.err.errmsgtxt,
+              Cstager_IStagerSvc_errorMsg(stgSvc),
+              sizeof(tape->tapereq.err.errmsgtxt)-1);
+      tape->tapereq.err.errorcode = save_serrno;
+      tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+      (void)C_Services_rollback(*dbSvc,iAddr);
+      C_IAddress_delete(iAddr);
+      rtcpcldc_cleanup(tape);
+      serrno = save_serrno;
+      return(-1);
+    }
   } 
   Cstager_Tape_status(clientCntx->currentTp,&currentStatus);
   tape->tapereq.TStartRequest = (int)time(NULL);
@@ -1732,6 +1752,9 @@ int rtcpcldc(tape)
     }
   CLIST_ITERATE_END(tape->file,fl);
 
+  /*
+   * This guy will also do the commit
+   */
   rc = addNewSegmentsToDB(tape,clientCntx);
   if ( rc == -1 ) {
     LOG_FAILED_CALL("addNewSegmentsToDB()","");
