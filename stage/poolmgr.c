@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.197 2002/05/16 13:49:04 jdurand Exp $
+ * $Id: poolmgr.c,v 1.198 2002/05/23 10:20:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.197 $ $Date: 2002/05/16 13:49:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.198 $ $Date: 2002/05/23 10:20:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,7 +90,6 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern struct stgcat_entry *newreq _PROTO((int));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int nextreqid _PROTO(());
 
 #if !defined(linux)
