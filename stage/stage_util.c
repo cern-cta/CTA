@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.20 2002/05/25 09:13:50 jdurand Exp $
+ * $Id: stage_util.c,v 1.21 2002/06/13 08:07:01 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -128,6 +128,7 @@ int DLL_DECL stage_stgmagic()
 
   /* We check existence of an STG STGMAGIC from environment variable or configuration */
   if (((p = getenv("STAGE_STGMAGIC")) != NULL) || ((p = getconfent("STG","STGMAGIC")) != NULL)) {
+    errno = 0;
     stgmagic = strtol(p, &dp, 0);
     if ((*dp != '\0') || (((stgmagic == LONG_MIN) || (stgmagic == LONG_MAX)) && (errno == ERANGE))) {
       stage_errmsg(func, STG02, "Magic Number", "Configuration", "Using default magic number " STGMAGIC_DEFAULT_STRING);
@@ -368,6 +369,7 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 	long thislong;
 	int rc = 0;
 
+	errno = 0;
 	thislong = strtol (nptr, endptr, base);
 	if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
 		if (thislong <= INT_MIN) {
