@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.4 $ $Date: 2000/12/06 08:49:29 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.5 $ $Date: 2000/12/06 14:16:02 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2183,7 +2183,7 @@ struct server *serv;	/* pointer to list of all servers to open */
      printf("\t*********************************************\n\n\n");
      printf("\tTotal nb MBytes transferred: %d (%f TB)\n",totMB,
             (float)totMB/(1024.0*1024.0));
-     printf("\tTotal nb MBtyes written to tape: %d (%f TB)\n",totMBw,
+     printf("\tTotal nb MBytes written to tape: %d (%f TB)\n",totMBw,
             (float)totMBw/(1024.0*1024.0));
      printf("\tTotal nb MBytes read from tape: %d (%f TB)\n",totMBr,
             (float)totMBr/(1024.0*1024.0));
