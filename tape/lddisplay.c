@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1992-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1992-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.5 $ $Date: 2001/03/08 10:00:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	lddisplay - load display on 3480 compatible drives */
@@ -92,7 +92,6 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 #if defined(_AIX)
 #if defined(RS6000PCTA)
 	if (strncmp (dvrname, "mtdd", 4) == 0) {
-#endif
 		ldcmd.ld_func = fcb;
 		memset (ldcmd.ld_msg1, ' ', 8);
 		memcpy (ldcmd.ld_msg1, msg1, strlen (msg1));
@@ -105,7 +104,6 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 			if (fd < 0) close (tapefd);
 			RETURN (-1);
 		}
-#if defined(RS6000PCTA)
 	}
 #endif
 #if defined(ADSTAR)
