@@ -1,5 +1,5 @@
 COMM
-COMM $Id: Imakefile,v 1.1 2004/07/30 12:54:09 motiakov Exp $
+COMM $Id: Imakefile,v 1.2 2004/12/21 22:28:37 jdurand Exp $
 COMM
 
 COMM
@@ -40,16 +40,19 @@ LDLIBS = ws2_32.lib advapi32.lib mpr.lib
 #endif
 #endif
 
-GLOBLIB = DepLibraryTargetName(vdqm,vdqmapi) DepLibraryTargetName(common,common)
+DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+GLOBLIB = -L../shlib -lshift
 
-.PRECIOUS: LibraryTargetName(vdqmapi)
+#if BuildVdqmLibrary
+VDQMLIBTARGET=LibraryTargetName(vdqmapi)
+#endif
 
 #if BuildVdqmServer
 VDQMFLAGS=-DVDQMSERV
 #endif
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
-LDLIBS+= -ldl -L../lib -lshift
+LDLIBS+= -ldl
 #endif  
 
 CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS) -DVDQM_HOST=\"$(VDQM_HOST)\" -DVDQM_LOG_FILE=\"$(LOGFILE)\" -DVDQM_DRIVES_FILE=\"$(DRIVESFILE)\" $(VDQMFLAGS) $(SECURITYFLAG)
@@ -109,7 +112,7 @@ BC_SRVOBJS = vdqm_CloseConn.Osuf vdqm_InitNW.Osuf vdqm_Listen.Osuf \
 
 VDQMLIB_OBJS = vdqmapi.Osuf vdqmc_SendRecv.Osuf
 
-all: LibraryTargetName(vdqmapi) $(CLIENT) $(SERVER)
+all: $(VDQMLIBTARGET) $(CLIENT) $(SERVER)
 
 #if BuildVdqmServer
 install: $(BIN) $(IPROGS) $(SPOOL)
@@ -125,30 +128,30 @@ exportshr:
 
 #if BuildVdqmClient
 NormalProgramTarget(showqueues,showqueues.Osuf, \
-  DepLibraryTargetName(common,common), \
+  $(DEPLIB), \
   $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 NormalProgramTarget(tpsrv_in_prod,tpsrv_in_prod.Osuf, \
-  DepLibraryTargetName(common,common), \
+  $(DEPLIB), \
   $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 #endif
 
 NormalLibraryTarget(vdqmapi,$(VDQMLIB_OBJS))
 
-MakeDepLibrary(lib,shift)
+MakeDepSharedLibrary(shlib,shift)
 
 
 #if BuildVdqmServer
-NormalProgramTarget(vdqmserv,$(SRVOBJS),DepLibraryTargetName(common,common), \
+NormalProgramTarget(vdqmserv,$(SRVOBJS),$(DEPLIB), \
   $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 NormalProgramTarget(vdqmbc_serv,$(BC_SRVOBJS), \
-  DepLibraryTargetName(common,common), \
+  $(DEPLIB), \
   $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 NormalProgramTarget(vdqm_admin,vdqm_admin.Osuf $(VDQMLIB_OBJS), \
-  DepLibraryTargetName(common,common), \
+  $(DEPLIB), \
   $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 #endif
 
@@ -205,8 +208,6 @@ clobber:	clean
 	-@RemoveFiles(ProgramTargetName(vdqmbs_serv))
 
 Makefiles:
-
-MakeDepLibrary(common,common)
 
 FORCE:
 
