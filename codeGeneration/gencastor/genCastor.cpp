@@ -12,14 +12,16 @@
 #include <kapplication.h>
 #include <kcmdlineargs.h>
 #include <kconfig.h>
+#include "codegenerator.h"
+#include "classifier.h"
+#include "umldoc.h"
 #include <iostream>
 
-static KCmdLineOptions options[] =
-    {
-        { "+[File]", I18N_NOOP("file to open"), 0 },
-        // INSERT YOUR COMMANDLINE OPTIONS HERE
-        KCmdLineLastOption
-    };
+static KCmdLineOptions options[] = {
+  { "+File", I18N_NOOP("file to open"), 0 },
+  { "!+[classes]", I18N_NOOP("Classes to generate"), 0 },
+  KCmdLineLastOption
+};
 
 int main(int argc, char *argv[]) {
 
@@ -37,10 +39,27 @@ int main(int argc, char *argv[]) {
   uml->initGenerators();
 
   KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
-  if ( args -> count() ) {
-    uml -> openDocumentFile( args -> url( 0 ) );
-    uml->generateAllCode();
-    args -> clear();
+  if (args->count()) {
+    uml->openDocumentFile(args->url(0));
+    CodeGenerator* gen = uml->getGenerator();
+    if (gen) {
+      if (1 == args->count()) {
+        gen->writeCodeToFile();
+      } else {
+        UMLClassifierList classList;
+        for (int i = 1; i < args->count(); i++) {
+          UMLClassifierList inList = uml->getDocument()->getConcepts();
+          for (UMLClassifier * obj = inList.first(); obj != 0; obj = inList.next()) {
+            if (0 == obj->getName().compare(args->arg(i))) {
+              classList.append(obj);
+              break;
+            }
+          }
+        }
+        gen->writeCodeToFile(classList);
+      }
+    }
+    args->clear();
   } else {
     std::cout << "Invalid number of arguments\n"
               << "syntax : " << argv[0] << " <xmi File>"
