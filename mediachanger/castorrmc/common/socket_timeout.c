@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.16 $ $Date: 2001/10/23 06:17:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.17 $ $Date: 2001/10/23 06:24:45 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -200,7 +200,6 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
         /* Interupted */
         continue;
       } else {
-        serrno = errno;
         flag = -1;
         break;
       }
@@ -208,7 +207,6 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
     if ((nread = recv(fd, ptr, nleft, 0)) < 0) {
       if (errno != EINTR) {
         /* Error */
-        serrno = errno;
         flag = -1;
         break;
       }
@@ -303,7 +301,6 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
         /* Interrupted */
         continue;
       } else {
-        serrno = errno;
         flag = -1;
         break;
       }
@@ -311,7 +308,6 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
     if ((nwritten = send(fd, ptr, nleft, 0)) <= 0) {
       if (errno != EINTR) {
         /* Error */
-        serrno = errno;
         flag = -1;
         break;
       }
@@ -375,7 +371,6 @@ Sigfunc *_netsignal(signo, func)
   _Insure_set_option("runtime","on");
 #endif
   if (n < 0) {
-    serrno = errno;
     return(SIG_ERR);
   }
   return(oact.sa_handler);
