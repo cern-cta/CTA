@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.6 2001/06/21 09:53:36 jdurand Exp $
+ * $Id: procfilchg.c,v 1.7 2001/06/21 16:42:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.6 $ $Date: 2001/06/21 09:53:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.7 $ $Date: 2001/06/21 16:42:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -181,7 +181,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					errflg++;
 				}
 				/* The only status change supported here are STAGEOUT|CAN_BE_MIGR */
-				if (thisstatus != (STAGEOUT|CAN_BE_MIGR)) {
+				if ((thisstatus != (STAGEOUT|CAN_BE_MIGR)) && (! errflg)) {
 					sendrep (rpfd, MSG_ERR, STG06, "--status");
 					errflg++;
 				}
