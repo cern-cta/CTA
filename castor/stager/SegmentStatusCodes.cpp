@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // SegmentStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::SegmentStatusCodesStrings[8] = {
+const char* castor::stager::SegmentStatusCodesStrings[9] = {
   "SEGMENT_UNPROCESSED",
   "DELETED VALUE",
   "DELETED VALUE",
@@ -38,6 +38,7 @@ const char* castor::stager::SegmentStatusCodesStrings[8] = {
   "DELETED VALUE",
   "SEGMENT_FILECOPIED",
   "SEGMENT_FAILED",
-  "SEGMENT_SELECTED"
+  "SEGMENT_SELECTED",
+  "SEGMENT_RETRIED"
 };
 
