@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.10 $ $Date: 1999/11/12 12:37:11 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.11 $ $Date: 1999/11/12 14:09:16 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -153,13 +153,12 @@
 #define TP006	"TP006 - invalid value for %s\n"
 #define	TP007	"TP007 - fid is mandatory when TPPOSIT_FID\n"
 #define TP008	"TP008 - %s not accessible\n"
-#define TP009	"TP009 - could not configure %s: %s\n"
 #define TP010	"TP010 - resources already reserved for this job\n"
 #define TP011	"TP011 - too many tape users\n"
 #define TP012	"TP012 - too many drives requested\n"
 #define TP013	"TP013 - invalid device group name\n"
 #define TP014	"TP014 - reserve not done\n"
-#define TP015	"TP015 - drive with specified characteristics does not exist\n"
+#define TP015	"TP015 - drive with specified name/characteristics does not exist\n"
 #define TP017	"TP017 - cannot use blp in write mode\n"
 #define TP018	"TP018 - duplicate option %s\n"
 #define TP020	"TP020 - mount tape %s(%s) %s on drive %s@%s for %s %d (%s) or reply cancel | drive name"
