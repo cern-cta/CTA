@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2005/03/22 17:08:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -640,6 +640,25 @@ extern "C" {
     return 0;
   }
 
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_putDone
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_putDone
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 cfId,
+   u_signed64 fileSize) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->putDone(cfId, fileSize);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+    
+  }
+  
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_resetStream
   //-------------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.138 $ $Release$ $Date: 2005/03/16 15:08:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.139 $ $Release$ $Date: 2005/03/22 17:08:15 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -183,6 +183,10 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
   "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
 
+/// SQL statement for putDone
+const std::string castor::db::ora::OraStagerSvc::s_putDoneStatementString =
+  "BEGIN putDoneFunc(:1, :2); END;";
+
 /// SQL statement for resetStream
 const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
   "BEGIN resetStream(:1); END;";
@@ -257,6 +261,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0),
+  m_putDoneStatement(0),
   m_resetStreamStatement(0),
   m_bestFileSystemForJobStatement(0),
   m_updateFileSystemForJobStatement(0),
@@ -323,6 +328,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
+    deleteStatement(m_putDoneStatement);
     deleteStatement(m_resetStreamStatement);
     deleteStatement(m_bestFileSystemForJobStatement);
     deleteStatement(m_updateFileSystemForJobStatement);
@@ -361,6 +367,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_disk2DiskCopyDoneStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
+  m_putDoneStatement = 0;
   m_resetStreamStatement = 0;
   m_bestFileSystemForJobStatement = 0;
   m_updateFileSystemForJobStatement = 0;
@@ -2108,6 +2115,34 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in prepareForMigration."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// putDone
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::putDone
+(u_signed64 cfId,
+ u_signed64 fileSize)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_putDoneStatement) {
+      m_putDoneStatement =
+        createStatement(s_putDoneStatementString);
+      m_putDoneStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_putDoneStatement->setDouble(1, cfId);
+    m_putDoneStatement->setDouble(2, fileSize);
+    unsigned int nb = m_putDoneStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in putDone."
       << std::endl << e.what();
     throw ex;
   }

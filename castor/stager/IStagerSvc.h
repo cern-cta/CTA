@@ -668,10 +668,10 @@ int Cstager_IStagerSvc_recreateCastorFile
  struct Cstager_DiskCopy_t** diskCopy);
 
 /**
- * Prepares a file for migration. This involves
- * creating the needed TapeCopies according to the
- * FileClass of the castorFile and updating the file
- * size to the actual value.
+ * Prepares a file for migration. This is called
+ * when a put is over. It involves updating the file
+ * size to the actual value, archiving the subrequest
+ * and calling putDone.
  * @param stgSvc the IStagerSvc used
  * @param subreq The SubRequest handling the file to prepare
  * @param fileSize The actual size of the castor file
@@ -683,6 +683,25 @@ int Cstager_IStagerSvc_recreateCastorFile
 int Cstager_IStagerSvc_prepareForMigration
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
+ u_signed64 fileSize);
+
+/**
+ * Implementation of the PutDone API. This is called
+ * when a PrepareToPut is over. It involves
+ * creating the needed TapeCopies according to the
+ * FileClass of the castorFile.
+ * @param stgSvc the IStagerSvc used
+ * @param cfId The id of the CastorFile concerned
+ * @param fileSize The actual size of the castor file.
+ * This is only used to detect 0 length files
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_putDone
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 cfId,
  u_signed64 fileSize);
 
 /**

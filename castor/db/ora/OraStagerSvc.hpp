@@ -541,10 +541,10 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Prepares a file for migration. This involves
-         * creating the needed TapeCopies according to the
-         * FileClass of the castorFile and updating the file
-         * size to the actual value.
+         * Prepares a file for migration. This is called
+         * when a put is over. It involves updating the file
+         * size to the actual value, archiving the subrequest
+         * and calling putDone.
          * @param subreq The SubRequest handling the file to prepare
          * @param fileSize The actual size of the castor file
          * @exception Exception throws an Exception in case of error
@@ -552,6 +552,20 @@ namespace castor {
         virtual void prepareForMigration
         (castor::stager::SubRequest* subreq,
          u_signed64 fileSize)
+          throw (castor::exception::Exception);
+        
+        /**
+         * Implementation of the PutDone API. This is called
+         * when a PrepareToPut is over. It involves
+         * creating the needed TapeCopies according to the
+         * FileClass of the castorFile.
+         * @param cfId The id of the CastorFile concerned
+         * @param fileSize The actual size of the castor file.
+         * This is only used to detect 0 length files
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void putDone (u_signed64 cfId,
+                              u_signed64 fileSize)
           throw (castor::exception::Exception);
 
         /**
@@ -854,6 +868,12 @@ namespace castor {
 
         /// SQL statement object for function prepareForMigration
         oracle::occi::Statement *m_prepareForMigrationStatement;
+
+        /// SQL statement for function putDone
+        static const std::string s_putDoneStatementString;
+
+        /// SQL statement object for function putDone
+        oracle::occi::Statement *m_putDoneStatement;
 
         /// SQL statement for function resetStream
         static const std::string s_resetStreamStatementString;
