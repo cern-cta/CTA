@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.59 2002/05/31 10:10:15 jdurand Exp $
+ * $Id: procclr.c,v 1.60 2002/05/31 10:15:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.59 $ $Date: 2002/05/31 10:10:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.60 $ $Date: 2002/05/31 10:15:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -702,7 +702,8 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 
 	/* We check admin privilege if necessary */
 	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) ||
-		((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0))) {
+		((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0)) ||
+		(Fflag)) {
 		switch (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN)) {
 		case 0:
 			/* Yes */
