@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.72 $ $Date: 2000/04/07 15:43:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.73 $ $Date: 2000/04/10 13:55:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1370,10 +1370,12 @@ void *diskIOthread(void *arg) {
             rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
             if ( rc == 0 ) disk_fd = -1;
+            CHECK_PROC_ERR(file->tape,file,"MemoryToDisk() error");
         } else {
             rc = DiskToMemory(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
             if ( rc == 0 ) disk_fd = -1;
+            CHECK_PROC_ERR(file->tape,file,"DiskToMemory() error");
         }
     }
 
