@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.11 2001/07/12 11:06:40 jdurand Exp $
+ * $Id: procfilchg.c,v 1.12 2001/09/18 20:38:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.11 $ $Date: 2001/07/12 11:06:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.12 $ $Date: 2001/09/18 20:38:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -73,7 +73,7 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int mintime_beforemigr _PROTO((int));
 extern int retenp_on_disk _PROTO((int));
 extern int max_setretenp _PROTO((char *));
-extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -184,33 +184,38 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			break;
 		case 0:
 			if ((mintime_beforemigr_flag != 0) && (! donemintime_beforemigr)) {
-				thismintime_beforemigr = strtol (Coptarg, &dp, 10);
-				if ((*dp != '\0') || (((thismintime_beforemigr == LONG_MIN) || (thismintime_beforemigr == LONG_MAX)) && (errno == ERANGE))) {
-					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
+				if (stage_strtoi(&thismintime_beforemigr, Coptarg, &dp, 10) != 0) {
+					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
 					errflg++;
 				}
+				if (thismintime_beforemigr < 0) thismintime_beforemigr = -1;
 				donemintime_beforemigr = 1;
 			}
 			if ((reqid_flag != 0) && (! donereqid)) {
-				thisreqid = strtol (Coptarg, &dp, 10);
-				if ((*dp != '\0') || (((thisreqid == LONG_MIN) || (thisreqid == LONG_MAX)) && (errno == ERANGE))) {
-					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--reqid" : "--reqid (out of range)");
+				if (stage_strtoi(&thisreqid, Coptarg, &dp, 10) != 0) {
+					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--reqid" : "--reqid (out of range)");
 					errflg++;
 				}
 				donereqid = 1;
 			}
 			if ((retenp_on_disk_flag != 0) && (! doneretenp_on_disk)) {
-				thisretenp_on_disk = strtol (Coptarg, &dp, 10);
-				if ((*dp != '\0') || (((thisretenp_on_disk == LONG_MIN) || (thisretenp_on_disk == LONG_MAX)) && (errno == ERANGE))) {
-					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
+				if (stage_strtoi(&thisretenp_on_disk, Coptarg, &dp, 10) != 0) {
+					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
+					errflg++;
+				}
+				/* In the command-line mode, thisretenp_on_disk will furthermore be */
+				/* multiplied by ONE_DAY, and it have to be a positive number */
+				/* so the real limit there is [0, INT_MAX/ONE_DAY], or -1 */
+				if (thisretenp_on_disk < 0) thisretenp_on_disk = -1;
+				if (thisretenp_on_disk > (INT_MAX / ONE_DAY)) {
+					sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
 					errflg++;
 				}
 				doneretenp_on_disk = 1;
 			}
 			if ((status_flag != 0) && (! donestatus)) {
-				thisstatus = strtol (Coptarg, &dp, 0);
-				if ((*dp != '\0') || (((thisstatus == LONG_MIN) || (thisstatus == LONG_MAX)) && (errno == ERANGE))) {
-					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--status" : "--status (out of range)");
+				if (stage_strtoi(&thisstatus, Coptarg, &dp, 10) != 0) {
+					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--status" : "--status (out of range)");
 					errflg++;
 				}
 				/* The only status change supported here are STAGEOUT|CAN_BE_MIGR */
@@ -395,7 +400,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 										(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
 						);
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
-						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp)) != 0) {
+						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
 							if (c != CLEARED) {
 								goto reply;
 							} else {
