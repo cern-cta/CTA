@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.12 2000/05/08 10:43:07 jdurand Exp $
+ * $Id: stageclr.c,v 1.13 2000/09/11 15:28:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.12 $ $Date: 2000/05/08 10:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.13 $ $Date: 2000/09/11 15:28:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,10 +64,13 @@ int main(argc, argv)
 	uid_t uid;
 	char vid[MAXVSN][7];
 	char *hsm_host;
-	char hsm_path[CA_MAXHOSTNAMELEN + MAXPATH];
+	char hsm_path[2 + CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	int attached = 0;
+	char *dummy;
+
 	/* char repbuf[CA_MAXPATHLEN+1]; */
 
 	uid = getuid();
@@ -130,14 +133,30 @@ int main(argc, argv)
 			break;
 		case 'M':
 			Mflag++;
-			if (strchr(optarg,':') == NULL) {
+			/* Check if the option -M is attached or not */
+			if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
+				attached = 1;
+			}
+			/* We want to know if there is no ':' in the string or, if there is such a ':' */
+			/* if there is no '/' before (then is will indicate a hostname)                */
+			if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
 				if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-					strcpy (hsm_path, hsm_host);
+					if (attached != 0) {
+						strcpy (hsm_path, "-M");
+						strcat (hsm_path, hsm_host);
+					} else {
+						strcpy (hsm_path, hsm_host);
+					}
 					strcat (hsm_path, ":");
 					strcat (hsm_path, optarg);
 					argv[optind - 1] = hsm_path;
 				} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-					strcpy (hsm_path, hsm_host);
+					if (attached != 0) {
+						strcpy (hsm_path, "-M");
+						strcat (hsm_path, hsm_host);
+					} else {
+						strcpy (hsm_path, hsm_host);
+					}
 					strcat (hsm_path, ":");
 					strcat (hsm_path, optarg);
 					argv[optind - 1] = hsm_path;
