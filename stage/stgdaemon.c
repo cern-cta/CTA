@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.139 2001/06/21 10:50:24 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.140 2001/06/21 11:30:19 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.139 $ $Date: 2001/06/21 10:50:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.140 $ $Date: 2001/06/21 11:30:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -929,7 +929,6 @@ void prockilreq(req_type, req_data, clienthost)
 	struct waitq *wqp;
 	u_signed64 this_uniqueid;
 	int found = 0;
-	int c = 0;
 
 	rbp = req_data;
 	switch (req_type) {
@@ -3318,5 +3317,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Thursday 21 June, 2001 at 12:44:11 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 21 June, 2001 at 13:30:05 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
