@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.17 2002/10/03 14:35:41 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.18 2002/10/03 14:54:24 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.17 $ $Date: 2002/10/03 14:35:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.18 $ $Date: 2002/10/03 14:54:24 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/03 14:35:41 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/03 14:54:24 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -316,18 +316,23 @@ automatic migration output log
 .SH EXAMPLES
 .TP
 Here is an example of a configuration file:
-
-#
-.br
-#               shd02 stager configuration
-.br
-#
-.br
-POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
-.br
-  shd02 /stage
-.br
-
+.ft CW
+.nf
+.sp
+POOL thispool EXPORT_HSM DEFSIZE 1 MIGRATOR thismigr MIG_START_THRESH 100 STAGEALLOC_RETENP 12S MAX_SETRETENP 1
+        thishost         /shift/thishost/data01
+        thishost         /shift/thishost/data02
+        thishost2        /shift/thishost2/data01
+        thishost2        /shift/thishost2/data02
+POOL thispool2 DEFSIZE 1 MIGRATOR thismigr MIG_START_THRESH 100 STAGEALLOC_RETENP 12S MAX_SETRETENP 1
+        thishost3        /shift/thishost3/data01
+        thishost3        /shift/thishost3/data02
+        thishost3        /shift/thishost3/data03
+DEFPOOL thispool
+.ft
+.LP
+.fi
+that defines to pools, thispool and thispool2, each of them with 1MB default size allocation, sharing the same migrator, instructed to always migrate as soon as there is at least one file candidate for migration, with a retention period of 12 seconds to STAGEALLOCed files, and 1 day for maximum user\-defined retention period in case they would like to overwrite the default disk retention period on CASTOR files.
 .TP
 Here is a simple example of a stage_clean script:
 
@@ -335,37 +340,53 @@ stageqry \-a \-p $1 \-S  |  cut \-c33\-  |  cut \-d" " \-f1  |  stageclr \-c \-i
 .br
 
 .TP
-Here is a small log:
-
-01/12 17:52:18     1 stgdaemon: STG98 \- stageqry
-.br
-01/12 17:52:27     2 stgdaemon: STG98 \- stageqry \-s
-.br
-01/12 17:54:45     3 stgdaemon: STG98 \- stagein \-v CZ0134 \-g CART \-d 38000 \-l al fort.41
-.br
-01/12 18:11:42     3 stgdaemon: STG97 \- shd02:CZ0134.1.al staged by (baud,c3), server shd03.cern.ch  unit cartST0  ifce le0  size 324000  wtim 1006  ttim 4 rc 0
-.br
-01/12 18:11:52     3 sendrep: STG99 \- stage returns 0
-.br
-01/13 07:13:50     8 stgdaemon: STG98 \- stageqry \-P
-.br
-01/13 07:15:39     9 stgdaemon: STG98 \- stagein \-v CZ0134 \-g CART \-d 38000 \-l al fort.42
-.br
-01/13 07:15:39     9 stgdaemon: STG96 \- CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 2
-.br
-01/13 07:15:39     9 sendrep: STG99 \- stage returns 0
-.br
-01/13 07:15:46    10 stgdaemon: STG98 \- stageqry
-.br
-01/13 07:18:28    12 stgdaemon: STG98 \- stagein \-v CZ0134 \-q1,2 \-g CART \-d 38000 \-l al fort.43 fort.44
-.br
-01/13 07:18:28    12 stgdaemon: STG96 \- CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 3
-.br
-01/13 07:18:41    14 stgdaemon: STG98 \- stageqry
-.br
-01/13 07:30:07    12 stgdaemon: STG97 \- shd02:CZ0134.2.al staged by (baud,c3), server shd03.cern.ch  unit cartST1  ifce le0  size 648000  wtim 687  ttim 6 rc 0
-.br
-01/13 07:30:17    12 sendrep: STG99 \- stage returns 0
+Here is an excerpt from a production log:
+.ft CW
+.nf
+.sp
+\s-2
+10/03 11:36:51     0 migpoolfiles: ### Warning - stream on tape pool default have size to be migrated 680 < 2147483648
+10/03 11:36:51     0 migpoolfiles: ... Original number of streams : 1
+10/03 11:36:51     0 migpoolfiles: STG135 - Stream No 1 : 1 HSM files - 680 bytes - tape pool default
+10/03 11:36:51     0 migpoolfiles: Setted environment variable STAGE_STGMAGIC=0x13140704
+10/03 11:36:51    25 stgdaemon: STG92 - stage_wrt request by stage (14029,1474) from castordev.cern.ch
+10/03 11:36:51    25 stgdaemon: stcp[1/1] : -M /castor/cern.ch/user/j/jdurand/2002/10/03/shift.conf --server cnsuser.cern.ch --fileid 9372259 --fileclass 2 --req
+id 22
+10/03 11:36:51    25 stgdaemon: stpp[1/1] : castordev:/tmp/stage_castordev/c3/stage/shift.conf.22
+10/03 11:36:51    25 stgdaemon flags: STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK|STAGE_MIGLOG|STAGE_VOLATILE_TPPOOL
+10/03 11:36:51    25 stgdaemon tppool: default
+10/03 11:36:51    25 stgdaemon: execing stager_castor reqid=25 key=4019 rpfd=2 nbsubreqs=1 nretry=0 Aflag=0 concat_off_fseq=0 silent=1 use_subreqid=1 api_flag=1 
+flags=STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK|STAGE_MIGLOG|STAGE_VOLATILE_TPPOOL, pid=2540
+10/03 11:36:51     0 stager_castor: function entered
+10/03 11:36:51    25 stager_castor: Use [vid,side,vsn,dgn,aden,lbltype,fseqs]=[R09395,0,R09395,9840R5,20GC,aul,253 to 253]
+10/03 11:36:51    25 sendrep: selecting tape server ...
+10/03 11:36:51    25 sendrep: * tpsrv001 is a possible tape server.
+10/03 11:36:51    25 sendrep: ! selected tape server is tpsrv001.
+10/03 11:38:07    25 stager_castor: R09395/0.253, File No 1 (castordev:/tmp/stage_castordev/c3/stage/shift.conf.22), cprc=0, bytes_in=680, bytes_out=0, host_byte
+s=0
+10/03 11:38:07    26 stgdaemon: STG92 - stageupdc request by stage (14029,1474) from tpsrv001.cern.ch
+10/03 11:38:07    26 stgdaemon: STG98 - stage_updc_tppos -Z 25.4019@castordev -i 0 -b 32760 -D 984050A0 -F F -f /10/03/SHIFT.CONF -L 32760 -q 253
+10/03 11:38:07    25 rwcountersfs: castordev:/tmp/stage_castordev read[+1]/write[+0]= 1/ 0
+10/03 11:38:07    26 sendrep: STG99 - stage returns 0
+10/03 11:38:12    25 stager_castor: R09395/0.253, File No 1 (castordev:/tmp/stage_castordev/c3/stage/shift.conf.22), cprc=0, bytes_in=680, bytes_out=1024, host_b
+ytes=1024
+10/03 11:38:12    27 stgdaemon: STG92 - stageupdc request by stage (14029,1474) from tpsrv001.cern.ch
+10/03 11:38:12    27 stgdaemon: STG98 - stage_updc_filcp -Z 25.4019@castordev -b 32760 -i 0 -D 984050A0 -F F -f /10/03/SHIFT.CONF -I eth0 -L 32760 -s 680 -R 0 -T
+ 4 -W 77 -q 253
+10/03 11:38:12    25 rwcountersfs: castordev:/tmp/stage_castordev read[-1]/write[+0]= 0/ 0
+10/03 11:38:12    25 stgdaemon: STG97 - castordev:shift.conf.22 staged by (stage,st), server tpsrv001.cern.ch  unit 984050A0  ifce eth0  size 680  wtim 77  ttim 
+4 rc 0
+10/03 11:38:12    25 sendrep: STG42 - stagewrt succeeded for file /castor/cern.ch/user/j/jdurand/2002/10/03/shift.conf, return code 0
+10/03 11:38:12    25 stgdaemon: STG142 - /castor/cern.ch/user/j/jdurand/2002/10/03/shift.conf not removed - Retention period is AS_LONG_AS_POSSIBLE
+10/03 11:38:12    27 sendrep: STG99 - stage returns 0
+10/03 11:38:12    25 stgdaemon: stager process 2540 exiting with status 0
+10/03 11:38:12    25 sendrep: STG199 - stage returns 0
+10/03 11:38:12     0 migpoolfiles: Migration child pid=2539 exited, status 0
+10/03 11:38:13     0 stgdaemon: migration process 2537 exiting with status 0
+\s+2
+.ft
+.LP
+.fi
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR Cdbserver(1) ,
