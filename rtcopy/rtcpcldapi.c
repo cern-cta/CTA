@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/06/30 15:09:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/27 08:40:59 $ $Author: jdurand $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.21 $ $Date: 2004/06/30 15:09:52 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.22 $ $Date: 2004/07/27 08:40:59 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1247,7 +1247,8 @@ int rtcpcldc_appendFileReqs(tape,file)
       rc = addSegment(
                       tpList,
                       fl,
-                      NULL
+                      NULL,
+					  NULL
                       );
       if ( rc == -1 ) {
         LOG_FAILED_CALL("addSegment()");
@@ -1677,7 +1678,8 @@ int rtcpcldc(tape)
           rc = addSegment(
                           rtcpcldTp,
                           fl,
-                          myNotificationAddr
+                          myNotificationAddr,
+						  NULL
                           );
           if ( rc == -1 ) {
             LOG_FAILED_CALL("addSegment()");
