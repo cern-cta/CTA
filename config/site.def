@@ -219,6 +219,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildRtcopyServer	NO
 #define BuildRtcopyLibrary	NO
 #define BuildRtstat		NO
+#define BuildRtcpclientd	NO
 #define BuildStageClient	NO
 #define BuildStageDaemon	NO
 #define BuildStageLibrary	NO

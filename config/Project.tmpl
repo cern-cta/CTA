@@ -209,6 +209,27 @@
 #undef BuildRtcopyLibrary
 #define BuildRtcopyLibrary YES
 #endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#if BuildVdqmLibrary != YES
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#endif
+
+#if BuildRtcpclientd
+#if !BuildRtcopyLibrary
+#undef BuildRtcopyLibrary
+#define BuildRtcopyLibrary YES
+#endif
 #if !BuildCastorClientCPPLibrary
 #undef BuildCastorClientCPPLibrary
 #define BuildCastorClientCPPLibrary YES
@@ -216,6 +237,14 @@
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
+#endif
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#if BuildVdqmLibrary != YES
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
 #endif
 #if !BuildOraCpp
 #undef BuildOraCpp
