@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.2 $ $Date: 2000/03/20 09:00:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.3 $ $Date: 2000/03/23 14:09:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -145,7 +145,7 @@ int xflag;
 	printf ("%-6s %-6s %-6s %-8s %-2s %-15s %-7sB ",
 	    vid, vsn, dgn, density, lbltype, pool_name, u64tostru (u64, tmpbuf, 7));
 	if (! xflag) {
-		ltime = (wtime < rtime) ? ltime = rtime : wtime;
+		ltime = (wtime < rtime) ? rtime : wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
 			printf ("%04d%02d%02d ",
