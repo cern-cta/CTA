@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.32 2002/12/13 15:31:25 jdurand Exp $
+.\" $Id: stageqry.man,v 1.33 2004/05/26 09:37:22 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.32 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.33 $ $Date: 2004/05/26 09:37:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2004/05/26 09:37:22 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -381,8 +381,11 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
   shd02 /stage CAPACITY 492.00M FREE 476.39M ( 96.8%)
 .cs R
 .fi
-.\" .SH NOTES
+.SH NOTES
 .\" \'Tape\' files coming from what is in fact multi-sided media (like DVD) and from a side number greater than zero (zero mean the first side) are shown with the following format in the first column: "%s/%d" where the string correspond to the VolumeID and the number to the side, respectively. For side zero (which is the default and only possible value for magnetic tape) the format of the first column is "%s", showing only the VolumeID.
+.br
+The \-\-format option doesn't show the distinction between DELAY_MIGR and CAN_BE_MIGR candidates.
+
 .SH RETURN CODES
 \
 .br
