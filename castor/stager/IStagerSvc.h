@@ -522,6 +522,28 @@ int Cstager_IStagerSvc_selectDiskServer
  const char* name);
 
 /**
+ * Retrieves the TapeCopies from the database that have
+ * status TAPECOPY_CREATED or TAPECOPY_TOBEMIGRATED and
+ * have a castorFile linked to the right SvcClass.
+ * Changes their status to TAPECOPY_WAITINSTREAMS.
+ * Caller is in charge of the deletion of the allocated
+ * memory.
+ * @param stgSvc the IStagerSvc used
+ * @param svcClass the SvcClass we select on
+ * @param tapeCopyArray output array of pointers to tapeCopy objects
+ * @param nbItems output number of items returned in the tapeCopyArray
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectTapeCopiesForMigration
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SvcClass_t* svcClass,
+ struct Cstager_TapeCopy_t*** tapeCopyArray,
+ int *nbItems);
+
+/**
  * Updates a SubRequest status in the DB and tells
  * whether the request to which it belongs still
  * has some SubRequests in SUBREQUEST_START status.

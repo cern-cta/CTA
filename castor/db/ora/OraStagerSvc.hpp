@@ -427,6 +427,22 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieves the TapeCopies from the database that have
+         * status TAPECOPY_CREATED or TAPECOPY_TOBEMIGRATED and
+         * have a castorFile linked to the right SvcClass.
+         * Changes their status to TAPECOPY_WAITINSTREAMS.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param svcClass the SvcClass we select on
+         * @return a vector of matching TapeCopies
+         * @exception Exception in case of error
+         */
+        virtual std::vector<castor::stager::TapeCopy*>
+        selectTapeCopiesForMigration
+        (castor::stager::SvcClass *svcClass)
+          throw (castor::exception::Exception);
+
+        /**
          * Updates a SubRequest status in the DB and tells
          * whether the request to which it belongs still
          * has some SubRequests in SUBREQUEST_START status.
@@ -626,6 +642,12 @@ namespace castor {
 
         /// SQL statement object for function selectDiskServer
         oracle::occi::Statement *m_selectDiskServerStatement;
+
+        /// SQL statement for function selectTapeCopiesForMigration
+        static const std::string s_selectTapeCopiesForMigrationStatementString;
+
+        /// SQL statement object for function selectTapeCopiesForMigration
+        oracle::occi::Statement *m_selectTapeCopiesForMigrationStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

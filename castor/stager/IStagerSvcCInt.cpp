@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/12/03 11:01:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/03 13:45:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -478,6 +478,32 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskServer = stgSvc->stgSvc->selectDiskServer(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectTapeCopiesForMigration
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectTapeCopiesForMigration
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SvcClass* svcClass,
+   castor::stager::TapeCopy*** tapeCopyArray,
+   int *nbItems) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      std::vector<castor::stager::TapeCopy*> result =
+        stgSvc->stgSvc->selectTapeCopiesForMigration(svcClass);
+      *nbItems = result.size();
+      *tapeCopyArray = (castor::stager::TapeCopy**)
+        malloc((*nbItems) * sizeof(castor::stager::TapeCopy*));
+      for (int i = 0; i < *nbItems; i++) {
+        (*tapeCopyArray)[i] = result[i];
+      }
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

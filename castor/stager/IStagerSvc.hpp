@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/03 11:12:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/03 13:45:06 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -417,6 +417,22 @@ namespace castor {
        */
       virtual castor::stager::DiskServer* selectDiskServer
       (const std::string name)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves the TapeCopies from the database that have
+       * status TAPECOPY_CREATED or TAPECOPY_TOBEMIGRATED and
+       * have a castorFile linked to the right SvcClass.
+       * Changes their status to TAPECOPY_WAITINSTREAMS.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param svcClass the SvcClass we select on
+       * @return a vector of matching TapeCopies
+       * @exception Exception in case of error
+       */
+      virtual std::vector<castor::stager::TapeCopy*>
+      selectTapeCopiesForMigration
+      (castor::stager::SvcClass *svcClass)
         throw (castor::exception::Exception) = 0;
 
       /**

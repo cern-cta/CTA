@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2004/12/03 11:12:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2004/12/03 13:45:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -145,6 +145,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementString =
   "SELECT id, status FROM DiskServer WHERE name = :1";
 
+/// SQL statement for selectTapeCopiesForMigration
+const std::string castor::db::ora::OraStagerSvc::s_selectTapeCopiesForMigrationStatementString =
+  "SELECT id FROM TapeCopy, CastorFile WHERE TapeCopy.castorFile = CastorFile.id AND CastorFile.svcClass = :1 AND TapeCopy.status IN (0, 1)";
+
 /// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
@@ -180,6 +184,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectFileSystemStatement(0),
   m_selectDiskPoolStatement(0),
   m_selectDiskServerStatement(0),
+  m_selectTapeCopiesForMigrationStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0) {
@@ -231,6 +236,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectCastorFileStatement);
     deleteStatement(m_selectDiskPoolStatement);
     deleteStatement(m_selectDiskServerStatement);
+    deleteStatement(m_selectTapeCopiesForMigrationStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
@@ -254,6 +260,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectCastorFileStatement = 0;
   m_selectDiskPoolStatement = 0;
   m_selectDiskServerStatement = 0;
+  m_selectTapeCopiesForMigrationStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
@@ -1430,6 +1437,55 @@ castor::db::ora::OraStagerSvc::selectDiskServer
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DiskServer by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectTapeCopiesForMigration
+// -----------------------------------------------------------------------
+std::vector<castor::stager::TapeCopy*>
+castor::db::ora::OraStagerSvc::selectTapeCopiesForMigration
+(castor::stager::SvcClass *svcClass)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectTapeCopiesForMigrationStatement) {
+    m_selectTapeCopiesForMigrationStatement =
+      createStatement(s_selectTapeCopiesForMigrationStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTapeCopiesForMigrationStatement->setDouble(1, svcClass->id());
+    oracle::occi::ResultSet *rset =
+      m_selectTapeCopiesForMigrationStatement->executeQuery();
+    // create result
+    std::vector<castor::stager::TapeCopy*> result;
+    // Fill it
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
+      castor::stager::TapeCopy* tapeCopy =
+        dynamic_cast<castor::stager::TapeCopy*>(obj);
+      if (0 == tapeCopy) {
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "In method OraStagerSvc::selectTapeCopiesForMigration, "
+          << "got a non tapeCopy object";
+        delete obj;
+        throw ex;
+      }
+      // Change tapeCopy status
+      tapeCopy->setStatus(castor::stager::TAPECOPY_WAITINSTREAMS);
+      cnvSvc()->updateRep(0, tapeCopy, false);
+      result.push_back(tapeCopy);
+    }
+    m_selectTapeCopiesForMigrationStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeCopies for migration :"
       << std::endl << e.getMessage();
     throw ex;
   }
