@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletedgnmap.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletedgnmap.c,v $ $Revision: 1.2 $ $Date: 2002/02/07 06:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletedgnmap - delete a triplet dgn/model/library */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletedgnmap.c,v $ $Revision: 1.1 $ $
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletedgnmap(const char *dgn)
+vmgr_deletedgnmap(const char *model, char *library)
 {
 	int c;
 	char func[18];
@@ -47,12 +47,12 @@ vmgr_deletedgnmap(const char *dgn)
         }
 #endif
 
-	if (! dgn) {
+	if (! model || ! library) {
 		serrno = EFAULT;
 		return (-1);
 	}
 
-	if (strlen (dgn) > CA_MAXDGNLEN) {
+	if (strlen (model) > CA_MAXMODELLEN || strlen (library) > CA_MAXTAPELIBLEN) {
 		serrno = EINVAL;
 		return (-1);
 	}
@@ -70,7 +70,8 @@ vmgr_deletedgnmap(const char *dgn)
  
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, dgn);
+	marshall_STRING (sbp, model);
+	marshall_STRING (sbp, library);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
