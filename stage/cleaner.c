@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.10 2000/05/31 07:32:38 jdurand Exp $
+ * $Id: cleaner.c,v 1.11 2000/09/11 15:00:25 jdurand Exp $
  */
 
 /*
@@ -8,18 +8,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.10 $ $Date: 2000/05/31 07:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.11 $ $Date: 2000/09/11 15:00:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
-#include <sys/stat.h>
-#include <sys/uio.h>
-#include <dirent.h>
-#endif
 #include "rfio_api.h"
 #include "stage.h"
 char func[16];
