@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.30 $ $Date: 2000/03/04 13:36:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.31 $ $Date: 2000/03/09 15:49:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1174,12 +1174,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Check the request and set defaults
      */
-    rc = rtcp_CheckReq(client_socket,tape);
+    rc = rtcp_CheckReq(client_socket,client,tape);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
             sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
-        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.21 $ $Date: 2000/03/03 11:59:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.22 $ $Date: 2000/03/09 15:49:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -36,6 +36,7 @@ extern char *geterr();
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
+#include <sacct.h>
 #define RFIO_KERNEL 1
 #include <rfio.h>
 #include <rfio_errno.h>
@@ -399,7 +400,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
-            sprintf(errmsgtxt,"%s: %s\n",filereq->file_path,sstrerror(serrno));
+            sprintf(errmsgtxt,RT110,"CPDSKTP",sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
         }
@@ -472,8 +473,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             rfio_errno = serrno = 0;
             rc = rfio_mstat(filereq->file_path,&st);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                sprintf(errmsgtxt,"File %s is a directory !\n",filereq->file_path);
                 serrno = EISDIR;
+                sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             }
             /*
@@ -491,8 +492,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;
-                    sprintf(errmsgtxt,"%s: %s\n",filereq->file_path,
-                            sstrerror(serrno));
+                    sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                     if ( rc == -1 ) return(rc);
@@ -501,10 +501,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                  * Couldn't find S_ISDIR() macro under NT. 
                  */
                 if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                    sprintf(errmsgtxt,"directory %s does not exist\n",
-                        filereq->file_path);
-                    if ( p != NULL ) *p = dir_delim;
                     serrno = ENOTDIR;
+                    sprintf(errmsgtxt,RT110,"CPTPDSK",sstrerror(serrno));
+                    if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                     if ( rc == -1 ) return(rc);
                 }
@@ -516,7 +515,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
 }
 
 
-int rtcp_CheckReq(SOCKET *client_socket, tape_list_t *tape) {
+int rtcp_CheckReq(SOCKET *client_socket, 
+                  rtcpClientInfo_t *client, 
+                  tape_list_t *tape) {
     int rc = 0;
     tape_list_t *tl;
     file_list_t *fl;
@@ -545,6 +546,7 @@ int rtcp_CheckReq(SOCKET *client_socket, tape_list_t *tape) {
         rc = rtcp_CheckTapeReq(tl);
         if ( rc == -1 ) {
             tellClient(client_socket,tl,NULL,rc);
+            (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
             break;
         }
 
@@ -555,8 +557,10 @@ int rtcp_CheckReq(SOCKET *client_socket, tape_list_t *tape) {
             if ( filereq->err.max_cpretry == -1 )
                 filereq->err.max_cpretry = max_cpretry;
             rc = rtcp_CheckFileReq(fl);
-            if ( *(filereq->err.errmsgtxt) != '\0' )
+            if ( *(filereq->err.errmsgtxt) != '\0' ) {
                 tellClient(client_socket,NULL,fl,rc);
+                (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+            }
             if ( rc == -1 ) break;
         } CLIST_ITERATE_END(tl->file,fl);
 
