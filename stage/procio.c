@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.160 2002/02/05 15:39:54 jdurand Exp $
+ * $Id: procio.c,v 1.161 2002/02/06 11:45:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.160 $ $Date: 2002/02/05 15:39:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.161 $ $Date: 2002/02/06 11:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4565,7 +4565,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	/* The fileclass will be checked at next user call - in a stageupdc for example */
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-		stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	savereqs();
