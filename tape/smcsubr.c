@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.5 $ $Date: 2002/04/08 14:08:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.6 $ $Date: 2002/07/24 07:31:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -155,14 +155,18 @@ struct smc_element_info element_info[];
 			element_info[i].state = *(p+2);
 			element_info[i].asc = *(p+4);
 			element_info[i].ascq = *(p+5);
+			element_info[i].flags = *(p+9);
 			element_info[i].source_address = *(p+10) * 256 + *(p+11);
 			if ((*(page_start-7) & 0x80) == 0 ||
 			    (*(p+12) == '\0') || (*(p+12) == ' '))
 				element_info[i].name[0] = '\0';
 			else {
 				q = (unsigned char *) strchr ((char *)p+12, ' ');
-				strncpy (element_info[i].name, (char *)p+12, q-p-12);
-				element_info[i].name[q-p-12] = '\0';
+				if (q) {
+					strncpy (element_info[i].name, (char *)p+12, q-p-12);
+					element_info[i].name[q-p-12] = '\0';
+				} else
+					strcpy (element_info[i].name, (char *)p+12);
 				if (strlen (element_info[i].name) > CA_MAXVIDLEN)
 					element_info[i].name[CA_MAXVIDLEN] = '\0';
 			}
