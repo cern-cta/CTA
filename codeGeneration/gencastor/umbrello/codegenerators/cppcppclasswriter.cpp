@@ -374,7 +374,8 @@ void CppCppClassWriter::writeType(CppBaseWriter* obj,
 //=============================================================================
 void CppCppClassWriter::writeClone(CppBaseWriter* obj,
                                    QTextStream &stream) {
-  stream << obj->getIndent() << "return this;" << endl;
+  stream << obj->getIndent() << "return new "
+         << obj->classInfo()->className << "(*this);" << endl;
 }
 
 //=============================================================================
