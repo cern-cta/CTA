@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.6 2002/04/30 12:17:31 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.7 2002/06/10 15:06:10 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -60,6 +60,7 @@ struct waitq {
 	int	clnreq_rpfd;
 	int	clnreq_waitingreqid; /* Gives exact reqid of the stcp that is in WAITING_SPC stage */
 	int	status;
+	int	forced_exit; /* Force the waitq to stop right now - Useful in case of fatal system error */
 	int	nretry;
 	int	noretry; /* Propagation of --noretry or STAGE_NORETRY flag */
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
