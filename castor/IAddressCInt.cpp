@@ -21,11 +21,13 @@
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
 #include "castor/IAddress.hpp"
+#include <iostream>
+#include <string>
 
 extern "C" {
 
@@ -34,6 +36,51 @@ extern "C" {
   //----------------------------------------------------------------------------
   int C_IAddress_delete(castor::IAddress* obj) {
     delete obj;
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_objType
+  //----------------------------------------------------------------------------
+  int C_IAddress_objType(castor::IAddress* instance,
+                         unsigned int* ret) {
+    *ret = instance->objType();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_setObjType
+  //----------------------------------------------------------------------------
+  int C_IAddress_setObjType(castor::IAddress* instance,
+                            unsigned int type) {
+    instance->setObjType(type);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_cnvSvcName
+  //----------------------------------------------------------------------------
+  int C_IAddress_cnvSvcName(castor::IAddress* instance,
+                            std::string* ret) {
+    *ret = instance->cnvSvcName();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_cnvSvcType
+  //----------------------------------------------------------------------------
+  int C_IAddress_cnvSvcType(castor::IAddress* instance,
+                            unsigned int* ret) {
+    *ret = instance->cnvSvcType();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_print
+  //----------------------------------------------------------------------------
+  int C_IAddress_print(castor::IAddress* instance,
+                       std::ostream& s) {
+    instance->print(s);
     return 0;
   }
 

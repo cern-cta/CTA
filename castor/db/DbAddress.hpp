@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/29 15:40:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -57,7 +57,7 @@ namespace castor {
       /*
        * destructor
        */
-      virtual ~DbAddress() {}
+      virtual ~DbAddress() throw() {}
 
       /**
        * gets the id of this address

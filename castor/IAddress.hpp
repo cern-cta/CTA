@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      IAddress.hpp
+ *                      castor/IAddress.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,72 +19,72 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
+ * 
  *
- *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_IADDRESS_HPP
-#define CASTOR_IADDRESS_HPP 1
+#define CASTOR_IADDRESS_HPP
 
 // Include Files
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace castor {
 
   /**
-   * Base class for all addresses.
-   * An address allows to find a foreign representation of an object.
-   * Fully empty except for an id telling the type of the address and
+   * class IAddress
+   *  Base class for all addresses. An address allows to find a foreign representation
+   * of an object. Fully empty except for an id telling the type of the address and
    * the infrastructure for printing any address
    */
-  class IAddress{
+  class IAddress {
 
   public:
 
     /**
-     * virtual destructor
+     * Empty Destructor
      */
-    virtual ~IAddress(){};
+    virtual ~IAddress() throw() {};
 
     /**
-     * gets the object type, that is the type of
-     * object whose representation is pointed to by
-     * this address
+     * gets the object type, that is the type of object whose representation is pointed
+     * to by this address
      */
     virtual const unsigned int objType() const = 0;
 
     /**
-     * sets the object type, that is the type of
-     * object whose representation is pointed to by
-     * this address.
+     * sets the object type, that is the type of object whose representation is pointed
+     * to by this address.
+     * @param type The new type of this address
      */
     virtual void setObjType(unsigned int type) = 0;
-    
+
     /**
-     * gets the name of the conversion service able
-     * to deal with this address
+     * gets the name of the conversion service able to deal with this address
      */
     virtual const std::string cnvSvcName() const = 0;
 
     /**
-     * gets the type of the conversion service able
-     * to deal with this address
+     * gets the type of the conversion service able to deal with this address
      */
     virtual const unsigned int cnvSvcType() const = 0;
 
     /**
      * prints the address into an output stream
+     * @param s The stream where to print
      */
     virtual void print(std::ostream& s) const = 0;
-    
-  };
 
-} // end of namespace castor
+  private:
+
+  }; // end of class IAddress
+
+}; // end of namespace castor
 
 /**
- * outputs this address on an output stream
+ * outputs this IAddress to an output stream
  * This method is actually not virtual as is always the case for
  * streaming operators. However, it makes use of the print method
  * which is pure virtual.

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/IAddres.h
+ *                      castor/IAddress.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +21,7 @@
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_IADDRESS_H
@@ -33,12 +33,46 @@ struct C_IAddress_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class IAddress
-// 
+//  Base class for all addresses. An address allows to find a foreign representation
+// of an object. Fully empty except for an id telling the type of the address and
+// the infrastructure for printing any address
 //------------------------------------------------------------------------------
 
 /**
  * Empty Destructor
  */
 int C_IAddress_delete(struct C_IAddress_t* obj);
+
+/**
+ * gets the object type, that is the type of object whose representation is pointed
+ * to by this address
+ */
+int C_IAddress_objType(struct C_IAddress_t* instance,
+                       const unsigned int* ret);
+
+/**
+ * sets the object type, that is the type of object whose representation is pointed
+ * to by this address.
+ */
+int C_IAddress_setObjType(struct C_IAddress_t* instance,
+                          unsigned int type);
+
+/**
+ * gets the name of the conversion service able to deal with this address
+ */
+int C_IAddress_cnvSvcName(struct C_IAddress_t* instance,
+                          const string* ret);
+
+/**
+ * gets the type of the conversion service able to deal with this address
+ */
+int C_IAddress_cnvSvcType(struct C_IAddress_t* instance,
+                          const unsigned int* ret);
+
+/**
+ * prints the address into an output stream
+ */
+int C_IAddress_print(struct C_IAddress_t* instance,
+                     ostream& s);
 
 #endif // CASTOR_IADDRESS_H

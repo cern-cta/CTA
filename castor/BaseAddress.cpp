@@ -41,5 +41,7 @@ castor::BaseAddress::BaseAddress(const std::string cnvSvcName,
 // print
 //------------------------------------------------------------------------------
 void castor::BaseAddress::print(std::ostream& s) const {
-  s << "ObjType " << m_objType << ", CnvSvc " << m_cnvSvcName;
+  s << "ObjType " << m_objType
+    << ", CnvSvcName " << m_cnvSvcName
+    << ", CnvSvcType " << m_cnvSvcType;
 }

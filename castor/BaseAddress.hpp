@@ -50,7 +50,7 @@ namespace castor {
     /*
      * destructor
      */
-    virtual ~BaseAddress() {}
+    virtual ~BaseAddress() throw() {}
 
     /**
      * gets the object type, that is the type of
