@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.11 1999/12/14 14:51:40 jdurand Exp $
+ * $Id: procqry.c,v 1.12 1999/12/15 08:21:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.11 $ $Date: 1999/12/14 14:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.12 $ $Date: 1999/12/15 08:21:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,8 +71,6 @@ static regex_t preg;
 static char expbuf[256];
 #endif
 extern struct stgdb_fd dbfd;
-extern char *Default_db_user;
-extern char *Default_db_pwd;
 
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
@@ -261,13 +259,11 @@ char *clienthost;
 			close (rpfd);
 			return;
 		} else {
-			char db_user[33];
-			char db_pwd[33];
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
-            dbfd_in_fork.username = dbfd.username;
-            dbfd_in_fork.password = dbfd.password;
+            strcpy(dbfd_in_fork.username,dbfd.username);
+            strcpy(dbfd_in_fork.password,dbfd.password);
 
 			if (stgdb_login(&dbfd_in_fork) != 0) {
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
@@ -290,6 +286,7 @@ char *clienthost;
 		/* No fork : the dbfd to use is the one of the main process */
 		dbfd_query = &dbfd;
 	}
+
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
 		    numvid, vid, fseq, xfile, afile, mfile);
