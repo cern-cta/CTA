@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.30 2000/02/04 10:46:47 jdurand Exp $
+ * $Id: Cthread.c,v 1.31 2000/02/17 17:14:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.30 $ $Date: 2000/02/04 10:46:47 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.31 $ $Date: 2000/02/17 17:14:09 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -16,6 +16,13 @@ static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.30 $ $Date: 200
 #include <serrno.h>
 #include <errno.h>
 #include <osdep.h>
+
+/* ==================== */
+/* Malloc Debug Library */
+/* ==================== */
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
 
 #ifdef DEBUG
 #ifndef CTHREAD_DEBUG
