@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.2 2004/11/03 09:56:16 bcouturi Exp $
+ * $Id: Cns_api.h,v 1.3 2004/11/03 10:31:40 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:56:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.3 $ $Date: 2004/11/03 10:31:40 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -27,6 +27,7 @@ int *C__Cns_errno();
 #define	CNS_LIST_BEGIN		0
 #define	CNS_LIST_CONTINUE	1
 #define	CNS_LIST_END		2
+
 
 struct Cns_api_thread_info {
 	u_signed64	cwd;		/* current HSM working directory */
@@ -220,5 +221,6 @@ EXTERN_C int DLL_DECL Cns_utime _PROTO((const char *, struct utimbuf *));
 EXTERN_C int DLL_DECL send2nsd _PROTO((int *, char *, char *, int, char *, int));
 EXTERN_C int DLL_DECL Cns_setid _PROTO((uid_t, gid_t));
 EXTERN_C int DLL_DECL Cns_getid _PROTO((uid_t *, gid_t *));
+EXTERN_C int DLL_DECL Cns_getrealid _PROTO((uid_t *, gid_t *));
 EXTERN_C int DLL_DECL Cns_unsetid _PROTO(());
 #endif
