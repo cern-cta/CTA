@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.139 2001/06/21 08:19:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.140 2001/06/21 11:31:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.139 $ $Date: 2001/06/21 08:19:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.140 $ $Date: 2001/06/21 11:31:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3814,7 +3814,7 @@ void check_lifetime_on_disk() {
           int save_reqid = reqid;
 
           reqid = 0;
-          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), "move to PUT_FAILED");
+          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_lifetime / ONE_DAY), "move to PUT_FAILED");
           reqid = save_reqid;
           if (rfio_stat(stcp->ipath, &st) == 0) {
             stcp->actual_size = (u_signed64) st.st_size;
