@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.17 $ $Date: 2002/10/25 11:37:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.18 $ $Date: 2002/10/25 12:32:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -20,7 +20,6 @@ extern char *geterr();
 #include <sys/types.h>                  /* Standard data types          */
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
-#include <regex.h>
 #endif /* _WIN32 */
 #include <osdep.h>
 #include <log.h>
@@ -37,6 +36,8 @@ int hold = 0;
 void *hold_lock = NULL;
 int nbReqs = 0;
 void *nbReqs_lock = NULL;
+
+extern int vdqm_PipeHangup();
 
 
 int vdqm_InitProcReq() {
@@ -158,7 +159,11 @@ void *vdqm_ProcReq(void *arg) {
     i=0;
     while (req_values[i] != -1 && req_values[i] != reqtype) i++;
     req_string = req_strings[i];
-    log(LOG_INFO,"vdqm_ProcReq(): new %s request\n",req_string);
+	if ((reqtype != VDQM_GET_VOLQUEUE) &&
+		(reqtype != VDQM_GET_DRVQUEUE) &&
+		(reqtype != VDQM_PING)) {
+		log(LOG_INFO,"vdqm_ProcReq(): new %s request\n",req_string);
+	}
     if ( !VDQM_VALID_REQTYPE(reqtype) ) {
         log(LOG_ERR,"vdqm_ProcReq(): invalid request 0x%x\n",
             reqtype);
@@ -197,6 +202,18 @@ void *vdqm_ProcReq(void *arg) {
         }
 
         vdqm_ReqStarted();
+#if DEBUG
+		{
+			extern dgn_element_t *dgn_queues;
+			dgn_element_t *dgn_context = NULL;
+			vdqm_drvrec_t *drv = NULL;
+			CLIST_ITERATE_BEGIN(dgn_queues,dgn_context) {
+				CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+					log(LOG_INFO,"vdqm_DumpQueues() [Debug] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drv->drv.drive, drv->drv.server, drv->drv.is_uid, drv->drv.uid, drv->drv.is_gid, drv->drv.gid, drv->drv.is_name);
+				} CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+			} CLIST_ITERATE_END(dgn_queues,dgn_context);
+		}
+#endif
         if ( !rc ) {
             switch (reqtype) {
             case VDQM_VOL_REQ:
@@ -326,7 +343,7 @@ void *vdqm_ProcReq(void *arg) {
                 rc = vdqm_GetQueuePos(&volumeRequest);
                 (void) vdqm_AcknPing(client_connection,rc);
                 (void) vdqm_CloseConn(client_connection);
-                log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+                /* log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string); */
                 vdqm_ReqEnded();
                 vdqm_ReturnPool(client_connection);
                 return((void *)&return_status);
@@ -381,7 +398,11 @@ void *vdqm_ProcReq(void *arg) {
         }
     }
     (void) vdqm_CloseConn(client_connection);
-    log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+	if ((reqtype != VDQM_GET_VOLQUEUE) &&
+		(reqtype != VDQM_GET_DRVQUEUE) &&
+		(reqtype != VDQM_PING)) {
+		log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+	}
     vdqm_ReqEnded();
     vdqm_ReturnPool(client_connection);
     return((void *)&return_status);
