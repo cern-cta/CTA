@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.83 2001/02/09 18:16:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.84 2001/02/12 07:34:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.83 $ $Date: 2001/02/09 18:16:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.84 $ $Date: 2001/02/12 07:34:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2214,7 +2214,7 @@ int migpoolfiles(pool_p)
       int rc;
       
 #ifdef STAGER_DEBUG
-      stglogit(func, "### Stagewrt request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
+      stglogit(func, "### stagewrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
       sleep(9);
       sleep(1);
 #endif
@@ -2224,18 +2224,25 @@ int migpoolfiles(pool_p)
       seteuid(start_passwd.pw_uid);
       setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
       seteuid(tppool_vs_stcp[j].euid);
-      rc = stagewrt_hsm((u_signed64) STAGE_SILENT,    /* Flags */
-                        0,                            /* open flags - disabled */
-                        (mode_t) 0,                   /* open mode - disabled */
-                        localhost,                    /* Hostname */
-                        NULL,                         /* Pooluser */
-                        tppool_vs_stcp[j].nstcp,      /* nstcp_input */
-                        tppool_vs_stcp[j].stcp,       /* records... */
-                        0,                            /* nstcp_output */
-                        NULL,                         /* stcp_output */
-                        tppool_vs_stcp[j].nstcp,      /* nstpp_input */
-                        tppool_vs_stcp[j].stpp        /* stpp_input */
-                        );
+    stagewrt_hsm_retry:
+      if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT,    /* Flags */
+                             0,                            /* open flags - disabled */
+                             (mode_t) 0,                   /* open mode - disabled */
+                             localhost,                    /* Hostname */
+                             NULL,                         /* Pooluser */
+                             tppool_vs_stcp[j].nstcp,      /* nstcp_input */
+                             tppool_vs_stcp[j].stcp,       /* records... */
+                             0,                            /* nstcp_output */
+                             NULL,                         /* stcp_output */
+                             tppool_vs_stcp[j].nstcp,      /* nstpp_input */
+                             tppool_vs_stcp[j].stpp        /* stpp_input */
+                             )) != 0) {
+        stglogit(func, "### stagewrt_hsm request error No %d (%s)\n", serrno, sstrerror(serrno));
+        if ((serrno == SECOMERR) || (serrno == SECONNDROP)) {
+          /* There was a communication error */
+          goto stagewrt_hsm_retry;
+        }
+      }
       for (i = 0; i < ntppool_vs_stcp; i++) {
         if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
         if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
@@ -2244,7 +2251,7 @@ int migpoolfiles(pool_p)
       setegid(start_passwd.pw_gid);                   /* Go back to admin */
       seteuid(start_passwd.pw_uid);
 #ifdef STAGER_DEBUG
-      stglogit(func, "### Stagewrt request exiting with status %d\n", rc);
+      stglogit(func, "### stagewrt_hsm request exiting with status %d\n", rc);
       if (rc != 0) {
         stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
       }
