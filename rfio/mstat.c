@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.14 2001/11/07 11:01:06 jdurand Exp $
+ * $Id: mstat.c,v 1.15 2001/11/07 11:48:57 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.14 $ $Date: 2001/11/07 11:01:06 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.15 $ $Date: 2001/11/07 11:48:57 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -41,7 +41,7 @@ static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultane
 EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
 static int rfio_mstat_findentry _PROTO((char *,int));
-static int rfio_end_this _PROTO((int));
+static int rfio_end_this _PROTO((int,int));
 
 int DLL_DECL rfio_mstat(file,statb)
      char *file ;
@@ -164,7 +164,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
 	  if( pw_tmp  == NULL ) {
         TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
         END_TRACE();
-        rfio_end_this(s);
+        rfio_end_this(s,1);
         return(-1);
 	  }	
 	  memcpy(pw, pw_tmp, sizeof(struct passwd));
@@ -194,7 +194,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
     END_TRACE();
-    rfio_end_this(s);
+    rfio_end_this(s,0);
     return(-1);
   }
   p = buf;
@@ -203,13 +203,13 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   if ( rc == 0 && (reqst == RQST_MSTAT_SEC || reqst == RQST_STAT_SEC ) ) {
     TRACE(2, "rfio", "rfio_stat: Server doesn't support secure stat()");
     serrno = SEPROTONOTSUP;
-    rfio_end_this(s);
+    rfio_end_this(s,1);
     return(-1);
   }
   if ( rc != 8*LONGSIZE+5*WORDSIZE)  {
     TRACE(2, "rfio", "rfio_stat: read(): ERROR occured (errno=%d)", errno);
     END_TRACE();
-    rfio_end_this(s);
+    rfio_end_this(s, (rc <= 0 ? 0 : 1));
     return(-1);
   }
   unmarshall_WORD(p, statbuf->st_dev);
@@ -294,8 +294,10 @@ int DLL_DECL rfio_end()
 }
 
 /* This is a simplified version of rfio_end() that just free entry in the table */
-static int rfio_end_this(s)
+/* If flag is set a clean close is tried (write on the socket) */
+static int rfio_end_this(s,flag)
      int s;
+     int flag;
 {
   int i,Tid, j=0 ;
   char buf[256];
@@ -306,7 +308,7 @@ static int rfio_end_this(s)
 
   Cglobals_getTid(&Tid);
 
-  TRACE(3,"rfio","rfio_end_this(s=%d) entered, Tid=%d", s, Tid);
+  TRACE(3,"rfio","rfio_end_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
 
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_end_this : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
@@ -316,12 +318,14 @@ static int rfio_end_this(s)
     /* TRACE(3,"rfio","mstat_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", mstat_tab[i].host, mstat_tab[i].s, mstat_tab[i].sec, mstat_tab[i].Tid); */
     if (mstat_tab[i].Tid == Tid) {
       if ((mstat_tab[i].s == s) && (mstat_tab[i].host[0] != '\0')) {
-        marshall_WORD(p, RFIO_MAGIC);
-        marshall_WORD(p, RQST_END);
-        marshall_LONG(p, j);
-        TRACE(3,"rfio","rfio_end_this: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
-        if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
-          TRACE(3, "rfio", "rfio_end_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
+        if (flag) {
+          marshall_WORD(p, RFIO_MAGIC);
+          marshall_WORD(p, RQST_END);
+          marshall_LONG(p, j);
+          TRACE(3,"rfio","rfio_end_this: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
+          if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+            TRACE(3, "rfio", "rfio_end_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
+          }
         }
         (void) close(mstat_tab[i].s);
         mstat_tab[i].s = -1;
