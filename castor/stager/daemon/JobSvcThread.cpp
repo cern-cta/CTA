@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.15 2004/12/17 11:13:40 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.16 2004/12/17 17:54:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.15 $ $Date: 2004/12/17 11:13:40 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.16 $ $Date: 2004/12/17 17:54:30 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -117,13 +117,14 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
       STAGER_LOG_DEBUG(NULL,"req FOUND");
       *output = req;
       rc = 0;
-    }
 
-    /* Set uuid for the log */
-    /* -------------------- */
-    Cuuid_t request_uuid;
-    if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
-      stager_request_uuid = request_uuid;
+      /* Set uuid for the log */
+      /* -------------------- */
+      Cuuid_t request_uuid;
+      if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
+	stager_request_uuid = request_uuid;
+      }
+
     }
 
   } catch (castor::exception::Exception e) {
