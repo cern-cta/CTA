@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/03 16:41:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/14 08:20:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,11 +31,9 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/ServicesCInt.hpp"
 
 extern "C" {
-
-  // C include files
-  #include "castor/ServicesCInt.hpp"
 
   //------------------------------------------------------------------------------
   // C_Services_create
