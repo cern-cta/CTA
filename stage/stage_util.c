@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.21 2002/06/13 08:07:01 jdurand Exp $
+ * $Id: stage_util.c,v 1.22 2002/07/27 06:51:17 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -430,6 +430,47 @@ void DLL_DECL stage_util_time(this,timestr)
   } else {
     strftime(timestr,64,strftime_format,tp);
   }
+}
+
+void DLL_DECL stage_util_retenp(this,timestr)
+     int this;
+     char *timestr;
+{
+	char *p;
+	time_t allunits[5]  = { ONE_YEAR    , ONE_DAY    , ONE_HOUR    , ONE_MINUTE  ,           1 };
+	char *allformats[5] = { "%dY", "%dD", "%dH", "%dM" , "%dS" };
+	int i;
+	
+	if (this < 0) {
+		strcpy(timestr,"-1");
+		return;
+	}
+
+	p = timestr;
+
+	*p = '\0';
+	for (i = 0; i < 5; i++) {
+		if (this >= allunits[i]) {
+#if (defined(__osf__) && defined(__alpha))
+			sprintf (p, allformats[i], this / allunits[i]);
+#else
+#if defined(_WIN32)
+			_snprintf (p, 64 - strlen(timestr), allformats[i], this / allunits[i]);
+#else
+			snprintf (p, 64 - strlen(timestr), allformats[i], this / allunits[i]);
+#endif
+#endif
+			timestr[64-1] = '\0';
+			if (strlen(timestr) >= 64) return;
+			p += strlen(p);
+			this %= allunits[i];
+			if (this <= 0) return;
+			/* Something remains - we need to add a separator */
+			if (strlen(timestr) >= 63) return;
+			*p++ = ',';
+			*p = '\0';
+		}
+	}
 }
 
 int DLL_DECL stage_util_status2string(output, maxsize, status)
