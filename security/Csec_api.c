@@ -1,5 +1,5 @@
 /*
- * $Id: Csec_api.c,v 1.14 2004/08/27 14:34:01 motiakov Exp $
+ * $Id: Csec_api.c,v 1.15 2004/10/22 20:16:09 jdurand Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -68,6 +68,7 @@ static struct _serv_table service_table[] = {
     {"castor-central", CSEC_SERVICE_TYPE_CENTRAL},
     {"castor-disk", CSEC_SERVICE_TYPE_DISK},
     {"castor-tape", CSEC_SERVICE_TYPE_TAPE},
+    {"castor-stager", CSEC_SERVICE_TYPE_STAGER},
     {"", 0}
 };
 
