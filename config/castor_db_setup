@@ -1,3 +1,11 @@
+# Version 3.2.3 of the gcc compiler
+export PATH=/usr/local/gcc-alt-3.2.3/bin:${PATH}
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  export LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib:${LD_LIBRARY_PATH}
+else
+  export LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib
+fi
+
 # ORACLE setup. We use version 10 for gcc 3.2
 ORACLE_CERN=/afs/cern.ch/project/oracle; export ORACLE_CERN
 ORACLE_HOME=${ORACLE_CERN}/linux/10102gcc323; export ORACLE_HOME
