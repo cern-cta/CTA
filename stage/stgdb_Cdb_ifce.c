@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.8 1999/12/16 12:42:13 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.9 1999/12/17 09:06:44 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.8 $ $Date: 1999/12/16 12:42:13 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.9 $ $Date: 1999/12/17 09:06:44 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -191,7 +191,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
   }
 
   /* We say where to start */
-  stcp = *stcsp;
+  stpp = *stpsp;
 
   /* We ask for a dump of tape table from Cdb */
   /* ---------------------------------------- */
@@ -390,7 +390,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     struct stgpath_entry *dummy;
 
     for (dummy = *stpsp; dummy < stpp; dummy++) {
-      stglogit("stgdb_load","Got (unsorted) stpp entry reqid %d\n",dummy->reqid);
+      stglogit("stgdb_load","Got (unsorted) stpp entry reqid %d (%s)\n",dummy->reqid,dummy->upath);
     }
   }
   stglogit("sgdb_load","[1] stpp=0x%lx, *stpsp=0x%lx, calling qsort\n",(unsigned long) stpp, (unsigned long) *stpsp);
@@ -459,8 +459,13 @@ int stgdb_stppcmp(p1,p2)
     return(1);
   } else {
     stglogit("stgdb_stppcmp",
-             "### Warning[%s:%d] : two elements in stgpath have same reqid (%d)\n",
-             __FILE__,__LINE__,(int) stpp1->reqid);
+             "### Warning[%s:%d] : two elements (at 0x%lx and 0x%lx) in stgpath have same reqid (%d)\n",
+             __FILE__,__LINE__,(unsigned long) stpp1,(unsigned long) stpp2,(int) stpp1->reqid);
+    stglogit("stgdb_stppcmp",
+             "### .......[%s:%d] : stpp1 (0x%lx) = [%d,%s] , stpp2 (0x%lx) = [%d,%s]\n"
+             __FILE__,__LINE__,
+             (unsigned long) stpp1,stpp1->reqid,stpp1->upath,
+             (unsigned long) stpp2,stpp2->reqid,stpp2->upath);
     return(0);
   }
 #else
