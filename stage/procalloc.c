@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.48 2002/09/17 11:06:56 jdurand Exp $
+ * $Id: procalloc.c,v 1.49 2002/09/17 11:14:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.48 $ $Date: 2002/09/17 11:06:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.49 $ $Date: 2002/09/17 11:14:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -105,6 +105,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	struct stgcat_entry stcp_input;
 	u_signed64  flags = 0;
 	mode_t openmode = 0;
+	int noretry_flag = 0;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	memset ((char *)&stcp_input, 0, sizeof(stcp_input));
@@ -161,6 +162,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 		unmarshall_HYPER(rbp, flags);
 		if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) Pflag++;
 		if ((flags & STAGE_UFUN) == STAGE_UFUN) Uflag++;
+		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) noretry_flag = 1;
 		unmarshall_LONG(rbp, openmode);
 		{
 			char tmpbyte;
@@ -282,6 +284,10 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	stcp->a_time = stcp->c_time;
 	stcp->nbaccesses++;
 	if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
+		if (noretry_flag) {
+			c = ENOSPC;
+			goto noretry;
+		}
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost,
 								user, stcp->uid, stcp->gid,
@@ -308,6 +314,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 		wqp->nb_clnreq++;
 		cleanpool (stcp->poolname);
 	} else if (c) {
+	  noretry:
 		delreq (stcp,1);
 		goto reply;
 	} else {
