@@ -408,8 +408,8 @@ int Cstager_IStagerSvc_selectCastorFile
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int updateAndCheckSubRequest(struct Cstager_IStagerSvc_t* stgSvc,
-                             struct Cstager_SubRequest_t* subreq,
-                             int* result);
+int Cstager_IStagerSvc_updateAndCheckSubRequest(struct Cstager_IStagerSvc_t* stgSvc,
+						struct Cstager_SubRequest_t* subreq,
+						int* result);
 
 #endif // CASTOR_ISTAGERSVC_H
