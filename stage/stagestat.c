@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.25 2002/05/22 12:36:14 jdurand Exp $
+ * $Id: stagestat.c,v 1.26 2002/05/23 15:18:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.25 $ $Date: 2002/05/22 12:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.26 $ $Date: 2002/05/23 15:18:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -740,6 +740,9 @@ void enter_filc_details (rp, accthdr)
 		create_filelist (&file_in_list, &file_in_last, rp);
 		enter_pool_details (rp);
 		frecord = file_in_last;
+		frecord->last_stgin = rp->u2.s.c_time;
+		frecord->num_accesses++;
+		frecord->stage_status = 1;
 		if (rp->uid == 0) {		/* garbage collected */
 			frecord->total_stgin_gc2 = frecord->total_stgin_gc2 + 
 				(accthdr.timestamp - rp->u2.s.c_time);
