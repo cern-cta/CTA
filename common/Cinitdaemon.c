@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.2 $ $Date: 2000/01/17 09:02:58 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
+/*
+ * Cinitdaemon.c - Common routine for CASTOR daemon initialisation
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h> 
