@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.64 2001/09/18 20:12:24 jdurand Exp $
+ * $Id: stage.h,v 1.65 2001/09/19 18:10:16 jdurand Exp $
  */
 
 /*
@@ -23,9 +23,10 @@
 #include "Cns_api.h"
 #include "osdep.h"
 #include "serrno.h"     /* Contains ESTNACT etc... */
+#include "osdep.h"      /* Contains ONE_MB */
 
 /* Maximum request size */
-#define MAX_NETDATA_SIZE 1000000
+#define MAX_NETDATA_SIZE ONE_MB
 
 /* Limit under which we consider requestor is root */
 #define ROOTUIDLIMIT 100
