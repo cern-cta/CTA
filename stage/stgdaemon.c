@@ -3333,9 +3333,15 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
 							actual_size_block = actual_size;
 						}
+					} else if (rfio_serrno() == ENOENT) {
+						/* What are we going to use as size information !? */
+						stglogit(func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+						actual_size = (u_signed64) (stcp->actual_size ? stcp->actual_size : stcp->size);
+						actual_size_block = actual_size;
 					} else {
 						return(-1);
 					}
+					/* It is okay to delete a file even if it is in ENOENT */
 				}
 				PRE_RFIO;
 				if (RFIO_UNLINK(stcp->ipath) == 0) {
