@@ -1,14 +1,14 @@
 /*
- * $Id: rfdir.c,v 1.10 2001/06/18 06:17:36 baud Exp $
+ * $Id: rfdir.c,v 1.11 2002/11/19 15:36:48 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.10 $ $Date: 2001/06/18 06:17:36 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.11 $ $Date: 2002/11/19 15:36:48 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -25,9 +25,11 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.10 $ $Date: 2001/
 #if !defined(_WIN32)
 #include <dirent.h>
 #endif
+
 #include <pwd.h>
 #include <grp.h>
 #include <rfio.h>
+#include <u64subr.h>
 
 #define SIXMONTHS (6*30*24*60*60)
 #ifndef PATH_MAX
@@ -45,6 +47,7 @@ struct dirstack {
   struct dirstack *prev;
 };
 
+static int  exit_rc = 0;
 static char *ckpath();
 char *getconfent();
 
@@ -54,7 +57,7 @@ char *argv[];
 {
   extern char * optarg;
   extern int optind;
-  struct stat st;
+  struct stat64 st;
   char *dir;
   int rc,i;
   struct dirent *de;
@@ -69,6 +72,7 @@ char *argv[];
   char path[PATH_MAX];
   int recursively = 0;
   int multiple = 0;
+  char tmpbuf[21];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -83,11 +87,12 @@ char *argv[];
   fmode_v[6] = S_IROTH; fmode_v[7] = S_IWOTH; fmode_v[8] = S_IXOTH;
   if ( argc < 2 ) {
     fprintf(stderr,"Usage: %s [-R] [file | directory ...]\n",argv[0]);
-    exit(0);
+    exit(1);
   }
-  while ( (i = getopt(argc,argv,"R")) != EOF ) {
+  while ( (i = getopt(argc,argv,"Rr")) != EOF ) {
     switch(i) {
     case 'R' : 
+    case 'r' : 
       recursively++;
       break;
     case '?' :
@@ -109,11 +114,11 @@ char *argv[];
     
     dir = ckpath(argv[optind]);
     
-    rc = rfio_stat(dir,&st);
-    
+    rc = rfio_stat64(dir,&st);
     if ( rc ) {
       fprintf(stderr,"%s: %s\n",dir,rfio_serror());
-      exit(1);
+      exit_rc = 2;
+      continue;
     }
     
     if ( !S_ISDIR(st.st_mode) ) {
@@ -134,14 +139,14 @@ char *argv[];
          strftime(t_creat,13,"%b %d  %Y",t_tm);
       else
          strftime(t_creat,13,"%b %d %H:%M",t_tm);
-      fprintf(stdout,"%s %3d %-8.8s %-8.8s %8d %s %s\n",modestr,st.st_nlink,
-         uidstr,gidstr,(int)st.st_size,t_creat,dir);
+      fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,st.st_nlink,
+         uidstr,gidstr,u64tostr((u_signed64)st.st_size,tmpbuf,20),t_creat,dir);
     } else {
       list_dir(dir,recursively,multiple);
     }
   }
   rfio_end();
-  exit(0);
+  exit(exit_rc);
 }
 
 static char *ckpath(path)
@@ -194,7 +199,7 @@ char *dir;
 int recursively,multiple;
 {
   RDIR *dirp;
-  struct stat st;
+  struct stat64 st;
   int rc,i,fd;
   struct dirent *de;
   char modestr[11];
@@ -213,25 +218,32 @@ int recursively,multiple;
   int reqtype = 0;
   int localdir = 0;
   int rootpathlen=0;
+  char tmpbuf[21];
 
   if (rfio_parseln(dir,&host,&filename,RDLINKS)) {
     fd=rfio_connect(host,&i) ;
-    reqtype = RQST_MSTAT_SEC;
-    if ( fd >= 0 ) rc = rfio_smstat(fd,filename,&st,reqtype);
-    if ( rc < 0 && serrno == SEPROTONOTSUP ) 
-      reqtype = RQST_MSTAT;
-    else netclose(fd);
+    reqtype = RQST_MSTAT64;
+    if ( fd >= 0 ) rc = rfio_smstat64(fd,filename,&st,reqtype);
+    if ( rc < 0 && serrno == SEPROTONOTSUP ) {
+      fd=rfio_connect(host,&i) ;
+      reqtype = RQST_MSTAT_SEC;
+      if ( fd >= 0 ) rc = rfio_smstat64(fd,filename,&st,reqtype);
+      if ( rc < 0 && serrno == SEPROTONOTSUP )
+        reqtype = RQST_MSTAT;
+    } 
+    if (fd >= 0) netclose(fd);
   } else {
     localdir = 1;
   }
   
+  if ( recursively || multiple ) fprintf(stdout,"\n%s:\n\n",dir);
   dirp = rfio_opendir(dir);
   if ( dirp == NULL ) {
-    rfio_perror("opendir()");
-    exit(1);
+    fprintf(stderr, "opendir(): %s: %s\n", dir, rfio_serror());
+    exit_rc = 2;
+    return(1);
   }
 
-  if ( recursively || multiple ) fprintf(stdout,"\n%s:\n\n",dir);
   if ( !localdir ) {
     strcpy(path,host);
     strcat(path,":");
@@ -245,13 +257,16 @@ int recursively,multiple;
     strcat(path,de->d_name);
     if (!rfio_parseln(path,&host,&filename,RDLINKS) && host == NULL ) {
       /* The file is local */
-      rc = stat(filename,&st) ;
+      rc = stat64(filename,&st) ;
     } else {
-      if ( localdir ) rc = rfio_stat(path,&st);
-      else rc = rfio_smstat(dirp->s,filename,&st,reqtype);
+      if ( localdir )
+        rc = rfio_stat64(path,&st);
+      else 
+        rc = rfio_smstat64(dirp->s,filename,&st,reqtype);
     }
     if ( rc ) {
       fprintf(stderr,"%s: %s\n",path,rfio_serror());
+      exit_rc = 2;
       continue;
     }
     strcpy(modestr,"----------");
@@ -277,8 +292,8 @@ int recursively,multiple;
          strftime(t_creat,13,"%b %d  %Y",t_tm);
     else
          strftime(t_creat,13,"%b %d %H:%M",t_tm);
-    fprintf(stdout,"%s %3d %-8.8s %-8.8s %8d %s %s\n",modestr,st.st_nlink,
-         uidstr,gidstr,(int)st.st_size,t_creat,de->d_name);
+    fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,st.st_nlink,
+         uidstr,gidstr,u64tostr((u_signed64)st.st_size,tmpbuf,20),t_creat,de->d_name);
     if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") && 
 	 S_ISDIR(st.st_mode) && recursively ) rfio_pushdir(&ds,path);
   }
