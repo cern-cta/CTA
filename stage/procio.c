@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.64 2000/12/13 09:50:18 jdurand Exp $
+ * $Id: procio.c,v 1.65 2000/12/14 15:24:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.64 $ $Date: 2000/12/13 09:50:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.65 $ $Date: 2000/12/14 15:24:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -81,6 +81,7 @@ int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *)
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
+extern void getdefsize _PROTO((char *, int *));
 
 #ifdef MIN
 #undef MIN
@@ -523,6 +524,9 @@ void procioreq(req_type, req_data, clienthost)
 	} else poolflag = 1;
 	if (pool_user == NULL)
 		pool_user = "stage";
+
+	if (req_type == STAGEIN && stgreq.t_or_d == 't' && Aflag && ! size)
+		getdefsize(stgreq.poolname,&(stgreq.size));  /* Size for deferred stagein of a tape file */
 
 	if (stgreq.t_or_d == 't') {
 		if (numvid == 0) {
