@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.3 2000/03/15 10:06:02 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.4 2000/03/15 10:08:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.3 $ $Date: 2000/03/15 10:06:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.4 $ $Date: 2000/03/15 10:08:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,11 +49,11 @@ void wait4child _PROTO(());
 int rc_shift2castor _PROTO((int));
 
 int rc_shift2castor(rc)
-     int copyrc;
+     int rc;
 {
   /* Input  is a SHIFT  return code */
   /* Output is a CASTOR return code */
-  switch (copyrc) {
+  switch (rc) {
   case BLKSKPD:
     return(ERTBLKSKPD);
   case TPE_LSZ:
