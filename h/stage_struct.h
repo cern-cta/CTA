@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.5 2001/12/20 11:33:15 jdurand Exp $
+ * $Id: stage_struct.h,v 1.6 2002/03/27 08:08:51 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -68,10 +68,10 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 			char	Xparm[23];
 	    } d;
       struct {			/* Migrated files (non-CASTOR) */
-			char	xfile[167];
+			char	xfile[STAGE_MAX_HSMLENGTH+1];
 	    } m;
 	    struct {			/* HSM files (CASTOR) */
-			char	xfile[167];
+			char	xfile[STAGE_MAX_HSMLENGTH+1];
 			char	server[CA_MAXHOSTNAMELEN+1];
 			u_signed64	fileid;
 			short	fileclass;

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_protocol.h,v 1.3 2002/03/14 07:42:10 jdurand Exp $
+ * $Id: stage_protocol.h,v 1.4 2002/03/27 08:08:51 jdurand Exp $
  */
 
 #ifndef __stage_protocol_h
@@ -253,12 +253,12 @@
     output += unmarshall_STRINGN(ptr,(st)->u1.d.Xparm,23);     \
     break;                                           \
   case 'a':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,STAGE_MAX_HSMLENGTH+1);    \
     break;                                           \
   case 'm':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,STAGE_MAX_HSMLENGTH+1);    \
   case 'h':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,STAGE_MAX_HSMLENGTH+1);    \
     if (magic <= STGMAGIC2) {                        \
       if (from == STAGE_OUTPUT_MODE) {                 \
         output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
@@ -333,12 +333,12 @@
     output += unmarshall_STRINGN(ptr,(st)->u1.d.Xparm,23);     \
     break;                                           \
   case 'a':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,STAGE_MAX_HSMLENGTH+1);    \
     break;                                           \
   case 'm':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,STAGE_MAX_HSMLENGTH+1);    \
   case 'h':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,167);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,STAGE_MAX_HSMLENGTH+1);    \
     if (magic <= STGMAGIC2) {                        \
       if (from == STAGE_OUTPUT_MODE) {                 \
         output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
