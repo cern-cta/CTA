@@ -1,10 +1,10 @@
-.\" $Id: stage_limits.man,v 1.1 2002/09/14 06:30:20 jdurand Exp $
+.\" $Id: stage_limits.man,v 1.2 2002/10/04 08:02:59 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_limits.man,v $ $Revision: 1.1 $ $Date: 2002/09/14 06:30:20 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_limits.man,v $ $Revision: 1.2 $ $Date: 2002/10/04 08:02:59 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_LIMITS "3" "$Date: 2002/09/14 06:30:20 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_LIMITS "3" "$Date: 2002/10/04 08:02:59 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage limits \- Internal limits of stage
 .SH SYNOPSIS
@@ -34,7 +34,7 @@ is the user id under which a request is considered to come from an admin account
 is the group id under which a request is considered to come from an admin account. Default is 100.
 
 .SH SEE ALSO
-\fBCastor_limits\fP(3), \fBstage_struct\fP(3)
+\fBCastor_limits\fP(3), \fBstage_struct\fP(3), \fBstage_constants\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
