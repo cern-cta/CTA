@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.1 $ $Date: 2000/05/11 10:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.2 $ $Date: 2002/04/08 13:50:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -53,6 +53,7 @@ char **argv;
 	int drvord = -1;
 	int errflg = 0;
 	int fd = -1;
+	int invert = 0;
 	char loader[32];
 	char *msgaddr;
 	int n;
@@ -69,7 +70,7 @@ char **argv;
 
 	loader[0] = '\0';
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deil:mN:q:S:V:v")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deIil:mN:q:S:V:v")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -86,6 +87,9 @@ char **argv;
 				errflg++;
 			} else
 				req_type = c;
+			break;
+		case 'I':	/* invert */
+			invert = 1;
 			break;
 		case 'l':	/* loader */
 			strcpy (loader, optarg);
@@ -209,7 +213,7 @@ char **argv;
 		c = smc_import (fd, loader, &robot_info, vid);
 		break;
 	case 'm':
-		c = smc_mount (fd, loader, &robot_info, drvord, vid);
+		c = smc_mount (fd, loader, &robot_info, drvord, vid, invert);
 		break;	
 	case 'q':
 		switch (qry_type) {
@@ -317,7 +321,7 @@ char *vid;
 	}
 
 	if ((c = smc_move_medium (fd, loader, element_info.element_address,
-	    (impexp_info+i)->element_address)) < 0) {
+	    (impexp_info+i)->element_address, 0)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		fprintf (stderr, SR017, "export", vid, msgaddr);
 		free (impexp_info);
@@ -395,7 +399,7 @@ char *vid;
 			}
 
 			if ((c = smc_move_medium (fd, loader, (element_info+i)->element_address,
-			    (element_info+j)->element_address)) < 0) {
+			    (element_info+j)->element_address, 0)) < 0) {
 				c = smc_lasterror (&smc_status, &msgaddr);
 				fprintf (stderr, SR017, "import",
 				    (element_info+i)->name, msgaddr);
@@ -410,12 +414,13 @@ char *vid;
 	return (c);
 }
 
-smc_mount (fd, loader, robot_info, drvord, vid)
+smc_mount (fd, loader, robot_info, drvord, vid, invert)
 int fd;
 char *loader;
 struct robot_info *robot_info;
 int drvord;
 char *vid;
+int invert;
 {
         int c;
         struct smc_element_info element_info;
@@ -436,7 +441,7 @@ char *vid;
 		return (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (fd, loader, element_info.element_address,
-	    robot_info->device_start+drvord)) < 0) {
+	    robot_info->device_start+drvord), invert) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		fprintf (stderr, SR018, "mount", vid, drvord, msgaddr);
 		return (c);
