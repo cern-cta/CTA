@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.21 2000/07/04 10:08:22 jdurand Exp $
+ * $Id: procupd.c,v 1.22 2000/09/01 13:18:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.21 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.22 $ $Date: 2000/09/01 13:18:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -219,6 +219,21 @@ procupdreq(req_data, clienthost)
 	}
 	if (! found) {
 		sendrep (rpfd, MSG_ERR, STG22);
+		/* We log information because this might be a bug */
+		wqp = waitqp;
+		while (wqp) {
+			stglogit(func,"Compared (reqid,key,uid,gid)=(%d,%d,%d,%d) with wqp's (reqid,key,uid,gid)=(%d,%d,%d,%d)\n",
+					(int) reqid,
+					(int) key,
+					(int) uid,
+					(int) gid,
+					(int) wqp->reqid,
+					(int) wqp->key,
+					(int) (wqp->Migrationflag ? stpasswd->pw_uid : wqp->uid),
+					(int) (wqp->Migrationflag ? stpasswd->pw_gid : wqp->gid)
+			);
+			wqp = wqp->next;
+		}
 		c = USERR;
 		goto reply;
 	}
