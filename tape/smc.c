@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.3 $ $Date: 2002/07/24 07:25:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.4 $ $Date: 2002/08/08 14:42:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -254,6 +254,10 @@ char *vid;
 		c = smc_lasterror (&smc_status, &msgaddr);
 		fprintf (stderr, SR020, "read_elem_status", msgaddr);
 		return (c);
+	}
+	if ((element_info.state & 0x1) == 0) {
+		fprintf (stderr, SR018, "demount", vid, drvord, "Medium Not Present");
+		return (USERR);
 	}
 	if (*vid && strcmp (element_info.name, vid)) {
 		fprintf (stderr, SR009, vid, element_info.name);
