@@ -2,7 +2,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.6 $ $Date: 2005/02/03 16:11:42 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.7 $ $Date: 2005/03/01 11:18:41 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
 
@@ -98,11 +98,10 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8', 'System');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('9', 'Important');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Debug');
 
-
-CREATE INDEX dlf.I_strparam_seq_no ON dlf.dlf_str_param_values (msg_seq_no);
-CREATE INDEX dlf.I_numparam_seq_no ON dlf.dlf_num_param_values (msg_seq_no);
-CREATE INDEX dlf.I_tapeds_seq_no ON dlf.dlf_tape_ids (msg_seq_no);
-CREATE INDEX dlf.I_rqids_seq_no ON dlf.dlf_rq_ids_map (msg_seq_no);
-CREATE INDEX dlf.I_messages_time ON dlf.dlf_messages (time);
-CREATE INDEX dlf.I_messages_fileid ON dlf.dlf_messages (ns_file_id);
-CREATE INDEX dlf.I_messages_requestid ON dlf.dlf_messages (req_id);
+CREATE INDEX dlf_i_strparam_seq_no ON dlf_str_param_values (msg_seq_no);
+CREATE INDEX dlf_i_numparam_seq_no ON dlf_num_param_values (msg_seq_no);
+CREATE INDEX dlf_i_tapeds_seq_no ON dlf_tape_ids (msg_seq_no);
+CREATE INDEX dlf_i_rqids_seq_no ON dlf_rq_ids_map (msg_seq_no);
+CREATE INDEX dlf_i_messages_time ON dlf_messages (time);
+CREATE INDEX dlf_i_messages_fileid ON dlf_messages (ns_file_id);
+CREATE INDEX dlf_i_messages_requestid ON dlf_messages (req_id);
