@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.232 2002/10/30 16:19:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.233 2002/11/01 14:54:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.232 $ $Date: 2002/10/30 16:19:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.233 $ $Date: 2002/11/01 14:54:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -150,7 +150,7 @@ struct pool_element_ext {
 	time_t last_allocation;
 };
 
-void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
+void print_pool_utilization _PROTO((int *, char *, char *, char *, char *, int, int, int, int));
 int update_migpool _PROTO((struct stgcat_entry **, int, int));
 void incr_migpool_counters _PROTO((struct stgcat_entry *, struct pool *, int, int, time_t));
 int insert_in_migpool _PROTO((struct stgcat_entry *));
@@ -1562,7 +1562,7 @@ int poolalloc(pool_p, nbpool_ent)
 }
 
 void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag, counters_flag)
-	int rpfd;
+	int *rpfd;
 	char *poolname, *defpoolname, *defpoolname_in, *defpoolname_out;
 	int migrator_flag;
 	int class_flag;
@@ -1596,7 +1596,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		stage_util_retenp(pool_p->stageout_retenp,stageout_retenp_timestr);
 		stage_util_retenp(pool_p->stagealloc_retenp,stagealloc_retenp_timestr);
 		stage_util_retenp(pool_p->put_failed_retenp,put_failed_retenp_timestr);
-		sendrep (&rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
+		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
 				 pool_p->name,
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
@@ -1619,27 +1619,27 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			);
 		if (pool_p->cleanreqtime > 0) {
 			stage_util_time(pool_p->cleanreqtime,timestr);
-			sendrep (&rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
+			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
 		} else {
-			sendrep (&rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
+			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
 		}
 		if (pool_p->cleanreqtime_previous > 0) {
 			stage_util_time(pool_p->cleanreqtime_previous,timestr);
-			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
 		} else {
-			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
 		}
 		if (pool_p->cleanreqtime_previous_end > 0) {
 			stage_util_time(pool_p->cleanreqtime_previous_end,timestr);
-			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
 		} else {
-			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
 		}
 		before_fraction = pool_p->capacity ? (100 * pool_p->free) / pool_p->capacity : 0;
 		after_fraction = pool_p->capacity ?
 			(10 * (pool_p->free * 100 - pool_p->capacity * before_fraction)) / pool_p->capacity :
 			0;
-		sendrep (&rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%s.%s%%)\n",
+		sendrep (rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%s.%s%%)\n",
 				 u64tostru(pool_p->capacity, tmpbuf1, 0),
 				 u64tostru(pool_p->free, tmpbuf2, 0),
 				 u64tostr(before_fraction, tmpbuf3, 0),
@@ -1649,7 +1649,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			after_fraction = elemp->capacity ?
 				(10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
 				0;
-			sendrep (&rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%s%s%s%s\n",
+			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%s%s%s%s\n",
 					 elemp->server,
 					 elemp->dirpath,
 					 u64tostru(elemp->capacity, tmpbuf1, 0),
@@ -1666,60 +1666,60 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		}
 	}
 	if (*poolname == '\0') {
-		sendrep (&rpfd, MSG_OUT, "DEFPOOL     %s\n", defpoolname);
-		sendrep (&rpfd, MSG_OUT, "DEFPOOL_IN  %s\n", defpoolname_in);
-		sendrep (&rpfd, MSG_OUT, "DEFPOOL_OUT %s\n", defpoolname_out);
+		sendrep (rpfd, MSG_OUT, "DEFPOOL     %s\n", defpoolname);
+		sendrep (rpfd, MSG_OUT, "DEFPOOL_IN  %s\n", defpoolname_in);
+		sendrep (rpfd, MSG_OUT, "DEFPOOL_OUT %s\n", defpoolname_out);
 	}
 	if ((migrator_flag != 0) && (migrators != NULL)) {
 		for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
 			if (*poolname && pool_p_migr != migr_p) continue;
 			if (migr_newline) {
-				sendrep (&rpfd, MSG_OUT, "\n");
+				sendrep (rpfd, MSG_OUT, "\n");
 				migr_newline = 0;
 			}
-			sendrep (&rpfd, MSG_OUT, "MIGRATOR %s\n",migr_p->name);
-			sendrep (&rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->global_predicates.nbfiles_canbemig);
-			sendrep (&rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->global_predicates.space_canbemig, tmpbuf, 0));
-			sendrep (&rpfd, MSG_OUT, "\tNBFILES_DELAY_MIGR     %d\n", migr_p->global_predicates.nbfiles_delaymig);
-			sendrep (&rpfd, MSG_OUT, "\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_delaymig, tmpbuf, 0));
-			sendrep (&rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
-			sendrep (&rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
+			sendrep (rpfd, MSG_OUT, "MIGRATOR %s\n",migr_p->name);
+			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->global_predicates.nbfiles_canbemig);
+			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->global_predicates.space_canbemig, tmpbuf, 0));
+			sendrep (rpfd, MSG_OUT, "\tNBFILES_DELAY_MIGR     %d\n", migr_p->global_predicates.nbfiles_delaymig);
+			sendrep (rpfd, MSG_OUT, "\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_delaymig, tmpbuf, 0));
+			sendrep (rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
+			sendrep (rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
 			if (migr_p->migreqtime > 0) {
 				stage_util_time(migr_p->migreqtime,timestr);
-				sendrep (&rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
+				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
 			} else {
-				sendrep (&rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
+				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
 			}
 			if (migr_p->migreqtime_previous > 0) {
 				stage_util_time(migr_p->migreqtime_previous,timestr);
-				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED %s\n", timestr);
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED %s\n", timestr);
 			} else {
-				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED <none>\n");
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED <none>\n");
 			}
 			if (migr_p->migreqtime_previous_end > 0) {
 				stage_util_time(migr_p->migreqtime_previous_end,timestr);
-				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED %s\n", timestr);
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED %s\n", timestr);
 			} else {
-				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED <none>\n");
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED <none>\n");
 			}
 			for (j = 0; j < migr_p->nfileclass; j++) {
-				sendrep (&rpfd, MSG_OUT, "\tFILECLASS %s@%s (classid=%d)\n",
+				sendrep (rpfd, MSG_OUT, "\tFILECLASS %s@%s (classid=%d)\n",
 						 migr_p->fileclass[j]->Cnsfileclass.name,
 						 migr_p->fileclass[j]->server,
 						 migr_p->fileclass[j]->Cnsfileclass.classid);
-				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->fileclass_predicates[j].nbfiles_canbemig);
-				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->fileclass_predicates[j].space_canbemig, tmpbuf, 0));
-				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_DELAY_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_delaymig);
-				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_delaymig, tmpbuf, 0));
-				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_BEING_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_beingmig);
-				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
+				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->fileclass_predicates[j].nbfiles_canbemig);
+				sendrep (rpfd, MSG_OUT, "\t\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->fileclass_predicates[j].space_canbemig, tmpbuf, 0));
+				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_DELAY_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_delaymig);
+				sendrep (rpfd, MSG_OUT, "\t\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_delaymig, tmpbuf, 0));
+				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_BEING_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_beingmig);
+				sendrep (rpfd, MSG_OUT, "\t\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
 			}
 		}
 	}
 	if ((class_flag != 0) && (fileclasses != NULL)) {
-		sendrep (&rpfd, MSG_OUT, "\n");
+		sendrep (rpfd, MSG_OUT, "\n");
 		for (i = 0; i < nbfileclasses; i++) {
-			printfileclass(&rpfd, &(fileclasses[i]));
+			printfileclass(rpfd, &(fileclasses[i]));
 		}
 	}
 	if (queue_flag != 0) {
@@ -1730,92 +1730,92 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 
 		for (wqp = waitqp, iwaitq = 1; wqp; wqp = wqp->next, iwaitq++) {
 			struct stgcat_entry *stcp;
-			sendrep (&rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
-			sendrep (&rpfd, MSG_OUT, "pool_user                %s\n", wqp->pool_user);
-			sendrep (&rpfd, MSG_OUT, "clienthost               %s\n", wqp->clienthost);
-			sendrep (&rpfd, MSG_OUT, "req_user                 %s\n", wqp->req_user);
-			sendrep (&rpfd, MSG_OUT, "req_uid                  %ld\n", (unsigned long) wqp->req_uid);
-			sendrep (&rpfd, MSG_OUT, "req_gid                  %ld\n", (unsigned long) wqp->req_gid);
-			sendrep (&rpfd, MSG_OUT, "rtcp_user                %s\n", wqp->rtcp_user);
-			sendrep (&rpfd, MSG_OUT, "rtcp_group               %s\n", wqp->rtcp_group);
-			sendrep (&rpfd, MSG_OUT, "rtcp_uid                 %ld\n", (unsigned long) wqp->rtcp_uid);
-			sendrep (&rpfd, MSG_OUT, "rtcp_gid                 %ld\n", (unsigned long) wqp->rtcp_gid);
-			sendrep (&rpfd, MSG_OUT, "clientpid                %ld\n", (unsigned long) wqp->clientpid);
-			sendrep (&rpfd, MSG_OUT, "uniqueid gives           Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
+			sendrep (rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
+			sendrep (rpfd, MSG_OUT, "pool_user                %s\n", wqp->pool_user);
+			sendrep (rpfd, MSG_OUT, "clienthost               %s\n", wqp->clienthost);
+			sendrep (rpfd, MSG_OUT, "req_user                 %s\n", wqp->req_user);
+			sendrep (rpfd, MSG_OUT, "req_uid                  %ld\n", (unsigned long) wqp->req_uid);
+			sendrep (rpfd, MSG_OUT, "req_gid                  %ld\n", (unsigned long) wqp->req_gid);
+			sendrep (rpfd, MSG_OUT, "rtcp_user                %s\n", wqp->rtcp_user);
+			sendrep (rpfd, MSG_OUT, "rtcp_group               %s\n", wqp->rtcp_group);
+			sendrep (rpfd, MSG_OUT, "rtcp_uid                 %ld\n", (unsigned long) wqp->rtcp_uid);
+			sendrep (rpfd, MSG_OUT, "rtcp_gid                 %ld\n", (unsigned long) wqp->rtcp_gid);
+			sendrep (rpfd, MSG_OUT, "clientpid                %ld\n", (unsigned long) wqp->clientpid);
+			sendrep (rpfd, MSG_OUT, "uniqueid gives           Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
 					 (unsigned long) (wqp->uniqueid / 0xFFFFFFFF),
 					 (int) (wqp->uniqueid / 0xFFFFFFFF),
 					 (unsigned long) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF),
 					 (int) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF) - 1
 				);
-			sendrep (&rpfd, MSG_OUT, "copytape                 %d\n", wqp->copytape);
-			sendrep (&rpfd, MSG_OUT, "Pflag                    %d\n", wqp->Pflag);
-			sendrep (&rpfd, MSG_OUT, "Upluspath                %d\n", wqp->Upluspath);
-			sendrep (&rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
-			sendrep (&rpfd, MSG_OUT, "key                      %d\n", wqp->key);
-			sendrep (&rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
-			sendrep (&rpfd, MSG_OUT, "save_rpfd                %d\n", wqp->save_rpfd);
-			sendrep (&rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
-			sendrep (&rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
-			sendrep (&rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
-			sendrep (&rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
-			sendrep (&rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
-			sendrep (&rpfd, MSG_OUT, "waiting_pool             %s\n", wqp->waiting_pool);
-			sendrep (&rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
-			sendrep (&rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
-			sendrep (&rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
-			sendrep (&rpfd, MSG_OUT, "status                   %d\n", wqp->status);
-			sendrep (&rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
-			sendrep (&rpfd, MSG_OUT, "noretry flag             %d\n", wqp->noretry);
-			sendrep (&rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
-			sendrep (&rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
-			sendrep (&rpfd, MSG_OUT, "magic                    0x%lx\n", (unsigned long) wqp->magic);
-			sendrep (&rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
-			sendrep (&rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
-			sendrep (&rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
-			sendrep (&rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
-			sendrep (&rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
-			sendrep (&rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
-			sendrep (&rpfd, MSG_OUT, "(API) flags              %s\n", stglogflags(NULL,NULL,(u_signed64) wqp->flags));
+			sendrep (rpfd, MSG_OUT, "copytape                 %d\n", wqp->copytape);
+			sendrep (rpfd, MSG_OUT, "Pflag                    %d\n", wqp->Pflag);
+			sendrep (rpfd, MSG_OUT, "Upluspath                %d\n", wqp->Upluspath);
+			sendrep (rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
+			sendrep (rpfd, MSG_OUT, "key                      %d\n", wqp->key);
+			sendrep (rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
+			sendrep (rpfd, MSG_OUT, "save_rpfd                %d\n", wqp->save_rpfd);
+			sendrep (rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
+			sendrep (rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
+			sendrep (rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
+			sendrep (rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
+			sendrep (rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
+			sendrep (rpfd, MSG_OUT, "waiting_pool             %s\n", wqp->waiting_pool);
+			sendrep (rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
+			sendrep (rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
+			sendrep (rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
+			sendrep (rpfd, MSG_OUT, "status                   %d\n", wqp->status);
+			sendrep (rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
+			sendrep (rpfd, MSG_OUT, "noretry flag             %d\n", wqp->noretry);
+			sendrep (rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
+			sendrep (rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
+			sendrep (rpfd, MSG_OUT, "magic                    0x%lx\n", (unsigned long) wqp->magic);
+			sendrep (rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
+			sendrep (rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
+			sendrep (rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
+			sendrep (rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
+			sendrep (rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
+			sendrep (rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
+			sendrep (rpfd, MSG_OUT, "(API) flags              %s\n", stglogflags(NULL,NULL,(u_signed64) wqp->flags));
 			if (wqp->save_subreqid != NULL) {
 				for (i = 0, wfp = wqp->wf; i < wqp->save_nbsubreqid; i++, wfp++) {
-					sendrep (&rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
+					sendrep (rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
 				}
 			}
-			sendrep (&rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
+			sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
 			for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid) {
 						char tmpbuf1[21];
 						char tmpbuf2[22];
 
-						sendrep(&rpfd, MSG_OUT, "\tWaiting File No %3d\n", i);
-						sendrep(&rpfd, MSG_OUT, "\t\tsubreqid=%d\n", wfp->subreqid);
-						sendrep(&rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
-						sendrep(&rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
-						sendrep(&rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
-						sendrep(&rpfd, MSG_OUT, "\t\thsmsize=%s\n", u64tostr(wfp->hsmsize, tmpbuf1, 0));
-						sendrep(&rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
-						sendrep(&rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
+						sendrep(rpfd, MSG_OUT, "\tWaiting File No %3d\n", i);
+						sendrep(rpfd, MSG_OUT, "\t\tsubreqid=%d\n", wfp->subreqid);
+						sendrep(rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
+						sendrep(rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
+						sendrep(rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
+						sendrep(rpfd, MSG_OUT, "\t\thsmsize=%s\n", u64tostr(wfp->hsmsize, tmpbuf1, 0));
+						sendrep(rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
+						sendrep(rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
 
 						switch (stcp->t_or_d) {
 						case 't':
-							sendrep(&rpfd, MSG_OUT, "\t\tVID.FSEQ=%s.%s\n", stcp->u1.t.vid[0], stcp->u1.t.fseq);
+							sendrep(rpfd, MSG_OUT, "\t\tVID.FSEQ=%s.%s\n", stcp->u1.t.vid[0], stcp->u1.t.fseq);
 							break;
 						case 'd':
 						case 'a':
-							sendrep(&rpfd, MSG_OUT, "\t\tu1.d.xfile=%s\n", stcp->u1.d.xfile);
+							sendrep(rpfd, MSG_OUT, "\t\tu1.d.xfile=%s\n", stcp->u1.d.xfile);
 							break;
 						case 'm':
-							sendrep(&rpfd, MSG_OUT, "\t\tu1.m.xfile=%s\n", stcp->u1.m.xfile);
+							sendrep(rpfd, MSG_OUT, "\t\tu1.m.xfile=%s\n", stcp->u1.m.xfile);
 							break;
 						case 'h':
-							sendrep(&rpfd, MSG_OUT, "\t\tu1.h.xfile=%s\n", stcp->u1.h.xfile);
+							sendrep(rpfd, MSG_OUT, "\t\tu1.h.xfile=%s\n", stcp->u1.h.xfile);
 							if (wfp->ipath[0] != '\0') {
-								sendrep(&rpfd, MSG_OUT, "\t\tipath=%s (copy between pools)\n", wfp->ipath);
+								sendrep(rpfd, MSG_OUT, "\t\tipath=%s (copy between pools)\n", wfp->ipath);
 							}
 							break;
 						default:
-							sendrep(&rpfd, MSG_OUT, "\t\t<unknown_type>\n");
+							sendrep(rpfd, MSG_OUT, "\t\t<unknown_type>\n");
 							break;
 						}
 						break;

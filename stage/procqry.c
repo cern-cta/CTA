@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.105 2002/10/30 16:21:09 jdurand Exp $
+ * $Id: procqry.c,v 1.106 2002/11/01 14:54:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.105 $ $Date: 2002/10/30 16:21:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.106 $ $Date: 2002/11/01 14:54:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -82,7 +82,7 @@ extern int sendrep _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
-extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
+extern void print_pool_utilization _PROTO((int *, char *, char *, char *, char *, int, int, int, int));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int cleanpool _PROTO((char *));
@@ -768,7 +768,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		goto reply;
 	}
 	if (sflag) {
-		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag, counters_flag);
+		print_pool_utilization (&rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag, counters_flag);
 		goto reply;
 	}
 	if (Sflag) {
