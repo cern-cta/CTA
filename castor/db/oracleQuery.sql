@@ -15,6 +15,7 @@ CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_Request on SubRequest (request);
 
 /* A little function base index to speed up subrequestToDo */
 CREATE INDEX I_SubRequest_Status on SubRequest
