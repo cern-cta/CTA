@@ -1,0 +1,18 @@
+# Global paths setup for CASTOR
+
+# $Id: castor_paths,v 1.1 2004/06/23 04:22:23 jdurand Exp $
+# Copyright CERN/IT/ADC/CA 2004
+
+if [ -n "$PATH" ]; then
+  PATH=${PATH}:/usr/local/bin
+else
+  PATH=/usr/local/bin
+fi
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
+else
+  LD_LIBRARY_PATH=/usr/local/lib
+fi
+
+export PATH
+export LD_LIBRARY_PATH

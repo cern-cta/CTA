@@ -1,0 +1,19 @@
+# Global compiler setup for CASTOR
+
+# $Id: castor_compiler,v 1.1 2004/06/23 04:22:23 jdurand Exp $
+# Copyright CERN/IT/ADC/CA 2004
+
+# Version 3.2.3 of the gcc compiler
+if [ -n "$PATH" ]; then
+  PATH=/usr/local/gcc-alt-3.2.3/bin:${PATH}
+else
+  PATH=/usr/local/gcc-alt-3.2.3/bin
+fi
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib:${LD_LIBRARY_PATH}
+else
+  LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib
+fi
+
+export PATH
+export LD_LIBRARY_PATH

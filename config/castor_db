@@ -1,0 +1,25 @@
+# Global Db setup for CASTOR
+
+# $Id: castor_db,v 1.1 2004/06/23 04:22:23 jdurand Exp $
+# Copyright CERN/IT/ADC/CA 2004
+
+# ORACLE setup. We use version 10 for gcc 3.2
+ORACLE_CERN=/afs/cern.ch/project/oracle
+ORACLE_HOME=${ORACLE_CERN}/linux/10102gcc323
+TNS_ADMIN=${ORACLE_CERN}/admin
+if [ -n "$PATH" ]; then
+  PATH=${PATH}:${ORACLE_CERN}/script:${ORACLE_HOME}/bin
+else
+  PATH=${ORACLE_CERN}/script:${ORACLE_HOME}/bin
+fi
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ORACLE_HOME}/lib
+else
+  LD_LIBRARY_PATH=${ORACLE_HOME}/lib
+fi
+
+export ORACLE_CERN
+export ORACLE_HOME
+export TNS_ADMIN
+export PATH
+export LD_LIBRARY_PATH
