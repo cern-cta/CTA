@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.55 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.56 $ $Release$ $Date: 2004/11/24 17:21:27 $ $Author: bcouturi $
 #
 # Make Castor libraries and executables
 #
@@ -264,6 +264,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
+              exception/Communication.cpp \
               exception/NoEntry.cpp 
 
 #if BuildSecurity
