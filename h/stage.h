@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.52 2001/03/27 08:37:30 jdurand Exp $
+ * $Id: stage.h,v 1.53 2001/03/29 10:53:03 jdurand Exp $
  */
 
 /*
@@ -406,6 +406,7 @@ struct pool_element {
 	u_signed64	free;		/* free space in bytes */
 	int nbreadaccess;       /* Number of known accesses in read mode */
 	int nbwriteaccess;      /* Number of known accesses in write mode */
+	time_t last_allocation; /* last known allocation timestamp */
 };
 
 struct sorted_ent {
