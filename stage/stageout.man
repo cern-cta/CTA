@@ -1,10 +1,10 @@
-.\" $Id: stageout.man,v 1.13 2002/10/03 14:03:56 jdurand Exp $
+.\" $Id: stageout.man,v 1.14 2002/10/06 09:14:29 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.13 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.14 $ $Date: 2002/10/06 09:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEOUT "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stage User Commands"
+.TH STAGEOUT "1" "$Date: 2002/10/06 09:14:29 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageout \- allocate space and store the option values in the stgdaemon catalog
 for use by stageput later.
@@ -61,7 +61,7 @@ This may also be specified thru the environment variable STAGE_POOL.
 If specified, only 
 .I size 
 Mbytes will be copied.
-Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte. In the case of multiple files, a series of size values may be given,
+Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo\-byte, 'M' for Mega\-byte (default), 'G' for Giga\-byte, 'T' for Tera\-byte and 'P' for Peta\-byte. In the case of multiple files, a series of size values may be given,
 separated by ":"s. These apply to the tape files in the specified order.
 If there are more files than size values, the last one will be used for all
 remaining files. Thus, a single size value may be given which applies to all files on the tape.
@@ -78,7 +78,7 @@ stageout -s 10:20 \\
 .br
 \-M $CASTOR_HOME/stageout_file \\
 .br
-\M $CASTOR_HOME/stageout_file2 \\
+\-M $CASTOR_HOME/stageout_file2 \\
 .br
 out out2
 .LP
