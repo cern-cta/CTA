@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.5 $ $Date: 2003/11/17 07:04:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.6 $ $Date: 2003/11/21 11:07:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -490,23 +490,6 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 			    sstrerror(serrno));
 		}
 
-		printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d) to (%s,%d,%d,%02x%02x%02x%02x,%d)\n",
-		    timestamp(),
-		    u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
-		    seg_list[last_seg_repacked].copyno,
-		    seg_list[last_seg_repacked].fsec,
-		    seg_list[last_seg_repacked].vid,
-		    seg_list[last_seg_repacked].side,
-		    seg_list[last_seg_repacked].fseq,
-		    seg_list[last_seg_repacked].blockid[0],
-		    seg_list[last_seg_repacked].blockid[1],
-		    seg_list[last_seg_repacked].blockid[2],
-		    seg_list[last_seg_repacked].blockid[3],
-		    seg_list[last_seg_repacked].compression,
-		    tl->vid, tl->side, fl->tape_fseq, fl->blockid[0], fl->blockid[1],
-		    fl->blockid[2], fl->blockid[3], compression_factor);
-		fflush (stdout);
-
 		fileid = seg_list[last_seg_repacked].fileid;
 
 		old_segattrs.copyno = seg_list[last_seg_repacked].copyno;
@@ -527,7 +510,32 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 			fprintf (stderr, "Cns_replaceseg (%s %d %d) error: %s\n",
 			    u64tostr (fileid, tmpbuf, 0), old_segattrs.copyno,
 			    old_segattrs.fsec, sstrerror(serrno));
+			if (serrno == EACCES) {
+				usr_errflg++;
+				return (-1);
+			} else if (serrno != ENOENT) {
+				sys_errflg++;
+				return (-1);
+			}
 		}
+
+		printf ("%s (%s,%d,%d) repacked from (%s,%d,%d,%02x%02x%02x%02x,%d) to (%s,%d,%d,%02x%02x%02x%02x,%d)\n",
+		    timestamp(),
+		    u64tostr (seg_list[last_seg_repacked].fileid, tmpbuf, 0),
+		    seg_list[last_seg_repacked].copyno,
+		    seg_list[last_seg_repacked].fsec,
+		    seg_list[last_seg_repacked].vid,
+		    seg_list[last_seg_repacked].side,
+		    seg_list[last_seg_repacked].fseq,
+		    seg_list[last_seg_repacked].blockid[0],
+		    seg_list[last_seg_repacked].blockid[1],
+		    seg_list[last_seg_repacked].blockid[2],
+		    seg_list[last_seg_repacked].blockid[3],
+		    seg_list[last_seg_repacked].compression,
+		    tl->vid, tl->side, fl->tape_fseq, fl->blockid[0], fl->blockid[1],
+		    fl->blockid[2], fl->blockid[3], compression_factor);
+		fflush (stdout);
+
 		if (! nodelete_flag) {
 			printf ("%s Deleting %s.%d from disk\n", timestamp(),
 			    seg_list[last_seg_repacked].vid,
@@ -687,7 +695,7 @@ char *pool_name;
 				fl = fl->next;
 			} while (fl != tl->file);
 		}
-		c = (serrno == ENOSPC) ? 0 : SYERR;
+		c = (serrno == ENOSPC) ? 0 : usr_errflg ? USERR : SYERR;
 		if (vmgr_updatetape (tl->tapereq.vid, tl->tapereq.side,
 		    (u_signed64) 0, 0, 0, Flags) < 0) {
 			fprintf (stderr, "vmgr_updatetape %s: %s\n", tl->tapereq.vid,
