@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.25 $ $Date: 2002/04/08 14:36:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.26 $ $Date: 2003/09/15 08:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,14 +23,12 @@ static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.25 $ $Date: 2002
 #include <sys/select.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "marshall.h"
 #if SACCT
 #include "sacct.h"
 #endif
 #include "serrno.h"
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 char *devtype;
 char *dvrname;
 char errbuf[512];
@@ -54,6 +52,7 @@ char	**argv;
 	int c;
 	int cfseq;
 	int den;
+	struct devinfo *devinfo;
 	char *dgn;
 	char *domainname;
 	char *drive;
@@ -166,7 +165,7 @@ char	**argv;
 				configdown (drive);
 			else
 				usrmsg (func, TP042, path, "open",
-					sys_errlist[errno]);
+					strerror(errno));
 			goto reply;
 		}
 		if (chkdriveready_sony (tapefd) <= 0) {
@@ -204,7 +203,7 @@ char	**argv;
 				configdown (drive);
 			else
 				usrmsg (func, TP042, path, "open",
-					sys_errlist[errno]);
+					strerror(errno));
 			goto reply;
 		}
 		if (chkdriveready (tapefd) <= 0) {
@@ -280,9 +279,10 @@ char	**argv;
 		strcpy (recfm, "U");
 	if (blksize == 0)
 		if (strcmp (devtype, "SD3")) {
-			if (lrecl == 0)
-				blksize = 32760;
-			else
+			if (lrecl == 0) {
+				devinfo = Ctape_devinfo (devtype);
+				blksize = devinfo->defblksize;
+			} else
 				blksize = lrecl;
 		} else {
 			if (lrecl == 0)
