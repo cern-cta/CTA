@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.3 $ $Date: 1999/09/21 05:52:56 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:50:41 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ COMPRESSION_STATS *comp_stats;
 #endif
 #if defined(ADSTAR)
 	if (strcmp (devtype, "3590") == 0) {
-		if ((c = ioctl (tapefd, STIOC_LOG_SENSE, &log_sense) < 0)
+		if ((c = ioctl (tapefd, STIOC_LOG_SENSE, &log_sense)) < 0)
 			return (c);
 		p = log_sense.data;
 	}
