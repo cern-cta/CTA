@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.7 $ $Date: 2000/05/29 15:28:22 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.8 $ $Date: 2000/05/29 15:55:25 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -25,6 +25,17 @@ struct rfstatfs {
         long totnods  ;      /* Total number of inodes       */
         long freenods ;      /* Number of free inodes        */
 } ;
+
+/*
+ * Define structure for preseek requests.
+ */
+#if !defined(SOLARIS) && !(defined(__osf__) && defined(__alpha)) && !defined(HPUX1010) && !defined(IRIX6) && !defined(linux) && !defined(AIX42) && !defined(IRIX5)
+struct iovec {
+        int iov_base ;
+        int iov_len ;
+} ;
+#endif
+
 
 /*
  * Internal data types 

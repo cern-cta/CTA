@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.9 $ $Date: 2000/05/29 14:17:39 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.10 $ $Date: 2000/05/29 15:55:24 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -23,6 +23,7 @@
 #include <sys/types.h>          /* standard data types                  */
 #include <dirent.h>             /* standard directory definitions       */
 #endif /* _WIN32 */
+#include <sys/stat.h>           /* file status definitions              */
 
 /*
  * Common includes needed by internal (kernel) routines.
@@ -44,7 +45,6 @@
 #if ! defined(_WIN32)
 #include <sys/file.h>           /* define L_XTND, L_INCR and L_SET      */
 #endif
-#include <sys/stat.h>           /* file status definitions              */
 #if defined(_WIN32)
 #include <time.h>
 #else
@@ -205,16 +205,6 @@ struct rfiostat	{
 	long rnbr ;                     /* byte read count              */
 	long wnbr ;                     /* byte written count           */
 } ;
-
-/*
- * Define structure for preseek requests.
- */
-#if !defined(SOLARIS) && !(defined(__osf__) && defined(__alpha)) && !defined(HPUX1010) && !defined(IRIX6) && !defined(linux) && !defined(AIX42) && !defined(IRIX5)
-struct iovec {
-	int iov_base ;
-	int iov_len ; 
-} ;
-#endif
 
 #endif /* RFIO_KERNEL */
 
