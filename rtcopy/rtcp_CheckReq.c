@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.39 $ $Date: 2000/08/28 10:13:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.40 $ $Date: 2000/08/29 10:38:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -567,6 +567,8 @@ int rtcp_CheckReq(SOCKET *client_socket,
                   tape_list_t *tape) {
     int rc = 0;
     int save_serrno;
+    int nb_filereqs = 0;
+    int tot_nb_filereqs = 0;
     tape_list_t *tl;
     file_list_t *fl, *file;
     char *p;
@@ -606,20 +608,34 @@ int rtcp_CheckReq(SOCKET *client_socket,
 
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
-            if ( filereq->err.max_tpretry == -1 )
-                filereq->err.max_tpretry = max_tpretry;
-            if ( filereq->err.max_cpretry == -1 )
-                filereq->err.max_cpretry = max_cpretry;
-            rc = rtcp_CheckFileReq(fl);
-            if ( rc == -1 ) {
+            tot_nb_filereqs++;
+            if ( filereq->proc_status != RTCP_FINISHED ) {
+                nb_filereqs++;
+                if ( filereq->err.max_tpretry == -1 )
+                    filereq->err.max_tpretry = max_tpretry;
+                if ( filereq->err.max_cpretry == -1 )
+                    filereq->err.max_cpretry = max_cpretry;
+                rc = rtcp_CheckFileReq(fl);
+                if ( rc == -1 ) {
 #if defined(RTCP_SERVER)
-                tellClient(client_socket,NULL,fl,rc);
-                (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
+                    tellClient(client_socket,NULL,fl,rc);
+                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
 #endif /* RTCP_SERVER */
+                }
+                if ( rc == -1 ) break;
             }
-            if ( rc == -1 ) break;
         } CLIST_ITERATE_END(tl->file,fl);
-
+        if ( tot_nb_filereqs > 0 && nb_filereqs == 0 ) {
+            rtcp_log(LOG_ERR,"rtcp_CheckReq(): All filerequests already finished. Nothing to do!\n");
+            sprintf(errmsgtxt,"%s\n",RT127,CMD(tapereq->mode));
+            serrno = SEINTERNAL;
+            file = NULL;
+            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+#if defined(RTCP_SERVER)
+            tellClient(client_socket,tape,NULL,rc);
+            (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
+#endif /* RTCP_SERVER */
+        }
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
     if ( rfio_end() < 0 && rc != -1 ) {
