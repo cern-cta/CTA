@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.49 $ $Date: 2000/03/31 15:34:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.50 $ $Date: 2000/03/31 17:07:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -311,7 +311,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
             if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
                  strlen(qstr) + 6 < CA_MAXLINELEN ) {
                 if ( filereq->tape_fseq == fseq + 1 &&
-                     (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD)==0) ) {
+                     (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
                     if ( qstr[strlen(qstr)-1] != '-' )
                         sprintf(&qstr[strlen(qstr)],"-");
                 } else {
