@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.12 2005/02/18 17:16:32 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.13 2005/03/14 09:05:21 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -119,7 +119,7 @@
 #ifdef RM_MEM_DEFAULT_FREQUENCY
 #undef RM_MEM_DEFAULT_FREQUENCY
 #endif
-#define RM_MEM_DEFAULT_FREQUENCY 60
+#define RM_MEM_DEFAULT_FREQUENCY 10
 
 #ifdef RM_SWAP_DEFAULT_FREQUENCY
 #undef RM_SWAP_DEFAULT_FREQUENCY
