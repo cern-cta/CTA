@@ -1,0 +1,254 @@
+.\"
+.\" @(#)$RCSfile: vdqm_NextVol.man,v $ $Revision: 1.1 $ $Date: 2000/08/09 16:08:28 $ CERN IT-PDP/DM O.Barring
+.\"
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_NEXTVOL l "$Date: 2000/08/09 16:08:28 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_NextVol \- get information about next volume request in a running VDQM query
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "Ctape_constants.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_NextVol ("
+.br
+.BI "                const vdqmnw_t *" nw ,
+.br
+.BI "                vdqmVolReq_t *" volreq );
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information 
+returned by a prior call to
+.B vdqm_Connect(3).
+If this parameter is NULL, which is the recommended usage,
+.B vdqm_NextVol
+will internally call 
+.B vdqm_Connect(3)
+and
+.B vdqm_Disconnect(3)
+to open and close the connection with the VDQM server.
+.PP
+.I volreq
+\- VDQM structure (described below) containing all available information
+about the volume request.
+.PP
+.SH DESCRIPTION
+.B vdqm_NextVol
+returns information about the next volume request in a running query of the VDQM
+database. The first call to 
+.B vdqm_NextVol
+initiates the query and returns information about the first volume request 
+matching the specified device group (if any). The connection to the VDQM server
+stays open between two calls to
+.B vdqm_NextVol
+in a running query. In order to guarantee consistent information the lock
+on the queue is also maintained between two calls to
+.B vdqm_NextVol.
+This means that the calls to
+.B vdqm_NextVol
+should be put in a critical section, where there are no other blocking calls
+(the query will eventually timeout). 
+
+.B vdqm_NextVol
+returns -1 and sets 
+.B serrno
+to 
+.B EVQEOQREACHED
+when there are no more volume requests matching the query.
+
+The volume request record returned by 
+.B vdqm_NextVol
+is defined in the
+.B vdqm.h
+file as follows:
+.sp
+.BI "typedef struct vdqmVolReq " {
+.br
+.BI "                  int " VolReqID ;
+.br
+.BI "                  int " DrvReqID ;
+.br
+.BI "                  int " priority ;
+.br
+.BI "                  int " client_port ;
+.br
+.BI "                  int " recvtime ;
+.br
+.BI "                  int " clientUID ;
+.br
+.BI "                  int " clientGID ;
+.br
+.BI "                  int " mode ;
+.br
+.BI "                  char " client_host[CA_MAXHOSTNAMELEN+1] ;
+.br
+.BI "                  char " volid[CA_MAXVIDLEN+1] ;
+.br
+.BI "                  char " server[CA_MAXHOSTNAMELEN+1] ;
+.br
+.BI "                  char " drive[CA_MAXUNMLEN+1] ;
+.br
+.BI "                  char " dgn[CA_MAXDGNLEN+1] ;
+.br
+.BI "                  char " client_name[CA_MAXLINELEN+1] ;
+.br
+.BI                   }
+
+Where the elements are:
+.PP
+.I VolReqID
+\- Volume request unique ID assigned to by the VDQM server.
+.PP
+.I DrvReqID
+\- Drive ID for assigned drive (if any).
+.PP
+.I priority
+\- Request priority assigned by the VDQM server (currently not used).
+.PP
+.I client_port
+\- Number of the port to which the client has bound a listen socket. This
+is the port the RTCOPY server will use to call back the client when the
+request is started.
+.PP
+.I recvtime
+\- Time when the request was received.
+.PP
+.I clientUID
+\- User ID of volume request client.
+.PP 
+.I clientGID
+\- Group ID of volume request client.
+.PP
+.I mode
+\- Tape access mode. Either of WRITE_ENABLE/WRITE_DISABLE defined in the
+.B Ctape_constants.h.
+include file.
+.PP
+.I client_host
+\- Host name of volume request client.
+.PP
+.I volid
+\- Requested Volume ID (VID).
+.PP
+.I server
+\- Requested tape server host name (if any).
+.PP
+.I drive
+\- Requested tape drive name (if any).
+.PP
+.I dgn
+\- Device group name.
+.PP
+.I client_name
+\- Volume request client login name on the client host.
+
+.SH EXAMPLE
+Here follows an example showing how call
+.B vdqm_NextVol
+to VDQM database for all volume requests in the specified device group.
+.P
+.nf
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <Ctape_constants.h>
+#include <Ctape_api.h>
+#include <vdqm_api.h>
+
+int main(int argc, char *argv) {
+    int rc, last_id;
+    vdqmnw_t **nw = NULL;
+    char *dgn = NULL;
+    vdqmVolReq_t volreq;
+
+    if ( argc > 1 ) dgn = argv[1];
+
+    /*
+     * Initialise the structure
+     */
+    memset(&volreq,'\0',sizeof(vdqmVolReq_t));
+    if ( dgn != NULL ) strcpy(volreq.dgn,dgn);
+    /*
+     * Loop on query until no more info. is returned.
+     */
+    while ( (rc = \fBvdqm_NextVol\fP(nw,&volreq)) != -1 ) {
+        /*
+         * The VDQM server can sometimes return empty records or
+         * repeate previous record.
+         */
+        if ( *volreq.server != '\0' && *volreq.drive != '\0' &&
+             volreq.VolReqID != last_id ) {
+            last_id = volreq.VolReqID;
+            printf("User %s@%s:%d VID: %s, mode %s\\n",
+                   volreq.client_name,volreq.client_host,volreq.client_port,
+                   volreq.volid,
+                   (volreq.mode == WRITE_DISABLE ? "read" : "write"));
+        }
+    }
+    exit(0);
+}
+.fi
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_NextVol
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_NextVol
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
+.TP
+.B EINVAL
+A parameter or combination of parameters is invalid. For instance if
+any of the required parameters device group name (dgn) or drive name (unit)
+is a NULL pointer.
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+.TP
+.B EVQEOQREACHED
+Running query reached its end.
+
+.SH SEE ALSO
+.BR vdqm_Connect(3), 
+.BR vdqm_Disconnect(3),
+.BR vdqm_NextDrive(3)
