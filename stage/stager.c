@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.151 2001/07/11 10:39:16 jdurand Exp $
+ * $Id: stager.c,v 1.152 2001/08/11 10:16:13 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.151 $ $Date: 2001/07/11 10:39:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.152 $ $Date: 2001/08/11 10:16:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1618,13 +1618,19 @@ int stagein_castor_hsm_file() {
 						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Empty file",sstrerror(serrno));
 						forced_exit = 1;
 						break;
+					} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode == EINVAL) {
+						/* We check if the failure was because of a invalid value somewhere in the chain ? */
+						serrno = EINVAL;
+						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "",sstrerror(serrno));
+						forced_exit = 1;
+						break;
 					}
 				}
 			}
 			RESTORE_EID;
 			if (forced_exit) {
 				free(stcp_start);
-				RETURN (serrno == ENOENT ? USERR : SYERR);
+				RETURN (((serrno == ENOENT) || (serrno == EINVAL)) ? USERR : SYERR);
 			}
 		}
 	} else if (rtcp_rc > 0) {
@@ -3949,6 +3955,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 04 July, 2001 at 19:16:19 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Saturday 11 August, 2001 at 12:13:53 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
