@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/09/17 15:39:36 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/09/23 07:46:17 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/09/17 15:39:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/09/23 07:46:17 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -597,7 +597,8 @@ int rtcpcld_Callback(
       rc = rtcpcld_setFileStatus(
                                  filereq,
                                  status,
-                                 (status == SEGMENT_FAILED ? 1 : 0)
+/*                                 (status == SEGMENT_FAILED ? 1 : 0) */
+                                 1
                                  );
       if ( rc == -1 ) {
         save_serrno = serrno;
