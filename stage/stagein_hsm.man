@@ -1,12 +1,12 @@
-.\" $Id: stagein_hsm.man,v 1.1 2002/10/03 16:22:15 jdurand Exp $
+.\" $Id: stagein_hsm.man,v 1.2 2002/10/03 16:27:31 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.1 $ $Date: 2002/10/03 16:22:15 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.2 $ $Date: 2002/10/03 16:27:31 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEIN_HSM "3" "$Date: 2002/10/03 16:22:15 $" "CASTOR" "Stage Library Functions"
+.TH STAGEIN_HSM "3" "$Date: 2002/10/03 16:27:31 $" "CASTOR" "Stage Library Functions"
 .SH NAME
-stagein_hsm \- Asks for one or more HSM files to be on staged on disk
+stagein_hsm \- Asks for one or more HSM files to be staged on disk
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
