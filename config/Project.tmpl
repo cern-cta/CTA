@@ -303,3 +303,10 @@ DBTESTCPPDIR = db
 IOTESTCPPDIR = io
 DBCTESTCPPDIR = dbC
 #endif
+
+#if BuildSecurity
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+SECURITYDIR=security
+#endif

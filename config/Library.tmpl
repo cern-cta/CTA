@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.1 $ $Date: 2004/05/14 07:18:28 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.2 $ $Date: 2004/05/17 11:31:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -193,6 +193,13 @@ HPSSLIB = DepLibraryTargetName(hpss,hpss_common)
 
 #if BuildDlfClient
 DLFLIB = DepLibraryTargetName(dlf,dlf)
+#endif
+
+#if BuildSecurity
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+SECURITYLIB = DepLibraryTargetName(security,security)
 #endif
 
 
