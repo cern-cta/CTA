@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rtcpcldapi_new.c
+ *                      rtcpcldapi.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.63 $ $Release$ $Date: 2004/09/20 09:59:46 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.64 $ $Release$ $Date: 2004/09/27 11:04:22 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.63 $ $Date: 2004/09/20 09:59:46 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.64 $ $Date: 2004/09/27 11:04:22 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -864,13 +864,7 @@ static int addNewSegmentsToDB(
     return(-1);
   }
   
-/*   iObj = Cstager_Tape_getIObject(tp); */
-
-/*   rc = C_Services_updateRep(*dbSvc,iAddr,iObj,0); */
   if ( rc != 0 ) {
-/*     LOG_FAILED_CALL("C_Services_updateRep()", */
-/*                     C_Services_errorMsg(*dbSvc)); */
-/*     save_serrno = serrno; */
     LOG_FAILED_CALL("C_Services_createRepNoRec()",
                     C_Services_errorMsg(*dbSvc));
     (void)C_Services_rollback(*dbSvc,iAddr);
@@ -909,8 +903,6 @@ static int addNewSegmentsToDB(
   /*
    * Update client context with the updated Tape instance
    */
-  /*  Cstager_Tape_delete(clientCntx->currentTp); */
-  /*  clientCntx->currentTp = tp; */
   C_IAddress_delete(iAddr);
 
   return(0);
@@ -1739,37 +1731,18 @@ int rtcpcldc(tape)
       }
     }
   CLIST_ITERATE_END(tape->file,fl);
-  
-  tapeIObj = Cstager_Tape_getIObject(clientCntx->currentTp);
 
-  if ( rtcpcldc_killed(tape) != 0 ) {
+  rc = addNewSegmentsToDB(tape,clientCntx);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("addNewSegmentsToDB()","");
     save_serrno = serrno;
     (void)C_Services_rollback(*dbSvc,iAddr);
     C_IAddress_delete(iAddr);
     rtcpcldc_cleanup(tape);
-    rtcp_log(LOG_ERR,"Request aborted\n");
     serrno = save_serrno;
     return(-1);
   }
-  
-  rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
-  if ( rc != 0 ) {
-    LOG_FAILED_CALL("C_Services_updateRep()",
-                    C_Services_errorMsg(*dbSvc));
-    save_serrno = serrno;
-    (void)C_Services_rollback(*dbSvc,iAddr);
-    tape->tapereq.err.errorcode = save_serrno;
-    strncpy(tape->tapereq.err.errmsgtxt,
-            C_Services_errorMsg(*dbSvc),
-            sizeof(tape->tapereq.err.errmsgtxt)-1);
-    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-    C_IAddress_delete(iAddr);
-    rtcpcldc_cleanup(tape);
-    rtcp_log(LOG_ERR,"DB error: %s\n",
-             tape->tapereq.err.errmsgtxt);
-    serrno = save_serrno;
-    return(-1);
-  }
+
   (void)rtcpcld_notifyRtcpclientd();
   
   C_IAddress_delete(iAddr);
