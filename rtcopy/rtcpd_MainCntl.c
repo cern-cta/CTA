@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.78 $ $Date: 2000/11/08 14:01:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.79 $ $Date: 2000/12/20 16:25:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1429,7 +1429,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpClientInfo_t *client = NULL;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile;
-    int rc, retry, reqtype, errmsglen,status, save_errno, CLThId;
+    int rc, retry, reqtype, errmsglen, tot_reqlen, status, save_errno, CLThId;
     char *errmsg, *msgtxtbuf;
     static int thPoolId = -1;
     static int thPoolSz = -1;
@@ -1575,7 +1575,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rc = 0;
     reqtype = 0;
     tape = NULL;
+    tot_reqlen = 0;
     while ( reqtype != RTCP_NOMORE_REQ  ) {
+        if ( tot_reqlen > RTCP_MAX_REQUEST_LENGTH ) {
+            rtcp_log(LOG_ERR,"rtcpd_MainCntl() request too long! (%d > %d)\n",
+                     tot_reqlen,RTCP_MAX_REQUEST_LENGTH);
+            rc = -1;
+            break;
+        }
         memset(&filereq,'\0',sizeof(filereq));
         filereq.err.severity = RTCP_OK;
         rc = rtcp_RecvReq(client_socket,
@@ -1604,6 +1611,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_SendAckn(): %s\n",
                 sstrerror(serrno));
+            serrno = SEINTERNAL;
             break;
         }
         if ( reqtype == RTCP_TAPE_REQ || reqtype == RTCP_TAPEERR_REQ ) {
@@ -1617,6 +1625,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                 rc = -1;
                 break;
             }
+            tot_reqlen += sizeof(tape_list_t);
             tapereq.TStartRtcpd = (int)time(NULL);
             nexttape->tapereq = tapereq;
             nexttape->tapereq.err.severity = nexttape->tapereq.err.severity &
@@ -1644,6 +1653,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                 rc = -1;
                 break;
             }
+            tot_reqlen += sizeof(file_list_t);
             nextfile->end_index = -1;
             nextfile->filereq = filereq;
             nextfile->filereq.err.severity = nextfile->filereq.err.severity &
