@@ -1,13 +1,13 @@
 /*
- * $Id: pwd.h,v 1.6 2000/11/03 13:32:49 baud Exp $
+ * $Id: pwd.h,v 1.7 2001/05/21 11:00:27 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: pwd.h,v $ $Revision: 1.6 $ $Date: 2000/11/03 13:32:49 $ CERN IT-PDP/DC Frederic Hemmer
+ * @(#)$RCSfile: pwd.h,v $ $Revision: 1.7 $ $Date: 2001/05/21 11:00:27 $ CERN IT-PDP/DC Frederic Hemmer
  */
  
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DC
+ * Copyright (C) 1993-2001 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
@@ -27,16 +27,9 @@ struct passwd
 	char* pw_shell;
 };
 
-EXTERN_C struct passwd DLL_DECL *getpwent _PROTO((void));
-EXTERN_C void          DLL_DECL  setpwent _PROTO((void));
-EXTERN_C void          DLL_DECL  endpwent _PROTO((void));
-
 EXTERN_C char          DLL_DECL *cuserid _PROTO((char *));
-EXTERN_C struct group  DLL_DECL *fillgrpent _PROTO((char *));
 EXTERN_C struct passwd DLL_DECL *fillpwent _PROTO((char *));
 EXTERN_C gid_t         DLL_DECL  getgid _PROTO(());
-EXTERN_C struct group  DLL_DECL *getgrgid _PROTO((gid_t));
-EXTERN_C struct group  DLL_DECL *getgrnam _PROTO((char *));
 EXTERN_C struct passwd DLL_DECL *getpwnam _PROTO((char *));
 EXTERN_C struct passwd DLL_DECL *getpwuid _PROTO((uid_t));
 EXTERN_C uid_t         DLL_DECL  getuid _PROTO(());

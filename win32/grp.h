@@ -1,19 +1,21 @@
 /*
- * $Id: grp.h,v 1.3 2000/11/03 13:34:11 baud Exp $
+ * $Id: grp.h,v 1.4 2001/05/21 11:00:27 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: grp.h,v $ $Revision: 1.3 $ $Date: 2000/11/03 13:34:11 $ CERN IT-PDP/DC Frederic Hemmer
+ * @(#)$RCSfile: grp.h,v $ $Revision: 1.4 $ $Date: 2001/05/21 11:00:27 $ CERN IT-PDP/DC Frederic Hemmer
  */
 
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DC
+ * Copyright (C) 1993-2001 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
 
 #ifndef __win32_grp_h
 #define __win32_grp_h
+
+#include <osdep.h>
 
 struct  group {
         char    *gr_name;
@@ -22,7 +24,8 @@ struct  group {
         char    **gr_mem;
 };
 
-struct group *getgrgid();
-struct group *getgrnam();
+EXTERN_C struct group  DLL_DECL *fillgrpent _PROTO((char *));
+EXTERN_C struct group  DLL_DECL *getgrgid _PROTO((gid_t));
+EXTERN_C struct group  DLL_DECL *getgrnam _PROTO((char *));
 
 #endif /* __win32_grp_h */
