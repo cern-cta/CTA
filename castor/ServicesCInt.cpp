@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 17:35:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,6 +26,8 @@
 
 // Include Files
 #include "castor/Services.hpp"
+#include <iostream>
+#include <errno.h>
 
 extern "C" {
 
@@ -52,7 +54,13 @@ extern "C" {
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 1) {
-    svcs->createRep(address, object, autocommit);
+    try {
+      svcs->createRep(address, object, autocommit);
+    } catch (castor::Exception e) {
+      errno = EINVAL;
+      svcs->setLastErrorMsg(e.getMessage().str());
+      return -1;
+    }
     return 0;
   }
 
@@ -63,7 +71,13 @@ extern "C" {
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 1) {
-    svcs->updateRep(address, object, autocommit);
+    try {
+      svcs->updateRep(address, object, autocommit);
+    } catch (castor::Exception e) {
+      errno = EINVAL;      
+      svcs->setLastErrorMsg(e.getMessage().str());
+      return -1;
+    }
     return 0;
   }
 
@@ -74,7 +88,13 @@ extern "C" {
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 0) {
-    svcs->deleteRep(address, object, autocommit);
+    try {
+      svcs->deleteRep(address, object, autocommit);
+    } catch (castor::Exception e) {
+      errno = EINVAL;      
+      svcs->setLastErrorMsg(e.getMessage().str());
+      return -1;
+    }
     return 0;
   }
 
@@ -84,8 +104,21 @@ extern "C" {
   int C_Services_createObj(castor::Services* svcs,
                            castor::IAddress* address,
                            castor::IObject** object) {
-    *object = svcs->createObj(address);
+    try {
+      *object = svcs->createObj(address);
+    } catch (castor::Exception e) {
+      errno = EINVAL;
+      svcs->setLastErrorMsg(e.getMessage().str());
+      return -1;
+    }
     return 0;
   }
 
+  //------------------------------------------------------------------------------
+  // C_Services_errorMsg
+  //------------------------------------------------------------------------------
+  const char* C_Services_errorMsg(castor::Services* svcs) {
+    return svcs->lastErrorMsg().c_str();
+  }
+  
 } // End of extern "C"

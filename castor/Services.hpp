@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 17:35:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -127,6 +127,21 @@ namespace castor {
      */
     IObject* createObj(IAddress* address) throw (Exception);
 
+  public:
+    /**
+     * gets the last error message.
+     * This is only used by the C interface and should not be
+     * touched by any other entity.
+     */
+    std::string& lastErrorMsg() { return m_lastErrorMsg; }
+    
+    /**
+     * sets the last error message.
+     * This is only used by the C interface and should not be
+     * touched by any other entity.
+     */
+    void setLastErrorMsg(std::string msg) { m_lastErrorMsg = msg; }
+
   private:
     /**
      * gets a conversion service able to deal with a given
@@ -137,6 +152,9 @@ namespace castor {
   private:
     /** the list of services, by name */
     std::map<const std::string, IService*> m_services;
+
+    /** The last error message. To be only used by the C interface */
+    std::string m_lastErrorMsg;
 
   };
 
