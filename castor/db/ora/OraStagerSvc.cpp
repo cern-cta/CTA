@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.85 $ $Release$ $Date: 2004/12/10 13:22:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.86 $ $Release$ $Date: 2004/12/10 14:10:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -96,7 +96,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
 
 /// SQL statement for anyTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatementString =
-  "SELECT id FROM TapeCopy, Stream2TapeCopy WHERE status = :1 and child = id and ROWNUM < 2";
+  "SELECT id FROM TapeCopy, Stream2TapeCopy WHERE status = 2 and child = id and parent = :1 and ROWNUM < 2";
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
@@ -399,7 +399,7 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
     oracle::occi::ResultSet *rset =
       m_anyTapeCopyForStreamStatement->executeQuery();
     bool result =
-      oracle::occi::ResultSet::END_OF_FETCH == rset->next();
+      oracle::occi::ResultSet::END_OF_FETCH != rset->next();
     m_anyTapeCopyForStreamStatement->closeResultSet(rset);
     if (result) {
       searchItem->setStatus(castor::stager::STREAM_WAITMOUNT);
