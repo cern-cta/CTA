@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.51 $ $Date: 2000/10/03 12:58:51 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.52 $ $Date: 2000/10/04 07:44:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -168,8 +168,16 @@ int rtcpd_Deassign(int VolReqID,
     rc = vdqm_UnitStatus(NULL,vid,tapereq->dgn,NULL,tapereq->unit,
                          &status,&value,jobID);
     if ( rc == -1 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_QUERY) %s\n",
                 sstrerror(serrno));
+    } else if ( (status & (VDQM_UNIT_ASSIGN|VDQM_FORCE_UNMOUNT)) != 0 ) {
+        /*
+         * If tape software has already assigned the unit or called for
+         * force unmount, the cleanup will not be needed here.
+         */
+        rtcp_log(LOG_INFO,"rtcpd_Deassign() unit status=0x%x. Cleanup not needed\n",
+                 status);
+        return(0);
     } else if ( *vid != '\0' ) {
         /*
          * There is a volume on the unit! we must make sure that it is
