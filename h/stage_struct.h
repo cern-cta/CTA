@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.7 2002/04/30 12:18:16 jdurand Exp $
+ * $Id: stage_struct.h,v 1.8 2002/05/15 06:39:27 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -76,6 +76,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 			char	tppool[CA_MAXPOOLNAMELEN+1];
 			int		retenp_on_disk; /* Overwriten retention period on disk (-1 == default) */
 			int		mintime_beforemigr; /* Overwriten mintime before migration (-1 == default) */
+			short   flag;
 	    } h;
 	} u1;
 };
