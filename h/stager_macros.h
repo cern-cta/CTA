@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.1 2004/10/28 09:02:16 jdurand Exp $
+ * $Id: stager_macros.h,v 1.2 2004/11/01 11:36:10 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -11,7 +11,8 @@
 #include "serrno.h"
 #include "osdep.h"
 #include "Cthread_api.h"
-#include "Cpool_api.h"
+#include "Cuuid.h"
+#include "u64subr.h"
 
 /*
               DLF_LVL_EMERGENCY                     Not used
@@ -39,19 +40,18 @@
 /* It will issue a warning about type mismatch... */
 /* So I convert the integers to string */
 #define STAGER_LOG(what,fileid,message,value) { \
-  extern int DLL_DECL _Cpool_self _PROTO(()); \
   char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
+  extern Cuuid_t stagerUuid; \
   if (message != NULL) { \
     dlf_write( \
 	      stagerUuid, \
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+4, \
+	      STAGER_NB_PARAMS+3, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
 	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
-	      "POOL_ID",  DLF_MSG_PARAM_STR,(_Cpool_self()  >= 0) ? u64tostr((u_signed64) _Cpool_self() , tmpbuf2, 0) : "", \
 	      message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
 	      STAGER_LOG_WHERE \
 	      ); \
@@ -61,10 +61,9 @@
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+3, \
+	      STAGER_NB_PARAMS+2, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
 	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
-	      "POOL_ID",  DLF_MSG_PARAM_STR,(_Cpool_self()  >= 0) ? u64tostr((u_signed64) _Cpool_self() , tmpbuf2, 0) : "", \
 	      STAGER_LOG_WHERE \
 	      ); \
   } \
@@ -134,5 +133,28 @@
 }
 
 #define STAGER_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
+
+/* Exit out of a thread if we received a signal trapped by the signal thread, using label for exit point */
+/* ===============================================================================================-===== */
+#define STAGER_THREAD_CHECK_SIGNAL(label) { \
+  extern int stagerSignaled; \
+  int stagerSignaledBackup; \
+  extern void *stagerSignalCthreadStructure; \
+  extern Cuuid_t stagerUuid; \
+  if (Cthread_mutex_timedlock_ext(stagerSignalCthreadStructure,STAGER_MUTEX_TIMEOUT) != 0) { \
+    STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_timedlock_ext"); \
+    goto label; \
+  } \
+  stagerSignaledBackup = stagerSignaled; \
+  if (Cthread_mutex_unlock_ext(stagerSignalCthreadStructure) != 0) { \
+    STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_unlock_ext"); \
+    goto label; \
+  } \
+  if (stagerSignaledBackup >= 0) { \
+    STAGER_LOG_DEBUG(NULL,"Exiting because Signal Thread catched a signal"); \
+    goto label; \
+  } \
+}
+
 
 #endif /* __stager_macros_h */
