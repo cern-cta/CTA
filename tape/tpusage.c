@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.3 $ $Date: 2000/08/08 10:07:31 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.4 $ $Date: 2000/08/09 07:26:09 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.3 $ $Date: 2000
 #include <rfio.h>
 #include <net.h>
 #if defined(VDQM)
-#define VDQMSERV
+#include <rtcp_api.h>           /* To get CLIST macro's */
 #include <vdqm_api.h>
 #endif /* VDQM */
 
@@ -750,7 +750,7 @@ char **argv;
 
 /* Function to store device usage and statistics information */
 
-adddevinfo(rp, timestamp,servname)
+int adddevinfo(rp, timestamp,servname)
 struct accttape *rp;
 time_t timestamp;
 char *servname;
@@ -854,6 +854,7 @@ char *servname;
       dp->nbmounted++;
     }
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -861,7 +862,7 @@ char *servname;
 
 /* Function to add graph information for device usage */
 
-add_gph_info(rp, timestamp, divisions, server_name, endtime)
+int add_gph_info(rp, timestamp, divisions, server_name, endtime)
 time_t endtime, divisions[];
 struct accttape *rp;
 char server_name[CA_MAXHOSTNAMELEN+1];
@@ -999,6 +1000,7 @@ char server_name[CA_MAXHOSTNAMELEN+1];
   if (dptr->unit_util[current_timeslot] > dptr->max_util[current_timeslot]) {
     dptr->max_util[current_timeslot] = dptr->unit_util[current_timeslot];
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1006,7 +1008,7 @@ char server_name[CA_MAXHOSTNAMELEN+1];
 
 /* Function to get the queue information */
  
-add_queue_info(rp, devfound, devgroup, divisions, timestamp, endtime, servername)
+int add_queue_info(rp, devfound, devgroup, divisions, timestamp, endtime, servername)
 struct accttape *rp;
 int devfound;
 char devgroup[];
@@ -1059,6 +1061,7 @@ char *servername;
       }
     }
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1116,7 +1119,7 @@ struct summary *sumstats;
 
 /* Function to enter group mount information */
 
-addtpmnt(rp, num_devs)
+int addtpmnt(rp, num_devs)
 struct accttape *rp;
 int num_devs;
 {
@@ -1199,7 +1202,7 @@ int num_devs;
 
 /* Function to validate device group */
 
-chk_devgrp(arg, num_devs)
+int chk_devgrp(arg, num_devs)
 char *arg;
 int num_devs;
 {
@@ -1224,7 +1227,7 @@ int num_devs;
 
 /* Function to validate server name */
 
-chk_serv(arg, list, numservs)
+int chk_serv(arg, list, numservs)
 char *arg;
 char list[MAXSERVS][9];
 int numservs;
@@ -1250,11 +1253,11 @@ int numservs;
 /* Function to validate volume vid */
 
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-chk_vol(arg, expstruct)
+int chk_vol(arg, expstruct)
 char *arg;
 regex_t *expstruct;
 #else
-chk_vol(arg, expbuf, expbufsize)
+int chk_vol(arg, expbuf, expbufsize)
 char *arg;
 char *expbuf;
 int expbufsize;
@@ -1504,7 +1507,7 @@ char *arg;
 
 /* Function to enter the data on queue lengths */
 
-enter_data(record, rp, divisions, timestamp, endtime, servername)
+int enter_data(record, rp, divisions, timestamp, endtime, servername)
 struct accttape *rp;
 struct numq *record;
 time_t divisions[];
@@ -1618,6 +1621,7 @@ char *servername;
   }
   csql->qlength = qlen;
   strcpy(record->devname, rp->dgn);
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1694,7 +1698,7 @@ int *swapped;
 
 /* Function to calculate global queue lengths */
 
-global_queue()
+int global_queue()
 {
   struct numq *nq = NULL;	/* Pointer to numq record */
   int i = 0;			/* Counter */
@@ -1717,6 +1721,7 @@ global_queue()
     }
     nq = nq->next;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1724,7 +1729,7 @@ global_queue()
 
 /* Function to set graph divisions */
 
-graph_divs(starttime, endtime, div, divisions)
+int graph_divs(starttime, endtime, div, divisions)
 time_t starttime;
 time_t endtime;
 time_t divisions[];
@@ -1760,6 +1765,7 @@ int *div;
   for (i = 1; i < NUMDIVS; i++) {
     divisions[i] = divisions[i-1] + *div;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1767,7 +1773,7 @@ int *div;
 
 /* Function to print out device usage statistics */
 
-print_devusage (starttime, endtime, divisions, stdin_flag)
+int print_devusage (starttime, endtime, divisions, stdin_flag)
 time_t starttime;
 time_t endtime;
 time_t divisions[];
@@ -1868,6 +1874,7 @@ int stdin_flag;
     }
     du = du->next;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1875,7 +1882,7 @@ int stdin_flag;
 
 /* Function to print out mount requests by group and device */
 
-print_mountdetails(starttime, endtime, num_devs, option, devgroup)
+int print_mountdetails(starttime, endtime, num_devs, option, devgroup)
 time_t starttime;
 time_t endtime;
 int num_devs;
@@ -1969,6 +1976,7 @@ char devgroup[CA_MAXDGNLEN+1];
     }
   }
   printf("\n");
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -1976,7 +1984,7 @@ char devgroup[CA_MAXDGNLEN+1];
 
 /* Function to print out queue lengths information */
 
-print_queue(starttime, endtime, record, divisions, devgroup, serv_name, num_devs)
+int print_queue(starttime, endtime, record, divisions, devgroup, serv_name, num_devs)
 time_t starttime;
 time_t endtime;
 struct numq *record;
@@ -2065,6 +2073,7 @@ int num_devs;
       }
     }
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2072,7 +2081,7 @@ int num_devs;
 
 /* Function to print out summary information */
 
-print_summary(starttime, endtime, num_devs, sumstats, devgroup)
+int print_summary(starttime, endtime, num_devs, sumstats, devgroup)
 time_t starttime;
 time_t endtime;
 int num_devs;
@@ -2200,6 +2209,7 @@ char devgroup[CA_MAXDGNLEN+1];
   }
 
   printf("\n\nTotal tape mounts\t%-8d\n", t_mounts);
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2207,7 +2217,7 @@ char devgroup[CA_MAXDGNLEN+1];
 
 /* Function to print out mount time details */
 
-print_time_details(starttime, endtime)
+int print_time_details(starttime, endtime)
 time_t starttime;
 time_t endtime;
 {
@@ -2247,6 +2257,7 @@ time_t endtime;
     }
     dp = dp->next;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2254,7 +2265,7 @@ time_t endtime;
 
 /* Function to print time */
 
-print_time_val(stime)
+int print_time_val(stime)
 time_t stime;
 {
   struct tm *tm = NULL;		/* Pointer to tm record */
@@ -2262,6 +2273,7 @@ time_t stime;
   tm = localtime(&stime);
   printf ("%02d/%02d/%04d %02d:%02d:%02d", tm->tm_mday, tm->tm_mon+1,
           tm->tm_year+1900, tm->tm_hour, tm->tm_min, tm->tm_sec);
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2269,7 +2281,7 @@ time_t stime;
 
 /* Function to print out time interval */
 
-print_time_interval(starttime, endtime)
+int print_time_interval(starttime, endtime)
 time_t starttime;
 time_t endtime;
 {
@@ -2278,6 +2290,7 @@ time_t endtime;
   printf("  -  ");
   print_time_val(endtime);
   printf(")");
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2286,7 +2299,7 @@ time_t endtime;
 /* Function to print out detailed list of mounted volumes */
 
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-print_tpentry(rp, timestamp, devgroup, Lflag, expstruct,servname)
+int print_tpentry(rp, timestamp, devgroup, Lflag, expstruct,servname)
 struct accttape *rp;
 time_t timestamp;
 char devgroup[CA_MAXDGNLEN+1];
@@ -2294,7 +2307,7 @@ int Lflag;
 regex_t *expstruct;
 char *servname;
 #else
-print_tpentry(rp, timestamp, devgroup, Lflag, expbuf,servname)
+int print_tpentry(rp, timestamp, devgroup, Lflag, expbuf,servname)
 struct accttape *rp;
 time_t timestamp;
 char devgroup[CA_MAXDGNLEN+1];
@@ -2365,6 +2378,7 @@ char *servname;
       }
     }
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2372,7 +2386,7 @@ char *servname;
 
 /* Function to initialise the queue length timeslots */
 
-set_q_timeslots(record)
+int set_q_timeslots(record)
 struct numq *record;
 {
   int i = 0;			/* Counter */
@@ -2385,6 +2399,7 @@ struct numq *record;
     record->lastval[i] = -1;
     record->total_Q[i] = 0;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2392,7 +2407,7 @@ struct numq *record;
 
 /* Function to initialise utilisation timeslots */
 
-set_util_timeslots(du)
+int set_util_timeslots(du)
 struct dev_usage *du;
 {
   int i = 0;			/* Counter */
@@ -2405,6 +2420,7 @@ struct dev_usage *du;
     du->max_util[i] = -1;
     du->unit_util[i] = -1;
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2412,7 +2428,7 @@ struct dev_usage *du;
 
 /* Function to swap byte order of fields */
 
-swap_fields(rp)
+int swap_fields(rp)
 struct accttape *rp;
 {
   swap_it(rp->subtype);
@@ -2421,6 +2437,7 @@ struct accttape *rp;
   swap_it(rp->jid);
   swap_it(rp->fseq);
   swap_it(rp->reason);
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2429,7 +2446,7 @@ struct accttape *rp;
 /* Function to set the value of any timeslot which has had no entry, before */
 /* printing */
 
-ti_vals(record)
+int ti_vals(record)
 struct numq *record;
 {
   int i = 0;			/* Counter */
@@ -2448,6 +2465,7 @@ struct numq *record;
       record->timeslot[i] = record->lastval[i - 1];
     }
   }
+  return(0);
 }
 
 /* ************************************************************************** */
@@ -2455,9 +2473,10 @@ struct numq *record;
 
 /* Function to give correct usage syntax */
 
-usage(cmd)
+int usage(cmd)
 char *cmd;
 {
   fprintf(stderr, "Usage: %s ", cmd);
   fprintf(stderr, "%s", "[-D][-e end_time][-f accounting_file][-g device_group][-L][-M][-m][-Q][-S server name][-s start_time][-T][-V volume_label][-v][-w week_number][-Y]\n");
+  return(0);
 }
