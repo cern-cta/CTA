@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.4 $ $Date: 1999/11/25 13:48:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.5 $ $Date: 2000/01/22 08:11:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -221,11 +221,11 @@ char *vol1, *hdr1, *hdr2;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
 			if (fsec > 1)	{ /* nth file section in multivolume set */
-				if (*cfseq != pfseq && filstat != NEW_FILE) {
+				if (*cfseq != fseq && filstat != NEW_FILE) {
 					c = ETLBL;
 					goto reply;
 				} else
-					*cfseq = pfseq;
+					*cfseq = fseq;
 			} else if (*cfseq != 1) {
 				if (fseq != 1 || filstat != NEW_FILE) {
 					c = ETLBL;
