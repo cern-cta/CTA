@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.19 2002/03/06 13:50:07 jdurand Exp $
+ * $Id: stage_constants.h,v 1.20 2002/03/27 08:07:16 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -30,6 +30,11 @@
 #undef  MAXPATH
 #endif
 #define MAXPATH 80	/* maximum path length */
+
+#ifdef STAGE_MAX_HSMLENGTH
+#undef STAGE_MAX_HSMLENGTH /* Limitation on hsm filename length until we get rid of catalog in memory */
+#endif
+#define STAGE_MAX_HSMLENGTH 166
 
 #ifdef  MAXVSN
 #undef  MAXVSN
