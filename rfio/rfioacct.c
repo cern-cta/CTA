@@ -1,14 +1,14 @@
 /*
- * $Id: rfioacct.c,v 1.3 1999/12/09 13:47:12 jdurand Exp $
+ * $Id: rfioacct.c,v 1.4 2002/02/27 10:12:03 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-1999 by CERN/IT/PDP/DM Olof Barring
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM Olof Barring
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:12 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.4 $ $Date: 2002/02/27 10:12:03 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -43,7 +43,11 @@ char *filename1,*filename2;
   struct acctrfio acct_rfio;
   struct sockaddr_in local_addr;
   struct sockaddr_in remote_addr;
+#if defined(_AIX)
+  socklen_t addr_len;
+#else
   int addr_len;
+#endif
   static int ACCTRFIO_ON = -1;
 #if defined(HPSS)
   int jid = -1;
