@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.14 2001/12/19 17:18:32 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.15 2002/01/24 10:42:41 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -30,6 +30,7 @@
 #include "Cstage_ifce.h"            /* Conversion routines */
 #include "u64subr.h"
 #include "Cgetopt.h"
+#include "stage_api.h"
 
 /* ====== */
 /* Macros */
@@ -74,8 +75,6 @@
 /* Internal prototypes */
 /* =================== */
 void check_Cdbentry_usage _PROTO(());
-void stppprint _PROTO((struct stgpath_entry *));
-void stcpprint _PROTO((struct stgcat_entry *));
 
 /* ================ */
 /* Static variables */
@@ -250,7 +249,7 @@ int main(argc,argv)
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
 								 db[idb]);
-					stcpprint(&stcp);
+					print_stcp(&stcp);
 				}
 				break;
 			case 1:
@@ -265,7 +264,7 @@ int main(argc,argv)
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
 								 db[idb]);
-					stcpprint(&stcp);
+					print_stcp(&stcp);
 				}
 				break;
 			case 2:
@@ -280,7 +279,7 @@ int main(argc,argv)
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
 								 db[idb]);
-					stcpprint(&stcp);
+					print_stcp(&stcp);
 				}
 				break;
 			case 3:
@@ -295,7 +294,7 @@ int main(argc,argv)
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
 								 db[idb]);
-					stcpprint(&stcp);
+					print_stcp(&stcp);
 				}
 				break;
 			case 4:
@@ -310,7 +309,7 @@ int main(argc,argv)
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
 								 db[idb]);
-					stcpprint(&stcp);
+					print_stcp(&stcp);
 				}
 				break;
 			case 5:
@@ -325,14 +324,14 @@ int main(argc,argv)
                   printf("--> Upath %s (reqid=%d) found at offset %s in database \"%s\":\n",
                          upath, link.reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
                          db[idb]);
-                  stppprint(&stpp);
+                  print_stpp(&stpp);
                   while (Cdb_keynext_fetch(&Cdb_db,db[idb],key[idb],NULL,&found_offset,&link) == 0) {
                     Cdb2stpp(&stpp,&link);
                     ++global_find_status;
                     printf("--> Upath %s (reqid=%d) found again at offset %s in database \"%s\":\n",
                            upath, link.reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
                            db[idb]);
-                    stppprint(&stpp);
+                    print_stpp(&stpp);
                   }
 				}
 				break;
@@ -392,93 +391,3 @@ void check_Cdbentry_usage() {
 				 "  -p                Cdb password\n"
 				 "\n");
 }
-
-void stppprint(stpp)
-		 struct stgpath_entry *stpp;
-{
-	if (stpp == NULL) {
-		return;
-	}
-
-	printf("------------------------------------\n");
-	printf("%-23s : %10s\n","What","Value");
-	printf("------------------------------------\n");
-	DUMP_VAL(stpp,reqid);
-	DUMP_STRING(stpp,upath);
-}
-
-void stcpprint(stcp)
-		 struct stgcat_entry *stcp;
-{
-	int i;
-
-	if (stcp == NULL) {
-		return;
-	}
-
-	printf("------------------------------------\n");
-	printf("%-23s : %10s\n","What","Value");
-	printf("------------------------------------\n");
-	DUMP_VAL(stcp,blksize);
-	DUMP_STRING(stcp,filler);
-	DUMP_CHAR(stcp,charconv);
-	DUMP_CHAR(stcp,keep);
-	DUMP_VAL(stcp,lrecl);
-	DUMP_VAL(stcp,nread);
-	DUMP_STRING(stcp,poolname);
-	DUMP_STRING(stcp,recfm);
-	DUMP_U64(stcp,size);
-	DUMP_STRING(stcp,ipath);
-	DUMP_CHAR(stcp,t_or_d);
-	DUMP_STRING(stcp,group);
-	DUMP_STRING(stcp,user);
-	DUMP_VAL(stcp,uid);
-	DUMP_VAL(stcp,gid);
-	DUMP_VAL(stcp,mask);
-	DUMP_VAL(stcp,reqid);
-	DUMP_VALHEX(stcp,status);
-	DUMP_U64(stcp,actual_size);
-	DUMP_U64(stcp,c_time);
-	DUMP_U64(stcp,a_time);
-	DUMP_VAL(stcp,nbaccesses);
-	switch (stcp->t_or_d) {
-	case 't':
-		DUMP_STRING(stcp,u1.t.den);
-		DUMP_STRING(stcp,u1.t.dgn);
-		DUMP_STRING(stcp,u1.t.fid);
-		DUMP_CHAR(stcp,u1.t.filstat);
-		DUMP_STRING(stcp,u1.t.fseq);
-		DUMP_STRING(stcp,u1.t.lbl);
-		DUMP_VAL(stcp,u1.t.retentd);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
-		DUMP_VAL(stcp,u1.t.side);
-#endif
-		DUMP_STRING(stcp,u1.t.tapesrvr);
-		DUMP_CHAR(stcp,u1.t.E_Tflags);
-		for (i = 0; i < MAXVSN; i++) {
-			DUMP_STRING(stcp,u1.t.vid[i]);
-			DUMP_STRING(stcp,u1.t.vsn[i]);
-		}
-		break;
-	case 'd':
-	case 'a':
-		DUMP_STRING(stcp,u1.d.xfile);
-		DUMP_STRING(stcp,u1.d.Xparm);
-		break;
-	case 'm':
-		DUMP_STRING(stcp,u1.m.xfile);
-		break;
-	case 'h':
-		DUMP_STRING(stcp,u1.h.xfile);
-		DUMP_STRING(stcp,u1.h.server);
-		DUMP_U64(stcp,u1.h.fileid);
-		DUMP_VAL(stcp,u1.h.fileclass);
-		DUMP_STRING(stcp,u1.h.tppool);
-		DUMP_VAL(stcp,u1.h.retenp_on_disk);
-		DUMP_VAL(stcp,u1.h.mintime_beforemigr);
-		break;
-	}
-}
-
-
-
