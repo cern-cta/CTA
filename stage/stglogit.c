@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.26 2001/12/05 10:13:09 jdurand Exp $
+ * $Id: stglogit.c,v 1.27 2001/12/13 17:58:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.26 $ $Date: 2001/12/05 10:13:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.27 $ $Date: 2001/12/13 17:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -21,8 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.26 $ $Date: 20
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-#include "stage.h"
-#include "stage_api.h"
+#include "stage_constants.h"
 #include "osdep.h"
 
 extern int reqid;
@@ -158,7 +157,9 @@ int stglogflags(va_alist) va_dcl
 		{ STAGE_REMOVEHSM  , "STAGE_REMOVEHSM"  },
 		{ STAGE_RETENP     , "STAGE_RETENP"     },
 		{ STAGE_MINTIME    , "STAGE_MINTIME"    },
-		{ STAGE_VERBOSE    , "STAGE_VERBOSE"    },
+ 		{ STAGE_VERBOSE    , "STAGE_VERBOSE"    },
+ 		{ STAGE_FORCE_SIDE_FORMAT , "STAGE_FORCE_SIDE_FORMAT"    },
+ 		{ STAGE_SIDE       , "STAGE_SIDE"      },
         { 0                , NULL               }
 	};
       
