@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.4 1999/12/16 12:38:38 jdurand Exp $
+ * $Id: stage.h,v 1.5 1999/12/22 07:22:52 jdurand Exp $
  */
 
 /*
@@ -174,6 +174,7 @@
 #define	STG97	"STG97 - %s:%s staged by (%s,%s), server %s  unit %s  ifce %s  size %ld  wtim %d  ttim %d rc %d\n"
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
+#define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
 
 			/* stage daemon return codes */
 
