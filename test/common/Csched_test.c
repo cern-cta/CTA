@@ -1,5 +1,5 @@
 /*
- * $Id: Csched_test.c,v 1.1 2000/06/13 14:49:28 jdurand Exp $
+ * $Id: Csched_test.c,v 1.2 2000/06/13 15:27:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.1 $ $Date: 2000/06/13 14:49:28 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: Csched_test.c,v $ $Revision: 1.2 $ $Date: 2000/06/13 15:27:39 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*******************************************************************************
@@ -138,6 +138,9 @@ int main(argc,argv)
     case 'L':
       low_priority = atoi(optarg);
       break;
+    case 'h':
+      _Csched_test_usage();
+      return(EXIT_SUCCESS);
     case '?':
       ++errflg;
       printf("Unknown option\n");
