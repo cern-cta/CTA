@@ -1,4 +1,15 @@
 /*
+ * $Id: open.c,v 1.2 1999/07/20 12:48:03 jdurand Exp $
+ *
+ * $Log: open.c,v $
+ * Revision 1.2  1999/07/20 12:48:03  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1998 by CERN/IT/PDP/IP
  * All rights reserved
  */
@@ -394,7 +405,7 @@ int	rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
 	marshall_WORD(p,rfp->mapping);
 	marshall_STRING(p, vmstr) ;
 	TRACE(2,"rfio","rfio_open: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(rfp->s,rfio_buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(rfp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2,"rfio","rfio_open: write(): ERROR occured (errno=%d)", errno) ;
 		syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
 			sys_errlist[errno], errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
@@ -406,7 +417,7 @@ int	rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
 	 * Getting status and current offset.
 	 */
 	TRACE(1, "rfio", "rfio_open: reading %d bytes",rfp->_iobuf.hsize) ;
-	if (netread(rfp->s,rfio_buf,rfp->_iobuf.hsize) != rfp->_iobuf.hsize ) {
+	if (netread_timeout(rfp->s,rfio_buf,rfp->_iobuf.hsize, RFIO_CTRL_TIMEOUT) != rfp->_iobuf.hsize ) {
 		TRACE(2, "rfio", "rfio_open: read(): ERROR occured (errno=%d)", errno);
 		syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
 			sys_errlist[errno], errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);

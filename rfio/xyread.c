@@ -1,4 +1,15 @@
 /*
+ * $Id: xyread.c,v 1.2 1999/07/20 12:48:37 jdurand Exp $
+ *
+ * $Log: xyread.c,v $
+ * Revision 1.2  1999/07/20 12:48:37  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/CN/SW/DC
  * All rights reserved
  */
@@ -84,7 +95,7 @@ int     *ngot, *irc;
 	marshall_LONG(p, nrec);
 	marshall_LONG(p, nwant);
 	TRACE(2,"rfio","rfio_xyread: sending %d bytes",RQSTSIZE) ;
-	if (netwrite(ftnlun[lun]->s,buffer,RQSTSIZE) != RQSTSIZE) {
+	if (netwrite_timeout(ftnlun[lun]->s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 		TRACE(2, "rfio" ,"rfio_xyread: write(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		if ( serrno ) 	
@@ -100,7 +111,7 @@ int     *ngot, *irc;
 		}
 	}
 	TRACE(2,"rfio","rfio_xyread: reading %d bytes",3*LONGSIZE) ;
-	if (netread(ftnlun[lun]->s, buffer, 3*LONGSIZE) != 3*LONGSIZE) {
+	if (netread_timeout(ftnlun[lun]->s, buffer, 3*LONGSIZE, RFIO_CTRL_TIMEOUT) != (3*LONGSIZE)) {
 		TRACE(2,"rfio","rfio_xyread: read(): ERROR occured (errno=%d)",errno) ;
 		END_TRACE();
 		if ( serrno ) 	
@@ -114,7 +125,7 @@ int     *ngot, *irc;
 	unmarshall_LONG(p, *ngot);
 	if ( *ngot ) {
 		TRACE(2, "rfio", "rfio_xyread: reading %d bytes", *ngot);
-		if (netread(ftnlun[lun]->s, buf, *ngot) != *ngot)       {
+		if (netread_timeout(ftnlun[lun]->s, buf, *ngot, RFIO_DATA_TIMEOUT) != *ngot)       {
 			TRACE(2, "rfio" ,"rfio_xyread: read(): ERROR occured (errno=%d)", errno);
 			END_TRACE();
 			if ( serrno ) 	

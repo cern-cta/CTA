@@ -1,10 +1,21 @@
 /*
+ * $Id: chown.c,v 1.2 1999/07/20 12:47:53 jdurand Exp $
+ *
+ * $Log: chown.c,v $
+ * Revision 1.2  1999/07/20 12:47:53  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1994 by CERN/CN/PDP/CS
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)chown.c	1.3 05/06/98 CERN CN-PDP Felix Hassine ";
+static char sccsid[] = "@(#)chown.c	1.3 5/6/98 CERN CN-PDP Felix Hassine ";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -59,7 +70,7 @@ int 		group ;		   /* Owner's gid */
 	marshall_WORD(p, owner) ;
 	marshall_WORD(p, group);
 	TRACE(2,"rfio","rfio_chown: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_chown: write(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();
@@ -67,7 +78,7 @@ int 		group ;		   /* Owner's gid */
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_chown: reading %d bytes", LONGSIZE);
-	if (netread(s, buf, 2* LONGSIZE) != 2 * LONGSIZE)  {
+	if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_chown: read(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();

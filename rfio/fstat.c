@@ -1,10 +1,21 @@
 /*
+ * $Id: fstat.c,v 1.2 1999/07/20 12:47:59 jdurand Exp $
+ *
+ * $Log: fstat.c,v $
+ * Revision 1.2  1999/07/20 12:47:59  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990,1991 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)fstat.c	3.3 05/06/98 CERN CN-SW/DC F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)fstat.c	3.3 5/6/98 CERN CN-SW/DC F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -80,7 +91,7 @@ int  rfio_fstat(s, statbuf)
 	marshall_LONG(p, rfilefdt[s]->lseekoff) ; 
 	marshall_LONG(p, rfilefdt[s]->lseekhow) ; 
 	TRACE(2,"rfio","rfio_fstat: sending %d bytes",RQSTSIZE) ;
-	if (netwrite(s,rfio_buf,RQSTSIZE) != RQSTSIZE) {
+	if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 		TRACE(2, "rfio", "rfio_fstat: write(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return(-1);
@@ -94,7 +105,7 @@ int  rfio_fstat(s, statbuf)
 		LONG msgsiz ;
 
 		TRACE(2, "rfio", "rfio_fstat: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-		if (netread(s,rfio_buf,rfilefdt[s]->_iobuf.hsize) != rfilefdt[s]->_iobuf.hsize) {
+		if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
 			TRACE(2, "rfio", "rfio_fstat: read(): ERROR occured (errno=%d)", errno);
 			if ( temp ) (void) free(trp) ; 
 			END_TRACE() ;
@@ -108,7 +119,7 @@ int  rfio_fstat(s, statbuf)
 		switch(req) {
 		   case RQST_FSTAT:
 			TRACE(2, "rfio", "rfio_fstat: reading %d bytes",msgsiz);
-			if (netread(s,rfio_buf,msgsiz) != msgsiz ) {
+			if (netread_timeout(s,rfio_buf,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio","rfio_fstat: read(): ERROR occured (errno=%d)",errno) ;
 				if ( temp ) (void) free(trp) ; 
 				END_TRACE() ;
@@ -150,7 +161,7 @@ int  rfio_fstat(s, statbuf)
 			   else
 				trp= iodata(rfilefdt[s]) ;
 			}
-			if ( netread(s,trp,msgsiz) != msgsiz ) {
+			if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio","rfio_fstat: read(): ERROR occured (errno=%d)",errno) ;
 				if ( temp ) (void) free(trp) ; 
 				END_TRACE() ; 

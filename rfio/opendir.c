@@ -1,10 +1,21 @@
 /*
+ * $Id: opendir.c,v 1.2 1999/07/20 12:48:04 jdurand Exp $
+ *
+ * $Log: opendir.c,v $
+ * Revision 1.2  1999/07/20 12:48:04  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)opendir.c	1.2 06/02/98 O.Barring";
+static char sccsid[] = "@(#)opendir.c	1.2 02 Jun 1998 O.Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -251,7 +262,7 @@ RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
   marshall_WORD(p,rdp->mapping);
   marshall_STRING(p, vmstr) ;
   TRACE(2,"rfio","rfio_opendir: sending %d bytes",RQSTSIZE+len) ;
-  if (netwrite(rdp->s,rfio_buf,RQSTSIZE+len) != RQSTSIZE+len) {
+  if (netwrite_timeout(rdp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2,"rfio","rfio_opendir: write(): ERROR occured (errno=%d)", errno) ;
     syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
 	   sys_errlist[errno], errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, rfio_buf, RQSTSIZE+len);
@@ -263,7 +274,7 @@ RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
    * Getting status.
    */
   TRACE(1, "rfio", "rfio_opendir: reading %d bytes",WORDSIZE+3*LONGSIZE) ;
-  if (netread(rdp->s,rfio_buf,WORDSIZE+3*LONGSIZE) != WORDSIZE+3*LONGSIZE ) {
+  if (netread_timeout(rdp->s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
     TRACE(2, "rfio", "rfio_opendir: read(): ERROR occured (errno=%d)", errno);
     syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
 	   sys_errlist[errno], errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, 

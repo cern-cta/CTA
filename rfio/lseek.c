@@ -1,10 +1,21 @@
 /*
+ * $Id: lseek.c,v 1.2 1999/07/20 12:48:01 jdurand Exp $
+ *
+ * $Log: lseek.c,v $
+ * Revision 1.2  1999/07/20 12:48:01  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990,1991 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lseek.c	3.6 05/06/98 CERN CN-SW/DC F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)lseek.c	3.6 5/6/98 CERN CN-SW/DC F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -199,7 +210,7 @@ static int rfio_lseekinbuf(s,offset)
 			 */
 			msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;
 			TRACE(2,"rfio","rfio_lseekinbuf: reading %d bytes",msgsiz) ; 
-			if ( netread(s,rfilefdt[s]->_iobuf.base,msgsiz) != msgsiz ) {
+			if ( netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio","rfio_lseekinbuf: read() : ERROR occured (errno=%d)",errno) ;
 				break ; 
 			}
@@ -294,7 +305,7 @@ static int rfio_forcelseek(s, offset, how)
 	marshall_LONG(p, offset);
 	marshall_LONG(p, how);
 	TRACE(2, "rfio", "rfio_forcelseek: sending %d bytes",RQSTSIZE) ;
-	if (netwrite(s,rfio_buf,RQSTSIZE) != RQSTSIZE) {
+	if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 		TRACE(2, "rfio", "rfio_lseek: write(): ERROR occured (errno=%d)", errno);
 		END_TRACE() ;
 		return -1 ;
@@ -325,7 +336,7 @@ static int rfio_forcelseek(s, offset, how)
 		int  msgsiz ;
 
 		TRACE(2, "rfio", "rfio_forcelseek: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-		if (netread(s,rfio_buf,rfilefdt[s]->_iobuf.hsize) != rfilefdt[s]->_iobuf.hsize) {
+		if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
 			TRACE(2,"rfio","rfio_forcelseek: read(): ERROR occured (errno=%d)",errno) ;
 			if ( temp ) (void) free(trp) ; 
 			END_TRACE() ;
@@ -364,7 +375,7 @@ static int rfio_forcelseek(s, offset, how)
 				trp= iodata(rfilefdt[s]) ;
 			}
 			TRACE(2,"rfio","rfio_forcelseek: reading %d bytes to throw them away",msgsiz) ; 
-			if ( netread(s,trp,msgsiz) != msgsiz ) {
+			if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio", "rfio_forcelseek: read(): ERROR occured (errno=%d)", errno);
 				if ( temp ) (void) free(trp) ; 
 				END_TRACE() ; 

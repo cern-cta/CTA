@@ -1,10 +1,21 @@
 /*
+ * $Id: rfrename.c,v 1.2 1999/07/20 12:48:18 jdurand Exp $
+ *
+ * $Log: rfrename.c,v $
+ * Revision 1.2  1999/07/20 12:48:18  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1998,1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)rfrename.c	1.2 01/08/99 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rfrename.c	1.2 08 Jan 1999 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*

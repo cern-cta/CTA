@@ -1,10 +1,21 @@
 /*
+ * $Id: read.c,v 1.2 1999/07/20 12:48:07 jdurand Exp $
+ *
+ * $Log: read.c,v $
+ * Revision 1.2  1999/07/20 12:48:07  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)read.c	3.15 05/06/98  F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)read.c	3.15 5/6/98  F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -339,7 +350,7 @@ static int rfio_preread(s,buffer,size)
 			 */
 			msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;	
 			TRACE(2,"rfio","rfio_preread: reading %d bytes",msgsiz) ; 
-			if ( netread(s,rfilefdt[s]->_iobuf.base,msgsiz) != msgsiz ) {
+			if ( netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio","rfio_preread: read(): ERROR occured (errno=%d)",errno) ;
 				END_TRACE() ;
 				return -1 ;
@@ -398,7 +409,7 @@ int rfio_filbuf(s,buffer,size)
 		marshall_LONG(p,rfilefdt[s]->lseekoff) ; 
 		rfilefdt[s]->lseekhow= -1 ;
 		TRACE(2,"rfio","rfio_filbuf: writing %d bytes",RQSTSIZE) ;
-		if (netwrite(s,rfio_buf,RQSTSIZE) != RQSTSIZE)  {
+		if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
 			TRACE(2,"rfio","rfio_filbuf: write(): ERROR occured (errno=%d)", errno) ;
 			END_TRACE() ;
 			return -1 ; 
@@ -415,7 +426,7 @@ int rfio_filbuf(s,buffer,size)
 		 */
 		if ( rfilefdt[s]->_iobuf.base == NULL ) {
 			TRACE(2, "rfio", "rfio_filbuf: reading %d bytes",hsize) ; 
-			if ( netread(s,rfio_buf,hsize) != hsize ) {
+			if ( netread_timeout(s,rfio_buf,hsize,RFIO_CTRL_TIMEOUT) != hsize ) {
 				TRACE(2,"rfio","rfio_filbuf: read(): ERROR occured (errno=%d)", errno);
 				END_TRACE();
 				return -1 ; 
@@ -475,7 +486,7 @@ int rfio_filbuf(s,buffer,size)
 		 */
 		if ( nbytes ) {
 			TRACE(2,"rfio","rfio_filbuf: reading last %d bytes",nbytes) ; 
-			if ( netread(s,p,nbytes) != nbytes ) {
+			if ( netread_timeout(s,p,nbytes,RFIO_DATA_TIMEOUT) != nbytes ) {
 				TRACE(2, "rfio", "rfio_filbuf: read(): ERROR occured (errno=%d)", errno) ;
 				END_TRACE() ;
 				return -1 ;

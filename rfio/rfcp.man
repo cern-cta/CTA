@@ -1,3 +1,13 @@
+.\"
+.\" $Id: rfcp.man,v 1.2 1999/07/20 12:48:09 jdurand Exp $
+.\"
+.\" $Log: rfcp.man,v $
+.\" Revision 1.2  1999/07/20 12:48:09  jdurand
+.\" 20-JUL-1999 Jean-Damien Durand
+.\"   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+.\"   on all control and data sockets.
+.\"
+.\"
 .\" @(#)rfcp.man	1.2 09/07/98     CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998 by CERN/IT/PDP
 .\" All rights reserved

@@ -1,4 +1,15 @@
 /*
+ * $Id: rfstat.c,v 1.2 1999/07/20 12:48:20 jdurand Exp $
+ *
+ * $Log: rfstat.c,v $
+ * Revision 1.2  1999/07/20 12:48:20  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1998 by CERN/CN/SW/DC
  * All rights reserved
  */

@@ -1,10 +1,21 @@
 /*
+ * $Id: lstat.c,v 1.2 1999/07/20 12:48:02 jdurand Exp $
+ *
+ * $Log: lstat.c,v $
+ * Revision 1.2  1999/07/20 12:48:02  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstat.c	1.5 01/08/99 CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)lstat.c	1.5 08 Jan 1999 CERN CN-SW/DC Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -96,7 +107,7 @@ struct stat *statbuf;           	/* status buffer 		*/
 		}
 		marshall_STRING(p, filename);
 		TRACE(2,"rfio","rfio_lstat: sending %d bytes",RQSTSIZE+len) ;
-		if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+		if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 			TRACE(2, "rfio", "rfio_lstat: write(): ERROR occured (errno=%d)", errno);
 			(void) netclose(s);
 			END_TRACE();
@@ -104,7 +115,7 @@ struct stat *statbuf;           	/* status buffer 		*/
 		}
 		p = buf;
 		TRACE(2, "rfio", "rfio_lstat: reading %d bytes", 6*LONGSIZE+5*WORDSIZE);
-	        if ((rc = netread(s, buf, 6*LONGSIZE+5*WORDSIZE)) != 6*LONGSIZE+5*WORDSIZE)  {
+	        if ((rc = netread_timeout(s, buf, 6*LONGSIZE+5*WORDSIZE,RFIO_CTRL_TIMEOUT)) != (6*LONGSIZE+5*WORDSIZE))  {
 			TRACE(2, "rfio", "rfio_lstat: read(): ERROR occured (errno=%d)", errno);
 			(void) netclose(s);
 			if ( rc == 0 && reqst == RQST_LSTAT_SEC ) {

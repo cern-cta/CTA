@@ -1,10 +1,21 @@
 /*
+ * $Id: checkkey.c,v 1.2 1999/07/20 12:47:52 jdurand Exp $
+ *
+ * $Log: checkkey.c,v $
+ * Revision 1.2  1999/07/20 12:47:52  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1993-1997 by CERN CN-SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)checkkey.c	1.4 10/29/98  CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)checkkey.c	1.4 29 Oct 1998  CERN CN-SW/DC Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -25,6 +36,7 @@ static char sccsid[] = "@(#)checkkey.c	1.4 10/29/98  CERN CN-SW/DC Felix Hassine
 #else /* HPSS */
 #include <marshall.h>
 #endif /* HPSS */
+#include <socket_timeout.h>
 
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1
@@ -38,6 +50,10 @@ extern int (*sendfunc)();	/* Network send function */
 
 #define netread         (*recvfunc)
 #define netwrite        (*sendfunc)
+
+#ifndef RFIO_CTRL_TIMEOUT
+#define RFIO_CTRL_TIMEOUT 10
+#endif
 
 int connecttpread(host,aport)
         char * host ;
@@ -117,14 +133,14 @@ u_short  key;
         /*
          * Sending key.
          */
-        if ( netwrite(sock,marsh_buf,3*LONGSIZE) == -1 ) {
+        if ( netwrite_timeout(sock,marsh_buf,3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (3*LONGSIZE) ) {
                 log(LOG_ERR,"netwrite(): %s\n", sys_errlist[errno]) ;
                 return -1 ;
         }
 	/*
 	 * Waiting for ok akn.
 	 */
-	if ( (rcode= netread(sock,marsh_buf,LONGSIZE*3)) == -1 ) {
+	if ( (rcode= netread_timeout(sock,marsh_buf,LONGSIZE*3,RFIO_CTRL_TIMEOUT)) != (LONGSIZE*3) ) {
                 log(LOG_ERR,"netread(): %s\n",sys_errlist[errno]) ;
                 (void) close(sock) ;
                 return -1 ;

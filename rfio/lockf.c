@@ -1,10 +1,21 @@
 /*
+ * $Id: lockf.c,v 1.2 1999/07/20 12:48:00 jdurand Exp $
+ *
+ * $Log: lockf.c,v $
+ * Revision 1.2  1999/07/20 12:48:00  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1994 by CERN/CN/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lockf.c	1.2 05/06/98 CERN CN-PDP Antony Simmins";
+static char sccsid[] = "@(#)lockf.c	1.2 5/6/98 CERN CN-PDP Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
@@ -52,7 +63,7 @@ long		siz;		/* locked region			*/
 	marshall_LONG(p, siz);
 	TRACE(1,"rfio","rfio_lockf: op %d, siz %ld", op, siz);
 	TRACE(2,"rfio","rfio_lockf: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(sd,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(sd,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_lockf: write(): ERROR occurred (errno=%d)", errno);
 		(void) close(sd);
 		END_TRACE();
@@ -60,7 +71,7 @@ long		siz;		/* locked region			*/
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_lockf: reading %d bytes", 2*LONGSIZE);
-	if (netread(sd, buf, 2*LONGSIZE) != 2*LONGSIZE)  {
+	if (netread_timeout(sd, buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_lockf: read(): ERROR occurred (errno=%d)", errno);
 		(void) close(sd);
 		END_TRACE();

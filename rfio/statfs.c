@@ -1,10 +1,21 @@
 /*
+ * $Id: statfs.c,v 1.2 1999/07/20 12:48:30 jdurand Exp $
+ *
+ * $Log: statfs.c,v $
+ * Revision 1.2  1999/07/20 12:48:30  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990,1991 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)statfs.c	1.4 05/06/98 CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)statfs.c	1.4 5/6/98 CERN CN-SW/DC Felix Hassine";
 #endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
@@ -52,7 +63,7 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
 	p= buf + RQSTSIZE;
 	marshall_STRING(p, filename);
 	TRACE(2,"rfio","rfio_statfs: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_statfs: write(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();
@@ -60,7 +71,7 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_statfs: reading %d bytes", 7*LONGSIZE);
-	if (netread(s, buf, 7*LONGSIZE) != 7*LONGSIZE)  {
+	if (netread_timeout(s, buf, 7*LONGSIZE, RFIO_CTRL_TIMEOUT) != (7*LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_statfs: read(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();

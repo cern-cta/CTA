@@ -1,10 +1,21 @@
 /*
+ * $Id: popen.c,v 1.2 1999/07/20 12:48:05 jdurand Exp $
+ *
+ * $Log: popen.c,v $
+ * Revision 1.2  1999/07/20 12:48:05  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1994-1998 by CERN CN-PDP/CS
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)popen.c	1.11 03/26/99 CERN CN-PDP/CS F. Hassine";
+static char sccsid[] = "@(#)popen.c	1.11 3/26/99 CERN CN-PDP/CS F. Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -152,7 +163,7 @@ char *type 	;
    marshall_WORD(p,B_RFIO_MAGIC) 	;
    marshall_WORD(p,RQST_POPEN) 	;
    marshall_LONG(p,len) 		;
-   if (netwrite(rfp->s,buf, RQSTSIZE ) != RQSTSIZE ) {
+   if (netwrite_timeout(rfp->s,buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE ) {
       TRACE(2,"rfio","rfio_popen: write(): ERROR occured (errno=%d)",errno);
       free((char *)rfp) ;
       END_TRACE() ;
@@ -164,7 +175,7 @@ char *type 	;
    marshall_STRING(p,type) 	;
    marshall_STRING(p,pcom) 	;
    marshall_STRING(p,uname) 	;
-   if (netwrite(rfp->s,buf, len ) != len ) {
+   if (netwrite_timeout(rfp->s,buf, len, RFIO_CTRL_TIMEOUT) != len ) {
       TRACE(2,"rfio","rfio_popen: write(): ERROR occured (errno=%d)",errno);
       free((char *)rfp) ;
       END_TRACE() ;
@@ -174,7 +185,7 @@ char *type 	;
    /*
     * Getting status and current offset.
     */
-   if (netread(rfp->s,buf, WORDSIZE+LONGSIZE) != WORDSIZE+LONGSIZE) {
+   if (netread_timeout(rfp->s,buf, WORDSIZE+LONGSIZE, RFIO_CTRL_TIMEOUT) != (WORDSIZE+LONGSIZE)) {
       TRACE(2, "rfio","rfio_popen: read(): ERROR occured (errno=%d)", errno);
       free((char *)rfp);
       END_TRACE();

@@ -1,4 +1,15 @@
 /*
+ * $Id: pwrite.c,v 1.2 1999/07/20 12:48:06 jdurand Exp $
+ *
+ * $Log: pwrite.c,v $
+ * Revision 1.2  1999/07/20 12:48:06  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1993-1998 by  CERN/CN/SW/DC
  * All rights reserved
  */
@@ -49,7 +60,7 @@ RFILE   *fp;                            /* remote file pointer          */
 	marshall_LONG(p, size);
 	marshall_LONG(p, items);
 	TRACE(2, "rfio", "rfio_pwrite: sending %d bytes", 2*WORDSIZE+2*LONGSIZE);
-	if (netwrite(fp->s, buf, RQSTSIZE) != RQSTSIZE )     {
+	if (netwrite_timeout(fp->s, buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE )     {
 		TRACE(2,"rfio","rfio_pwrite: write(): ERROR occured (errno=%d)",errno);
 		END_TRACE();
 		return -1;
@@ -57,14 +68,14 @@ RFILE   *fp;                            /* remote file pointer          */
 	TRACE(2, "rfio", "rfio_pwrite: sending %d bytes", items*size);
 	p = buf ;
 	marshall_STRING(p,ptr) ;
-	if (netwrite(fp->s, buf, items*size) != items*size)       {
+	if (netwrite_timeout(fp->s, buf, items*size, RFIO_DATA_TIMEOUT) != (items*size))       {
 		TRACE(2, "rfio", "rfio_pwrite: write(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return(-1);
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_pwrite: reading %d bytes", 2*LONGSIZE);
-	if (netread(fp->s, buf, 2*LONGSIZE) != 2*LONGSIZE)  {
+	if (netread_timeout(fp->s, buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_pwrite: read(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return(-1);

@@ -1,10 +1,21 @@
 /*
+ * $Id: fclose.c,v 1.2 1999/07/20 12:47:56 jdurand Exp $
+ *
+ * $Log: fclose.c,v $
+ * Revision 1.2  1999/07/20 12:47:56  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990,1991 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)fclose.c	3.4 05/06/98  CERN CN-SW/DC F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)fclose.c	3.4 5/6/98  CERN CN-SW/DC F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */

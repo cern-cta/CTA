@@ -1,10 +1,21 @@
 /*
+ * $Id: mkdir.c,v 1.2 1999/07/20 12:48:03 jdurand Exp $
+ *
+ * $Log: mkdir.c,v $
+ * Revision 1.2  1999/07/20 12:48:03  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1994 by CERN/CN/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkdir.c	1.4 05/06/98 CERN CN-PDP Antony Simmins";
+static char sccsid[] = "@(#)mkdir.c	1.4 5/6/98 CERN CN-PDP Antony Simmins";
 #endif /* not lint */
 
 /* mkdir.c       Remote File I/O - make a directory file                */
@@ -58,7 +69,7 @@ int		mode;              /* remote directory mode             */
 	marshall_LONG(p, mode);
 	TRACE(1,"rfio","rfio_mkdir: mode %o",mode);
 	TRACE(2,"rfio","rfio_mkdir: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_mkdir: write(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();
@@ -66,7 +77,7 @@ int		mode;              /* remote directory mode             */
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_mkdir: reading %d bytes", LONGSIZE);
-	if (netread(s, buf, 2* LONGSIZE) != 2 * LONGSIZE)  {
+	if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_mkdir: read(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();

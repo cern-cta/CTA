@@ -1,10 +1,21 @@
 /*
+ * $Id: pclose.c,v 1.2 1999/07/20 12:48:05 jdurand Exp $
+ *
+ * $Log: pclose.c,v $
+ * Revision 1.2  1999/07/20 12:48:05  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1993-1998 by CERN CN-SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)pclose.c	1.8 03/26/99 CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)pclose.c	1.8 3/26/99 CERN CN-SW/DC Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -76,7 +87,7 @@ RFILE 	*fs ;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_PCLOSE);
    TRACE(2, "rfio", "rfio_pclose: sending %d bytes",RQSTSIZE) ;
-   if (netwrite(fs->s, buf,RQSTSIZE) != RQSTSIZE) {
+   if (netwrite_timeout(fs->s, buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
       TRACE(2, "rfio", "rfio_pclose: write(): ERROR occured (errno=%d)", errno);
       (void)close(fs->s) ;
       (void) free((char *)fs) ;
@@ -87,7 +98,7 @@ RFILE 	*fs ;
     * Getting data from the network.
     */
    p = buf ;
-   if ( netread ( fs->s , buf, 2*LONGSIZE) != 2*LONGSIZE)  {
+   if ( netread_timeout( fs->s , buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != 2*LONGSIZE)  {
       TRACE(2,"rfio", "pclose: write(): %s", sys_errlist[errno]);
       return -1 ;
    }

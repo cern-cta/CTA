@@ -1,4 +1,15 @@
 /*
+ * $Id: fseek.c,v 1.2 1999/07/20 12:47:59 jdurand Exp $
+ *
+ * $Log: fseek.c,v $
+ * Revision 1.2  1999/07/20 12:47:59  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1998 by CERN/CN/SW/DC
  * All rights reserved
  */

@@ -1,3 +1,14 @@
+/*
+ * $Id: symlink.c,v 1.2 1999/07/20 12:48:33 jdurand Exp $
+ *
+ * $Log: symlink.c,v $
+ * Revision 1.2  1999/07/20 12:48:33  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
 
 /*
  * Copyright (C) 1990-1997 by CERN/CN/SW/DC
@@ -5,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)symlink.c	1.7 05/06/98  CERN CN-SW/DC F. Hassine";
+static char sccsid[] = "@(#)symlink.c	1.7 5/6/98  CERN CN-SW/DC F. Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -85,7 +96,7 @@ char *n2 ;
 	status = strlen(pw->pw_name)+strlen(n1)+strlen(filename)+3+2*WORDSIZE;
 	marshall_LONG(p, status) ;
 
-        if (netwrite(s,buf,RQSTSIZE) != RQSTSIZE) {
+        if (netwrite_timeout(s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
                 TRACE(2, "rfio", "%slink: write(): ERROR occured (errno=%d)",
 					(un ? "un":"sym"),
 					errno);
@@ -109,7 +120,7 @@ char *n2 ;
 	marshall_STRING( p, filename ) ;
 	marshall_STRING( p, pw->pw_name) ;
 	
-	if (netwrite(s,nbuf,status) != status ) {
+	if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
                 TRACE(2, "rfio", "%slink: write(): ERROR occured (errno=%d)",(un ? "un":"sym"),errno);
                 (void) close(s);
                 END_TRACE();
@@ -120,7 +131,7 @@ char *n2 ;
 	/*
  	 * Getting back status
 	 */ 
-        if ((c=netread(s, buf, WORDSIZE + 2*LONGSIZE)) != WORDSIZE+ 2*LONGSIZE)  {
+        if ((c=netread_timeout(s, buf, WORDSIZE + 2*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (WORDSIZE+ 2*LONGSIZE))  {
 		if (c == 0 && un == 0) {
 			serrno = SEOPNOTSUP;	/* symbolic links not supported on remote machine */
 			TRACE(2, "rfio", "rfio_symlink: read(): ERROR occured (serrno=%d)", serrno);

@@ -1,10 +1,21 @@
 /*
+ * $Id: xyclose.c,v 1.2 1999/07/20 12:48:35 jdurand Exp $
+ *
+ * $Log: xyclose.c,v $
+ * Revision 1.2  1999/07/20 12:48:35  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xyclose.c	3.11 05/06/98  CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)xyclose.c	3.11 5/6/98  CERN CN-SW/DC Frederic Hemmer";
 #endif /* not lint */
 
 /* xyclose.c    Remote File I/O - Close a Fortran Logical Unit          */
@@ -75,7 +86,7 @@ int     *irc;
 	marshall_WORD(p, RFIO_MAGIC);
 	marshall_WORD(p, RQST_XYCLOS);
 	TRACE(2,"rfio","rfio_xyclose: writing %d bytes",RQSTSIZE) ;
-	if (netwrite(ftnlun[lun]->s,buf,RQSTSIZE) != RQSTSIZE) {
+	if (netwrite_timeout(ftnlun[lun]->s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 		TRACE(2, "rfio" ,"rfio_xyclose: write(): ERROR occured (errno=%d)", errno);
 		free((char *)ftnlun[lun]); ftnlun[lun]=(RFILE *) NULL;
 		END_TRACE();
@@ -86,7 +97,7 @@ int     *irc;
 	}
 	p = buf;
 	TRACE(2, "rfio" ,"rfio_xyclose: reading %d bytes", LONGSIZE);
-	if (netread(ftnlun[lun]->s, buf, LONGSIZE) != LONGSIZE) {
+	if (netread_timeout(ftnlun[lun]->s, buf, LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE) {
 		TRACE(2, "rfio" ,"rfio_xyclose: read(): ERROR occured (errno=%d)", errno);
 		free((char *)ftnlun[lun]); ftnlun[lun]=(RFILE *) NULL;
 		END_TRACE();

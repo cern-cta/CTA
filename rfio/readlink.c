@@ -1,3 +1,14 @@
+/*
+ * $Id: readlink.c,v 1.2 1999/07/20 12:48:08 jdurand Exp $
+ *
+ * $Log: readlink.c,v $
+ * Revision 1.2  1999/07/20 12:48:08  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
 
 /*
  * Copyright (C) 1994-1997 by CERN CN-PDP/CS
@@ -5,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readlink.c	1.6 05/06/98 CERN CN-PDP/CS F. Hassine";
+static char sccsid[] = "@(#)readlink.c	1.6 5/6/98 CERN CN-PDP/CS F. Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -64,7 +75,7 @@ int length ;
 	status = 2*WORDSIZE + strlen(path) + 1;
 	marshall_LONG(p, status) ;
 
-        if (netwrite(s,buffer,RQSTSIZE) != RQSTSIZE) {
+        if (netwrite_timeout(s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
                 TRACE(2, "rfio", "readlink: write(): ERROR occured (errno=%d)",errno);
                 (void) close(s);
                 END_TRACE();
@@ -76,7 +87,7 @@ int length ;
 	marshall_WORD(p,gid) ;
 	marshall_STRING(p,filename) ;
 	
-	if (netwrite(s,buffer,status ) != status ) {
+	if (netwrite_timeout(s,buffer,status,RFIO_CTRL_TIMEOUT) != status ) {
                 TRACE(2, "rfio", "readlink(): write(): ERROR occured (errno=%d)",errno);
                 (void) close(s);
                 END_TRACE();
@@ -86,7 +97,7 @@ int length ;
 	/*
  	 * Getting back status
 	 */ 
-        if ((c=netread(s, buffer, 3*LONGSIZE)) != 3*LONGSIZE)  {
+        if ((c=netread_timeout(s, buffer, 3*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (3*LONGSIZE))  {
 		if (c == 0) {
 			serrno = SEOPNOTSUP;    /* symbolic links not supported on remote machine */
 			TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (serrno=%d)", serrno);
@@ -108,7 +119,8 @@ int length ;
                 END_TRACE();
                 return(status);
         }
-        if (netread(s, buffer, len) != len)  {
+        /* Length is not of a long size, so RFIO_CTRL_TIMEOUT is enough */
+        if (netread_timeout(s, buffer, len, RFIO_CTRL_TIMEOUT) != len)  {
                 TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
                 (void) close(s);
                 END_TRACE();

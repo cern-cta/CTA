@@ -1,4 +1,15 @@
 /*
+ * $Id: alrm.c,v 1.2 1999/07/20 12:47:52 jdurand Exp $
+ *
+ * $Log: alrm.c,v $
+ * Revision 1.2  1999/07/20 12:47:52  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1995-1997 by CERN/CN/PDP/SC
  * All rights reserved
  */

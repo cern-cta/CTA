@@ -1,10 +1,21 @@
 /*
+ * $Id: write.c,v 1.2 1999/07/20 12:48:34 jdurand Exp $
+ *
+ * $Log: write.c,v $
+ * Revision 1.2  1999/07/20 12:48:34  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)write.c	3.12 05/06/98  F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)write.c	3.12 5/6/98  F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -105,7 +116,7 @@ int     s, size;
 	marshall_LONG(p, rfilefdt[s]->lseekoff) ; 
 	rfilefdt[s]->lseekhow= -1 ;
 	TRACE(2, "rfio", "rfio_write: sending %d bytes",RQSTSIZE) ;
-	if (netwrite(s, rfio_buf, RQSTSIZE) != RQSTSIZE) {
+	if (netwrite_timeout(s, rfio_buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 		TRACE(2,"rfio","rfio_write: write(): ERROR occured (errno=%d)",errno) ;
 		END_TRACE() ;
 		return -1 ;
@@ -118,7 +129,7 @@ int     s, size;
 		}
 	}
 	TRACE(2,"rfio","rfio_write: sending %d bytes",size) ;
-	if (netwrite(s, ptr, size) != size) {
+	if (netwrite_timeout(s, ptr, size, RFIO_DATA_TIMEOUT) != size) {
 		TRACE(2,"rfio","rfio_write: write(): ERROR occured (errno=%d)",errno) ;
 		END_TRACE() ;
 		return -1 ;
@@ -132,7 +143,7 @@ int     s, size;
 		LONG msgsiz ;
 
 		TRACE(2, "rfio", "rfio_write: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-		if (netread(s,rfio_buf,rfilefdt[s]->_iobuf.hsize) != rfilefdt[s]->_iobuf.hsize) {
+		if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_CTRL_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
 			TRACE(2, "rfio", "rfio_write: read(): ERROR occured (errno=%d)", errno);
 			if ( temp ) (void) free(trp) ; 
 			END_TRACE() ;
@@ -174,7 +185,7 @@ int     s, size;
 				trp= iodata(rfilefdt[s]) ;
 			}
 			TRACE(2, "rfio", "rfio_write: reading %d bytes to throw them away",msgsiz) ; 
-			if ( netread(s,trp,msgsiz) != msgsiz ) {
+			if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 				TRACE(2,"rfio", "rfio_write: read(): ERROR occured (errno=%d)", errno);
 				if ( temp ) (void) free(trp) ; 
 				END_TRACE() ; 

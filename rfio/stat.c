@@ -1,10 +1,21 @@
 /*
+ * $Id: stat.c,v 1.2 1999/07/20 12:48:29 jdurand Exp $
+ *
+ * $Log: stat.c,v $
+ * Revision 1.2  1999/07/20 12:48:29  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stat.c	3.9 01/08/99  CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)stat.c	3.9 08 Jan 1999  CERN CN-SW/DC Frederic Hemmer";
 #endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */

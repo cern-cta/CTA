@@ -1,10 +1,21 @@
 /*
+ * $Id: error.c,v 1.2 1999/07/20 12:47:56 jdurand Exp $
+ *
+ * $Log: error.c,v $
+ * Revision 1.2  1999/07/20 12:47:56  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1998 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)error.c	3.17 05/06/98 CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)error.c	3.17 5/6/98 CERN CN-SW/DC Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -46,13 +57,13 @@ int     code;
 	marshall_WORD(p, RQST_ERRMSG);
 	marshall_LONG(p, code);
 	TRACE(2,"rfio","rfio_errmsg: sending %d bytes",RQSTSIZE) ;
-	if (netwrite(s,rfio_buf,RQSTSIZE) != RQSTSIZE)  {
+	if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
 		TRACE(2, "rfio" ,"rfio_errmsg: write(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return((char *) NULL);
 	}
 	TRACE(2, "rfio", "rfio_errmsg: reading %d bytes", LONGSIZE);
-	if (netread(s,rfio_buf, LONGSIZE) != LONGSIZE) {
+	if (netread_timeout(s,rfio_buf, LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE) {
 		TRACE(2, "rfio" ,"rfio_errmsg: read(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return((char *) NULL);
@@ -60,7 +71,7 @@ int     code;
 	p = rfio_buf ;
 	unmarshall_LONG(p, len);
 	TRACE(2, "rfio", "rfio_errmsg: reading %d bytes", len);
-	if (netread(s,rfio_buf,len) != len) {
+	if (netread_timeout(s,rfio_buf,len,RFIO_CTRL_TIMEOUT) != len) {
 		TRACE(2, "rfio" ,"rfio_errmsg: read(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return((char *) NULL);

@@ -1,10 +1,21 @@
 /*
+ * $Id: preseek.c,v 1.2 1999/07/20 12:48:06 jdurand Exp $
+ *
+ * $Log: preseek.c,v $
+ * Revision 1.2  1999/07/20 12:48:06  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)preseek.c	3.4 05/06/98 CERN IT-PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)preseek.c	3.4 5/6/98 CERN IT-PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -110,7 +121,7 @@ int rfio_preseek(s,iov,iovnb)
 		marshall_LONG(p,iov[i].iov_len) ;
 	}
 	TRACE(2,"rfio","rfio_preseek: sending %d bytes",RQSTSIZE+2*LONGSIZE*iovnb) ;
-	if (netwrite(s,trp,RQSTSIZE+2*LONGSIZE*iovnb) != RQSTSIZE+2*LONGSIZE*iovnb) {
+	if (netwrite_timeout(s,trp,RQSTSIZE+2*LONGSIZE*iovnb,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+2*LONGSIZE*iovnb)) {
 		TRACE(2,"rfio","rfio_preseek: write(): ERROR occured (errno=%d)",errno) ;
 		if ( temp ) (void) free(trp) ;
 		END_TRACE() ;
@@ -132,7 +143,7 @@ int rfio_preseek(s,iov,iovnb)
 
 		msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;
 		TRACE(2, "rfio", "rfio_preseek: reading %d bytes",msgsiz) ; 
-		if (netread(s,rfilefdt[s]->_iobuf.base,msgsiz) != msgsiz) {
+		if (netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz) {
 			TRACE(2,"rfio","rfio_preseek: read(): ERROR occured (errno=%d)",errno) ;
 			END_TRACE() ;
 			return -1 ; 

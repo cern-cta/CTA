@@ -1,10 +1,21 @@
 /*
+ * $Id: readdir.c,v 1.2 1999/07/20 12:48:07 jdurand Exp $
+ *
+ * $Log: readdir.c,v $
+ * Revision 1.2  1999/07/20 12:48:07  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readdir.c	1.2 06/02/98 O.Barring";
+static char sccsid[] = "@(#)readdir.c	1.2 02 Jun 1998 O.Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -76,13 +87,13 @@ RDIR *dirp;
   marshall_WORD(p, RFIO_MAGIC);
   marshall_WORD(p, RQST_READDIR) ; 
   TRACE(2,"rfio","rfio_readdir: writing %d bytes",RQSTSIZE) ;
-  if (netwrite(s,rfio_buf,RQSTSIZE) != RQSTSIZE)  {
+  if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
     TRACE(2,"rfio","rfio_readdir: write(): ERROR occured (errno=%d)", errno) ;
     END_TRACE() ;
     return(NULL) ; 
   }
   TRACE(2, "rfio", "rfio_readdir: reading %d bytes",WORDSIZE+3*LONGSIZE) ; 
-  if ( netread(s,rfio_buf,WORDSIZE+3*LONGSIZE) != WORDSIZE+3*LONGSIZE ) {
+  if ( netread_timeout(s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
     TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
     END_TRACE();
     return(NULL) ; 
@@ -102,7 +113,9 @@ RDIR *dirp;
   if ( namlen > 0 ) {
     TRACE(2, "rfio", "rfio_readdir: reading %d bytes",namlen) ; 
     memset(de->d_name,'\0',MAXFILENAMSIZE);
-    if ( netread(s,de->d_name,namlen) != namlen ) {
+    /* Directory name is of a small size, so I put RFIO_CTRL_TIMEOUT instead */
+    /* of RFIO_DATA_TIMEOUT */
+    if ( netread_timeout(s,de->d_name,namlen,RFIO_CTRL_TIMEOUT) != namlen ) {
       TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
       END_TRACE();
       return(NULL) ; 

@@ -1,3 +1,14 @@
+/*
+ * $Id: mstat.c,v 1.2 1999/07/20 12:48:03 jdurand Exp $
+ *
+ * $Log: mstat.c,v $
+ * Revision 1.2  1999/07/20 12:48:03  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
 
 /*
  * Copyright (C) 1995-1999 by CERN/CN/SW/DC
@@ -5,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mstat.c	1.9 01/08/99  CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)mstat.c	1.9 08 Jan 1999  CERN CN-SW/DC Felix Hassine";
 #endif /* not lint */
 
 
@@ -158,7 +169,7 @@ int reqst ;
 	}
 	marshall_STRING(p, filename);
 	TRACE(2,"rfio","rfio_stat: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
 		(void) close(s);
 		END_TRACE();
@@ -166,7 +177,7 @@ int reqst ;
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_stat: reading %d bytes", 8*LONGSIZE+5*WORDSIZE);
-	rc = netread(s, buf, 8*LONGSIZE+5*WORDSIZE);
+	rc = netread_timeout(s, buf, 8*LONGSIZE+5*WORDSIZE, RFIO_CTRL_TIMEOUT);
 	if ( rc == 0 && (reqst == RQST_MSTAT_SEC || reqst == RQST_STAT_SEC ) ) {
 		TRACE(2, "rfio", "rfio_stat: Server doesn't support secure stat()");
 		serrno = SEPROTONOTSUP;
@@ -222,7 +233,7 @@ int rfio_end()
 		marshall_WORD(p, RFIO_MAGIC);
         	marshall_WORD(p, RQST_END);
         	marshall_LONG(p, j);
-        	if (netwrite(tab[i].s,buf,RQSTSIZE) != RQSTSIZE) {
+        	if (netwrite_timeout(tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
                 	TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
                 	END_TRACE();
                 	return(-1);

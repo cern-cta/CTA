@@ -1,10 +1,21 @@
 /*
+ * $Id: closedir.c,v 1.2 1999/07/20 12:47:54 jdurand Exp $
+ *
+ * $Log: closedir.c,v $
+ * Revision 1.2  1999/07/20 12:47:54  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)closedir.c	1.2 06/02/98 O.Barring";
+static char sccsid[] = "@(#)closedir.c	1.2 02 Jun 1998 O.Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
@@ -63,7 +74,7 @@ int rfio_closedir(dirp)
   marshall_WORD(p, RFIO_MAGIC);
   marshall_WORD(p, RQST_CLOSEDIR);
   TRACE(2, "rfio", "rfio_closedir: sending %d bytes",RQSTSIZE) ;
-  if (netwrite(s, rfio_buf,RQSTSIZE) != RQSTSIZE) {
+  if (netwrite_timeout(s, rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
     TRACE(2, "rfio", "rfio_closedir: write(): ERROR occured (errno=%d)", errno);
     (void) rfio_dircleanup(s) ;
     END_TRACE() ;
@@ -74,7 +85,7 @@ int rfio_closedir(dirp)
    */
 
   TRACE(2, "rfio", "rfio_closedir: reading %d bytes",WORDSIZE+3*LONGSIZE) ; 
-  if (netread(s,rfio_buf,WORDSIZE+3*LONGSIZE) != WORDSIZE+3*LONGSIZE) {
+  if (netread_timeout(s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE)) {
     TRACE(2, "rfio", "rfio_closedir: read(): ERROR occured (errno=%d)", errno);
     (void)rfio_dircleanup(s) ; 
     END_TRACE() ;

@@ -1,10 +1,21 @@
 /*
+ * $Id: xyopen.c,v 1.2 1999/07/20 12:48:35 jdurand Exp $
+ *
+ * $Log: xyopen.c,v $
+ * Revision 1.2  1999/07/20 12:48:35  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990-1997 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xyopen.c	3.19 05/06/98 CERN CN-SW/DC Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)xyopen.c	3.19 5/6/98 CERN CN-SW/DC Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -301,13 +312,13 @@ char *reqhost;
         marshall_LONG(p, fd->passwd);
         marshall_WORD(p, fd->mapping);
 	TRACE(3,"rfio","rfio_xyopen: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,rfio_buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(3, "rfio", "rfio_xyopen: write(): ERROR occured (errno=%d)", errno);
 		free((char *)fd); ftnlun[lun]=(RFILE *) NULL;
 		return( (serrno ? serrno : errno) );
 	}
 	TRACE(3, "rfio", "rfio_xyopen: reading %d bytes", LONGSIZE);
-	if (netread(s,rfio_buf,LONGSIZE) != LONGSIZE) {
+	if (netread_timeout(s,rfio_buf,LONGSIZE,RFIO_CTRL_TIMEOUT) != LONGSIZE) {
 		TRACE(3, "rfio", "rfio_xyopen: read(): ERROR occured (errno=%d)", errno);
 		free((char *)fd); ftnlun[lun]=(RFILE *) NULL;
 		return( (serrno ? serrno : errno) );

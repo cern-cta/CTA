@@ -1,10 +1,21 @@
 /*
+ * $Id: access.c,v 1.2 1999/07/20 12:47:51 jdurand Exp $
+ *
+ * $Log: access.c,v $
+ * Revision 1.2  1999/07/20 12:47:51  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
+ *   on all control and data sockets.
+ *
+ */
+
+/*
  * Copyright (C) 1990,1991 by CERN/CN/SW/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)access.c	1.4 05/06/98 Felix Hassine CN-PDP";
+static char sccsid[] = "@(#)access.c	1.4 5/6/98 Felix Hassine CN-PDP";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
@@ -56,7 +67,7 @@ int 	mode ;			/* Access mode 				*/
 	marshall_LONG(p, gid) ;
 	marshall_LONG(p, mode);
 	TRACE(2,"rfio","rfio_access: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite(s,buf,RQSTSIZE+len) != RQSTSIZE+len) {
+	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_access: write(): ERROR occured (errno=%d)", errno);
 		(void) netclose(s);
 		END_TRACE();
@@ -64,7 +75,7 @@ int 	mode ;			/* Access mode 				*/
 	}
 	p = buf;
 	TRACE(2, "rfio", "rfio_access: reading %d bytes", LONGSIZE);
-	if (netread(s, buf, LONGSIZE ) != LONGSIZE )  {
+	if (netread_timeout(s, buf, LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE )  {
 		TRACE(2, "rfio", "rfio_access: read(): ERROR occured (errno=%d)", errno);
 		(void) netclose(s);
 		END_TRACE();
