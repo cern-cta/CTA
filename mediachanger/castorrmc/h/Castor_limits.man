@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.8 2001/07/25 09:40:37 baud Exp $
+.\" $Id: Castor_limits.man,v 1.9 2001/09/26 09:13:51 jdurand Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2001/07/25 09:40:37 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2001/09/26 09:13:51 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -183,4 +183,4 @@ maximum length for a VSN
 Default value: 6
 
 .SH AUTHOR
-Castor Developpment Team - Contact : castor-support@listbox.cern.ch
+\fBCASTOR\fP Team <castor.support@cern.ch>
