@@ -115,7 +115,8 @@ int user_repbuf_len;
 
 			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			  Cns_errmsg (func, NS002, "send", "Could not init context");
-			  serrno = SECOMERR;
+			  (void) netclose (s);
+			  serrno = ESEC_CTX_NOT_INITIALIZED;
 			  return -1;
 			}
 			
@@ -123,7 +124,8 @@ int user_repbuf_len;
 			  Cns_errmsg (func, "%s: %s\n",
 				      "send",
 				      "Could not establish context");
-			  serrno = SECOMERR;
+			  (void) netclose (s);
+			  serrno = ESEC_NO_CONTEXT;
 			  return -1;
 			}
 
