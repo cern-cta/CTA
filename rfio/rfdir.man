@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfdir.man,v 1.4 2001/09/26 09:28:45 jdurand Exp $
+.\" $Id: rfdir.man,v 1.5 2002/02/13 11:11:43 baud Exp $
 .\"
 .\" @(#)rfdir.man	1.2 09/21/98     CERN IT-PDP/DM Olof Barring
-.\" Copyright (C) 1998 by CERN/IT/PDP
+.\" Copyright (C) 1998-2002 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFDIR l "09/21/98"
+.TH RFDIR 1 "$Date: 2002/02/13 11:11:43 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfdir \- Remote directory list
 .SH SYNOPSIS
@@ -36,7 +36,7 @@ similar to that of the
 command for listing local files or directories.
 .SH "SEE ALSO"
 .BR rcp(1), 
-.BR rfiod(l)
+.BR rfiod(1)
 .SH "NOTES"
 .B rfdir
 does not support regular expressions

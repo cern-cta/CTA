@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.6 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfcp.man,v 1.7 2002/02/13 11:11:43 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.7 $ $Date: 2002/02/13 11:11:43 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP l "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2002/02/13 11:11:43 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -83,6 +83,6 @@ If specified, forces the RFIO V.2 protocol.
 196	Request killed.
 .SH SEE ALSO
 .BR rcp(1), 
-.BR rfiod(l)
+.BR rfiod(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
