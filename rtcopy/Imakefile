@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2004/08/03 15:41:38 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2004/10/12 16:09:56 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -60,19 +60,10 @@ CCOPTIM =
 CCOPTIM = -g
 #endif
 
-#REDEF_RTCPC = -Drtcpc=rtcpcldc
-REDEF_RTCPC =
-
 #DBLIBS = -L../dlf -ldlf -L../castor/db/ora -lcastorCommonOra
 
 #if defined(SONYRAW)
 SONYRFLG = -DSONYRAW
-#endif
-
-#if UseTms
-TMSFLG = -DTMS
-TMSSERV = rtcp_CallTMS.Osuf
-TMSLIB = rtcpc_CallTMS.Osuf
 #endif
 
 #if UseVmgr
@@ -160,7 +151,7 @@ MONITORFLAG=-DMONITOR
 MONITORFLAG=
 #endif
 
-CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CallTMS.c
+CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c
 
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
@@ -175,7 +166,7 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
 	 -DNS_ROOT=\"$(NS_ROOT)\" \
 	 $(ACCTON) $(SONYRFLG) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
-	 $(RTCPFLAG) $(TMSFLG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) \
+	 $(RTCPFLAG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) \
 	 $(ACCTFILE)  $(MONITORFLAG) $(RTCPCLDFLAGS)
 
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
@@ -206,14 +197,17 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
 	   FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
 	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
 PROGS_D = ProgramTargetName(rtcpclientd) \
-	  ProgramTargetName(VidWorker)
+	  ProgramTargetName(recaller) \
+	  ProgramTargetName(migrator)
 IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpclientd)) \
-	   FileName($(BIN),ProgramTargetName(VidWorker))
+	   FileName($(BIN),ProgramTargetName(recaller)) \
+	   FileName($(BIN),ProgramTargetName(migrator))
 EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
 	   FileName($(EXPORTBIN),dumptape) \
 	   FileName($(EXPORTBIN),rtcpcldCleanupDB) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
-	   FileName($(EXPORTBIN),VidWorker) \
+	   FileName($(EXPORTBIN),recaller) \
+	   FileName($(EXPORTBIN),migrator) \
 	   $(EPROGS_RTSTAT)
 MANPAGES_C = FileName($(MANDIR),tpread.$(MANSUFFIX)) \
 	     FileName($(MANDIR),tpwrite.$(MANSUFFIX)) \
@@ -240,7 +234,7 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 RTCPD_MONITORCLIENT = Cmonit_rtcopyclient.Osuf
 #endif 
 
-RTCPD_OBJS =	rtcpd.Osuf $(TMSSERV) $(VMGRSERV) rtcp_CheckReq.Osuf \
+RTCPD_OBJS =	rtcpd.Osuf $(VMGRSERV) rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
 		rtcpd_MainCntl.Osuf rtcpd_SelfMonitor.Osuf rtcpd_Tape.Osuf \
@@ -251,13 +245,16 @@ RTCPD_OBJS =	rtcpd.Osuf $(TMSSERV) $(VMGRSERV) rtcp_CheckReq.Osuf \
 		rtcp_accounting.Osuf		
 
 RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
-		$(TMSLIB) $(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \
-		rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf \
-		rtcpcldapi.Osuf rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf
+		$(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \
+		rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
 
 TPREAD_OBJS =	tpread.Osuf
-VIDWORKER_OBJS = VidWorker.Osuf
-RTCPCLD_OBJS = rtcpclientd.Osuf
+RECALLER_OBJS = recaller.Osuf
+MIGRATOR_OBJS = migrator.Osuf
+RTCPCLIENTD_OBJS = rtcpclientd.Osuf
+RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf \
+		rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
+RTCPCLD_MT_OBJS =	rtcpcldcommon_mt.Osuf
 RTCPCLD_CLEANUP_OBJS = rtcpcldCleanupDB.Osuf
 DUMPTAPE_OBJS =	dumptape.Osuf
 #if BuildRtstat
@@ -274,10 +271,6 @@ rtcpc_log.c:		DepSourceName(rtcopy,rtcp_log.c)
 			RemoveFile(rtcpc_log.c)
 			$(CP) rtcp_log.c rtcpc_log.c
 
-rtcpc_CallTMS.c:	DepSourceName(rtcopy,rtcp_CallTMS.c)
-			RemoveFile(rtcpc_CallTMS.c)
-			$(CP) rtcp_CallTMS.c rtcpc_CallTMS.c
-
 rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
 			RemoveFile(rtcpc_CallVMGR.c)
 			$(CP) rtcp_CallVMGR.c rtcpc_CallVMGR.c
@@ -290,14 +283,12 @@ rtcpc_SendRecv.Osuf:	rtcpc_SendRecv.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtc
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_SendRecv.c
 rtcpc_log.Osuf:		rtcpc_log.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_log.c
-rtcpc_CallTMS.Osuf:	rtcpc_CallTMS.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(TMSFLG) rtcpc_CallTMS.c
 rtcpc_CallVMGR.Osuf:	rtcpc_CallVMGR.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(VMGRFLG) rtcpc_CallVMGR.c
 rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_CheckReq.c
 tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(REDEF_RTCPC) tpread.c
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) tpread.c
 dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) dumptape.c
 
@@ -306,13 +297,15 @@ rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
 	$(CC) -c $(CFLAGS) rtstat.c
 #endif
 
-NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(VidWorker,$(VIDWORKER_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
-NormalProgramTarget(rtcpclientd,$(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
-NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OJBS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+
+NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
@@ -344,7 +337,8 @@ InstallProgram(tpread,$(BIN),root,bin,0755)
 InstallProgram(tpwrite,$(BIN),root,bin,0755)
 InstallProgram(dumptape,$(BIN),root,bin,0755)
 InstallProgram(rtcpclientd,$(BIN),root,bin,0750)
-InstallProgram(VidWorker,$(BIN),root,bin,0750)
+InstallProgram(recaller,$(BIN),root,bin,0750)
+InstallProgram(migrator,$(BIN),root,bin,0750)
 InstallProgram(rtcpcldCleanupDB,$(BIN),root,bin,0750)
 #if BuildRtstat
 InstallProgram(rtstat,$(BIN),root,bin,0755)
@@ -366,8 +360,6 @@ MakeDir($(ERRLISTDIR),root,bin,755)
 MakeDir($(SACCTDIR),root,bin,0777)
 #endif
 
-api-doc:	../h/rtcpcldapi.h
-	-@doxygen rtcpcldapi.doxygen
 
 install.man: $(MANDIR) $(MANPAGES_C) $(MANPAGES_S)
 
@@ -394,7 +386,8 @@ IEXPORT(tpwrite,$(EXPORTBIN),755)
 IEXPORT(dumptape,$(EXPORTBIN),755)
 IEXPORT(rtcpd,$(EXPORTBIN),750)
 IEXPORT(rtcpclientd,$(EXPORTBIN),750)
-IEXPORT(VidWorker,$(EXPORTBIN),750)
+IEXPORT(recaller,$(EXPORTBIN),750)
+IEXPORT(migrator,$(EXPORTBIN),750)
 IEXPORT(rtcpcldCleanupDB,$(EXPORTBIN),750)
 #if BuildRtstat
 IEXPORT(rtstat,$(EXPORTBIN),755)
