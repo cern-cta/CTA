@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.113 2001/03/20 13:10:47 jdurand Exp $
+ * $Id: procio.c,v 1.114 2001/03/21 11:29:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.113 $ $Date: 2001/03/20 13:10:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.114 $ $Date: 2001/03/21 11:29:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -130,7 +130,7 @@ extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct stgcat_entry *newreq _PROTO(());
-char *findpoolname();
+extern char *findpoolname _PROTO((char *));
 int last_tape_file;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
