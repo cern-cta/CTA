@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2005 by CERN/IT/ADC
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.1 $ $Date: 2005/01/03 09:35:47 $ CERN IT-ADC/CA Jean-Damien Durand
+ */
+
+/* ================================ */
+/* Hidden dependencies of libraries */
+/* ================================ */
+#if BuildStageLibrary
+#if !BuildNameServerLibrary
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary	YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+#if BuildRfioLibrary
+#if !BuildNameServerLibrary
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary	YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#endif
+
+#if BuildOraCpp
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+
+#if BuildVolumeMgrLibrary
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
+#endif
+
+#if BuildStageLibrary
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if !BuildDlfLibrary
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#endif
+
+#if BuildRtcopyLibrary
+#if !BuildVdqmLibrary
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#endif
+
