@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.49 2000/11/17 08:22:58 jdurand Exp $
+ * $Id: poolmgr.c,v 1.50 2000/11/17 08:25:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.49 $ $Date: 2000/11/17 08:22:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.50 $ $Date: 2000/11/17 08:25:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1130,7 +1130,7 @@ updpoolconf(defpoolname)
 					if (strcmp (pool_n->name, pool_p->name) == 0) {
 						pool_n->ovl_pid = pool_p->ovl_pid;
 						pool_n->cleanreqtime = pool_p->cleanreqtime;
-						if (pool_n->migr != NULL) {
+						if (pool_n->migr != NULL && pool_p->migr != NULL) {
 							pool_n->migr->mig_pid = pool_p->migr->mig_pid;
 							pool_n->migr->migreqtime = pool_p->migr->migreqtime;
 						}
