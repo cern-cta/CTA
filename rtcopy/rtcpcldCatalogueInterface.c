@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.66 $ $Release$ $Date: 2004/11/01 11:01:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.67 $ $Release$ $Date: 2004/11/02 11:24:59 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.66 $ $Release$ $Date: 2004/11/01 11:01:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.67 $ $Release$ $Date: 2004/11/02 11:24:59 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -153,20 +153,7 @@ static int getDbSvc(
     rc = C_Services_create(svc);
     if ( rc == -1 ) {
       save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_create()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
+      LOG_DBCALL_ERR("C_Services_create()","(null)");
       serrno = save_serrno;
       return(-1);
     }
@@ -225,26 +212,9 @@ static int getStgSvc(
     
     rc = C_Services_service(*svcs,"OraStagerSvc",SVC_ORASTAGERSVC, &iSvc);
     if ( rc == -1 || iSvc == NULL ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_IServices_service()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      LOG_DBCALL_ERR("C_Services_service()",
+                     C_Services_errorMsg(*svcs));
       serrno = save_serrno;
       return(-1);
     }
@@ -338,25 +308,11 @@ static int updateTapeFromDB(
                                        tape->tapereq.mode
                                        );
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_selectTape()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgSvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      save_serrno = serrno;
+      LOG_DBCALL_ERR("Cstager_IStagerSvc_selectTape()",
+                     Cstager_IStagerSvc_errorMsg(*stgSvc));
+      C_IAddress_delete(iAddr);
+      serrno = save_serrno;
       return(-1);
     }
     /*
@@ -367,30 +323,10 @@ static int updateTapeFromDB(
   }
 
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
+    LOG_DBCALL_ERR((tp == NULL ? "C_Services_createObj()" : "C_Services_updateObj()"),
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    (tp == NULL ? "C_Services_createObj()" : "C_Services_updateObj()"),
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT,
-                    (int)key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(save_serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -409,30 +345,10 @@ static int updateTapeFromDB(
                             OBJ_Stream
                             );
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
+      LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(*svcs));
       C_IAddress_delete(iAddr);
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_fillObj()",
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
       serrno = save_serrno;
       return(-1);
     }
@@ -515,30 +431,10 @@ static int updateSegmentFromDB(
 
   rc = C_Services_updateObj(*svcs,iAddr,iObj);  
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
+    LOG_DBCALL_ERR("C_Services_updateObj()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_updateObj()",
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT,
-                    (int)key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(save_serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
   }
@@ -685,26 +581,9 @@ int rtcpcld_getTapesToDo(
                                     &nbTpItems
                                     );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "Cstager_IStagerSvc_tapesTodo()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_tapesToDo()",
+                   Cstager_IStagerSvc_errorMsg(*stgsvc));
     serrno = save_serrno;
     return(-1);
   } else if ( nbTpItems > 0 ) {
@@ -751,26 +630,10 @@ int rtcpcld_getTapesToDo(
                                       &nbStreamItems
                                       );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "Cstager_IStagerSvc_streamsTodo()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_streamsToDo()",
+                   Cstager_IStagerSvc_errorMsg(*stgsvc));
+    serrno = save_serrno;
   } else if ( nbStreamItems > 0 ) {
     iAddr = NULL;
     rc = getDbSvc(&dbSvc);
@@ -859,7 +722,8 @@ int rtcpcld_getTapesToDo(
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_SYSCALL_ERR("C_Services_fillRep()");
+        LOG_DBCALL_ERR("C_Services_fillRep()",
+                       C_Services_errorMsg(*dbSvc));
         (void)rtcpcld_updateTape(tl,NULL,1,0);
         if ( tl != NULL ) free(tl);
         continue;
@@ -1146,26 +1010,9 @@ static int nextSegmentToDo(
                                                    &recallCandidate
                                                    );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "Cstager_IStagerSvc_bestFileSystemForSegment()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);      
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
+                   Cstager_IStagerSvc_errorMsg(*stgsvc));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -1286,26 +1133,9 @@ static int procSegmentsForTape(
                                           &nbItems
                                           );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "Cstager_IStagerSvc_segmentsForTape()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);      
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_segmentsForSegment()",
+                   Cstager_IStagerSvc_errorMsg(*stgsvc));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -1503,32 +1333,15 @@ int procTapeCopiesForStream(
                                                 &nextMigrCandidate
                                                 );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
     if ( save_serrno == ENOENT ) {
       C_IAddress_delete(iAddr);
       serrno = ENOENT;
       return(-1);
     } else {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_bestTapeCopyForStream()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
+      LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForSegment()",
+                     Cstager_IStagerSvc_errorMsg(*stgsvc));
     }
-    if ( _dbErr != NULL ) free(_dbErr);      
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -1580,26 +1393,9 @@ int procTapeCopiesForStream(
                           OBJ_Segment
                           );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_fillObj()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);      
+    LOG_DBCALL_ERR("C_Services_fillObj()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -1810,28 +1606,11 @@ int rtcpcld_anyReqsForTape(
     rc = Cstager_IStagerSvc_anyTapeCopyForStream(*stgsvc,stream);
   }
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    (tape->tapereq.mode == WRITE_DISABLE ?
-                     "Cstager_anySegmentsForTape()" :
-                     "Cstager_anyTapeCopiesForStream()"),
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(*stgsvc))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR((tape->tapereq.mode == WRITE_DISABLE ?
+                    "Cstager_anySegmentsForTape()" :
+                    "Cstager_anyTapeCopiesForStream()"),
+                   Cstager_IStagerSvc_errorMsg(*stgsvc));
     serrno = save_serrno;
     return(-1);
   }
@@ -1983,30 +1762,9 @@ int rtcpcld_updcMigrFailed(
                             );
   }
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    Cstager_TapeCopy_id(tapeCopy,&key);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_fillRep()",
-                    "DB_KEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_fillRep()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2025,30 +1783,9 @@ int rtcpcld_updcMigrFailed(
                           1
                           );
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    Cstager_Segment_id(segment,&key);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_fillRep()",
-                    "DB_KEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_fillRep()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2177,30 +1914,9 @@ int rtcpcld_updcFileMigrated(
   }
 
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    Cstager_CastorFile_id(castorFile,&key);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_fillObj()",
-                    "DB_KEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_fillObj()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2263,30 +1979,9 @@ int rtcpcld_updcFileMigrated(
                                 0
                                 );
       if ( rc == -1 ) {
-        char *_dbErr = NULL;
         save_serrno = serrno;
-        Cstager_DiskCopy_id(diskCopyArray[i],&key);
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+4,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "C_Services_updateRep()",
-                        "DB_KEY",
-                        DLF_MSG_PARAM_INT64,
-                        key,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
+        LOG_DBCALL_ERR("C_Services_updateRep()",
+                       C_Services_errorMsg(*svcs));
         if ( diskCopyArray != NULL ) free(diskCopyArray);
         if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_Services_rollback(*svcs,iAddr);
@@ -2312,30 +2007,9 @@ int rtcpcld_updcFileMigrated(
                             OBJ_Segment
                             );
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      Cstager_TapeCopy_id(tapeCopyArray[i],&key);
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_fillObj()",
-                      "DB_KEY",
-                      DLF_MSG_PARAM_INT64,
-                      key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(*svcs));
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       C_Services_rollback(*svcs,iAddr);
       C_IAddress_delete(iAddr);
@@ -2374,29 +2048,9 @@ int rtcpcld_updcFileMigrated(
     }
 
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_deleteRep()",
-                      "DB_KEY",
-                      DLF_MSG_PARAM_INT64,
-                      key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      LOG_DBCALL_ERR("C_Services_deleteRep()",
+                     C_Services_errorMsg(*svcs));
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       C_IAddress_delete(iAddr);
       C_Services_rollback(*svcs,iAddr);
@@ -2413,26 +2067,9 @@ int rtcpcld_updcFileMigrated(
 
   rc = C_Services_commit(*svcs,iAddr);
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_commit()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_commit()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2528,30 +2165,9 @@ int rtcpcld_updateTapeStatus(
     rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
     save_serrno = serrno;
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      C_IAddress_delete(iAddr);
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)_key,
-                      "C_Services_updateRep()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      LOG_DBCALL_ERR("C_Services_updateRep()",
+                     C_Services_errorMsg(*svcs));
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2658,32 +2274,11 @@ int rtcpcld_returnStream(
                               );
     }
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      C_IAddress_delete(iAddr);
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+4,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT64,
-                      key,
-                      (doCommit == 0 ? 
+      LOG_DBCALL_ERR((doCommit == 0 ? 
                        "C_Services_updateRep()" :
                        "C_Services_fillRep()"),
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+                      C_Services_errorMsg(*svcs));
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2761,30 +2356,9 @@ int rtcpcld_setVidWorkerAddress(
   Cstager_Tape_id(tp,&_key);
   rc = C_Services_updateObj(*svcs,iAddr,iObj);
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    C_IAddress_delete(iAddr);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_updateObj()",
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT,
-                    (int)_key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_updateObj()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2793,30 +2367,9 @@ int rtcpcld_setVidWorkerAddress(
   Cstager_Tape_id(tp,&_key);
   rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
-    char *_dbErr = NULL;
     save_serrno = serrno;
-    C_IAddress_delete(iAddr);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_DBSVC,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+4,
-                    "DBSVCCALL",
-                    DLF_MSG_PARAM_STR,
-                    "C_Services_updateRep()",
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT,
-                    (int)_key,
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
-                    "DB_ERROR",
-                    DLF_MSG_PARAM_STR,
-                    (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                    RTCPCLD_LOG_WHERE
-                    );
-    if ( _dbErr != NULL ) free(_dbErr);
+    LOG_DBCALL_ERR("C_Services_updateRep()",
+                   C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2980,33 +2533,9 @@ int rtcpcld_setFileStatus(
     }
     
     if ( rc == -1 ) {
-      char *_dbErr = NULL;
       save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)&fileid,
-                      RTCPCLD_NB_PARAMS+5,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      (*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRep()"),
-                      "DBKEY",
-                      DLF_MSG_PARAM_INT,
-                      (int)_key,
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (*svcs == NULL ? "(null)" : 
-                       (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs)))),
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      stgUuid,
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
+      LOG_DBCALL_ERR((*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRep()"),
+                     (*svcs == NULL ? "(null)" : C_Services_errorMsg(*svcs)));
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
