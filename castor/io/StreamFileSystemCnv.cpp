@@ -96,6 +96,7 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->weight();
   ad->stream() << obj->fsDeviation();
   ad->stream() << obj->mountPoint();
+  ad->stream() << obj->deltaWeight();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -122,6 +123,9 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);
+  float deltaWeight;
+  ad->stream() >> deltaWeight;
+  object->setDeltaWeight(deltaWeight);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

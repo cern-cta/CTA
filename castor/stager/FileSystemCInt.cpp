@@ -165,6 +165,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_deltaWeight
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_deltaWeight(castor::stager::FileSystem* instance, float* var) {
+    *var = instance->deltaWeight();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setDeltaWeight
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setDeltaWeight(castor::stager::FileSystem* instance, float new_var) {
+    instance->setDeltaWeight(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_id
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_id(castor::stager::FileSystem* instance, u_signed64* var) {

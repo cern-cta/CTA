@@ -96,7 +96,7 @@ END;
 CREATE OR REPLACE PROCEDURE updateFsWeight
 (ds IN INTEGER, fs IN INTEGER, deviation IN INTEGER) AS
 BEGIN
- UPDATE FileSystem SET weight = weight - deviation
+ UPDATE FileSystem SET weightDelta = weightDelta - deviation
   WHERE diskServer = ds;
  UPDATE FileSystem SET fsDeviation = 2 * deviation
   WHERE id = fs;
@@ -124,7 +124,8 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
     AND TapeCopy.status = 2 -- WAITINSTREAMS
-   ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
+   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
+            FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
  FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
@@ -164,14 +165,14 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
      AND DiskServer.id = FileSystem.diskServer
      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-   ORDER by FileSystem.weight DESC;
+   ORDER by FileSystem.weight + FileSystem.deltaWeigth DESC,
+            FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
  FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, rpath, dci;
  CLOSE c1;
  UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
- UPDATE FileSystem SET weight = weight - deviation
-  WHERE diskserver = fsDiskServer;
+ updateFsWeight(fsDiskServer, fileSystemId, deviation);
 END;
 
 /* PL/SQL method implementing fileRecalled */
@@ -260,7 +261,6 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
-  rFsWeight NUMBER;
   unused CastorFile%ROWTYPE;
 BEGIN
  -- Get and uid, gid
@@ -295,7 +295,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   -- Try to find remote DiskCopies
   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
          FileSystem.weight
-  INTO dci, rpath, rstatus, rFsWeight
+  INTO dci, rpath, rstatus
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -566,7 +566,8 @@ BEGIN
      AND FileSystem.id MEMBER OF fsIds
      AND FileSystem.free >= minFree
      AND ROWNUM < 2
-    ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
+    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
+             FileSystem.fsDeviation ASC;
   END;
  ELSE
   OPEN c1 FOR
@@ -576,7 +577,8 @@ BEGIN
    WHERE FileSystem.diskserver = DiskServer.id
     AND FileSystem.free >= minFree
     AND ROWNUM < 2
-   ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
+   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
+            FileSystem.fsDeviation ASC;
  END IF;
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;

@@ -171,6 +171,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_deltaWeight
+       * Estimation of the modifications of the weight since the last update.
+       * @return the value of m_deltaWeight
+       */
+      float deltaWeight() const {
+        return m_deltaWeight;
+      }
+
+      /**
+       * Set the value of m_deltaWeight
+       * Estimation of the modifications of the weight since the last update.
+       * @param new_var the new value of m_deltaWeight
+       */
+      void setDeltaWeight(float new_var) {
+        m_deltaWeight = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -276,6 +294,9 @@ namespace castor {
       float m_fsDeviation;
 
       std::string m_mountPoint;
+
+      /// Estimation of the modifications of the weight since the last update.
+      float m_deltaWeight;
 
       /// The id of this object
       u_signed64 m_id;

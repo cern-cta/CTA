@@ -413,7 +413,7 @@ namespace castor {
 
         /**
          * Retrieves a FileSystem from the database based on its
-         * mount point and diskServer name.
+         * mount point and diskServer name. Keeps a lock on it.
          * Caller is in charge of the deletion of the allocated
          * objects, including the DiskServer Object
          * @param mountPoint the mountPoint of the FileSystem

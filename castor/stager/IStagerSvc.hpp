@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/01/20 14:52:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/01/20 15:56:10 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -408,7 +408,7 @@ namespace castor {
 
       /**
        * Retrieves a FileSystem from the database based on its
-       * mount point and diskServer name.
+       * mount point and diskServer name. Keeps a lock on it.
        * Caller is in charge of the deletion of the allocated
        * objects, including the DiskServer Object
        * @param mountPoint the mountPoint of the FileSystem
