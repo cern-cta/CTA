@@ -1,20 +1,20 @@
-.\" $Id: stage_put_hsm.man,v 1.1 2002/10/08 08:52:25 jdurand Exp $
+.\" $Id: stage_put_hsm.man,v 1.2 2002/10/08 09:20:16 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 08:52:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 09:20:16 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 08:52:25 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 09:20:16 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put_hsm \- copy disk files to Hierarchical Storage Management System.
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-.BI "int stage_put (char *" stghost ,
+.BI "int stage_put_hsm (char *" stghost ,
 .BI "stage_hsm_t " *hsmstruct ");"
 
 .SH DESCRIPTION
-.B stage_put
+.B stage_put_hsm
 copies disk files to a Hierarchical Storage Management System. It can only be used after a
 .B stageout
 command, or a
