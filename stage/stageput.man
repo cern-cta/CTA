@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.10 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.11 $ $Date: 2002/02/20 15:47:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPUT l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGEPUT l "$Date: 2002/02/20 15:47:33 $"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -14,6 +14,8 @@ Hierarchical Storage Management System.
 .BI \-h " host"
 ] [
 .BI \-U " fun"
+] [
+.BI \-\-noretry
 ] [
 .BI \-\-nowait
 ] [
@@ -28,6 +30,8 @@ Hierarchical Storage Management System.
 ] [
 .BI \-q " file_sequence_number(s)"
 ] [
+.BI \-\-noretry
+] [
 .BI \-\-nowait
 ]
 .BI \-V " visual_identifier"
@@ -39,6 +43,8 @@ Hierarchical Storage Management System.
 .BI \-h " host"
 ] [
 .BI \-I " external_filename"
+] [
+.BI \-\-noretry
 ] [
 .BI \-\-nowait
 ]
@@ -52,6 +58,8 @@ Hierarchical Storage Management System.
 .BI \-M " hsmfile"
 [
 .BI \-M ...
+] [
+.BI \-\-noretry
 ] [
 .BI \-\-nowait
 ]
@@ -116,6 +124,9 @@ if the first command format is used.
 .BI \-V " vid"
 copy the files corresponding to the given vid.
 .TP
+.B \-\-noretry
+There will be no retry in case of any failure.
+.TP
 .BI \-\-nowait
 specifies that the command should return immediately. Copy in done in the background of the stager daemon.
 .SH RETURN CODES
@@ -136,5 +147,7 @@ specifies that the command should return immediately. Copy in done in the backgr
 192	Request cancelled by stageclr.
 .br
 197	Stageing limited by size.
+.br
+198	Stager not active
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

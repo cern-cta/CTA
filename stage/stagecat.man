@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.7 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.8 $ $Date: 2002/02/20 15:47:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECAT l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGECAT l "$Date: 2002/02/20 15:47:33 $"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 .SH SYNOPSIS
@@ -309,5 +309,7 @@ in the same order.
 2	System error.
 .br
 4	Configuration error.
+.br
+198	Stager not active
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
