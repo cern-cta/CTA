@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.8 $ $Date: 1999/12/28 15:52:49 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.9 $ $Date: 2000/02/16 08:45:54 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -175,6 +175,20 @@ typedef struct rtcpTapeRequest {
         strlen(X->devtype) + strlen(X->density) + strlen(X->unit)+6)
 
 /*
+ * Special request for dumptape requests
+ */
+typedef struct rtcpDumpTapeRequest {
+    int maxbyte;
+    int blocksize;
+    int convert;
+    int tp_err_action;
+    int maxfile;
+    int fromblock;
+    int toblock;
+} rtcpDumpTapeRequest_t;
+#define RTCP_DUMPTAPEREQLEN(X) (7*LONGSIZE)
+
+/*
  * Circular lists of tape and file requests. (Client only)
  */
 typedef struct tape_list {
@@ -184,6 +198,7 @@ typedef struct tape_list {
                                       * to prevent Ctape_reserve() from
                                       * being called twice. */
     rtcpTapeRequest_t tapereq;        
+    rtcpDumpTapeRequest_t dumpreq;   /* Only used if file == NULL */
     struct file_list *file;          /* List of files for this tape */
     struct tape_list *next;          /* Next in circular list */
     struct tape_list *prev;          /* Previous in circular list */
@@ -250,8 +265,10 @@ typedef struct file_list {
 #define CLIST_ITERATE_END(X,Y) Y=(Y)->next; } while ((X) != (Y));}}
 #define CLIST_INSERT(X,Y) {if ((X) == NULL) {X=(Y); (X)->next = (X)->prev = (X);} \
 else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(Y);}}
-#define CLIST_DELETE(Y,X) {if ((X) != NULL) {if ( (X) == (Y) ) (Y)=(Y)->next; if ((X)->prev != (X) && (X)->next != (X)) {\
-(X)->prev->next = (X)->next; (X)->next->prev = (X)->prev;} else {(Y)=NULL;}}}
+#define CLIST_DELETE(X,Y) {if ((Y) != NULL) {if ( (Y) == (X) ) (X)=(X)->next; \
+ if ((Y)->prev != (Y) && (Y)->next != (Y)) {\
+ (Y)->prev->next = (Y)->next; (Y)->next->prev = (Y)->prev;} else {(X)=NULL;}}}
+
 
 /*
  * This extern declaration is needed by both client and server
