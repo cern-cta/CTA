@@ -722,16 +722,16 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
 
   if (m_classInfo->id() == a->getRoleAId() ||
       m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
-    pushPair (parseMulti(a->getMultiA()),
+    pushPair (parseMulti(a->getMultiB()),
               parseAssocKind(a->getAssocType(), true),
-              a->getRoleNameA(),
+              a->getRoleNameB(),
               a->getObjectB()->getName(),
               a->getObjectA()->getName(),
               list);
   } else {
-    pushPair (parseMulti(a->getMultiB()),
+    pushPair (parseMulti(a->getMultiA()),
               parseAssocKind(a->getAssocType(), false),
-              a->getRoleNameB(),
+              a->getRoleNameA(),
               a->getObjectA()->getName(),
               a->getObjectB()->getName(),
               list);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/09/28 14:45:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/09/30 14:02:02 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -270,13 +270,13 @@ void CHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
       // class in the code of this one
       if (a->getRoleAId() == myID && a->getVisibilityA() == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameA().isEmpty()) {
+        if(!a->getRoleNameB().isEmpty()) {
           QString name = a->getObjectB()->getName();
           if (!isEnum(name)) name.append("*");
           writeAssociationRoleMethod
             (name,
-             a->getRoleNameA(),
-             parseMulti(a->getMultiA()),
+             a->getRoleNameB(),
+             parseMulti(a->getMultiB()),
              a->getRoleBDoc(),
              a->getChangeabilityB(),
              stream);
@@ -284,13 +284,13 @@ void CHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
       }
       if (a->getRoleBId() == myID && a->getVisibilityB() == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameB().isEmpty()) {
+        if(!a->getRoleNameA().isEmpty()) {
           QString name = a->getObjectA()->getName();
           if (!isEnum(name)) name.append("*");
           writeAssociationRoleMethod
             (name,
-             a->getRoleNameB(),
-             parseMulti(a->getMultiB()),
+             a->getRoleNameA(),
+             parseMulti(a->getMultiA()),
              a->getRoleADoc(),
              a->getChangeabilityA(),
              stream);

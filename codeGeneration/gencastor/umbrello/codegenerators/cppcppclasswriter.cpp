@@ -162,6 +162,8 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
   if (type.contains("*") || (type == "int") ||
       (type == "long") || (type == "short")) {
     content = "0";
+  } else if ((type == "float") || (type == "double")) {
+    content = "0.0";
   } else if (type == "void") {
   } else if (type[type.length()-1] == ']') {
     // Nothing for arrays
@@ -195,18 +197,18 @@ void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
                                                      bool& first) {
   if (m_classInfo->id() == a->getRoleAId() ||
       m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
-    if (parseMulti(a->getMultiA()) == MULT_ONE) {
+    if (parseMulti(a->getMultiB()) == MULT_ONE) {
       QString className = a->getObjectB()->getName();
       if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleNameA(),
+      writeInitInConstructor (QString("m_") + a->getRoleNameB(),
                               className,
                               first);
     }
   } else {
-    if (parseMulti(a->getMultiB()) == MULT_ONE) {
+    if (parseMulti(a->getMultiA()) == MULT_ONE) {
       QString className = a->getObjectA()->getName();
       if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleNameB(),
+      writeInitInConstructor (QString("m_") + a->getRoleNameA(),
                               className,
                               first);
     }
@@ -298,8 +300,8 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
                   getNamespace(a->getObjectB()->getName()),
                   m_classInfo->packageName);
       writeDeleteInDestructor
-        (a->getRoleNameA(), a->getRoleNameB(),
-         multA, multB,
+        (a->getRoleNameB(), a->getRoleNameA(),
+         multB, multA,
          a->getAssocType() == Uml::at_Composition);
     }
   } else {
@@ -309,8 +311,8 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
                   getNamespace(a->getObjectA()->getName()),
                   m_classInfo->packageName);
       writeDeleteInDestructor
-        (a->getRoleNameB(), a->getRoleNameA(),
-         multB, multA, false);
+        (a->getRoleNameA(), a->getRoleNameB(),
+         multA, multB, false);
     }
   }
 }
@@ -452,15 +454,15 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                                         QTextStream &stream) {
   if (obj->classInfo()->id() == a->getRoleAId() ||
       obj->classInfo()->allSuperclassIds.contains(a->getRoleAId())) {
-    Multiplicity multiB = obj->parseMulti(a->getMultiA());
+    Multiplicity multiB = obj->parseMulti(a->getMultiB());
     switch (multiB) {
     case MULT_ONE:
       {
         UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectB());
         if (0 == cl || cl->isEnumeration()) {
-          writeSimplePrint (obj->getIndent(), a->getRoleNameA(), stream);
+          writeSimplePrint (obj->getIndent(), a->getRoleNameB(), stream);
         } else {
-          writeAssoc1Print (a->getRoleNameA(),
+          writeAssoc1Print (a->getRoleNameB(),
                             a->getObjectB()->getName(),
                             obj,
                             stream);
@@ -468,7 +470,7 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       }
       break;
     case MULT_N:
-      writeAssocNPrint (a->getRoleNameA(),
+      writeAssocNPrint (a->getRoleNameB(),
                         a->getObjectB()->getName() + "*",
                         obj,
                         stream);
@@ -477,15 +479,15 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       break;
     }
   } else {
-    Multiplicity multiA = obj->parseMulti(a->getMultiB());
+    Multiplicity multiA = obj->parseMulti(a->getMultiA());
     switch (multiA) {
     case MULT_ONE:
       {
         UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectA());
         if (0 == cl || cl->isEnumeration()) {
-          writeSimplePrint (obj->getIndent(), a->getRoleNameB(), stream);
+          writeSimplePrint (obj->getIndent(), a->getRoleNameA(), stream);
         } else {
-          writeAssoc1Print (a->getRoleNameB(),
+          writeAssoc1Print (a->getRoleNameA(),
                             a->getObjectA()->getName(),
                             obj,
                             stream);
@@ -493,7 +495,7 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       }
       break;
     case MULT_N:
-      writeAssocNPrint (a->getRoleNameB(),
+      writeAssocNPrint (a->getRoleNameA(),
                         a->getObjectA()->getName() + "*",
                         obj,
                         stream);
