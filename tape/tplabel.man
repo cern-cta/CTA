@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.6 $ $Date: 2002/04/08 14:59:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape User Commands"
+.TH TPLABEL 1 "$Date: 2002/04/08 14:59:15 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS
@@ -23,10 +23,12 @@ tplabel \- initialize a new blank tape
 .BI -V " visual_identifier"
 ] [
 .BI -v " volume_serial_number"
+] [
+.BI --nbsides " n"
 ]
 .SH DESCRIPTION
 .B tplabel
-checks with TMS if the tape is available and if the user
+checks with VMGR if the tape is available and if the user
 has write permission. It asks the operator or the robot to mount it write
 enabled on a drive selected by the tape daemon or specified in the -D option.
 When the tape is ready, it checks if the tape is blank (if not the operator will
@@ -35,7 +37,7 @@ rewinds it and writes VOL1 and HDR1 label records followed by one or two
 tape marks for labelled tapes or only one or two tape marks for unlabelled
 tapes.
 By default, the number of tapemarks is one for tapes with directory such as DLT,
-NTP, Redwood and 9840, two tapemarks otherwise.
+IBM 3590, Redwood and STK 9840, two tapemarks otherwise.
 The option -T can be used to force two tapamarks to be written.
 .SH OPTIONS
 .TP
@@ -56,6 +58,7 @@ for double density IBM 3490 cartridges,
 .B 38KDC
 for 3490 cartridges with compaction (IDRC),
 .BR 8200 ,
+.BR 8200C ,
 .B 8500
 or
 .B 8500C
@@ -70,14 +73,20 @@ for DAT cartridges,
 .BR 10GC ,
 .BR 20G ,
 .BR 20GC ,
-.B 35G
+.BR 35G ,
+.BR 35GC ,
+.B 40G
 or
-.B 35GC
+.B 40GC
 for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590K cartridges,
 .BR 10G ,
 .BR 10GC ,
 .BR 25G ,
@@ -89,11 +98,22 @@ for Redwood cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
+It must match the density specified in VMGR (if installed).
 .TP
 .BI \-g " dgn"
 The device group must be a member of an installation defined set of "device groups".
-It must match the device group specified in TMS (if installed).
+The list can be obtained with
+.BR vmgrlistdgnmap .
+It must match the device group specified in VMGR (if installed).
 Default is CART.
 .TP
 .BI \-H " number_headers"
@@ -108,10 +128,11 @@ VOL1, HDR1 and HDR2 are written to tape.
 .BI \-l " lab_type"
 Label type:
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
-It must match the label type specified in TMS.
+It must match the label type specified in VMGR (if installed).
 Default is sl.
 .TP
 .B \-T
@@ -124,7 +145,11 @@ and is converted to upper case.
 .BI \-v " vsn"
 Specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long and is converted to upper case.
-The vsn must match the one specified in TMS.
+The vsn must match the one specified in VMGR (if installed).
+.TP
+.BI \-\-nbsides " n"
+Specifies the number of sides offered by the piece of media (for example a DVD).
+Default is 1.
 .LP
 VOL1 record structure:
 
@@ -132,7 +157,11 @@ VOL1 record structure:
 .br
 5:10	vsn (maximum 6 characters in upper case).
 .br
+38:51	Owner (login name) for AL tapes.
+.br
 42:51	Owner (login name) for SL tapes.
+.br
+80	Label standard level 3 (AL tapes).
 
 HDR1 record structure:
 
@@ -140,17 +169,23 @@ HDR1 record structure:
 .br
 5:12	"PRELABEL"
 .br
+22:27	fsid (same as vsn)
+.br
 28:31	0001 (volume sequence number)
 .br
 32:35	0001 (file sequence number)
 .br
-43:47	today's date in Julian form (creation date)
+36:39	0001 (generation number)
 .br
-49:53	today's date in Julian form (expiration date)
+40:41	00 (version number)
+.br
+42:47	today's date in Julian form (creation date)
+.br
+48:53	today's date in Julian form (expiration date)
 .br
 55:60	000000 (block count)
 .br
-61:73	system name ("SUN", "SGI/IRIX", "DEC3100")
+61:73	system code ("CASTOR" followed by version number)
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
