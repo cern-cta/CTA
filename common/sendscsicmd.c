@@ -1,5 +1,5 @@
-/*
- * $Id: sendscsicmd.c,v 1.5 1999/12/14 11:58:36 fabien Exp $
+/* 
+ * $Id: sendscsicmd.c,v 1.6 1999/12/14 14:33:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.5 $ $Date: 1999/12/14 11:58:36 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:33:28 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.5 $ $Date: 
  */
 /*	currently implemented on SOLARIS25, sgi, hpux, Digital Unix and linux */
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <fcntl.h>
