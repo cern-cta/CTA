@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:41:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.3 $ $Date: 1999/11/25 06:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -181,7 +181,9 @@ char	*path;
 	int c;
 	struct devlblinfo  *dlip;
 	int fsec;
+	char hdr1[80], hdr2[80];
 	int i;
+	char vol1[80];
 
 	for (i = 0, dlip = devlblinfop; i < nb_rsvd_resources; i++, dlip++)
 		if (strcmp (dlip->path, path) == 0) break;
@@ -194,13 +196,16 @@ char	*path;
 		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
 	if (dlip->lblcode == NL) return (0);	/* tape is unlabelled */
 	if (dlip->fseq == 1) {
-		if (dlip->lblcode == SL) asc2ebc (dlip->vol1, 80);
-		if ((c = writelbl (tapefd, path, dlip->vol1)) < 0) return (c);
+		memcpy (vol1, dlip->vol1, 80);
+		if (dlip->lblcode == SL) asc2ebc (vol1, 80);
+		if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
 	}
-	if (dlip->lblcode == SL) asc2ebc (dlip->hdr1, 80);
-	if ((c = writelbl (tapefd, path, dlip->hdr1)) < 0) return (c);
-	if (dlip->lblcode == SL) asc2ebc (dlip->hdr2, 80);
-	if ((c = writelbl (tapefd, path, dlip->hdr2)) < 0) return (c);
+	memcpy (hdr1, dlip->hdr1, 80);
+	if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
+	if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
+	memcpy (hdr2, dlip->hdr2, 80);
+	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
+	if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
 	return (wrttpmrk (tapefd, path, 1));
 }
 
@@ -215,7 +220,7 @@ int	nblocks;
 	int c;
 	struct devlblinfo  *dlip;
 	int fseq;
-	char hdr1[81], hdr2[81];
+	char hdr1[80], hdr2[80];
 	int i;
 #if defined(hpux) || defined(linux)
 	struct mtget mt_info;
@@ -230,9 +235,11 @@ int	nblocks;
 	if (dlip->lblcode == NL) return (wrteotmrk (tapefd, path));	/* tape is unlabelled */
 	if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
 
+	memcpy (hdr1, dlip->hdr1, 80);
 	memcpy (hdr1, labelid, 3);
 	sprintf (buf, "%.6d", nblocks);
 	memcpy (hdr1 + 54, buf, 6);
+	memcpy (hdr2, dlip->hdr2, 80);
 	memcpy (hdr2, labelid, 3);
 
 	if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
