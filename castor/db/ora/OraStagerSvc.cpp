@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/10/22 07:57:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/10/22 12:44:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -227,11 +227,11 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->setInt
         (4, castor::stager::STREAM_RUNNING);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING);
+        (5, oracle::occi::OCCISTRING, 255);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING);
+        (6, oracle::occi::OCCISTRING, 255);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING);
+        (7, oracle::occi::OCCISTRING, 255);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (8, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
@@ -239,7 +239,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (11, oracle::occi::OCCISTRING);
+        (11, oracle::occi::OCCISTRING, 255);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (12, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
