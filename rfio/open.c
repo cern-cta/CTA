@@ -1,14 +1,14 @@
 /*
- * $Id: open.c,v 1.12 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: open.c,v 1.13 2001/06/17 14:25:41 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.12 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.13 $ $Date: 2001/06/17 14:25:41 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -224,6 +224,8 @@ char  	*vmstr ;
    int                     tolen;
    struct  hostent *hp;
    extern void rfio_setup_ext();
+   extern char * getacct() ;
+   extern char * getconfent() ;
    extern char * getifnam() ;
    int old,n;
    int n_index;
