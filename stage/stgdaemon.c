@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.63 2000/09/28 12:57:43 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.64 2000/09/30 09:04:35 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.63 $ $Date: 2000/09/28 12:57:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.64 $ $Date: 2000/09/30 09:04:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1966,8 +1966,8 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 							stcp->uid, stcp->gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
-					goto upd_stageout_return;
 				}
+				goto upd_stageout_return;
 			} else {
 				if (stcp->t_or_d == 'h') {
 					struct Cns_fileid Cnsfileid;
