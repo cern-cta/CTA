@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/03 10:31:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/13 14:32:49 $ $Author: jdurand $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[69] = {
+const char* castor::ObjectsIdStrings[71] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -99,7 +99,9 @@ const char* castor::ObjectsIdStrings[69] = {
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",
-  "StartResponse"
+  "StartResponse",
+  "IObject",
+  "IAddress"
 };
 
 //=============================================================================
