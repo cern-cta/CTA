@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.11 $ $Date: 2002/02/07 06:45:32 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.12 $ $Date: 2003/11/17 06:46:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2002/02/07 06:45:32 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE 3 "$Date: 2003/11/17 06:46:30 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -11,6 +11,7 @@ vmgr_querytape \- query the CASTOR Volume Manager about a tape
 \fB#include "vmgr_api.h"\fR
 .sp
 .BI "int vmgr_querytape (const char *" vid ,
+.BI "int " side ,
 .BI "struct vmgr_tape_info *" tape_info ,
 .BI "char *" dgn )
 .SH DESCRIPTION
