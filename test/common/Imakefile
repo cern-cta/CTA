@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2000/08/09 08:19:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2001/05/22 11:39:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -15,9 +15,9 @@ COMM --------------------------
 CFLAGS         = $(MTCCFLAGS) -I$(INCLUDES) $(DEBUG)
 LDFLAGS        = $(MTLDFLAGS)
 
-OBJS = Csched_test.Osuf
+OBJS = Csched_test.Osuf tuxid.Osuf
 
-PROGS = ProgramTargetName(Csched_test)
+PROGS = ProgramTargetName(Csched_test) ProgramTargetName(tuxid)
 
 DEPLIBS = DepLibraryTargetName(FileName(..,common),common)
 
@@ -42,6 +42,7 @@ all: $(PROGS)
 
 #ifndef _WIN32
 NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
+NormalProgramTarget(tuxid,tuxid.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 MakeDepLibrary(FileName(..,common),common)
 #endif
 
