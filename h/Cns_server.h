@@ -1,5 +1,5 @@
 /*
- * Cns_server.h,v 1.38 2004/03/03 08:50:31 bcouturi Exp
+ * $Id: Cns_server.h,v 1.2 2004/07/14 16:51:17 motiakov Exp $
  */
 
 /*
@@ -136,7 +136,9 @@ struct Cns_srv_thread_info {
 	int		db_open_done;
 	struct Cns_dbfd dbfd;
 	char		errbuf[PRTBUFSZ];
+#ifdef CSEC
         Csec_context sec_ctx;
+#endif
 };
 
 struct Cns_seg_metadata {
