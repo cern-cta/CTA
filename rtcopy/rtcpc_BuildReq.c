@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 13:59:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:24:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -206,7 +206,6 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     filereq->position_method = -1;
     filereq->tape_fseq = -1;
     filereq->disk_fseq = -1;
-    filereq->tape_fsec = 1;
     filereq->blocksize = -1;
     filereq->recordlength = -1;
     filereq->retention = -1;
@@ -1460,8 +1459,6 @@ static int rtcpc_v_opt(int mode,
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
                     tl->file->filereq.tape_fseq = 0;
-                    tl->file->filereq.tape_fsec =
-                        tl->prev->file->filereq.tape_fsec + 1;
                 }
             }
             tapereq = &tl->tapereq;
@@ -1528,8 +1525,6 @@ static int rtcpc_V_opt(int mode,
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
                     tl->file->filereq.tape_fseq = 0;
-                    tl->file->filereq.tape_fsec =
-                        tl->prev->file->filereq.tape_fsec + 1;
                 }
             }
             tapereq = &tl->tapereq;
@@ -1874,7 +1869,6 @@ int dumpFileReq(file_list_t *fl) {
     DUMPINT(indent,filereq->jobID);
     DUMPINT(indent,filereq->position_method);
     DUMPINT(indent,filereq->tape_fseq);
-    DUMPINT(indent,filereq->tape_fsec);
     DUMPINT(indent,filereq->disk_fseq);
     DUMPINT(indent,filereq->blocksize);
     DUMPINT(indent,filereq->recordlength);
