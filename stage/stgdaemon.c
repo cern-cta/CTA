@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.192 2002/05/15 08:18:09 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.193 2002/05/15 14:03:12 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.192 $ $Date: 2002/05/15 08:18:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.193 $ $Date: 2002/05/15 14:03:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -105,6 +105,39 @@ struct winsize {
 #ifdef STAGE_CSETPROCNAME
 #define STAGE_CSETPROCNAME_FORMAT "%s PORT=%d NBCAT=%d NBPATH=%d QUEUED=%d FREE_FD=%d"
 #include "Csetprocname.h"
+#endif
+#ifdef STAGER_DEBUG
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/times.h>
+struct _stage_times {
+	struct tms tms;
+	clock_t     time;
+};
+typedef struct _stage_times _stage_times_t;
+#define STAGE_TIME_START(comment) { \
+	char *thisfile = __FILE__; \
+	int thisline = __LINE__; \
+    char *thiscomment = comment; \
+    _stage_times_t _stage_times_start; \
+	_stage_times_t _stage_times_end; \
+	long clktck; \
+	_stage_times_start.time = times(&_stage_times_start.tms);
+#define STAGE_TIME_END \
+	_stage_times_end.time = times(&_stage_times_end.tms); \
+	clktck = sysconf(_SC_CLK_TCK); \
+	stglogit("timer", "[%s] Between %s:%d and %s:%d, timer gives:\n", thiscomment, thisfile, thisline, __FILE__, __LINE__); \
+	stglogit("timer", "[%s] Real Time : %7.2f (%ld ticks)\n", thiscomment, (_stage_times_end.time - _stage_times_start.time) / (double) clktck, (long) (_stage_times_end.time - _stage_times_start.time) ); \
+	stglogit("timer", "[%s] User Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
+	stglogit("timer", "[%s] Sys  Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
+}
+#else
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
+#endif
+#else
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
 #endif
 
 /* Pages size */
@@ -1664,10 +1697,12 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 	/* allocate space */
 
+	STAGE_TIME_START("build_ipath : selectfs");
 	if (selectfs (stcp->poolname, &(stcp->size), stcp->ipath, stcp->status, noallocation) < 0) {
 		stcp->ipath[0] = '\0';
 		return (-1);	/* not enough space */
 	}
+	STAGE_TIME_END;
 
 	/* build full internal path name */
 
@@ -1745,7 +1780,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 	if (get_create_file_option (stcp->poolname)) {
 		/* Create group directory if needed */
 		*p_u = '\0';
+		STAGE_TIME_START("build_ipath : create_dir");
 		c = create_dir (stcp->ipath, (uid_t) 0, stcp->gid, (mode_t) 0755);
+		STAGE_TIME_END;
 		*p_u = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1758,7 +1795,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return ((errno == ENOENT) ? SEUSERUNKN : SESYSERR);
 		}
 		*p_f = '\0';
+		STAGE_TIME_START("build_ipath : create_dir");
 		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
+		STAGE_TIME_END;
 		*p_f = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1772,7 +1811,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 	(void) umask (stcp->mask);
 	PRE_RFIO;
+	STAGE_TIME_START("build_ipath : rfio_open");
 	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
+	STAGE_TIME_END;
 	(void) umask (0);
 	if (fd < 0) {
 		if (errno != ENOENT && rfio_errno != ENOENT) {
@@ -1787,7 +1828,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		/* create group and user directories */
 
 		*p_u = '\0';
+		STAGE_TIME_START("build_ipath : create_dir");
 		c = create_dir (stcp->ipath, (uid_t) 0, stcp->gid, (mode_t) 0755);
+		STAGE_TIME_END;
 		*p_u = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1800,7 +1843,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (SESYSERR);
 		}
 		*p_f = '\0';
+		STAGE_TIME_START("build_ipath : create_dir");
 		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
+		STAGE_TIME_END;
 		*p_f = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1811,7 +1856,9 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 		(void) umask (stcp->mask);
 		PRE_RFIO;
+		STAGE_TIME_START("build_ipath : rfio_open");
 		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
+		STAGE_TIME_END;
 		(void) umask (0);
 		if (fd < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
@@ -1820,10 +1867,13 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		}
 	}
 	PRE_RFIO;
+	STAGE_TIME_START("build_ipath : rfio_close");
 	if (rfio_close(fd) != 0) {
 		stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
 	}
+	STAGE_TIME_END;
 	PRE_RFIO;
+	STAGE_TIME_START("build_ipath : rfio_chown");
 	if (rfio_chown (stcp->ipath, stcp->uid, stcp->gid) < 0) {
 		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown", rfio_serror());
 		/* Here file has been created but we cannot chown... We erase the file */
@@ -1834,6 +1884,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		stcp->ipath[0] = '\0';
 		return (SESYSERR);
 	}
+	STAGE_TIME_END;
 	return (0);
 }
 
