@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.15 2002/04/11 10:37:08 jdurand Exp $
+ * $Id: stager_castor.c,v 1.16 2002/04/30 13:09:34 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.15 $ $Date: 2002/04/11 10:37:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.16 $ $Date: 2002/04/30 13:09:34 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -918,9 +918,9 @@ int stagein_castor_hsm_file() {
     int last_found;        /* In case of use_subreqid == 0 */
 	char fseq_for_log[1025]; /* 1024 characters max (+'\0') */
 	int last_fseq_for_log = -1;
-	char *p_fseq;
+	char *p_fseq = NULL;
 	char this_string[CA_MAXFSEQLEN+1];
-	char *this_cont;
+	char *this_cont = NULL;
 	char *start_fseq = "";
 	char *cont_fseq = "-";
 	char *new_fseq = ",";
@@ -981,7 +981,7 @@ int stagein_castor_hsm_file() {
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
 
-				new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
+				new_totalsize = stcp->size;
 
 				/* If the maximum size to transfer does not exceed physical size then */
 				/* we change this field.                                              */
@@ -1188,7 +1188,7 @@ int stagein_castor_hsm_file() {
 		if (stcp->size > 0) {
 			u_signed64 new_totalsize;
 
-			new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
+			new_totalsize = stcp->size;
 
 			/* If the maximum size to transfer does not exceed physical size then */
 			/* we change this field.                                              */
@@ -1906,7 +1906,7 @@ int stagewrt_castor_hsm_file() {
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
 
-				new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
+				new_totalsize = stcp->size;
 
 				/* If the amount of bytes to transfer is asked to be lower than the physical */
 				/* size of the file, we reflect this in the corresponding field.             */
@@ -2694,8 +2694,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			/* Here we support limitation of number of bytes in write-to-tape */
 			if (stcp->size > 0) {
 				u_signed64 dummysize;
-				dummysize = (u_signed64) stcp->size;
-				dummysize *= (u_signed64) ONE_MB;
+				dummysize = stcp->size;
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
 			}
@@ -2705,9 +2704,8 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			if (stcp->size > 0) {
 				/* But user (unfortunately) specified such a number... We overwrite it if necessasry */
 				u_signed64 dummysize;
-				dummysize = (u_signed64) stcp->size;
-				dummysize *= (u_signed64) ONE_MB;
-				/* If stcp->size (in MB) in lower than totalsize, we change maxsize value */
+				dummysize = stcp->size;
+				/* If stcp->size (in bytes) in lower than totalsize, we change maxsize value */
 				if (dummysize < hsm_totalsize[ihsm]) dummysize = hsm_totalsize[ihsm];
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
@@ -3485,8 +3483,6 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 	if (is_this_flag != 0) {
 		/* Two cases: segments to soft-delete (action in NS) or not (action in VMGR) */
 		if ((castor_hsm != NULL) && (filereq != NULL) && (segments_to_soft_delete != 0)) {
-			int i;
-			
 			/* We need find again which copyno/fsec exactly refers to this tape/vid.fseq */
 			/* This must be in the list of segments that are known in advance: */
 			if (hsm_segments != NULL && hsm_nsegments != NULL) {
@@ -3834,7 +3830,7 @@ int copyfile(fd1, fd2, inpfile, outfile, totalsize, effsize)
 	u_signed64 totalsize;
 	u_signed64 *effsize;
 {
-	int n, m, mode;
+	int n, m = 0, mode;
 	struct stat sbuf;
 	char *p;
 	int bufsize = TRANSFER_UNIT;
