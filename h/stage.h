@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.31 2000/12/12 14:52:18 jdurand Exp $
+ * $Id: stage.h,v 1.32 2000/12/18 16:00:25 jdurand Exp $
  */
 
 /*
@@ -213,7 +213,7 @@
 #define	STG94	"STG94 - creating link %s\n"
 #define	STG95	"STG95 - %s cleared by %s\n"
 #define	STG96	"STG96 - %s already staged, size = %ld (%.1f MB), nbaccess = %d\n"
-#define	STG97	"STG97 - %s:%s staged by (%s,%s), server %s  unit %s  ifce %s  size %ld  wtim %d  ttim %d rc %d\n"
+#define	STG97	"STG97 - %s:%s staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
 #define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
@@ -223,6 +223,8 @@
 #define STG104  "STG104 - Internal error: status=0x%x but req not in waitq - Ask admin to try with -F option\n"
 #define STG105  "STG105 - Internal error in %s : %s\n"
 #define STG106  "STG106 - Internal error in %s for %s: %s\n"
+#define	STG107	"STG107 - %s:%s segment %d staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
+#define	STG108	"STG108 - %s:%s staged using %d segments by (%s,%s), size %s rc %d\n"
 
 			/* stage daemon return codes */
 
@@ -312,6 +314,9 @@ struct stgpath_entry {		/* entry format in STGPATH table */
 struct waitf {
 	int	subreqid;
 	int	waiting_on_req;
+	u_signed64 size_to_recall;             /* Only used in read-mode (asyncrhoneous callbacks from RTCOPY) */
+	int nb_segments;
+	u_signed64 size_yet_recalled;
 	char	upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 };
 
@@ -349,6 +354,9 @@ struct waitq {
 	int	StageIDflag; /* Determine if done under stage:st or not */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
 	int	background; /* Determine if done in background or not */
+	int use_subreqid; /* Says if we allow RTCOPY to do asynchroneous callback */
+	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
+	int save_nbsubreqid; /* Save original number of entries */
 };
 
 struct migpolicy {

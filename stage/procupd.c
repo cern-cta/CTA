@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.43 2000/12/14 15:25:19 jdurand Exp $
+ * $Id: procupd.c,v 1.44 2000/12/18 16:00:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.43 $ $Date: 2000/12/14 15:25:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.44 $ $Date: 2000/12/18 16:00:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.43 $ $Date: 200
 #include "rfio_api.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
+#include "u64subr.h"
 
 void procupdreq _PROTO((char *, char *));
 void update_hsm_a_time _PROTO((struct stgcat_entry *));
@@ -109,6 +110,8 @@ procupdreq(req_data, clienthost)
 	struct waitq *wqp;
 	int Zflag = 0;
 	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
+	int callback_index = -1;
+	int found_wfp = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -126,7 +129,7 @@ procupdreq(req_data, clienthost)
 	upd_rpfd = rpfd;
 	Coptind = 1;
 	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:I:L:q:R:s:T:U:W:Z:")) != -1) {
+	while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:i:I:L:q:R:s:T:U:W:Z:")) != -1) {
 		switch (c) {
 		case 'b':
 			blksize = strtol (Coptarg, &dp, 10);
@@ -145,6 +148,12 @@ procupdreq(req_data, clienthost)
 			fid = Coptarg;
 			break;
 		case 'h':
+			break;
+		case 'i':
+			if ((callback_index = atoi(Coptarg)) < 0) {
+				sendrep (rpfd, MSG_ERR, STG06, "-i");
+				errflg++;
+			}
 			break;
 		case 'I':
 			ifce = Coptarg;
@@ -251,8 +260,37 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 	c = 0;
-	for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++)
-		if (! wfp->waiting_on_req) break;
+	if (callback_index < 0) {
+		/* We got no indication of index - this is a sequential callback */
+		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+			if (! wfp->waiting_on_req) {
+				found_wfp = 1;
+				break;
+			}
+		}
+	} else {
+		if (callback_index >= wqp->save_nbsubreqid) {
+			/* False value */
+			sendrep (rpfd, MSG_ERR, STG22);
+			c = USERR;
+			goto reply;
+		}
+		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+#ifdef STAGER_DEBUG
+			sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] Comparing wqp->save_subreqid[%d]=%d with wfp->subreqid=%d [i=%d]\n", callback_index, wqp->save_subreqid[callback_index], wfp->subreqid, i);
+#endif
+			if (wfp->subreqid == wqp->save_subreqid[callback_index] && ! wfp->waiting_on_req) {
+				found_wfp = 1;
+				break;
+			}
+		}
+	}
+	if (! found_wfp) {
+		/* False value */
+		sendrep (rpfd, MSG_ERR, STG22);
+		c = USERR;
+		goto reply;
+	}
 	subreqid = wfp->subreqid;
 
 	found = index_found = 0;
@@ -398,6 +436,8 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 	if (stcp->ipath[0] != '\0') {
+		int done_partial_msg = 0;
+
 		if ((p = strchr (stcp->ipath, ':')) != NULL) {
 			q = stcp->ipath;
 		} else {
@@ -406,12 +446,43 @@ procupdreq(req_data, clienthost)
 		}
 		strncpy (dsksrvr, q, p - q);
 		dsksrvr[p - q] = '\0';
-		stglogit (func, STG97, dsksrvr, strrchr (stcp->ipath, '/')+1,
-						stcp->user, stcp->group,
-						clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
 		if (stcp->status == STAGEIN) {
+			char tmpbuf[21];
+
 			if (rfio_stat (stcp->ipath, &st) == 0) {
-				stcp->actual_size = st.st_size;
+				stcp->actual_size = (u_signed64) st.st_size;
+				wfp->nb_segments++;
+				wfp->size_yet_recalled = (u_signed64) st.st_size;
+				if (wfp->size_yet_recalled >= wfp->size_to_recall) {
+					/* Final message - Note that wfp->size_to_recall can be zero */
+					/* (always the case it it is not a recall of CASTOR file) */
+					if (wfp->nb_segments == 1) {
+						/* Done in one segment */
+						stglogit(func, STG97,
+								dsksrvr, strrchr (stcp->ipath, '/')+1,
+								stcp->user, stcp->group,
+								clienthost, dvn, ifce,
+								u64tostr((u_signed64) size, tmpbuf, 0),
+								waiting_time, transfer_time, rc);
+					} else {
+						/* Done in more than one segment */
+						stglogit(func, STG108,
+							dsksrvr, strrchr (stcp->ipath, '/')+1,
+							wfp->nb_segments, stcp->user, stcp->group,
+							u64tostr(stcp->actual_size, tmpbuf, 0),
+							size,
+							rc);
+					}
+				} else if (wfp->size_to_recall > 0) {
+					/* Not everything has yet been recalled */
+					/* Done for this segment */
+					stglogit(func, STG107,
+						dsksrvr, strrchr (stcp->ipath, '/')+1,
+						wfp->nb_segments, stcp->user, stcp->group,
+						clienthost, dvn, ifce,
+						u64tostr((u_signed64) size, tmpbuf, 0),
+						waiting_time, transfer_time, rc);
+				}
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -420,6 +491,11 @@ procupdreq(req_data, clienthost)
 			} else {
 				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 			}
+		} else {
+			stglogit(func, STG97,
+					dsksrvr, strrchr (stcp->ipath, '/')+1,
+					stcp->user, stcp->group,
+					clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
 		}
 	}
 #if SACCT
@@ -470,22 +546,26 @@ procupdreq(req_data, clienthost)
 		wqp->nbdskf = wqp->nb_subreqs;
 		goto reply;
 	}
-	p_cmd = s_cmd[stcp->status & 0xF];
-	if (IS_RC_OK(rc))
-		p_stat = "succeeded";
-	else if (IS_RC_WARNING(rc))
-		p_stat = "warning";
-	else
-		p_stat = "failed";
-	if (stcp->t_or_d == 't')
-		sendrep (wqp->rpfd, MSG_ERR, STG41, p_cmd, p_stat,
-						 fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
-	else if (stcp->t_or_d == 'd')
-		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
-	else if (stcp->t_or_d == 'm')
-		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
-	else if (stcp->t_or_d == 'h')
-		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
+	if (wfp->size_yet_recalled >= wfp->size_to_recall) {
+		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
+		/* (always the case it it is not a recall of CASTOR file) */
+		p_cmd = s_cmd[stcp->status & 0xF];
+		if (IS_RC_OK(rc))
+			p_stat = "succeeded";
+		else if (IS_RC_WARNING(rc))
+			p_stat = "warning";
+		else
+			p_stat = "failed";
+		if (stcp->t_or_d == 't')
+			sendrep (wqp->rpfd, MSG_ERR, STG41, p_cmd, p_stat,
+							 fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
+		else if (stcp->t_or_d == 'd')
+			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
+		else if (stcp->t_or_d == 'm')
+			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
+		else if (stcp->t_or_d == 'h')
+			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
+	}
 	if ((rc != 0 && rc != LIMBYSZ &&
 			 rc != BLKSKPD && rc != TPE_LSZ && rc != MNYPARI) ||
 			(rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE) == 0)) {
@@ -554,36 +634,53 @@ procupdreq(req_data, clienthost)
 #endif
 		}
 	}
-	wqp->nb_subreqs--;
-	wqp->nbdskf--;
-	rpfd = wqp->rpfd;
-	if ((stcp->status == STAGEWRT) ||
-		((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ||
-		((stcp->status & 0xF) == STAGEPUT)) {
-		n = 1;
-		if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
-			n += wqp->nbdskf;
-			wqp->nbdskf = 0;
-		}
-		for (i = 0; i < n; i++, wfp++) {
-			for (stcp = stcs; stcp < stce; stcp++)
-				if (stcp->reqid == wfp->subreqid) break;
-			if (wqp->copytape)
-				sendinfo2cptape (rpfd, stcp);
-			if (! stcp->keep && stcp->nbaccesses <= 1) {
-				if ((stcp->status == STAGEWRT ||
-					((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
-					stcp->poolname[0] == '\0')
-					delreq (stcp,0);
-				else if (delfile (stcp, 0, 1, 1,
-						stcp->status == STAGEWRT ? "stagewrt ok" :
-							(((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ? "migration stagewrt ok" :
-								(((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok")), uid, gid, 0) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-									 "rfio_unlink", rfio_serror());
-					/* For migration files, delfile will call update_migpool(stcp,-1) that will */
-					/* remove the BEING_MIGR flag */
-					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
+	if (wfp->size_yet_recalled >= wfp->size_to_recall) {
+		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
+		/* (always the case it it is not a recall of CASTOR file) */
+		wqp->nb_subreqs--;
+		wqp->nbdskf--;
+		rpfd = wqp->rpfd;
+		if ((stcp->status == STAGEWRT) ||
+			((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ||
+			((stcp->status & 0xF) == STAGEPUT)) {
+			n = 1;
+			if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
+				n += wqp->nbdskf;
+				wqp->nbdskf = 0;
+			}
+			for (i = 0; i < n; i++, wfp++) {
+				for (stcp = stcs; stcp < stce; stcp++)
+					if (stcp->reqid == wfp->subreqid) break;
+				if (wqp->copytape)
+					sendinfo2cptape (rpfd, stcp);
+				if (! stcp->keep && stcp->nbaccesses <= 1) {
+					if ((stcp->status == STAGEWRT ||
+						((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
+						stcp->poolname[0] == '\0')
+						delreq (stcp,0);
+					else if (delfile (stcp, 0, 1, 1,
+							stcp->status == STAGEWRT ? "stagewrt ok" :
+								(((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ? "migration stagewrt ok" :
+									(((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok")), uid, gid, 0) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+										 "rfio_unlink", rfio_serror());
+						/* For migration files, delfile will call update_migpool(stcp,-1) that will */
+						/* remove the BEING_MIGR flag */
+						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
+						stcp->status |= STAGED;
+						update_hsm_a_time(stcp);
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+					}
+				} else {
+					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+						/* update_migpool(stcp,-1) will remove the BEING_MIGR flag */
+						update_migpool(stcp,-1);
+						stcp->status &= ~CAN_BE_MIGR;
+					}
 					stcp->status |= STAGED;
 					update_hsm_a_time(stcp);
 #ifdef USECDB
@@ -592,50 +689,40 @@ procupdreq(req_data, clienthost)
 					}
 #endif
 				}
-			} else {
-				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					/* update_migpool(stcp,-1) will remove the BEING_MIGR flag */
-					update_migpool(stcp,-1);
-					stcp->status &= ~CAN_BE_MIGR;
-				}
-				stcp->status |= STAGED;
-				update_hsm_a_time(stcp);
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
-#endif
 			}
-		}
-		i = 0;		/* reset these variables changed by the above loop */
-		wfp = wqp->wf;	/* and needed in the loop below */
-	} else {	/* STAGEIN */
-		stcp->status |= STAGED;
-		if (rc == BLKSKPD || rc == TPE_LSZ || rc == MNYPARI)
-			stcp->status |= STAGED_TPE;
-		if (rc == LIMBYSZ || rc == TPE_LSZ)
-			stcp->status |= STAGED_LSZ;
+			i = 0;		/* reset these variables changed by the above loop */
+			wfp = wqp->wf;	/* and needed in the loop below */
+		} else {	/* STAGEIN */
+			stcp->status |= STAGED;
+			if (rc == BLKSKPD || rc == TPE_LSZ || rc == MNYPARI)
+				stcp->status |= STAGED_TPE;
+			if (rc == LIMBYSZ || rc == TPE_LSZ)
+				stcp->status |= STAGED_LSZ;
 #ifdef USECDB
-		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-		}
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-		if (wqp->copytape)
-			sendinfo2cptape (rpfd, stcp);
-		if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-			create_link (stcp, wfp->upath);
-		if (wqp->Upluspath &&
-				strcmp (stcp->ipath, (wfp+1)->upath))
-			create_link (stcp, (wfp+1)->upath);
-		updfreespace (stcp->poolname, stcp->ipath,
-									(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
-		check_waiting_on_req (subreqid, STAGED);
-	}
-	savereqs  ();
-	for ( ; i < wqp->nbdskf; i++, wfp++) {
-		wfp->subreqid = (wfp+1)->subreqid;
-		wfp->waiting_on_req = (wfp+1)->waiting_on_req;
-		strcpy (wfp->upath, (wfp+1)->upath);
+			if (wqp->copytape)
+				sendinfo2cptape (rpfd, stcp);
+			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
+				create_link (stcp, wfp->upath);
+			if (wqp->Upluspath &&
+					strcmp (stcp->ipath, (wfp+1)->upath))
+				create_link (stcp, (wfp+1)->upath);
+			updfreespace (stcp->poolname, stcp->ipath,
+										(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
+			check_waiting_on_req (subreqid, STAGED);
+		}
+		savereqs();
+		for ( ; i < wqp->nbdskf; i++, wfp++) {
+			memcpy(wfp,wfp+1,sizeof(struct waitf));
+			/*
+			wfp->subreqid = (wfp+1)->subreqid;
+			wfp->waiting_on_req = (wfp+1)->waiting_on_req;
+			strcpy (wfp->upath, (wfp+1)->upath);
+			*/
+		}
 	}
 	if (rc == MNYPARI) wqp->status = rc;
 #ifdef STAGER_DEBUG
@@ -643,6 +730,9 @@ procupdreq(req_data, clienthost)
 		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
+				char tmpbuf1[21];
+				char tmpbuf2[21];
+
 				if (wfp->subreqid == stcp->reqid) {
 					switch (stcp->t_or_d) {
 					case 't':
@@ -656,7 +746,7 @@ procupdreq(req_data, clienthost)
 						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'h':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s, size_to_recall=%s, size_yet_recalled=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath, u64tostr((u_signed64) wfp->size_to_recall, tmpbuf1, 0), u64tostr((u_signed64) wfp->size_yet_recalled, tmpbuf2, 0));
 						break;
 					default:
 						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.84 2000/12/12 14:42:37 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.85 2000/12/18 16:00:32 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.84 $ $Date: 2000/12/12 14:42:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.85 $ $Date: 2000/12/18 16:00:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -168,7 +168,7 @@ extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
-struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 
 main(argc,argv)
 		 int argc;
@@ -752,7 +752,7 @@ void procinireq(req_data, clienthost)
 }
 
 struct waitq *
-add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp, vid, fseq)
+add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp, save_subreqid, vid, fseq, use_subreqid)
 		 char *clienthost;
 		 char *req_user;
 		 uid_t req_uid;
@@ -766,8 +766,10 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, c
 		 int req_type;
 		 int nbwf;
 		 struct waitf **wfp;
+		 int **save_subreqid;
 		 char *vid;
 		 char *fseq;
+		 int use_subreqid;
 {
 	/* add request to the wait queue */
 	struct waitq *prev, *wqp;
@@ -797,7 +799,13 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, c
 	wqp->req_type = req_type;
 	wqp->key = time (0) & 0xFFFF;
 	wqp->rpfd = rpfd;
+	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
+	wqp->save_nbsubreqid = nbwf;
+	if (wqp->use_subreqid != 0) {
+		wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int));
+		wqp->save_nbsubreqid = nbwf;
+	}
 	*wfp = wqp->wf;
 	return (wqp);
 }
@@ -1239,9 +1247,12 @@ check_waiting_on_req(subreqid, state)
 				wqp->nb_subreqs--;
 				wqp->nbdskf--;
 				for ( ; i < wqp->nb_subreqs; i++, wfp++) {
+					memcpy(wfp,wfp+1,sizeof(struct waitf));
+					/*
 					wfp->subreqid = (wfp+1)->subreqid;
 					wfp->waiting_on_req = (wfp+1)->waiting_on_req;
 					strcpy (wfp->upath, (wfp+1)->upath);
+					*/
 				}
 			} else {	/* FAILED or KILLED */
 				if (firstreqid == 0) {
@@ -1369,9 +1380,12 @@ check_coff_waiting_on_req(subreqid, state)
 				wqp->nb_subreqs--;
 				wqp->nbdskf--;
 				for ( ; i < wqp->nb_subreqs; i++, wfp++) {
+					memcpy(wfp,wfp+1,sizeof(struct waitf));
+					/*
 					wfp->subreqid = (wfp+1)->subreqid;
 					wfp->waiting_on_req = (wfp+1)->waiting_on_req;
 					strcpy (wfp->upath, (wfp+1)->upath);
+					*/
 				}
 			}
 			break;
@@ -1781,7 +1795,7 @@ void delreq(stcp,nodb_delete_flag)
 fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2], arg_StageIDflag[2], arg_background[2];
+	char arg_Aflag[2], arg_StageIDflag[2], arg_background[2], arg_use_subreqid[2];
 	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	int c, i;
 	static int pfd[2];
@@ -1843,9 +1857,10 @@ fork_exec_stager(wqp)
 		sprintf (arg_StageIDflag, "%d", wqp->StageIDflag);
 		sprintf (arg_concat_off_fseq, "%d", wqp->concat_off_fseq);
 		sprintf (arg_background, "%d", wqp->background);
+		sprintf (arg_use_subreqid, "%d", wqp->use_subreqid);
 
 #ifdef __INSURE__
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s tmpfile=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s use_subreqid=%s, tmpfile=%s, pid=%d\n",
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
@@ -1855,6 +1870,7 @@ fork_exec_stager(wqp)
 							arg_StageIDflag,
 							arg_concat_off_fseq,
 							arg_background,
+							arg_use_subreqid,
 							tmpfile,
 							getpid());
 		execl (progfullpath, "stager",
@@ -1866,10 +1882,11 @@ fork_exec_stager(wqp)
 							arg_StageIDflag,
 							arg_concat_off_fseq,
 							arg_background,
+							arg_use_subreqid,
 							tmpfile,
 							NULL);
 #else
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s use_subreqid=%s, pid=%d\n",
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
@@ -1879,6 +1896,7 @@ fork_exec_stager(wqp)
 							arg_StageIDflag,
 							arg_concat_off_fseq,
 							arg_background,
+							arg_use_subreqid,
 							getpid());
 		execl (progfullpath, "stager",
 							arg_reqid,
@@ -1890,6 +1908,7 @@ fork_exec_stager(wqp)
 							arg_StageIDflag,
 							arg_concat_off_fseq,
 							arg_background,
+							arg_use_subreqid,
 							NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
@@ -2011,6 +2030,7 @@ void rmfromwq(wqp)
 	else waitqp = wqp->next;
 	if (wqp->next) (wqp->next)->prev = wqp->prev;
 	free (wqp->wf);
+	if (wqp->save_subreqid != NULL) free (wqp->save_subreqid);
 	free (wqp);
 }
 

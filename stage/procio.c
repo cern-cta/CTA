@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.66 2000/12/14 16:34:13 jdurand Exp $
+ * $Id: procio.c,v 1.67 2000/12/18 16:00:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.66 $ $Date: 2000/12/14 16:34:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.67 $ $Date: 2000/12/18 16:00:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ extern int isuserlevel _PROTO((char *));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
-extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
@@ -145,6 +145,7 @@ void procioreq(req_type, req_data, clienthost)
 	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	struct waitf *wfp;
+	int *save_subreqid;
 	struct waitq *wqp = NULL;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
@@ -314,16 +315,6 @@ void procioreq(req_type, req_data, clienthost)
 				hsmfiles = dummy;
 			}
 			hsmfiles[nhsmfiles++] = Coptarg;
-			/* We check that there is no redundant hsm files (multiple equivalent ones) */
-			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-				for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
-					if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
-						sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
-						c = USERR;
-						goto reply;
-					}
-				}
-			}
 			/* We check that user do not mix different hsm types (hpss and castor) */
 			if (ISHPSS(Coptarg)) {
 				if (ISCASTORHOST(Coptarg)) {
@@ -466,6 +457,19 @@ void procioreq(req_type, req_data, clienthost)
 			break;
 		}
 	}
+
+	if (nhsmfiles > 0) {
+		/* We check that there is no redundant hsm files (multiple equivalent ones) */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
+				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
+					sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
+					errflg++;
+				}
+			}
+		}
+	}
+
 	if (Aflag && strcmp (stgreq.poolname, "NOPOOL") == 0) {
 		sendrep (rpfd, MSG_ERR, STG17, "-A deferred", "-p NOPOOL");
 		errflg++;
@@ -636,11 +640,14 @@ void procioreq(req_type, req_data, clienthost)
 	}
 	for (i = 0; i < nbdskf; i++) {
 		time_t hsmmtime;
-		int forced_Cns_creatx = 0;
-		int forced_rfio_stat = 0;
+		int forced_Cns_creatx;
+		int forced_rfio_stat;
 		u_signed64 correct_size;
 		u_signed64 hsmsize;
+		u_signed64 size_to_recall;
 
+		forced_Cns_creatx = forced_rfio_stat = 0;
+		correct_size = hsmsize = size_to_recall = 0;
 		ihsmfiles++;
 		if (Uflag && i > 0) break;
 		if (stgreq.t_or_d == 't') {
@@ -724,6 +731,7 @@ void procioreq(req_type, req_data, clienthost)
 			if (! size) {
 				/* We force size to be allocated to exactly what we need */
 				stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
+				if (ncastorfiles > 0) size_to_recall = hsmsize;
 			} else {
 				goto get_size_from_user;
 			}
@@ -734,6 +742,13 @@ void procioreq(req_type, req_data, clienthost)
 			if (p != NULL) {
 				*p = ':';
 				size = p + 1;
+			}
+			if (ncastorfiles > 0) {
+				size_to_recall = (u_signed64) (((u_signed64) stgreq.size) * (u_signed64) ONE_MB);
+				if (size_to_recall > hsmsize) {
+					/* We take the minimum of -s option and real size in the nameserver */
+					size_to_recall = hsmsize;
+				}
 			}
 		}
 		if (no_upath == 0)
@@ -778,16 +793,20 @@ void procioreq(req_type, req_data, clienthost)
 									user, stcp->uid, stcp->gid,
 									user, stcp->uid, stcp->gid,
 									clientpid,
-									Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+									Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 1);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 #ifdef CONCAT_OFF
 					wqp->concat_off_fseq = concat_off_fseq;
 #endif
 				}
-				wfp->subreqid = stcp->reqid;
+				wfp->subreqid = *save_subreqid = stcp->reqid;
+				save_subreqid++;
 				wfp->waiting_on_req = savereqid;
 				strcpy (wfp->upath, upath);
+				wfp->size_to_recall = size_to_recall;      /* Can be zero */
+				wfp->size_yet_recalled = 0;
 				strcpy (wqp->pool_user, pool_user);
 				wqp->nb_waiting_on_req++;
 				wqp->nbdskf++;
@@ -911,14 +930,18 @@ void procioreq(req_type, req_data, clienthost)
 					wqp = add2wq (clienthost,
 									user, stcp->uid, stcp->gid,
 									user, stcp->uid, stcp->gid,
-									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 1);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 #ifdef CONCAT_OFF
 					wqp->concat_off_fseq = concat_off_fseq;
 #endif
 				}
-				wfp->subreqid = stcp->reqid;
+				wfp->subreqid = *save_subreqid = stcp->reqid;
+				save_subreqid++;
+				wfp->size_to_recall = size_to_recall;   /* Can be zero */
+				wfp->size_yet_recalled = 0;
 				strcpy (wfp->upath, upath);
 				strcpy (wqp->pool_user, pool_user);
 				if (! Aflag) {
@@ -1036,8 +1059,8 @@ void procioreq(req_type, req_data, clienthost)
 										user, stcp->uid, stcp->gid,
 										user, stcp->uid, stcp->gid,
 										clientpid,
-										Upluspath, reqid, req_type, nbdskf, &wfp,
-										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+										Upluspath, reqid, req_type, nbdskf, &wfp, NULL, 
+										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
 				wqp->nbdskf++;
@@ -1290,7 +1313,8 @@ void procioreq(req_type, req_data, clienthost)
 									user, stcp->uid, stcp->gid,
 									user_waitq, uid_waitq, gid_waitq,
 									clientpid, Upluspath, reqid, req_type,
-									nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+									nbdskf, &wfp, NULL, 
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 					wqp->copytape = copytape;
 				}
 				wfp->subreqid = stcp->reqid;
@@ -1641,7 +1665,8 @@ void procputreq(req_data, clienthost)
 			if (!wqp) wqp = add2wq (clienthost,
 									user, uid, gid,
 									user, uid, gid,
-									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+									NULL, NULL, NULL, 0);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1704,7 +1729,8 @@ void procputreq(req_data, clienthost)
 			if (!wqp) wqp = add2wq (clienthost,
 									user, uid, gid,
 									user, uid, gid,
-									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+									NULL, NULL, NULL, 0);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1785,7 +1811,8 @@ void procputreq(req_data, clienthost)
 				if (!wqp) wqp = add2wq (clienthost,
 										user, uid, gid,
 										user_waitq, uid_waitq, gid_waitq,
-										clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
+										clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+										NULL, NULL, NULL, 0);
 				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
@@ -1967,7 +1994,8 @@ void procputreq(req_data, clienthost)
 			if (!wqp) wqp = add2wq (clienthost,
 									user, uid, gid,
 									user_waitq, uid_waitq, gid_waitq,
-									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
+									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+									NULL, NULL, NULL, 0);
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;

@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.108 2000/12/12 14:38:26 jdurand Exp $
+ * $Id: stager.c,v 1.109 2000/12/18 16:00:30 jdurand Exp $
  */
 
 /*
@@ -17,9 +17,12 @@
 
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
+/* Otherwise you can also specify two tape servers depending if a tape ends with odd or an even number: */
+/* #define TAPESRVR_ODD "shd65" */
+/* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.108 $ $Date: 2000/12/12 14:38:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.109 $ $Date: 2000/12/18 16:00:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -86,6 +89,7 @@ int Aflag;                          /* Allocation flag */
 int StageIDflag;                    /* Forced uid:gid to be "stage" account */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int background;                     /* Tells if we are running in the background or not */
+int use_subreqid;                   /* Tells if we allow asynchroneous callbacks from RTCOPY */
 int nbcat_ent = -1;                 /* Number of catalog entries in stdin */
 int nbcat_ent_current = -1;         /* Number of catalog entries currently processed - used in callback */
 int istart = -1;                    /* Index of first entry currently processed - used in callback */
@@ -386,8 +390,22 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] background = %d\n", background);
 #endif
+#ifdef USE_SUBREQID
+	use_subreqid = atoi (argv[10]);
+#else
+	use_subreqid = 0;
+	if (use_subreqid != atoi(argv[10])) {
+		/* We says in the log-file that this feature is hardcoded to not supported by stager.c */
+		/* whereas the stgdaemon specified it in the waitq. This means that the callbacks are */
+		/* forced to all synchroneous. */
+		stglogit (func, "Asynchroneous callback specified by stgdaemon disabled\n");
+	}
+#endif
+#ifdef STAGER_DEBUG
+	sendrep(rpfd, MSG_ERR, "[DEBUG] use_subreqid = %d\n", use_subreqid);
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[10];
+	tmpfile = argv[11];
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
@@ -892,10 +910,25 @@ int stagein_castor_hsm_file() {
 				hsm_totalsize[i] = new_totalsize;
 			}
 		}
+#ifndef USE_SUBREQID
+		if (hsm_segments[i][hsm_oksegment[i]].segsize < hsm_totalsize[i]) {
+			/* The stagein of this CASTOR file will require multiple segments */
+			/* and we know in advance that this is supported, when async callback */
+			/* is disabled only if this file is the last one on the command-line */
+			if (stcp != (stce - 1)) {
+				SAVE_EID;
+				serrno = SEOPNOTSUP;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Requires > 1 segment to be recalled [supported with this version only if this is the last -M option]",
+								 sstrerror (serrno));
+				RESTORE_EID;
+				RETURN (USERR);
+			}
+		}
+#endif
 	}
 
  getseg:
-	/* We initalize current vid and fseq */
+	/* We initalize current vid, fseq and blockid's */
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		hsm_vid[i] = NULL;
 		hsm_fseq[i] = -1;
@@ -946,8 +979,8 @@ int stagein_castor_hsm_file() {
 			/* We check previous vid returned by Cns_getsegattrs if any */
 			if (last_vid[0] != '\0') {
 				if (strcmp(last_vid,hsm_vid[i]) != 0) {
-                  /* We are moving from one tape to another : we will */
-                  /* run current and partial rtcp request             */
+					/* We are moving from one tape to another : we will */
+					/* run current and partial rtcp request             */
 					new_tape = 1;
 					/* We remember this vid */
 					/* strcpy(last_vid,vid); */
@@ -958,13 +991,13 @@ int stagein_castor_hsm_file() {
 			} else {
 				/* We initialize this first vid */
 				strcpy(last_vid,hsm_vid[i]);
-				if (stcp == stce - 1) {
+				if (stcp == (stce - 1)) {
 					/* And this will be the only one */
 					new_tape = 1;
 				}
 			}
 
-			if (new_tape == 0 && stcp == stce - 1) {
+			if (new_tape == 0 && stcp == (stce - 1)) {
 				/* This is the special case where all file HSM files share the same vid */
 				/* from the first not yet completely transfered up to the last one */
 				/* Then the first test (when last_vid == "") leads only to strcpy(last_vid,hsm_vid[i]) */
@@ -976,6 +1009,11 @@ int stagein_castor_hsm_file() {
 				break;
 			}
 		}
+	}
+
+	if (last_vid[0] != '\0' && new_tape == 0) {
+		/* This means that we found something and remaining entries where already staged */
+		new_tape = 1;
 	}
 
 	SETTAPEEID(stcs->uid,stcs->gid);
@@ -1031,7 +1069,7 @@ int stagein_castor_hsm_file() {
 			RESTORE_EID;
 			RETURN (USERR);
 		}
-		iend = 0;
+		iend = istart;
 	}
 
 	/* nbcat_ent_current will be the number of entries that will use vid */
@@ -1081,9 +1119,13 @@ int stagein_castor_hsm_file() {
 		RETURN (USERR);
 	}
 
-	/* We reset all the hsm_flag[] values */
+	/* We reset all the hsm_flag[] values that are candidates for search */
 	for (i = 0; i < nbcat_ent; i++) {
-		hsm_flag[i] = 0;
+		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+			hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+		} else {
+			hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+		}
 	}
 
 	/* We build the request */
@@ -1150,7 +1192,11 @@ int stagein_castor_hsm_file() {
 			sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",sstrerror(save_serrno));
 			/* We reset all the hsm_flag[] values */
 			for (i = 0; i < nbcat_ent; i++) {
-				hsm_flag[i] = 0;
+				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+				} else {
+					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+				}
 			}
 
 			for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
@@ -1474,7 +1520,11 @@ int stagewrt_castor_hsm_file() {
 
 			/* We reset all the hsm_flags entries */
 			for (i = 0; i < nbcat_ent; i++) {
-				hsm_flag[i] = 0;
+				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
+				} else {
+					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
+				}
 			}
 
 			/* Build the request from where we started (included) up to our next (excluded) */
@@ -2016,8 +2066,26 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #ifdef TAPESRVR
 				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR );
 #else
+#if (defined(TAPESRVR_ODD) && defined(TAPESRVR_EVEN))
+				if (((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '0') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '2') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '4') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '6') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '8')) {
+					strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR_ODD );
+				} else if (((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '1') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '3') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '5') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '7') ||
+					((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '9')) {
+					strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR_EVEN );
+				} else {
+					strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcp->u1.t.tapesrvr );
+				}
+#else
 				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcp->u1.t.tapesrvr );
-#endif
+#endif /* TAPESRVR_ODD || TAPESRVR_EVEN */
+#endif /* TAPESRVR */
 				switch (stcp->status & 0xF) {
 				case STAGEWRT:
 				case STAGEPUT:
@@ -2301,6 +2369,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						fl[j_ok].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
 					}
 #endif
+					if (use_subreqid != 0) {
+						fl[j_ok].filereq.stageSubreqID = get_subreqid(stcp);
+					}
 				next_entry:
 					if (stcp + 1 < fixed_stce) stcp++;
 				}
@@ -2380,7 +2451,23 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #endif
 #ifdef TAPESRVR
 			strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR );
-#endif
+#else
+#if (defined(TAPESRVR_ODD) && defined(TAPESRVR_EVEN))
+			if (((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '0') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '2') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '4') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '6') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '8')) {
+				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR_ODD );
+			} else if (((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '1') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '3') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '5') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '7') ||
+				((*rtcpcreqs_in)[i]->tapereq.vid[strlen((*rtcpcreqs_in)[i]->tapereq.vid) - 1] == '9')) {
+				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , TAPESRVR_EVEN );
+			}
+#endif  /* TAPESRVR_ODD || TAPESRVR_EVEN */
+#endif /* TAPESRVR */
 			if ((*rtcpcreqs_in)[i]->file == NULL) {
 				/* First file for this VID */
 				if (((*rtcpcreqs_in)[i]->file = (file_list_t *) calloc(1,sizeof(file_list_t))) == NULL) {
@@ -2501,6 +2588,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				}
 			}
 #endif /* SKIP_FILEREQ_MAXSIZE */
+			if (use_subreqid != 0) {
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.stageSubreqID = get_subreqid(stcp);
+			}
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.offset = hsm_transferedsize[ihsm];
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.def_alloc = Aflag;
 			if (! Aflag) {
@@ -3037,7 +3127,19 @@ void init_hostname()
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 }
 
+int get_subreqid(stcp)
+     struct stgcat_entry *stcp;
+{
+  int i;
+
+  for (i = 0; i < nbcat_ent; i++) {
+    if (stcp->reqid == stcs[i].reqid) return(i);
+  }
+  return(-1);
+}
+
+
 /*
- * Last Update: "Tuesday 12 December, 2000 at 15:36:44 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 18 December, 2000 at 14:08:16 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
