@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.9 2000/05/15 07:49:01 jdurand Exp $
+ * $Id: stage_api.h,v 1.10 2000/06/01 06:52:54 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -7,7 +7,6 @@
 
 #include <osdep.h>
 #include <stage.h>
-#include <rtcp_api.h>
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -36,13 +35,11 @@ EXTERN_C int  DLL_DECL  stage_outmsg _PROTO(());
 EXTERN_C int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
 EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, char *, char *, int, int, char *, char *));
 EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
-EXTERN_C int  DLL_DECL  stage_xxx_hsm _PROTO((int, char *, int, char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
-
-#define stage_out_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGEOUT,stghost,Kopt,diskpool,hsmstruct)
-#define stage_in_hsm(stghost,diskpool,hsmstruct) stage_xxx_hsm(STAGEIN,stghost,0,diskpool,hsmstruct)
-#define stage_wrt_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGEWRT,stghost,Kopt,diskpool,hsmstruct)
-#define stage_cat_hsm(stghost,diskpool,hsmstruct) stage_xxx_hsm(STAGECAT,stghost,0,diskpool,hsmstruct)
+EXTERN_C int  DLL_DECL  stage_out_hsm _PROTO((char *, int, char *, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_in_hsm _PROTO((char *, char *, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_wrt_hsm _PROTO((char *, int, char *, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_cat_hsm _PROTO((char *, char *, stage_hsm_t *));
 
 #endif /* __stage_api_h */
 
