@@ -41,17 +41,6 @@ enum NotificationState {
   DONT_NOTIFY
 };
 
-#if defined(CASTOR_STAGER_TAPECOPY_H)
-typedef struct RunningTpCopies 
-{
-  rtcpFileRequest_t *filereq;
-  u_signed64 castorFileSize;
-  struct Cstager_TapeCopy_t *tpCopy;
-  struct RunningTpCopies *next;
-  struct RunningTpCopies *prev;
-} RunningTpCopies_t;
-#endif /* CASTOR_STAGER_TAPECOPY_H */
-
 #if defined(CASTOR_SERVICES_H)
 int rtcpcld_getDbSvc _PROTO((
                              struct C_Services_t ***
@@ -222,19 +211,19 @@ char *rtcpcld_fixStr _PROTO((
                              ));
 int rtcpcld_updcMigrFailed _PROTO((
                                    tape_list_t *,
-                                   rtcpFileRequest_t *
+                                   file_list_t *
                                    ));
 int rtcpcld_updcRecallFailed _PROTO((
                                      tape_list_t *,
-                                     rtcpFileRequest_t *
+                                     file_list_t *
                                      ));
 int rtcpcld_updcFileMigrated _PROTO((
                                      tape_list_t *,
-                                     rtcpFileRequest_t *
+                                     file_list_t *
                                    ));
 int rtcpcld_updcFileRecalled _PROTO((
                                      tape_list_t *,
-                                     rtcpFileRequest_t *
+                                     file_list_t *
                                      ));
 int rtcpcld_initNsInterface _PROTO((
                                     void
@@ -244,24 +233,24 @@ int rtcpcld_initCatalogueInterface _PROTO((
                                            ));
 int rtcpcld_updateNsSegmentAttributes _PROTO((
                                               tape_list_t *,
-                                              rtcpFileRequest_t *
+                                              file_list_t *
                                               ));
 int rtcpcld_checkSegment _PROTO((
-                                 rtcpTapeRequest_t *,
-                                 rtcpFileRequest_t *
+                                 tape_list_t *,
+                                 file_list_t *
                                  ));
 
 int rtcpcld_checkCastorFile _PROTO((
-                                    rtcpFileRequest_t *
+                                    file_list_t *
                                     ));
 int rtcpcld_setatime _PROTO((
-                             rtcpFileRequest_t *
+                             file_list_t *
                              ));
 char *rtcpcld_tapeStatusStr _PROTO((
                                     int
                                     ));
 int rtcpcld_getFileId _PROTO((
-                              rtcpFileRequest_t *,
+                              file_list_t *,
                               struct Cns_fileid **
                               ));
 int rtcpcld_gettape _PROTO((
@@ -274,20 +263,12 @@ int rtcpcld_tapeOK _PROTO((
                            ));
 int rtcpcld_updateTape _PROTO((
                                tape_list_t *,
-                               rtcpFileRequest_t *,
+                               file_list_t *,
                                int,
                                int
                                ));
 int rtcpcld_segmentOK _PROTO((
                               struct Cns_segattrs *
                               ));
-
-#if defined(CASTOR_STAGER_TAPECOPY_H)
-int rtcpcld_findRunningTpCopy _PROTO((
-                                      tape_list_t *,
-                                      rtcpFileRequest_t *,
-                                      struct Cstager_TapeCopy_t **
-                                      ));
-#endif /* CASTOR_STAGER_TAPECOPY_H */   
 
 #endif /* RTCPCLD_H */
