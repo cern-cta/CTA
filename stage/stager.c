@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.142 2001/03/28 08:58:00 jdurand Exp $
+ * $Id: stager.c,v 1.143 2001/03/29 15:21:35 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.142 $ $Date: 2001/03/28 08:58:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.143 $ $Date: 2001/03/29 15:21:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1630,6 +1630,8 @@ int stagewrt_castor_hsm_file() {
 	extern char* poolname2tapepool _PROTO((char *));
     struct devinfo *devinfo;
     int save_serrno;
+    int fseq_start;
+    int fseq_end;
 
     ALLOCHSM;
 
@@ -1863,10 +1865,13 @@ int stagewrt_castor_hsm_file() {
 
 			/* From now on we know that stcp[istart,iend] fulfill a-priori the requirement */
 			nbcat_ent_current = iend - istart + 1;
+            fseq_start = fseq_end = -1;
 			for (i = 0; i < nbcat_ent; i++) {
 				if ((i >= istart) && (i <= iend) && (hsm_ignore[i] == 0)) {
 					hsm_vid[i] = vid;
 					hsm_fseq[i] = fseq++;
+                    fseq_end = hsm_fseq[i];
+                    if (fseq_start == -1) fseq_start = fseq_end;
 				} else {
 					hsm_vid[i] = NULL;
 					hsm_fseq[i] = -1;
@@ -1878,6 +1883,11 @@ int stagewrt_castor_hsm_file() {
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Use [vid,vsn,dgn,aden,lbltype,fseqs]=[%s,%s,%s,%s,%s,%d to %d]\n",
 					vid,vsn,dgn,aden,lbltype,hsm_fseq[istart],hsm_fseq[iend]);
 			RESTORE_EID;
+#else
+            SAVE_EID;
+            stglogit (func, "Use [vid,vsn,dgn,aden,lbltype,fseqs]=[%s,%s,%s,%s,%s,%d to %d]\n",
+                      vid,vsn,dgn,aden,lbltype,fseq_start,fseq_end);
+            RESTORE_EID;
 #endif
 
 			/* We "interrogate" for the number of structures */
@@ -3772,6 +3782,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 28 March, 2001 at 10:56:37 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 29 March, 2001 at 17:17:37 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
