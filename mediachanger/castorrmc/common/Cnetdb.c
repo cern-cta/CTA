@@ -1,13 +1,3 @@
-/*
- * $Id: Cnetdb.c,v 1.2 1999/07/30 16:00:41 obarring Exp $
- * $Log: Cnetdb.c,v $
- * Revision 1.2  1999/07/30 16:00:41  obarring
- * Add copyright notice
- *
- * Revision 1.1  1999/07/30 15:03:55  obarring
- * First version
- *
- */
 
 /*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
@@ -16,8 +6,12 @@
 
 
 #ifndef lint
-static char cvsId[] = "$Id: Cnetdb.c,v 1.2 1999/07/30 16:00:41 obarring Exp $";
+static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.3 $ $Date: 1999/11/22 17:53:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
+
+/*
+ * Cnetdb.c - CASTOR MT-safe wrappers on netdb routines.
+ */ 
 
 #if defined(_WIN32)
 #include <winsock2.h>
