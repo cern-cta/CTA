@@ -1,7 +1,24 @@
+gencastor (2.0-3) unstable; urgency=low
+
+  * do not generate code for classes outside of castor namespace
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 28 Sep 2004 15:20:26 +0200
+   
+gencastor (2.0-2) unstable; urgency=low
+
+  * Fixed generation of author field
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 28 Sep 2004 15:20:26 +0200
+   
 gencastor (2.0-1) unstable; urgency=low
 
-  * Initial Release.
   * Incorporated the code generation
 
- -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 24 Sep 2004 16:08:26 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 28 Sep 2004 12:08:26 +0200
 
+gencastor (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 24 Sep 2004 16:08:26 +0200
+	  

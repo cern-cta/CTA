@@ -72,6 +72,11 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // build information on the calss
   ClassifierInfo classInfo(c, m_doc);
 
+  // If not in namespace castor, ignore the class
+  if (classInfo.packageName.left(6) != "castor") {
+    return;
+  }
+
   // Check whether some methods or members should be added
   {
     // first the print method for IObject descendants
@@ -140,7 +145,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   // write Header file
-  std::cout << "Building header file " << fileName.ascii() << ".hpp" << std::endl;
   CppHClassWriter hppw(m_doc, ".hpp file generator");
   runGenerator(hppw, fileName + ".hpp", c);
   if (m_castorTypes.find(c->getName()) == m_castorTypes.end()) {
@@ -177,21 +181,21 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // check existence of the directory
           QDir packageDir(m_outputDirectory.absPath() + "/castor/db");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
-            std::cout << "Cannot create the package folder "
+            std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()
                       << "\nPlease check the access rights" << std::endl;
             return;
           }
           QDir packageDirOra(m_outputDirectory.absPath() + "/castor/db/ora");
           if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
-            std::cout << "Cannot create the package folder "
+            std::cerr << "Cannot create the package folder "
                       << packageDirOra.absPath().ascii()
                       << "\nPlease check the access rights" << std::endl;
             return;
           }
           QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
-            std::cout << "Cannot create the package folder "
+            std::cerr << "Cannot create the package folder "
                       << packageDirOdbc.absPath().ascii()
                       << "\nPlease check the access rights" << std::endl;
             return;
@@ -215,7 +219,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // check existence of the directory
           QDir packageDir(m_outputDirectory.absPath() + "/castor/io");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
-            std::cout << "Cannot create the package folder "
+            std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()
                       << "\nPlease check the access rights" << std::endl;
             return;

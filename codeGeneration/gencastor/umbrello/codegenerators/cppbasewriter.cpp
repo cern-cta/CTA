@@ -383,17 +383,13 @@ QString CppBaseWriter::fixTypeName(QString string,
 // Initialization
 //=============================================================================
 bool CppBaseWriter::init(UMLClassifier* c, QString fileName) {
-  m_class = c;
-  
+  m_class = c;  
   // open the file
-  std::cout << "Opening file " << fileName.ascii();
+  std::cout << "Generating file " << fileName.ascii() << std::endl;
   if (!openFile(m_file, fileName)) {
-    std::cout << " without success" << std::endl;
+    std::cerr << "Unable to open file" << std::endl;
     return false;
-  } else {
-    std::cout << " with success" << std::endl;
   }
-
   // preparations
   m_classInfo = new ClassifierInfo(m_class, m_doc);
   m_classInfo->className = m_class->getName();
@@ -414,7 +410,6 @@ bool CppBaseWriter::finalize() {
   delete (m_classInfo);
   m_classInfo = 0;
   // Closes the file
-  std::cout << "Closing file." << std::endl;
   m_file.close();
   // Delete the streams
   delete (m_mainStream);
