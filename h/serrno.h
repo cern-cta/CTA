@@ -243,7 +243,8 @@
 #define ERTNOTCLIST     ERTBASEOFF+8    /* Request list is not circular */
 #define ERTBADREQ       ERTBASEOFF+9    /* Bad request structure */
 #define ERTMORETODO	ERTBASEOFF+10	/* Request partially processed */
-#define ERTMAXERR       ERTBASEOFF+10
+#define ERTDBERR        ERTBASEOFF+11   /* Catalogue DB error */
+#define ERTMAXERR       ERTBASEOFF+11
 
 /*
  *------------------------------------------------------------------------
