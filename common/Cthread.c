@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.17 1999/10/14 12:02:37 jdurand Exp $
+ * $Id: Cthread.c,v 1.18 1999/10/15 14:35:20 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.17 $ $Date: 1999/10/14 12:02:37 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.18 $ $Date: 1999/10/15 14:35:20 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -1788,16 +1788,16 @@ int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
+#ifdef _NOCTHREAD
+  /* This is not a thread implementation */
+  return(0);
+#else
   /* Verify the arguments */
   if (addr == NULL) {
     serrno = EINVAL;
     return(-1);
   }
 
-#ifdef _NOCTHREAD
-  /* This is not a thread implementation */
-  return(0);
-#else
   /* This is a thread implementation            */
   rc = 0;
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
@@ -2016,16 +2016,16 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
+#ifdef _NOCTHREAD
+  /* This is not a thread implementation */
+  return(0);
+#else
   /* Verify the arguments */
   if (addr == NULL) {
     serrno = EINVAL;
     return(-1);
   }
   
-#ifdef _NOCTHREAD
-  /* This is not a thread implementation */
-  return(0);
-#else
   /* This is a thread implementation            */
   /* Flag the number of threads waiting on addr */
 
@@ -2636,16 +2636,16 @@ int DLL_DECL Cthread_Lock_Mtx_ext(file, line, addr, timeout)
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
+#ifdef _NOCTHREAD
+  /* This is not a thread implementation */
+  return(0);
+#else
   /* Verify the arguments */
   if (addr == NULL) {
     serrno = EINVAL;
     return(-1);
   }
 
-#ifdef _NOCTHREAD
-  /* This is not a thread implementation */
-  return(0);
-#else
   /* This is a thread implementation            */
   return(_Cthread_obtain_mtx(file,line,&(current->mtx),timeout));
 #endif /* _NOCTHREAD */
@@ -2768,16 +2768,16 @@ int DLL_DECL Cthread_Mutex_Unlock_ext(file, line, addr)
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
+#ifdef _NOCTHREAD
+  /* This is not a thread implementation */
+  return(0);
+#else
   /* Verify the arguments */
   if (addr == NULL) {
     serrno = EINVAL;
     return(-1);
   }
 
-#ifdef _NOCTHREAD
-  /* This is not a thread implementation */
-  return(0);
-#else
   /* This is a thread implementation            */
   return(_Cthread_release_mtx(file,line,&(current->mtx)));
 #endif /* ifdef _NOCTHREAD */
