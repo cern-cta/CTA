@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/01 14:44:06 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/12/07 14:41:37 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/01 14:44:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/12/07 14:41:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -647,38 +647,6 @@ int rtcpcld_checkNsSegment(
   if ( castorFileId != NULL ) free(castorFileId);  
   if ( blkid != NULL ) free(blkid);
   if ( rc == -1 ) serrno = save_serrno;
-  return(rc);
-}
-
-int rtcpcld_checkCastorFile(
-                            file
-                            )
-     file_list_t *file;
-{
-  int rc;
-  struct Cns_filestat statbuf;
-  struct Cns_fileid *castorFileId = NULL;
-  
-  if ( file == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  rc = rtcpcld_getFileId(file,&castorFileId);
-  if ( rc < 0 ){
-    LOG_SYSCALL_ERR("Cns_statx()");
-    return(-1);
-  }
-
-  rc = Cns_statx(
-                 NULL,
-                 castorFileId,
-                 &statbuf
-                 );
-  if ( rc < 0 ){
-    LOG_SYSCALL_ERR("Cns_statx()");
-  }
-  if ( castorFileId != NULL ) free(castorFileId);  
   return(rc);
 }
 
