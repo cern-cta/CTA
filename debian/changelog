@@ -1,3 +1,9 @@
+castor (2.0.0-17) unstable; urgency=low
+
+  * Fix in the stored procedure to handle the case where DELETE, for example, is done on no entry but there is nevertheless a binded value for output : that value should be explicitely initialized in the procedure
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri,  4 Feb 2005 14:45:13 +0100
+
 castor (2.0.0-16) unstable; urgency=low
 
   * New DB schema (improving in particular requestsToDo and al. queries)
