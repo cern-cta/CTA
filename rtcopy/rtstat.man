@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
-.\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.3 $ $Date: 2001/10/04 15:26:16 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
+.\" Copyright (C) 1995-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RTSTAT 1 "$Date: 2001/09/26 09:13:54 $" CASTOR "RTCOPY User Commands"
+.TH RTSTAT 1 "$Date: 2001/10/04 15:26:16 $" CASTOR "RTCOPY User Commands"
 
 .SH NAME
 rtstat \- gives local or global statistics on rtcopy requests, the number which are successful 
@@ -11,6 +11,8 @@ details of specifically tape errors are provided
 .SH SYNOPSIS
 .B rtstat 
 [
+.BI --acctdir " accounting_dir"
+] [
 .BI -c
 ] [
 .BI -e " end_time"
@@ -49,6 +51,10 @@ ID then by unit name.
 The statistics can be requested for specific servers, or device groups, or given globally. 
 
 .SH OPTIONS
+.TP
+.BI \-\-acctdir " accounting_dir"
+The central directory from which information is to be read.  If not specified
+the default is /usr/spool/sacct on each tape server.
 .TP
 .BI \-c
 Use the local
@@ -160,15 +166,15 @@ Req Time             Server  VID     UNM       No.Occ  Error Message
 01/07/1996 13:23:07  shd05   AX0553  exab05         2  I/O ERROR WRITING ON TAPE: No sense
 01/07/1996 18:41:32          AX0553  exab05            I/O ERROR WRITING ON TAPE: No sense
 02/07/1996 11:00:01  shd05   AX0554  exab05         1  I/O ERROR WRITING ON TAPE: No sense
+.cs R
+.fi
+.bp
+.nf
+.cs R 18
 02/07/1996 14:17:40  shd05   AX0554  exab06         1  I/O ERROR WRITING ON TAPE: Medium error
 03/07/1996 09:02:02  shd05   AX0554  exab07         2  I/O ERROR WRITING ON TAPE: Medium error
 03/07/1996 09:26:36          AX0554  exab07            I/O ERROR WRITING ON TAPE: Medium error
 03/07/1996 09:15:21  shd05   AX0554  exab05         1  No sense
-.cs R
-.fi
-.sp
-.nf
-.cs R 18
 
 DETAILS OF TAPE ERRORS - SORTED BY UNM
 Req Time             Server  VID     UNM       No.Occ  Error Message
@@ -227,15 +233,15 @@ Block ID Sequence Error  ->  0.43 % - 2
 
 OTHER ERRORS (DETAIL)
 TP023 - mount cancelled by operator  ->  0.43 % - 2
+.cs R
+.fi
+.bp
+.nf
+.cs R 18
 
 DETAILS OF TAPE ERRORS - SORTED BY VID
 Req Time             Server  VID     UNM       No.Occ  Error Message
 26/06/1996 03:05:17  shd02   LH1078  cart0F9F       2  Block ID Sequence Error
-.cs R
-.fi
-.sp
-.nf
-.cs R 18
 26/06/1996 03:49:31          LH1078  cart0F9F          Block ID Sequence Error
 
 DETAILS OF TAPE ERRORS - SORTED BY UNM
