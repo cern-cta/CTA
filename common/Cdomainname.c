@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.3 $ $Date: 2003/03/07 10:29:09 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.4 $ $Date: 2003/10/31 12:46:56 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.3 $ $Date: 
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
