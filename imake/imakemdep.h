@@ -142,7 +142,7 @@
 #define DEFAULT_CPP "/usr/ccs/lbin/cpp"
 #endif
 #ifdef __ia64__
-#define DEFAULT_CPP "/usr/local/bin/cpp"
+#define DEFAULT_CPP "/usr/bin/cpp"
 #endif
 
 /*
