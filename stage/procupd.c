@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.114 2002/08/27 08:38:03 jdurand Exp $
+ * $Id: procupd.c,v 1.115 2002/09/17 11:49:54 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.114 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.115 $ $Date: 2002/09/17 11:49:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
