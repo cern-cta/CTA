@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.49 $ $Date: 2000/03/14 16:50:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.50 $ $Date: 2000/03/14 17:03:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -521,6 +521,8 @@ static int DiskFileClose(int disk_fd,
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     filereq = &file->filereq;
 
+    rtcp_log(LOG_DEBUG,"DiskFileClose(%s) close file descriptor %d\n",
+             filereq->file_path,disk_fd);
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
     } else if ( (*filereq->recfm == 'U') && 
@@ -1286,7 +1288,7 @@ void *diskIOthread(void *arg) {
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
-    int rc, mode, severity, save_errno,save_serrno;
+    int rc, mode, severity, save_errno,save_serrno, retry;
     extern int ENOSPC_occurred;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
     if ( arg == NULL ) {
@@ -1338,6 +1340,7 @@ void *diskIOthread(void *arg) {
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
 
     if ( (severity & RTCP_EOD) == 0 ) {
+    retry = 0;
     do {
         rc = DiskFileOpen(pool_index,tape,file);
         save_serrno = serrno;
@@ -1352,9 +1355,11 @@ void *diskIOthread(void *arg) {
             break;
         }
         if ( (severity & RTCP_LOCAL_RETRY) == 0 ) break;
-        rtcp_log(LOG_INFO,"diskIOthread(%s): local retry open\n",
-                 filereq->file_path);
-    } while ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
+        retry++;
+        rtcp_log(LOG_INFO,"diskIOthread(%s): local retry %d open\n",
+                 retry,filereq->file_path);
+    } while ( retry < 10 &&
+              (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
     CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
         if ( mode == WRITE_DISABLE ) {
     if ( (severity & RTCP_EOD) == 0 ) {
