@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.56 2001/06/21 11:38:10 jdurand Exp $
+ * $Id: procqry.c,v 1.57 2001/06/22 10:40:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.56 $ $Date: 2001/06/21 11:38:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.57 $ $Date: 2001/06/22 10:40:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -752,7 +752,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			strcpy( p_stat, "WAITING_NS");
 		else
 			strcpy (p_stat, s_stat[stcp->status]);
-		if ((lflag || ((stcp->status & 0xFF0) == 0)) && stcp->ipath[0] != '\0') {
+		if ((lflag || ((stcp->status & 0xFF0) == 0)) &&
+			((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) &&  /* STAGEOUT|CAN_BE_MIGR[|BEING_MIGR,|WAITING_MIGR,etc...] */
+			((stcp->status &  BEING_MIGR) !=  BEING_MIGR) &&  /* STAGEPUT|BEING_MIGR for example */
+			(stcp->ipath[0] != '\0')) {
 			if (rfio_mstat(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
 
