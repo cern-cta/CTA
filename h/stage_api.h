@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.7 2000/05/09 06:48:32 jdurand Exp $
+ * $Id: stage_api.h,v 1.8 2000/05/11 07:56:32 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -33,9 +33,9 @@ EXTERN_C int  DLL_DECL  stage_xxx_hsm _PROTO((int, char *, int, char *, stage_hs
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
 
 #define stage_out_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGEOUT,stghost,Kopt,diskpool,hsmstruct)
-#define stage_in_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGEIN,stghost,Kopt,diskpool,hsmstruct)
+#define stage_in_hsm(stghost,diskpool,hsmstruct) stage_xxx_hsm(STAGEIN,stghost,0,diskpool,hsmstruct)
 #define stage_wrt_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGEWRT,stghost,Kopt,diskpool,hsmstruct)
-#define stage_cat_hsm(stghost,Kopt,diskpool,hsmstruct) stage_xxx_hsm(STAGECAT,stghost,Kopt,diskpool,hsmstruct)
+#define stage_cat_hsm(stghost,diskpool,hsmstruct) stage_xxx_hsm(STAGECAT,stghost,0,diskpool,hsmstruct)
 
 #endif /* __stage_api_h */
 
