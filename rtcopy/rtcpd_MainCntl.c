@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.23 $ $Date: 2000/02/09 15:30:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.24 $ $Date: 2000/02/11 18:03:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -84,6 +84,7 @@ static void rtcpd_SetDebug() {
     if ( getenv("RTCOPY_DEBUG") != NULL ||
          getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
     else NOTRACE;                 /* Switch off tracing */
+    if ( Debug == TRUE ) initlog("rtcopyd",LOG_DEBUG,RTCOPY_LOGFILE);
     return;
 }
 
@@ -103,6 +104,135 @@ int rtcpd_CheckNoMoreTapes() {
  * add local checks for the future.
  */
 static int rtcpd_CheckClient(rtcpClientInfo_t *client) {
+    return(0);
+}
+
+/*
+ * Log command line a'la SHIFT.
+ */
+#define LOGLINE_APPEND(X,Y) sprintf(&logline[strlen(logline)],(X),(Y));
+static int rtcpd_PrintCmd(tape_list_t *tape) {
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+    tape_list_t *tl;
+    file_list_t *fl;
+    char *vid;
+    char *vsn;
+    char logline[CA_MAXLINELEN+1];
+    char *fidstr = NULL;
+    char *szstr = NULL;
+    char *qstr = NULL;
+    int mode,fseq;
+
+    if ( tape == NULL ) return(-1);
+
+    *logline = '\0';
+    tapereq = &tape->tapereq;
+    vid = tapereq->vid;
+    vsn = tapereq->vsn;
+    mode = tapereq->mode;
+    sprintf(logline,"%s %s %s",(mode == WRITE_ENABLE ? "tpwrite" : "tpread"),
+            (*vid != '\0' ? "-V" : "-v"),(*vid != '\0' ? vid : vsn));
+    CLIST_ITERATE_BEGIN(tape,tl) {
+        if ( tl != tape ) {
+            tapereq = &tl->tapereq;
+            LOGLINE_APPEND(":%s",
+                    (*vid != '\0' ? tapereq->vid : tapereq->vsn));
+        }
+    } CLIST_ITERATE_END(tape,tl);
+
+    filereq = &tape->file->filereq;
+    if ( *filereq->recfm != '\0' ) {
+        LOGLINE_APPEND(" -F %s",filereq->recfm);
+        if ( filereq->convert > 0 &&
+             (filereq->convert & NOF77CW) != 0 ) LOGLINE_APPEND(",%s","-f77");
+    }
+    if ( filereq->blocksize > 0 )
+        LOGLINE_APPEND(" -b %d",filereq->blocksize);
+    if ( filereq->recordlength > 0 ) 
+        LOGLINE_APPEND(" -L %d",filereq->recordlength);
+    if ( filereq->def_alloc > 0 )
+        LOGLINE_APPEND(" -A %s","deferred");
+    if ( filereq->rtcp_err_action == SKIPBAD ) 
+        LOGLINE_APPEND(" -E %s","skip");
+    if ( filereq->rtcp_err_action == KEEPFILE ) 
+        LOGLINE_APPEND(" -E %s","keep");
+    if ( filereq->tp_err_action == IGNOREEOI ) 
+        LOGLINE_APPEND(" -E %s","ignoreeoi");
+    if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) { 
+        LOGLINE_APPEND("%s"," -C "); 
+        if ( (filereq->convert & EBCCONV) != 0 ) {
+            LOGLINE_APPEND("%s","ebcdic");
+        } else LOGLINE_APPEND("%s","ascii");
+        if ( (filereq->convert & FIXVAR) != 0 )
+            LOGLINE_APPEND(",%s","block");
+    } 
+
+    if ( filereq->maxnbrec > 0 )
+        LOGLINE_APPEND(" -N %d",(int)filereq->maxnbrec);
+
+    if ( *filereq->fid != '\0' ) fidstr = (char *)malloc(CA_MAXLINELEN+1);
+    if ( filereq->maxsize > 0 ) szstr = (char *)malloc(CA_MAXLINELEN+1);
+ 
+    fseq = filereq->tape_fseq; 
+    if ( fidstr != NULL ) sprintf(fidstr,"%s",filereq->fid);
+    if ( szstr != NULL ) 
+        sprintf(szstr,"%d",(int)(filereq->maxsize/(1024*1024)));
+    if ( filereq->position_method == TPPOSIT_EOI ||
+         filereq->position_method == TPPOSIT_FID ) {
+        fseq = tape->file->prev->filereq.disk_fseq;
+        LOGLINE_APPEND(" -q %s",
+            (filereq->position_method == TPPOSIT_EOI ? "n" : "u"));
+        if ( fseq > 1 ) LOGLINE_APPEND("%d",fseq);
+    }
+
+    fseq = filereq->tape_fseq;
+    if ( filereq->position_method == TPPOSIT_FSEQ ) {
+        qstr = (char *)malloc(CA_MAXLINELEN+1);
+        sprintf(qstr,"%d",fseq);
+    }
+
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+        filereq = &fl->filereq;
+        if ( filereq->tape_fseq != fseq ) {
+            if ( fidstr != NULL &&
+                 strlen(fidstr)+strlen(filereq->fid)+2 < CA_MAXLINELEN )
+                sprintf(&fidstr[strlen(fidstr)],":%s",filereq->fid);
+            if ( szstr != NULL && strlen(szstr)+12 < CA_MAXLINELEN )
+                sprintf(&szstr[strlen(szstr)],":%d",
+                        (int)(filereq->maxsize/(1024*1024)));
+            if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
+                 strlen(qstr) + 6 < CA_MAXLINELEN ) {
+                if ( filereq->tape_fseq == fseq + 1 ) {
+                    if ( qstr[strlen(qstr)-1] != '-' )
+                        sprintf(&qstr[strlen(qstr)],"-");
+                } else {
+                    if ( qstr[strlen(qstr)-1] != '-' )
+                        sprintf(&qstr[strlen(qstr)],",");
+                    sprintf(&qstr[strlen(qstr)],"%d",filereq->tape_fseq);
+                }
+                fseq = filereq->tape_fseq;
+            }
+        }
+    } CLIST_ITERATE_END(tape->file,fl);
+
+    if ( fidstr != NULL ) LOGLINE_APPEND(" -f %s",fidstr);
+    if ( szstr != NULL ) LOGLINE_APPEND(" -s %s",szstr);
+    if ( qstr != NULL ) LOGLINE_APPEND(" -q %s",qstr);
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+        filereq = &fl->filereq;
+        if ( strlen(logline)+strlen(filereq->file_path)+4 < CA_MAXLINELEN ) {
+            LOGLINE_APPEND(" %s",filereq->file_path);
+        } else {
+            rtcp_log(LOG_INFO,"%s \\\n",logline);
+            *logline = '\0';
+        }
+    } CLIST_ITERATE_END(tape->file,fl);
+    if ( *logline != '\0' ) rtcp_log(LOG_INFO,"%s\n",logline);
+    if ( fidstr != NULL ) free(fidstr);
+    if ( szstr != NULL ) free(szstr);
+    if ( qstr != NULL ) free(qstr);
+
     return(0);
 }
 
@@ -967,6 +1097,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() setuid(%d): %s\n",
                 client->uid,sstrerror(errno));
     }
+    (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         rtcpd_FreeResources(&client_socket,&client,&tape);
