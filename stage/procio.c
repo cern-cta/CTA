@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.93 2001/02/22 10:53:07 jdurand Exp $
+ * $Id: procio.c,v 1.94 2001/02/23 10:15:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.93 $ $Date: 2001/02/22 10:53:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.94 $ $Date: 2001/02/23 10:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2947,8 +2947,9 @@ isstaged(cur, p, poolflag, poolname)
 			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile) == 0) stcp_castor_name = stcp;
 
 			/* Remember if we found this HSM invariant pair */
-			if (strcmp (cur->u1.h.server, stcp->u1.h.server) == 0 &&
-				cur->u1.h.fileid == stcp->u1.h.fileid) stcp_castor_invariants = stcp;
+			if ((cur->u1.h.server[0] != '\0') && (cur->u1.h.fileid != 0) &&
+				(strcmp (cur->u1.h.server, stcp->u1.h.server) == 0) &&
+				(cur->u1.h.fileid == stcp->u1.h.fileid)) stcp_castor_invariants = stcp;
 
 			if (stcp_castor_name != NULL) {
 				if (stcp_castor_name == stcp_castor_invariants) {
