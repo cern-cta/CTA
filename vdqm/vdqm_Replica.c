@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.11 $ $Date: 2000/04/28 11:41:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.12 $ $Date: 2000/04/28 12:34:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -507,30 +507,16 @@ static int DeleteReplica(vdqmReplica_t *Replica) {
     int rc, save_serrno;
     vdqmReplicaList_t *rpl = NULL;
 
-    rc = LockReplicaList();
-    if ( rc == -1 ) {
-        save_serrno = serrno;
-        log(LOG_ERR,"DeleteReplica() LockReplicaList(): %s\n",
-            sstrerror(serrno));
-        vdqm_SetError(save_serrno);
-        return(-1);
-    }
+    /*
+     * Replica client list must be locked before calling this routine !
+     */
     rc = FindReplicaRecord(Replica,&rpl);
     if ( rc != 1 || rpl == NULL ) {
         log(LOG_ERR,"DeleteReplica() could not find replication record\n");
         vdqm_SetError(ENOENT);
-        (void)UnlockReplicaList();
         return(-1);
     }
     CLIST_DELETE(ReplicaList,rpl);
-    rc = UnlockReplicaList();
-    if ( rc == -1 ) {
-        save_serrno = serrno;
-        log(LOG_ERR,"DeleteReplica() UnlockReplicaList(): %s\n",
-            sstrerror(save_serrno));
-        vdqm_SetError(save_serrno);
-        return(-1);
-    }
     return(0);
 }
 
