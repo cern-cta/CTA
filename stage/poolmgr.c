@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.48 2000/11/11 08:57:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.49 2000/11/17 08:22:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.48 $ $Date: 2000/11/11 08:57:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.49 $ $Date: 2000/11/17 08:22:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1122,14 +1122,18 @@ updpoolconf(defpoolname)
 		nbpool = sav_nbpool;
 		pools = sav_pools;
 	} else {			/* free the old configuration */
-		/* but keep pids of cleaner/migrator if any */
+		/* but keep pids of cleaner/migrator as well as started time if any */
 		free (sav_poolc);
 		for (i = 0, pool_p = sav_pools; i < sav_nbpool; i++, pool_p++) {
 			if (pool_p->ovl_pid || (pool_p->migr != NULL && pool_p->migr->mig_pid)) {
 				for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
 					if (strcmp (pool_n->name, pool_p->name) == 0) {
 						pool_n->ovl_pid = pool_p->ovl_pid;
-						if (pool_n->migr != NULL) pool_n->migr->mig_pid = pool_p->migr->mig_pid;
+						pool_n->cleanreqtime = pool_p->cleanreqtime;
+						if (pool_n->migr != NULL) {
+							pool_n->migr->mig_pid = pool_p->migr->mig_pid;
+							pool_n->migr->migreqtime = pool_p->migr->migreqtime;
+						}
 						break;
 					}
 				}
