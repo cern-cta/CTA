@@ -1,0 +1,57 @@
+.\" @(#)$RCSfile: readlbl.man,v $ $Revision: 1.1 $ $Date: 2002/10/01 11:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH READLBL 3 "$Date: 2002/10/01 11:03:31 $" CASTOR "Ctape Library Functions"
+.SH NAME
+readlbl \- read one block from a tape and check block length
+.SH SYNOPSIS
+.BI "int readlbl (int " tapefd ,
+.BI "char *" path ,
+.BI "char *" lblbuf );
+.SH DESCRIPTION
+.B readlbl
+reads one block from a tape and checks the block length.
+.TP
+.I tapefd
+being the file descriptor returned by the
+.B open
+statement.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is given by the application program in the
+.B open
+statement.
+.I path
+is only used for the error messages.
+.TP
+.I lblbuf
+allocated by the calling program to receive the block.
+.SH RETURN VALUE
+This routine returns 0 if a 80 characters block was read, 1 if the block
+length was different, 2 for a tape mark, 3 for blank tape or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

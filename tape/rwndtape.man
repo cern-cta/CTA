@@ -1,0 +1,49 @@
+.\" @(#)$RCSfile: rwndtape.man,v $ $Revision: 1.1 $ $Date: 2002/10/01 11:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RWNDTAPE 3 "$Date: 2002/10/01 11:03:31 $" CASTOR "Ctape Library Functions"
+.SH NAME
+rwndtape \- rewind the tape
+.SH SYNOPSIS
+.BI "int rwndtape (int " tapefd ,
+.BI "char *" path );
+.SH DESCRIPTION
+.B rwndtape
+rewinds the tape.
+.TP
+.I tapefd
+being the file descriptor returned by the
+.B open
+statement.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is given by the application program in the
+.B open
+statement.
+.I path
+is only used for the error messages.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

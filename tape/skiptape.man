@@ -1,0 +1,95 @@
+.\" @(#)$RCSfile: skiptape.man,v $ $Revision: 1.1 $ $Date: 2002/10/01 11:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH SKIPTAPE 3 "$Date: 2002/10/01 11:03:31 $" CASTOR "Ctape Library Functions"
+.SH NAME
+skiptpfb, skiptpff, skiptpfff, skiptprb, skiptprf \- low level tape positioning routines
+.SH SYNOPSIS
+.BI "int skiptpfb (int " tapefd ,
+.BI "char *" path ,
+.BI " int " n );
+.LP
+.BI "int skiptpff (int " tapefd ,
+.BI "char *" path ,
+.BI " int " n );
+.LP
+.BI "int skiptpfff (int " tapefd ,
+.BI "char *" path ,
+.BI " int " n );
+.LP
+.BI "int skiptprb (int " tapefd ,
+.BI "char *" path ,
+.BI " int " n );
+.LP
+.BI "int skiptprf (int " tapefd ,
+.BI "char *" path ,
+.BI " int " n );
+.SH DESCRIPTION
+.B skiptpfb
+back spaces the tape over
+.I n
+tape marks.
+.LP
+.B skiptpff
+forward spaces the tape over
+.I n
+tape marks.
+.LP
+.B skiptpfff
+forward spaces the tape over
+.I n
+tape marks. If it finds EOI before the count is exhausted, it returns the
+residual count.
+.LP
+.B skiptprb
+back spaces the tape over
+.I n
+blocks.
+.LP
+.B skiptprf
+forward spaces the tape over
+.I n
+blocks.
+.TP
+.I tapefd
+being the file descriptor returned by the
+.B open
+statement.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is given by the application program in the
+.B open
+statement.
+.I path
+is only used for the error messages.
+.TP
+.I n
+is the number of blocks or tape marks to be skipped.
+.SH RETURN VALUE
+These routines return 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

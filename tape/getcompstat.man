@@ -1,0 +1,81 @@
+.\" @(#)$RCSfile: getcompstat.man,v $ $Revision: 1.1 $ $Date: 2002/10/01 11:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH GETCOMPSTAT 3 "$Date: 2002/10/01 11:03:31 $" CASTOR "Ctape Library Functions"
+.SH NAME
+clear_compression_stats, get_compression_stats \- clear and get compression statistics
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int clear_compression_stats (int " tapefd ,
+.BI "char *" path ,
+.BI "char *" devtype );
+.LP
+.BI "int get_compression_stats (int " tapefd ,
+.BI "char *" path ,
+.BI "char *" devtype ,
+.BI "COMPRESSION_STATS *" comp_stats );
+.SH DESCRIPTION
+.B clear_compression_stats
+clears the compression statistics.
+.LP
+.B get_compression_stats
+gets the compression statistics.
+.TP
+.I tapefd
+being the file descriptor returned by the
+.B open
+statement.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is given by the application program in the
+.B open
+statement.
+.I path
+is only used for the error messages.
+.TP
+.I devtype
+is the device type.
+.TP
+.I comp_stats
+allocated by the calling program to receive the reply.
+.LP
+.nf
+.ft CW
+typedef struct {
+        unsigned long from_host;
+        unsigned long to_tape;
+        unsigned long from_tape;
+        unsigned long to_host;
+} COMPRESSION_STATS;
+.ft
+.fi
+.LP
+The four values are in kB (1024 bytes).
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B SEOPNOTSUP
+Operation not supported.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETNOSNS
+No sense data available.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
