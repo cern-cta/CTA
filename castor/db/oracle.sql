@@ -61,7 +61,7 @@ CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUM
 
 /* SQL statements for type Tape */
 DROP TABLE rh_Tape;
-CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR(255), id INTEGER PRIMARY KEY, status INTEGER);
+CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR(255), id INTEGER PRIMARY KEY, stream INTEGER, status INTEGER);
 
 /* SQL statements for type Segment */
 DROP TABLE rh_Segment;

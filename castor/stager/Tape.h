@@ -32,6 +32,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_Segment_t;
+struct Cstager_Stream_t;
 struct Cstager_Tape_t;
 
 //------------------------------------------------------------------------------
@@ -172,6 +173,16 @@ int Cstager_Tape_vwAddress(struct Cstager_Tape_t* instance, const char** var);
  * Vid worker address for killing requests
  */
 int Cstager_Tape_setVwAddress(struct Cstager_Tape_t* instance, const char* new_var);
+
+/**
+ * Get the value of stream
+ */
+int Cstager_Tape_stream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t** var);
+
+/**
+ * Set the value of stream
+ */
+int Cstager_Tape_setStream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t* new_var);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

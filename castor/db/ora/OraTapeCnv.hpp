@@ -167,6 +167,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type Stream refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepStream(castor::stager::Tape* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type Segment refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -183,6 +191,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type Stream refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjStream(castor::stager::Tape* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -231,10 +247,10 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL update statement for member 
+        /// SQL update statement for member stream
         static const std::string s_updateStreamStatementString;
 
-        /// SQL update statement object for member 
+        /// SQL update statement object for member stream
         oracle::occi::Statement *m_updateStreamStatement;
 
         /// SQL select statement for member segments

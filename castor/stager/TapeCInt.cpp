@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "osdep.h"
@@ -218,6 +219,22 @@ extern "C" {
   int Cstager_Tape_setVwAddress(castor::stager::Tape* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setVwAddress(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_stream
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_stream(castor::stager::Tape* instance, castor::stager::Stream** var) {
+    *var = instance->stream();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setStream
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setStream(castor::stager::Tape* instance, castor::stager::Stream* new_var) {
+    instance->setStream(new_var);
     return 0;
   }
 

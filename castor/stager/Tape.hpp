@@ -43,6 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class Stream;
     class Segment;
 
     /**
@@ -231,6 +232,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_stream
+       * @return the value of m_stream
+       */
+      Stream* stream() const {
+        return m_stream;
+      }
+
+      /**
+       * Set the value of m_stream
+       * @param new_var the new value of m_stream
+       */
+      void setStream(Stream* new_var) {
+        m_stream = new_var;
+      }
+
+      /**
        * Add a Segment* object to the m_segmentsVector list
        */
       void addSegments(Segment* add_object) {
@@ -300,6 +317,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      Stream* m_stream;
 
       std::vector<Segment*> m_segmentsVector;
 

@@ -55,6 +55,9 @@ castor::stager::Stream::~Stream() throw() {
     m_tapeCopyVector[i]->removeStream(this);
   }
   m_tapeCopyVector.clear();
+  if (0 != m_tape) {
+    m_tape->setStream(0);
+  }
   if (0 != m_tapePool) {
     m_tapePool->removeStreams(this);
   }

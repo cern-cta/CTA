@@ -283,7 +283,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
   // Update remote object or create new one
   if (tapeId == 0) {
     if (0 != obj->tape()) {
-      cnvSvc()->createRep(&ad, obj->tape(), false);
+      cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_Stream);
     }
   } else {
     cnvSvc()->updateRep(&ad, obj->tape(), false);

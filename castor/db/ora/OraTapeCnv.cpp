@@ -38,6 +38,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include <set>
@@ -55,7 +56,7 @@ const castor::IFactory<castor::IConverter>& OraTapeCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCnv::s_insertStatementString =
-"INSERT INTO rh_Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9)";
+"INSERT INTO rh_Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
@@ -63,7 +64,7 @@ const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status FROM rh_Tape WHERE id = :1";
+"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status FROM rh_Tape WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCnv::s_updateStatementString =
@@ -77,9 +78,9 @@ const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL update statement for member 
+/// SQL update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
-"UPDATE rh_Tape SET  = : 1 WHERE id = :2";
+"UPDATE rh_Tape SET stream = : 1 WHERE id = :2";
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
@@ -158,6 +159,9 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
   switch (type) {
+  case castor::OBJ_Stream :
+    fillRepStream(obj);
+    break;
   case castor::OBJ_Segment :
     fillRepSegment(obj);
     break;
@@ -171,6 +175,52 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
   if (autocommit) {
     cnvSvc()->getConnection()->commit();
   }
+}
+
+//------------------------------------------------------------------------------
+// fillRepStream
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 streamId = (u_signed64)rset->getDouble(9);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(streamId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != streamId &&
+      0 != obj->stream() &&
+      obj->stream()->id() != streamId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    streamId = 0;
+  }
+  // Update remote object or create new one
+  if (streamId == 0) {
+    if (0 != obj->stream()) {
+      cnvSvc()->createRep(&ad, obj->stream(), false, OBJ_Tape);
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->stream(), false);
+  }
+  // Check update statement
+  if (0 == m_updateStreamStatement) {
+    m_updateStreamStatement = createStatement(s_updateStreamStatementString);
+  }
+  // Update local object
+  m_updateStreamStatement->setDouble(1, 0 == obj->stream() ? 0 : obj->stream()->id());
+  m_updateStreamStatement->setDouble(2, obj->id());
+  m_updateStreamStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -221,6 +271,9 @@ void castor::db::ora::OraTapeCnv::fillObj(castor::IAddress* address,
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
   switch (type) {
+  case castor::OBJ_Stream :
+    fillObjStream(obj);
+    break;
   case castor::OBJ_Segment :
     fillObjSegment(obj);
     break;
@@ -230,6 +283,45 @@ void castor::db::ora::OraTapeCnv::fillObj(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjStream
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCnv::fillObjStream(castor::stager::Tape* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 streamId = (u_signed64)rset->getDouble(9);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->stream() &&
+      (0 == streamId ||
+       obj->stream()->id() != streamId)) {
+    delete obj->stream();
+    obj->setStream(0);
+  }
+  // Update object or create new one
+  if (0 != streamId) {
+    if (0 == obj->stream()) {
+      obj->setStream
+        (dynamic_cast<castor::stager::Stream*>
+         (cnvSvc()->getObjFromId(streamId)));
+    } else if (obj->stream()->id() == streamId) {
+      cnvSvc()->updateObj(obj->stream());
+    }
   }
 }
 
@@ -314,7 +406,8 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(6, obj->severity());
     m_insertStatement->setString(7, obj->vwAddress());
     m_insertStatement->setDouble(8, obj->id());
-    m_insertStatement->setDouble(9, 0);
+    m_insertStatement->setDouble(9, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setDouble(10, 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -345,6 +438,7 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
                     << "  severity : " << obj->severity() << std::endl
                     << "  vwAddress : " << obj->vwAddress() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  stream : " << obj->stream() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }
@@ -487,7 +581,7 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId((u_signed64)rset->getDouble(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -541,7 +635,7 @@ void castor::db::ora::OraTapeCnv::updateObj(castor::IObject* obj)
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId((u_signed64)rset->getDouble(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
