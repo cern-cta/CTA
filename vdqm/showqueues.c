@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.11 $ $Date: 2001/08/31 17:25:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.12 $ $Date: 2002/10/25 12:51:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -15,8 +15,6 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.11 $ $Date: 
 #include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#else /* _WIN32 */
-#include <regex.h>
 #endif /* _WIN32 */
 #include <time.h>
 #include <Castor_limits.h>
