@@ -45,7 +45,7 @@ castor::stager::Request::Request() throw() :
   m_mask(0),
   m_pid(0),
   m_machine(""),
-  m_projectName(""),
+  m_svcClassName(""),
   m_client(0) {
 };
 
@@ -84,7 +84,7 @@ void castor::stager::Request::print(std::ostream& stream,
   stream << indent << "mask : " << m_mask << std::endl;
   stream << indent << "pid : " << m_pid << std::endl;
   stream << indent << "machine : " << m_machine << std::endl;
-  stream << indent << "projectName : " << m_projectName << std::endl;
+  stream << indent << "svcClassName : " << m_svcClassName << std::endl;
   alreadyPrinted.insert(this);
   {
     stream << indent << "SubRequests : " << std::endl;
@@ -98,7 +98,6 @@ void castor::stager::Request::print(std::ostream& stream,
     }
   }
   stream << indent << "client : " << m_client << std::endl;
-  stream << indent << "status : " << m_status << std::endl;
 }
 
 //------------------------------------------------------------------------------

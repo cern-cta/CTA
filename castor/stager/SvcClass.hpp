@@ -120,9 +120,9 @@ namespace castor {
 
       /**
        * Get the value of m_nbDrives
-       * Number of drives to use for this project. This is the default number, but it
-       * could be that occasionnally more drives are used, if a resource is shared with
-       * another project using more drives
+       * Number of drives to use for this service class. This is the default number, but
+       * it could be that occasionnally more drives are used, if a resource is shared with
+       * another service class using more drives
        * @return the value of m_nbDrives
        */
       unsigned int nbDrives() const {
@@ -131,13 +131,31 @@ namespace castor {
 
       /**
        * Set the value of m_nbDrives
-       * Number of drives to use for this project. This is the default number, but it
-       * could be that occasionnally more drives are used, if a resource is shared with
-       * another project using more drives
+       * Number of drives to use for this service class. This is the default number, but
+       * it could be that occasionnally more drives are used, if a resource is shared with
+       * another service class using more drives
        * @param new_var the new value of m_nbDrives
        */
       void setNbDrives(unsigned int new_var) {
         m_nbDrives = new_var;
+      }
+
+      /**
+       * Get the value of m_name
+       * the name of this SvcClass
+       * @return the value of m_name
+       */
+      std::string name() const {
+        return m_name;
+      }
+
+      /**
+       * Set the value of m_name
+       * the name of this SvcClass
+       * @param new_var the new value of m_name
+       */
+      void setName(std::string new_var) {
+        m_name = new_var;
       }
 
     private:
@@ -147,10 +165,13 @@ namespace castor {
       std::string m_policy;
 
       /*
-       * Number of drives to use for this project.
-       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another project using more drives
+       * Number of drives to use for this service class.
+       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives
       */
       unsigned int m_nbDrives;
+
+      /// the name of this SvcClass
+      std::string m_name;
 
       /// The id of this object
       u_signed64 m_id;

@@ -102,18 +102,30 @@ int Cstager_SvcClass_setPolicy(struct Cstager_SvcClass_t* instance, const char* 
 
 /**
  * Get the value of nbDrives
- * Number of drives to use for this project. This is the default number, but it
- * could be that occasionnally more drives are used, if a resource is shared with
- * another project using more drives
+ * Number of drives to use for this service class. This is the default number, but
+ * it could be that occasionnally more drives are used, if a resource is shared with
+ * another service class using more drives
  */
 int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbDrives
- * Number of drives to use for this project. This is the default number, but it
- * could be that occasionnally more drives are used, if a resource is shared with
- * another project using more drives
+ * Number of drives to use for this service class. This is the default number, but
+ * it could be that occasionnally more drives are used, if a resource is shared with
+ * another service class using more drives
  */
 int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of name
+ * the name of this SvcClass
+ */
+int Cstager_SvcClass_name(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of name
+ * the name of this SvcClass
+ */
+int Cstager_SvcClass_setName(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 #endif // CASTOR_STAGER_SVCCLASS_H

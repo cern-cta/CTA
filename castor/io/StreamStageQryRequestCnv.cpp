@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/11 13:43:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 14:13:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,7 +39,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/RequestStatusCodes.hpp"
 #include "castor/stager/StageQryRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
@@ -98,9 +97,8 @@ void castor::io::StreamStageQryRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->mask();
   ad->stream() << obj->pid();
   ad->stream() << obj->machine();
-  ad->stream() << obj->projectName();
+  ad->stream() << obj->svcClassName();
   ad->stream() << obj->id();
-  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -160,15 +158,12 @@ castor::IObject* castor::io::StreamStageQryRequestCnv::createObj(castor::IAddres
   std::string machine;
   ad->stream() >> machine;
   object->setMachine(machine);
-  std::string projectName;
-  ad->stream() >> projectName;
-  object->setProjectName(projectName);
+  std::string svcClassName;
+  ad->stream() >> svcClassName;
+  object->setSvcClassName(svcClassName);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int status;
-  ad->stream() >> status;
-  object->setStatus((castor::stager::RequestStatusCodes)status);
   return object;
 }
 

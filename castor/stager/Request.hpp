@@ -29,7 +29,6 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/stager/RequestStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -205,19 +204,19 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_projectName
-       * @return the value of m_projectName
+       * Get the value of m_svcClassName
+       * @return the value of m_svcClassName
        */
-      std::string projectName() const {
-        return m_projectName;
+      std::string svcClassName() const {
+        return m_svcClassName;
       }
 
       /**
-       * Set the value of m_projectName
-       * @param new_var the new value of m_projectName
+       * Set the value of m_svcClassName
+       * @param new_var the new value of m_svcClassName
        */
-      void setProjectName(std::string new_var) {
-        m_projectName = new_var;
+      void setSvcClassName(std::string new_var) {
+        m_svcClassName = new_var;
       }
 
       /**
@@ -265,22 +264,6 @@ namespace castor {
         m_client = new_var;
       }
 
-      /**
-       * Get the value of m_status
-       * @return the value of m_status
-       */
-      RequestStatusCodes status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * @param new_var the new value of m_status
-       */
-      void setStatus(RequestStatusCodes new_var) {
-        m_status = new_var;
-      }
-
     private:
 
       u_signed64 m_flags;
@@ -303,13 +286,11 @@ namespace castor {
       /// The machine that submitted the request
       std::string m_machine;
 
-      std::string m_projectName;
+      std::string m_svcClassName;
 
       std::vector<SubRequest*> m_subRequestsVector;
 
       castor::IClient* m_client;
-
-      RequestStatusCodes m_status;
 
     }; // end of class Request
 

@@ -136,4 +136,21 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_name
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_name(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->name().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setName
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setName(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setName(snew_var);
+    return 0;
+  }
+
 } // End of extern "C"

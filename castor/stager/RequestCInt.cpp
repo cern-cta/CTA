@@ -28,7 +28,6 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/RequestStatusCodes.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <vector>
@@ -180,19 +179,19 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Request_projectName
+  // Cstager_Request_svcClassName
   //----------------------------------------------------------------------------
-  int Cstager_Request_projectName(castor::stager::Request* instance, const char** var) {
-    *var = instance->projectName().c_str();
+  int Cstager_Request_svcClassName(castor::stager::Request* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Request_setProjectName
+  // Cstager_Request_setSvcClassName
   //----------------------------------------------------------------------------
-  int Cstager_Request_setProjectName(castor::stager::Request* instance, const char* new_var) {
+  int Cstager_Request_setSvcClassName(castor::stager::Request* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setProjectName(snew_var);
+    instance->setSvcClassName(snew_var);
     return 0;
   }
 
@@ -238,22 +237,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Request_setClient(castor::stager::Request* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Request_status
-  //----------------------------------------------------------------------------
-  int Cstager_Request_status(castor::stager::Request* instance, castor::stager::RequestStatusCodes* var) {
-    *var = instance->status();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Request_setStatus
-  //----------------------------------------------------------------------------
-  int Cstager_Request_setStatus(castor::stager::Request* instance, castor::stager::RequestStatusCodes new_var) {
-    instance->setStatus(new_var);
     return 0;
   }
 

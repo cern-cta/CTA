@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageOutRequestCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageOutRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 14:13:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -38,7 +38,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/RequestStatusCodes.hpp"
 #include "castor/stager/StageOutRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include <set>
@@ -56,7 +55,7 @@ const castor::IFactory<castor::IConverter>& OraStageOutRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageOutRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StageOutRequest (flags, userName, euid, egid, mask, pid, machine, projectName, openmode, id, client, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO rh_StageOutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, openmode, id, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageOutRequestCnv::s_deleteStatementString =
@@ -64,11 +63,11 @@ const std::string castor::db::ora::OraStageOutRequestCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageOutRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, projectName, openmode, id, client, status FROM rh_StageOutRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, openmode, id, client FROM rh_StageOutRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageOutRequestCnv::s_updateStatementString =
-"UPDATE rh_StageOutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, projectName = :8, openmode = :9, client = :10, status = :11 WHERE id = :12";
+"UPDATE rh_StageOutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, openmode = :9, client = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageOutRequestCnv::s_storeTypeStatementString =
@@ -404,11 +403,10 @@ void castor::db::ora::OraStageOutRequestCnv::createRep(castor::IAddress* address
     m_insertStatement->setInt(5, obj->mask());
     m_insertStatement->setInt(6, obj->pid());
     m_insertStatement->setString(7, obj->machine());
-    m_insertStatement->setString(8, obj->projectName());
+    m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setInt(9, obj->openmode());
     m_insertStatement->setDouble(10, obj->id());
     m_insertStatement->setDouble(11, obj->client() ? obj->client()->id() : 0);
-    m_insertStatement->setDouble(12, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -438,11 +436,10 @@ void castor::db::ora::OraStageOutRequestCnv::createRep(castor::IAddress* address
                     << "  mask : " << obj->mask() << std::endl
                     << "  pid : " << obj->pid() << std::endl
                     << "  machine : " << obj->machine() << std::endl
-                    << "  projectName : " << obj->projectName() << std::endl
+                    << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  openmode : " << obj->openmode() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  client : " << obj->client() << std::endl
-                    << "  status : " << obj->status() << std::endl;
+                    << "  client : " << obj->client() << std::endl;
     throw ex;
   }
 }
@@ -471,11 +468,10 @@ void castor::db::ora::OraStageOutRequestCnv::updateRep(castor::IAddress* address
     m_updateStatement->setInt(5, obj->mask());
     m_updateStatement->setInt(6, obj->pid());
     m_updateStatement->setString(7, obj->machine());
-    m_updateStatement->setString(8, obj->projectName());
+    m_updateStatement->setString(8, obj->svcClassName());
     m_updateStatement->setInt(9, obj->openmode());
     m_updateStatement->setDouble(10, obj->client() ? obj->client()->id() : 0);
-    m_updateStatement->setDouble(11, (int)obj->status());
-    m_updateStatement->setDouble(12, obj->id());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -594,10 +590,9 @@ castor::IObject* castor::db::ora::OraStageOutRequestCnv::createObj(castor::IAddr
     object->setMask(rset->getInt(5));
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
-    object->setProjectName(rset->getString(8));
+    object->setSvcClassName(rset->getString(8));
     object->setOpenmode(rset->getInt(9));
     object->setId((unsigned long long)rset->getDouble(10));
-    object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -650,10 +645,9 @@ void castor::db::ora::OraStageOutRequestCnv::updateObj(castor::IObject* obj)
     object->setMask(rset->getInt(5));
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
-    object->setProjectName(rset->getString(8));
+    object->setSvcClassName(rset->getString(8));
     object->setOpenmode(rset->getInt(9));
     object->setId((unsigned long long)rset->getDouble(10));
-    object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(12));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

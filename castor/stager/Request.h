@@ -28,7 +28,6 @@
 #define CASTOR_STAGER_REQUEST_H
 
 // Include Files and Forward declarations for the C world
-#include "castor/stager/RequestStatusCodes.h"
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -149,14 +148,14 @@ int Cstager_Request_machine(struct Cstager_Request_t* instance, const char** var
 int Cstager_Request_setMachine(struct Cstager_Request_t* instance, const char* new_var);
 
 /**
- * Get the value of projectName
+ * Get the value of svcClassName
  */
-int Cstager_Request_projectName(struct Cstager_Request_t* instance, const char** var);
+int Cstager_Request_svcClassName(struct Cstager_Request_t* instance, const char** var);
 
 /**
- * Set the value of projectName
+ * Set the value of svcClassName
  */
-int Cstager_Request_setProjectName(struct Cstager_Request_t* instance, const char* new_var);
+int Cstager_Request_setSvcClassName(struct Cstager_Request_t* instance, const char* new_var);
 
 /**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list
@@ -182,15 +181,5 @@ int Cstager_Request_client(struct Cstager_Request_t* instance, struct C_IClient_
  * Set the value of client
  */
 int Cstager_Request_setClient(struct Cstager_Request_t* instance, struct C_IClient_t* new_var);
-
-/**
- * Get the value of status
- */
-int Cstager_Request_status(struct Cstager_Request_t* instance, enum Cstager_RequestStatusCodes_t* var);
-
-/**
- * Set the value of status
- */
-int Cstager_Request_setStatus(struct Cstager_Request_t* instance, enum Cstager_RequestStatusCodes_t new_var);
 
 #endif // CASTOR_STAGER_REQUEST_H
