@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.37 $ $Date: 2000/03/14 11:08:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.38 $ $Date: 2000/03/14 11:10:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1337,7 +1337,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Initialise the stage API
      */
-    rc = rtcpd_init_stgupdc(tape_list_t *tape);
+    rc = rtcpd_init_stgupdc(tape);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_init_stgupdc(): %s\n",
                  sstrerror(serrno));
