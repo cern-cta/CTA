@@ -56,7 +56,7 @@
 #define DbSpool	/var/spool/db
 #define DomainName	cern.ch
 #define FilManDir       $(DESTDIR)/usr/share/man/man4
-#define FilManSuffix    4castor
+#define FilManSuffix    4
 #define HsmToolsSpool	/var/spool/hsmtools
 #if defined(_WIN32)
 #define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
@@ -79,14 +79,14 @@
 #define InstallLibDir	$(DESTDIR)/usr/lib
 #endif
 #define LibManDir       $(DESTDIR)/usr/share/man/man3
-#define LibManSuffix    3castor
+#define LibManSuffix    3
 #if defined(_WIN32)
 #define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
 #else
 #define LocalHostsList  /etc/castor/shift.localhosts
 #endif
 #define ManDir  $(DESTDIR)/usr/share/man/man1
-#define ManSuffix       1castor
+#define ManSuffix       1
 #if defined(_WIN32)
 #define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
 #else
