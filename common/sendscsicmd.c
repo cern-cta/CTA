@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1996-1998 by CERN/CN/PDP
+ * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sendscsicmd.c	1.16 11/24/98 CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.2 $ $Date: 1999/11/05 07:21:09 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -53,9 +53,9 @@ static char sccsid[] = "@(#)sendscsicmd.c	1.16 11/24/98 CERN CN-PDP Fabien Colli
 #include "/usr/src/linux/include/scsi/sg.h"
 #include <sys/stat.h>
 #endif
-#include "../h/scsictl.h"
+#include "scsictl.h"
 #if defined(TAPE)
-#include "tape.h"
+#include "Ctape.h"
 #define USRMSG(fmt,p,f,msg) \
 	{ \
 	sprintf (tp_err_msgbuf, fmt, p, f, msg); \
