@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)vdqm_QueueOp.c,v 1.27 2000/02/29 17:27:35 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.44 $ $Date: 2001/08/31 14:25:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -35,9 +35,11 @@ static int vdqm_maxtimediff = VDQM_MAXTIMEDIFF;
 static int vdqm_retrydrvtime = VDQM_RETRYDRVTIM;
 
 static int Rollback = 0;
+static void *Rollback_lock = NULL;
 
-int vdqm_InitQueueLock() {
+static int InitQueueLock() {
     int save_serrno, rc;
+
     rc = Cthread_mutex_lock(&nb_dgn);
     save_serrno = serrno;
     if ( rc == -1 ) {
@@ -288,27 +290,62 @@ static int AnyVolRecForDgn(const dgn_element_t *dgn_context) {
     return(found);
 }
 
-static int NewVolReqID(int *id) {
-    static int reqID = 0;
+/*
+ * Generation of unique IDs for volume and drive requests.
+ */
+static int NewReqID(int *id, int *reqID, void **reqID_lock) {
     int rc;
     
-    Cthread_mutex_lock(&reqID);
-    if ( id == NULL || *id < reqID ) rc = ++reqID;
-    else rc = reqID = *id;
-    Cthread_mutex_unlock(&reqID);
+	if ( reqID == NULL || reqID_lock == NULL ) {
+		serrno = EINVAL;
+		return(-1);
+	}
+	if ( id != NULL && *id == -1 ) {
+		if ( Cthread_mutex_lock(reqID) == -1 ) {
+			log(LOG_ERR,"NewReqID() Cthread_mutex_lock(): %s\n",
+				sstrerror(serrno));
+			return(-1);
+		}
+		if ( Cthread_mutex_unlock(reqID) == -1 ) {
+			log(LOG_ERR,"NewReqID() Cthread_mutex_unlock(): %s\n",
+				sstrerror(serrno));
+			return(-1);
+		}
+		(*reqID_lock) = Cthread_mutex_lock_addr(reqID);
+		if ( (*reqID_lock) == NULL ) {
+			log(LOG_ERR,"NewReqID() Cthread_mutex_lock_addr(): %s\n",
+				sstrerror(serrno));
+			return(-1);
+		}
+		return(0);
+	}
+    if ( Cthread_mutex_lock_ext(*reqID_lock) == -1 ) return(-1);
+    if ( id == NULL ) rc = ++(*reqID);
+    else if ( (*id > 0) && (*id < *reqID) ) rc = *id;
+    else rc = *reqID = *id;
+    if ( Cthread_mutex_unlock_ext(*reqID_lock) == -1 ) return(-1);
     return(rc);
 }
 
-static int NewDrvReqID(int *id) {
-    static int reqID = 0;
-    int rc;
-    
-    Cthread_mutex_lock(&reqID);
-    if ( id == NULL || *id < reqID ) rc = ++reqID;
-    else rc = reqID = *id;
-    Cthread_mutex_unlock(&reqID);
-    return(rc);
+static int NewVolReqID(int *id) {
+	static int reqID = 0;
+	static void *reqID_lock = NULL;
+	return(NewReqID(id,&reqID,&reqID_lock));
 }
+
+static int NewDrvReqID(int *id) {
+	static int reqID = 0;
+	static void *reqID_lock = NULL;
+	return(NewReqID(id,&reqID,&reqID_lock));
+}
+
+static int InitReqIDs() {
+	int id = -1;
+	if ( NewVolReqID(&id) == -1 ) return(-1);
+	if ( NewDrvReqID(&id) == -1 ) return(-1);
+	return(0);
+}
+
 /*
  * Externalised interfaces (used in vdqm_Replica.c)
  */
@@ -484,7 +521,7 @@ static int PopVolRecord(const dgn_element_t *dgn_context,
 }
 
 static int AnyVolRecForMountedVol(const dgn_element_t *dgn_context,
-                                  const vdqm_drvrec_t *drv,
+                                  vdqm_drvrec_t *drv,
                                   vdqm_volrec_t **volrec) {
     vdqm_volrec_t *vol, *top;
     int i;
@@ -540,7 +577,7 @@ static int AnyVolRecForMountedVol(const dgn_element_t *dgn_context,
 }
 
 static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
-                           const vdqm_drvrec_t *drv,
+                           vdqm_drvrec_t *drv,
                            vdqm_volrec_t **volrec) {
     vdqm_volrec_t *vol, *top;
     int i;
@@ -1133,19 +1170,19 @@ int vdqm_OnRollback() {
     vdqm_drvrec_t *drvrec;
     int rc;
 
-    log(LOG_INFO,"vdqm_OnRollback(): Initializing mutex\n");
-    rc = Cthread_mutex_lock(&Rollback);
+    log(LOG_INFO,"vdqm_OnRollback(): Locking Rollback mutex\n");
+    rc = Cthread_mutex_lock_ext(Rollback_lock);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_OnRollback() Cthread_mutex_lock(): %s\n",
+        log(LOG_ERR,"vdqm_OnRollback() Cthread_mutex_lock_ext(): %s\n",
             sstrerror(serrno));
         return(-1);
     }
     
     for (;;) {
         log(LOG_INFO,"vdqm_OnRollback(): wait for rollback operation\n");
-        rc = Cthread_cond_wait(&Rollback);
+        rc = Cthread_cond_wait_ext(Rollback_lock);
         if ( rc == -1 ) {
-            log(LOG_ERR,"vdqm_OnRollback() Cthread_cond_wait(): %s\n",
+            log(LOG_ERR,"vdqm_OnRollback() Cthread_cond_wait_ext(): %s\n",
                 sstrerror(serrno));
             return(-1);
         }
@@ -1260,23 +1297,23 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
         drvrec->vol = NULL;
     }
     FreeDgnContext(&dgn_context);
-    rc = Cthread_mutex_lock(&Rollback);
+    rc = Cthread_mutex_lock_ext(Rollback_lock);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_lock(): %s\n",
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_lock_ext(): %s\n",
             sstrerror(serrno));
         return(-1);
     }
     Rollback++;
-    rc = Cthread_cond_broadcast(&Rollback);
+    rc = Cthread_cond_broadcast_ext(Rollback_lock);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_cond_broadcast(): %s\n",
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_cond_broadcast_ext(): %s\n",
             sstrerror(serrno));
-        (void)Cthread_mutex_unlock(&Rollback);
+        (void)Cthread_mutex_unlock_ext(Rollback_lock);
         return(-1);
     }
-    rc = Cthread_mutex_unlock(&Rollback);
+    rc = Cthread_mutex_unlock_ext(Rollback_lock);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_unlock(): %s\n",
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_unlock_ext(): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -1284,6 +1321,35 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
     return(0);
 }
 
+/*
+ * Initialise the rollback lock
+ */
+static int InitRollback() {
+	if ( Cthread_mutex_lock(&Rollback) == -1 ) {
+		log(LOG_ERR,"InitRollback() Cthread_mutex_lock(): %s\n",
+			sstrerror(serrno));
+		return(-1);
+	}
+	if ( Cthread_mutex_unlock(&Rollback) == -1 ) {
+		log(LOG_ERR,"InitRollback() Cthread_mutex_unlock(): %s\n",
+			sstrerror(serrno));
+		return(-1);
+	}
+	Rollback_lock = Cthread_mutex_lock_addr(&Rollback);
+	if ( Rollback_lock == NULL ) {
+		log(LOG_ERR,"InitRollback() Cthread_mutex_lock_addr(): %s\n",
+			sstrerror(serrno));
+		return(-1);
+	}
+	return(0);
+}
+
+int vdqm_InitQueueOp() {
+	if ( InitQueueLock() == -1 ) return(-1);
+	if ( InitReqIDs() == -1 ) return(-1);
+	if ( InitRollback() == -1 ) return(-1);
+	return(0);
+}
 
 int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     dgn_element_t *dgn_context;
@@ -1438,7 +1504,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     dgn_element_t *dgn_context = NULL;
     vdqm_volrec_t *volrec;
     vdqm_drvrec_t *drvrec;
-    int rc,i,unknown;
+    int rc,unknown;
     char status_string[256];
     
     if ( hdr == NULL || DrvReq == NULL ) return(-1);
@@ -1585,6 +1651,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             drvrec->drv.jobID = 0;
         }
         drvrec->drv.status = VDQM_UNIT_DOWN;
+		drvrec->update = 1;
     } else if ( DrvReq->status & VDQM_UNIT_WAITDOWN ) {
         /*
          * Intermediate state until tape daemon confirms that
@@ -1597,6 +1664,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             log(LOG_INFO,"vdqm_NewDrvRequest(): WAIT DOWN request from %s\n",
                 DrvReq->reqhost); 
             drvrec->drv.status = VDQM_UNIT_WAITDOWN;
+			drvrec->update = 1;
         }
     } else if ( DrvReq->status & VDQM_UNIT_UP ) {
         /*
@@ -1633,6 +1701,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         if ( DrvReq->status == VDQM_UNIT_UP )
             drvrec->drv.status |= VDQM_UNIT_FREE;
         drvrec->drv.status |= DrvReq->status;
+		drvrec->update = 1;
     } else {
         if ( drvrec->drv.status & VDQM_UNIT_DOWN ) {
             /*
@@ -1648,7 +1717,11 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
          * If the unit is not DOWN, it must be UP! Make sure it's the case.
          * This is to facilitate the repair after a VDQM server crash.
          */
-        drvrec->drv.status |= VDQM_UNIT_UP;
+        if ( (drvrec->drv.status & VDQM_UNIT_UP) == 0 ) {
+			drvrec->drv.status |= VDQM_UNIT_UP;
+			drvrec->update = 1;
+		}
+
         if ( DrvReq->status & VDQM_UNIT_BUSY ) {
             /*
              * Consistency check
@@ -1796,6 +1869,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                                       (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
                                        ~VDQM_UNIT_MBCOUNT );
         }
+		drvrec->update = 1;
     }
     
     volrec = NULL;
@@ -2125,7 +2199,6 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
 
 int vdqm_DedicateDrv(vdqmDrvReq_t *DrvReq) {
     dgn_element_t *dgn_context;
-    vdqm_volrec_t *volrec;
     vdqm_drvrec_t *drvrec;
     int rc;
 
