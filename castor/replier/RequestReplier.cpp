@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/02/03 15:28:27 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/02/03 18:09:05 $ $Author: bcouturi $
  *
  *
  *
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <time.h>
 
 #include <cstring>
 #include <string>
@@ -110,6 +111,10 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   // Setting the end processing flag to zero
   m_terminate = 0;
 
+  // Setting the statistics values
+  m_lastStatTime = 0;
+  m_nbQueuedResponses =0;
+  m_nbDequeuedResponses =0;
   // Starting the ReplierThread
   start();
 }
@@ -166,8 +171,22 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
 
   char *func = "RequestReplier::replierThread ";
+  m_lastStatTime = time(0);
 
   while (1) {
+
+    time_t curtime = time(0);
+
+    if ((curtime - m_lastStatTime) >= 60) {
+      clog() << IMPORTANT << func 
+             << " STATISTICS During last " << (curtime - m_lastStatTime)
+             << " s New Requests:" << m_nbQueuedResponses
+             << " Processed:" <<  m_nbDequeuedResponses << std::endl;
+      m_nbQueuedResponses = 0;
+      m_nbDequeuedResponses = 0;
+      m_lastStatTime = curtime;
+    }
+    
 
     // Getting the value of the end processing flag
     Cthread_mutex_lock(&m_terminate);
@@ -472,7 +491,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         clog() << DEBUG << func << "Connect successful for fd: "
                << pl[i].fd << std::endl;
       case CONNECTED:
-        clog() << DEBUG << func << "Send successful for fd: "
+        clog() << DEBUG << func << "fd: "
                << pl[i].fd << " now sending next message" << std::endl;
         try {
           cr->sendData();
@@ -491,6 +510,9 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
                  << sstrerror(ex.code()) << std::endl
                  << ex.getMessage().str() << std::endl;
         }
+
+        // Increasing statistics counter
+        m_nbDequeuedResponses++;
         break;
       case RESEND:
         if (pl[i].revents & POLLOUT) {
@@ -565,6 +587,11 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
   int clients_in_queue = m_clientQueue->size();
 
   for(int i=0; i<clients_in_queue; i++) {
+
+    // Increasing the statistics counter
+    m_nbQueuedResponses++;
+    
+
     ClientResponse cr = m_clientQueue->front();
     m_clientQueue->pop();
 

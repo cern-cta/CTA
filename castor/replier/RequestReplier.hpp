@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/20 12:28:53 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/02/03 18:09:05 $ $Author: bcouturi $
  *
  *
  *
@@ -190,6 +190,15 @@ namespace castor {
        * processing
        */
       int m_terminate;
+
+      /**
+       * Statistics variables
+       */
+      time_t m_lastStatTime;
+      int m_nbQueuedResponses;
+      int m_nbDequeuedResponses;
+      
+
 
     }; // class RequestReplier
   } // namespace replier
