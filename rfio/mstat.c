@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.5 1999/12/10 19:44:43 baran Exp $
+ * $Id: mstat.c,v 1.6 1999/12/14 14:38:00 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:44:43 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:38:00 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -258,6 +258,7 @@ int rfio_end()
    *rfindex=0;
    
    END_TRACE();
+   return(0);
 }
 
 
