@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.11 2002/03/10 05:55:38 jdurand Exp $
+ * $Id: stager_castor.c,v 1.12 2002/03/21 17:51:58 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.11 $ $Date: 2002/03/10 05:55:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.12 $ $Date: 2002/03/21 17:51:58 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2310,9 +2310,7 @@ int stagewrt_castor_hsm_file() {
 			i = 0;
 			for (j = istart; j <= iend; j++, i++) {
 				if (error_already_processed != 0) break;
-				SAVE_EID;
 				stager_process_error(save_serrno,&(rtcpcreqs[0]->tapereq),&(rtcpcreqs[0]->file[i].filereq),NULL);
-				RESTORE_EID;
 				if (error_already_processed == 0) {
 					if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
 						/* Tape info very probably inconsistency with, for ex., TMS */
@@ -3194,16 +3192,12 @@ int stager_hsm_callback(tapereq,filereq)
 				/* that the transfer of this HSM file IS ok                */
 				hsm_status[stager_client_true_i] = 1;
 			} else if (filereq->cprc != 0) {
-				/* STAGEIN callback will cprc error */
-				SAVE_EID;
+				/* STAGEIN callback with cprc error */
 				stager_process_error(serrno,tapereq,filereq,castor_hsm);
-				RESTORE_EID;
 			}
 		}
 	} else if (filereq->cprc != 0) {
-		SAVE_EID;
 		stager_process_error(serrno,tapereq,filereq,castor_hsm);
-		RESTORE_EID;
 		if ((use_subreqid != 0) && ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) && (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs))) {
 			/* In the specific case of STAGEWRT or STAGEPUT we can exceptionnaly force a callback error */
 			/* that will prevent RTCOPY to send another callback to the stgdaemon itself, allowing us to */
