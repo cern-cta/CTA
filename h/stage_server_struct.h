@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.9 2002/07/27 06:44:38 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.10 2002/10/30 16:18:37 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -49,6 +49,7 @@ struct waitq {
 	int	reqid;
 	int	req_type;
 	int	key;
+	int	save_rpfd; /* In case of --silent but no --nowait */
 	int	rpfd;
 	int	ovl_pid;
 	int	nb_subreqs;
