@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.9 $ $Date: 2000/01/19 11:02:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.10 $ $Date: 2000/01/24 09:09:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -159,7 +159,7 @@ int rtcpd_Deassign(int VolReqID,
 }
 
 void rtcpd_CtapeKill() {
-    if ( *tape_path != '\0' ) Ctape_kill(tape_path);
+    if ( tape_path[0] != '\0' ) Ctape_kill(tape_path);
     return;
 }
 
@@ -249,13 +249,11 @@ int rtcpd_Mount(tape_list_t *tape) {
                      tapereq->VolReqID);
     
     tapereq->tprc = rc;
+    tape_path[0] = '\0';
     save_serrno = (serrno != 0 ? serrno : errno);
     tapereq->TEndMount = (int)time(NULL);
     if ( AbortFlag == 1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING! Calling Ctape_kill(%s)\n",
-            tape_path);
-        Ctape_kill(tape_path);
-        *tape_path = '\0';
+        rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING!\n");
         severity = RTCP_FAILED | RTCP_USERR;
         rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
         return(-1);
@@ -328,7 +326,6 @@ int rtcpd_Mount(tape_list_t *tape) {
             break;
         case EINTR:
             severity = RTCP_FAILED | RTCP_USERR;
-            (void)Ctape_kill(tape_path);
             break;
         default:
             severity = RTCP_FAILED | RTCP_UNERR;
@@ -340,7 +337,6 @@ int rtcpd_Mount(tape_list_t *tape) {
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
-    *tape_path = '\0';
     return(rc);
 }
 
@@ -433,14 +429,12 @@ int rtcpd_Position(tape_list_t *tape,
         save_serrno = (serrno > 0 ? serrno : errno);
         filereq->TEndPosition = (int)time(NULL);
         filereq->cprc = rc;
+        tape_path[0] = '\0';
         if ( AbortFlag == 1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_Position() ABORTING! Calling Ctape_kill(%s)\n",
-                tape_path);
+            rtcp_log(LOG_ERR,"rtcpd_Position() ABORTING!\n");
             severity = RTCP_FAILED | RTCP_USERR;
             save_serrno = EINTR;
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
-            Ctape_kill(tape_path);
-            *tape_path = '\0';
             return(-1);
         }
         if ( rc == -1 ) {
@@ -550,7 +544,6 @@ int rtcpd_Position(tape_list_t *tape,
                 break;
             case EINTR:
                 severity = RTCP_FAILED | RTCP_USERR;
-                (void)Ctape_kill(tape_path);
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             default:
@@ -578,7 +571,6 @@ int rtcpd_Position(tape_list_t *tape,
     } /* end while (do_retry) */
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position() successful\n");
-    *tape_path = '\0';
     return(rc);
 }
 
@@ -624,10 +616,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
             severity = RTCP_RESELECT_SERV | RTCP_SYERR;
             break;
         case EINTR:
-            if ( filereq != NULL ) {
-                severity = RTCP_FAILED | RTCP_UNERR;
-                (void)Ctape_kill(filereq->tape_path);
-            }
+            if ( filereq != NULL ) severity = RTCP_FAILED | RTCP_UNERR;
             break;
         default:
             severity = RTCP_FAILED | RTCP_UNERR;
@@ -702,10 +691,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
                 rc = 0;
             break;
         case EINTR:
-            if ( filereq != NULL ) {
-                severity = RTCP_FAILED | RTCP_UNERR;
-                (void)Ctape_kill(filereq->tape_path);
-            }
+            if ( filereq != NULL ) severity = RTCP_FAILED | RTCP_UNERR;
             break;
         default:
             break;
