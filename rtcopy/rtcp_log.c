@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 13:32:24 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:19:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -94,7 +94,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
 int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     char *p = NULL;
     char **msgbuf_p = NULL;
-    int loglevel = LOG_DEBUG;
+    int loglevel = LOG_INFO;
     FILE **out_p, **err_p;
     SOCKET **client_socket_p;
 
@@ -105,6 +105,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     if ( msgbuf == NULL && out == NULL && err == NULL && client_socket == NULL ) {
         initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
         rtcp_log = (void (*)(int, const char *, ...))log;
+        return(0);
     }
 #endif /* RTCP_SERVER */
     if ( p == NULL ) {
