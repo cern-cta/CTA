@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.52 $ $Date: 2000/03/29 11:30:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.53 $ $Date: 2000/03/29 14:27:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -263,7 +263,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 (void)rtcpd_AppendClientMsg(NULL,file,RT105,sstrerror(errno));
                 rtcp_log(LOG_ERR,"MemoryToTape() malloc(): %s\n",
                     sstrerror(errno));
-                if ( NoSyncAccess = 0 ) {
+                if ( NoSyncAccess == 0 ) {
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 }
