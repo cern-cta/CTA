@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.29 2001/06/25 10:38:57 jdurand Exp $
+ * $Id: stgconvert.c,v 1.30 2001/07/27 09:11:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.29 $ $Date: 2001/06/25 10:38:57 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.30 $ $Date: 2001/07/27 09:11:18 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -1495,12 +1495,12 @@ int main(argc,argv)
 									nbcat_ent = statbuff.st_size / sizeof(struct stgcat_entry);
 									ndeleted = 0;
 									stcpe = stcpall + nbcat_ent;
-									for (stcp1 = stcpall; stcp1 < stcpe; stcp1++) {
+									for (stcp1 = stcpall; stcp1 < (stcpe - ndeleted); stcp1++) {
 										ideleted = 0;
 										if (stcp1->t_or_d != 'h') continue;
 										if ((stcp1->status & STAGED) != STAGED) continue;
 										if (! (ISSTAGEOUT(stcp1) || ISSTAGEPUT(stcp1))) continue;
-										for (stcp2 = stcpe - 1; stcp2 > stcp1; stcp2--) {
+										for (stcp2 = (stcpe - ndeleted) - 1; stcp2 > stcp1; stcp2--) {
 											if (stcp2->t_or_d != 'h') continue;
 											if ((stcp2->status & STAGED) != STAGED) continue;
 											if (! (ISSTAGEOUT(stcp2) || ISSTAGEPUT(stcp2))) continue;
@@ -1509,10 +1509,10 @@ int main(argc,argv)
 											/*
 											 * Remove duplicate entry stcp2
 											*/
-											if (stcp2 < (stcpe - 1)) {
+											if (stcp2 < ((stcpe - ndeleted) - 1)) {
 												char tmpbuf[21];
 												printf("... ... %s (fileid %s@%s)\n", stcp2->u1.h.xfile, u64tostr((u_signed64) stcp2->u1.h.fileid, tmpbuf, 0), stcp2->u1.h.server);
-												memmove(stcp2, stcp2 + 1, (stcpe - stcp2 - 1) * sizeof(struct stgcat_entry));
+												memmove(stcp2, stcp2 + 1, ((stcpe - ndeleted) - stcp2 - 1) * sizeof(struct stgcat_entry));
 											}
 											statbuff.st_size -= sizeof(struct stgcat_entry);
 											ndeleted++;
@@ -1530,6 +1530,13 @@ int main(argc,argv)
 										if (write(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
 											printf("### write error on \"%s\" (%s)\n",stgcat,strerror(errno));
 											printf("### Sorted stgcat output probably corrupted\n");
+										} else {
+											printf("... ... %d saved (record size=%d)\n", (int) statbuff.st_size / sizeof(struct stgcat_entry), (int) sizeof(struct stgcat_entry));
+										}
+										if (ftruncate(stgcat_fd, (size_t) statbuff.st_size) != 0) {
+											printf("### ftruncate on %s error, %s\n"
+												 ,stgcat
+												 ,strerror(errno));
 										}
 									}
 								}
@@ -1725,6 +1732,13 @@ int main(argc,argv)
 										if (write(stgpath_fd,stppall,statbuff.st_size) != statbuff.st_size) {
 											printf("### write error on \"%s\" (%s)\n",stgpath,strerror(errno));
 											printf("### Sorted stgpath output probably corrupted\n");
+										} else {
+											printf("... ... %d saved (record size=%d)\n", (int) statbuff.st_size / sizeof(struct stgpath_entry), (int) sizeof(struct stgpath_entry));
+										}
+										if (ftruncate(stgpath_fd, (size_t) statbuff.st_size) != 0) {
+											printf("### ftruncate on %s error, %s\n"
+												 ,stgpath
+												 ,strerror(errno));
 										}
 									}
 								}
