@@ -1,10 +1,10 @@
-.\" $Id: stageshutdown.man,v 1.8 2002/10/03 14:00:37 jdurand Exp $
+.\" $Id: stageshutdown.man,v 1.9 2002/10/04 07:37:29 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.8 $ $Date: 2002/10/03 14:00:37 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.9 $ $Date: 2002/10/04 07:37:29 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESHUTDOWN "1" "$Date: 2002/10/03 14:00:37 $" "CASTOR" "Stager Administrator Commands"
+.TH STAGESHUTDOWN "1" "$Date: 2002/10/04 07:37:29 $" "CASTOR" "Stager Administrator Commands"
 .SH NAME
 stageshutdown \- tells stgdaemon to exit
 .SH SYNOPSIS
@@ -30,7 +30,7 @@ they just continue to run in parallel.
 .BI \-h " host"
 Sends the request to the stager on
 .IR host .
-This option is mandatory, regardless of environment variable $STAGE_HOST.
+This option is mandatory, regardless of environment variable $STAGE_HOST or entry 'STG HOST' in /etc/shift.conf.
 
 .SH RETURN CODES
 \
@@ -46,6 +46,9 @@ This option is mandatory, regardless of environment variable $STAGE_HOST.
 187	CASTOR User Privilege validation not active
 .br
 198	Stager daemon not active
+
+.SH SEE ALSO
+\fBstage_shutdown\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
