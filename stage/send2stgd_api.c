@@ -793,7 +793,7 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	/* [Bug #1854] stage_in_tape does not reorder correctly structures in output */
 	/* It is an error to do permutations. We must only do what we prepared the code */
 	/* for: refill an array with the correct indices - that's all */
-	if ((new_stcp_output = (struct stgcat_output *) malloc(*nstcp_output * sizeof(struct stgcat_entry))) == NULL) {
+	if ((new_stcp_output = (struct stgcat_entry *) malloc(*nstcp_output * sizeof(struct stgcat_entry))) == NULL) {
 		serrno = ENOMEM;
 		free(seen);
 		return(-1);
