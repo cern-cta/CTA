@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 17:42:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.13 $ $Date: 2000/01/10 08:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -502,6 +502,10 @@ char	**argv;
 			if (qlab) {
 				printf (" ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
 				printf (" *********************************************************************************************************************\n");
+				if (maxfile != 0 && nfile >= maxfile) {
+					printf (" DUMP - DUMPING PROGRAM COMPLETE.\n");
+					exit_prog (0);
+				}
 				qlab = 0;
 			} else {
 				nfile++;
@@ -516,7 +520,7 @@ char	**argv;
 					printf ("                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
 						avg_block_length);
 					printf (" *********************************************************************************************************************\n");
-					if (maxfile != 0 && nfile >= maxfile) {
+					if (lcode == 0 && maxfile != 0 && nfile >= maxfile) {
 						printf (" DUMP - DUMPING PROGRAM COMPLETE.\n");
 						exit_prog (0);
 					}
