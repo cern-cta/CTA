@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.20 $ $Date: 2000/02/01 13:17:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.21 $ $Date: 2000/02/07 17:47:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -599,7 +599,8 @@ void rtcpd_SetProcError(int code) {
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
         proc_cntl.ProcError = RTCP_FAILED;
     }
-    if ( (rc & (RTCP_FAILED | RTCP_EOD)) != 0 ) rtcpd_BroadcastException(); 
+    if ( (rc & (RTCP_FAILED |RTCP_RESELECT_SERV | RTCP_EOD)) != 0 ) 
+        rtcpd_BroadcastException(); 
 
     return;
 }

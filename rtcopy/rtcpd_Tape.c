@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.23 $ $Date: 2000/02/07 15:52:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.24 $ $Date: 2000/02/07 17:47:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -189,7 +189,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             }
             databufs[i]->nb_waiters--;
             rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
-            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
+            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
+                              (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( (convert & FIXVAR) != 0 ) {
@@ -492,7 +493,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * writing to the tape?
          */
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
-        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
+        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
+                          (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
             if ( (convert & FIXVAR) != 0 ) {
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( convert_context != NULL ) free(convert_context);
@@ -616,7 +618,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             }
             databufs[i]->nb_waiters--;
             rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
-            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) {
+            if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
+                              (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 break;
@@ -916,7 +919,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * reading from the tape?
          */
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
-        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & RTCP_FAILED)) != 0 ) break;
+        if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
+                          (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) break;
     } /* for (;;) */
     if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
@@ -940,13 +944,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
-    if ( rc == -1 || (severity & RTCP_FAILED) != 0 || \
-         (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
+    if ( rc == -1 || (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 || \
+        (rtcpd_CheckProcError() & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) { \
          rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
          if ( (severity & RTCP_FAILED) != 0 ) rtcpd_BroadcastException(); \
          if ( mode == WRITE_ENABLE &&  \
-            (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
-             rtcpd_SetProcError(RTCP_FAILED); \
+          (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
+             if ( (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) \
+                 rtcpd_SetProcError(severity); \
+             else \
+                 rtcpd_SetProcError(RTCP_FAILED); \
+         } \
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
          if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
              if ( rc == -1 || mode == WRITE_ENABLE ) { \
@@ -1258,7 +1266,7 @@ void *tapeIOthread(void *arg) {
                             TP_STATUS(RTCP_PS_STAGEUPDC);
                             rc = rtcpd_stageupdc(nexttape,nextfile);
                             TP_STATUS(RTCP_PS_NOBLOCKING);
-                            rtcpd_SetProcError(RTCP_FAILED);
+                            rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
                         }
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
