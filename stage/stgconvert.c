@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.12 2000/01/26 16:48:26 jdurand Exp $
+ * $Id: stgconvert.c,v 1.13 2000/01/26 17:21:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.12 $ $Date: 2000/01/26 16:48:26 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.13 $ $Date: 2000/01/26 17:21:26 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -418,7 +418,7 @@ int main(argc,argv)
 
   if (convert_direction == CASTORDISK_TO_CASTORCDB) {
     /* ==================================== */
-    /* CASTOR/CDB -> CASTOR/DISK conversion */
+    /* CASTOR/DISK -> CASTOR/CDB conversion */
     /* ==================================== */
     int i = 0;
     int nstcp = 0;
@@ -511,7 +511,7 @@ int main(argc,argv)
                    ,tape.reqid
                    ,sstrerror(serrno));
           } else {
-            if (i == 1 || i % frequency == 0) {
+            if (i == 1 || i % frequency == 0 || i == nstcp) {
               printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_tape\" [c_time=0x%lx,VID[0]=%s,FSEQ=%s] at offset %s\n",
                      i,nstcp,tape.reqid,(unsigned long) tape.c_time,tape.vid[0],tape.fseq,
                      u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
@@ -524,7 +524,7 @@ int main(argc,argv)
                    ,disk.reqid
                    ,sstrerror(serrno));
           } else {
-            if (i == 1 || i % frequency == 0) {
+            if (i == 1 || i % frequency == 0 || i == nstcp) {
               printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_disk\" [c_time=0x%lx,xfile=%s] at offset %s\n",
                      i,nstcp,disk.reqid,(unsigned long) disk.c_time,disk.xfile,
                      u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
@@ -537,7 +537,7 @@ int main(argc,argv)
                    ,hsm.reqid
                    ,sstrerror(serrno));
           } else {
-            if (i == 1 || i % frequency == 0) {
+            if (i == 1 || i % frequency == 0 || i == nstcp) {
               printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset %s\n",
                      i,nstcp,hsm.reqid,(unsigned long) hsm.c_time,hsm.xfile,
                      u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
@@ -550,7 +550,7 @@ int main(argc,argv)
                    ,alloc.reqid
                    ,sstrerror(serrno));
           } else {
-            if (i == 1 || i % frequency == 0) {
+            if (i == 1 || i % frequency == 0 || i == nstcp) {
               printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_alloc\" [c_time=0x%lx,xfile=%s] at offset %s\n",
                      i,nstcp,alloc.reqid,(unsigned long) alloc.c_time,alloc.xfile,
                      u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
@@ -614,7 +614,7 @@ int main(argc,argv)
                  ,stpp->reqid
                  ,sstrerror(serrno));
         } else {
-          if (i == 1 || i % frequency == 0) {
+          if (i == 1 || i % frequency == 0 || i == nstpp) {
             printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_link\" [upath=%s] at offset %s\n",
                    i,nstpp,link.reqid,link.upath,
                    u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
@@ -626,9 +626,10 @@ int main(argc,argv)
   } else if (convert_direction == CASTORCDB_TO_CASTORDISK) {
 
     /* ==================================== */
-    /* CASTOR/DISK -> CASTOR/CDB conversion */
+    /* CASTOR/CDB -> CASTOR/DISK conversion */
     /* ==================================== */
     
+    int last_reqid = 0;
     int i = 0;
 
     if (no_stgcat == 0) {
@@ -682,10 +683,15 @@ int main(argc,argv)
         } else {
           ++i;
           if (i == 1 || i % frequency == 0) {
+            last_reqid = thisstcp.reqid;
             printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
           }
         }
 
+      }
+
+      if (! (i == 1 || i % frequency == 0)) {
+        printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
       if (Cdb_dump_end(&Cdb_db,"stgcat_tape") != 0) {
@@ -728,9 +734,14 @@ int main(argc,argv)
         } else {
           ++i;
           if (i == 1 || i % frequency == 0) {
+            last_reqid = thisstcp.reqid;
             printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
           }
         }
+      }
+
+      if (! (i == 1 || i % frequency == 0)) {
+        printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
       if (Cdb_dump_end(&Cdb_db,"stgcat_disk") != 0) {
@@ -773,9 +784,14 @@ int main(argc,argv)
         } else {
           ++i;
           if (i == 1 || i % frequency == 0) {
+            last_reqid = thisstcp.reqid;
             printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
           }
         }
+      }
+
+      if (! (i == 1 || i % frequency == 0)) {
+        printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
       if (Cdb_dump_end(&Cdb_db,"stgcat_hsm") != 0) {
@@ -818,9 +834,14 @@ int main(argc,argv)
         } else {
           ++i;
           if (i == 1 || i % frequency == 0) {
+            last_reqid = thisstcp.reqid;
             printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
           }
         }
+      }
+
+      if (! (i == 1 || i % frequency == 0)) {
+        printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
       if (Cdb_dump_end(&Cdb_db,"stgcat_alloc") != 0) {
@@ -909,12 +930,17 @@ int main(argc,argv)
           } else {
             ++i;
             if (i == 1 || i % frequency == 0) {
+              last_reqid = thisstpp.reqid;
               printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
             }
           }
         }
       }
 
+      if (i == 1 || i % frequency == 0) {
+        printf("--> (%6d) reqid = %d converted back\n",i,last_reqid);
+      }
+      
       if (Cdb_dump_end(&Cdb_db,"stgcat_link") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
