@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.23 2000/09/20 11:29:06 jdurand Exp $
+ * $Id: procupd.c,v 1.24 2000/09/27 08:09:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.23 $ $Date: 2000/09/20 11:29:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.24 $ $Date: 2000/09/27 08:09:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -50,12 +50,13 @@ extern struct waitq *waitqp;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
-extern int upd_stageout _PROTO((int, char *, int *, int));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern struct waitf *add2wf _PROTO((struct waitq *));
 extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
+extern void update_migpool _PROTO((struct stgcat_entry *, int));
 
 void
 procupdreq(req_data, clienthost)
@@ -204,7 +205,7 @@ procupdreq(req_data, clienthost)
 	}
 	if (nargs > optind) {
 		for  (i = optind; i < nargs; i++)
-			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1))
+			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL))
 				goto reply;
 		goto reply;
 	}
@@ -213,7 +214,7 @@ procupdreq(req_data, clienthost)
 	while (wqp) {
 		if (wqp->reqid == reqid &&
 			wqp->key == key &&
-			(wqp->Migrationflag ?
+			(wqp->StageIDflag != 0 ?
 				(stpasswd->pw_uid == uid && stpasswd->pw_gid == gid) :
 				(wqp->uid         == uid && wqp->gid         == gid)
 			)
@@ -235,8 +236,8 @@ procupdreq(req_data, clienthost)
 					(int) gid,
 					(int) wqp->reqid,
 					(int) wqp->key,
-					(int) (wqp->Migrationflag ? stpasswd->pw_uid : wqp->uid),
-					(int) (wqp->Migrationflag ? stpasswd->pw_gid : wqp->gid)
+					(int) (wqp->StageIDflag != 0 ? stpasswd->pw_uid : wqp->uid),
+					(int) (wqp->StageIDflag != 0 ? stpasswd->pw_gid : wqp->gid)
 			);
 			wqp = wqp->next;
 		}
@@ -555,7 +556,7 @@ procupdreq(req_data, clienthost)
 			} else {
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					stcp->status &= ~CAN_BE_MIGR;
-					update_migpool(stcp,-1,0);
+					update_migpool(stcp,-1);
 				}
 				stcp->status |= STAGED;
 #ifdef USECDB
