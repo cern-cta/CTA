@@ -40,6 +40,7 @@ castor::BaseAddress::BaseAddress() throw() :
   m_objType(0),
   m_cnvSvcName(""),
   m_cnvSvcType(0),
+  m_target(0),
   m_id(0) {
 };
 
@@ -65,6 +66,7 @@ void castor::BaseAddress::print(std::ostream& stream,
   stream << indent << "objType : " << m_objType << std::endl;
   stream << indent << "cnvSvcName : " << m_cnvSvcName << std::endl;
   stream << indent << "cnvSvcType : " << m_cnvSvcType << std::endl;
+  stream << indent << "target : " << m_target << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

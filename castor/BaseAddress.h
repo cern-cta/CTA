@@ -136,6 +136,18 @@ int C_BaseAddress_cnvSvcType(struct C_BaseAddress_t* instance, unsigned int* var
 int C_BaseAddress_setCnvSvcType(struct C_BaseAddress_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of target
+ * The id of the object this address points to, if any
+ */
+int C_BaseAddress_target(struct C_BaseAddress_t* instance, u_signed64* var);
+
+/**
+ * Set the value of target
+ * The id of the object this address points to, if any
+ */
+int C_BaseAddress_setTarget(struct C_BaseAddress_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

@@ -215,7 +215,7 @@ castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* addres
   if (OBJ_INVALID == address->objType()) {
     castor::BaseAddress* ad =
       dynamic_cast<castor::BaseAddress*>(address);
-    unsigned int type = getTypeFromId(ad->id());
+    unsigned int type = getTypeFromId(ad->target());
     if (0 == type) return 0;
     ad->setObjType(type);
   }
@@ -332,7 +332,7 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
       castor::BaseAddress* ret = new castor::BaseAddress();
       ret->setCnvSvcName("OraCnvSvc");
       ret->setCnvSvcType(castor::SVC_ORACNV);
-      ret->setId(m_getNRStatement->getInt(1));
+      ret->setTarget(m_getNRStatement->getInt(1));
       return ret;
     }
   } catch (oracle::occi::SQLException e) {
@@ -458,7 +458,7 @@ castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
 (u_signed64 id)
   throw (castor::exception::Exception) {
   castor::BaseAddress clientAd;
-  clientAd.setId(id);
+  clientAd.setTarget(id);
   clientAd.setCnvSvcName("OraCnvSvc");
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);

@@ -608,11 +608,11 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setDouble(1, ad->id());
+    m_selectStatement->setDouble(1, ad->target());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
-      ex.getMessage() << "No object found for id :" << ad->id();
+      ex.getMessage() << "No object found for id :" << ad->target();
       throw ex;
     }
     // create the new Object
@@ -642,7 +642,7 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->id() << std::endl;;
+                    << "and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }

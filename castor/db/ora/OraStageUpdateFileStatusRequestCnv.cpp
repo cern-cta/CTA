@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 16:32:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/12/13 16:49:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -694,11 +694,11 @@ castor::IObject* castor::db::ora::OraStageUpdateFileStatusRequestCnv::createObj(
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setDouble(1, ad->id());
+    m_selectStatement->setDouble(1, ad->target());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
-      ex.getMessage() << "No object found for id :" << ad->id();
+      ex.getMessage() << "No object found for id :" << ad->target();
       throw ex;
     }
     // create the new Object
@@ -734,7 +734,7 @@ castor::IObject* castor::db::ora::OraStageUpdateFileStatusRequestCnv::createObj(
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->id() << std::endl;;
+                    << "and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }

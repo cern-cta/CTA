@@ -38,7 +38,7 @@ END;
 
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
-CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR(2048), cnvSvcType NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type Client */
 DROP TABLE Client;

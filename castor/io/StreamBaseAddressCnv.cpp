@@ -90,6 +90,7 @@ void castor::io::StreamBaseAddressCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->objType();
   ad->stream() << obj->cnvSvcName();
   ad->stream() << obj->cnvSvcType();
+  ad->stream() << obj->target();
   ad->stream() << obj->id();
 }
 
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamBaseAddressCnv::createObj(castor::IAddress* a
   unsigned int cnvSvcType;
   ad->stream() >> cnvSvcType;
   object->setCnvSvcType(cnvSvcType);
+  u_signed64 target;
+  ad->stream() >> target;
+  object->setTarget(target);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

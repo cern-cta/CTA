@@ -50,7 +50,7 @@ const castor::ICnvFactory& OraBaseAddressCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraBaseAddressCnv::s_insertStatementString =
-"INSERT INTO BaseAddress (objType, cnvSvcName, cnvSvcType, id) VALUES (:1,:2,:3,:4)";
+"INSERT INTO BaseAddress (objType, cnvSvcName, cnvSvcType, target, id) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraBaseAddressCnv::s_deleteStatementString =
@@ -58,11 +58,11 @@ const std::string castor::db::ora::OraBaseAddressCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraBaseAddressCnv::s_selectStatementString =
-"SELECT objType, cnvSvcName, cnvSvcType, id FROM BaseAddress WHERE id = :1";
+"SELECT objType, cnvSvcName, cnvSvcType, target, id FROM BaseAddress WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraBaseAddressCnv::s_updateStatementString =
-"UPDATE BaseAddress SET objType = :1, cnvSvcName = :2, cnvSvcType = :3 WHERE id = :4";
+"UPDATE BaseAddress SET objType = :1, cnvSvcName = :2, cnvSvcType = :3, target = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraBaseAddressCnv::s_storeTypeStatementString =
@@ -207,7 +207,8 @@ void castor::db::ora::OraBaseAddressCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->objType());
     m_insertStatement->setString(2, obj->cnvSvcName());
     m_insertStatement->setInt(3, obj->cnvSvcType());
-    m_insertStatement->setDouble(4, obj->id());
+    m_insertStatement->setDouble(4, obj->target());
+    m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -233,6 +234,7 @@ void castor::db::ora::OraBaseAddressCnv::createRep(castor::IAddress* address,
                     << "  objType : " << obj->objType() << std::endl
                     << "  cnvSvcName : " << obj->cnvSvcName() << std::endl
                     << "  cnvSvcType : " << obj->cnvSvcType() << std::endl
+                    << "  target : " << obj->target() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -258,7 +260,8 @@ void castor::db::ora::OraBaseAddressCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(1, obj->objType());
     m_updateStatement->setString(2, obj->cnvSvcName());
     m_updateStatement->setInt(3, obj->cnvSvcType());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setDouble(4, obj->target());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -347,11 +350,11 @@ castor::IObject* castor::db::ora::OraBaseAddressCnv::createObj(castor::IAddress*
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setDouble(1, ad->id());
+    m_selectStatement->setDouble(1, ad->target());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
-      ex.getMessage() << "No object found for id :" << ad->id();
+      ex.getMessage() << "No object found for id :" << ad->target();
       throw ex;
     }
     // create the new Object
@@ -360,7 +363,8 @@ castor::IObject* castor::db::ora::OraBaseAddressCnv::createObj(castor::IAddress*
     object->setObjType(rset->getInt(1));
     object->setCnvSvcName(rset->getString(2));
     object->setCnvSvcType(rset->getInt(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setTarget((u_signed64)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -380,7 +384,7 @@ castor::IObject* castor::db::ora::OraBaseAddressCnv::createObj(castor::IAddress*
                     << std::endl << e.what() << std::endl
                     << "Statement was :" << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->id() << std::endl;;
+                    << "and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -409,7 +413,8 @@ void castor::db::ora::OraBaseAddressCnv::updateObj(castor::IObject* obj)
     object->setObjType(rset->getInt(1));
     object->setCnvSvcName(rset->getString(2));
     object->setCnvSvcType(rset->getInt(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setTarget((u_signed64)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.88 $ $Release$ $Date: 2004/12/13 11:20:23 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.89 $ $Release$ $Date: 2004/12/13 16:49:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -804,7 +804,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   // Now get the tape from its id
   try {
     castor::BaseAddress ad;
-    ad.setId(id);
+    ad.setTarget(id);
     ad.setCnvSvcName("OraCnvSvc");
     ad.setCnvSvcType(castor::SVC_ORACNV);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
@@ -1122,7 +1122,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       castor::BaseAddress ad;
       ad.setCnvSvcName("OraCnvSvc");
       ad.setCnvSvcType(castor::SVC_ORACNV);
-      ad.setId(id);
+      ad.setTarget(id);
       castor::IObject* iobj = cnvSvc()->createObj(&ad);
       castor::stager::DiskCopy *dc =
         dynamic_cast<castor::stager::DiskCopy*>(iobj);

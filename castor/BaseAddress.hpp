@@ -149,6 +149,24 @@ namespace castor {
     }
 
     /**
+     * Get the value of m_target
+     * The id of the object this address points to, if any
+     * @return the value of m_target
+     */
+    u_signed64 target() const {
+      return m_target;
+    }
+
+    /**
+     * Set the value of m_target
+     * The id of the object this address points to, if any
+     * @param new_var the new value of m_target
+     */
+    void setTarget(u_signed64 new_var) {
+      m_target = new_var;
+    }
+
+    /**
      * Get the value of m_id
      * The id of this object
      * @return the value of m_id
@@ -176,6 +194,9 @@ namespace castor {
 
     /// the type of the conversion service able to deal with this address
     unsigned int m_cnvSvcType;
+
+    /// The id of the object this address points to, if any
+    u_signed64 m_target;
 
     /// The id of this object
     u_signed64 m_id;

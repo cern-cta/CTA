@@ -159,6 +159,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // C_BaseAddress_target
+  //----------------------------------------------------------------------------
+  int C_BaseAddress_target(castor::BaseAddress* instance, u_signed64* var) {
+    *var = instance->target();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_BaseAddress_setTarget
+  //----------------------------------------------------------------------------
+  int C_BaseAddress_setTarget(castor::BaseAddress* instance, u_signed64 new_var) {
+    instance->setTarget(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // C_BaseAddress_id
   //----------------------------------------------------------------------------
   int C_BaseAddress_id(castor::BaseAddress* instance, u_signed64* var) {
