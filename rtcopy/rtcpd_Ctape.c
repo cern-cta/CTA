@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.38 $ $Date: 2000/08/07 14:46:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.39 $ $Date: 2000/08/14 09:43:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -772,10 +772,13 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                  file->tape_fsec,unit,filereq->blocksize,filereq->recordlength,
                  recfm);
         if ( fseq > 0 && (fseq != filereq->tape_fseq) ) {
-            rtcp_log(LOG_ERR,"rtcpd_Info(%s) returned wrong TAPE FSEQ: %d (%d)\n",
+            rtcp_log(LOG_ERR,"rtcpd_Info(%s) returned wrong TAPE FSEQ: %d (requested %d)\n",
                      filereq->tape_path,filereq->tape_fseq,fseq);
             save_serrno = SEINTERNAL;
             severity = RTCP_FAILED|RTCP_UNERR;
+            rtcpd_AppendClientMsg(NULL, file,
+            "rtcpd_Info(%s) returned wrong TAPE FSEQ: %d (requested %d)",
+                     filereq->tape_path,filereq->tape_fseq,fseq);
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
             rc = -1;
         } 
