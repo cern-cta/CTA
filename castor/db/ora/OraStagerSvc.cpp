@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.126 $ $Release$ $Date: 2005/02/03 18:07:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.127 $ $Release$ $Date: 2005/02/04 13:29:49 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -993,15 +993,14 @@ castor::db::ora::OraStagerSvc::requestToDo
     // Check whether the statements are ok
     if (0 == m_requestToDoStatement) {
       std::ostringstream stmtString;
-      stmtString << "BEGIN DELETE FROM newRequests WHERE type IN (";
+      stmtString << "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (";
       for (std::vector<ObjectsIds>::const_iterator it = types.begin();
            it!= types.end();
            it++) {
         if (types.begin() != it) stmtString << ", ";
         stmtString << *it;
       }
-      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1;"
-                 << " EXCEPTION WHEN NO_DATA_FOUND THEN :1 := 0; END;";
+      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1; END;";
       m_requestToDoStatement =
         createStatement(stmtString.str());
       m_requestToDoStatement->registerOutParam
