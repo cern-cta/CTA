@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.3 $ $Date: 2000/01/07 14:04:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.4 $ $Date: 2002/04/08 11:50:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_test1 - test program 1: copy one tape to another */
@@ -97,7 +97,7 @@ char **argv;
 		exit (c);
 	}
 	if (c = Ctape_position (ipath, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
-	    NULL, NULL, 0, 0, 0, 0)) {
+	    NULL, NULL, NULL, 0, 0, 0, 0)) {
 		fprintf (stderr, "%s", errbuf);
 		exit (c);
 	}
