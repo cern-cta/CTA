@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.5 $ $Date: 2000/03/03 16:22:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.6 $ $Date: 2000/03/30 06:39:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -17,6 +17,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.5 $ $Da
 #include <Ctape_constants.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+
+extern int AbortFlag;
 
 int rtcp_wacct(int   subtype,
                uid_t uid,
@@ -130,8 +132,10 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         errmsgtxt = tapereq->err.errmsgtxt;
 
     if ( subtype == RTCPEMSG && *errmsgtxt == '\0' ) {
-        rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPEMSG) without msg txt\n");
-        return(-1);
+        if ( AbortFlag == 0 ) {
+            rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPEMSG) without msg txt\n");
+            return(-1);
+        } else sprintf(errmsgtxt,"request aborted by user\n");
     }
 
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
