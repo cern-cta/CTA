@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.82 2000/07/26 11:08:46 jdurand Exp $
+ * $Id: stager.c,v 1.83 2000/07/26 16:11:28 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.82 $ $Date: 2000/07/26 11:08:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.83 $ $Date: 2000/07/26 16:11:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1525,8 +1525,7 @@ int filecopy(stcp, key, hostname)
 			sprintf (command+strlen(command), " %s", stcp->u1.d.xfile);	    
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 	}
-	setgid (stcp->gid);
-	setuid (stcp->uid);
+	SETID(stcp->uid,stcp->gid);
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		RETURN (SYERR);
