@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.252 2003/11/17 13:20:04 jdurand Exp $
+ * $Id: poolmgr.c,v 1.253 2003/11/17 17:10:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.252 $ $Date: 2003/11/17 13:20:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.253 $ $Date: 2003/11/17 17:10:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3485,7 +3485,7 @@ void checkfile2mig()
 					pool_p->migr->migreqtime_last_start = 0;
 				}
 				if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig - pool_p->migr->fileclass_predicates[j].space_delaymig) >= pool_p->mig_data_thresh)) ||
-					((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_start) >= pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))) {
+					(((time(NULL) - pool_p->migr->migreqtime_last_start) >= pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))) {
 					global_or = 1;
 				}
 				if (global_or != 0) {
@@ -3514,7 +3514,7 @@ void checkfile2mig()
 							 u64tostru(pool_p->mig_data_thresh, tmpbuf5, 0)
 						);
 					stglogit("checkfile2mig", "STG98 - 2) (%s) last migrator started %d seconds ago > %d seconds ?\n",
-							 pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0 ? "ON" : "OFF",
+							 "ON",
 							 (int) (time(NULL) - pool_p->migr->migreqtime_last_start),
 							 pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval);
 					reqid = save_reqid;
