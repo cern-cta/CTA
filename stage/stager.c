@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.162 2001/11/14 12:23:07 jdurand Exp $
+ * $Id: stager.c,v 1.163 2001/11/23 12:30:18 jdurand Exp $
  */
 
 /*
@@ -34,7 +34,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.162 $ $Date: 2001/11/14 12:23:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.163 $ $Date: 2001/11/23 12:30:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -81,6 +81,10 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
+
+#ifndef PRE_RFIO
+#define PRE_RFIO { rfio_errno = serrno = 0; }
+#endif
 
 int stagein_castor_hsm_file _PROTO(());
 int stagewrt_castor_hsm_file _PROTO(());
@@ -1019,6 +1023,7 @@ int stagein_castor_hsm_file() {
     int jsegments;
     int ksegments;
     int save_serrno;
+    int last_found;        /* In case of use_subreqid == 0 */
 
     ALLOCHSM;
 
@@ -1328,6 +1333,7 @@ int stagein_castor_hsm_file() {
 			/* We check if other HSM files also requires this tape */
 			if (stcp != (stce - 1)) {
 				stcp++;
+				last_found = i;
 				for (j = i + 1; stcp < stce; stcp++, j++) {
 #ifdef STAGER_DEBUG
 					/* Search for castor a-la-unix path in the file to stagein */
@@ -1384,21 +1390,56 @@ int stagein_castor_hsm_file() {
 					}
 					/* We accept this only hsm_vid[j] matches hsm_vid[i] */
 					if (strcmp(hsm_segments[j][hsm_oksegment[j]].vid, hsm_vid[i]) == 0) {
-						hsm_vid[j] = hsm_segments[j][hsm_oksegment[j]].vid;
-						hsm_fseq[j] = hsm_segments[j][hsm_oksegment[j]].fseq;
-						memcpy(hsm_blockid[j],hsm_segments[j][hsm_oksegment[j]].blockid,sizeof(blockid_t));
+						if (use_subreqid) {
+							hsm_vid[j] = hsm_segments[j][hsm_oksegment[j]].vid;
+							hsm_fseq[j] = hsm_segments[j][hsm_oksegment[j]].fseq;
+							memcpy(hsm_blockid[j],hsm_segments[j][hsm_oksegment[j]].blockid,sizeof(blockid_t));
 #ifdef STAGER_DEBUG
-						/* Search for castor a-la-unix path in the file to stagein */
-						SAVE_EID;
-						sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Added vid.fseq=%s.%d (blockid '\\%d\\%d\\%d\\%d')\n",
-							castor_hsm,
-							hsm_vid[j],hsm_fseq[j],
-							(int) hsm_blockid[j][0],
-							(int) hsm_blockid[j][1],
-							(int) hsm_blockid[j][2],
-							(int) hsm_blockid[j][3]);
-						RESTORE_EID;
+							/* Search for castor a-la-unix path in the file to stagein */
+							SAVE_EID;
+							sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Added vid.fseq=%s.%d (blockid '\\%d\\%d\\%d\\%d')\n",
+								castor_hsm,
+								hsm_vid[j],hsm_fseq[j],
+								(int) hsm_blockid[j][0],
+								(int) hsm_blockid[j][1],
+								(int) hsm_blockid[j][2],
+								(int) hsm_blockid[j][3]);
+							RESTORE_EID;
 #endif
+							last_found = j;
+						} else if (j == (last_found + 1)) {
+							/* We are lucky : next stcp's segment shares also the same tape */
+							hsm_vid[j] = hsm_segments[j][hsm_oksegment[j]].vid;
+							hsm_fseq[j] = hsm_segments[j][hsm_oksegment[j]].fseq;
+							memcpy(hsm_blockid[j],hsm_segments[j][hsm_oksegment[j]].blockid,sizeof(blockid_t));
+#ifdef STAGER_DEBUG
+							/* Search for castor a-la-unix path in the file to stagein */
+							SAVE_EID;
+							sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Added vid.fseq=%s.%d (blockid '\\%d\\%d\\%d\\%d')\n",
+								castor_hsm,
+								hsm_vid[j],hsm_fseq[j],
+								(int) hsm_blockid[j][0],
+								(int) hsm_blockid[j][1],
+								(int) hsm_blockid[j][2],
+								(int) hsm_blockid[j][3]);
+							RESTORE_EID;
+#endif
+							last_found = j;
+						} else {
+							/* Bad luck : we are not allowed to stagein regardless of order and the next segment */
+							/* in the list that shares same tape is NOT the next one just after i */
+#ifdef STAGER_DEBUG
+							/* Search for castor a-la-unix path in the file to stagein */
+							SAVE_EID;
+							sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : use_subreqid = 0 => Cannot add vid.fseq=%s.%d\n",
+								castor_hsm,
+								hsm_segments[j][hsm_oksegment[j]].vid,
+								hsm_segments[j][hsm_oksegment[j]].fseq);
+							RESTORE_EID;
+#endif
+							/* No point going further */
+							break;
+						}
 					}
                 }
 			}
