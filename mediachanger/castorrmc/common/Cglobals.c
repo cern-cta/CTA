@@ -1,6 +1,9 @@
 /*
- * $Id: Cglobals.c,v 1.6 1999/07/23 16:03:32 obarring Exp $
+ * $Id: Cglobals.c,v 1.7 1999/07/30 15:57:21 obarring Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.7  1999/07/30 15:57:21  obarring
+ * Add __h_errno() for systems which don't provide any themselves.
+ *
  * Revision 1.6  1999/07/23 16:03:32  obarring
  * Change Cglobals_getTid() to return -1 if no MT.
  *
@@ -16,7 +19,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.6 1999/07/23 16:03:32 obarring Exp $";
+static char cvsId[] = "$Id: Cglobals.c,v 1.7 1999/07/30 15:57:21 obarring Exp $";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -82,6 +85,22 @@ int *__serrno();
 int *__rfio_errno();
 #endif /* __STDC__ */
 
+#if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
+/* 
+ * We need to define a thread safe h_errno for these systems...
+ */
+extern int h_errno;
+/*
+ * Function prototypes for muti-thread env. version of h_errno external
+ */
+#if defined(__STDC__)
+int *__h_errno(void);
+#else /* __STDC__ */
+int *__h_errno();
+#endif /* __STDC__ */
+
+#endif /* hpux ||HPUX10 || sgi || SOLARIS */
+
 /*
  * Cglobals_init() - assing routines to provide thread local storage. 
  * Globals that existed prior to this call are all re-assigned as
@@ -120,6 +139,10 @@ void Cglobals_init(int (*getspec)(int *, void **),
          */
         *__serrno() = serrno;
         *__rfio_errno() = rfio_errno;
+#if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
+        *__h_errno() = h_errno;
+#endif /* hpux || HPUX10 || sgi || SOLARIS */
+
         single_thread_globals = NULL;
     }
     return;    
@@ -193,6 +216,9 @@ int *__serrno() {
         return(&serrno);
     } else {
         addr = NULL;
+        /*
+         * We re-use the old single thread serrno as key
+         */
         rc = local_getspec(&serrno,(void **)&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
@@ -218,6 +244,9 @@ int *__rfio_errno() {
         return(&rfio_errno);
     } else {
         addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
         rc = local_getspec(&rfio_errno,(void **)&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
@@ -234,3 +263,34 @@ int *__rfio_errno() {
         else return(addr);
     }
 }
+
+#if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
+int *__h_errno() {
+    int rc;
+    int *addr;
+
+    if ( local_setspec == NULL ) {
+        return(&h_errno);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread h_errno as key
+         */
+        rc = local_getspec(&h_errno,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (int *)calloc(1,sizeof(int));
+            rc = local_setspec(&h_errno,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __h_errno().
+         */
+        if ( addr == NULL ) return(&h_errno);
+        else return(addr);
+    }
+}
+#endif /* hpux || HPUX10 ||  sgi || SOLARIS */
+
