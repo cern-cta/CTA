@@ -159,7 +159,7 @@ CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, id INTEGER PRIMARY K
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
+CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
@@ -214,7 +214,7 @@ ALTER TABLE Stream2TapeCopy
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.5');
+INSERT INTO CastorVersion VALUES ('2.0.0.6');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -308,12 +308,23 @@ EXCEPTION
 END;
 
 /* PL/SQL method to update FileSystem weight for new streams */
-CREATE OR REPLACE PROCEDURE updateFsWeight
-(ds IN INTEGER, fs IN INTEGER, deviation IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE updateFsFileOpened
+(ds IN INTEGER, fs IN INTEGER,
+ deviation IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
   WHERE diskServer = ds;
- UPDATE FileSystem SET fsDeviation = 2 * deviation
+ UPDATE FileSystem SET fsDeviation = 2 * deviation,
+                       reservedSpace = reservedSpace + fileSize
+  WHERE id = fs;
+END;
+
+/* PL/SQL method to update FileSystem free space when file are closed */
+CREATE OR REPLACE PROCEDURE updateFsFileClosed
+(fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+ UPDATE FileSystem SET deltaFree = deltaFree - fileSize,
+                       reservedSpace = reservedSpace - reservation
   WHERE id = fs;
 END;
 
@@ -360,7 +371,7 @@ BEGIN
   WHERE id = tapeCopyId;
  UPDATE Stream SET status = 3 -- RUNNING
   WHERE id = streamId;
- updateFsWeight(fsDiskServer, fileSystemId, deviation);
+ updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
@@ -370,7 +381,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
  fileSystemId NUMBER;
  deviation NUMBER;
  fsDiskServer NUMBER;
- CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id
+ fileSize NUMBER;
+ CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id, SubRequest.xsize
    FROM DiskServer, FileSystem, DiskPool2SvcClass,
       (SELECT id, svcClass from StageGetRequest UNION
        SELECT id, svcClass from StagePrepareToGetRequest UNION
@@ -387,7 +399,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
      AND Request.id = SubRequest.request
      AND Request.svcclass = DiskPool2SvcClass.child
      AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND FileSystem.free > CastorFile.fileSize
+     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace > CastorFile.fileSize
      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
      AND DiskServer.id = FileSystem.diskServer
      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -395,26 +407,29 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
             FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
- FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, rpath, dci;
+ FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, rpath, dci, fileSize;
  CLOSE c1;
  UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
- updateFsWeight(fsDiskServer, fileSystemId, deviation);
+ updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
 END;
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
  SubRequestId NUMBER;
  dci NUMBER;
+ fsId NUMBER;
+ fileSize NUMBER;
 BEGIN
-SELECT SubRequest.id, DiskCopy.id
- INTO SubRequestId, dci
+SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+ INTO SubRequestId, dci, fileSize
  FROM TapeCopy, SubRequest, DiskCopy
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 0 WHERE id = dci; -- DISKCOPY_STAGED
+UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_STAGED
 UPDATE SubRequest SET status = 1 WHERE id = SubRequestId; -- SUBREQUEST_RESTART
 UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+updateFsFileClosed(fsId, fileSize, fileSize);
 END;
 
 /* PL/SQL method implementing castor package */
@@ -680,6 +695,8 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   nc INTEGER;
   cfId INTEGER;
   tcId INTEGER;
+  fsId INTEGER;
+  reservedSpace NUMBER;
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
@@ -687,11 +704,14 @@ BEGIN
  -- with triggers that we are the only ones to deal with its copies
  UPDATE CastorFile set fileSize = fs WHERE id = cfId
   RETURNING fileId, nsHost INTO fId, nh;
- -- get uid, gid from Request
- SELECT euid, egid INTO userId, groupId FROM SubRequest,
+ -- get uid, gid and reserved space from Request
+ SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
       (SELECT euid, egid, id from StagePutRequest UNION
        SELECT euid, egid, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- update the FileSystem free space
+ SELECT fileSystem INTO fsId FROM DiskCopy WHERE castorFile = cfid AND status = 6; -- STAGEOUT
+ updateFsFileClosed(fsId, reservedSpace, fs);
  -- if 0 length file, stop here
  IF fs = 0 THEN
    COMMIT;
@@ -792,7 +812,7 @@ BEGIN
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
      AND FileSystem.id MEMBER OF fsIds
-     AND FileSystem.free >= minFree
+     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree
      AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
      AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
@@ -804,7 +824,7 @@ BEGIN
           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
    FROM FileSystem, DiskServer
    WHERE FileSystem.diskserver = DiskServer.id
-    AND FileSystem.free >= minFree
+    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
@@ -812,5 +832,5 @@ BEGIN
  END IF;
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;
- updateFsWeight(ds, fs, dev);
+ updateFsFileOpened(ds, fs, dev, minFree);
 END;

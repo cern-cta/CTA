@@ -145,6 +145,32 @@ int Cstager_FileSystem_deltaWeight(struct Cstager_FileSystem_t* instance, float*
 int Cstager_FileSystem_setDeltaWeight(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
+ * Get the value of deltaFree
+ * Estimation of the modifications of the free space since the last update.
+ */
+int Cstager_FileSystem_deltaFree(struct Cstager_FileSystem_t* instance, int* var);
+
+/**
+ * Set the value of deltaFree
+ * Estimation of the modifications of the free space since the last update.
+ */
+int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, int new_var);
+
+/**
+ * Get the value of reservedSpace
+ * Space reserved on the filesystem but not yet used and thus not taken into account
+ * in free and deltaFree
+ */
+int Cstager_FileSystem_reservedSpace(struct Cstager_FileSystem_t* instance, int* var);
+
+/**
+ * Set the value of reservedSpace
+ * Space reserved on the filesystem but not yet used and thus not taken into account
+ * in free and deltaFree
+ */
+int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

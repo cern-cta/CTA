@@ -189,6 +189,44 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_deltaFree
+       * Estimation of the modifications of the free space since the last update.
+       * @return the value of m_deltaFree
+       */
+      int deltaFree() const {
+        return m_deltaFree;
+      }
+
+      /**
+       * Set the value of m_deltaFree
+       * Estimation of the modifications of the free space since the last update.
+       * @param new_var the new value of m_deltaFree
+       */
+      void setDeltaFree(int new_var) {
+        m_deltaFree = new_var;
+      }
+
+      /**
+       * Get the value of m_reservedSpace
+       * Space reserved on the filesystem but not yet used and thus not taken into account
+       * in free and deltaFree
+       * @return the value of m_reservedSpace
+       */
+      int reservedSpace() const {
+        return m_reservedSpace;
+      }
+
+      /**
+       * Set the value of m_reservedSpace
+       * Space reserved on the filesystem but not yet used and thus not taken into account
+       * in free and deltaFree
+       * @param new_var the new value of m_reservedSpace
+       */
+      void setReservedSpace(int new_var) {
+        m_reservedSpace = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -297,6 +335,12 @@ namespace castor {
 
       /// Estimation of the modifications of the weight since the last update.
       float m_deltaWeight;
+
+      /// Estimation of the modifications of the free space since the last update.
+      int m_deltaFree;
+
+      /// Space reserved on the filesystem but not yet used and thus not taken into account in free and deltaFree
+      int m_reservedSpace;
 
       /// The id of this object
       u_signed64 m_id;
