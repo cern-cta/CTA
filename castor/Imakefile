@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.80 $ $Release$ $Date: 2005/02/09 17:05:37 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.81 $ $Release$ $Date: 2005/02/25 18:00:54 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -28,8 +28,8 @@
 
 RH_HOST=RhHost
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(GCCPPDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(GCCPPDIR)
 
 #if _AIX
 OSLIBS = -L FileName(..,shlib) -lshift

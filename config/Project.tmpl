@@ -473,7 +473,16 @@
 /* ------------------ */
 /* Garbage Collection */
 /* ------------------ */
-/* Nothing special for the moment */
+#if BuildGCCpp
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary	YES
+#endif
+#endif
 
 
 /* ------- */
@@ -567,6 +576,9 @@ EXPERTDIR = expert
 #endif
 #if BuildRHCpp
 RHCPPDIR = rh
+#endif
+#if BuildGCCpp
+GCCPPDIR = gc
 #endif
 #if BuildCastorClientCPPLibrary
 COMMONCPPDIR = castor
