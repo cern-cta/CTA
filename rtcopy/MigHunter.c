@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/06 11:41:38 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/06 13:23:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/06 11:41:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/06 13:23:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -493,6 +493,11 @@ int main(int argc, char *argv[])
   struct Cstager_SvcClass_t *svcClass = NULL;
   int rc, i;
 
+  if ( argc <= 1 ) {
+    usage(argv[0]);
+    return(1);
+  }
+  
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
   
   for ( i=1; i<argc; i++ ) {
