@@ -25,33 +25,33 @@
 */
 
 #define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9"
-#define AuthorizedHosts	/etc/rtcopy.hosts
+#define AuthorizedHosts	/etc/castor/rtcopy.hosts
 #define CDKDir	/usr/local/src/CDK
 #if defined(_WIN32)
 #define CupvConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\CUPVCONFIG
 #else
-#define CupvConfigFile	/etc/CUPVCONFIG
+#define CupvConfigFile	/etc/castor/CUPVCONFIG
 #endif
 #define CupvHost	"castorcupv"
-#define PolicySpool	/etc/expert
+#define PolicySpool	/etc/castor/expert
 #define CupvSpool	/var/spool/upv
 #define RmMasterSpool	/var/spool/rmmaster
 #if defined(_WIN32)
 #define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMMASTERCONFIG
 #else
-#define RmMasterConfigFile	/etc/RMMASTERCONFIG
+#define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
 #endif
 #define RmNodeSpool	/var/spool/rmnode
 #if defined(_WIN32)
 #define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMNODECONFIG
 #else
-#define RmNodeConfigFile	/etc/RMNODECONFIG
+#define RmNodeConfigFile	/etc/castor/RMNODECONFIG
 #endif
 #define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\DBCONFIG
 #else
-#define DbConfigFile	/etc/DBCONFIG
+#define DbConfigFile	/etc/castor/DBCONFIG
 #endif
 #define DbSpool	/var/spool/db
 #define DomainName	cern.ch
@@ -61,7 +61,7 @@
 #if defined(_WIN32)
 #define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
 #else
-#define InstallConfigDir	/etc/sysconfig
+#define InstallConfigDir	$(DESTDIR)/etc/sysconfig
 #endif
 #if defined(_WIN32)
 #define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
@@ -83,30 +83,30 @@
 #if defined(_WIN32)
 #define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
 #else
-#define LocalHostsList  /etc/shift.localhosts
+#define LocalHostsList  /etc/castor/shift.localhosts
 #endif
 #define ManDir  $(DESTDIR)/usr/share/man/man1
 #define ManSuffix       1castor
 #if defined(_WIN32)
 #define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
 #else
-#define MappingFile	/etc/ext.users
+#define MappingFile	/etc/castor/ext.users
 #endif
 #define MonitorHost	"castormon"
 #define MonitorSpool	/var/spool/monitor
-#define MsgdaemonAuthHosts /etc/msg.hosts
+#define MsgdaemonAuthHosts /etc/castor/msg.hosts
 #define MsgdaemonHost	"castormsg"
 #define NfsRoot	/shift
 #if defined(_WIN32)
 #define NsConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\NSCONFIG
 #else
-#define NsConfigFile	/etc/NSCONFIG
+#define NsConfigFile	/etc/castor/NSCONFIG
 #endif
 #define NsHost	"castorns"
 #define NsHostPfx	cns
 #define NsSpool	/var/spool/ns
 #define NsRoot  "/castor"
-#define OperConfigFile	/etc/OPERCONFIG
+#define OperConfigFile	/etc/castor/OPERCONFIG
 #define OperatorGid	root
 #if defined(_WIN32)
 #define OperatorDir	%%SystemRoot%%
@@ -117,7 +117,7 @@
 #if defined(_WIN32)
 #define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\shift.remhosts
 #else
-#define RemoteHostsList /etc/shift.remhosts
+#define RemoteHostsList /etc/castor/shift.remhosts
 #endif
 #define RfioAlarmFile	rfio_alrm
 #define RfioSpool	/var/spool/rfio
@@ -129,38 +129,38 @@
 #if defined(_WIN32)
 #define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor.conf
 #else
-#define ShiftConfigFile	/etc/castor.conf
+#define ShiftConfigFile	/etc/castor/castor.conf
 #endif
-#define StageConfigFile	/etc/STGCONFIG
-#define StageConfigDbLogin	/etc/STGDBCONFIG
+#define StageConfigFile	/etc/castor/STGCONFIG
+#define StageConfigDbLogin	/etc/castor/STGDBCONFIG
 #define StagerSuperGroup	st
 #define StagerSuperUser	stage
 #define StageHost	"stagepublic"
 #define StageSpool	/var/spool/stage
 #define StagerGid	st
 #define SysreqHost	"sysreq tms-2 tms"
-#define TapeConfigFile	/etc/TPCONFIG
+#define TapeConfigFile	/etc/castor/TPCONFIG
 #define TapeSpool	/var/spool/tape
 #define VdqmHost        "castorvdqm1 castorvdqm2"
 #define VdqmSpool	/var/spool/vdqm
 #if defined(_WIN32)
 #define VmgrConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\VMGRCONFIG
 #else
-#define VmgrConfigFile	/etc/VMGRCONFIG
+#define VmgrConfigFile	/etc/castor/VMGRCONFIG
 #endif
 #define VmgrHost	"castorvmgr"
 #define VmgrSpool	/var/spool/vmgr
 #if defined(_WIN32)
 #define DlfConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\DLFCONFIG
 #else
-#define DlfConfigFile  /etc/DLFCONFIG
+#define DlfConfigFile  /etc/castor/DLFCONFIG
 #endif
 #define DlfHost        "castordlf"
 #define DlfSpool       /var/spool/dlf
 #if defined(_WIN32)
 #define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\EXPCONFIG
 #else
-#define ExpertConfigFile  /etc/EXPCONFIG
+#define ExpertConfigFile  /etc/castor/EXPCONFIG
 #endif
 #define ExpertHost     "localhost"
 #define ExpertSpool    /var/spool/expert
