@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 15:21:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 15:28:31 $ $Author: obarring $
  *
  * 
  *
@@ -30,7 +30,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 15:21:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 15:28:31 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -155,8 +155,7 @@ static int tapeFseq(
   int rc = 0, save_serrno;
 
   save_serrno = serrno;
-  rc = Cthread_mutex_lock_ext(currentTapeFseqLock);
-  if ( rc == -1 ) {
+  if ( Cthread_mutex_lock_ext(currentTapeFseqLock) == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
     return(-1);
   }
@@ -173,8 +172,7 @@ static int tapeFseq(
     currentTapeFseq = newValue;
   }
 
-  rc = Cthread_mutex_unlock_ext(currentTapeFseqLock);
-  if ( rc == -1 ) {
+  if ( Cthread_mutex_unlock_ext(currentTapeFseqLock) == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
     return(-1);
   }
