@@ -68,6 +68,7 @@ castor::db::ora::OraBaseObj::createStatement (const std::string &stmtString)
   try {
     oracle::occi::Statement* stmt =
       cnvSvc()->getConnection()->createStatement();
+    stmt->setAutoCommit(false);
     stmt->setSQL(stmtString);
     return stmt;
   } catch (oracle::occi::SQLException e) {
