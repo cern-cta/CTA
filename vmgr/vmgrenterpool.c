@@ -1,44 +1,76 @@
+/*
+ * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+ 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vmgrenterpool.c,v $ $Revision: 1.2 $ $Date: 2000/03/02 13:53:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+
+/*	vmgrenterpool - define a new tape pool */
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-
-int main(argc, argv)
-     int argc;
-     char **argv;
+main(argc, argv)
+int argc;
+char **argv;
 {
-  char buf[80];
-  char *dp;
-  int errflg = 0;
-  FILE *fopen(), *fs;
-  char *poolname;
-  uid_t pool_user;
-  gid_t pool_group;
+	int c;
+	char *dp;
+	int errflg = 0;
+	static struct Coptions longopts[] = {
+		{"name", REQUIRED_ARGUMENT, 0, 'P'},
+		{"gid", REQUIRED_ARGUMENT, 0, OPT_POOL_GID},
+		{"uid", REQUIRED_ARGUMENT, 0, OPT_POOL_UID},
+		{0, 0, 0, 0}
+	};
+	gid_t pool_gid = 0;
+	char *pool_name = NULL;
+	uid_t pool_uid = 0;
 
-  if (argc != 4) {
-    fprintf (stderr,
-             "usage: vmgrenterpool poolname pool_user_uid pool_group_gid\n"
-             "\n"
-             "  where poolname         Pool name          ex: default\n"
-             "        pool_user_uid    Pool ass. uid      ex: 0\n"
-             "        pool_group_gid   Pool ass. gid      ex: 0\n"
-             "\n"
-             "Comments to the CASTOR Developpment Team <castor-dev@listbox.cern.ch>\n"
-             "\n");
-    return(EXIT_FAILURE);
-  }
-
-  poolname        = argv[1];
-  pool_user       = (uid_t) atoi(argv[2]);
-  pool_group      = (gid_t) atoi(argv[3]);
-
-  if (vmgr_enterpool (poolname, pool_user, pool_group)) {
-    fprintf (stderr, "%s: %s\n", poolname, sstrerror(serrno));
-    return(EXIT_FAILURE);
-  }
-
-  printf("--> OK\n");
-
-  return(EXIT_SUCCESS);
+	Coptind = 1;
+        while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
+                switch (c) {
+		case 'P':
+			pool_name = Coptarg;
+                        break;
+		case OPT_POOL_GID:
+			if ((pool_gid = strtol (Coptarg, &dp, 10)) < 0 ||
+			    *dp != '\0') {
+				fprintf (stderr,
+				    "invalid pool_gid for pool %s\n", pool_name);
+				errflg++;
+			}
+			break;
+		case OPT_POOL_UID:
+			if ((pool_uid = strtol (Coptarg, &dp, 10)) < 0 ||
+			    *dp != '\0') {
+				fprintf (stderr,
+				    "invalid pool_uid for pool %s\n", pool_name);
+				errflg++;
+			}
+			break;
+                case '?':
+                        errflg++;
+                        break;
+                default:
+                        break;
+                }
+        }
+        if (Coptind < argc || pool_name == NULL) {
+                errflg++;
+        }
+        if (errflg) {
+                fprintf (stderr, "usage: %s %s", argv[0],
+		    "--name pool_name [--gid pool_gid] [--uid pool_uid]\n");
+                exit (USERR);
+        }
+ 
+	if (vmgr_enterpool (pool_name, pool_uid, pool_gid) < 0) {
+		fprintf (stderr, "vmgrenterpool %s: %s\n", pool_name, sstrerror(serrno));
+		exit (USERR);
+	}
+	exit (0);
 }
