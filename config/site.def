@@ -205,7 +205,6 @@
 #define BuildRtcopyServer	NO
 #define BuildRtcopyLibrary	NO
 #define BuildRtstat		NO
-/* To be added when there will be end-user STAGE client(s) */
 #define BuildStageClient	NO
 #define BuildStageDaemon	NO
 #define BuildStageLibrary	NO
