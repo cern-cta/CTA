@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.6 2002/02/11 15:53:48 jdurand Exp $
+ * $Id: stager_castor.c,v 1.7 2002/02/14 18:36:50 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.6 $ $Date: 2002/02/11 15:53:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.7 $ $Date: 2002/02/14 18:36:50 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -909,6 +909,7 @@ int stagein_castor_hsm_file() {
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 #endif
+    struct devinfo *devinfo;
     int isegments;
     int jsegments;
     int ksegments;
@@ -971,7 +972,7 @@ int stagein_castor_hsm_file() {
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
 
-				new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+				new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
 
 				/* If the maximum size to transfer does not exceed physical size then */
 				/* we change this field.                                              */
@@ -1178,7 +1179,7 @@ int stagein_castor_hsm_file() {
 		if (stcp->size > 0) {
 			u_signed64 new_totalsize;
 
-			new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+			new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
 
 			/* If the maximum size to transfer does not exceed physical size then */
 			/* we change this field.                                              */
@@ -1505,6 +1506,9 @@ int stagein_castor_hsm_file() {
 		sleep(RETRYI);
 	}
 
+	/* We grab the optimal blocksize */
+	devinfo = Ctape_devinfo(vmgr_tapeinfo.model);
+
 	/* Build the request from where we found vid/side (included) up to our next (excluded) */
 	nbcat_ent_current = 0;
 	istart = -1;
@@ -1561,6 +1565,10 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0, stcp_tmp = stcp_start; stcp < stce; stcp++, i++) {
 		if ((hsm_vid[i] != NULL) && (hsm_side[i] >= 0)) {
 			*stcp_tmp = *stcp;
+			/* We also force the blocksize while recalling in some cases (s/w pbs with default values) */
+			if (devinfo->defblksize > 99999) {
+				stcp_tmp->blksize = devinfo->defblksize;
+			}
 			stcp_tmp++;
 		}
 	}
@@ -1773,7 +1781,7 @@ int stagewrt_castor_hsm_file() {
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
 
-				new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+				new_totalsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
 
 				/* If the amount of bytes to transfer is asked to be lower than the physical */
 				/* size of the file, we reflect this in the corresponding field.             */

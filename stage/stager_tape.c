@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.5 2002/02/07 18:07:50 jdurand Exp $
+ * $Id: stager_tape.c,v 1.6 2002/02/14 18:36:50 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.5 $ $Date: 2002/02/07 18:07:50 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.6 $ $Date: 2002/02/14 18:36:50 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1256,7 +1256,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #ifndef SKIP_FILEREQ_MAXSIZE
 		if (stcp->size > 0) {
 			/* filereq.maxsize is in bytes */
-			fl[j_ok].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+			fl[j_ok].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
 		}
 #endif
 		if (use_subreqid != 0) {

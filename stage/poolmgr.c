@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.183 2002/02/14 13:06:57 jdurand Exp $
+ * $Id: poolmgr.c,v 1.184 2002/02/14 18:36:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.183 $ $Date: 2002/02/14 13:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.184 $ $Date: 2002/02/14 18:36:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2228,7 +2228,7 @@ int update_migpool(stcp,flag,immediate)
 
   /* If this fileclass specifies a minimum filesize we check it */
   if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize > 0) &&
-      ((*stcp)->actual_size < (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize * ONE_MB))) {
+      ((u_signed64) ((*stcp)->actual_size) < (u_signed64) (((u_signed64) pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize) * ((u_signed64) ONE_MB)))) {
     char tmpbuf1[21];
     char tmpbuf2[21];
     sendrep(rpfd, MSG_ERR, STG168,
@@ -2258,7 +2258,7 @@ int update_migpool(stcp,flag,immediate)
 
   /* If this fileclass specifies a maximum filesize we check it */
   if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize > 0) &&
-      ((*stcp)->actual_size > (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize * ONE_MB))) {
+      ((u_signed64) (*stcp)->actual_size > (u_signed64) (((u_signed64) pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize) * ((u_signed64) ONE_MB)))) {
     char tmpbuf1[21];
     char tmpbuf2[21];
     sendrep(rpfd, MSG_ERR, STG168,

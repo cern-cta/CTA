@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.163 2002/02/12 12:34:19 jdurand Exp $
+ * $Id: procio.c,v 1.164 2002/02/14 18:36:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.163 $ $Date: 2002/02/12 12:34:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.164 $ $Date: 2002/02/14 18:36:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2512,11 +2512,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					yetdone_rfio_stat = &filemig_stat;
 					SET_CORRECT_EUID_EGID;
 					correct_size = (u_signed64) filemig_stat.st_size;
-					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+					if (stgreq.size && ((u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB) < correct_size)) {
 						/* If user specified a maxsize of bytes to transfer and if this */
 						/* maxsize is lower than physical file size, then the size of */
 						/* of the migrated file will be the minimum of the twos */
-						correct_size = (u_signed64) (stgreq.size * ONE_MB);
+						correct_size = (u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB);
 					}
 					if (correct_size > 0 && correct_size == Cnsfilestat.filesize) {
 						/* Same size and > 0 : we assume user asks for a new copy */
@@ -2636,11 +2636,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					if (rfio_stat_rc == 0) {
 						correct_size = (u_signed64) st.st_size;
-						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+						if (stgreq.size && ((u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB) < correct_size)) {
 							/* If user specified a maxsize of bytes to transfer and if this */
 							/* maxsize is lower than physical file size, then the size of */
 							/* of the migrated file will be the minimum of the twos */
-							correct_size = (u_signed64) (stgreq.size * ONE_MB);
+							correct_size = (u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB);
 						}
 					} else {
 						/* This must have fail because of RFIO */
