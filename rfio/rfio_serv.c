@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.11 2004/09/28 12:51:05 obarring Exp $
+ * $Id: rfio_serv.c,v 1.12 2004/09/28 14:13:32 obarring Exp $
  */
 
 /*
@@ -1097,7 +1097,7 @@ char tmpbuf[21], tmpbuf2[21];
      int priority, sched_rc;
      priority = atoi(p1);
      log(LOG_INFO,"Trying to set scheduling priority to %d\n",priority);
-     sched_rc = setpriority(PRIO_PGRP,0,priority);
+     sched_rc = setpriority(PRIO_PROCESS,0,priority);
      if ( sched_rc == -1 ) log(LOG_ERR,"setpriority(%d,%d,%d): %s\n",
                                PRIO_PGRP,0,priority,strerror(errno));
    }
