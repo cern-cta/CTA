@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/03 11:47:34 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 13:58:27 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/03 11:47:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 13:58:27 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -396,9 +396,18 @@ int migratorCallback(
 
   switch (filereq->proc_status) {
   case RTCP_POSITIONED:
-      msgNo = RTCPCLD_MSG_CALLBACK_POS;
-      func = "processTapePositionCallback";
-      break;
+    msgNo = RTCPCLD_MSG_CALLBACK_POS;
+    func = "processTapePositionCallback";
+    if ( (tapereq->tprc != 0) ||
+         (filereq->cprc != 0) ) {
+      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      func = "processFileCopyCallback";
+      rc = migratorCallbackFileCopied(
+                                      tapereq,
+                                      filereq
+                                      );
+    }
+    break;
   case RTCP_FINISHED:
     msgNo = RTCPCLD_MSG_CALLBACK_CP;
     func = "processFileCopyCallback";
