@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.13 2001/03/04 07:39:58 jdurand Exp $
+ * $Id: buildupath.c,v 1.14 2001/03/04 08:44:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.13 $ $Date: 2001/03/04 07:39:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.14 $ $Date: 2001/03/04 08:44:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.13 $ $Date: 
 #endif
 #include "stage.h"
 #include "stage_api.h"
+#include "Castor_limits.h"
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -156,7 +157,7 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 		 int size;
 		 int req_type;
 {
-	char buf[256];
+	char buf[CA_MAXPATHLEN+1];
 	int c;
 	char *p;
 	char *func = "build_linkname";
@@ -180,6 +181,10 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 			} else
 				sprintf (path, "%s/%s", cwd, argvi);
 	} else {
+		if (strlen(argvi) > CA_MAXPATHLEN) {
+			stage_errmsg(func, STG08, argvi);
+			return (USERR);
+		}
 		strcpy (buf, argvi);
 		if ((p = strrchr (buf, '/')) != NULL) {
 			*p = '\0';
@@ -189,6 +194,10 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 			}
 			*p = '/';
 		} else {
+			stage_errmsg(func, STG08, argvi);
+			return (USERR);
+		}
+		if (((int) strlen (path) + (int) strlen (p) + 1) > size) {
 			stage_errmsg(func, STG08, argvi);
 			return (USERR);
 		}
