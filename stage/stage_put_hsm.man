@@ -1,10 +1,10 @@
-.\" $Id: stage_put_hsm.man,v 1.4 2002/10/08 13:45:51 jdurand Exp $
+.\" $Id: stage_put_hsm.man,v 1.5 2002/10/13 11:47:30 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.4 $ $Date: 2002/10/08 13:45:51 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.5 $ $Date: 2002/10/13 11:47:30 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 13:45:51 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT_HSM "3" "$Date: 2002/10/13 11:47:30 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put_hsm \- copy disk files to Hierarchical Storage Management System.
 .SH SYNOPSIS
@@ -28,7 +28,7 @@ is the stager machine name that hosts the stage daemon. If this parameter is
 .B NULL
 , then default value is taken (either from configuration file, from environment variable
 .B STAGE_HOST
-, or from hardcoded value, "castor").
+, or from hardcoded value, "stagepublic").
 .P
 .B hsmstruct
 is a linked list giving all the HSM files that have to be written on tape. This structure is composed of the following members:
