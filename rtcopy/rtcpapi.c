@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.1 $ $Date: 2004/05/18 14:49:56 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.2 $ $Date: 2004/06/07 14:48:09 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1776,6 +1776,10 @@ void *rtcpc_processReqUpdate(void *arg)
           filereq->err.severity = filereq->err.severity & 
             ~RTCP_RESELECT_SERV;
           filereq->cprc = 0;
+          filereq->err.severity = RTCP_OK;
+          *filereq->err.errmsgtxt = '\0';
+          if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK )
+            filereq->concat = NOCONCAT;
           filereq->VolReqID = reqID;
           if ( filereq->umask <= 0 )
             (void) umask(filereq->umask = (int) umask(0));
