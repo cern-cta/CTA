@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.12 $ $Date: 2000/03/16 12:52:54 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.13 $ $Date: 2000/05/17 16:50:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -89,22 +89,22 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         if ( level == LOG_INFO && (strncmp(msgbuf," CP",3) != 0 &&
              strncmp(msgbuf," DUMP",5) != 0 && 
              *msgbuf != '\0' && *msgbuf != '\n') ) {
-            if ( tpread_command == TRUE ) log(LOG_INFO,msgbuf);
+            if ( tpread_command == TRUE ) log(LOG_INFO,"%s",msgbuf);
             return;
         }
 
         if ( client_socket_p != NULL && *client_socket_p != NULL ) {
-            if ( level <= LOG_ERR ) log(level,msgbuf);
+            if ( level <= LOG_ERR ) log(level,"%s",msgbuf);
             rtcp_ClientMsg(*client_socket_p,msgbuf);
         }
  
         if ( out_p != NULL && *out_p != NULL && 
              err_p != NULL && *err_p != NULL ) {
-            if ( loglevel >= LOG_INFO ) fprintf(*out_p,msgbuf);
-            else fprintf(*err_p,msgbuf);
+            if ( loglevel >= LOG_INFO ) fprintf(*out_p,"%s",msgbuf);
+            else fprintf(*err_p,"%s",msgbuf);
         } else {
-            if ( out_p != NULL && *out_p != NULL ) fprintf(*out_p,msgbuf);
-            else if ( err_p != NULL && *err_p != NULL ) fprintf(*err_p,msgbuf);
+            if ( out_p != NULL && *out_p != NULL ) fprintf(*out_p,"%s",msgbuf);
+            else if ( err_p != NULL && *err_p != NULL ) fprintf(*err_p,"%s",msgbuf);
         }
 
     }
