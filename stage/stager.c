@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.127 2001/02/16 09:42:48 jdurand Exp $
+ * $Id: stager.c,v 1.128 2001/02/22 08:30:48 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.127 $ $Date: 2001/02/16 09:42:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.128 $ $Date: 2001/02/22 08:30:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3140,7 +3140,7 @@ int stager_hsm_callback(tapereq,filereq)
 	if (((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
 		((filereq->cprc <  0) && ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
 			(
-				(filereq->err.errorcode == ENOSPC && (ISSTAGEWRT(stcs) ||
+				((filereq->err.errorcode == ENOSPC) && (ISSTAGEWRT(stcs) ||
 														ISSTAGEPUT(stcs))) ||
 				((stcs->status & STAGEIN) == STAGEIN)
 			)
@@ -3561,6 +3561,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Friday 16 February, 2001 at 10:05:56 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 21 February, 2001 at 11:55:37 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
