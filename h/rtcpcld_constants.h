@@ -17,7 +17,8 @@
 
 #define RTCPCLD_CATPOLL_TIMEOUT (30)   /* Timeout between two polls on the catalogue */
 #define RTCPCLD_VDQMPOLL_TIMEOUT (600) /* Timeout between two polls on a VDQM request */
-#define RTCPCLD_VIDWORKER_CMD "VidWorker"
+#define RTCPCLD_RECALLER_CMD "recaller"
+#define RTCPCLD_MIGRATOR_CMD "migrator"
 
 #ifndef RTCPCLD_NOTIFY_PORT
 #define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd notification (UDP) port */
