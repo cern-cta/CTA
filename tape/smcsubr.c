@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.4 $ $Date: 2001/09/19 12:57:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.5 $ $Date: 2002/04/08 14:08:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.4 $ $Date: 2001
 #include "serrno.h"
 #include "smc.h"
 #define	RBT_XTRA_PROC 10
+#if !defined(linux)
+extern char *sys_errlist[];
+#endif
 static struct smc_status smc_status;
 static char *smc_msgaddr;
 
@@ -55,10 +58,11 @@ int type;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
+	int voltag = 0x10;
  
  	memset (cdb, 0, sizeof(cdb));
  	cdb[0] = 0xB8;		/* read element status */
- 	cdb[1] = 0x10 + type;
+ 	cdb[1] = voltag + type;
  	cdb[5] = 0;
  	cdb[9] = 16;
  	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 16,
@@ -152,12 +156,15 @@ struct smc_element_info element_info[];
 			element_info[i].asc = *(p+4);
 			element_info[i].ascq = *(p+5);
 			element_info[i].source_address = *(p+10) * 256 + *(p+11);
-			if (*(p+12) == '\0')
+			if ((*(page_start-7) & 0x80) == 0 ||
+			    (*(p+12) == '\0') || (*(p+12) == ' '))
 				element_info[i].name[0] = '\0';
 			else {
 				q = (unsigned char *) strchr ((char *)p+12, ' ');
 				strncpy (element_info[i].name, (char *)p+12, q-p-12);
 				element_info[i].name[q-p-12] = '\0';
+				if (strlen (element_info[i].name) > CA_MAXVIDLEN)
+					element_info[i].name[CA_MAXVIDLEN] = '\0';
 			}
 		}
 	}
@@ -195,11 +202,71 @@ struct smc_element_info element_info[];
 	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
 		sense, 38, 60000, SCSI_OUT, &nb_sense_ret, &msgaddr);
 	if (rc < 0) {
+		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
+			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
+			    start, nbelem, element_info);
+			if (rc >= 0)
+				RETURN (rc);
+		}
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
 	}
 	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
 	RETURN (rc);
+}
+
+smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem, element_info)
+int fd;
+char *rbtdev;
+int type;
+char *template;
+int start;
+int nbelem;
+struct smc_element_info element_info[];
+{
+	int c;
+	static char err_msgbuf[132];
+	int found;
+	char func[16];
+	int i;
+	struct smc_element_info *inventory_info; 
+	char *msgaddr;
+	struct robot_info robot_info;
+	int tot_nbelem;
+
+	ENTRY (find_cartridge2);
+	if (c = smc_get_geometry (fd, rbtdev, &robot_info))
+		return (c);
+
+	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
+		robot_info.port_count + robot_info.device_count;
+
+	if ((inventory_info = malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
+		serrno = errno;
+#if defined(TAPE)
+		sprintf (err_msgbuf, TP005);
+#else
+		sprintf (err_msgbuf, "malloc error: %s", sys_errlist[errno]);
+#endif
+		msgaddr = err_msgbuf;
+		save_error (-1, 0, NULL, msgaddr);
+		return (-1);
+	}
+
+	if ((c = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info)) < 0) {
+		free (inventory_info);
+		return (c);
+	}
+	found = 0;	
+	for (i = 0 ; i < tot_nbelem ; i++)
+		if (strncmp (inventory_info[i].name, template, CA_MAXVIDLEN) == 0) {
+			memcpy (element_info, &inventory_info[i],
+				sizeof(struct smc_element_info));
+			found = 1;
+			break;
+		}
+	free (inventory_info);
+	RETURN (found);
 }
 
 smc_get_geometry(fd, rbtdev, robot_info)
@@ -324,11 +391,12 @@ char **msgaddr;
 	return (RBT_NORETRY);
 }
 
-smc_move_medium(fd, rbtdev, from, to)
+smc_move_medium(fd, rbtdev, from, to, invert)
 int fd;
 char *rbtdev;
 int from;
 int to;
+int invert;
 {
 	unsigned char cdb[12];
 	char func[16];
@@ -344,6 +412,7 @@ int to;
 	cdb[5] = from & 0xFF;
 	cdb[6] = to >> 8;
 	cdb[7] = to & 0xFF;
+	cdb[10] = invert;
 	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
 		sense, 38, 300000, SCSI_NONE, &nb_sense_ret, &msgaddr);
 	if (rc < 0) {
