@@ -1,15 +1,15 @@
 /*
- * $Id: readlink.c,v 1.5 1999/12/10 19:46:42 baran Exp $
+ * $Id: readlink.c,v 1.6 2000/09/22 14:52:05 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:42 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.6 $ $Date: 2000/09/22 14:52:05 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -35,7 +35,8 @@ int length ;
    int rcode , len;
    int uid ;
    int gid ;
-   char buffer[256];
+   char buffer[MAXFILENAMSIZE];
+   char tmpbuf[MAXFILENAMSIZE];
 
    /*
     * The file is local.
@@ -120,7 +121,12 @@ int length ;
       return(-1);
    }
    p = buffer ;
-   unmarshall_STRING( p, buf ) ;
+   if (rcode < length) {
+      unmarshall_STRING( p, buf ) ;
+   } else {
+      unmarshall_STRING( p, tmpbuf ) ;
+      memcpy (buf, tmpbuf, length) ;
+   }
    TRACE (2,"rfio","rfio_readlink succeded: returned %s",buf);
    END_TRACE();
    (void) close (s) ;
