@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.79 2001/06/25 18:30:43 jdurand Exp $
+ * $Id: procupd.c,v 1.80 2001/07/12 11:04:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.79 $ $Date: 2001/06/25 18:30:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.80 $ $Date: 2001/07/12 11:04:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -210,7 +210,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 		path_status = 0;
-		unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
+		unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
 		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
 			c = USERR;
@@ -454,6 +454,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 										reqid, STAGEOUT, 1, &wfp, NULL, 
 										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 						wqp->api_out = api_out;
+						wqp->magic = magic;
 						wqp->openflags = 0;
 						wqp->openmode = 0;
 						wqp->uniqueid = stage_uniqueid;
@@ -474,7 +475,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				} else {
 					/* Space successfully allocated - Here c == 0 per construction */
-					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
 					wqp->status = 0;
 				}
@@ -812,7 +813,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			break;
 		}
 		wqp->nb_subreqs = i;
@@ -895,7 +896,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		} else {
 			/* Space successfully allocated */
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
 			wqp->status = 0;
 			goto reply;
@@ -1085,7 +1086,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
-							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp_found);
+							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp_found, wqp->magic);
 						} else {
 							stcp_found = stcp;
 							goto delete_entry;
@@ -1213,7 +1214,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					stcp->status |= STAGED;
 					update_hsm_a_time(stcp);
 					/* We send the reply right now */
-					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
 					stcp_found = stcp_other_migration_found = stcp_other_migrated_found = NULL;
 					for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
@@ -1359,7 +1360,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -1459,5 +1460,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Monday 25 June, 2001 at 20:29:35 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 25 June, 2001 at 20:31:06 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
