@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.6 2000/05/09 15:37:06 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.7 2000/05/23 06:54:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.6 $ $Date: 2000/05/09 15:37:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.7 $ $Date: 2000/05/23 06:54:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -91,6 +91,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	struct servent *sp;
 	int stg_s;
 	char stghost[CA_MAXHOSTNAMELEN+1];
+	char *stagehost = STAGEHOST;
 
 	strcpy (func, "send2stgd");
 	link_rc = 0;
@@ -102,11 +103,10 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
 				(p = getconfent("STG", "HOST",0)) == NULL) {
-			stage_errmsg (func, STG31);
-			serrno = SENOSHOST;
-			return (-1);
+			strcpy (stghost, stagehost);
+		} else {
+			strcpy (stghost, p);
 		}
-		strcpy (stghost, p);
 	} else {
 		strcpy (stghost, host);
 	}
