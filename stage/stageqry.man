@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.30 2002/12/10 12:37:09 jdurand Exp $
+.\" $Id: stageqry.man,v 1.31 2002/12/12 08:42:44 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.30 $ $Date: 2002/12/10 12:37:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.31 $ $Date: 2002/12/12 08:42:44 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/12/10 12:37:09 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/12/12 08:42:44 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -391,6 +391,8 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 1	Bad parameter.
 .br
 2	System error.
+.br
+198	Stager not active.
 
 .SH SEE ALSO
 \fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3), \fBstage_constants\fP(3), \fBCns_queryclass\fP(3)
