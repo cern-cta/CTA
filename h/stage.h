@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.62 2001/06/21 15:52:58 jdurand Exp $
+ * $Id: stage.h,v 1.63 2001/07/12 10:54:28 jdurand Exp $
  */
 
 /*
@@ -108,6 +108,7 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STGMAGIC2   0x13140702
+#define STGMAGIC3   0x13140703
 
 #define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - remapped in send2stgd */
 
@@ -136,6 +137,8 @@
 #define	STAGEMIGPOOL	13
 #define STAGEFILCHG	14
 #define STAGESHUTDOWN	15
+#define STAGESETRETENP	16
+#define STAGESETMINTIME	17
 
 			/* stage daemon reply types */
 
@@ -147,6 +150,7 @@
 #define API_STPP_OUT	7
 #define UNIQUEID	8                /* First version of the API - magic = STGMAGIC - stgdaemon giving back a uniqueid */
 #define UNIQUEID2	9                /* Second version of the API - magic = STGMAGIC2 - stgdaemon receiving a uniqueid */
+#define UNIQUEID3	10               /* Third version of the API - magic = STGMAGIC3 - stgdaemon receiving a uniqueid */
 
 			/* -C, -E and -T options */
 
@@ -344,6 +348,7 @@ struct waitq {
 	int	nretry;
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
+	int	magic; /* Flag to tell which magic number in case of API output */
 	int	api_out; /* Flag to tell if we have to send structure in output (API mode) */
 #if defined(_WIN32)
 	int openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
@@ -378,15 +383,20 @@ struct pool {
 	int	mig_start_thresh;
 	int	mig_stop_thresh;
 	u_signed64 mig_data_thresh;
+	int	max_setretenp;	/* maximum value for explicit setting of retention period (days) */
+	int	put_failed_retenp;	/* minimum value for put_failed retention period (days) */
+	int	stageout_retenp;	/* minimum value for stageout retention period (days) */
 };
 
 struct predicates {
-  int nbfiles_canbemig;
+  int nbfiles_canbemig;            /* Files candidates for migration */
   u_signed64 space_canbemig;
-  int nbfiles_beingmig;
+  int nbfiles_delaymig;            /* Files postponed for being candidate to migration (see mintime_beforemigr) */
+  u_signed64 space_delaymig;
+  int nbfiles_beingmig;            /* Files currently being migrated */
   u_signed64 space_beingmig;
   int nbfiles_to_mig;              /* Used for logging purpose when forking a migrator */
-  u_signed64 space_to_mig;         /* Used for logging purpose when forking a migrator */
+  u_signed64 space_to_mig;
 };
 
 struct fileclass {

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.40 2001/06/20 13:57:14 jdurand Exp $
+ * $Id: stage_api.h,v 1.41 2001/07/12 10:54:28 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -54,14 +54,20 @@ typedef struct stage_hsm stage_hsm_t;
 #define STAGE_INPUT_MODE 0
 #define STAGE_OUTPUT_MODE 1
 
-#define marshall_STAGE_PATH(from,output,ptr,st) { \
-  marshall_STRING(ptr,(st)->upath);               \
+#define marshall_STAGE_PATH(magic,from,output,ptr,st) { \
+  if (magic > STGMAGIC2) {                              \
+    marshall_LONG(ptr,(st)->reqid);                     \
+  }                                                     \
+  marshall_STRING(ptr,(st)->upath);                     \
 }
-#define unmarshall_STAGE_PATH(from,output,ptr,st) { \
+#define unmarshall_STAGE_PATH(magic,from,output,ptr,st) { \
+  if (magic > STGMAGIC2) {                                \
+    unmarshall_LONG(ptr,(st)->reqid);                     \
+  }                                                       \
   output += unmarshall_STRINGN(ptr,(st)->upath,(CA_MAXHOSTNAMELEN+MAXPATH)+1); \
 }
 
-#define marshall_STAGE_CAT(from,output,ptr,st) {   \
+#define marshall_STAGE_CAT(magic,from,output,ptr,st) {   \
   marshall_LONG(ptr,(st)->reqid);                  \
   marshall_LONG(ptr,(st)->blksize);                \
   marshall_BYTE(ptr,(st)->charconv);               \
@@ -117,12 +123,22 @@ typedef struct stage_hsm stage_hsm_t;
     marshall_STRING(ptr,(st)->u1.m.xfile);         \
   case 'h':                                        \
     marshall_STRING(ptr,(st)->u1.h.xfile);         \
-    if (from == STAGE_OUTPUT_MODE) {               \
+    if (magic <= STGMAGIC2) {                      \
+      if (from == STAGE_OUTPUT_MODE) {             \
+        marshall_STRING(ptr,(st)->u1.h.server);    \
+        marshall_HYPER(ptr,(st)->u1.h.fileid);     \
+        marshall_SHORT(ptr,(st)->u1.h.fileclass);  \
+      }                                            \
+    } else {                                       \
       marshall_STRING(ptr,(st)->u1.h.server);      \
       marshall_HYPER(ptr,(st)->u1.h.fileid);       \
       marshall_SHORT(ptr,(st)->u1.h.fileclass);    \
     }                                              \
     marshall_STRING(ptr,(st)->u1.h.tppool);        \
+    if (magic > STGMAGIC2) {                       \
+      marshall_HYPER(ptr,(st)->u1.h.retenp_on_disk); \
+      marshall_HYPER(ptr,(st)->u1.h.mintime_beforemigr); \
+    }                                              \
     break;                                         \
   default:                                         \
     output = -1;                                   \
@@ -130,7 +146,7 @@ typedef struct stage_hsm stage_hsm_t;
   }                                                \
 }
 
-#define unmarshall_STAGE_CAT(from,output,ptr,st) {   \
+#define unmarshall_STAGE_CAT(magic,from,output,ptr,st) {   \
   unmarshall_LONG(ptr,(st)->reqid);                  \
   unmarshall_LONG(ptr,(st)->blksize);                \
   unmarshall_BYTE(ptr,(st)->charconv);               \
@@ -187,12 +203,22 @@ typedef struct stage_hsm stage_hsm_t;
     output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,167);    \
   case 'h':                                          \
     output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,167);    \
-    if (from == STAGE_OUTPUT_MODE) {                 \
+    if (magic <= STGMAGIC2) {                        \
+      if (from == STAGE_OUTPUT_MODE) {                 \
+        output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
+        unmarshall_HYPER(ptr,(st)->u1.h.fileid);       \
+        unmarshall_SHORT(ptr,(st)->u1.h.fileclass);    \
+      }                                                \
+    } else {                                         \
       output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
       unmarshall_HYPER(ptr,(st)->u1.h.fileid);       \
       unmarshall_SHORT(ptr,(st)->u1.h.fileclass);    \
     }                                                \
     output += unmarshall_STRINGN(ptr,(st)->u1.h.tppool,CA_MAXPOOLNAMELEN+1); \
+    if (magic > STGMAGIC2) {                         \
+      unmarshall_HYPER(ptr,(st)->u1.h.retenp_on_disk); \
+      unmarshall_HYPER(ptr,(st)->u1.h.mintime_beforemigr); \
+    }                                                \
     break;                                           \
   default:                                           \
     output = -1;                                     \
@@ -233,6 +259,8 @@ typedef struct stage_hsm stage_hsm_t;
 #define STAGE_CONDITIONAL 0x008000000    /* -c           [stage_clr]            */
 #define STAGE_FORCE       0x010000000    /* -F           [stage_clr]            */
 #define STAGE_REMOVEHSM   0x020000000    /* -remove_from_hsm [stage_clr]        */
+#define STAGE_RETENP      0x040000000    /* --retenp     [stage_qry]            */
+#define STAGE_MINTIME     0x100000000    /* --mintime    [stage_qry]            */
 
 /* For stage_qry only */
 /* ------------------ */
@@ -240,21 +268,22 @@ typedef struct stage_hsm stage_hsm_t;
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
 /* ======================================================================= */
-#define STAGE_00        100
-#define STAGE_IN        101
-#define STAGE_OUT       102
-#define STAGE_WRT       103
-#define STAGE_PUT       104           /* Not yet supported */
-#define STAGE_QRY       105           /* Not yet supported */
-#define STAGE_CLR       106           /* Not yet supported */
-#define	STAGE_KILL      107
-#define	STAGE_UPDC      108           /* Not yet supported */
-#define	STAGE_INIT      109           /* Not yet supported */
-#define	STAGE_CAT       110
-#define	STAGE_ALLOC     111           /* Not yet supported */
-#define	STAGE_GET       112           /* Not yet supported */
-#define	STAGE_MIGPOOL   113           /* Not yet supported */
-#define STAGE_FILCHG    114           /* Not yet supported */
+#define STAGE_00         100
+#define STAGE_IN         101
+#define STAGE_OUT        102
+#define STAGE_WRT        103
+#define STAGE_PUT        104           /* Not yet supported */
+#define STAGE_QRY        105           /* Not yet supported */
+#define STAGE_CLR        106           /* Not yet supported */
+#define	STAGE_KILL       107
+#define	STAGE_UPDC       108           /* Not yet supported */
+#define	STAGE_INIT       109           /* Not yet supported */
+#define	STAGE_CAT        110
+#define	STAGE_ALLOC      111           /* Not yet supported */
+#define	STAGE_GET        112           /* Not yet supported */
+#define	STAGE_MIGPOOL    113           /* Not yet supported */
+#define STAGE_FILCHG     114           /* Not yet supported */
+#define	STAGE_SHUTDOWN   115           /* Not yet supported */
 
 /* -------------------------------------------------------- */
 /* Generic STAGE_IN/STAGE_OUT/STAGE_WRT/STAGE_CAT interface */
@@ -457,6 +486,7 @@ EXTERN_C int  DLL_DECL  send2stgd _PROTO((char *, int, u_signed64, char *, int, 
 /* Compatibility mode */
 EXTERN_C int  DLL_DECL  send2stgd_compat _PROTO((char *, char *, int, int, char *, int)); /* Old version without forking */
 EXTERN_C void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
+EXTERN_C int  DLL_DECL stage_stgmagic _PROTO(()); /* Return current magic number */
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 EXTERN_C void DLL_DECL dump_stpp _PROTO((int, struct stgpath_entry *, int (*) _PROTO((int, int, ...))));
 EXTERN_C void DLL_DECL dump_stcp _PROTO((int, struct stgcat_entry *, int (*) _PROTO((int, int, ...))));
