@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/30 13:04:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/08/20 13:10:35 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -171,7 +171,7 @@ namespace castor {
         dlflevel = DLF_LVL_ALERT;
         break;
       case (ALWAYS) :
-        dlflevel = DLF_LVL_EMERGENCY;
+        dlflevel = DLF_LVL_IMPORTANT;
         break;
       }
       // XXX For the time being, we ignore completely
