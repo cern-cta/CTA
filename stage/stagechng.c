@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.13 2002/01/23 11:02:24 jdurand Exp $
+ * $Id: stagechng.c,v 1.14 2002/01/24 17:43:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.13 $ $Date: 2002/01/23 11:02:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.14 $ $Date: 2002/01/24 17:43:19 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -91,6 +91,11 @@ int main(argc, argv)
 		{NULL,                 0,                  NULL,                      0}
 	};
 
+	if (argc <= 1) {
+		usage (argv[0]);
+		exit (0);
+	}
+
 	mintime_beforemigr_flag = 0;
 	reqid_flag = 0;
 	retenp_on_disk_flag = 0;
@@ -169,10 +174,10 @@ int main(argc, argv)
 			if (retenp_on_disk_flag && ! done_retenp_on_disk) { /* --retenp */
 				if (strcmp(Coptarg,"AS_LONG_AS_POSSIBLE") == 0) {
 					/* Per definition Coptarg has enough place to support to format 0x%x == AS_LONG_AS_POSSIBLE == 0x7FFFFFFF */
-					sprintf(Coptarg, "0x%x", AS_LONG_AS_POSSIBLE);
+					sprintf(Coptarg, "0x%xS", AS_LONG_AS_POSSIBLE);
 				} else if (strcmp(Coptarg,"INFINITE_LIFETIME") == 0) {
 					/* Per definition Coptarg has enough place to support to format 0x%x == INFINITE_LIFETIME == 0x7FFFFFFE */
-					sprintf(Coptarg, "0x%x", INFINITE_LIFETIME);
+					sprintf(Coptarg, "0x%xS", INFINITE_LIFETIME);
 				}
 				done_retenp_on_disk = 1;
 			}
@@ -290,7 +295,7 @@ void usage(cmd)
 				"usage: %s [-h stagehost] pathname(s)\n"
 				"\nor\n\n"
 				"%s [-h stagehost] [-p poolname] -M filename"
-				"[--mintime_beforemigr mintime_in_seconds]\n"
+				"[--mintime_beforemigr mintime_before_migration[unit]]\n"
 				"[--reqid request_id]\n"
 				"[--retenp_on_disk retention_period[unit]]\n"
 				"[--status status]\n",
