@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/25 09:26:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -103,6 +103,8 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
                                    ObjectSet& alreadyDone,
                                    bool autocommit)
   throw (castor::exception::Exception) {
+  // If no object, nothing to create
+  if (0 == object) return;
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   IConverter* conv = converter(object->type());
@@ -119,6 +121,8 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
                                    ObjectSet& alreadyDone,
                                    bool autocommit)
   throw (castor::exception::Exception) {
+  // If no object, nothing to update
+  if (0 == object) return;
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   IConverter* conv = converter(object->type());
