@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.8 2000/04/13 10:23:07 obarring Exp $
+ * $Id: sacct.h,v 1.9 2000/04/13 10:51:20 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.8 $ $Date: 2000/04/13 10:23:07 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.9 $ $Date: 2000/04/13 10:51:20 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -27,6 +27,7 @@ struct accthdr {	/* header for accounting record */
 #define	ACCTRTCOPY	3
 #define	ACCTSTAGE	4
 #define	ACCTNQS		5
+#define ACCTRTCPTIM     6
 
 struct  acctsystem      {
 	int     subtype;
