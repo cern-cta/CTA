@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.117 2002/09/23 11:12:59 jdurand Exp $
+ * $Id: procupd.c,v 1.118 2002/10/16 09:35:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.117 $ $Date: 2002/09/23 11:12:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.118 $ $Date: 2002/10/16 09:35:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1778,7 +1778,8 @@ int update_hsm_a_time(stcp)
 	struct Cns_fileid Cnsfileid;
 	struct Cns_filestat Cstatbuf;
 	int rc = 0;
-
+	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+	
 	switch (stcp->t_or_d) {
 	case 'm':
 		/* HPSS */
@@ -1794,7 +1795,12 @@ int update_hsm_a_time(stcp)
 		/* CASTOR */
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
-		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf) == 0) {
+		setegid(stcp->gid);
+		seteuid(stcp->uid);
+		rc = Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf);
+		setegid(start_passwd.pw_gid);
+		seteuid(start_passwd.pw_uid);
+		if (rc == 0) {
 			stcp->a_time = Cstatbuf.mtime;
 		} else {
 			rc = serrno;
