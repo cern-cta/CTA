@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.143 $ $Release$ $Date: 2005/03/30 10:00:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.144 $ $Release$ $Date: 2005/03/30 10:27:46 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2360,9 +2360,23 @@ void castor::db::ora::OraStagerSvc::filesDeleted
   // Execute statement and get result
   unsigned long id;
   try {
-    oracle::occi::setVector
-      (m_filesDeletedStatement, 1, diskCopyIds,
-       "numList");
+    // Deal with the list of diskcopy ids
+    unsigned int nb = diskCopyIds.size();
+    ub2 lens[nb];
+    unsigned char buffer[nb][21];
+    memset(buffer, 0, nb * 21);
+    for (int i = 0; i < nb; i++) {
+      oracle::occi::Number n = (double)(*(diskCopyIds[i]));
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+    ub4 unused = nb;
+    m_bestFileSystemForJobStatement->setDataBufferArray
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,
+       nb, &unused, 21, lens);
+    // execute the statement
+    m_bestFileSystemForJobStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
@@ -2388,6 +2402,7 @@ void castor::db::ora::OraStagerSvc::getUpdateDone
   unsigned long id;
   try {
     m_getUpdateDoneStatement->setDouble(1, subReqId);
+    m_getUpdateDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
@@ -2413,6 +2428,7 @@ void castor::db::ora::OraStagerSvc::getUpdateFailed
   unsigned long id;
   try {
     m_getUpdateFailedStatement->setDouble(1, subReqId);
+    m_getUpdateFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
@@ -2438,6 +2454,7 @@ void castor::db::ora::OraStagerSvc::putFailed
   unsigned long id;
   try {
     m_putFailedStatement->setDouble(1, subReqId);
+    m_putFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
