@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/29 07:42:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/29 07:42:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -329,6 +329,7 @@ int migratorCallback(
 {
   int rc = 0, save_serrno, msgNo, level = DLF_LVL_SYSTEM;
   struct Cns_fileid *castorFileId = NULL;
+  file_list_t *file = NULL;
   char *blkid, *func;
 
   if ( tapereq == NULL || filereq == NULL ) {
@@ -347,7 +348,10 @@ int migratorCallback(
     return(-1);
   }
 
-  (void)rtcpcld_getFileId(filereq,&castorFileId);
+  rc = rtcpcld_findFile(tape,filereq,&file);
+  if ( (rc != -1) && (file != NULL) ) {
+    (void)rtcpcld_getFileId(file,&castorFileId);
+  }
   blkid = rtcp_voidToString(
                             (void *)filereq->blockid,
                             sizeof(filereq->blockid)
@@ -470,6 +474,7 @@ int migratorCallback(
     }
   }
   if ( blkid != NULL ) free(blkid);
+  if ( castorFileId != NULL ) free(castorFileId);
   return(rc);
 }
 
