@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifytape.c,v $ $Revision: 1.6 $ $Date: 2001/01/31 12:38:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifytape.c,v $ $Revision: 1.7 $ $Date: 2002/02/07 06:03:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifytape - modify an existing tape volume */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_modifytape.c,v $ $Revision: 1.6 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_modifytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *manufacturer, char *sn, char *poolname, int status)
+vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, char *lbltype, char *manufacturer, char *sn, char *poolname, int status)
 {
 	int c;
 	char func[15];
@@ -71,8 +71,8 @@ vmgr_modifytape(const char *vid, char *vsn, char *dgn, char *density, char *lblt
 	} else {
 		marshall_STRING (sbp, "");
 	}
-	if (dgn) {
-		marshall_STRING (sbp, dgn);
+	if (library) {
+		marshall_STRING (sbp, library);
 	} else {
 		marshall_STRING (sbp, "");
 	}
