@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/05 13:50:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/04/05 14:25:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -119,14 +119,14 @@ int castor::rh::Server::main () {
       svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
     if (0 == svc) {
       // "Could not get Conversion Service for Oracle" message
-      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 2);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
       return -1;
     }
     castor::ICnvSvc *svc2 =
       svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
     if (0 == svc2) {
       // "Could not get Conversion Service for Streaming" message
-      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 3);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3);
       return -1;
     }
     /* Create a socket for the server, bind, and listen */
@@ -151,7 +151,7 @@ int castor::rh::Server::main () {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 4, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
   }
 }
 
@@ -177,13 +177,13 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 5, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 2, params);
   }
   // "New Request Arrival" message
   castor::dlf::Param params[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(m_uuid, DLF_LVL_USAGE, 1, 2, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 2, params);
 
   // get the incoming request
   try {
@@ -192,7 +192,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     if (0 == fr) {
       delete obj;
       // "Invalid Request" message
-      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 6);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
@@ -201,7 +201,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 7, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
     std::ostringstream stst;
@@ -211,7 +211,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   }
 
   // placeholder for the request uuid if any
-  Cuuid_t cuuid = m_uuid;
+  Cuuid_t cuuid = nullCuuid;
   if (ack.status()) {
     try {
       // gives a Cuuid to the request

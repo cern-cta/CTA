@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/04/05 14:25:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -43,13 +43,7 @@
 castor::BaseServer::BaseServer(const std::string serverName,
                                const int nbThreads):
   m_foreground(false), m_singleThreaded(false), m_threadPoolId(-1),
-  m_threadNumber(nbThreads), m_serverName(serverName) {
-  // gives a Cuuid to this server
-  // XXX Interface to Cuuid has to be improved !
-  // XXX its length has currently to be hardcoded
-  // XXX wherever you use it !!!
-  Cuuid_create(&m_uuid);
-}
+  m_threadNumber(nbThreads), m_serverName(serverName) {}
 
 //------------------------------------------------------------------------------
 // destructor
