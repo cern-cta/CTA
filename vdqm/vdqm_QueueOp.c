@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.51 $ $Date: 2003/11/04 13:26:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.52 $ $Date: 2003/12/10 12:41:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2511,7 +2511,7 @@ static int vdqm_write_drv(int fd, vdqmDrvReq_t *drv) {
     }
 
     /* Writing the server information on one line */
-    memset(buf, sizeof(buf), '\0');
+    memset(buf, '\0', sizeof(buf));
     if (strlen(drv->dgn) == 0
         || strlen(drv->server) == 0
         || strlen(drv->drive) == 0) {
@@ -2533,7 +2533,7 @@ static int vdqm_write_drv(int fd, vdqmDrvReq_t *drv) {
     }
 
     /* Writing the dedication on another line */
-    memset(buf, sizeof(buf), '\0');
+    memset(buf, '\0', sizeof(buf));
     rc = Csnprintf(buf, CA_MAXLINELEN, "%s\n", drv->dedicate);   
     if (rc <= 0) {
         log(LOG_ERR,"vdqm_write_drv: Could not write to buffer\n");
@@ -2574,7 +2574,7 @@ int vdqm_save_queue() {
     fd = open(drives_filename, O_WRONLY | O_CREAT | O_TRUNC, 00666);
     if (fd < 0) {
         log(LOG_ERR,"vdqm_save_queue: Could not open: %s\n", drives_filename);
-        return -1;
+        goto end_loops;;
     }
     
     CLIST_ITERATE_BEGIN(dgn_queues,queue) {
@@ -2587,7 +2587,9 @@ int vdqm_save_queue() {
     } CLIST_ITERATE_END(dgn_queues,queue);
 
   end_loops:
-    close(fd);
+    if (fd >= 0) {
+        close(fd);
+    }
     if(vdqm_UnlockAllQueues() != 0) {
         log(LOG_ERR,"vdqm_save_queue: Could not unlock all queues\n");
         return -1;
@@ -2691,7 +2693,7 @@ int vdqm_load_queue() {
  */
 void vdqm_init_drive_file(char *filename) {
 
-    memset(drives_filename, 0, sizeof(drives_filename)); 
+    memset(drives_filename, '\0', sizeof(drives_filename)); 
     strncpy(drives_filename, filename, CA_MAXPATHLEN);
     
     log(LOG_INFO, "vdqm_init_drive_file(): Will save drives to file: %s\n", drives_filename);
