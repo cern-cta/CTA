@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.96 $ $Release$ $Date: 2005/01/03 16:41:16 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.97 $ $Release$ $Date: 2005/01/03 17:35:23 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -124,7 +124,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3, :4, :5, :6, :7); END;";
+  "BEGIN putStart(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
