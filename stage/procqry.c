@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.52 2001/03/08 17:52:40 jdurand Exp $
+ * $Id: procqry.c,v 1.53 2001/03/19 12:43:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.52 $ $Date: 2001/03/08 17:52:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.53 $ $Date: 2001/03/19 12:43:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -1099,13 +1099,6 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		if (stcp->reqid == 0) break;
 		if ((this_reqid > 0) && (stcp->reqid != this_reqid)) continue;
 		if ((stcp->status & 0xF0) != STAGED) continue;
-		if (stcp->t_or_d == 'h') {
-			/* We explicitely exclude all CASTOR HSM files that have a retention period on disk INFINITE_LIFETIME */
-			int ifileclass;
-
-			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
-			if (retenp_on_disk(ifileclass) == INFINITE_LIFETIME) continue;
-		}
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
@@ -1158,6 +1151,20 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			} else {
 				if (strcmp(p, mfile) != 0) continue;
 			}
+		}
+		if (stcp->t_or_d == 'h') {
+			/* We explicitely exclude all CASTOR HSM files that have a retention period on disk INFINITE_LIFETIME */
+			int ifileclass;
+			int save_rpfd;
+
+			save_rpfd = rpfd;
+			rpfd = -1;             /* To make sure nothing does on the terminal here */
+			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+				rpfd = save_rpfd;
+				continue; /* Unknown fileclass */
+			}
+			rpfd = save_rpfd;
+			if (retenp_on_disk(ifileclass) == INFINITE_LIFETIME) continue;
 		}
 		if (stcp->ipath[0] != '\0') {
 			if (rfio_mstat(stcp->ipath, &st) == 0) {
