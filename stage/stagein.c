@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.54 2003/04/28 10:03:14 jdurand Exp $
+ * $Id: stagein.c,v 1.55 2003/09/14 05:59:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.54 $ $Date: 2003/04/28 10:03:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.55 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -53,9 +53,7 @@ extern	char	*getenv();
 extern	char	*getconfent();
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
 extern int  rfio_access _PROTO((char *, int));
-#if !defined(linux)
-extern	char	*sys_errlist[];
-#endif
+
 static gid_t gid;
 static int pid;
 static struct passwd *pw;

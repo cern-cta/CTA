@@ -1,5 +1,5 @@
 /*
- * $Id: stgcat2dbm.c,v 1.4 2000/03/23 01:41:50 jdurand Exp $
+ * $Id: stgcat2dbm.c,v 1.5 2003/09/14 05:59:35 jdurand Exp $
  */
 
 /*
@@ -13,11 +13,11 @@
 #include <ndbm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "stage.h"
-extern char *sys_errlist[];
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.4 $ $Date: 2000/03/23 01:41:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.5 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 main()
@@ -34,11 +34,11 @@ main()
 	/* read stage catalog */
 
 	if ((scfd = open (STGCAT, O_RDONLY)) < 0) {
-		fprintf (stderr, STG02, STGCAT, "open", sys_errlist[errno]);
+		fprintf (stderr, STG02, STGCAT, "open", strerror(errno));
 		exit (USERR);
 	}
 	if (fstat (scfd, &st) < 0) {
-		fprintf (stderr, STG02, STGCAT, "fstat", sys_errlist[errno]);
+		fprintf (stderr, STG02, STGCAT, "fstat", strerror(errno));
 		exit (USERR);
 	}
 	if (st.st_size == 0) {
@@ -51,12 +51,12 @@ main()
 		exit (SYERR);
 	}
 	if ((fdb = dbm_open (STGCAT, O_RDWR | O_CREAT, 0644)) == NULL) {
-		fprintf (stderr, STG02, STGCAT, "dbm_open", sys_errlist[errno]);
+		fprintf (stderr, STG02, STGCAT, "dbm_open", strerror(errno));
 		exit (USERR);
 	}
 	for (i = 0; i < nbcat_ent; i++) {
 		if (read (scfd, (char *) &stgreq, sizeof(struct stgcat_entry)) < 0) {
-			fprintf (stderr, STG02, STGCAT, "read", sys_errlist[errno]);
+			fprintf (stderr, STG02, STGCAT, "read", strerror(errno));
 			exit (USERR);
 		}
 		key.dptr = (char *) &stgreq.reqid;

@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.22 2003/04/28 10:03:13 jdurand Exp $
+ * $Id: stagechng.c,v 1.23 2003/09/14 05:59:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.22 $ $Date: 2003/04/28 10:03:13 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.23 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -31,10 +31,6 @@ static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.22 $ $Date: 2
 #include "Cgetopt.h"
 #include "Cns_constants.h"
 #include "serrno.h"
-
-#if !defined(linux)
-extern	char	*sys_errlist[];
-#endif
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void usage _PROTO((char *));

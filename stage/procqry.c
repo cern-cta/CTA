@@ -88,9 +88,6 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int,
 extern int mintime_beforemigr _PROTO((int));
 extern int get_mintime _PROTO((struct stgcat_entry *, char *));
 
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 extern char defpoolname[];
 extern char defpoolname_in[];
 extern char defpoolname_out[];
@@ -707,7 +704,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #ifndef STAGEQRY_IN_MAIN
 		/* We run this procqry requests in a forked child */
 		if ((pid = fork ()) < 0) {
-			sendrep (&rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+			sendrep (&rpfd, MSG_ERR, STG02, "", "fork", strerror(errno));
 			c = SESYSERR;
 			goto reply;
 		}

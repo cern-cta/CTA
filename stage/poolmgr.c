@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.248 2003/09/08 15:50:36 jdurand Exp $
+ * $Id: poolmgr.c,v 1.249 2003/09/14 05:59:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.248 $ $Date: 2003/09/08 15:50:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.249 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -95,9 +95,6 @@ extern struct stgcat_entry *newreq _PROTO((int));
 extern int nextreqid _PROTO(());
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 struct migrator *migrators;
 struct fileclass *fileclasses;
 int nbmigrator;
@@ -1379,7 +1376,7 @@ int cleanpool(poolname)
 	pool_p->ovl_pid = fork ();
 	pid = pool_p->ovl_pid;
 	if (pid < 0) {
-		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
+		stglogit (func, STG02, "", "fork", strerror(errno));
 		pool_p->ovl_pid = 0;
 		return (SESYSERR);
 	} else if (pid == 0) {  /* we are in the child */
@@ -1389,7 +1386,7 @@ int cleanpool(poolname)
 		sprintf (progfullpath, "%s/cleaner", BIN);
 		stglogit (func, "execing cleaner, pid=%d\n", getpid());
 		execl (progfullpath, "cleaner", pool_p->gc, poolname, hostname, 0);
-		stglogit (func, STG02, "cleaner", "execl", sys_errlist[errno]);
+		stglogit (func, STG02, "cleaner", "execl", strerror(errno));
 		exit (SYERR); /* Warning: this is an exit code of a process, not a return code */
 	} else {
 		pool_p->cleanreqtime = time(NULL);
@@ -3544,7 +3541,7 @@ int migrate_files(pool_p)
 
 	if (pid < 0) {
 		reqid = 0;
-		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
+		stglogit (func, STG02, "", "fork", strerror(errno));
 		/* We do not retry here because we would have to sleep and stop service until sleep is over */
 		pool_p->migr->mig_pid = 0;
 		reqid = save_reqid;

@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.241 $ $Date: 2003/09/08 15:53:15 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.242 $ $Date: 2003/09/14 05:59:36 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -93,7 +93,7 @@ struct winsize {
 #ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
 #endif
-#include <serrno.h>
+#include "serrno.h"
 #include "osdep.h"
 #include "Cnetdb.h"
 #include "Cns_api.h"
@@ -165,9 +165,6 @@ typedef struct _stage_times _stage_times_t;
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 char defpoolname[CA_MAXPOOLNAMELEN + 1];
 char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
 char defpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
@@ -814,13 +811,13 @@ int main(argc,argv)
 	sin.sin_family = AF_INET ;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (stg_s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-		stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
+		stglogit (func, STG02, "", "setsockopt", strerror(errno));
 	/*
 	if (setsockopt (stg_s, IPPROTO_TCP, TCP_NODELAY, (char *)&on, sizeof(on)) < 0)
-		stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
+		stglogit (func, STG02, "", "setsockopt", strerror(errno));
 	*/
 	if (bind (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		stglogit (func, STG02, "", "bind", sys_errlist[errno]);
+		stglogit (func, STG02, "", "bind", strerror(errno));
 		stglogit (func, "Exit.\n");
 		exit (CONFERR);
 	}
@@ -1285,7 +1282,7 @@ int main(argc,argv)
 
 			if ((rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen)) < 0) {
 				stglogit (func, STG02, "", "accept",
-										sys_errlist[errno]);
+										strerror(errno));
 				goto select_continue;
 			}
 			/* We check that what returned accept() is not a pending file descriptor */
@@ -1313,7 +1310,7 @@ int main(argc,argv)
 				int sav_reqid = reqid;
 				reqid = 0;
 				stglogit (func, STG02, "", "getpeername",
-										sys_errlist[errno]);
+										strerror(errno));
 				reqid = sav_reqid;
 			}
 			hp = Cgethostbyaddr((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
@@ -3710,7 +3707,7 @@ int fork_exec_stager(wqp)
 	}
 
 	if (pipe (pfd) < 0) {
-		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
+		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "pipe", strerror(errno));
 		return (SESYSERR);
 	}
 
@@ -3757,7 +3754,7 @@ int fork_exec_stager(wqp)
 	wqp->ovl_pid = fork ();
 	pid = wqp->ovl_pid;
 	if (pid < 0) {
-		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+		sendrep (&(wqp->rpfd), MSG_ERR, STG02, "", "fork", strerror(errno));
 #ifdef __INSURE__
 		remove(tmpfile);
 #endif
@@ -3881,7 +3878,7 @@ int fork_exec_stager(wqp)
 			   arg_rtcp_gid,
 			   NULL);
 #endif
-		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
+		stglogit (func, STG02, "stager", "execl", strerror(errno));
 		exit (SYERR);
 	} else {
 		wqp->status = 0;
@@ -4088,13 +4085,13 @@ int savepath()
 	/* This function is now dummy with the DB interface */
 #else
 	if ((spfd = open (STGPATH, O_WRONLY)) < 0) {
-		stglogit (func, STG02, STGPATH, "open", sys_errlist[errno]);
+		stglogit (func, STG02, STGPATH, "open", strerror(errno));
 		return (-1);
 	}
 	n = nbpath_ent * sizeof(struct stgpath_entry);
 	if (nbpath_ent != 0) {
 		if ((c = write (spfd, stps, n)) != n) {
-			stglogit (func, STG02, STGPATH, "write", sys_errlist[errno]);
+			stglogit (func, STG02, STGPATH, "write", strerror(errno));
 			close (spfd);
 			return (-1);
 		}
@@ -4117,13 +4114,13 @@ int savereqs()
 	/* This function is now dummy with the DB interface */
 #else
 	if ((scfd = open (STGCAT, O_WRONLY)) < 0) {
-		stglogit (func, STG02, STGCAT, "open", sys_errlist[errno]);
+		stglogit (func, STG02, STGCAT, "open", strerror(errno));
 		return (-1);
 	}
 	n = nbcat_ent * sizeof(struct stgcat_entry);
 	if (nbcat_ent != 0) {
 		if ((c = write (scfd, stcs, n)) != n) {
-			stglogit (func, STG02, STGCAT, "write", sys_errlist[errno]);
+			stglogit (func, STG02, STGCAT, "write", strerror(errno));
 			close (scfd);
 			return (-1);
 		}
