@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.10 $ $Date: 2000/01/10 10:21:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.11 $ $Date: 2000/01/12 15:26:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -613,9 +613,20 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     static int thPoolSz = -1;
     struct passwd *pwd;
     char *cmd = NULL;
+#if !defined(_WIN32)
+    struct sigaction sigact;
+    sigset_t sigset;
+#endif /* _WIN32 */
 
     (void)setpgrp();
+#if !defined(_WIN32)
+    (void)sigemptyset(&sigset);
+    sigact.sa_mask = sigset;
+    sigact.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE,&sigact,NULL);
+#else /* _WIN32 */
     signal(SIGPIPE,SIG_IGN);
+#endif /* _WIN32 */
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
     AbortFlag = 0;
