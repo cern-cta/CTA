@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.121 2001/03/20 07:31:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.122 2001/03/20 13:12:10 jdurand Exp $
  */
 
 /*
@@ -10,10 +10,13 @@
 /*
  * Nota : restore tab after emacs global identation:
  * perl -pi -e 'while (s/^(\t*)(  )/$1\t/) {} ' /tmp/stgdaemon.c
+ *
+ * HP-UX counts st_blocks in 1024-byte units
+ * 
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.121 $ $Date: 2001/03/20 07:31:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.122 $ $Date: 2001/03/20 13:12:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -258,6 +261,11 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
+
+/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
+/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
+/* to determine if the remote file system is an HP-UX one or not */
+#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 int main(argc,argv)
 		 int argc;
@@ -629,8 +637,12 @@ int main(argc,argv)
 			}
 		} else if ((stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
+			u_signed64 actual_size_block;
 			if (rfio_stat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
+				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+					actual_size_block = stcp->actual_size;
+				}
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -638,9 +650,11 @@ int main(argc,argv)
 #endif
 			} else {
 				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				/* No block information - assume mismatch with actual_size will be acceptable */
+				actual_size_block = stcp->actual_size;
 			}
 			updfreespace (stcp->poolname, stcp->ipath,
-										(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
+						(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
@@ -725,8 +739,13 @@ int main(argc,argv)
 				if ((stcp->status == STAGEIN) ||
 					(stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
+					u_signed64 actual_size_block;
+
 					if (rfio_stat (stcp->ipath, &st) == 0) {
 						stcp->actual_size = st.st_size;
+						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+							actual_size_block = stcp->actual_size;
+						}
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -734,9 +753,11 @@ int main(argc,argv)
 #endif
 					} else {
 						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+						/* No block information - assume mismatch with actual_size will be acceptable */
+						actual_size_block = stcp->actual_size;
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
-							(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
+							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 				}
 			}
 			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
@@ -1568,7 +1589,20 @@ void checkpoolstatus()
 							break;
 					}
 					if ((stcp->status & 0xF0) == WAITING_SPC) {
-						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) < 0) {
+						int has_trailing = 0;
+						if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
+							/* We remove the trailing '-' */
+							if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
+								has_trailing = 1;
+								stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
+							}
+						}
+						c = build_ipath (wfp->upath, stcp, wqp->pool_user);
+						if (has_trailing != 0) {
+							/* We restore the trailing '-' */
+							strcat(stcp->u1.t.fseq,"-");
+						}
+						if (c < 0) {
 							if (wqp->nb_clnreq++ > MAXRETRY) {
 								sendrep (rpfd, MSG_ERR, STG45);
 								wqp->status = ENOSPC;
@@ -1653,7 +1687,20 @@ void checkwaitingspc()
 					break;
 			}
 			if ((stcp->status & 0xF0) == WAITING_SPC) {
-				if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) == 0) {
+				int has_trailing = 0;
+				if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
+					/* We remove the trailing '-' */
+					if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
+						has_trailing = 1;
+						stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
+					}
+				}
+				c = build_ipath (wfp->upath, stcp, wqp->pool_user);
+				if (has_trailing != 0) {
+					/* We restore the trailing '-' */
+					strcat(stcp->u1.t.fseq,"-");
+				}
+				if (c == 0) {
 					int hsm_ns_error = 0;
 
 					/* We succeeded to allocate space for this WAITING_SPC request */
@@ -2246,6 +2293,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 	struct stgpath_entry *stpp;
 	int found = 0;
 	struct stgcat_entry *stcp_perhaps_stagein = NULL;
+	u_signed64 actual_size_block;
 
 	if (stcp->ipath[0]) {
 		/* Is there any other entry pointing at the same disk file?
@@ -2286,13 +2334,15 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			/* it's the last entry - we can remove the file and release the space */
 			/* or it's the last entry but another STAGED + STAGEIN */
 			if (! freersv) {
-				if ((stcp->status & 0xF0) != STAGED) {
-					if (rfio_stat (stcp->ipath, &st) == 0)
-						actual_size = st.st_size;
-					else
-						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				if (rfio_stat (stcp->ipath, &st) == 0) {
+					actual_size = st.st_size;
+					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < actual_size) {
+						actual_size_block = actual_size;
+					}
 				} else {
-					actual_size = stcp->actual_size;
+					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					/* No block information - assume mismatch with actual_size will be acceptable */
+					actual_size_block = actual_size;
 				}
 			}
 			if (rfio_unlink (stcp->ipath) == 0) {
@@ -2316,7 +2366,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				update_migpool(&stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
-										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
+						((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size_block)));
 		} else {
 			/* We neverthless take into account the migration counters */
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
@@ -2867,12 +2917,20 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 		return (USERR);
 	}
 	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
-		if (rfio_stat (stcp->ipath, &st) == 0)
+		u_signed64 actual_size_block;
+
+		if (rfio_stat (stcp->ipath, &st) == 0) {
 			stcp->actual_size = st.st_size;
-		else
+			if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+				actual_size_block = stcp->actual_size;
+			}
+		} else {
 			stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+			/* No block information - assume mismatch with actual_size will be acceptable */
+			actual_size_block = stcp->actual_size;
+		}
 		updfreespace (stcp->poolname, stcp->ipath,
-									(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) stcp->actual_size));
+						(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) actual_size_block));
 		rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 	}
 	if (req_type == STAGEPUT) {
@@ -2924,6 +2982,8 @@ int upd_staged(upath)
 	int found;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
+	u_signed64 actual_size_block;
+	struct stat st;
 
 	found = 0;
 	/* first lets assume that internal and user path are different */
@@ -2970,13 +3030,23 @@ int upd_staged(upath)
 		create_link (stcp, upath);
 
 	savereqs();
+	if (rfio_stat (stcp->ipath, &st) == 0) {
+		stcp->actual_size = st.st_size;
+		if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+			actual_size_block = stcp->actual_size;
+		}
+	} else {
+		stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+		/* No block information - assume mismatch with actual_size will be acceptable */
+		actual_size_block = stcp->actual_size;
+    }
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
+					(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 	return (0);
 }
 
