@@ -1,8 +1,8 @@
-.\" $Id: Ctape_label.man,v 1.2 1999/09/02 14:11:54 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.3 $ $Date: 1999/09/11 05:54:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL l "$Date: 1999/09/02 14:11:54 $"
+.TH CTAPE_LABEL l "$Date: 1999/09/11 05:54:20 $"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -139,6 +139,9 @@ Drive not operational. The drive is automatically configured down.
 .B EACCES
 Operator cancel, access denied by TMS.
 .TP
+.B EINVAL
+Bad parameter value.
+.TP
 .B SENOSHOST
 Host unknown.
 .TP
@@ -150,9 +153,6 @@ Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
-.TP
-.B ETPRM
-Bad parameter.
 .TP
 .B ETNDV
 Too many drives requested.
