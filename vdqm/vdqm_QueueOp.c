@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.22 $ $Date: 2000/02/02 09:50:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.23 $ $Date: 2000/02/02 12:01:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1408,11 +1408,12 @@ n",
                 }
             }
             /*
-             * If unit is busy the job IDs must be same
+             * If unit is busy with a running job the job IDs must be same
              */
             if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
+                 !(drvrec->drv.status & VDQM_UNIT_RELEASE) &&
                 (DrvReq->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
-                VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
+                                   VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
                 (drvrec->drv.jobID != DrvReq->jobID) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (0x%x, 0x%x)\n",
                     DrvReq->jobID,drvrec->drv.jobID);
@@ -1486,6 +1487,7 @@ n",
              * RTCOPY rather than the tape daemon we cannot yet reset
              * unknown status if it was previously set.
              */
+            drvrec->drv.MBtransf = DrvReq->MBtransf;
             drvrec->drv.TotalMB += DrvReq->MBtransf;
             if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
         }
@@ -1652,7 +1654,7 @@ n",
                      * request from being assigned.
                      */
                     DrvReq->status  = VDQM_VOL_UNMOUNT;
-                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
+                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
                     volrec = NULL;
                 } else {
                     volrec->drv = drvrec;
