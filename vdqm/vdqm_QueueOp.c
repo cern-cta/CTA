@@ -1630,7 +1630,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
          * If the unit is not DOWN, it must be UP! Make sure it's the case.
          * This is to facilitate the repair after a VDQM server crash.
          */
-        drvreq->drv.status |= VDQM_UNIT_UP;
+        drvrec->drv.status |= VDQM_UNIT_UP;
         if ( DrvReq->status & VDQM_UNIT_BUSY ) {
             /*
              * Consistency check
