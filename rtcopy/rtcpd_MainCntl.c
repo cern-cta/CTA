@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.29 $ $Date: 2000/03/03 16:22:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.30 $ $Date: 2000/03/04 13:36:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -882,14 +882,18 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     static int thPoolSz = -1;
     struct passwd *pwd;
     char *cmd = NULL;
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(hpux)
+    /*
+     * sigaction exists on hpux but it's just a mess with their
+     * thread implementation
+     */
     struct sigaction sigact;
     sigset_t sigset;
 #endif /* _WIN32 */
 
     (void)setpgrp();
     AbortFlag = 0;
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(hpux)
     (void)sigemptyset(&sigset);
     sigact.sa_mask = sigset;
     sigact.sa_handler = SIG_IGN;
