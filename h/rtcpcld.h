@@ -50,6 +50,7 @@ RtcpcldTapeList_t;
 typedef struct RtcpcldSegmentList 
 {
   file_list_t *file;
+  int diskFseq;
   enum Cstager_SegmentStatusCodes_t oldStatus;
   enum NotificationState notified;
   struct Cstager_Segment_t *segment;
