@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/10 13:37:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/10 14:10:22 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/10 13:37:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/10 14:10:22 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -318,13 +318,16 @@ int rtcpcld_updateNsSegmentAttributes(
                   (inChild == 0 ? mainUuid : childUuid),
                   RTCPCLD_LOG_MSG(RTCPCLD_MSG_ADDSEGM),
                   (struct Cns_fileid *)&castorFileId,
-                  9,
+                  10,
                   "",
                   DLF_MSG_PARAM_TPVID,
                   nsSegAttrs->vid,
                   "SIDE",
                   DLF_MSG_PARAM_INT,
                   nsSegAttrs->side,
+                  "COPYNB",
+                  DLF_MSG_PARAM_INT,
+                  nsSegAttrs->copyno,
                   "FSEC",
                   DLF_MSG_PARAM_INT,
                   nsSegAttrs->fsec,
