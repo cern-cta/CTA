@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.29 2002/07/18 11:09:49 jdurand Exp $
+ * $Id: procfilchg.c,v 1.30 2002/07/27 06:47:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.29 $ $Date: 2002/07/18 11:09:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.30 $ $Date: 2002/07/27 06:47:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -199,6 +199,11 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						thisunit_mintime = ONE_SECOND; /* Second */
 						Coptarg[strlen(Coptarg) - 1] = '\0';
 						break;
+					case 'M':
+					case 'm':
+						thisunit_mintime = ONE_MINUTE; /* Minute */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
 					case 'H':
 					case 'h':
 						thisunit_mintime = ONE_HOUR; /* Hour */
@@ -241,6 +246,11 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					case 'S':
 					case 's':
 						thisunit_retenp = ONE_SECOND; /* Second */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'M':
+					case 'm':
+						thisunit_retenp = ONE_MINUTE; /* Minute */
 						Coptarg[strlen(Coptarg) - 1] = '\0';
 						break;
 					case 'H':
@@ -349,10 +359,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		poolflag = -1;
 	} else if (doneretenp_on_disk) { /* --retenp_on_dik */
 		/* Note: MAX_SETRETENP can be < 0, e.g. allow no retention period set... */
-		if ((max_setretenp(poolname) != 0) && (thisretenp_on_disk > (max_setretenp(poolname) * ONE_DAY))) {
+		if ((max_setretenp(poolname) != 0) && (thisretenp_on_disk > max_setretenp(poolname))) {
 			/* This apply unless user gave special value corresponding to AS_LONG_AS_POSSIBLE */
 			if (thisretenp_on_disk != AS_LONG_AS_POSSIBLE) {
-				sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
+				char max_setretenp_timestr[64] ;
+
+				stage_util_retenp(max_setretenp(poolname),max_setretenp_timestr);
+				sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp_timestr);
 				c = EINVAL;
 				goto reply;
 			}
