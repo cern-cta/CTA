@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.56 2002/05/23 10:21:23 jdurand Exp $
+ * $Id: procclr.c,v 1.57 2002/05/25 08:50:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.56 $ $Date: 2002/05/23 10:21:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.57 $ $Date: 2002/05/25 08:50:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.56 $ $Date: 200
 #include "osdep.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "Cns_api.h"
 #include "rfio_api.h"
 #include "serrno.h"
 #ifdef STAGER_DEBUG
@@ -602,6 +603,23 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
 				if (stcp->t_or_d == 'm' && strcmp (mfile, stcp->u1.m.xfile)) continue;
 				if (stcp->t_or_d == 'h' && strcmp (mfile, stcp->u1.h.xfile)) continue;
+				if (stcp->t_or_d == 'h') {
+					/* Name matched but perhaps it was... renamed ?*/
+					if ((stcp->u1.h.server[0] != '\0') && (stcp->u1.h.fileid != 0)) {
+						char checkpath[CA_MAXPATHLEN+1];
+						if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
+							if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
+								char tmpbuf[21];
+								
+								sendrep (rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server);
+								strncpy(stcp->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
+								stcp->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
+								continue;
+							}
+						}
+
+					}
+				}
 			}
 			found = 1;
 			if (cflag && stcp->poolname[0] &&
