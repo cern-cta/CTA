@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.35 $ $Date: 2000/08/04 10:25:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.36 $ $Date: 2000/08/04 13:51:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -144,6 +144,9 @@ int rtcpd_Assign(tape_list_t *tape) {
 int rtcpd_Deassign(int VolReqID,
                    rtcpTapeRequest_t *tapereq) {
     int rc, status, jobID, value, save_serrno, save_errno;
+    char vid[CA_MAXVIDLEN+1];
+    tape_list_t *tape, *nexttape;
+    file_list_t *nextfile = NULL;
 
     save_serrno = serrno;
     save_errno = errno;
@@ -153,6 +156,52 @@ int rtcpd_Deassign(int VolReqID,
         return(-1);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_Deassign() called\n");
+
+    /*
+     * Check whether there is a volume physically mounted (could be
+     * the case if this is a job re-using an already mounted volume).
+     */
+    status = VDQM_UNIT_QUERY;
+    *vid = '\0';
+    jobID = 0;
+    rc = vdqm_UnitStatus(NULL,vid,tapereq->dgn,NULL,tapereq->unit,
+                         &status,&value,jobID);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
+                sstrerror(serrno));
+    } else if ( *vid != '\0' ) {
+        /*
+         * There is a volume on the unit! we must make sure that it is
+         * physically unmounted.
+         */
+        rtcp_log(LOG_INFO,"rtcpd_Deassign() volume on drive. Trying to unmount\n");
+        tape = NULL;
+        nexttape = (tape_list_t *)calloc(1,sizeof(tape_list_t));
+        CLIST_INSERT(tape,nexttape);
+        nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
+        CLIST_INSERT(tape->file,nextfile);
+        nexttape->tapereq = *tapereq;
+
+#if defined(CTAPE_DUMMIES)
+        /*
+         * If we run with dummy Ctape we need to assign the
+         * drive here
+         */
+        (void) rtcpd_Assign(tape);
+#endif /* CTAPE_DUMMIES */
+        (void)rtcpd_Reserve(tape);
+        rc = rtcpd_Mount(tape);
+        (void)rtcpd_Release(tape,NULL);
+
+        free(nextfile);
+        free(nexttape);
+        return(rc);
+    }
+    /*
+     * We're here because there was no tape physically mounted on the drive.
+     * Just make sure that the job is released in VDQM.
+     */
+
     if ( tapereq->jobID <= 0 ) {
         /*
          * We need to assign the unit first (for safety VDQM
