@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.5 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.6 $ $Date: 2002/05/31 08:16:25 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESHUTDOWN l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGESHUTDOWN l "$Date: 2002/05/31 08:16:25 $"
 .SH NAME
 stageshutdown \- tells stgdaemon to exit
 .SH SYNOPSIS
@@ -37,6 +37,10 @@ This option is mandatory, regardless of environment variable $STAGE_HOST.
 2	System error.
 .br
 4	Configuration error.
+.br
+187	CASTOR User Privileve validation not active
+.br
+198	Stager daemon not active
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 
