@@ -1,14 +1,14 @@
 /*
- * $Id: open.c,v 1.18 2002/11/19 12:55:33 baud Exp $
+ * $Id: open.c,v 1.19 2003/04/22 11:07:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.18 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.19 $ $Date: 2003/04/22 11:07:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -73,6 +73,7 @@ int	passwd;
    TRACE ( 2,"rfio","rfio_setup_ext: owner s gid is %d",iop->gid);
    END_TRACE();
    (void) umask(iop->umask=umask(0));
+   iop->bufsize = 0;
    iop->ftype = FFTYPE_C;
    iop->binary = 0;                 /* no translation needed        */
    iop->eof = 0;
