@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.124 2001/03/27 08:45:52 jdurand Exp $
+ * $Id: poolmgr.c,v 1.125 2001/03/27 09:08:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.124 $ $Date: 2001/03/27 08:45:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.125 $ $Date: 2001/03/27 09:08:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3688,9 +3688,12 @@ void check_lifetime_on_disk() {
           stglogit (func, STG143, stcp->ipath, stageout_lifetime);
           rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
           stcp->status |= PUT_FAILED;
+          /* If we do this it will be considered as a candidate for migration at next restart */
+          /*
           if (stcp->t_or_d == 'h') {
             stcp->status |= CAN_BE_MIGR;
           }
+          */
 #ifdef USECDB
           if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
             stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
