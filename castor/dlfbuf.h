@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/20 15:35:22 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -56,12 +56,20 @@ namespace castor {
         Cthread_mutex_lock(&s_lock);
         // It could be that somebody was quicker
         if (!s_dlfInitCalled) {
-          // This is needed to avoid
-          if (dlf_init(name.c_str()) != 0) {
+          int rc;
+          if ((rc = dlf_init(name.c_str())) != 0) {
             castor::exception::Internal e;
-            e.getMessage() << "Unable to initialize DLF :"
-                           << std::endl
-                           << sstrerror(serrno);
+            if (rc > 0) {
+              e.getMessage()
+                << "The log destination used in dlf_init ("
+                << name
+                << ") cannot be found in the configuration file.\n"
+                << "Please check your configuration."
+            } else {
+              e.getMessage() << "Unable to initialize DLF :"
+                             << std::endl
+                             << sstrerror(serrno);
+            }
             throw e;
           }
           s_dlfInitCalled = true;
