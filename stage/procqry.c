@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.31 2000/11/07 09:55:03 jdurand Exp $
+ * $Id: procqry.c,v 1.32 2000/11/11 08:31:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.31 $ $Date: 2000/11/07 09:55:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.32 $ $Date: 2000/11/11 08:31:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -414,7 +414,7 @@ void procqryreq(req_data, clienthost)
 			if ((stcp->status & 0xF0) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
 				strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 			else
-				strcpy (p_stat, ((stcp->status == STAGEPUT|CAN_BE_MIGR) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) ?
+				strcpy (p_stat, ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) ?
 								"BEING_MIGR" :
 								l_stat[(stcp->status & 0xF00) >> 8]);
 		else if (stcp->status & 0xF0)
