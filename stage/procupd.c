@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.84 2001/09/22 07:49:15 jdurand Exp $
+ * $Id: procupd.c,v 1.85 2001/10/01 11:55:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.84 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.85 $ $Date: 2001/10/01 11:55:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1397,7 +1397,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			memcpy(wfp,wfp+1,sizeof(struct waitf));
 		}
 	}
-	if ((rc == MNYPARI) || (rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)) wqp->status = rc;
+	if ((rc == MNYPARI) || ((wqp->nbdskf <= 0) && ((rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)))) wqp->status = rc;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
@@ -1480,5 +1480,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Saturday 22 September, 2001 at 09:47:37 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 01 October, 2001 at 12:36:06 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
