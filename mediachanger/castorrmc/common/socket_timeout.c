@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.21 $ $Date: 2003/10/13 04:21:30 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.22 $ $Date: 2003/10/29 13:06:34 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #if defined(linux)
@@ -15,9 +15,8 @@ static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.21 $ $Da
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
-#if _WIN32
 #include <time.h>
-#else
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 #ifdef _AIX
