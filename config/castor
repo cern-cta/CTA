@@ -1,6 +1,6 @@
 # Global setup for CASTOR
 
-# $Id: castor,v 1.1 2004/06/23 04:24:23 jdurand Exp $
+# $Id: castor,v 1.2 2004/06/23 05:06:43 jdurand Exp $
 # Copyright CERN/IT/ADC/CA 2004
 
 # Compiler
@@ -11,3 +11,6 @@
 
 # Paths
 [ -r /etc/sysconfig/castor_paths ] && . /etc/sysconfig/castor_paths
+
+# Environment
+[ -r /etc/sysconfig/castor_env ] && . /etc/sysconfig/castor_env
