@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.44 2000/10/22 07:30:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.45 2000/10/26 17:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.44 $ $Date: 2000/10/22 07:30:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.45 $ $Date: 2000/10/26 17:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -848,6 +848,8 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 	struct tm *tp;
 	char tmpbuf1[21];
 	char tmpbuf2[21];
+	char tmpbuf3[21];
+	char tmpbuf4[21];
 	u_signed64 before_fraction, after_fraction;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
@@ -877,23 +879,23 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		after_fraction = pool_p->capacity ?
 			(10 * (pool_p->free * 100 - pool_p->capacity * before_fraction)) / pool_p->capacity :
 			0;
-		sendrep (rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%d.%d%%)\n",
+		sendrep (rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%s.%s%%)\n",
 			u64tostru(pool_p->capacity, tmpbuf1, 0),
 			u64tostru(pool_p->free, tmpbuf2, 0),
-			before_fraction,
-			after_fraction);
+			u64tostr(before_fraction, tmpbuf3, 0),
+			u64tostr(after_fraction, tmpbuf4, 0));
 		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
 			before_fraction = elemp->capacity ? (100 * elemp->free) / elemp->capacity : 0;
 			after_fraction = elemp->capacity ?
 				(10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
 				0;
-			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%d.%d%%)\n",
+			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)\n",
 				elemp->server,
 				elemp->dirpath,
 				u64tostru(elemp->capacity, tmpbuf1, 0),
 				u64tostru(elemp->free, tmpbuf2, 0),
-				before_fraction,
-				after_fraction);
+				u64tostr(before_fraction, tmpbuf3, 0),
+				u64tostr(after_fraction, tmpbuf4, 0));
 		}
 	}
 	if (*poolname == '\0') sendrep (rpfd, MSG_OUT, "DEFPOOL %s\n", defpoolname);
