@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:56:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.3 $ $Date: 2000/01/19 15:19:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ extern char *geterr();
 
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
-    int rc, save_serrno, WaitTime, TransferTime;
+    int rc, retval, save_serrno, WaitTime, TransferTime;
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
 #if !defined(USE_STAGEAPI)
@@ -84,7 +84,27 @@ int rtcpd_stageupdc(tape_list_t *tape,
      */
     if ( *filereq->stageID == '\0' ) return(0);
 
-#if !defined(USE_STAGEAPI)
+#if defined(USE_STAGEAPI)
+    if ( filereq->proc_status == RTCP_POSITIONED ) {
+        status = filereq->err.errorcode;
+        if ( status != ETFSQ ) status = 0;
+        rc = stage_updc_tppos(filereq->stageID,
+                              status,
+                              filereq->blocksize,
+                              tapereq->unit,
+                              filereq->fid,
+                              filereq->tape_fseq,
+                              filereq->recordlength,
+                              filereq->recfm,
+                              newpath);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
+                     sstrerror(serrno));
+            return(-1);
+        }
+    } else if ( filereq->proc_status == RTCP_FINISHED ) {
+    }
+#else /* USE_STAGEAPI */
     sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
     if ( filereq->cprc < 0 && 
         (filereq->err.severity & (RTCP_FAILED | RTCP_EOD)) ) {
@@ -109,7 +129,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 (time_t)filereq->TEndTransferTape) - TransferTime;
             ADD_NOPT(stageupdc_cmd," -W %d ",WaitTime);
             ADD_NOPT(stageupdc_cmd," -T %d ",TransferTime);
-            ADD_NOPT(stageupdc_cmd," -R %d ",filereq->cprc);
+            /*
+             * Always give the return code
+             */
+            retval = 0;
+            rc = rtcpd_RetvalSHIFT(tape,file,&retval);
+            sprintf(&stageupdc_cmd[strlen(stageupdc_cmd)]," -R %d ",retval);
             ADD_NOPT(stageupdc_cmd," -s %d ",(int)filereq->bytes_out);
         }
         if ( filereq->cprc != RTCP_SYERR ) {

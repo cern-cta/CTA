@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.1 $ $Date: 2000/01/07 13:33:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.2 $ $Date: 2000/01/19 15:19:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -38,7 +38,7 @@ extern char *geterr();
 #include <Ctape_api.h>
 #include <serrno.h>
 
-int rtcp_RetvalSHIFT(tape_list_t *tape, int *Retval) {
+int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
     tape_list_t *tl;
     file_list_t *fl;
     rtcpErrMsg_t *err;
@@ -55,12 +55,17 @@ int rtcp_RetvalSHIFT(tape_list_t *tape, int *Retval) {
             err = &(tl->tapereq.err);
             break;
         }
-        CLIST_ITERATE_BEGIN(tl->file,fl) {
-            if ( fl->filereq.cprc != 0 ) {
-                err = &(fl->filereq.err);
-                break;
-            }
-        } CLIST_ITERATE_END(tl->file,fl);
+        if ( file == NULL ) {
+            CLIST_ITERATE_BEGIN(tl->file,fl) {
+                if ( fl->filereq.cprc != 0 ) {
+                    err = &(fl->filereq.err);
+                    break;
+                }
+            } CLIST_ITERATE_END(tl->file,fl);
+        } else {
+            fl = file;
+            err = &(fl->filereq.err);
+        }
         if ( fl->filereq.cprc != 0 ) break;
     } CLIST_ITERATE_END(tape,tl);
 

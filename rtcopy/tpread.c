@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.8 $ $Date: 2000/01/14 08:35:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.9 $ $Date: 2000/01/19 15:19:58 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
         } CLIST_ITERATE_END(tl->file,fl);
     } CLIST_ITERATE_END(tape,tl);
 
-    rc = rtcp_RetvalSHIFT(tape,&retval);
+    rc = rtcp_RetvalSHIFT(tape,NULL,&retval);
     if ( rc == -1 ) retval = UNERR;
     switch (retval) {
     case 0:
