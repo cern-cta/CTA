@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.47 2004/03/03 11:02:33 jdurand Exp $
+ * $Id: stager_castor.c,v 1.48 2004/03/22 13:20:35 jdurand Exp $
  */
 
 /*
@@ -24,10 +24,6 @@
 /* Do you want to hardcode the limit of number of files per rtcpc() request ? */
 #define MAX_RTCPC_FILEREQ 1000
 
-/* Do you want disk to disk copy done a la third party, e.g. transfer not going through this process */
-/* if source file is not local ? */
-#define DISK2DISK_COPY_REMOTE
-
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
@@ -42,7 +38,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.47 $ $Date: 2004/03/03 11:02:33 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.48 $ $Date: 2004/03/22 13:20:35 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
