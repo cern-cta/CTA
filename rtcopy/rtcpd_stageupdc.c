@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.36 $ $Date: 2000/04/12 16:59:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.37 $ $Date: 2000/04/18 09:49:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -183,6 +183,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 switch (save_serrno) {
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
+                    (void)rtcpd_LockForTpPos(0);
                     serrno = save_serrno;
                     return(-1);
                 case SECOMERR:
@@ -190,6 +191,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                     break;
                 default:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_UNERR);
+                    (void)rtcpd_LockForTpPos(0);
                     serrno = save_serrno;
                     return(-1);
                 }
@@ -294,6 +296,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 switch (save_serrno) {
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
+                    (void)rtcpd_LockForTpPos(0);
                     serrno = save_serrno;
                     return(-1);
                 case ENOSPC:
@@ -301,12 +304,15 @@ int rtcpd_stageupdc(tape_list_t *tape,
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
                     else 
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_SYERR);
+                    (void)rtcpd_LockForTpPos(0);
+                    serrno = save_serrno;
                     return(-1);
                 case SECOMERR:
                 case SESYSERR:
                     break;
                 default:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_UNERR);
+                    (void)rtcpd_LockForTpPos(0);
                     serrno = save_serrno;
                     return(-1);
                 }
