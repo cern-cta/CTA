@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.154 2001/09/23 07:43:43 jdurand Exp $
+ * $Id: poolmgr.c,v 1.155 2001/10/05 12:49:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.154 $ $Date: 2001/09/23 07:43:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.155 $ $Date: 2001/10/05 12:49:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -5302,6 +5302,7 @@ int checkaccess(path)
         if ((thisname = malloc(strlen(dirpath) + 1 + strlen(de->d_name) + 1)) == NULL) {
           stglogit (func, STG02, path, "malloc()", strerror(errno));
           rc = -1;
+          rfio_closedir(dirp);
           goto checkaccess_return;
         }
         strcpy(thisname,dirpath);
@@ -5311,6 +5312,7 @@ int checkaccess(path)
           stglogit (func, STG02, thisname, "rfio_unlink()", rfio_serror());
           free(thisname);
           rc = -1;
+          rfio_closedir(dirp);
           goto checkaccess_return;
         }
       }
