@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.14 $ $Date: 2000/09/05 14:41:00 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.15 $ $Date: 2000/09/05 14:45:38 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -22,6 +22,8 @@
 #else /* _WIN32 */
 #include <statbits.h>           /* File access macros for WIN32         */
 #endif /* _WIN32 */
+
+#include <dirent.h>             /* standard directory definitions       */
 
 /*
  * Common includes needed by internal (kernel) routines.
@@ -56,6 +58,10 @@
 #include <socket_timeout.h>             /* socket timeout routines */
 
 #endif /* RFIO_KERNEL */
+
+#ifndef _RFIO_CONSTANTS_H_INCLUDED_
+#include <rfio_constants.h>
+#endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
 
 #if !defined(_WIN32)
 #ifndef min
