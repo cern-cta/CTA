@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.16 2000/03/24 09:28:42 jdurand Exp $
+ * $Id: stager.c,v 1.17 2000/03/24 13:19:55 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,10 @@
  */
 
 /* When filereq.maxsize will work removed, remove the define below and it the the code below again */
-#define SKIP_FILEREQ_MAXSIZE
+/* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.16 $ $Date: 2000/03/24 09:28:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.17 $ $Date: 2000/03/24 13:19:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1500,7 +1500,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					if (stcp->size > 0) {
 											/* filereq.maxsize is in bytes */
 #ifndef SKIP_FILEREQ_MAXSIZE
-											fl[j].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+						fl[j].filereq.maxsize = 1 + (u_signed64) ((u_signed64) stcp->size * ONE_MB);
 #endif
 					}
 					if (stcp + 1 < fixed_stce) stcp++;
@@ -1600,19 +1600,19 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			}
 #ifndef SKIP_FILEREQ_MAXSIZE
 			if (stcp->size > 0) {
-							u_signed64 dummysize;
+				u_signed64 dummysize;
 
-							dummysize = (u_signed64) stcp->size;
-							dummysize *= (u_signed64) ONE_MB;
-							dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-							(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
+				dummysize = (u_signed64) stcp->size;
+				dummysize *= (u_signed64) ONE_MB;
+				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
 			} else {
-							u_signed64 dummysize;
+				u_signed64 dummysize;
 
-							dummysize = (u_signed64) hsm_totalsize[ihsm];
-							dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-							(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
-						}
+				dummysize = (u_signed64) hsm_totalsize[ihsm];
+				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
+			}
 #endif
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.offset = hsm_transferedsize[ihsm];
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.def_alloc = Aflag;
