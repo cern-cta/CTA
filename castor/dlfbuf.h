@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/20 15:40:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/30 13:04:31 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -34,6 +34,7 @@
 #include <Cthread_api.h>
 #include "Cuuid.h"
 #include "castor/logbuf.h"
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -49,6 +50,21 @@ namespace castor {
     dlfbuf(const std::string &name)
       throw (castor::exception::Exception) :
       castor::logbuf() {
+      // If dlf_seterrbuf was no tyet called in this thread
+      // then create a buffer and call dlf_seterrbuf
+      char** errBuf = errorBuffer();
+      if (0 == *errBuf) {
+        *errBuf = (char*) malloc(LOGBUFSZ);
+        int rc = dlf_seterrbuf(*errBuf, LOGBUFSZ);
+        if (rc < 0) {
+          castor::exception::Internal e;
+          e.getMessage()
+            << "Unable to initialize error buffer of DLF :"
+            << std::endl
+            << sstrerror(serrno);
+          throw e;
+        }
+      }
       if (!s_dlfInitCalled) {
         // If dlf_init not already called,
         // try to call it. But thread safety
@@ -66,9 +82,9 @@ namespace castor {
                 << ") cannot be found in the configuration file.\n"
                 << "Please check your configuration.";
             } else {
-              e.getMessage() << "Unable to initialize DLF :"
-                             << std::endl
-                             << sstrerror(serrno);
+              e.getMessage() << "Unable to initialize DLF :\n"
+                             << sstrerror(serrno) << "\n"
+                             << errorBuffer();
             }
             throw e;
           }
@@ -86,8 +102,55 @@ namespace castor {
     virtual int sync() throw() {
       if (0 == str().size()) return 0;
       // Write current message to DLF
-      Cuuid_t cuuid;
       std::string msg = str();
+      // Take care of long messages
+      if (str().size() <= DLF_MAXSTRVALLEN) {
+        dlf_write_internal("MESSAGE", msg.c_str());
+      } else {
+        // Message too long, cut it into pieces
+        const char* longmsg = msg.c_str();
+        int size = msg.size();
+        char buffer[DLF_MAXSTRVALLEN+1];
+        strncpy(buffer, longmsg, DLF_MAXSTRVALLEN);
+        buffer[DLF_MAXSTRVALLEN] = 0;
+        dlf_write_internal("MESSAGE", buffer);
+        int index = DLF_MAXSTRVALLEN;
+        while (index < size) {
+          int bitLength = DLF_MAXSTRVALLEN;
+          if (size - index < DLF_MAXSTRVALLEN) {
+            bitLength = size - index;
+          }
+          strncpy(buffer, longmsg, bitLength);
+          buffer[bitLength] = 0;
+          dlf_write_internal("CONTINUATION", buffer);
+          index = index + bitLength;
+        }
+      }
+      // Erase buffer
+      str("");
+      return 0;
+    }
+
+  private:
+
+    /**
+     * get the thread specific error buffer for DLF
+     */
+    char** errorBuffer() throw() {
+      static int C_dlfbuf_TLSkey = -1;
+      char** buffer;
+      castor::BaseObject::getTLS(&C_dlfbuf_TLSkey,
+                                 (void **)&buffer);
+      return buffer;
+    }
+
+    /**
+     * write something to DLF and checks for errors.
+     * If any, throws an exception
+     */
+    void dlf_write_internal(const char* name, const char* msg)
+      throw(castor::exception::Exception) {
+      Cuuid_t cuuid;
       // Compute DLF level for the message
       int dlflevel;
       switch (level()) {
@@ -111,35 +174,25 @@ namespace castor {
         dlflevel = DLF_LVL_EMERGENCY;
         break;
       }
-      // Take care of long messages
-      if (str().size() <= DLF_MAXSTRVALLEN) {
-        dlf_write(cuuid, dlflevel, 0, 0, 1,
-                  "MESSAGE", DLF_MSG_PARAM_STR, msg.c_str());
-      } else {
-        // Message too long, cut it into pieces
-        const char* longmsg = msg.c_str();
-        int size = msg.size();
-        char buffer[DLF_MAXSTRVALLEN+1];
-        strncpy(buffer, longmsg, DLF_MAXSTRVALLEN);
-        buffer[DLF_MAXSTRVALLEN] = 0;
-        dlf_write(cuuid, dlflevel, 0, 0, 1,
-                  "MESSAGE", DLF_MSG_PARAM_STR, buffer);
-        int index = DLF_MAXSTRVALLEN;
-        while (index < size) {
-          int bitLength = DLF_MAXSTRVALLEN;
-          if (size - index < DLF_MAXSTRVALLEN) {
-            bitLength = size - index;
-          }
-          strncpy(buffer, longmsg, bitLength);
-          buffer[bitLength] = 0;
-          dlf_write(cuuid, dlflevel, 0, 0, 1,
-                    "CONTINUATION", DLF_MSG_PARAM_STR, buffer);
-          index = index + bitLength;
-        }
-      }
-      // Erase buffer
-      str("");
-      return 0;
+      // XXX For the time being, we ignore completely
+      // XXX errors of dlf_write. Shall we syslog them ?
+      //int rc =
+      dlf_write (cuuid, dlflevel, 0, 0, 1,
+                 name, DLF_MSG_PARAM_STR, msg);
+      //if (0 != rc) {
+      //  castor::exception::Internal e;
+      //  if (rc > 0) {
+      //    e.getMessage()
+      //      << "The log destination used in dlf_write) "
+      //      << "cannot be found in the configuration file.\n"
+      //      << "Please check your configuration.";
+      //  } else {
+      //    e.getMessage() << "Unable to initialize DLF :\n"
+      //                   << sstrerror(serrno) << "\n"
+      //                   << errorBuffer();
+      //  }
+      //  throw e;
+      //}
     }
 
   private:
