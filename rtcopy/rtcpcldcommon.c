@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/21 16:15:27 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:41:17 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/21 16:15:27 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:41:17 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -77,11 +77,15 @@ void rtcpcld_extlog(
                     )
 {
   int msgNo, dlfLevel;
-  char tmpbuf[CA_MAXLINELEN+1];
+  char tmpbuf[CA_MAXLINELEN+1], *p;
   va_list args;
   va_start(args,format);
   vsprintf(tmpbuf,format,args);
   va_end(args);
+  /*
+   * strip off newlines (not good for DLF)
+   */
+  while ((p = strchr(tmpbuf,'\n')) != NULL) *p = ' ';
   if ( level >= LOG_INFO ) {
     msgNo = RTCPCLD_MSG_EXTINFO;
     dlfLevel = DLF_LVL_DEBUG;
