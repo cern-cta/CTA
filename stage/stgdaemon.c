@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.186 2002/04/13 12:52:49 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.187 2002/04/19 10:01:55 jdurand Exp $
  */
 
 /*
@@ -17,13 +17,14 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.186 $ $Date: 2002/04/13 12:52:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.187 $ $Date: 2002/04/19 10:01:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>                     /* For INT_MIN and INT_MAX */
 #include <pwd.h>
 #include <sys/types.h>
 #include <fcntl.h>
