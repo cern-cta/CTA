@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.16 2000/04/03 09:35:14 jdurand Exp $
+ * $Id: stage.h,v 1.17 2000/05/08 10:02:58 jdurand Exp $
  */
 
 /*
@@ -15,6 +15,18 @@
 #include "Castor_limits.h"
 #include <osdep.h>
 #include "serrno.h"     /* Contains ESTNACT etc... */
+
+/* This macro returns TRUE is the file is an hpss one */
+#define ISHPSS(xfile)   ( strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
+
+/* This macro returns TRUE is the file is an castor one */
+#define ISCASTOR(xfile) ( strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
+
+/* This macro returns the hpss file pointer, without hostname */
+#define HPSSFILE(xfile)   strstr(xfile,"/hpss/")
+
+/* This macro returns the castor file pointer, without hostname */
+#define CASTORFILE(xfile) strstr(xfile,"/castor/")
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
@@ -55,6 +67,7 @@
 #define	STAGECAT	10
 #define	STAGEALLOC	11
 #define	STAGEGET	12
+#define	STAGEMIGPOOL	13
 
 			/* stage daemon reply types */
 
@@ -79,6 +92,7 @@
 #define	KILLED		0x40	/* stage killed */
 #define	STG_FAILED	0x50	/* stage failed */
 #define	PUT_FAILED	0x60	/* stageput failed */
+#define	CAN_BE_MIGR	0x70	/* file can be migrated */
 #define	STAGED_LSZ	0x100	/* stage limited by size */
 #define	STAGED_TPE	0x200	/* blocks with parity error have been skipped */
 #define	LAST_TPFILE	0x1000	/* last file on this tape */
@@ -110,9 +124,9 @@
 #define	STG22	"STG22 - could not find corresponding stage request\n"
 #define	STG23	"STG23 - %s is not accessible\n"
 #define	STG24	"STG24 - pool %s is empty\n"
-#define	STG25	"STG25 - pool name is missing\n"
-#define	STG26	"STG26 - invalid description of pool %s\n"
-#define	STG27	"STG27 - pool name %s is too long\n"
+#define	STG25	"STG25 - %s name is missing\n"
+#define	STG26	"STG26 - invalid description of %s %s\n"
+#define	STG27	"STG27 - %s name %s is too long\n"
 #define	STG28	"STG28 - missing or invalid value for DEFSIZE\n"
 #define	STG29	"STG29 - no staging pool described\n"
 #define	STG30	"STG30 - a default pool must be defined\n"
@@ -142,6 +156,7 @@
 #define	STG53	"STG53 - %s error %d\n"
 #endif
 #define	STG54	"STG54 - HSM hostname not specified\n"
+#define	STG55	"STG55 - migration policy %s not defined\n"
 #if defined(vms)
 #define	STG80	"STG80 - invalid GRPUSER entry (username missing) : %s\n"
 #define	STG81	"STG81 - invalid GRPUSER entry (uid missing) : %s\n"
@@ -195,7 +210,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
 	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk */
 	char	group[CA_MAXGRPNAMELEN+1];
-	char	user[15];	/* login name */
+	char	user[CA_MAXUSRNAMELEN+1];	/* login name */
 	uid_t	uid;		/* uid or Guid */
 	gid_t	gid;
 #if defined(vms) || defined(_WIN32)
@@ -247,9 +262,9 @@ struct waitf {
 struct waitq {
 	struct waitq *prev;
 	struct waitq *next;
-	char	pool_user[15];
+	char	pool_user[CA_MAXUSRNAMELEN+1];
 	char	clienthost[CA_MAXHOSTNAMELEN+1];
-	char	user[15];	/* login name */
+	char	user[CA_MAXUSRNAMELEN+1];	/* login name */
 	uid_t	uid;		/* uid or Guid */
 	gid_t	gid;
 	int	clientpid;
@@ -272,15 +287,27 @@ struct waitq {
 	int	status;
 	int	nretry;
 	int	Aflag;
+	int	Migrationflag;
 };
 
+struct migpolicy {
+	u_signed64 data_mig_threshold;
+	int	freespace_threshold;
+	int	maxdrives;
+	int	seg_allowed;
+	int	time_interval;
+	char	name[CA_MAXMIGPNAMELEN+1];
+	int	tape_pool_index;
+	char	**tape_pool;		/* Tape poolnames */
+};
+	
 struct pool {
 	char	name[CA_MAXPOOLNAMELEN+1];
 	struct pool_element *elemp;
 	int	defsize;
 	int	minfree;
 	char	gc[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* garbage collector */
-	int	no_file_creation;		/* Do not create empty file on stagein/out (for Objectivity DB) */
+	int	no_file_creation;	/* Do not create empty file on stagein/out (for Objectivity DB) */
 	int	nbelem;
 	int	next_pool_elem;		/* next pool element to be used */
 	u_signed64	capacity;		/* in 512 bytes blocks */
@@ -288,9 +315,12 @@ struct pool {
 	int	ovl_pid;
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
-	char tape_pool[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* Tape poolname */
-	int free4mig;	/* Tape migration policy (%) */
-	char mig[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* Tape migration script */
+	int	mig_pid;
+	time_t	migreqtime;
+	int	nbfiles_canbemig;	/* number of files that can be migrated */
+	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
+	char	migp_name[CA_MAXMIGPNAMELEN+1];
+	struct migpolicy *migp;
 };
 
 struct pool_element {
