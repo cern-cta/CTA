@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IClientFactory.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/16 11:01:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IClientFactory.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/16 15:27:07 $ $Author: jdurand $
  *
  * 
  *
@@ -67,7 +67,7 @@ const std::string castor::IClientFactory::client2String
 //------------------------------------------------------------------------------
 // string2Client
 //------------------------------------------------------------------------------
-castor::IClient* string2Client(const std::string &st)
+castor::IClient* castor::IClientFactory::string2Client(const std::string &st)
   throw (castor::exception::Exception) {
   std::istringstream in(st);
   unsigned int type;
