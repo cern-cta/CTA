@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.31 $ $Date: 2001/09/24 13:06:59 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.32 $ $Date: 2001/11/07 12:00:48 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -78,7 +78,9 @@ EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_chown _PROTO((char *, int, int));
 EXTERN_C int DLL_DECL rfio_close _PROTO((int));
 EXTERN_C int DLL_DECL rfio_close_v3 _PROTO((int));
-EXTERN_C int DLL_DECL rfio_end _PROTO((void));
+EXTERN_C int DLL_DECL rfio_end _PROTO((void));  /* Close connections opened by rfio_mstat() */
+EXTERN_C int DLL_DECL rfio_symend _PROTO((void)); /* Close connections opened by rfio_msymlink() */
+EXTERN_C int DLL_DECL rfio_unend _PROTO((void)); /* Close connections opened by rfio_munlink() */
 EXTERN_C int DLL_DECL rfio_fstat _PROTO((int, struct stat *));
 EXTERN_C char DLL_DECL *rfio_getcwd _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_lockf _PROTO((int, int, long));
@@ -86,6 +88,8 @@ EXTERN_C int DLL_DECL rfio_lseek _PROTO((int, int, int));
 EXTERN_C int DLL_DECL rfio_lstat _PROTO((char *, struct stat *));
 EXTERN_C int DLL_DECL rfio_mkdir _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_mstat _PROTO((char *, struct stat *));
+EXTERN_C int DLL_DECL rfio_munlink _PROTO((char *));
+EXTERN_C int DLL_DECL rfio_msymlink _PROTO((char *, char *));
 #if defined(RFIO_KERNEL)
 EXTERN_C int DLL_DECL rfio_open _PROTO((char *, int, int));
 #else /* RFIO_KERNEL */
