@@ -1,11 +1,13 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2004/06/09 08:40:40 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2004/06/09 16:11:25 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
 COMM Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
+
+#include <Project.tmpl>
 
 COMM         Make RTCOPY API library and server
 
