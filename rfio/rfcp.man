@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.10 2003/04/28 10:18:00 jdurand Exp $
+.\" $Id: rfcp.man,v 1.11 2003/05/27 13:44:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.10 $ $Date: 2003/04/28 10:18:00 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.11 $ $Date: 2003/05/27 13:44:12 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP 1 "$Date: 2003/04/28 10:18:00 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2003/05/27 13:44:12 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -26,6 +26,9 @@ rfcp \- Remote file copy
 ]
 .IR filename
 .IR directory
+.br
+.P
+On Windows only:
 .br
 .B rfcp
 [
