@@ -1,22 +1,10 @@
 /*
- * $Id: packfseq.c,v 1.3 1999/07/21 20:09:01 jdurand Exp $
- *
- * $Log: packfseq.c,v $
- * Revision 1.3  1999/07/21 20:09:01  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:16  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1997 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)packfseq.c	1.6 04/08/97 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)packfseq.c	1.6 4/8/97 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -32,7 +20,7 @@ char trailing;
 char *fseq;
 int fseqsz;
 {
-	char *dp = NULL;
+	char *dp;
 	char fseq_tmp[MAXFSEQ];
 	int j;
 	int n1, n2;

@@ -1,22 +1,10 @@
 /*
- * $Id: stageacct.c,v 1.3 1999/07/21 20:09:06 jdurand Exp $
- *
- * $Log: stageacct.c,v $
- * Revision 1.3  1999/07/21 20:09:06  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:20  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1995 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stageacct.c	1.2 07/31/95 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)stageacct.c	1.2 7/31/95 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -39,7 +27,7 @@ char *tapesrvr;
 	int acctreclen;
 	struct acctstage acctstage;
 	char *getconfent();
-	char *p = NULL;
+	char *p;
 
 	if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
 	    (strcmp (p, "YES") && strcmp (p, "yes"))) return;

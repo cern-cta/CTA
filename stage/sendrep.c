@@ -1,22 +1,10 @@
 /*
- * $Id: sendrep.c,v 1.4 1999/07/21 20:09:05 jdurand Exp $
- *
- * $Log: sendrep.c,v $
- * Revision 1.4  1999/07/21 20:09:05  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.3  1999/07/20 17:29:19  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1995 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sendrep.c	1.3 08/03/95 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)sendrep.c	1.3 8/3/95 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,14 +19,13 @@ extern char *sys_errlist[];
 sendrep(va_alist) va_dcl
 {
 	va_list args;
-	char *file1 = NULL;
-    char *file2 = NULL;
+	char *file1, *file2;
 	char func[16];
-	char *msg = NULL;
-	char *p = NULL;
+	char *msg;
+	char *p;
 	char prtbuf[PRTBUFSZ];
-	char *q = NULL;
-	char *rbp = NULL;
+	char *q;
+	char *rbp;
 	int rc;
 	int rep_type;
 	int req_type;
@@ -127,7 +114,7 @@ sendrep(va_alist) va_dcl
 sndmsg:
 	va_end (args);
 	repsize = rbp - repbuf;
-	if (netwrite_timeout (rpfd, repbuf, repsize, STGTIMEOUT) != repsize) {
+	if (netwrite (rpfd, repbuf, repsize) != repsize) {
 		stglogit (func, STG02, "", "write", sys_errlist[errno]);
 		if (rep_type == STAGERC)
 			close (rpfd);
@@ -141,7 +128,7 @@ sndmsg:
 iserrmsg(p)
 char *p;
 {
-	char *q = NULL;
+	char *q;
 
 	if (*p == '\0') return (0);
 	if (strncmp (p, " CP", 3) == 0)

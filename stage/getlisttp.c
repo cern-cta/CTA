@@ -1,22 +1,10 @@
 /*
- * $Id: getlisttp.c,v 1.3 1999/07/21 20:09:01 jdurand Exp $
- *
- * $Log: getlisttp.c,v $
- * Revision 1.3  1999/07/21 20:09:01  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:16  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1995 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getlisttp.c	1.2 02/14/95 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)getlisttp.c	1.2 2/14/95 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -31,7 +19,7 @@ char v[MAXVSN][7];
 int *num;
 {
 	int errflg = 0;
-	char *p = NULL;
+	char *p;
 
 	if (*num == 0) {
 		p = strtok (optarg, ":");

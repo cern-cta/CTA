@@ -1,18 +1,4 @@
 /*
- * $Id: stage.h,v 1.3 1999/07/20 17:29:19 jdurand Exp $
- *
- * $Log: stage.h,v $
- * Revision 1.3  1999/07/20 17:29:19  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-#ifndef __stage_h
-#define __stage_h
-
-#include <socket_timeout.h>
-
-/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -45,7 +31,6 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STG	"stage"	/* service name in /etc/services */
-#define STGTIMEOUT 10
 
 #define UPPER(s) \
 	{ \
@@ -176,11 +161,6 @@
 #define	STG97	"STG97 - %s:%s staged by (%s,%s), server %s  unit %s  ifce %s  size %ld  wtim %d  ttim %d rc %d\n"
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
-#ifdef DB
-#define STG100  "STG100 - At %s:%d : DB error \"%s\" No %d (%s)\n"
-#define STG101  "STG101 - DB - Database %s opened\n"
-#define STG102  "STG102 - %s:%d : DB error No %d (%s)\n"
-#endif
 
 			/* stage daemon return codes */
 
@@ -339,15 +319,6 @@ struct pool_element {
 	long	bsize;		/* block size */
 };
 
-#ifdef DB
-struct sorted_ent {
-  struct sorted_ent *next;
-  struct sorted_ent *prev;
-  int     stcp_reqid;
-  int     stpp_reqid;
-  double  weight;
-};
-#else
 struct sorted_ent {
 	struct sorted_ent *next;
 	struct sorted_ent *prev;
@@ -355,7 +326,4 @@ struct sorted_ent {
 	struct stgpath_entry *stpp;
 	double	weight;
 };
-#endif /* DB */
 #endif
-
-#endif /* __stage_h */

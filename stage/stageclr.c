@@ -1,16 +1,4 @@
 /*
- * $Id: stageclr.c,v 1.3 1999/07/21 20:09:06 jdurand Exp $
- *
- * $Log: stageclr.c,v $
- * Revision 1.3  1999/07/21 20:09:06  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:21  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -48,22 +36,22 @@ char	**argv;
 	int Gflag = 0;
 	uid_t Guid;
 	gid_t gid;
-	struct group *gr = NULL;
+	struct group *gr;
 	int Iflag = 0;
 	char ibuf[MAXHOSTNAMELEN + MAXPATH];
 	int iflag = 0;
 	int Lflag = 0;
-    int Mflag = 0;
+        int Mflag = 0;
 	int msglen;
 	int ntries = 0;
 	int numvid;
 	int Pflag = 0;
-	char *p = NULL;
+	char *p;
 	char path[MAXHOSTNAMELEN + MAXPATH];
-	struct passwd *pw = NULL;
-	char *q = NULL;
-	char *sbp = NULL;
-	char *sbpp = NULL;
+	struct passwd *pw;
+	char *q;
+	char *sbp;
+	char *sbpp;
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;

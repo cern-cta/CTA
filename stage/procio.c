@@ -1,22 +1,10 @@
 /*
- * $Id: procio.c,v 1.4 1999/07/21 20:09:03 jdurand Exp $
- *
- * $Log: procio.c,v $
- * Revision 1.4  1999/07/21 20:09:03  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.3  1999/07/20 17:29:17  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)procio.c	1.41 01/14/99 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)procio.c	1.42 08/24/99 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -39,12 +27,6 @@ static char sccsid[] = "@(#)procio.c	1.41 01/14/99 CERN IT-PDP/DM Jean-Philippe 
 #if SACCT
 #include "../h/sacct.h"
 #endif
-#ifdef DB
-#include <Cdb_api.h>
-#include <errno.h>
-#include "wrapdb.h"
-#endif /* DB */
-
 extern char *optarg;
 extern int optind;
 extern char *rfio_serror();
@@ -61,11 +43,6 @@ struct waitq *add2wq();
 char *findpoolname();
 int last_tape_file;
 
-#ifdef DB
-extern db_fd **db_stgcat;     /* DB connection on STGCAT catalog */
-extern db_fd **db_stgipath;   /* DB connection on STGIPATH catalog */
-#endif /* DB */
-
 procioreq(req_type, req_data, clienthost)
 int req_type;
 char *req_data;
@@ -74,21 +51,21 @@ char *clienthost;
 	int Aflag = 0;
 	int actual_poolflag;
 	char actual_poolname[MAXPOOLNAMELEN];
-	char **argv = NULL;
+	char **argv;
 	int c, i, j;
 	int concat_off = 0;
 	int clientpid;
 	static char cmdnames[4][9] = {"", "stagein", "stageout", "stagewrt"};
 	int copytape = 0;
-	char *dp = NULL;
+	char *dp;
 	int errflg = 0;
 	char *fid = NULL;
 	struct stat filemig_stat;
 	char filemig_size[5];
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
-	struct group *gr = NULL;
-	char *name = NULL;
+	struct group *gr;
+	char *name;
 	int nargs;
 	int nbdskf;
 	int nbtpf;
@@ -96,22 +73,21 @@ char *clienthost;
 	int no_upath = 0;
 	char *nread = NULL;
 	int numvid, numvsn;
-	char *p = NULL;
-    char *q = NULL;
+	char *p, *q;
 	char *pool_user = NULL;
 	int poolflag;
-	char *rbp = NULL;
+	char *rbp;
 	int savereqid;
 	char *size = NULL;
 	struct stat st;
-	struct stgcat_entry *stcp = NULL;
+	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
 	char trailing;
 	int Uflag = 0;
 	int Upluspath = 0;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user = NULL;
-	struct waitf *wfp = NULL;
+	char *user;
+	struct waitf *wfp;
 	struct waitq *wqp = NULL;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
@@ -380,6 +356,8 @@ char *clienthost;
 
 	/* setting defaults */
 
+	if (stgreq.t_or_d != 't')
+		Aflag = 0;
 	if (concat_off)
 		Aflag = 1;	/* force deferred space allocation */
 	if (*stgreq.poolname == '\0') {
@@ -513,13 +491,6 @@ char *clienthost;
 			case STAGEIN:	/* stage in progress */
 			case STAGEIN|WAITING_SPC:	/* waiting space */
 				stcp->nbaccesses++;
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
 				savereqid = stcp->reqid;
 				stcp = newreq ();
 				memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -551,13 +522,6 @@ char *clienthost;
 					wfp->subreqid = stcp->reqid;
 					strcpy (wfp->upath, argv[optind+1]);
 				}
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
 				break;
 			case STAGED:		/* staged */
 				if (rfio_stat (stcp->ipath, &st) < 0) {
@@ -590,13 +554,6 @@ char *clienthost;
 			case STAGEWRT:
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
 #if SACCT
 				stageacct (STGFILS, stgreq.uid, stgreq.gid,
 				    clienthost, reqid, req_type, 0, 0, stcp, "");
@@ -638,13 +595,6 @@ notstaged:
 				stcp->c_time = time (0);
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
 					stcp->uid, stcp->gid, clientpid,
@@ -659,13 +609,6 @@ notstaged:
 					if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 						stcp->status |= WAITING_SPC;
 						strcpy (wqp->waiting_pool, stcp->poolname);
-#ifdef DB
-						if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-							sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-							c = SYERR;
-							goto reply;
-						}
-#endif /* DB */
 					} else if (c) {
 						updfreespace (stcp->poolname, stcp->ipath,
 							stcp->size*1024*1024);
@@ -724,22 +667,8 @@ notstaged:
 			stcp->c_time = time (0);
 			stcp->a_time = stcp->c_time;
 			stcp->nbaccesses++;
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				c = SYERR;
-				goto reply;
-			}
-#endif /* DB */
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 				stcp->status |= WAITING_SPC;
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
 				if (!wqp) wqp = add2wq (clienthost, user,
 					stcp->uid, stcp->gid, clientpid,
 					Upluspath, reqid, req_type, nbdskf, &wfp);
@@ -817,13 +746,6 @@ notstaged:
 			}
 			stcp->a_time = time (0);
 			strcpy (stcp->ipath, upath);
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				c = SYERR;
-				goto reply;
-			}
-#endif /* DB */
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
 				stcp->gid, clientpid, Upluspath, reqid, req_type,
 				nbdskf, &wfp);
@@ -863,13 +785,6 @@ notstaged:
 				stcp->reqid = reqid;
 			stcp->status = STAGEIN | STAGED;
 			strcpy (stcp->poolname, actual_poolname);
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				c = SYERR;
-				goto reply;
-			}
-#endif /* DB */
 			if (rfio_stat (upath, &st) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, upath, "rfio_stat",
 					rfio_serror());
@@ -881,13 +796,6 @@ notstaged:
 			stcp->a_time = st.st_atime;
 			stcp->nbaccesses = 1;
 			strcpy (stcp->ipath, upath);
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				c = SYERR;
-				goto reply;
-			}
-#endif /* DB */
 			break;
 		}
 	}
@@ -913,19 +821,10 @@ reply:
 	sendrep (rpfd, STAGERC, req_type, c);
 	if (c && wqp) {
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
-#ifdef DB
-		if (wrapCdb_fetch(db_stgcat, wfp->subreqid, (void **) &stcp, NULL, 0) != 0) {
-			sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-			if (stcp != NULL)
-				free(stcp);
-			return;
-		}
-#else /* DB */        
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid)
 					break;
 			}
-#endif /* DB */
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
 					stcp->size*1024*1024);
@@ -933,51 +832,43 @@ reply:
 		}
 		rmfromwq (wqp);
 	}
-#ifdef DB
-	if (stcp != NULL)
-		free(stcp);
-#endif /* DB */
 }
 
 procputreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
-	char **argv = NULL;
+	char **argv;
 	int c, i;
 	int clientpid;
-	char *dp = NULL;
+	char *dp;
 	int errflg = 0;
-	char *externfile = NULL;
+	char *externfile;
 	int found;
 	char fseq[MAXFSEQ];
 	gid_t gid;
-	struct group *gr = NULL;
-	char *hsmfile = NULL;
+	struct group *gr;
+	char *hsmfile;
 	int Iflag = 0;
 	int Mflag = 0;
-	char *name = NULL;
+	char *name;
 	int nargs;
 	int nbdskf;
 	int numvid = 0;
 	int n1 = 0;
 	int n2 = 0;
-	char *q = NULL;
-	char *rbp = NULL;
+	char *q;
+	char *rbp;
 	struct stat st;
-	struct stgcat_entry *stcp = NULL;
+	struct stgcat_entry *stcp;
 	int subreqid;
 	int Upluspath = 0;
 	uid_t uid;
 	char upath[MAXHOSTNAMELEN + MAXPATH];
-	char *user = NULL;
+	char *user;
 	char vid[7];
-	struct waitf *wfp = NULL;
-	struct waitq *wqp = NULL;
-#ifdef DB
-	char *db_data = NULL;
-	size_t db_size;
-#endif /* DB */
+	struct waitf *wfp;
+	struct waitq *wqp;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1065,33 +956,6 @@ char *clienthost;
 		for (i = n1; i <= n2; i++) {
 			sprintf (fseq, "%d", i);
 			found = 0;
-#ifdef DB
-			if (Cdb_altkey_fetch(db_stgcat, "u1.t.vid0", vid, (void **) &db_data, &db_size) == 0) {
-				char *ptr = NULL;
-                char *ptrmax = NULL;
-
-				ptrmax = ptr = db_data;
-				ptrmax += db_size;
-				do {
-					int reqid;
-	
-					reqid = atoi(ptr);
-					/* In case of a string, sizeof() == strlen() + 1 */
-					/* ptr points to the reqid (as a string, e.g. a master key) */
-		   			if (wrapCdb_fetch(db_stgcat,reqid,(void **) &stcp, NULL, 0) == 0) {
-						if (stcp != NULL) {
-							stcp->status = STAGEOUT|PUT_FAILED;
-							if (strcmp (stcp->u1.t.vid[0], vid) != 0) goto docontinue0;
-							if (strcmp (stcp->u1.t.fseq, fseq)) goto docontinue0;
-							found = 1;
-							break;
-						}
-					}
-				docontinue0:
-					ptr += (strlen(ptr) + 1);
-				} while (ptr < ptrmax);
-			}
-#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (stcp->t_or_d != 't') continue;
@@ -1100,7 +964,6 @@ char *clienthost;
 				found = 1;
 				break;
 			}
-#endif /* DB */
 			if (found == 0 ||
 			    (stcp->status != STAGEOUT &&
 			    stcp->status != (STAGEOUT|PUT_FAILED))) {
@@ -1116,13 +979,6 @@ char *clienthost;
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				c = SYERR;
-				goto reply;
-			}
-#endif /* DB */
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 				clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 			wfp->subreqid = stcp->reqid;
@@ -1133,14 +989,6 @@ char *clienthost;
 	} else if (Mflag || Iflag) {
 		nbdskf = 1;
 		found = 0;
-#ifdef DB
-		if (Mflag)
-			if (Cdb_altkey_fetch(db_stgcat, "u1.m.xfile", hsmfile, (void **) &stcp, NULL) == 0)
-				found = 1;
-			else
-				if (Cdb_altkey_fetch(db_stgcat, "u1.d.xfile", externfile, (void **) &stcp, NULL) == 0)
-				found = 1;
-#else /* DB */
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (Mflag) {
@@ -1153,7 +1001,6 @@ char *clienthost;
 			found = 1;
 			break;
 		}
-#endif /* DB */
 		if (found == 0 ||
 		    (stcp->status != STAGEOUT &&
 		    stcp->status != (STAGEOUT|PUT_FAILED))) {
@@ -1162,28 +1009,13 @@ char *clienthost;
 			goto reply;
 		}
 		if (stcp->status == STAGEOUT) {
-			if (rfio_stat (stcp->ipath, &st) == 0) {
+			if (rfio_stat (stcp->ipath, &st) == 0)
 				stcp->actual_size = st.st_size;
-#ifdef DB
-				if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-					c = SYERR;
-					goto reply;
-				}
-#endif /* DB */
-			}
 			updfreespace (stcp->poolname, stcp->ipath,
 				stcp->size*1024*1024 - (int)stcp->actual_size);
 		}
 		stcp->status = STAGEPUT;
 		stcp->a_time = time (0);
-#ifdef DB
-		if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-			sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-			c = SYERR;
-			goto reply;
-		}
-#endif /* DB */
 		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 			clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 		wfp->subreqid = stcp->reqid;
@@ -1211,10 +1043,6 @@ char *clienthost;
 	if (! wqp) goto reply;
 	free (argv);
 	fork_exec_stager (wqp);
-#ifdef DB
-	if (stcp != NULL)
-		free(stcp);
-#endif /* DB */
 	return;
 reply:
 	free (argv);
@@ -1225,35 +1053,14 @@ reply:
 	sendrep (rpfd, STAGERC, STAGEPUT, c);
 	if (c && wqp) {
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
-#ifdef DB
-			if (wrapCdb_fetch(db_stgcat, wfp->subreqid, (void **) &stcp, NULL, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				if (stcp != NULL)
-					free(stcp);
-				return;
-			}
-#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid)
 					break;
 			}
-#endif /* DB */
 			stcp->status = STAGEOUT|PUT_FAILED;
-#ifdef DB
-			if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
-				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
-				if (stcp != NULL)
-					free(stcp);
-				return;
-			}
-#endif /* DB */
 		}
 		rmfromwq (wqp);
 	}
-#ifdef DB
-	if (stcp != NULL)
-		free(stcp);
-#endif /* DB */
 }
 
 isstaged(cur, p, poolflag, poolname)
@@ -1264,247 +1071,9 @@ char *poolname;
 {
 	int found = 0;
 	int i;
-	struct stgcat_entry *stcp = NULL;
-#ifdef DB
-	char *db_data = NULL;
-	char *db_vid[MAXVSN];
-	size_t db_size[MAXVSN];
-	int  min_index = -1;
-#endif
+	struct stgcat_entry *stcp;
 
 	last_tape_file = 0;
-#ifdef DB
-	if (cur->t_or_d == 't') {
-		/* We want all the vid[] members to be the same */
-		int  ndb_vid[MAXVSN];
-		int   all_the_same = 1;
-		int   entered = 0;
-		for (i = 0; i < MAXVSN; i++) {
-			/* Do some initialization */
-			db_vid[i]  = NULL;
-			ndb_vid[i] = 0;
-			db_size[i] = 0;
-		}
-
-		/* ------------------------------------- */
-		/* Fetch alternate keys matching the VID */
-		/* ------------------------------------- */
-		for (i = 0; i < MAXVSN; i++) {
-
-			if (strlen(cur->u1.t.vid[i]) > 0) {
-				char *newkey = NULL;
-                int   status;
-                char *data = NULL;
-                
-                ++entered;
-                if ((newkey = (char *) malloc(strlen("u1.t.vid") + count_digits(i,10) + 1)) == NULL) {
-                	stglogit (func, STG05);
-                    exit(SYERR);
-                }
-                strcpy(newkey,"u1.t.vid");
-                sprintf(newkey + strlen("u1.t.vid"),"%d",i);
-                data = NULL;
-                
-                status = Cdb_altkey_fetch(db_stgcat, newkey, cur->u1.t.vid[i], (void **) &data, &(db_size[i]));
-                
-                free(newkey);
-                if (status != 0) {
-                	/* Just to be sure */
-                	all_the_same = 0;
-                    break;
-                }
-                
-                db_vid[i] = data;
-                /* we got the entry */
-                /* Let's evaluate the number of entries in it */
-                {
-                	char *ptr = NULL;
-                    char *ptrmax = NULL;
-                    ptrmax = ptr = db_vid[i];
-                    ptrmax += db_size[i];
-                    do {
-                    	ptr += (strlen(ptr) + 1);
-                        ++ndb_vid[i];
-                    } while (ptr < ptrmax);
-                }
-                /* And which entry has the lowest number of indexes */
-                if (min_index >= 0) {
-                	if (ndb_vid[i] < ndb_vid[min_index])
-                      min_index = i;
-                } else {
-                  min_index=i;
-                }
-                
-            }
-        }
-        
-        if (entered > 0 && all_the_same == 1) {
-        	/* We have found the MAXVSN entries in the u1.t.vid[] respective databases */
-        	/* We now need the list of "reqid" that match all of them at the time      */
-        	/* This means, the list of "reqid" that appears in all db_vid[] lists */
-
-        	/* Free all the indexes but the one that has the lowest number of entries  */
-        	for (i = 0; i < MAXVSN; i++) {
-            	if (i != min_index) {
-                	if (db_vid[i] != NULL) {
-                      free(db_vid[i]);
-                    }
-                }
-            }
-            
-            /* ---------------------------------------------------------------------- */
-            /* Fetch the (reduced) matched reqid corresponding to found alternate key */
-            /* ---------------------------------------------------------------------- */
-            {
-            	char *ptr = NULL;
-                char *ptrmax = NULL;
-
-                ptrmax = ptr = db_vid[min_index];
-                ptrmax += db_size[min_index];
-                do {
-                	int reqid;
-                    
-                    reqid = atoi(ptr);
-                    
-                    if (stcp != NULL)
-                    	free(stcp);
-                    stcp = NULL;
-                    
-                    if (wrapCdb_fetch(db_stgcat,reqid,(void **) &stcp, NULL, 0) == 0) {
-                    	for (i = 0; i < MAXVSN; i++)
-                        	if (strcmp (cur->u1.t.vid[i], stcp->u1.t.vid[i])) {
-                              break;
-                            }
-                        if (i < MAXVSN) {
-                        	goto docontinue1;
-                        }
-                        for (i = 0; i < MAXVSN; i++)
-                        	if (strcmp (cur->u1.t.vsn[i], stcp->u1.t.vsn[i])) {
-                              break;
-                            }
-                        if (i < MAXVSN) {
-                        	goto docontinue1;
-                        }
-                        if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) {
-                        	goto docontinue1;
-                        }
-                        if (cur->u1.t.fseq[0] != 'u') {
-                        	if ((stcp->status & 0xF000) == LAST_TPFILE) {
-                            	last_tape_file = atoi (stcp->u1.t.fseq);
-                            }
-                            if (strcmp (cur->u1.t.fseq, stcp->u1.t.fseq)) {
-                            	goto docontinue1;
-                            }
-                        } else {
-                        	if (strcmp (cur->u1.t.fid, stcp->u1.t.fid)) {
-                            	goto docontinue1;
-                            }
-                        }
-                        found = 1;
-                        break;
-                    }
-                docontinue1:
-                    ptr += (strlen(ptr) + 1);
-                } while (ptr < ptrmax);
-            }
-            
-            /* --------------------------------------------------------------- */
-            /* If found: db_vid[min_index] points to the possible reqid's */
-            /* --------------------------------------------------------------- */
-            if (found == 0) {
-            	free(db_vid[min_index]);
-            }
-        } else {
-        	/* All the entries do not exist. For sure there is no other "reqid" that   */
-        	/* match all the vid of record "cur"                                       */
-        	for (i = 0; i < MAXVSN; i++) {
-            	if (db_vid[i] != NULL)
-                	free(db_vid[i]);
-            }
-        }
-        if (stcp != NULL)
-        	free(stcp);
-        stcp = NULL;
-    } else if (cur->t_or_d == 'm') {
-    	/* -------------------------------------------------------------- */
-    	/* If it works: db_vid[0] and db_size[0] will be filled */
-      	/* -------------------------------------------------------------- */
-    	if (Cdb_altkey_fetch(db_stgcat, "u1.m.xfile", cur->u1.m.xfile, (void **) &(db_vid[0]), &(db_size[0])) == 0) {
-          min_index = 0;
-          found = 1;
-        }
-    } else {
-    	/* -------------------------------------------------------------- */
-    	/* If it works: db_vid[0] and db_size[0] will be filled */
-    	/* -------------------------------------------------------------- */
-    	if (Cdb_altkey_fetch(db_stgcat, "u1.d.xfile", cur->u1.d.xfile, (void **) &(db_vid[0]), &(db_size[0])) == 0) {
-          min_index = 0;
-          found = 1;
-        }
-    }
-    /* Do the poolfalg condition at the end, instead */
-    if (found != 0) {
-    	/* We have found an alternate entry */
-    	/* Is there any "reqid" that match the "poolname" condition ? */
-    	char *ptr = NULL;
-        char *ptrmax = NULL;
-
-        found = 0;
-        ptrmax = ptr = db_vid[min_index];
-        ptrmax += db_size[min_index];
-        do {
-        	int reqid;
-            
-            reqid = atoi(ptr);
-            /* In case of a string, sizeof() == strlen() + 1 */
-            /* ptr points to the reqid (as a string, e.g. a master key) */
-            if (stcp != NULL)
-            	free(stcp);
-            stcp = NULL;
-            
-            if (wrapCdb_fetch(db_stgcat,reqid,(void **) &stcp, NULL, 0) == 0) {
-              /* if no pool specified, the file may reside in any pool */
-            	if (poolflag == 0) {
-                	if (stcp->poolname[0] == '\0') goto docontinue2;
-                } else
-                  /* if a specific pool was requested, the file must be there */
-                	if (poolflag > 0) {
-                    	if (strcmp (poolname, stcp->poolname)) goto docontinue2;
-                    } else
-                      /* if -p NOPOOL, the file should not reside in a pool */
-                    	if (poolflag < 0) {
-                        	if (stcp->poolname[0]) goto docontinue2;
-                        }
-                /* Still making sure that is a correct entry */
-                if (cur->t_or_d == 't') {
-                	for (i = 0; i < MAXVSN; i++)
-                    	if (strcmp (cur->u1.t.vid[i], stcp->u1.t.vid[i])) break;
-                    if (i < MAXVSN) goto docontinue2;
-                    for (i = 0; i < MAXVSN; i++)
-                    	if (strcmp (cur->u1.t.vsn[i], stcp->u1.t.vsn[i])) break;
-                    if (i < MAXVSN) goto docontinue2;
-                    if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) goto docontinue2;
-                    if (cur->u1.t.fseq[0] != 'u') {
-                    	if ((stcp->status & 0xF000) == LAST_TPFILE) {
-                          last_tape_file = atoi (stcp->u1.t.fseq);
-                        }
-                        if (strcmp (cur->u1.t.fseq, stcp->u1.t.fseq)) goto docontinue2;
-                    } else {
-                      if (strcmp (cur->u1.t.fid, stcp->u1.t.fid)) goto docontinue2;
-                    }
-                } else if (cur->t_or_d == 'm') {
-                  if (strcmp (cur->u1.m.xfile, stcp->u1.m.xfile)) goto docontinue2;
-                } else {
-                  if (strcmp (cur->u1.d.xfile, stcp->u1.d.xfile)) goto docontinue2;
-                }
-            }
-            found = 1;
-            break;
-        docontinue2:
-            ptr += (strlen(ptr) + 1);
-        } while (ptr < ptrmax);
-    }
-#else /* DB */
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if (cur->t_or_d != stcp->t_or_d) continue;
@@ -1543,18 +1112,7 @@ char *poolname;
 		found = 1;
 		break;
 	}
-#endif /* DB */
-
-  /* ----------------------------------- */
-  /* If the entry is found, then stcp    */
-  /* will have to point to the structure */
-  /* ----------------------------------- */
-
 	if (! found) {
-#ifdef DB
-		if (stcp != NULL)
-			free(stcp);
-#endif /* DB */
 		return (NOTSTAGED);
 	} else {
 		*p = stcp;
@@ -1572,12 +1130,11 @@ int req_type;
 char *trailing;
 fseq_elem **fseq_list;
 {
-	char *dp = NULL;
+	char *dp;
 	int i;
 	int n1, n2;
 	int nbtpf;
-	char *p = NULL;
-    char *q = NULL;
+	char *p, *q;
 
 	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {

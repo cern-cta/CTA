@@ -1,16 +1,4 @@
 /*
- * $Id: stagein.c,v 1.3 1999/07/21 20:09:08 jdurand Exp $
- *
- * $Log: stagein.c,v $
- * Revision 1.3  1999/07/21 20:09:08  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:22  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -54,8 +42,8 @@ extern	char	*sys_errlist[];
 #endif
 static gid_t gid;
 static int pid;
-static struct passwd *pw = NULL;
-char *stghost = NULL;
+static struct passwd *pw;
+char *stghost;
 char user[15];	/* login name */
 
 main(argc, argv)
@@ -67,15 +55,15 @@ char	**argv;
 	static char den[6] = "";
 	int dflag = 0;
 	static char dgn[9] = "";
-	char *dp = NULL;
+	char *dp;
 	int errflg = 0;
 	int fun = 0;
 	int Gflag = 0;
 	char Gname[15];
 	uid_t Guid;
 	int gflag = 0;
-	struct group *gr = NULL;
-	char *hsm_host = NULL;
+	struct group *gr;
+	char *hsm_host;
 	char hsm_path[MAXHOSTNAMELEN + MAXPATH];
 	static char lbl[4] = "";
 	int lflag = 0;
@@ -88,14 +76,13 @@ char	**argv;
 	int nargs;
 	int ntries = 0;
 	int numvid, numvsn;
-	char *p = NULL;
-    char *q = NULL;
+	char *p, *q;
 	char path[MAXHOSTNAMELEN + MAXPATH];
 	int pflag = 0;
 	char *pool_user = NULL;
 	char *poolname = NULL;
 	int req_type;
-	char *sbp = NULL;
+	char *sbp;
 	char sendbuf[REQBUFSZ];
 	int stagedisk = 0;
 	int stagemig = 0;
@@ -550,7 +537,7 @@ char *lbl;
 {
 	int c, j;
 	int errflg = 0;
-	char *p = NULL;
+	char *p;
 	int repsize;
 	int reqlen;
 	char tmrepbuf[132];
@@ -646,8 +633,7 @@ char *lbl;
 chkdirw(path)
 char *path;
 {
-	char *p = NULL;
-    char *q = NULL;
+	char *p, *q;
 	int rc;
 	char sav;
 
@@ -677,8 +663,8 @@ int sig;
 {
 	int c;
 	int msglen;
-	char *q = NULL;
-	char *sbp = NULL;
+	char *q;
+	char *sbp;
 	char sendbuf[64];
 
 	signal (sig, SIG_IGN);

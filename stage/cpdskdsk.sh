@@ -1,9 +1,9 @@
 #!CPSHELL
 #
-#  Copyright (C) 1994-1998 by CERN/CN/PDP/DH
+#  Copyright (C) 1994-1999 by CERN/CN/PDP/DH
 #  All rights reserved
 #
-#       @(#)cpdskdsk.sh	1.5 08/27/98 CERN CN-PDP/DH Jean-Philippe Baud
+#       @(#)cpdskdsk.sh	1.6 06/15/99 CERN CN-PDP/DH Jean-Philippe Baud
 
 # cpdskdsk   Copies disk file using rfio for VMS and Unix files
 #	     and CLIO for VM files
@@ -23,7 +23,7 @@ CONFERR=4	# Configuration error
 set -- `getopt b:F:L:N:s:X:Z: $*`
 if [ $? -ne 0 ]
 then
-    exit USERR
+    exit $USERR
 fi
 #
 size_present=0
@@ -37,7 +37,7 @@ do  case $1 in
     -X)     xparm=$2; shift;;
     -Z)     stagerid=$2; shift;;
     --)     shift; break;;
-    *)      echo "Bad parameter: " $1; exit USERR;;
+    *)      echo "Bad parameter: " $1; exit $USERR;;
     esac
     shift
 done

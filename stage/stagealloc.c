@@ -1,16 +1,4 @@
 /*
- * $Id: stagealloc.c,v 1.3 1999/07/21 20:09:06 jdurand Exp $
- *
- * $Log: stagealloc.c,v $
- * Revision 1.3  1999/07/21 20:09:06  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:20  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1995-1997 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -51,13 +39,13 @@ char	**argv;
 {
 	int c, i;
 	void cleanup();
-	char *dp = NULL;
+	char *dp;
 	int errflg = 0;
 	int fun = 0;
 	int Gflag = 0;
 	char Gname[15];
 	uid_t Guid;
-	struct group *gr = NULL;
+	struct group *gr;
 #if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(vms) || defined(_WIN32)
 	int mask;
 #else
@@ -66,13 +54,12 @@ char	**argv;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p = NULL;
-    char *q = NULL;
+	char *p, *q;
 	char path[MAXHOSTNAMELEN + MAXPATH];
 	int pflag = 0;
 	char *pool_user = NULL;
 	char *poolname = NULL;
-	char *sbp = NULL;
+	char *sbp;
 	char sendbuf[REQBUFSZ];
 	int uflag = 0;
 	uid_t uid;
@@ -275,8 +262,8 @@ int sig;
 {
 	int c;
 	int msglen;
-	char *q = NULL;
-	char *sbp = NULL;
+	char *q;
+	char *sbp;
 	char sendbuf[64];
 
 	signal (sig, SIG_IGN);

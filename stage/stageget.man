@@ -1,16 +1,8 @@
-.\"
-.\" $Id: stageget.man,v 1.2 1999/07/20 17:29:22 jdurand Exp $
-.\"
-.\" $Log: stageget.man,v $
-.\" Revision 1.2  1999/07/20 17:29:22  jdurand
-.\" Added Id and Log CVS's directives
-.\"
-.\"
-.\" @(#)stageget.man	1.1 04/18/96 CERN CN-PDP/DS Jean-Philippe Baud
+.\" @(#)stageget.man	1.1 4/18/96 CERN CN-PDP/DS Jean-Philippe Baud
 .\" Copyright (C) 1996 by CERN/CN/PDP/DS
 .\" All rights reserved
 .\"
-.TH STAGEGET l "04/18/96"
+.TH STAGEGET l "4/18/96"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS

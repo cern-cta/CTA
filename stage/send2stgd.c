@@ -1,19 +1,4 @@
 /*
- * $Id: send2stgd.c,v 1.5 1999/07/21 20:09:05 jdurand Exp $
- *
- * $Log: send2stgd.c,v $
- * Revision 1.5  1999/07/21 20:09:05  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.4  1999/07/20 20:07:32  jdurand
- * Added -lnsl for Linux
- *
- * Revision 1.3  1999/07/20 17:29:18  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -62,16 +47,16 @@ int want_reply;
 	char file2[MAXHOSTNAMELEN+MAXPATH];
 	char *getconfent();
 	char *getenv();
-	struct hostent *hp = NULL;
+	struct hostent *hp;
 	int link_rc;
 	int magic;
 	int n;
-	char *p = NULL;
+	char *p;
 	char prtbuf[PRTBUFSZ];
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp = NULL;
+	struct servent *sp;
 	int stg_s;
 	char stghost[64];
 #if !defined(vms) && !defined(_WIN32)
@@ -146,7 +131,7 @@ int want_reply;
 			return (SYERR);
 		}
 	}
-	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
+	if ((n = netwrite (stg_s, reqp, reql)) <= 0) {
 		if (n == 0)
 			fprintf (stderr, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
@@ -164,7 +149,7 @@ int want_reply;
 	}
 
 	while (1) {
-		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE, STGTIMEOUT)) != (3 * LONGSIZE)) {
+		if ((n = netread (stg_s, repbuf, 3 * LONGSIZE)) <= 0) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
@@ -187,7 +172,7 @@ int want_reply;
 			(void) netclose (stg_s);
 			break;
 		}
-		if ((n = netread_timeout (stg_s, repbuf, c, STGTIMEOUT)) != c) {
+		if ((n = netread (stg_s, repbuf, c)) <= 0) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
@@ -229,8 +214,8 @@ dosymlink (file1, file2)
 char *file1;
 char *file2;
 {
-	char *filename = NULL;
-	char *host = NULL;
+	char *filename;
+	char *host;
 	int remote;
 
 	remote = rfio_parseln (file2, &host, &filename, NORDLINKS);
@@ -252,8 +237,8 @@ char *file2;
 dounlink (path)
 char *path;
 {
-	char *filename = NULL;
-	char *host = NULL;
+	char *filename;
+	char *host;
 #if !defined(vms) && !defined(_WIN32)
 	int pid;
 	struct stat st;

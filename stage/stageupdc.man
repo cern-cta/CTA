@@ -1,16 +1,8 @@
-.\"
-.\" $Id: stageupdc.man,v 1.2 1999/07/20 17:29:26 jdurand Exp $
-.\"
-.\" $Log: stageupdc.man,v $
-.\" Revision 1.2  1999/07/20 17:29:26  jdurand
-.\" Added Id and Log CVS's directives
-.\"
-.\"
-.\" @(#)stageupdc.man	1.1 09/13/95 CERN CN-PDP/DH Jean-Philippe Baud
+.\" @(#)stageupdc.man	1.1 9/13/95 CERN CN-PDP/DH Jean-Philippe Baud
 .\" Copyright (C) 1995 by CERN/CN/PDP/DH
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "09/13/95"
+.TH STAGEUPDC l "9/13/95"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS

@@ -1,16 +1,8 @@
-.\"
-.\" $Id: stage.man,v 1.2 1999/07/20 17:29:19 jdurand Exp $
-.\"
-.\" $Log: stage.man,v $
-.\" Revision 1.2  1999/07/20 17:29:19  jdurand
-.\" Added Id and Log CVS's directives
-.\"
-.\"
-.\" @(#)stage.man	1.2 04/22/96 CERN CN-PDP/DH Jean-Philippe Baud
+.\" @(#)stage.man	1.2 4/22/96 CERN CN-PDP/DH Jean-Philippe Baud
 .\" Copyright (C) 1996 by CERN/CN/PDP/DH
 .\" All rights reserved
 .\"
-.TH STAGE l "04/22/96"
+.TH STAGE l "4/22/96"
 .SH DESCRIPTION
 The staging facilities offer fast access to tape data via copies in a disk pool.
 A stage daemon manages the pool space and keeps a catalog of staged files.

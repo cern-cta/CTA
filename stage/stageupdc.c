@@ -1,16 +1,4 @@
 /*
- * $Id: stageupdc.c,v 1.3 1999/07/21 20:09:12 jdurand Exp $
- *
- * $Log: stageupdc.c,v $
- * Revision 1.3  1999/07/21 20:09:12  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:26  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */
@@ -45,7 +33,7 @@ char	**argv;
 {
 	int c, i;
 	void cleanup();
-	char *dp = NULL;
+	char *dp;
 	int errflg = 0;
 	int fun = 0;
 	gid_t gid;
@@ -53,12 +41,12 @@ char	**argv;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p = NULL;
+	char *p;
 	char path[MAXHOSTNAMELEN + MAXPATH];
-	struct passwd *pw = NULL;
-	char *q = NULL;
+	struct passwd *pw;
+	char *q;
 	int reqid = 0;
-	char *sbp = NULL;
+	char *sbp;
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;

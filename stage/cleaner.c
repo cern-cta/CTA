@@ -1,22 +1,10 @@
 /*
- * $Id: cleaner.c,v 1.3 1999/07/21 20:09:01 jdurand Exp $
- *
- * $Log: cleaner.c,v $
- * Revision 1.3  1999/07/21 20:09:01  jdurand
- * Initialize all variable pointers to NULL
- *
- * Revision 1.2  1999/07/20 17:29:15  jdurand
- * Added Id and Log CVS's directives
- *
- */
-
-/*
  * Copyright (C) 1993-1996 by CERN/CN/PDP/DH
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cleaner.c	1.6 07/09/96 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)cleaner.c	1.6 7/9/96 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,7 +14,7 @@ static char sccsid[] = "@(#)cleaner.c	1.6 07/09/96 CERN CN-PDP/DH Jean-Philippe 
 #include "stage.h"
 char func[16];
 int reqid;
-static RFILE *rf = NULL;
+static RFILE *rf;
 main(argc, argv)
 int argc;
 char **argv;
@@ -34,10 +22,10 @@ char **argv;
 	char buf[256];
 	int c;
 	char command[MAXPATH+MAXPOOLNAMELEN+2];
-	char *gc = NULL;
-	char *p = NULL;
-	char *poolname = NULL;
-	char *q = NULL;
+	char *gc;
+	char *p;
+	char *poolname;
+	char *q;
 	char savebuf[256];
 	int saveflag = 0;
 	char *hostname = "";

@@ -1,11 +1,3 @@
-.\"
-.\" $Id: stageclr.man,v 1.2 1999/07/20 17:29:21 jdurand Exp $
-.\"
-.\" $Log: stageclr.man,v $
-.\" Revision 1.2  1999/07/20 17:29:21  jdurand
-.\" Added Id and Log CVS's directives
-.\"
-.\"
 .\" @(#)stageclr.man	1.7 09/07/98 CERN CN-PDP/DH Jean-Philippe Baud
 .\" Copyright (C) 1994-1997 by CERN/CN/PDP/DH
 .\" All rights reserved
