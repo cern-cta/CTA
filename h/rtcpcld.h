@@ -27,8 +27,8 @@ typedef struct RtcpcldVIDChild {
     struct RtcpcldVIDChild *prev;
 } RtcpcldVIDChild_t;
 
-#if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
 #define ID_TYPE unsigned long
+#if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
 
 typedef struct RtcpcldTapeList 
 {
