@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.22 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stage_updc.c,v 1.23 2002/04/11 10:28:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.22 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.23 $ $Date: 2002/04/11 10:28:06 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -300,7 +300,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -535,7 +535,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -653,7 +653,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -781,7 +781,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -898,7 +898,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -1047,7 +1047,7 @@ int DLL_DECL stage_updc_open(stageid, subreqid, mode)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
-    if ((c == 0) || (serrno == EINVAL)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -1192,7 +1192,7 @@ int DLL_DECL stage_updc_close(stageid, subreqid)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
-    if ((c == 0) || (serrno == EINVAL)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
