@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.236 2002/12/16 16:26:26 jdurand Exp $
+ * $Id: poolmgr.c,v 1.237 2003/01/13 10:41:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.236 $ $Date: 2002/12/16 16:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.237 $ $Date: 2003/01/13 10:41:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -269,7 +269,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 
 	strcpy (func, "getpoolconf");
 	if ((s = fopen (stgconfigfile, "r")) == NULL) {
-		stglogit (func, STG23, stgconfigfile);
+		sendrep(&rpfd, MSG_ERR, STG23, stgconfigfile);
 		return (ESTCONF);
 	}
 	
@@ -300,7 +300,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		while ((p = strtok (NULL, " \t\n")) != NULL) {
 			if (strcmp (p, "MIGRATOR") == 0) {
 				if (gotit != 0) {
-					stglogit (func, "STG29 - Bad MIGRATOR constructs\n");
+					sendrep(&rpfd, MSG_ERR, "STG29 - Bad MIGRATOR construct\n");
 					errflg++;
 					goto reply;
 				}
@@ -310,7 +310,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		}
 	}
 	if (nbpool == 0) {
-		stglogit (func, STG29);
+		sendrep (&rpfd, MSG_ERR, STG29);
 		errflg++;
 		goto reply;
 	}
@@ -346,12 +346,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			nbpool_ent = 0;
 			pool_p++;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG25, "pool");	/* name missing */
+				sendrep (&rpfd, MSG_ERR, STG25, "pool");	/* name missing */
 				errflg++;
 				goto reply;
 			}
 			if ((int) strlen (p) > CA_MAXPOOLNAMELEN) {
-				stglogit (func, STG27, "pool", p);
+				sendrep (&rpfd, MSG_ERR, STG27, "pool", p);
 				errflg++;
 				goto reply;
 			}
@@ -365,51 +365,51 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				if (strcmp (p, "DEFSIZE") == 0) {
 					int checkrc;
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "DEFSIZE in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
-						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "DEFSIZE in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					pool_p->defsize = strutou64(p);
 					if (pool_p->defsize <= 0) {
 						/* Well, it can not be < 0, strictly speaking */
-						stglogit (func, STG26, "DEFSIZE in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "DEFSIZE in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					if (checkrc == 0) pool_p->defsize *= ONE_MB; /* Not unit : default MB */
 				} else if ((strcmp (p, "MINFREE") == 0) || (strcmp (p, "GC_STOP_THRESH") == 0)) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "GC_STOP_THRESH (or MINFREE) in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "GC_STOP_THRESH (or MINFREE) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->gc_stop_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->gc_stop_thresh < 0) {
-						stglogit (func, STG26, "GC_STOP_THRESH (or MINFREE) pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "GC_STOP_THRESH (or MINFREE) pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "GC_START_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "GC_START_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "GC_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->gc_start_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->gc_start_thresh < 0) {
-						stglogit (func, STG26, "GC_START_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "GC_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MAX_SETRETENP") == 0) {
 					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MAX_SETRETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -445,9 +445,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 					if (stage_strtoi(&(pool_p->max_setretenp), p, &dp, 0) != 0) {
 						if (serrno != ERANGE) {
-							stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "MAX_SETRETENP in pool", pool_p->name);
 						} else {
-							stglogit (func, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
 						}
 						errflg++;
 						goto reply;
@@ -458,7 +458,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						if (thisunit != ONE_SECOND) {
 							/* Again out of range ? */
 							if (pool_p->max_setretenp > (INT_MAX / thisunit)) {
-								stglogit (func, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
+								sendrep (&rpfd, MSG_ERR, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
 								errflg++;
 								goto reply;
 							} else {
@@ -467,14 +467,14 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						}
 					}
 					if (pool_p->max_setretenp == 0) {
-						stglogit (func, STG26, "MAX_SETRETENP (should be <0 xor >0) in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MAX_SETRETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "PUT_FAILED_RETENP") == 0) {
 					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -510,9 +510,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 					if (stage_strtoi(&(pool_p->put_failed_retenp), p, &dp, 0) != 0) {
 						if (serrno != ERANGE) {
-							stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
 						} else {
-							stglogit (func, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
 						}
 						errflg++;
 						goto reply;
@@ -523,7 +523,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						if (thisunit != ONE_SECOND) {
 							/* Again out of range ? */
 							if (pool_p->put_failed_retenp > (INT_MAX / thisunit)) {
-								stglogit (func, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
+								sendrep (&rpfd, MSG_ERR, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
 								errflg++;
 								goto reply;
 							} else {
@@ -532,14 +532,14 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						}
 					}
 					if (pool_p->put_failed_retenp == 0) {
-						stglogit (func, STG26, "PUT_FAILED_RETENP (should be <0 xor >0) in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "PUT_FAILED_RETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "STAGEOUT_RETENP") == 0) {
 					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -575,9 +575,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 					if (stage_strtoi(&(pool_p->stageout_retenp), p, &dp, 0) != 0) {
 						if (serrno != ERANGE) {
-							stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
 						} else {
-							stglogit (func, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
 						}
 						errflg++;
 						goto reply;
@@ -588,7 +588,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						if (thisunit != ONE_SECOND) {
 							/* Again out of range ? */
 							if (pool_p->stageout_retenp > (INT_MAX / thisunit)) {
-								stglogit (func, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
+								sendrep (&rpfd, MSG_ERR, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
 								errflg++;
 								goto reply;
 							} else {
@@ -597,14 +597,14 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						}
 					}
 					if (pool_p->stageout_retenp == 0) {
-						stglogit (func, STG26, "STAGEOUT_RETENP (should be <0 xor >0) in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "STAGEOUT_RETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "STAGEALLOC_RETENP") == 0) {
 					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -640,9 +640,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 					if (stage_strtoi(&(pool_p->stagealloc_retenp), p, &dp, 0) != 0) {
 						if (serrno != ERANGE) {
-							stglogit (func, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
 						} else {
-							stglogit (func, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
+							sendrep (&rpfd, MSG_ERR, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
 						}
 						errflg++;
 						goto reply;
@@ -653,7 +653,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						if (thisunit != ONE_SECOND) {
 							/* Again out of range ? */
 							if (pool_p->stagealloc_retenp > (INT_MAX / thisunit)) {
-								stglogit (func, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
+								sendrep (&rpfd, MSG_ERR, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
 								errflg++;
 								goto reply;
 							} else {
@@ -662,19 +662,19 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						}
 					}
 					if (pool_p->stagealloc_retenp == 0) {
-						stglogit (func, STG26, "STAGEALLOC_RETENP (should be <0 xor >0) in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "STAGEALLOC_RETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp(p, "GC") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL ||
 						strchr (p, ':') == NULL ) {
-						stglogit (func, STG26, "GC in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "GC [RFIO syntax, with hostname, required] in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					if ((int) strlen(p) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-						stglogit (func, STG27, "garbage collector", p);
+						sendrep (&rpfd, MSG_ERR, STG27, "garbage collector", p);
 						errflg++;
 						goto reply;
 					}
@@ -685,18 +685,18 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					pool_p->export_hsm = 1;
 				} else if (strcmp (p, "MIGRATOR") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG25, "migrator");	/* name missing */
+						sendrep (&rpfd, MSG_ERR, STG25, "migrator");	/* name missing */
 						errflg++;
 						goto reply;
 					}
 					if ((int) strlen (p) > CA_MAXMIGRNAMELEN) {
-						stglogit (func, STG27, "migrator", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG27, "migrator", p);
 						errflg++;
 						goto reply;
 					}
 					if (pool_p->migr_name[0] != '\0') {
 						/* Yet defined !? */
-						stglogit (func, STG26, "MIGRATOR in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIGRATOR in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -717,37 +717,37 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 				} else if (strcmp (p, "MIG_START_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "MIG_START_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->mig_start_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->mig_start_thresh < 0) {
-						stglogit (func, STG26, "MIG_START_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_START_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MIG_STOP_THRESH") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					stage_strtoi(&(pool_p->mig_stop_thresh), p, &dp, 10);
 					if (*dp != '\0' || pool_p->mig_stop_thresh < 0) {
-						stglogit (func, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_STOP_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "MIG_DATA_THRESH") == 0) {
 					int checkrc;
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
-						stglogit (func, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
+						sendrep (&rpfd, MSG_ERR, STG26, "MIG_DATA_THRESH in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -755,7 +755,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					if (checkrc == 0) pool_p->mig_data_thresh *= ONE_MB; /* Not unit : default MB */
 					/* It is allowed to have pool_p->mig_data_thresh == 0 */
 				} else {
-					stglogit (func, STG26, "pool", pool_p->name);
+					sendrep (&rpfd, MSG_ERR, STG26, "pool", pool_p->name);
 					errflg++;
 					goto reply;
 				}
@@ -767,12 +767,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			nbpool_ent = -1;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG30);	/* name missing */
+				sendrep (&rpfd, MSG_ERR, STG30);	/* name missing */
 				errflg++;
 				goto reply;
 			}
 			if ((int) strlen (p) > CA_MAXPOOLNAMELEN) {
-				stglogit (func, STG27, "pool", p);
+				sendrep (&rpfd, MSG_ERR, STG27, "pool", p);
 				errflg++;
 				goto reply;
 			}
@@ -784,12 +784,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			nbpool_ent = -1;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG30);	/* name missing */
+				sendrep (&rpfd, MSG_ERR, STG30);	/* name missing */
 				errflg++;
 				goto reply;
 			}
 			if ((int) strlen (p) > CA_MAXPOOLNAMELEN) {
-				stglogit (func, STG27, "pool", p);
+				sendrep (&rpfd, MSG_ERR, STG27, "pool", p);
 				errflg++;
 				goto reply;
 			}
@@ -801,12 +801,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			nbpool_ent = -1;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG30);	/* name missing */
+				sendrep (&rpfd, MSG_ERR, STG30);	/* name missing */
 				errflg++;
 				goto reply;
 			}
 			if ((int) strlen (p) > ((10*(CA_MAXPOOLNAMELEN + 1)) - 1)) {
-				stglogit (func, STG27, "pool", p);
+				sendrep (&rpfd, MSG_ERR, STG27, "pool", p);
 				errflg++;
 				goto reply;
 			}
@@ -820,26 +820,26 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			nbpool_ent = -1;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG28);
+				sendrep (&rpfd, MSG_ERR, STG28);
 				errflg++;
 				goto reply;
 			}
 			if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
-				stglogit (func, STG28);
+				sendrep (&rpfd, MSG_ERR, STG28);
 				errflg++;
 				goto reply;
 			}
 			defsize = strutou64(p);
 			if (defsize <= 0) {
 				/* Cannot be < 0, strictly speaking */
-				stglogit (func, STG28);
+				sendrep (&rpfd, MSG_ERR, STG28);
 				errflg++;
 				goto reply;
 			}
 			if (checkrc == 0) defsize *= ONE_MB; /* Not unit : default MB */
 		} else {
 			if (nbpool_ent < 0) {
-				stglogit (func, STG26, "pool", "");
+				sendrep (&rpfd, MSG_ERR, STG26, "pool", "");
 				errflg++;
 				goto reply;
 			}
@@ -854,13 +854,13 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		if (nbpool == 1) {
 			strcpy (defpoolname, pools->name);
 		} else {
-			stglogit (func, STG30);
+			sendrep (&rpfd, MSG_ERR, STG30);
 			errflg++;
 			goto reply;
 		}
 	} else {
 		if (! isvalidpool (defpoolname)) {
-			stglogit (func, STG32, defpoolname);
+			sendrep (&rpfd, MSG_ERR, STG32, defpoolname);
 			errflg++;
 			goto reply;
 		}
@@ -869,7 +869,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		strcpy (defpoolname_in, defpoolname);
 	} else {
 		if (! isvalidpool (defpoolname_in)) {
-			stglogit (func, STG32, defpoolname_in);
+			sendrep (&rpfd, MSG_ERR, STG32, defpoolname_in);
 			errflg++;
 			goto reply;
 		}
@@ -883,7 +883,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		if ((p = strtok(defpoolname_out, ":")) != NULL) {
 			while (1) {
 				if (! isvalidpool (p)) {
-					stglogit (func, STG32, p);
+					sendrep (&rpfd, MSG_ERR, STG32, p);
 					errflg++;
 					strcpy(defpoolname_out, savdefpoolname_out);
 					goto reply;
@@ -911,7 +911,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (pool_p->gc_start_thresh >= pool_p->gc_stop_thresh) {
 			if ((pool_p->gc_start_thresh != 0) || (pool_p->gc_stop_thresh != 0)) {
-				stglogit (func, STG163, pool_p->name, pool_p->gc_start_thresh, pool_p->gc_stop_thresh);
+				sendrep (&rpfd, MSG_ERR, STG163, pool_p->name, pool_p->gc_start_thresh, pool_p->gc_stop_thresh);
 				errflg++;
 				goto reply;
 			}
@@ -925,7 +925,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		for (j = 0, migr_p = migrators; j < nbmigrator; j++, migr_p++)
 			if (strcmp (pool_p->migr_name, migr_p->name) == 0) break;
 		if (nbmigrator == 0 || j >= nbmigrator) {
-			stglogit (func, STG55, pool_p->migr_name);
+			sendrep (&rpfd, MSG_ERR, STG55, pool_p->migr_name);
 			errflg++;
 			goto reply;
 		}
@@ -950,7 +950,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			elemp = pool_p->elemp;
 			if (pool_p->defsize == 0) pool_p->defsize = defsize;
 			if (pool_p->defsize <= 0) {
-				stglogit(func,
+				sendrep(&rpfd, MSG_ERR,
 						 "### CONFIGURATION ERROR : POOL %s with DEFSIZE <= 0\n",
 						 pool_p->name);
 				errflg++;
@@ -960,6 +960,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					  pool_p->name, u64tostru(pool_p->defsize, tmpbuf, 0), pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
 			stglogit (func,".... GC %s\n",
 					  *(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
+			if (*(pool_p->gc) == '\0') {
+				sendrep (&rpfd, MSG_ERR, STG26, "pool [no garbage collector]", pool_p->name);
+				errflg++;
+				goto reply;
+			}
 			stglogit (func,".... NO_FILE_CREATION %s\n",
 					  (pool_p->no_file_creation ? "YES (!= 0)" : "NO (== 0)"));
 			stglogit (func,".... EXPORT_HSM %s\n",
@@ -995,18 +1000,18 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		else if (strcmp (p, "DEFSIZE") == 0) continue;
 		else {
 			if ((int) strlen (p) > CA_MAXHOSTNAMELEN) {
-				stglogit (func, STG26, "pool element [host too long]", p);
+				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with hostname too long]", p);
 				errflg++;
 				goto reply;
 			}
 			strcpy (elemp->server, p);
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
-				stglogit (func, STG26, "pool element [no path]", elemp->server);
+				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with pathname]", elemp->server);
 				errflg++;
 				goto reply;
 			}
 			if ((int) strlen (p) >= MAXPATH) {
-				stglogit (func, STG26, "pool element [path too long]", p);
+				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with pathname too long]", p);
 				errflg++;
 				goto reply;
 			}
@@ -1023,11 +1028,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
 			PRE_RFIO;
 			if (rfio_access (path, W_OK|F_OK|X_OK|R_OK) < 0) {
-				stglogit (func, STG02, path, "rfio_access", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_access", rfio_serror());
 			} else {
 				PRE_RFIO;
 				if (rfio_statfs (path, &st) < 0) {
-					stglogit (func, STG02, path, "rfio_statfs", rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_statfs", rfio_serror());
 				} else {
 					char tmpbuf1[21];
 					char tmpbuf2[21];
@@ -1126,7 +1131,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					if (strchr(gc_host,'.') == NULL) {
 						/* This is not yet fully qualified hostname */
 						if ((gc_host2 = (char *) malloc(strlen(gc_host) + 1 + strlen(localdomain) + 1)) == NULL) {
-							stglogit (func, "... Pool %s : malloc error building fully qualified GC %s hostname: %s\n", pool_p->name, pool_p->gc, strerror(errno));
+							sendrep (&rpfd, MSG_ERR, "... Pool %s : malloc error building fully qualified GC %s hostname: %s\n", pool_p->name, pool_p->gc, strerror(errno));
 						} else {
 							strcpy(gc_host2,gc_host);
 							strcat(gc_host2,".");
@@ -1140,7 +1145,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				}
 				/* Note : gc_host can be NULL - this is valid in the call to Cupv_check() */
 				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, localhost, P_ADMIN) != 0) {
-					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv (%s)\n", pool_p->name, pool_p->gc, gc_host, localhost, sstrerror(serrno));
+					sendrep (&rpfd, MSG_ERR, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] is probably needed in Cupv (%s)\n", pool_p->name, pool_p->gc, gc_host, localhost, sstrerror(serrno));
 				} else {
 					stglogit (func, "... Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s,ADMIN] ok\n", pool_p->name, pool_p->gc, gc_host, localhost);
 				}
