@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 16:14:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/22 08:30:47 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 16:14:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/22 08:30:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -93,7 +93,7 @@ static int getVIDFromRtcpd(
      rtcpTapeRequest_t *tapereq;
 {
   rtcpHdr_t hdr;
-  int rc;
+  int rc, acknMsg;
 
   if ( tapereq == NULL ) {
     serrno = EINVAL;
@@ -103,6 +103,7 @@ static int getVIDFromRtcpd(
   hdr.reqtype = RTCP_TAPEERR_REQ;
   hdr.len = -1;
   *tapereq->vid = '\0';
+  acknMsg = 0;
   rc = rtcp_SendReq(
                     origSocket,
                     &hdr,
@@ -111,6 +112,7 @@ static int getVIDFromRtcpd(
                     NULL
                     );
   if ( rc != -1 ) {
+    acknMsg = 1;
     rc = rtcp_RecvAckn(
                        origSocket,
                        hdr.reqtype
@@ -122,7 +124,10 @@ static int getVIDFromRtcpd(
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SYSCALL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    (acknMsg == 0 ? "rtcp_SendReq()" : "rtcp_RecvAckn()"),
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
@@ -130,6 +135,7 @@ static int getVIDFromRtcpd(
                     );
     return(-1);
   }
+  acknMsg = 0;
   rc = rtcp_RecvReq(
                     origSocket,
                     &hdr,
@@ -138,6 +144,7 @@ static int getVIDFromRtcpd(
                     NULL
                     );
   if ( rc != -1 ) {
+    acknMsg = 1;
     rc = rtcp_SendAckn(
                        origSocket,
                        hdr.reqtype
@@ -149,7 +156,10 @@ static int getVIDFromRtcpd(
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SYSCALL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    (acknMsg == 0 ? "rtcp_RecvReq()" : "rtcp_SendAckn()"),
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
@@ -364,6 +374,73 @@ static int updateRequestList(
     CLIST_INSERT(requestList,iterator);
   }
   return(found);
+}
+
+static void logConnection(
+                         s
+                         )
+     SOCKET s;
+{
+    char remhost[CA_MAXHOSTNAMELEN+1];
+    struct sockaddr_in from;
+    struct hostent *hp;
+    int fromlen,rc;
+
+    if ( s == INVALID_SOCKET ) return;
+
+    fromlen = sizeof(from);
+    rc = getpeername(s,(struct sockaddr *)&from,&fromlen);
+    if ( rc == SOCKET_ERROR ) {
+      (void)dlf_write(
+                      mainUuid,
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "getpeername()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      strerror(errno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      return;
+    }
+
+    hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
+                        from.sin_family);
+    if ( hp == NULL ) {
+      (void)dlf_write(
+                      mainUuid,
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cgethostbyaddr()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      return;
+    }
+
+    strncpy(remhost,hp->h_name,sizeof(remhost)-1);
+
+    (void)dlf_write(
+                    mainUuid,
+                    DLF_LVL_SYSTEM,
+                    RTCPCLD_MSG_NEWCONNECT,
+                    (struct Cns_fileid *)NULL,
+                    1,
+                    "REMHOST",
+                    DLF_MSG_PARAM_STR,
+                    remhost
+                    );
+     return;
 }
 
 static int checkVdqmReqs() 
@@ -797,6 +874,7 @@ int rtcpcld_main(
        * Send an empty tapereq to tell the server that we want to 
        * know the real request
        */
+      logConnection(acceptSocket);
       errno = serrno = 0;
       memset(&tapereq,'\0',sizeof(tapereq));
       rc = getVIDFromRtcpd(
