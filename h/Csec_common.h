@@ -32,8 +32,6 @@ int *C__Csec_errno();
 
 /** Structure with thread specific information */
 struct Csec_api_thread_info {
-/*   char *errbufp; */
-/*   int	errbuflen; */
   char  errbuf[ERRBUFSIZE+1];
   int	sec_errno;
   int   init_done;
@@ -41,14 +39,15 @@ struct Csec_api_thread_info {
   char  trace_file[CA_MAXNAMELEN+1];
 };
 
+/* Structure containing protocol information */
 typedef struct Csec_protocol {
   char id[PROTID_SIZE+1];
 } Csec_protocol;
 
 /** Structure holding the context */ 
 typedef struct Csec_context {
+  int magic;
   U_LONG flags; /* Flags containing status of  context structure */
-  /* char protid[PROTID_SIZE+1]; */    /* Protocol for which the context has been initialized */
   void *shhandle; /* Handle to the shared library */
   void *credentials; /*     gss_cred_id_t credentials; */
   void *connection_context;     /*     gss_ctx_id_t context; */
@@ -74,6 +73,7 @@ typedef struct Csec_context {
   /* Used on the server only ! */
   int server_service_type;
 
+  /* Pointers to the functions in the loaded shared libraries */
   int (*Csec_init_context)(struct Csec_context *);
   int (*Csec_reinit_context)(struct Csec_context *);
   int (*Csec_delete_connection_context)(struct Csec_context *);
@@ -84,12 +84,12 @@ typedef struct Csec_context {
   int (*Csec_client_establish_context)(struct Csec_context *, int);
   int (*Csec_map2name)(struct Csec_context *, char *, char *, int);
   int (*Csec_get_service_name)(struct Csec_context *, int, char *, char *, char *, int);
-  
+
 } Csec_context;
 
 int DLL_DECL check_ctx _PROTO ((Csec_context *, char *));
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context *)); 
-int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context *, int, int)) ;
+/* int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context *, int, int)) ; */
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
 char *DLL_DECL Csec_geterrmsg _PROTO(());
 int DLL_DECL Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
@@ -112,27 +112,27 @@ int DLL_DECL  Csec_server_establish_context_ext _PROTO ((Csec_context *ctx,
                                                          int s,
                                                          char *buf,
                                                          int len));
-
 int DLL_DECL Csec_map2name _PROTO((Csec_context *ctx,
                                    char *principal,
                                    char *name,
                                    int maxnamelen));
-
-
 int DLL_DECL Csec_get_service_name _PROTO ((Csec_context *ctx,
                                             int service_type,
                                             char *host,
                                             char *domain,
                                             char *service_name,
                                             int service_namelen));
-
 int DLL_DECL Csec_map2id _PROTO((Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid));
 int DLL_DECL Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
 int DLL_DECL Csec_get_peer_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
                                                  char *service_name, int service_namelen));
 int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
                                                   char *service_name, int service_namelen));
-
-
+int DLL_DECL  Csec_delete_connection_context _PROTO ((Csec_context *));
+int DLL_DECL  Csec_delete_creds _PROTO ((Csec_context *));
+int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context *, 
+						   int));
+int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context *, 
+						   int));
 
 #endif /* _CSEC_COMMON_H */

@@ -8,6 +8,10 @@
 /* Magic number for authentication tokens */
 #define CSEC_TOKEN_MAGIC_1   0xCA03
 
+/* Magic number to ensure the structure is properly initialized */
+#define CSEC_CONTEXT_MAGIC_CLIENT_1 0xCE030C
+#define CSEC_CONTEXT_MAGIC_SERVER_1 0xCE0305
+
 /** Various token types */
 #define CSEC_TOKEN_TYPE_PROTOCOL_REQ   0x1
 #define CSEC_TOKEN_TYPE_PROTOCOL_RESP  0x2
