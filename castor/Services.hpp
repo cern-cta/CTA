@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/07 15:59:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/08 08:37:33 $ $Author: sponcec3 $
  *
  *
  *
@@ -59,15 +59,6 @@ namespace castor {
      */
     IService* service (const std::string name,
                        const unsigned int id = 0) throw();
-
-    /**
-     * gets a global service by name. By global we mean
-     * that this service may be shared among threads.
-     * If id not 0 and the service does not exist, it
-     * is created.
-     */
-    static IService* globalService (const std::string name,
-                                    const unsigned int id = 0) throw();
 
     /**
      * gets a conversion service by name.
