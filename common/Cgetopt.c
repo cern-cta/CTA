@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.6 $ $Date: 2004/04/22 16:42:51 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.7 $ $Date: 2004/04/28 14:24:44 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -100,6 +100,7 @@ _Cgetopt_internal(nargc, nargv, ostr)
     return(-1);
 
   }
+  place = EMSG;
 
   if (Coptreset || !*place) {		/* update scanning pointer */
     Coptreset = 0;
