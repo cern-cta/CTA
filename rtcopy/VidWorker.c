@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:43:40 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:43:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/25 15:35:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -819,6 +819,11 @@ static int vidWorker(
       return(-1);
     }
   }
+
+  /*
+   * Put the vwAddress in the database to allow client to send abort
+   */
+  (void)rtcpcld_setVidWorkerAddress(vidChildTape,port);
   
   /*
    * Run the request;
@@ -1415,6 +1420,12 @@ int main(
                   );
   if ( rc == -1 ) {
     (void)rtcpcld_setVIDFailedStatus(vidChildTape);
+  } else {
+    (void)rtcpcld_updateVIDStatus(
+                                  vidChildTape,
+                                  TAPE_MOUNTED,
+                                  TAPE_FINISHED
+                                  );
   }
   
   return(retval);

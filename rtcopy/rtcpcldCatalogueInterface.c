@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/24 14:42:11 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/24 14:42:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/25 15:35:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1505,6 +1505,124 @@ int rtcpcld_updateVIDStatus(
     (void)notifyTape(tapeItem);
   }
   C_IAddress_delete(iAddr);
+  return(0);
+}
+
+/**
+ * This method is called from methods used by the VidWorker childs
+ * Update the vwAddress (VidWorker address) for receiving RTCOPY kill
+ * requests. 
+ */
+int rtcpcld_setVidWorkerAddress(
+                                tape,
+                                port
+                                )
+     tape_list_t *tape;
+     int port;
+{
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  struct Cstager_Tape_t *tapeItem = NULL;
+  enum Cstager_TapeStatusCodes_t cmpStatus;  
+  char myHost[CA_MAXHOSTNAMELEN+1], vwAddress[CA_MAXHOSTNAMELEN+12], *p;
+  int rc = 0, save_serrno;
+
+  if ( tape == NULL || port < 0 ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  (void)gethostname(myHost,sizeof(myHost)-1);
+  sprintf(vwAddress,"%s:%d",myHost,port);
+  
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+
+  rc = findTape(&(tape->tapereq),&tapeItem,NULL);
+  if ( tapeItem == NULL ) {
+    (void)updateTapeFromDB(NULL);
+    rc = findTape(&(tape->tapereq),&tapeItem,NULL);
+  }
+
+  if ( rc != 1 || tapeItem == NULL ) {
+    if ( dontLog == 0 ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_INTERNAL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+1,
+                      "REASON",
+                      DLF_MSG_PARAM_STR,
+                      "Tape request could not be found in internal list",
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+  iObj = Cstager_Tape_getIObject(tapeItem);
+  rc = C_Services_updateObj(*svcs,iAddr,iObj);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    C_IAddress_delete(iAddr);
+    if ( dontLog == 0 ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "C_Services_updateObj()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      C_Services_errorMsg(*svcs),
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
+    serrno = save_serrno;
+    return(-1);
+  }
+  Cstager_Tape_setVwAddress(tapeItem,vwAddress);
+  rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    C_IAddress_delete(iAddr);
+    if ( dontLog == 0 ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_DBSVC,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "DBSVCCALL",
+                      DLF_MSG_PARAM_STR,
+                      "C_Services_updateRep()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      "DB_ERROR",
+                      DLF_MSG_PARAM_STR,
+                      C_Services_errorMsg(*svcs),
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
+    serrno = save_serrno;
+    return(-1);
+  }
+  C_IAddress_delete(iAddr);
+  (void)notifyTape(currentTape);
   return(0);
 }
 

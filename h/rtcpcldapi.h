@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/24 14:39:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/25 15:33:40 $ $Author: obarring $
  *
  * 
  *
@@ -191,4 +191,9 @@ int rtcpcldc_appendFileReqs _PROTO((
                                     tape_list_t *tape,
                                     file_list_t *file
                                     ));
+
+int rtcpcldc_kill _PROTO((
+                          tape_list_t *tape
+                          ));
+
 #endif /* H_RTCPCLDAPI_H */

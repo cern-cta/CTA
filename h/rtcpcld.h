@@ -39,6 +39,7 @@ typedef struct RtcpcldTapeList
 {
   tape_list_t *tape;
   enum Cstager_TapeStatusCodes_t oldStatus;
+  char vwAddress[CA_MAXHOSTNAMELEN+12];
   struct Cstager_Tape_t *tp;
   struct RtcpcldSegmentList *segments;
   struct RtcpcldTapeList *next;
@@ -147,6 +148,11 @@ int rtcpcld_findTapeKey _PROTO((
 void rtcpcld_setTapeKey _PROTO((
                                 ID_TYPE
                                 ));
+
+int rtcpcld_setVidWorkerAddress _PROTO((
+                                        tape_list_t *,
+                                        int
+                                        ));
 
 #if defined(CASTOR_STAGER_TAPESTATUSCODES_H) && defined(CASTOR_STAGER_SEGMENTSTATUSCODES_H)
 int rtcpcld_updateVIDStatus _PROTO((

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/24 14:38:45 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.13 $ $Date: 2004/06/24 14:38:45 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.14 $ $Date: 2004/06/25 15:35:56 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -530,7 +530,7 @@ static int getUpdates(
   tape_list_t *tape;
   file_list_t *file;
   int rc, save_serrno;
-  char *segmCksumAlgorithm, *errmsgtxt;
+  char *segmCksumAlgorithm, *errmsgtxt, *vwAddress;
   unsigned char *blockid;
   ID_TYPE key;
 
@@ -566,6 +566,19 @@ static int getUpdates(
       Cstager_Tape_status(tpIterator->tp,&tpNewStatus);
       rtcp_log(LOG_DEBUG,"getUpdates() tape status (old=%d, new=%d)\n",
                tpOldStatus,tpNewStatus);
+      Cstager_Tape_vwAddress(tpIterator->tp,(CONST char **)&vwAddress);
+      if ( (vwAddress != NULL) &&
+           (strncmp(tpIterator->vwAddress,
+                    vwAddress,
+                    sizeof(tpIterator->vwAddress))) ) {
+        strncpy(
+                tpIterator->vwAddress,
+                vwAddress,
+                sizeof(tpIterator->vwAddress)
+                );
+        rtcp_log(LOG_DEBUG,"getUpdates() VidWorker address %s\n",
+                 tpIterator->vwAddress);
+      }
       if ( tpOldStatus != tpNewStatus ) {
         tpIterator->oldStatus = tpNewStatus;
         if ( tpNewStatus == TAPE_MOUNTED ) {
@@ -1070,9 +1083,7 @@ static int deleteFromDB(tpItem)
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
   if ( rc == -1 ) {
-    save_serrno = serrno;
     LOG_FAILED_CALL("C_BaseAddress_create()");
-    serrno = save_serrno;
     return(-1);
   }
 
@@ -1081,9 +1092,7 @@ static int deleteFromDB(tpItem)
   dbSvc = NULL;
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
-    save_serrno = serrno;
     LOG_FAILED_CALL("rtcpcld_getDbSvc()");
-    serrno = save_serrno;
     return(-1);
   }
 
@@ -1101,6 +1110,88 @@ static int deleteFromDB(tpItem)
   }
 
   C_IAddress_delete(iAddr);
+  return(0);
+}
+
+int rtcpcldc_kill(
+                  tape
+                  )
+     tape_list_t *tape;
+{
+  RtcpcldTapeList_t *tpList;
+  rtcpHdr_t hdr;
+  char *server, *p;
+  int rc, save_serrno, port, noLock = 0;
+  SOCKET abortSocket = INVALID_SOCKET;
+
+  if ( tape == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  /* Try to get the lock but don't give up if not acquired */
+  rc = Cmutex_lock(tape,0); 
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("Cmutex_lock()");
+    noLock = 1;
+  }
+  
+  rc = rtcpcld_findTpReqMap(tape,&tpList);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_findTpReqMap()");
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  if ( rc == 0 || tpList == NULL ) {
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = ENOENT;
+    return(-1);
+  }
+
+  p = strstr(tpList->vwAddress,":");
+  if ( p == NULL ) {
+    rtcp_log(LOG_ERR,"Incorrect format for VidWorker address: %s\n",
+             tpList->vwAddress);
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = EINVAL;
+    return(-1);
+  }
+  *p = '\0';
+  server = tpList->vwAddress;
+  port = atoi(++p);
+
+  rc = rtcp_Connect(&abortSocket,server,&port);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcp_Connect()");
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  hdr.magic = RTCOPY_MAGIC;
+  hdr.reqtype = RTCP_KILLJID_REQ;
+  hdr.len = 0;
+
+  rc = rtcp_SendReq(&abortSocket,&hdr,NULL,NULL,NULL);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcp_SendReq(RTCP_KILLJID_REQ)");
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  rc = rtcp_RecvAckn(&abortSocket,hdr.reqtype);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcp_RecvAckn(RTCP_KILLJID_REQ)");
+    if ( noLock == 0 ) (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  (void)rtcp_CloseConnection(&abortSocket);
   return(0);
 }
 
