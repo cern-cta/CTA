@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.7 2000/09/01 13:14:17 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.8 2000/09/13 17:21:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 13:14:17 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.8 $ $Date: 2000/09/13 17:21:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.7 $ $Date: 20
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -29,48 +30,138 @@ static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.7 $ $Date: 20
 #include "stage.h"
 #include "u64subr.h"
 #include "Cpwd.h"
+#include "Castor_limits.h"
 
-int _stage_xxx_hsm _PROTO((int, char *, int, char *, stage_hsm_t *));
+int _stage_xxx_hsm _PROTO((int, char *, char *, char *, int, stage_hsm_t *));
 
-int DLL_DECL stage_out_hsm(stghost,Kopt,diskpool,hsmstruct)
+int DLL_DECL stage_out_hsm(stghost,stgpool,stguser,Kopt,hsmstruct)
      char *stghost;
+     char *stgpool;
+     char *stguser;
      int Kopt;
-     char *diskpool;
      stage_hsm_t *hsmstruct;
 {
-  return(_stage_xxx_hsm(STAGEOUT,stghost,Kopt,diskpool,hsmstruct));
+  char stgpool_ok[CA_MAXPOOLNAMELEN + 1];
+  char stguser_ok[CA_MAXUSRNAMELEN + 1];
+  char *p;
+
+  if (stgpool == NULL) {
+    if ((p = getenv("STAGE_POOL")) != NULL) {
+      strncpy(stgpool_ok,p,CA_MAXPOOLNAMELEN);
+      stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+    } else {
+      stgpool_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stgpool_ok,stgpool,CA_MAXPOOLNAMELEN);
+    stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+  }
+
+  if (stguser == NULL) {
+    if ((p = getenv("STAGE_USER")) != NULL) {
+      strncpy(stguser_ok,p,CA_MAXUSRNAMELEN);
+      stguser_ok[CA_MAXUSRNAMELEN] = '\0';
+    } else {
+      stguser_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stguser_ok,stguser,CA_MAXUSRNAMELEN);
+    stguser_ok[CA_MAXUSRNAMELEN] = '\0';
+  }
+
+  return(_stage_xxx_hsm(STAGEOUT,stghost,stgpool_ok,stguser_ok,Kopt,hsmstruct));
 }
 
-int DLL_DECL stage_in_hsm(stghost,diskpool,hsmstruct)
+int DLL_DECL stage_in_hsm(stghost,stgpool,stguser,hsmstruct)
      char *stghost;
-     char *diskpool;
+     char *stgpool;
+     char *stguser;
      stage_hsm_t *hsmstruct;
 {
-  return(_stage_xxx_hsm(STAGEIN,stghost,0,diskpool,hsmstruct));
+  char stgpool_ok[CA_MAXPOOLNAMELEN + 1];
+  char stguser_ok[CA_MAXUSRNAMELEN + 1];
+  char *p;
+
+  if (stgpool == NULL) {
+    if ((p = getenv("STAGE_POOL")) != NULL) {
+      strncpy(stgpool_ok,p,CA_MAXPOOLNAMELEN);
+      stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+    } else {
+      stgpool_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stgpool_ok,stgpool,CA_MAXPOOLNAMELEN);
+    stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+  }
+
+  if (stguser == NULL) {
+    if ((p = getenv("STAGE_USER")) != NULL) {
+      strncpy(stguser_ok,p,CA_MAXUSRNAMELEN);
+      stguser_ok[CA_MAXUSRNAMELEN] = '\0';
+    } else {
+      stguser_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stguser_ok,stguser,CA_MAXUSRNAMELEN);
+    stguser_ok[CA_MAXUSRNAMELEN] = '\0';
+  }
+
+  return(_stage_xxx_hsm(STAGEIN,stghost,stgpool_ok,stguser_ok,0,hsmstruct));
 }
 
-int DLL_DECL stage_wrt_hsm(stghost,Kopt,diskpool,hsmstruct)
+int DLL_DECL stage_wrt_hsm(stghost,stgpool,Kopt,hsmstruct)
      char *stghost;
+     char *stgpool;
      int Kopt;
-     char *diskpool;
      stage_hsm_t *hsmstruct;
 {
-  return(_stage_xxx_hsm(STAGEWRT,stghost,Kopt,diskpool,hsmstruct));
+  char stgpool_ok[CA_MAXPOOLNAMELEN + 1];
+  char *p;
+
+  if (stgpool == NULL) {
+    if ((p = getenv("STAGE_POOL")) != NULL) {
+      strncpy(stgpool_ok,p,CA_MAXPOOLNAMELEN);
+      stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+    } else {
+      stgpool_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stgpool_ok,stgpool,CA_MAXPOOLNAMELEN);
+    stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+  }
+
+  return(_stage_xxx_hsm(STAGEWRT,stghost,stgpool_ok,NULL,Kopt,hsmstruct));
 }
 
-int DLL_DECL stage_cat_hsm(stghost,diskpool,hsmstruct)
+int DLL_DECL stage_cat_hsm(stghost,stgpool,hsmstruct)
      char *stghost;
-     char *diskpool;
+     char *stgpool;
      stage_hsm_t *hsmstruct;
 {
-  return(_stage_xxx_hsm(STAGECAT,stghost,0,diskpool,hsmstruct));
+  char stgpool_ok[CA_MAXPOOLNAMELEN + 1];
+  char *p;
+
+  if (stgpool == NULL) {
+    if ((p = getenv("STAGE_POOL")) != NULL) {
+      strncpy(stgpool_ok,p,CA_MAXPOOLNAMELEN);
+      stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+    } else {
+      stgpool_ok[0] = '\0';
+    }
+  } else {
+    strncpy(stgpool_ok,stgpool,CA_MAXPOOLNAMELEN);
+    stgpool_ok[CA_MAXPOOLNAMELEN] = '\0';
+  }
+
+  return(_stage_xxx_hsm(STAGECAT,stghost,stgpool_ok,NULL,0,hsmstruct));
 }
 
-int _stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
+int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
      int command;
      char *stghost;
+     char *stgpool;
+     char *stguser;
      int Kopt;
-     char *diskpool;
      stage_hsm_t *hsmstruct;
 {
   int c;
@@ -153,9 +244,14 @@ int _stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   default:
     break;
   }
-  if (diskpool != NULL) {
-    if (diskpool[0] != '\0') {
-      sendbuf_size += strlen("-p") + strlen(diskpool) + 2; /* -p option and value */
+  if (stgpool != NULL) {
+    if (stgpool[0] != '\0') {
+      sendbuf_size += strlen("-p") + strlen(stgpool) + 2; /* -p option and value */
+    }
+  }
+  if (stguser != NULL) {
+    if (stguser[0] != '\0') {
+      sendbuf_size += strlen("-u") + strlen(stguser) + 2; /* -u option and value */
     }
   }
   hsm = hsmstruct;
@@ -256,10 +352,17 @@ int _stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
     break;
   }
 
-  if (diskpool != NULL) {
-    if (diskpool[0] != '\0') {
+  if (stgpool != NULL) {
+    if (stgpool[0] != '\0') {
       marshall_STRING (sbp, "-p");
-      marshall_STRING (sbp, diskpool);
+      marshall_STRING (sbp, stgpool);
+      nargs += 2;
+    }
+  }
+  if (stguser != NULL) {
+    if (stguser[0] != '\0') {
+      marshall_STRING (sbp, "-u");
+      marshall_STRING (sbp, stguser);
       nargs += 2;
     }
   }

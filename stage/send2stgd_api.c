@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.9 2000/09/11 15:25:47 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.10 2000/09/13 17:21:50 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.9 $ $Date: 2000/09/11 15:25:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.10 $ $Date: 2000/09/13 17:21:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #if defined(_WIN32)
@@ -86,17 +87,27 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp;
+	struct servent *sp = NULL;
 	int stg_s;
 	char stghost[CA_MAXHOSTNAMELEN+1];
 	char *stagehost = STAGEHOST;
+	int stg_service = 0;
 
 	strcpy (func, "send2stgd");
 	link_rc = 0;
-	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
-		stage_errmsg (func, STG09, STG, "not defined in /etc/services");
-		serrno = SENOSSERV;
-		return (-1);
+	if ((p = getenv ("STAGE_PORT")) == NULL &&
+		(p = getconfent("STG", "PORT",0)) == NULL) {
+		if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
+			stage_errmsg (func, STG09, STG, "not defined in /etc/services");
+			serrno = SENOSSERV;
+			return (-1);
+		}
+	} else {
+		if ((stg_service = atoi(p)) <= 0) {
+			stage_errmsg (func, STG09, STG, "service from environment or configuration is <= 0");
+			serrno = SENOSSERV;
+			return (-1);
+		}
 	}
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
@@ -114,7 +125,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 		return (-1);
 	}
 	sin.sin_family = AF_INET;
-	sin.sin_port = sp->s_port;
+	sin.sin_port = (stg_service > 0 ? stg_service : sp->s_port);
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.21 2000/09/11 15:25:22 jdurand Exp $
+ * $Id: send2stgd.c,v 1.22 2000/09/13 17:21:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.21 $ $Date: 2000/09/11 15:25:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.22 $ $Date: 2000/09/13 17:21:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -95,10 +95,11 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp;
+	struct servent *sp = NULL;
 	int stg_s;
 	char stghost[CA_MAXHOSTNAMELEN+1];
 	char *stagehost = STAGEHOST;
+	int stg_service = 0;
 
 	strcpy (func, "send2stgd");
 #ifndef _WIN32
@@ -107,12 +108,21 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	sigaction (SIGCHLD, &sa, NULL);
 #endif
 	link_rc = 0;
-	nb_ovl = 0;
-	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
-		stage_errmsg (func, STG09, STG, "not defined in /etc/services");
-		serrno = SENOSSERV;
-		return (-1);
+	if ((p = getenv ("STAGE_PORT")) == NULL &&
+		(p = getconfent("STG", "PORT",0)) == NULL) {
+		if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
+			stage_errmsg (func, STG09, STG, "not defined in /etc/services");
+			serrno = SENOSSERV;
+			return (-1);
+		}
+	} else {
+		if ((stg_service = atoi(p)) <= 0) {
+			stage_errmsg (func, STG09, STG, "service from environment or configuration is <= 0");
+			serrno = SENOSSERV;
+			return (-1);
+		}
 	}
+	nb_ovl = 0;
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
 				(p = getconfent("STG", "HOST",0)) == NULL) {
@@ -129,7 +139,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 		return (-1);
 	}
 	sin.sin_family = AF_INET;
-	sin.sin_port = sp->s_port;
+	sin.sin_port = (stg_service > 0 ? stg_service : sp->s_port);
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
