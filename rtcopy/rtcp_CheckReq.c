@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.10 $ $Date: 2000/01/19 15:48:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.11 $ $Date: 2000/01/19 17:27:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -185,7 +185,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             /*
              * Tape read
              */
-            if ( strcmp(file->prev->filereq.file_path,filereq->file_path) == 0 )
+            if ( strcmp(filereq->file_path,".") != 0 &&
+                 strcmp(file->prev->filereq.file_path,filereq->file_path) == 0 )
                 filereq->concat = CONCAT;
             else
                 filereq->concat = NOCONCAT;
