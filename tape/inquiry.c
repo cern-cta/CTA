@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.2 $ $Date: 2001/01/24 08:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.3 $ $Date: 2001/10/12 12:24:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      inquiry - get information about the type of a drive */
@@ -44,8 +44,10 @@ unsigned char *inq_data;
 	int tapefd = -1;
 
 #if defined(_IBMR2)
-	if (strcmp (dvrname, "tape") == 0)
+	if (strcmp (dvrname, "tape") == 0) {
+		*inq_data = '\0';
 		return (0);
+	}
 #endif
 	ENTRY (inquiry);
 #if defined(_AIX) || defined(SOLARIS25) || defined(hpux)
@@ -67,9 +69,9 @@ unsigned char *inq_data;
                         if (fd < 0) close (tapefd);
 			RETURN (-1);
                 }
+		memcpy (inq_data, inqd.vendor_identification, 8);
+		memcpy (inq_data + 8, inqd.product_identification, 16);
         }
-	memcpy (inq_data, inqd.vendor_identification, 8);
-	memcpy (inq_data + 8, inqd.product_identification, 16);
 #else
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
