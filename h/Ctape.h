@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.5 $ $Date: 1999/10/20 09:08:10 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.6 $ $Date: 1999/11/07 16:02:18 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -160,6 +160,7 @@
 #define TP014	"TP014 - reserve not done\n"
 #define TP015	"TP015 - drive with specified characteristics does not exist\n"
 #define TP017	"TP017 - cannot use blp in write mode\n"
+#define TP018	"TP018 - duplicate option %s\n"
 #define TP020	"TP020 - mount tape %s(%s) %s on drive %s@%s for %s %d (%s) or reply cancel | drive name"
 #define TP021	"TP021 - label type mismatch: request %s, tape is %s\n"
 #define TP022	"TP022 - path exists already\n"
