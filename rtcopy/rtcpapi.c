@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.6 $ $Date: 2005/01/14 13:40:58 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.7 $ $Date: 2005/03/24 17:59:13 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -172,8 +172,11 @@ static int rtcpc_FixPath(file_list_t *file, int fn_size, int mode) {
    * is not given and has to be allocated by the stager itself 
    * (deferred space allocation). Otherwise we should check that the
    * path is valid.
+   * If filename begins with 'localhost' it is assumed to be
+   * on a shared filesystem. 
    */
-  if ( strcmp(filename,".") != 0 ) {
+  if ( (strcmp(filename,".") != 0) && 
+       (strstr(filename,"localhost") != filename) ) {
     /*
      * File name is local ?
      */
