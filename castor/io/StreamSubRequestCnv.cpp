@@ -44,7 +44,6 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -97,6 +96,7 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->protocol();
   ad->stream() << obj->poolName();
   ad->stream() << obj->xsize();
+  ad->stream() << obj->priority();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -126,6 +126,9 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   u_signed64 xsize;
   ad->stream() >> xsize;
   object->setXsize(xsize);
+  unsigned int priority;
+  ad->stream() >> priority;
+  object->setPriority(priority);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -154,12 +157,7 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->diskcopy(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
-    address->stream() << obj->parent().size();
-    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->parent().begin();
-         it != obj->parent().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
+    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -184,12 +182,8 @@ castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::bi
   obj->setDiskcopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskcopy));
   IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
-  unsigned int parentNb;
-  ad.stream() >> parentNb;
-  for (unsigned int i = 0; i < parentNb; i++) {
-    IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
-  }
+  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
 }

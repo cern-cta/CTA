@@ -291,23 +291,11 @@ namespace castor {
         /// SQL update statement object for member castorFile
         oracle::occi::Statement *m_updateCastorFileStatement;
 
-        /// SQL insert statement for member parent
-        static const std::string s_insertSubRequestStatementString;
+        /// SQL update statement for member parent
+        static const std::string s_updateSubRequestStatementString;
 
-        /// SQL insert statement object for member parent
-        oracle::occi::Statement *m_insertSubRequestStatement;
-
-        /// SQL delete statement for member parent
-        static const std::string s_deleteSubRequestStatementString;
-
-        /// SQL delete statement object for member parent
-        oracle::occi::Statement *m_deleteSubRequestStatement;
-
-        /// SQL select statement for member parent
-        static const std::string s_selectSubRequestStatementString;
-
-        /// SQL select statement object for member parent
-        oracle::occi::Statement *m_selectSubRequestStatement;
+        /// SQL update statement object for member parent
+        oracle::occi::Statement *m_updateSubRequestStatement;
 
         /// SQL update statement for member request
         static const std::string s_updateRequestStatementString;

@@ -158,6 +158,22 @@ int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, u_signed64* 
 int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of priority
+ * The priority defines in which order the files will be processed by the user when
+ * calling stage_get_next. The files of the SubRequest of same priority are given in
+ * a random order and lower priority files come first.
+ */
+int Cstager_SubRequest_priority(struct Cstager_SubRequest_t* instance, unsigned int* var);
+
+/**
+ * Set the value of priority
+ * The priority defines in which order the files will be processed by the user when
+ * calling stage_get_next. The files of the SubRequest of same priority are given in
+ * a random order and lower priority files come first.
+ */
+int Cstager_SubRequest_setPriority(struct Cstager_SubRequest_t* instance, unsigned int new_var);
+
+/**
  * Get the value of diskcopy
  */
 int Cstager_SubRequest_diskcopy(struct Cstager_SubRequest_t* instance, struct Cstager_DiskCopy_t** var);
@@ -178,19 +194,14 @@ int Cstager_SubRequest_castorFile(struct Cstager_SubRequest_t* instance, struct 
 int Cstager_SubRequest_setCastorFile(struct Cstager_SubRequest_t* instance, struct Cstager_CastorFile_t* new_var);
 
 /**
- * Add a struct Cstager_SubRequest_t* object to the parent list
+ * Get the value of parent
  */
-int Cstager_SubRequest_addParent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
+int Cstager_SubRequest_parent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t** var);
 
 /**
- * Remove a struct Cstager_SubRequest_t* object from parent
+ * Set the value of parent
  */
-int Cstager_SubRequest_removeParent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
-
-/**
- * Get the list of struct Cstager_SubRequest_t* objects held by parent
- */
-int Cstager_SubRequest_parent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+int Cstager_SubRequest_setParent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* new_var);
 
 /**
  * Add a struct Cstager_SubRequest_t* object to the child list

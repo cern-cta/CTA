@@ -192,6 +192,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_priority
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_priority(castor::stager::SubRequest* instance, unsigned int* var) {
+    *var = instance->priority();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setPriority
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setPriority(castor::stager::SubRequest* instance, unsigned int new_var) {
+    instance->setPriority(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_diskcopy
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_diskcopy(castor::stager::SubRequest* instance, castor::stager::DiskCopy** var) {
@@ -224,31 +240,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SubRequest_addParent
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_addParent(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
-    instance->addParent(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SubRequest_removeParent
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_removeParent(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
-    instance->removeParent(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SubRequest_parent
   //----------------------------------------------------------------------------
-  int Cstager_SubRequest_parent(castor::stager::SubRequest* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*> result = instance->parent();
-    *len = result.size();
-    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
-    for (int i = 0; i < *len; i++) {
-      (*var)[i] = result[i];
-    }
+  int Cstager_SubRequest_parent(castor::stager::SubRequest* instance, castor::stager::SubRequest** var) {
+    *var = instance->parent();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setParent
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setParent(castor::stager::SubRequest* instance, castor::stager::SubRequest* new_var) {
+    instance->setParent(new_var);
     return 0;
   }
 

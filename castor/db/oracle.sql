@@ -53,9 +53,7 @@ CREATE TABLE rh_ReqId (value VARCHAR(255), id INTEGER PRIMARY KEY, request INTEG
 
 /* SQL statements for type SubRequest */
 DROP TABLE rh_SubRequest;
-CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, request INTEGER, status INTEGER);
-DROP TABLE rh_SubRequest2SubRequest;
-CREATE TABLE rh_SubRequest2SubRequest (Parent INTEGER, Child INTEGER);
+CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, priority NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, request INTEGER, status INTEGER);
 
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;

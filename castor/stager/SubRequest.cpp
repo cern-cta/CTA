@@ -34,7 +34,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -45,9 +44,11 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_protocol(""),
   m_poolName(""),
   m_xsize(),
+  m_priority(0),
   m_id(),
   m_diskcopy(0),
   m_castorFile(0),
+  m_parent(0),
   m_request(0),
   m_status(SubRequestStatusCodes(0)) {
 };
@@ -56,10 +57,9 @@ castor::stager::SubRequest::SubRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::SubRequest::~SubRequest() throw() {
-  for (unsigned int i = 0; i < m_parentVector.size(); i++) {
-    m_parentVector[i]->removeChild(this);
+  if (0 != m_parent) {
+    m_parent->removeChild(this);
   }
-  m_parentVector.clear();
   if (0 != m_request) {
     m_request->removeSubRequests(this);
   }
@@ -82,6 +82,7 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "protocol : " << m_protocol << std::endl;
   stream << indent << "poolName : " << m_poolName << std::endl;
   stream << indent << "xsize : " << m_xsize << std::endl;
+  stream << indent << "priority : " << m_priority << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Diskcopy : " << std::endl;
@@ -96,16 +97,11 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
-  {
-    stream << indent << "Parent : " << std::endl;
-    int i;
-    std::vector<SubRequest*>::const_iterator it;
-    for (it = m_parentVector.begin(), i = 0;
-         it != m_parentVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
+  stream << indent << "Parent : " << std::endl;
+  if (0 != m_parent) {
+    m_parent->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
   stream << indent << "Request : " << std::endl;
   if (0 != m_request) {

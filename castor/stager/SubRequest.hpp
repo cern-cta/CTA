@@ -203,6 +203,28 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_priority
+       * The priority defines in which order the files will be processed by the user when
+       * calling stage_get_next. The files of the SubRequest of same priority are given in
+       * a random order and lower priority files come first.
+       * @return the value of m_priority
+       */
+      unsigned int priority() const {
+        return m_priority;
+      }
+
+      /**
+       * Set the value of m_priority
+       * The priority defines in which order the files will be processed by the user when
+       * calling stage_get_next. The files of the SubRequest of same priority are given in
+       * a random order and lower priority files come first.
+       * @param new_var the new value of m_priority
+       */
+      void setPriority(unsigned int new_var) {
+        m_priority = new_var;
+      }
+
+      /**
        * Get the value of m_diskcopy
        * @return the value of m_diskcopy
        */
@@ -235,32 +257,19 @@ namespace castor {
       }
 
       /**
-       * Add a SubRequest* object to the m_parentVector list
+       * Get the value of m_parent
+       * @return the value of m_parent
        */
-      void addParent(SubRequest* add_object) {
-        m_parentVector.push_back(add_object);
+      SubRequest* parent() const {
+        return m_parent;
       }
 
       /**
-       * Remove a SubRequest* object from m_parentVector
+       * Set the value of m_parent
+       * @param new_var the new value of m_parent
        */
-      void removeParent(SubRequest* remove_object) {
-        for (unsigned int i = 0; i < m_parentVector.size(); i++) {
-          SubRequest* item = m_parentVector[i];
-          if (item == remove_object) {
-            std::vector<SubRequest*>::iterator it = m_parentVector.begin() + i;
-            m_parentVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of SubRequest* objects held by m_parentVector
-       * @return list of SubRequest* objects held by m_parentVector
-       */
-      std::vector<SubRequest*>& parent() {
-        return m_parentVector;
+      void setParent(SubRequest* new_var) {
+        m_parent = new_var;
       }
 
       /**
@@ -345,6 +354,9 @@ namespace castor {
       /// The size of the file. This gives how many bytes should be allocated rather than the default.
       u_signed64 m_xsize;
 
+      /// The priority defines in which order the files will be processed by the user when calling stage_get_next. The files of the SubRequest of same priority are given in a random order and lower priority files come first.
+      unsigned int m_priority;
+
       /// The id of this object
       u_signed64 m_id;
 
@@ -352,7 +364,7 @@ namespace castor {
 
       CastorFile* m_castorFile;
 
-      std::vector<SubRequest*> m_parentVector;
+      SubRequest* m_parent;
 
       std::vector<SubRequest*> m_childVector;
 
