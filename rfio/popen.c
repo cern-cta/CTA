@@ -1,7 +1,10 @@
 /*
- * $Id: popen.c,v 1.2 1999/07/20 12:48:05 jdurand Exp $
+ * $Id: popen.c,v 1.3 1999/12/09 09:03:41 baran Exp $
  *
  * $Log: popen.c,v $
+ * Revision 1.3  1999/12/09 09:03:41  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:05  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -32,7 +35,6 @@ static char sccsid[] = "@(#)popen.c	1.11 3/26/99 CERN CN-PDP/CS F. Hassine";
 #endif
 #include <stdlib.h>
 #include "rfio.h"
-char buf[BUFSIZ] ;
 extern RFILE *rfilefdt[MAXRFD] ;
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
@@ -57,6 +59,7 @@ char *type 	;
    int len 	;
    FILE *file, *popen() 	;
    char localhost[MAXHOSTNAMELEN];
+   char buf[BUFSIZ] ;
 
    INIT_TRACE("RFIO_TRACE");
 

@@ -1,7 +1,10 @@
 /*
- * $Id: pclose.c,v 1.2 1999/07/20 12:48:05 jdurand Exp $
+ * $Id: pclose.c,v 1.3 1999/12/09 09:03:09 baran Exp $
  *
  * $Log: pclose.c,v $
+ * Revision 1.3  1999/12/09 09:03:09  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:05  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -27,7 +30,6 @@ static char sccsid[] = "@(#)pclose.c	1.8 3/26/99 CERN CN-SW/DC Felix Hassine";
 #endif
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
-static char     buf[256];       /* General input/output buffer          */
 #ifndef linux
 extern char     *sys_errlist[]; /* External error list          	*/
 #endif
@@ -42,7 +44,7 @@ RFILE 	*fs ;
    int  status ;
    int i ;
    int remoteio = 0 ;
-
+   static char     buf[256];       /* General input/output buffer          */
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_pclose(%x)", fs);
 

@@ -1,7 +1,10 @@
 /*
- * $Id: pread.c,v 1.2 1999/07/20 12:48:05 jdurand Exp $
+ * $Id: pread.c,v 1.3 1999/12/09 09:03:20 baran Exp $
  *
  * $Log: pread.c,v $
+ * Revision 1.3  1999/12/09 09:03:20  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:05  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -24,8 +27,6 @@ static char sccsid[] = "@(#)pread.c	1.7 09/03/98  CERN CN-SW/DC Felix Hassine";
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-static char     buf[256];       /* General input/output buffer          */
-
 int rfio_pread(ptr, size, items, fp)    /* Remote file read             */
 char    *ptr;                           /* buffer pointer               */
 int     size, items;                    /* .. size items                */
@@ -34,6 +35,7 @@ RFILE   *fp;                            /* remote file pointer          */
 	int   status ;
 	int rcode,i,remoteio=0 ;
 	char *p ;
+	static char     buf[256];       /* General input/output buffer          */
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_pread(%x, %d, %d, %x)", ptr, size, items, fp);
