@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.189 2002/03/08 13:08:47 jdurand Exp $
+ * $Id: poolmgr.c,v 1.190 2002/04/09 07:36:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.189 $ $Date: 2002/03/08 13:08:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.190 $ $Date: 2002/04/09 07:36:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4155,7 +4155,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 	extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
 	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 
-	/* At first call - application have to set them to zero - default is then STAGERGENERICUSER uid/gid */
+	/* At first call - application have to set them to zero - default is then STAGERSUPERUSER uid/gid */
 	if (*euid != (uid_t) 0) {
 		last_fileclass_euid = *euid;  /* We simulate a virtual previous explicit filter */
 	}
@@ -4319,7 +4319,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 					*egid = (stcp_check->gid != start_passwd.pw_gid) ? stcp_check->gid : (last_fileclass_egid != 0 ? last_fileclass_egid : stcp_check->gid);
 				}
 			} else {
-				/* There is no filter at all so the default is STAGERGENERICUSER account */
+				/* There is no filter at all so the default is STAGERSUPERUSER account */
 				/* Current's stcp_check's uid is matching since there is no filter on this */
 				*euid = stage_passwd.pw_uid;
 				/* Current's stcp_check's gid is matching since there is no filter on this */

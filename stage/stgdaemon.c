@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.183 2002/03/21 08:01:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.184 2002/04/09 07:36:47 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.183 $ $Date: 2002/03/21 08:01:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.184 $ $Date: 2002/04/09 07:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -467,15 +467,15 @@ int main(argc,argv)
 	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d), pid=%d\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, (int) getpid());
 
 	/* We get information on generic stage:st uid/gid */
-	if ((this_passwd = Cgetpwnam(STAGERGENERICUSER)) == NULL) {
-		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n",STAGERGENERICUSER,strerror(errno));
-		stglogit(func, "### Please check existence of account \"%s\" in password file\n", STAGERGENERICUSER);
+	if ((this_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n",STAGERSUPERUSER,strerror(errno));
+		stglogit(func, "### Please check existence of account \"%s\" in password file\n", STAGERSUPERUSER);
  		exit (SYERR);
 	}
 	stage_passwd = *this_passwd;
 	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
-		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, STAGERGENERICUSER);
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, STAGERSUPERUSER);
  		exit (SYERR);
 	}
 

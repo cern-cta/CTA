@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.99 2002/03/08 13:08:50 jdurand Exp $
+ * $Id: procupd.c,v 1.100 2002/04/09 07:36:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.99 $ $Date: 2002/03/08 13:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.100 $ $Date: 2002/04/09 07:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -486,7 +486,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				savereqs();
 				/* We try to find another entry immediately */
 				if (pool_user == NULL)
-					pool_user = STAGERGENERICUSER;
+					pool_user = STAGERSUPERUSER;
 				if (c == 0) {
 					/* This is how we distinguish from a first pass and a goto */
 					c = build_ipath (NULL, stcp, pool_user, 0);

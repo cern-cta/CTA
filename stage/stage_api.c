@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.41 2002/03/27 08:14:48 jdurand Exp $
+ * $Id: stage_api.c,v 1.42 2002/04/09 07:36:47 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -389,7 +389,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   sendbuf_size += LONGSIZE;                /* Mask */
   sendbuf_size += LONGSIZE;                /* Pid */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
-  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERGENERICUSER in stgdaemon) */
+  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERSUPERUSER in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
   sendbuf_size += LONGSIZE;                /* openflags */
   sendbuf_size += LONGSIZE;                /* openmode */
@@ -580,7 +580,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   marshall_LONG (sbp, mask);                 /* umask */
   marshall_LONG (sbp, pid);                  /* pid */
   marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
-  marshall_STRING (sbp, User);               /* User internal path (default to STAGERGENERICUSER in stgdaemon) */
+  marshall_STRING (sbp, User);               /* User internal path (default to STAGERSUPERUSER in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
   marshall_LONG (sbp, openflags);            /* openflags */
   marshall_LONG (sbp, openmode);             /* openmode */
@@ -1475,7 +1475,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   sendbuf_size += LONGSIZE;                /* Mask */
   sendbuf_size += LONGSIZE;                /* Pid */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
-  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERGENERICUSER in stgdaemon) */
+  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERSUPERUSER in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
   if (rcstatus >= 0) {
     sprintf (tmpbuf, "%d", rcstatus);
@@ -1557,7 +1557,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   marshall_LONG (sbp, mask);                 /* umask */
   marshall_LONG (sbp, pid);                  /* pid */
   marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
-  marshall_STRING (sbp, User);               /* User internal path (default to STAGERGENERICUSER in stgdaemon) */
+  marshall_STRING (sbp, User);               /* User internal path (default to STAGERSUPERUSER in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
   if (rcstatus >= 0) {
     sprintf (tmpbuf, "%d", rcstatus);

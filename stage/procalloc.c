@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.40 2002/03/08 13:08:48 jdurand Exp $
+ * $Id: procalloc.c,v 1.41 2002/04/09 07:36:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.40 $ $Date: 2002/03/08 13:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.41 $ $Date: 2002/04/09 07:36:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -176,7 +176,7 @@ void procallocreq(req_data, clienthost)
 	if (*stgreq.poolname == '\0')
 		bestnextpool_out(stgreq.poolname,WRITE_MODE);
 	if (pool_user == NULL)
-		pool_user = STAGERGENERICUSER;
+		pool_user = STAGERSUPERUSER;
 
 	nbdskf = nargs - Coptind;
 	if (Uflag && nbdskf == 2)
@@ -340,7 +340,7 @@ void procgetreq(req_data, clienthost)
 	/* setting defaults */
 
 	if (pool_user == NULL)
-		pool_user = STAGERGENERICUSER;
+		pool_user = STAGERSUPERUSER;
 
 	nbdskf = nargs - Coptind;
 	if (Uflag && nbdskf == 2)
