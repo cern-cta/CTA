@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.4 1999/12/09 13:46:22 jdurand Exp $
+ * $Id: sacct.h,v 1.5 2000/02/11 11:21:22 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.5 $ $Date: 2000/02/11 11:21:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -162,11 +162,12 @@ struct acctrtcp {	/* accounting record for rtcopy software */
 	char	reqtype;	/* R -> tpread, W -> tpwrite, D -> dumptape */
 	char	ifce[5];	/* network interface used for data transfer */
 	char	vid[CA_MAXVIDLEN+1];
-	int	size;
+	int	size;           /* MBytes */
 	int	retryn;		/* retry number */
 	int	exitcode;
 	char	clienthost[CA_MAXHOSTNAMELEN+1];
 	char	dsksrvr[CA_MAXHOSTNAMELEN+1];
+	char    errmsgtxt[CA_MAXLINELEN+1];
 };
 
 			/* subtypes for rtcopy accounting records */
@@ -177,6 +178,7 @@ struct acctrtcp {	/* accounting record for rtcopy software */
 #define	RTCPPRR		4	/* retry of partial request */
 #define	RTCPTPR		5	/* retry of tape mount */
 #define RTCPCMDD	6 	/* Decrypted command line */
+#define RTCPEMSG        7       /* Error message */
 
 #ifndef MAXFSEQ
 #define MAXFSEQ 15
