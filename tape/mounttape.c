@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.25 $ $Date: 2000/05/29 13:34:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.26 $ $Date: 2000/08/15 11:15:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -502,6 +502,8 @@ unload_loop1:
 
 		if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
 		if (prelabel >= 0 && c == 3) break;	/* tape is new. ok to prelabel */
+		if (prelabel >= 0 && c == 2 && readlbl (tapefd, path, vol1) > 1)
+			break;	/* tape has only a single or a double tapemark */
 		if (c) {	/* record read is not 80 bytes long */
 			c = 0;
 			tplbl = NL;
