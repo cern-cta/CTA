@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/25 11:54:51 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 10:18:33 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/25 11:54:51 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 10:18:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -344,6 +344,14 @@ int recallerCallbackFileCopied(
   return(0);
 }
 
+/*
+ * The way the rtcpc() handles morework requests is to loop on
+ * this callback to get all files currently available for processing.
+ * The loop is stopped by either another morework request or
+ * a finished request. The former would cause a new morework loop
+ * while the latter would rundown processing as soon as all unprocessed
+ * file requests have finished.
+ */
 int recallerCallbackMoreWork(
                              tapereq,
                              filereq
@@ -351,6 +359,7 @@ int recallerCallbackMoreWork(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
+  static int requestToProcess = 0;
   int rc, save_serrno, totalWaittime = 0;
   time_t tBefore, tNow;
   file_list_t *file = NULL;
@@ -360,65 +369,77 @@ int recallerCallbackMoreWork(
     return(-1);
   }
 
-  tBefore = time(NULL);
-  for (;;) {
-    if ( checkAborted(NULL) != 0 ) {
-      (void)rtcpcld_unlockTape();
-      return(-1);
-    }
-    file = NULL;
-    rc = rtcpcld_getSegmentToDo(tape,&file);
-    if ( rc == -1 ) {
-      if ( (serrno == EAGAIN) &&
-           (nbRunningSegms() > 0) ) {
-        tNow = time(NULL);
-        totalWaittime = (int)(tNow-tBefore);
-        (void)dlf_write(
-                        childUuid,
-                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_WAITSEGMS),
-                        (struct Cns_fileid *)NULL,
-                        1,
-                        "WAITTIME",
-                        DLF_MSG_PARAM_INT,
-                        totalWaittime
-                        );
+  if ( checkAborted(NULL) != 0 ) {
+    (void)rtcpcld_unlockTape();
+    return(-1);
+  }
+  file = NULL;
+  rc = rtcpcld_getSegmentToDo(tape,&file);
+  if ( (rc == -1) || (file == NULL) ) {
+    if ( serrno == EAGAIN ) {
+      /*
+       * There are semgents in SEGMENT_UNPROCESSED status
+       */
+      if ( requestToProcess > 0 ) {
+        /*
+         * We have already submitted some request to process in
+         * this MOREWORK round. Don't wait for more.
+         */
         if ( rtcpcld_unlockTape() == -1 ) {
           LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
           return(-1);
         }
-        if ( totalWaittime > (RTCP_NETTIMEOUT*3)/4 ) {
-          (void)dlf_write(
-                          childUuid,
-                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_WAITTIMEOUT),
-                          (struct Cns_fileid *)NULL,
-                          1,
-                          "WAITTIME",
-                          DLF_MSG_PARAM_INT,
-                          totalWaittime
-                          );
-          filereq->proc_status = RTCP_FINISHED;
-          return(0);
-        }
-        sleep(2);
-        if ( rtcpcld_lockTape() == -1 ) {
-          LOG_SYSCALL_ERR("rtcpcld_lockTape()");
-          return(-1);
-        }
-        continue;
+        requestToProcess = 0;
       } else {
         /*
-         * serrno != EAGAIN
+         * Should not happen
          */
-        save_serrno = serrno;
-        LOG_SYSCALL_ERR("rtcpcld_getSegmentsToDo()");
         (void)rtcpcld_unlockTape();
-        serrno = save_serrno;
+        serrno = SEINTERNAL;
         return(-1);
       }
+    } else if ( serrno == ENOENT ) {
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_SYSTEM,
+                      RTCPCLD_MSG_NOMORESEGMS,
+                      (struct Cns_fileid *)NULL,
+                      0
+                      );
+      if ( rtcpcld_unlockTape() == -1 ) {
+        LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+        return(-1);
+      }
+      filereq->proc_status = RTCP_FINISHED;
+      requestToProcess = 0;
+    } else {
+      /*
+       * serrno != (EAGAIN || ENOENT)
+       */
+      save_serrno = serrno;
+      LOG_SYSCALL_ERR("rtcpcld_getSegmentsToDo()");
+      (void)rtcpcld_unlockTape();
+      serrno = save_serrno;
+      return(-1);
     }
+  } else {
+    strncpy(
+            file->filereq.tape_path,
+            filereq->tape_path,
+            sizeof(file->filereq.tape_path)-1
+            );
+    *filereq = file->filereq;
+    if ( rtcpcld_unlockTape() == -1 ) {
+      LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+      return(-1);
+    }
+    requestToProcess = 1;
+    (void)updateSegmCount(1,0,0);
   }
   /*
    * We are here because there is at least one segment to process
+   * or there is nothing left to do and we should just let the currently
+   * running file copies finish (if any).
    */
   
   return(0);
@@ -485,6 +506,8 @@ int recallerCallback(
                                       tapereq,
                                       filereq
                                       );
+      if ( rc == -1 ) save_serrno = serrno;
+      (void)updateSegmCount(0,0,1);
     }
     break;
   case RTCP_FINISHED:
@@ -494,6 +517,7 @@ int recallerCallback(
                                     tapereq,
                                     filereq
                                     );
+    if ( rc == -1 ) save_serrno = serrno;
     break;
   case RTCP_REQUEST_MORE_WORK:
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
@@ -503,6 +527,9 @@ int recallerCallback(
                                     tapereq,
                                     filereq
                                     );
+      if ( rc == -1 ) save_serrno = serrno;
+    } else {
+      (void)updateSegmCount(0,0,1);
     }
     break;
   default:
@@ -517,6 +544,8 @@ int recallerCallback(
                                       tapereq,
                                       filereq
                                       );
+      if ( rc == -1 ) save_serrno = serrno;
+      (void)updateSegmCount(0,0,1);
     }
     break;
   }
@@ -613,6 +642,7 @@ int recallerCallback(
   }
   if ( blkid != NULL ) free(blkid);
   if ( castorFileId != NULL ) free(castorFileId);
+  if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
 
