@@ -17,6 +17,8 @@
 #define RTCPCLD_LOG_WHERE "File",DLF_MSG_PARAM_STR,__FILE__,"Line",DLF_MSG_PARAM_INT,__LINE__,"errno", \
     DLF_MSG_PARAM_INT,errno,"serrno",DLF_MSG_PARAM_INT,serrno
 
+#define RTCPCLD_LEVEL(X) (rtcpcldMessages[(X)].severity)
+
 enum RtcpcldMessageNo {
     RTCPCLD_MSG_STARTUP,
     RTCPCLD_MSG_INITNW, 
@@ -77,8 +79,8 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_REMAININGTPCPS,
     RTCPCLD_MSG_SEGMCHECK,
     RTCPCLD_MSG_BADPATH,
-    RTCPCLD_MSG_RESERVED58,
-    RTCPCLD_MSG_RESERVED59,
+    RTCPCLD_MSG_SECURITY,
+    RTCPCLD_MSG_VMGRFATAL,
     RTCPCLD_MSG_RESERVED60
 };
 
@@ -148,12 +150,12 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_REMAININGTPCPS, DLF_LVL_SYSTEM,"There are remaining tape copies to do"},
     { RTCPCLD_MSG_SEGMCHECK, DLF_LVL_ERROR,"Segment check failed"},
     { RTCPCLD_MSG_BADPATH, DLF_LVL_ERROR,"Bad path component"},
-    { RTCPCLD_MSG_RESERVED58, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED59, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_SECURITY, DLF_LVL_SECURITY,"Security layer error"},
+    { RTCPCLD_MSG_VMGRFATAL, DLF_LVL_ALERT,"VMGR error requiring admin intervention"},
     { RTCPCLD_MSG_RESERVED60, DLF_LVL_DEBUG,""}
 };
 #else /* RTCPCLD_COMMON */
-extern struct RtcpcldMessages rtcpcldMessages;
+extern struct RtcpcldMessages rtcpcldMessages[];
 #endif /* RTCPCLD_COMMON */
 
 #endif /* RTCPCLDMESSAGES_H_INCLUDED */
