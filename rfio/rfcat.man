@@ -1,0 +1,51 @@
+.\"
+.\" $Id: rfcat.man,v 1.1 2002/12/09 12:59:01 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfcat.man,v $ $Revision: 1.1 $ $Date: 2002/12/09 12:59:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFCAT 1 "$Date: 2002/12/09 12:59:01 $" CASTOR "Rfio User Commands"
+.SH NAME
+rfcat \- Remote file concatenation to standard output
+.SH SYNOPSIS
+.B rfcat
+.IR filename1
+.IR [filename2[...]]
+.SH DESCRIPTION
+.IX "\fLrfcat\fR"
+The remote file I/O concatenation program provides an interface to the
+.B CASTOR
+remote file I/O daemon (rfiod) for concatenating files from remote and/or
+local hosts to standard output. Each
+.IR filename
+argument is either a remote file name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local file name (not containing the :/ character combination)
+.LP
+or an HSM filename /castor/...
+.LP
+With no filename, or when
+.I filename
+is -, read standard input.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+16	Device or resource busy.
+.br
+28	No space left on device.
+.br
+196	Request killed.
+.SH SEE ALSO
+.BR cat(1), 
+.BR rfiod(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
