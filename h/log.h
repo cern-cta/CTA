@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.2 $ $Date: 1999/10/14 14:56:38 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.3 $ $Date: 1999/10/15 06:35:23 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */
@@ -15,6 +15,11 @@
 #define LOG_NOLOG       -1      /* Don't log                            */
 
 extern  void (*logfunc)();      /* logging function to use              */
+
+#ifdef log
+#undef log
+#endif
+#define log (*logfunc)          /* logging function name                */
 
 #include <syslog.h>             /* system logger definitions            */
 #define LOG_EMERG       0       /* system is unusable                   */
