@@ -34,8 +34,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
 #include <sys/utsname.h>
 #include <sstream>
+#include <Cpwd.h>
 #include "castor/io/Socket.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
@@ -80,11 +82,43 @@ void castor::client::BaseClient::run(int argc, char** argv)
     // builds a request
     castor::rh::Request* req;
     try {
-      req = buildRequest(); 
+      req = buildRequest();
     } catch (castor::exception::Exception e) {
       usage(e.getMessage().str());
       return;
     }
+    // Now the common part of the request
+    // Uid
+    uid_t euid;
+    if (0 != getenv("STAGE_EUID")) {
+      euid = atoi(getenv("STAGE_EUID"));
+    } else {
+      euid = geteuid();
+    }
+    req->setUid(euid);
+    // GID
+    uid_t egid;
+    if (0 != getenv("STAGE_EGID")) {
+      egid = atoi(getenv("STAGE_EGID"));
+    } else {
+      egid = getegid();
+    }
+    req->setGid(egid);
+    // Username
+    errno = 0;
+    struct passwd *pw = Cgetpwuid(euid);
+    if (0 == pw) {
+      std::cout << "Unknown user " << euid << std::endl;
+      return;
+    } else {
+      req->setUserName(pw->pw_name);
+    }
+    // Mask
+    mode_t mask = umask(0);
+    umask(mask);
+    req->setMask(mask);
+    // Pid
+    req->setPid(getpid());
     // create a socket for the callback
     m_callbackSocket = new castor::io::Socket(0, true);
     unsigned short port;
@@ -106,7 +140,7 @@ void castor::client::BaseClient::run(int argc, char** argv)
     // delete the result
     delete result;
   } catch (castor::exception::Exception ex) {
-    clog() << ex.getMessage().str();
+    std::cout << ex.getMessage().str() << std::endl;
   }
 }
 
