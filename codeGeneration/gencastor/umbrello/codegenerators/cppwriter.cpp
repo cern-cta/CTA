@@ -59,6 +59,7 @@ CppWriter::~CppWriter() {
   //delete odbccppw;
   delete streamhw;
   delete streamcppw;
+  std::cout << "Generation ended successfully !" << std::endl;
 }
 
 void CppWriter::configGenerator(CppBaseWriter *cg) {

@@ -17,7 +17,7 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
   /**
    * Destructor
    */
-  ~CppCppOraCnvWriter() {};
+  ~CppCppOraCnvWriter();
 
  public:
 
@@ -141,6 +141,17 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
    * creates file oracle.sql and write beginning of it
    */
   void startSQLFile();
+
+  /**
+   * write end of file oracle.sql
+   */
+  void endSQLFile();
+
+  /**
+   * insert the content of a file into a text stream
+   */
+  void insertFileintoStream(QTextStream &stream,
+                            QString fileName);
 
  private:
 

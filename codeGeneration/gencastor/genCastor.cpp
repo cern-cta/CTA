@@ -46,4 +46,5 @@ int main(int argc, char *argv[]) {
               << "syntax : " << argv[0] << " <xmi File>"
               << std::endl;
   }
+  uml->close();
 }
