@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/05 13:16:41 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/05 13:47:08 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/05 13:16:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/05 13:47:08 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -634,7 +634,7 @@ int recallerCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      12,
+                      13,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -656,6 +656,9 @@ int recallerCallback(
                       "BLKID",
                       DLF_MSG_PARAM_STR,
                       (blkid != NULL ? blkid : "unknown"),
+                      "DISKPATH",
+                      DLF_MSG_PARAM_STR,
+                      filereq->file_path,
                       "STATUS",
                       DLF_MSG_PARAM_INT,
                       filereq->proc_status,

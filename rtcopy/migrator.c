@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/09 15:33:40 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/05 13:47:08 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/09 15:33:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/05 13:47:08 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -555,7 +555,7 @@ int migratorCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      12,
+                      13,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -577,6 +577,9 @@ int migratorCallback(
                       "BLKID",
                       DLF_MSG_PARAM_STR,
                       (blkid != NULL ? blkid : "unknown"),
+                      "PATH",
+                      DLF_MSG_PARAM_STR,
+                      filereq->file_path,
                       "STATUS",
                       DLF_MSG_PARAM_INT,
                       filereq->proc_status,
