@@ -1,14 +1,14 @@
 /*
- * $Id: newacct.c,v 1.5 1999/12/09 13:39:07 jdurand Exp $
+ * $Id: newacct.c,v 1.6 2000/02/04 14:10:03 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:07 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.6 $ $Date: 2000/02/04 14:10:03 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* newacct		Command to change current account	*/
@@ -75,6 +75,10 @@ static void setacct(pwd,account,shell_opt)
 		cp= shell_opt ;
 	else if ( ( cp= getenv("SHELL")) == NULL ) 
 		cp= pwd->pw_shell ;
+	if ( strlen(cp) >= sizeof(shell) ) {
+		(void) fprintf(stderr,"newacct: invalid shell name %s\n",cp) ; 
+		exit(1) ; 
+	}
 	if ( *cp == 0)
 		cp= "/bin/sh" ;
 
@@ -120,7 +124,7 @@ main(argc,argv)
 		(void) fprintf(stderr,"usage is: newacct [accountid] \n") ; 
 		exit(1) ; 
 	}
-	if ( optind < argc && (int)strlen(argv[optind]) > 8 ) {
+	if ( optind < argc && (int)strlen(argv[optind]) > 6 ) {
 		(void) fprintf(stderr,"newacct:  invalid account id specified\n") ; 
 		exit(1) ; 
 	}
