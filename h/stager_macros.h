@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.4 2004/11/06 08:38:16 jdurand Exp $
+ * $Id: stager_macros.h,v 1.5 2004/11/08 09:38:47 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -13,25 +13,20 @@
 #include "Cuuid.h"
 #include "u64subr.h"
 
+/* --------------------------- */
+/* Macros for logging with DLF */
+/* --------------------------- */
+
 /*
               DLF_LVL_EMERGENCY                     Not used
-
               DLF_LVL_ALERT                         Very important error
-
               DLF_LVL_ERROR                         Error message
-
               DLF_LVL_WARNING                       Self-monitoring warning
-
               DLF_LVL_AUTH                          Auth error
-
               DLF_LVL_SECURITY                      Csec error
-
               DLF_LVL_USAGE                         Trace of routines
-
               DLF_LVL_SYSTEM                        Say important information
-
               DLF_LVL_IMPORTANT                     Not used
-
               DLF_LVL_DEBUG                         Debug level
 */
 
@@ -160,7 +155,7 @@
 #define STAGER_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
 /* Exit out of a thread if we received a signal trapped by the signal thread, using label for exit point */
-/* ===============================================================================================-===== */
+/* ----------------------------------------------------------------------------------------------------- */
 #define STAGER_THREAD_CHECK_SIGNAL(label) { \
   extern int stagerSignaled; \
   int stagerSignaledBackup; \
@@ -182,6 +177,7 @@
 }
 
 /* This macro avoid cut/paste of always the same code for methods not supposed to fail */
+/* ----------------------------------------------------------------------------------- */
 #define STAGER_DB_METHOD_THAT_SHOULD_NOT_FAIL(method,table,member,label) { \
   if (method (table,member) != 0) { \
     serrno = SEINTERNAL; \
