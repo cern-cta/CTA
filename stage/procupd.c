@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.32 2000/10/06 14:23:25 jdurand Exp $
+ * $Id: procupd.c,v 1.33 2000/10/09 06:24:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.32 $ $Date: 2000/10/06 14:23:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.33 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,6 +58,7 @@ extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern int updfreespace _PROTO((char *, char *, int));
 
 void
 procupdreq(req_data, clienthost)

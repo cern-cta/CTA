@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.38 2000/09/27 08:00:25 jdurand Exp $
+ * $Id: poolmgr.c,v 1.39 2000/10/09 06:24:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.38 $ $Date: 2000/09/27 08:00:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.39 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,6 +90,7 @@ void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, int *, char *));
+int updfreespace _PROTO((char *, char *, int));
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
@@ -185,7 +186,7 @@ getpoolconf(defpoolname)
 						goto reply;
 					}
 					pool_p->defsize = strtol (p, &dp, 10);
-					if (*dp != '\0') {
+					if (*dp != '\0' || pool_p->defsize <= 0) {
 						stglogit (func, STG26, "pool", pool_p->name);
 						errflg++;
 						goto reply;
@@ -259,7 +260,7 @@ getpoolconf(defpoolname)
 				goto reply;
 			}
 			defsize = strtol (p, &dp, 10);
-			if (*dp != '\0') {
+			if (*dp != '\0' || defsize <= 0) {
 				stglogit (func, STG28);
 				errflg++;
 				goto reply;
@@ -502,6 +503,13 @@ getpoolconf(defpoolname)
 			pool_p++;
 			elemp = pool_p->elemp;
 			if (pool_p->defsize == 0) pool_p->defsize = defsize;
+			if (pool_p->defsize <= 0) {
+				stglogit(func,
+						"### CONFIGURATION ERROR : POOL %s with DEFSIZE <= 0\n",
+						pool_p->name);
+				errflg++;
+				goto reply;
+			}
 			stglogit (func,"POOL %s DEFSIZE %d MINFREE %d\n",
 				pool_p->name, pool_p->defsize, pool_p->minfree);
 			stglogit (func,".... GC %s\n",
@@ -1010,6 +1018,7 @@ selectfs(poolname, size, path)
 	return (1);
 }
 
+int
 updfreespace(poolname, ipath, incr)
 		 char *poolname;
 		 char *ipath;

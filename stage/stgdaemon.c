@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.68 2000/10/06 14:23:26 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.69 2000/10/09 06:24:31 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.68 $ $Date: 2000/10/06 14:23:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.69 $ $Date: 2000/10/09 06:24:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -165,6 +165,7 @@ extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
+extern int updfreespace _PROTO((char *, char *, int));
 
 main(argc,argv)
 		 int argc;

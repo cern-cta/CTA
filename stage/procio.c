@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.41 2000/09/30 09:06:36 jdurand Exp $
+ * $Id: procio.c,v 1.42 2000/10/09 06:24:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.41 $ $Date: 2000/09/30 09:06:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.42 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,6 +78,7 @@ extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern int updfreespace _PROTO((char *, char *, int));
 
 #ifdef MIN
 #undef MIN
@@ -362,7 +363,7 @@ void procioreq(req_type, req_data, clienthost)
 			p = strtok (size, ":");
 			while (p != NULL) {
 				j = strtol (p, &dp, 10);
-				if (*dp != '\0' || j > 2047) {
+				if (*dp != '\0' || j > 2047 || j <= 0) {
 					sendrep (rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
 				}

@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.17 2000/09/20 11:19:07 jdurand Exp $
+ * $Id: procalloc.c,v 1.18 2000/10/09 06:24:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.17 $ $Date: 2000/09/20 11:19:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.18 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ extern struct stgdb_fd dbfd;
 
 void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
+extern int updfreespace _PROTO((char *, char *, int));
 
 void procallocreq(req_data, clienthost)
 		 char *req_data;
@@ -124,7 +125,7 @@ void procallocreq(req_data, clienthost)
 			break;
 		case 's':
 			stgreq.size = strtol (optarg, &dp, 10);
-			if (*dp != '\0' || stgreq.size > 2047) {
+			if (*dp != '\0' || stgreq.size > 2047 || stgreq.size <= 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
 			}
