@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/08/03 14:43:49 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/08/03 15:38:45 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/08/03 14:43:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/08/03 15:38:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1475,6 +1475,9 @@ int main(
                    vdqmVolReqID
                    );
   if ( rc == -1 ) return(2);  
+
+  rc = initSegmCountLock();
+  if ( rc == -1 ) return(2);
 
   /*
    * Process the request
