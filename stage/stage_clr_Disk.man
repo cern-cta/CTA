@@ -1,0 +1,107 @@
+.\" $Id: stage_clr_Disk.man,v 1.1 2002/10/09 07:49:26 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_clr_Disk.man,v $ $Revision: 1.1 $ $Date: 2002/10/09 07:49:26 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_CLR_DISK "3" "$Date: 2002/10/09 07:49:26 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_clr_Disk \- Asks for a disk file to be removed
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_clr_Disk(u_signed64 " flags ,
+.BI "char *" hostname ,
+.BI "char *" filename ");"
+
+.SH DESCRIPTION
+The \fBstage_clr_Disk\fP API method asks the stager to delete a disk file. Outputs are the default ttys (unless you use \fBstage_setlog\fP).
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_CONDITIONAL
+The remove operation is done only if the free space in the pool is lower than a minimum, defined with disk pools on the stager daemon side.
+.TP
+.I STAGE_FORCE
+Delete found record even if it is in an intermediate state, protected against a\-priori user error.
+.TP
+.I STAGE_NODISK
+Prevent any disk access. Just remove the entry.
+.TP
+.I STAGE_SILENT
+No output in send back to the client.
+.RE
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I filename
+Full path of the disk file
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B ESTGRPUSER
+Invalid group user
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTLINKNAME
+User link name processing error
+.TP
+.B SEOPNOTSUP
+Operation not supported (should not happen)
+.TP
+.B ENOENT
+No such file or directory
+.TP
+.B SESYSERR
+System error
+.TP
+.B EBUSY
+Device or resource busy
+.TP
+.B ESTLNKNSUP
+Symbolic link not supported
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH SEE ALSO
+\fBstageclr\fP(1), \fBstage_setlog\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

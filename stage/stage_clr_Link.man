@@ -1,0 +1,90 @@
+.\" $Id: stage_clr_Link.man,v 1.1 2002/10/09 07:49:25 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_clr_Link.man,v $ $Revision: 1.1 $ $Date: 2002/10/09 07:49:25 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_CLR_LINK "3" "$Date: 2002/10/09 07:49:25 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_clr_Link \- Asks for a link file to be removed
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_clr_Link(u_signed64 " flags ,
+.BI "char *" hostname ,
+.BI "char *" linkname ");"
+
+.SH DESCRIPTION
+The \fBstage_clr_Link\fP API method asks the stager for a link file to be removed. This does not delete the data file into internal disks associated to the link. Outputs are the default ttys (unless you use \fBstage_setlog\fP).
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Not used here.
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I linkname
+Name of the linkfile to be removed.
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B ESTGRPUSER
+Invalid group user
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTLINKNAME
+User link name processing error
+.TP
+.B SEOPNOTSUP
+Operation not supported (should not happen)
+.TP
+.B ENOENT
+No such file or directory
+.TP
+.B SESYSERR
+System error
+.TP
+.B ESTLNKNSUP
+Symbolic link not supported
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH SEE ALSO
+\fBstageclr\fP(1), \fBstage_setlog\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
