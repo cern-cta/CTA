@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/14 15:49:22 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -70,7 +70,8 @@ DEPLIB = DepLibraryTargetName(lib,shift)
 INCLUDES = -I FileName(..,h) -I FileName(..,)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-STGLIB_OBJS = BaseAddress.Osuf \
+STGLIB_OBJS = IAddressCInt.Osuf \
+              BaseAddress.Osuf \
               BaseAddressCInt.Osuf \
               BaseCnvSvc.Osuf \
               BaseObject.Osuf \
