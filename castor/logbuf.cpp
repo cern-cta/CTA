@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/08 08:26:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,3 +26,10 @@
 
 // Include Files
 #include "castor/logbuf.h"
+
+// -----------------------------------------------------------------------
+// static values initialization
+// -----------------------------------------------------------------------
+bool castor::logbuf::s_dlfInitCalled(false);
+int castor::logbuf::s_lock(0);
+

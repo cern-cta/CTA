@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/08 08:26:34 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -73,12 +73,14 @@ namespace castor {
      * @exception Exception if something went wrong
      */
     MsgSvc* msgSvc(std::string name) throw(castor::exception::Exception);
-    
+
     /**
-     * Initialization of to the log stream 
-     * @param name the name of the log stream
+     * Sets the name of the MsgSvc to use for logging
+     * Note that this name should be set only once if DLF
+     * is used due to limitations in the current implementation
+     * of DLF itsef
      */
-    void initLog(std::string name) throw(castor::exception::Exception);
+    void initLog(std::string name) throw();
 
     /**
      * Access to the log stream
@@ -95,15 +97,9 @@ namespace castor {
   private:
 
     /**
-     * The message service to be used for logging
-     * This is shared among instances
+     * The name of the MsgSvc to use
      */
-    static castor::MsgSvc* s_msgSvc;
-
-    /**
-     * a lock to synchronize the s_msgSvc creation/deletion
-     */
-    static int s_lock;
+    static std::string s_msgSvcName;
 
   }; // end of class BaseObject
 

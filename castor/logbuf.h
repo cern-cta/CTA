@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 16:01:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/08 08:26:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -34,6 +34,7 @@
 #include <string>
 #include <serrno.h>
 #include <iostream>
+#include <Cthread_api.h>
 
 namespace castor {
 
@@ -64,11 +65,22 @@ namespace castor {
     logbuf(std::string &name) :
       std::stringbuf(std::ios_base::out),
       m_curLevel(INFO) {
-      int e;
-      if ((e = dlf_init(name.c_str())) < 0) {
-        std::cerr << "Unable to initialize DLF :"
-                  << std::endl << sstrerror(e)
-                  << std::endl;
+      if (!s_dlfInitCalled) {
+        // If dlf_init not already called,
+        // try to call it. But thread safety
+        // needs a lock here and a double check
+        Cthread_mutex_lock(&s_lock);
+        // It could be that somebody was quicker
+        if (!s_dlfInitCalled) {
+          int e;
+          if ((e = dlf_init(name.c_str())) < 0) {
+            std::cerr << "Unable to initialize DLF :"
+                      << std::endl << sstrerror(e)
+                      << std::endl;
+          }
+          s_dlfInitCalled = true;
+        }
+        Cthread_mutex_unlock(&s_lock);
       }
     }
 
@@ -148,6 +160,16 @@ namespace castor {
        * Next calls to << will use this level
        */
       logbuf::Level m_curLevel;
+
+      /**
+       * Whether dlf_init was already called or not
+       */
+      static bool s_dlfInitCalled;
+
+      /**
+       * A lock to ensure a unique call to dlf_init
+       */
+      static int s_lock;
 
   };
 
