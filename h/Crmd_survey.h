@@ -18,5 +18,6 @@ extern void *_nrmnodes_cthread_structure;        /* Cthread structure for nrmnod
 EXTERN_C void DLL_DECL Crmd_survey_init _PROTO(());
 EXTERN_C void DLL_DECL *Crmd_survey_jobs _PROTO((void *));
 EXTERN_C void DLL_DECL *Crmd_survey_nodes _PROTO((void *));
+EXTERN_C void DLL_DECL *Crmd_survey_subdirs _PROTO((void *));
 
 #endif  /* __Crmd_survey */
