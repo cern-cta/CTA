@@ -193,6 +193,8 @@ int rc_shift2castor(magic,rc)
 		return(SESYSERR);
 	case SHIFT_ESTNACT:
 		return(ESTNACT);
+	case SHIFT_ECUPVNACT:
+		return(ECUPVNACT);
 	case REQKILD:
 		return(ESTKILLED);
 	case CLEARED:
