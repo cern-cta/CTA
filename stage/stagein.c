@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.24 2001/01/31 19:00:05 jdurand Exp $
+ * $Id: stagein.c,v 1.25 2001/02/01 12:32:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.24 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.25 $ $Date: 2001/02/01 12:32:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -410,6 +410,10 @@ int main(argc, argv)
 	if (req_type != STAGEIN && req_type != STAGEOUT &&
 			Coptind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
+		errflg++;
+	}
+	if ((tppool_flag != 0) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
+		fprintf (stderr, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
 		errflg++;
 	}
 	/* In the following stagetape is exclusive with all other types of stagein, except */

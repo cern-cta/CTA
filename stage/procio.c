@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.73 2001/02/01 10:36:27 jdurand Exp $
+ * $Id: procio.c,v 1.74 2001/02/01 12:31:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.73 $ $Date: 2001/02/01 10:36:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.74 $ $Date: 2001/02/01 12:31:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -832,7 +832,7 @@ void procioreq(req_type, req_data, clienthost)
 				errflg++;
 				break;
 			}
-            if (errflg) break;
+            if (errflg != 0) break;
 		}
 	}
 
@@ -946,9 +946,14 @@ void procioreq(req_type, req_data, clienthost)
 		if (errflg == 0) {
 			tppool = stcp_input[0].u1.h.tppool;
 		}
-    }
+	}
 
-	if (errflg) {
+	if ((tppool != NULL) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
+		sendrep (rpfd, MSG_ERR, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
+		errflg++;
+	}
+
+	if (errflg != 0) {
 		c = USERR;
 		goto reply;
 	}
@@ -1048,7 +1053,7 @@ void procioreq(req_type, req_data, clienthost)
 		}
 	} else nbtpf = 1;
 
-	if (errflg) {
+	if (errflg != 0) {
 		c = USERR;
 		goto reply;
 	}
@@ -2268,7 +2273,7 @@ void procputreq(req_type, req_data, clienthost)
 			errflg++;
 			break;
 		}
-		if (errflg) break;
+		if (errflg != 0) break;
 	}
 	if (Iflag && numvid)
 		errflg++;
@@ -2279,7 +2284,7 @@ void procputreq(req_type, req_data, clienthost)
 	if ((Iflag || Mflag) && (Coptind != nargs))
 		errflg++;
 
-	if (errflg) {
+	if (errflg != 0) {
 		c = USERR;
 		goto reply;
 	}
@@ -2818,7 +2823,7 @@ void procputreq(req_type, req_data, clienthost)
 					errflg++;
 					break;
 				}
-				if (errflg) break;
+				if (errflg != 0) break;
 			}
 		}
 	}
