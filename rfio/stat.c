@@ -1,5 +1,5 @@
 /*
- * $Id: stat.c,v 1.8 2002/11/19 15:36:49 baud Exp $
+ * $Id: stat.c,v 1.9 2003/10/31 07:20:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.8 $ $Date: 2002/11/19 15:36:49 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.9 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */
@@ -27,7 +27,7 @@ struct stat *statbuf;           /* status buffer (subset of local used) */
 	return (rfio_stat64(filepath,statbuf));
 #else
 	int       status ;
-#if defined(IRIX64) || defined(__ia64__)
+#if defined(IRIX64) || defined(__ia64__) || defined(__x86_64)
 	struct stat64 statb64;
 
 	if ((status = rfio_stat64(filepath,&statb64)) == 0)

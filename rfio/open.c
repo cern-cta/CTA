@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.21 2003/09/14 06:38:56 jdurand Exp $
+ * $Id: open.c,v 1.22 2003/10/31 07:20:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.21 $ $Date: 2003/09/14 06:38:56 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.22 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -149,7 +149,7 @@ int     flags,mode ;
    if ( flags & O_LARGEFILE ) return( rfio_open64(filepath, flags, mode) );
 #endif /* O_LARGEFILE */
 
-#if ( defined(__osf__) && defined(__alpha) ) || defined(IRIX64) || defined(__ia64__)
+#if ( defined(__osf__) && defined(__alpha) ) || defined(IRIX64) || defined(__ia64__) || defined(__x86_64)
    /* Try to promote into rfio 64 bits call                           */
    /* If 64 is not supported goes to rfio_open_ext                    */
    return( rfio_open64(filepath, flags, mode) );

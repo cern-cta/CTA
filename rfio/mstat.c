@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.31 2002/12/19 14:42:48 baud Exp $
+ * $Id: mstat.c,v 1.32 2003/10/31 07:20:03 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.31 $ $Date: 2002/12/19 14:42:48 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.32 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -50,7 +50,7 @@ struct stat *statb;
    return (rfio_mstat64(file,statb));
 #else
    int       rc ;
-#if defined(IRIX64) || defined(__ia64__)
+#if defined(IRIX64) || defined(__ia64__) || defined(__x86_64)
    struct stat64 statb64;
 
    if ((rc = rfio_mstat64(file,&statb64)) == 0)
