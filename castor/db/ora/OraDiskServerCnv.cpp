@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraDiskServerCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskServerCnv::s_insertStatementString =
-"INSERT INTO DiskServer (name, id, status) VALUES (:1,:2,:3)";
+"INSERT INTO DiskServer (name, id, status) VALUES (:1,ids_seq.nextval,:3) RETURNING id INTO :2";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteStatementString =
@@ -327,20 +327,19 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(2, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
+    m_insertStatement->setString(1, obj->name());
+    m_insertStatement->setInt(3, (int)obj->status());
+    m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(2));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setInt(3, (int)obj->status());
-    m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

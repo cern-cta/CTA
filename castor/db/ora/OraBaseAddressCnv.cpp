@@ -50,7 +50,7 @@ const castor::ICnvFactory& OraBaseAddressCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraBaseAddressCnv::s_insertStatementString =
-"INSERT INTO BaseAddress (objType, cnvSvcName, cnvSvcType, target, id) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO BaseAddress (objType, cnvSvcName, cnvSvcType, target, id) VALUES (:1,:2,:3,:4,ids_seq.nextval) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraBaseAddressCnv::s_deleteStatementString =
@@ -194,22 +194,21 @@ void castor::db::ora::OraBaseAddressCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     m_insertStatement->setInt(1, obj->objType());
     m_insertStatement->setString(2, obj->cnvSvcName());
     m_insertStatement->setInt(3, obj->cnvSvcType());
     m_insertStatement->setDouble(4, obj->target());
-    m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(5));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

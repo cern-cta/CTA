@@ -126,17 +126,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * reserves a bunch of ids from the database and
-         * returns the first one. The others are obtained
-         * by increasing the first id by 1.
-         * @param nids number of ids to reserve
-         * @return the first allocated id or 0 if an error
-         * occured
-         */
-        const u_signed64 getIds(const unsigned int nids)
-          throw (castor::exception::Exception);
-
-        /**
          * returns an address to the next request to handle.
          * Note that the caller is responsible for the deallocation
          * of the address.
@@ -221,12 +210,6 @@ namespace castor {
 
         /// SQL statement object for type retrieval
         oracle::occi::Statement *m_getTypeStatement;
-
-        /// SQL statement for id retrieval
-        static const std::string s_getIdStatementString;
-
-        /// SQL statement object for id retrieval
-        oracle::occi::Statement *m_getIdStatement;
 
         /// SQL statement for next request retrieval
         static const std::string s_getNRStatementString;

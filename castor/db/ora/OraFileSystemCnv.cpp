@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraFileSystemCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileSystemCnv::s_insertStatementString =
-"INSERT INTO FileSystem (free, weight, fsDeviation, mountPoint, id, diskPool, diskserver, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8)";
+"INSERT INTO FileSystem (free, weight, fsDeviation, mountPoint, id, diskPool, diskserver, status) VALUES (:1,:2,:3,:4,ids_seq.nextval,:6,:7,:8) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
@@ -513,25 +513,24 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->free());
     m_insertStatement->setFloat(2, obj->weight());
     m_insertStatement->setFloat(3, obj->fsDeviation());
     m_insertStatement->setString(4, obj->mountPoint());
-    m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->setDouble(6, (type == OBJ_DiskPool && obj->diskPool() != 0) ? obj->diskPool()->id() : 0);
     m_insertStatement->setDouble(7, (type == OBJ_DiskServer && obj->diskserver() != 0) ? obj->diskserver()->id() : 0);
     m_insertStatement->setInt(8, (int)obj->status());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(5));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

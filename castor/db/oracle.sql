@@ -7,27 +7,15 @@ DROP TABLE ID2TYPE;
 CREATE TABLE ID2TYPE (id INTEGER PRIMARY KEY, type NUMBER);
 CREATE INDEX I_ID2TYPE_FULL on ID2TYPE (id, type);
 
-/* SQL statements for indices */
-DROP INDEX I_INDICES_FULL;
-DROP TABLE INDICES;
-CREATE TABLE INDICES (name CHAR(8), value NUMBER);
-CREATE INDEX I_INDICES_FULL on INDICES (name, value);
-INSERT INTO INDICES (name, value) VALUES ('next_id', 1);
+/* Sequence for indices */
+DROP SEQUENCE ids_seq;
+CREATE SEQUENCE ids_seq;
 
 /* SQL statements for requests status */
 DROP INDEX I_REQUESTSSTATUS_FULL;
 DROP TABLE REQUESTSSTATUS;
 CREATE TABLE REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(20), creation DATE, lastChange DATE);
 CREATE INDEX I_REQUESTSSTATUS_FULL on REQUESTSSTATUS (id, status);
-
-/* PL/SQL procedure for id retrieval */
-CREATE OR REPLACE PROCEDURE getId(nb IN INTEGER, id OUT INTEGER) AS
-BEGIN
- UPDATE indices
-  SET value = value + nb
-  WHERE name='next_id'
-  RETURNING value INTO id;
-END;
 
 /* PL/SQL procedure for getting the next request to handle */
 CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
@@ -329,7 +317,7 @@ END;
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER);
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
@@ -400,17 +388,17 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   ELSE
     OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               DiskCopy.diskcopyId, FileSystem.weight
-    FROM DiskCopy, SubRequest, FileSystem
+               DiskCopy.diskcopyId, FileSystem.weight,
+               FileSystem.mountPoint, DiskServer.name
+    FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
-      AND FileSystem.id = DiskCopy.fileSystem;
+      AND FileSystem.id = DiskCopy.fileSystem
+      AND DiskServer.id = FileSystem.diskServer;
     -- create DiskCopy for Disk to Disk copy
-    getId(1, dci);
-    dci := dci - 1;
-    UPDATE SubRequest SET diskCopy = dci WHERE id = srId
-     RETURNING castorFile INTO cfid;
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval WHERE id = srId
+     RETURNING castorFile, diskCopy INTO cfid, dci;
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
      VALUES (rpath, dci, fileSystemId, cfid, 1); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
@@ -418,10 +406,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   END IF;
  EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on any FileSystem
   -- create one for recall
-  getId(1, dci);
-  dci := dci - 1;
-  UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
-   WHERE id = srId RETURNING castorFile INTO cfid;
+  UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4 -- WAITTAPERECALL
+   WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
   buildPathFromFileId(fid, nh, rpath);
   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
@@ -525,12 +511,11 @@ BEGIN
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
- getId(1, dcId);
- dcId := dcId - 1;
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-  VALUES (rpath, dcId, 0, cfId, 5); -- status WAITFS
+  VALUES (rpath, ids_seq.nextval, 0, cfId, 5) -- status WAITFS
+  RETURNING id INTO dcId;
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
@@ -568,13 +553,11 @@ BEGIN
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
  -- Create TapeCopies
  <<TapeCopyCreation>>
- getId(nc, tcId);
- tcId := tcId - nc;
  FOR i IN 1..nc LOOP
   INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-   VALUES (tcId, i, cfId, 0); -- TAPECOPY_CREATED
+    VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
+    RETURNING id INTO tcId;
   INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
-  tcId := tcId + 1;
  END LOOP TapeCopyCreation;
  COMMIT;
 END;

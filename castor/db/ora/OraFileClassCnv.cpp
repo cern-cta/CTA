@@ -51,7 +51,7 @@ const castor::ICnvFactory& OraFileClassCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileClassCnv::s_insertStatementString =
-"INSERT INTO FileClass (name, minFileSize, maxFileSize, nbCopies, id) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO FileClass (name, minFileSize, maxFileSize, nbCopies, id) VALUES (:1,:2,:3,:4,ids_seq.nextval) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileClassCnv::s_deleteStatementString =
@@ -195,22 +195,21 @@ void castor::db::ora::OraFileClassCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->setDouble(2, obj->minFileSize());
     m_insertStatement->setDouble(3, obj->maxFileSize());
     m_insertStatement->setInt(4, obj->nbCopies());
-    m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(5));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

@@ -178,6 +178,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "\"INSERT INTO " << m_classInfo->className
             << " (";
   int n = 0;
+  int nid = 0;
   // create a list of members
   MemberList members = createMembersList();
   // Go through the members
@@ -187,6 +188,7 @@ void CppCppOraCnvWriter::writeConstants() {
     if (n > 0) *m_stream << ", ";
     *m_stream << mem->name;
     n++;
+    if (mem->name == "id") nid = n;
   }
   // create a list of associations
   AssocList assocs = createAssocsList();
@@ -203,11 +205,16 @@ void CppCppOraCnvWriter::writeConstants() {
     }
   }
   *m_stream << ") VALUES (";
-  for (int i = 0; i < n; i++) {
-    *m_stream << ":" << (i+1);
-    if (i < n - 1) *m_stream << ",";
+  for (int i = 1; i <= n; i++) {
+    if (nid == i) {
+      *m_stream << "ids_seq.nextval";
+    } else {
+      *m_stream << ":" << i;
+    }
+    if (i < n) *m_stream << ",";
   }
-  *m_stream << ")\";" << endl << endl << getIndent()
+  *m_stream << ") RETURNING id INTO :" << nid
+            << "\";" << endl << endl << getIndent()
             << "/// SQL statement for request deletion"
             << endl << getIndent()
             << "const std::string "
@@ -1896,9 +1903,28 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl << getIndent()
             << "if (0 == m_insertStatement) {" << endl;
   m_indent++;
+  // create a list of members
+  MemberList members = createMembersList();
+  // Go through the members to find the number for id
+  unsigned int nid = 0;
+  {
+    unsigned int n = 1;
+    for (Member* mem = members.first();
+         0 != mem;
+         mem = members.next()) {
+      if (mem->name == "id") {
+        nid = n;
+        break;
+      }
+      n++;
+    }
+  }
   *m_stream << getIndent()
             << "m_insertStatement = createStatement(s_insertStatementString);"
-            << endl;
+            << endl << getIndent()
+            << "m_insertStatement->registerOutParam("
+            << nid
+            << ", oracle::occi::OCCIINT);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   if (isRequest()) {
@@ -1918,35 +1944,20 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << "m_storeTypeStatement = createStatement(s_storeTypeStatementString);"
             << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl << getIndent()
-            << "// Get an id for the new object"
-            << endl << getIndent()
-            << "obj->setId(cnvSvc()->getIds(1));" << endl;
+  *m_stream << getIndent() << "}" << endl;
   // Insert the object into the database
   *m_stream << getIndent()
             << "// Now Save the current object"
-            << endl << getIndent()
-            << "m_storeTypeStatement->setDouble(1, obj->id());"
-            << endl << getIndent()
-            << "m_storeTypeStatement->setInt(2, obj->type());"
-            << endl << getIndent()
-            << "m_storeTypeStatement->executeUpdate();"
             << endl;
-  if (isRequest()) {
-    *m_stream << getIndent()
-              << "m_insertStatusStatement->setDouble(1, obj->id());"
-              << endl << getIndent()
-              << "m_insertStatusStatement->executeUpdate();"
-              << endl;
-  }
   // create a list of members to be saved
-  MemberList members = createMembersList();
   unsigned int n = 1;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    writeSingleSetIntoStatement("insert", *mem, n);
+    if (mem->name != "id") {
+      writeSingleSetIntoStatement("insert", *mem, n);
+    }
     n++;
   }
   // create a list of associations
@@ -1977,7 +1988,22 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   }
   *m_stream << getIndent()
             << "m_insertStatement->executeUpdate();"
+            << endl << getIndent()
+            << "obj->setId(m_insertStatement->getInt("
+            << nid << "));" << endl << getIndent()
+            << "m_storeTypeStatement->setDouble(1, obj->id());"
+            << endl << getIndent()
+            << "m_storeTypeStatement->setInt(2, obj->type());"
+            << endl << getIndent()
+            << "m_storeTypeStatement->executeUpdate();"
             << endl;
+  if (isRequest()) {
+    *m_stream << getIndent()
+              << "m_insertStatusStatement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_insertStatusStatement->executeUpdate();"
+              << endl;
+  }
   // Commit if needed
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;

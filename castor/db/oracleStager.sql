@@ -209,10 +209,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
       AND FileSystem.id = DiskCopy.fileSystem
       AND DiskServer.id = FileSystem.diskServer;
     -- create DiskCopy for Disk to Disk copy
-    getId(1, dci);
-    dci := dci - 1;
-    UPDATE SubRequest SET diskCopy = dci WHERE id = srId
-     RETURNING castorFile INTO cfid;
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval WHERE id = srId
+     RETURNING castorFile, diskCopy INTO cfid, dci;
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
      VALUES (rpath, dci, fileSystemId, cfid, 1); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
@@ -220,10 +218,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   END IF;
  EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on any FileSystem
   -- create one for recall
-  getId(1, dci);
-  dci := dci - 1;
-  UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
-   WHERE id = srId RETURNING castorFile INTO cfid;
+  UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4 -- WAITTAPERECALL
+   WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
   buildPathFromFileId(fid, nh, rpath);
   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
@@ -327,12 +323,11 @@ BEGIN
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
- getId(1, dcId);
- dcId := dcId - 1;
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-  VALUES (rpath, dcId, 0, cfId, 5); -- status WAITFS
+  VALUES (rpath, ids_seq.nextval, 0, cfId, 5) -- status WAITFS
+  RETURNING id INTO dcId;
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
@@ -370,13 +365,11 @@ BEGIN
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
  -- Create TapeCopies
  <<TapeCopyCreation>>
- getId(nc, tcId);
- tcId := tcId - nc;
  FOR i IN 1..nc LOOP
   INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-   VALUES (tcId, i, cfId, 0); -- TAPECOPY_CREATED
+    VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
+    RETURNING id INTO tcId;
   INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
-  tcId := tcId + 1;
  END LOOP TapeCopyCreation;
  COMMIT;
 END;

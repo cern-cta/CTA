@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraTapeCopyCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCopyCnv::s_insertStatementString =
-"INSERT INTO TapeCopy (copyNb, id, castorFile, status) VALUES (:1,:2,:3,:4)";
+"INSERT INTO TapeCopy (copyNb, id, castorFile, status) VALUES (:1,ids_seq.nextval,:3,:4) RETURNING id INTO :2";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteStatementString =
@@ -547,21 +547,20 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(2, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     m_insertStatement->setInt(1, obj->copyNb());
-    m_insertStatement->setDouble(2, obj->id());
     m_insertStatement->setDouble(3, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setInt(4, (int)obj->status());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(2));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

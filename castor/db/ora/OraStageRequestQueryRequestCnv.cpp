@@ -55,7 +55,7 @@ const castor::ICnvFactory& OraStageRequestQueryRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_insertStatementString =
-"INSERT INTO StageRequestQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, parameter, id, svcClass, client, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
+"INSERT INTO StageRequestQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, parameter, id, svcClass, client, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:13,:14,:15) RETURNING id INTO :12";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_deleteStatementString =
@@ -369,6 +369,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(12, oracle::occi::OCCIINT);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -376,14 +377,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
-    m_insertStatusStatement->setDouble(1, obj->id());
-    m_insertStatusStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->flags());
     m_insertStatement->setString(2, obj->userName());
     m_insertStatement->setInt(3, obj->euid());
@@ -395,11 +389,16 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setString(11, obj->parameter());
-    m_insertStatement->setDouble(12, obj->id());
     m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->setInt(15, (int)obj->status());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(12));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
+    m_insertStatusStatement->setDouble(1, obj->id());
+    m_insertStatusStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

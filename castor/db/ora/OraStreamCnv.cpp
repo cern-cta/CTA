@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraStreamCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStreamCnv::s_insertStatementString =
-"INSERT INTO Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,ids_seq.nextval,:3,:4,:5) RETURNING id INTO :2";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStreamCnv::s_deleteStatementString =
@@ -563,22 +563,21 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(2, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->initialSizeToTransfer());
-    m_insertStatement->setDouble(2, obj->id());
     m_insertStatement->setDouble(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(4, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
     m_insertStatement->setInt(5, (int)obj->status());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(2));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

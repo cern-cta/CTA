@@ -57,7 +57,7 @@ const castor::ICnvFactory& OraStageUpdateRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageUpdateRequestCnv::s_insertStatementString =
-"INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13)";
+"INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:12,:13) RETURNING id INTO :11";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageUpdateRequestCnv::s_deleteStatementString =
@@ -498,6 +498,7 @@ void castor::db::ora::OraStageUpdateRequestCnv::createRep(castor::IAddress* addr
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(11, oracle::occi::OCCIINT);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -505,14 +506,7 @@ void castor::db::ora::OraStageUpdateRequestCnv::createRep(castor::IAddress* addr
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
-    m_insertStatusStatement->setDouble(1, obj->id());
-    m_insertStatusStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->flags());
     m_insertStatement->setString(2, obj->userName());
     m_insertStatement->setInt(3, obj->euid());
@@ -523,10 +517,15 @@ void castor::db::ora::OraStageUpdateRequestCnv::createRep(castor::IAddress* addr
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, obj->id());
     m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(11));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
+    m_insertStatusStatement->setDouble(1, obj->id());
+    m_insertStatusStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

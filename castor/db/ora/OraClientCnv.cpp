@@ -51,7 +51,7 @@ const castor::ICnvFactory& OraClientCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraClientCnv::s_insertStatementString =
-"INSERT INTO Client (ipAddress, port, id) VALUES (:1,:2,:3)";
+"INSERT INTO Client (ipAddress, port, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraClientCnv::s_deleteStatementString =
@@ -195,20 +195,19 @@ void castor::db::ora::OraClientCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(3, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
+    m_insertStatement->setInt(1, obj->ipAddress());
+    m_insertStatement->setInt(2, obj->port());
+    m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(3));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatement->setInt(1, obj->ipAddress());
-    m_insertStatement->setInt(2, obj->port());
-    m_insertStatement->setDouble(3, obj->id());
-    m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

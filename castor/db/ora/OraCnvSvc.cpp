@@ -61,10 +61,6 @@ const castor::IFactory<castor::IService>& OraCnvSvcFactory = s_factoryOraCnvSvc;
 const std::string castor::db::ora::OraCnvSvc::s_getTypeStatementString =
   "SELECT type FROM Id2Type WHERE id = :1";
 
-/// SQL statement for id retrieval
-const std::string castor::db::ora::OraCnvSvc::s_getIdStatementString =
-  "BEGIN getId(:1, :2); END;";
-
 /// SQL statement for selecting next request to be processed
 const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
   "BEGIN getNRStatement(:1); END;";
@@ -84,7 +80,6 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_environment(0),
   m_connection(0),
   m_getTypeStatement(0),
-  m_getIdStatement(0),
   m_getNRStatement(0),
   m_getNBRStatement(0) {
   char* cuser = getconfent(name.c_str(), "user", 0);
@@ -182,8 +177,6 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
     if (0 != m_connection) {
       if (0 != m_getTypeStatement)
         m_connection->terminateStatement(m_getTypeStatement);
-      if (0 != m_getIdStatement)
-        m_connection->terminateStatement(m_getIdStatement);
       if (0 != m_getNRStatement)
         m_connection->terminateStatement(m_getNRStatement);
       if (0 != m_getNBRStatement)
@@ -201,7 +194,6 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
   // reset all whatever the state is
   m_connection = 0;
   m_getTypeStatement = 0;
-  m_getIdStatement = 0;
   m_getNRStatement = 0;
   m_getNBRStatement = 0;
 }
@@ -255,47 +247,6 @@ void castor::db::ora::OraCnvSvc::rollback()
                     << std::endl << e.what();
     throw ex;
   }
-}
-
-// -----------------------------------------------------------------------
-// getIds
-// -----------------------------------------------------------------------
-const u_signed64
-castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
-  throw (castor::exception::Exception) {
-  if (0 == nids) return 0;
-  if (0 == m_getIdStatement) {
-    try {
-      m_getIdStatement =
-        getConnection()->createStatement(s_getIdStatementString);
-      m_getIdStatement->registerOutParam(2, oracle::occi::OCCIINT, sizeof(int));
-    } catch (oracle::occi::SQLException e) {
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        dropConnection();
-      }
-      m_getIdStatement = 0;
-      castor::exception::Internal ex;
-      ex.getMessage() << "Error in creating get Id statement."
-                      << std::endl << e.what();
-      throw ex;
-    }
-  }
-  try {
-    m_getIdStatement->setInt(1, nids);
-    m_getIdStatement->executeUpdate();
-    return m_getIdStatement->getInt(2) - nids;
-  } catch (oracle::occi::SQLException e) {
-    if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-      // We've obviously lost the ORACLE connection here
-      dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
-    ex.getMessage() << "Error in getting next id."
-                    << std::endl << e.what();
-    throw ex;
-  }
-  return 0;
 }
 
 // -----------------------------------------------------------------------

@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraSegmentCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSegmentCnv::s_insertStatementString =
-"INSERT INTO Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
+"INSERT INTO Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:13,:14,:15) RETURNING id INTO :12";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
@@ -384,16 +384,12 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(12, oracle::occi::OCCIINT);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
     std::string blockidS((const char*)obj->blockid(), 4);
     m_insertStatement->setString(1, blockidS);
     m_insertStatement->setInt(2, obj->fseq());
@@ -406,11 +402,14 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(9, obj->errMsgTxt());
     m_insertStatement->setInt(10, obj->errorCode());
     m_insertStatement->setInt(11, obj->severity());
-    m_insertStatement->setDouble(12, obj->id());
     m_insertStatement->setDouble(13, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(14, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
     m_insertStatement->setInt(15, (int)obj->status());
     m_insertStatement->executeUpdate();
+    obj->setId(m_insertStatement->getInt(12));
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
