@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.21 2000/03/30 10:01:50 jdurand Exp $
+ * $Id: stager.c,v 1.22 2000/03/30 15:36:23 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.21 $ $Date: 2000/03/30 10:01:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.22 $ $Date: 2000/03/30 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1317,10 +1317,12 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				int stcp_nbtpf = 0;
 				int stcp_inbtpf = 0;
 				struct stgcat_entry save_stcp;
+				struct stgcat_entry *save_stcp_p;
 
 				n = -1;
 
 				/* We compute the number of tape files */
+				save_stcp_p = stcp;
                 save_stcp = *stcp;
 				switch (stcp->u1.t.fseq[0]) {
 				case 'n':
@@ -1360,7 +1362,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 							*(p - 1) = ',';
 					}
 				}
-				*stcp = save_stcp;
+				*save_stcp_p = save_stcp;
 				nbfiles = (nbcat_ent > nbtpf) ? nbcat_ent : nbtpf;
 				if ((fl = (file_list_t *) calloc (nbfiles, sizeof(file_list_t))) == NULL) {
 					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
