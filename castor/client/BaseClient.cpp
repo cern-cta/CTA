@@ -119,6 +119,39 @@ void castor::client::BaseClient::run(int argc, char** argv)
     req->setMask(mask);
     // Pid
     req->setPid(getpid());
+    // Machine
+    {
+      // All this to get the hostname, thanks to C !
+      int len = 16;
+      char* hostname;
+      hostname = (char*) calloc(len, 1);
+      if (gethostname(hostname, len) < 0) {
+        clog() << "Unable to get hostname : "
+               << strerror(errno) << std::endl;
+        free(hostname);
+        return;
+      }
+      while (hostname[len - 1] != 0) {
+        len *= 2;
+        char *hostnameLonger = (char*) realloc(hostname, len);
+        if (0 == hostnameLonger) {
+          clog() << "Unable to allocate memory for hostname."
+                 << std::endl;
+          free(hostname);
+          return;
+        }
+        hostname = hostnameLonger;
+        memset(hostname, 0, len);
+        if (gethostname(hostname, len) < 0) {
+          clog() << "Unable to get hostname : "
+                 << strerror(errno) << std::endl;
+          free(hostname);
+          return;
+        }
+      }
+      req->setMachine(hostname);
+      free(hostname);
+    }
     // create a socket for the callback
     m_callbackSocket = new castor::io::Socket(0, true);
     unsigned short port;
