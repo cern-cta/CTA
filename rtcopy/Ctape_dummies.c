@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.6 $ $Date: 2000/04/18 14:47:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.7 $ $Date: 2000/06/14 13:02:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ static char unit[CA_MAXUNMLEN+1];
     fflush(stdin); \
     if ( rc == -1 ) { \
       serrno = value; \
-      errbuf = rtcpd_CtapeErrMsg(); \
+      errbuf = rtcpd_GetCtapeErrBuf(); \
     } \
     _rc = 0; \
     jobID = getpgrp(); \
@@ -249,30 +249,30 @@ int checkeofeov(int a, char *b) {
     CTAPE_BODY((stdout,"checkeofeov(%d,%s)\n",a,b));
 }
 
-int stage_updc_tppos(char *a, int b, int c, char *d, char *e, int f, int g,
-                     char *h, char *i) {
+int stage_updc_tppos(char *a, int b, int c, int d, char *e, char *f, int g, 
+                     int h, char *i, char *j) {
     CTAPE_DECL
-    fprintf(stdout,"stage_updc_tppos(%s,%d,%d,%s,%s,%d,%d,%s,%s)\n",
-            a,b,c,d,e,f,g,h,i);
+    fprintf(stdout,"stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            a,b,c,d,e,f,g,h,i,j);
     fprintf(stdout,"RC=?, errno=?, path=?\n"); 
     scanf("%d %d %[^\n]",&rc,&value,msg); 
     fflush(stdin); 
-    if ( *msg != '\0' ) strcpy(i,msg);
+    if ( *msg != '\0' ) strcpy(j,msg);
     if ( rc == -1 ) {
         serrno = value;
     }
     return(rc);
 }
 
-int stage_updc_filcp(char *a, int b, char *c, u_signed64 d, int e, int f,
-                     int g, char *h, char *i, int j, int k, char *l, char *m) {
+int stage_updc_filcp(char *a, int b, int c, char *d, u_signed64 e, int f, int g,
+                     int h, char *i, char *j, int k, int l, char *m, char *n) {
     CTAPE_DECL
-    fprintf(stdout,"stage_updc_filcp(%s,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
-            a,b,c,(int)d,e,f,g,h,i,j,k,l,m);
+    fprintf(stdout,"stage_updc_filcp(%s,%d,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            a,b,c,d,(int)e,f,g,h,i,j,k,l,m,n);
     fprintf(stdout,"RC=?, errno=?, path=?\n");
     scanf("%d %d %[^\n]",&rc,&value,msg);
     fflush(stdin); 
-    if ( *msg != '\0' ) strcpy(m,msg);
+    if ( *msg != '\0' ) strcpy(n,msg);
     if ( rc == -1 ) {
         serrno = value;
     }

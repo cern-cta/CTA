@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.33 $ $Date: 2000/05/23 06:48:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.34 $ $Date: 2000/06/14 13:02:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -68,13 +68,20 @@ int rtcpd_CtapeInit() {
     return(0);
 }
 
-char *rtcpd_CtapeErrMsg() {
+char *rtcpd_GetCtapeErrBuf() {
     char *errbuf;
     int errbufsiz = CA_MAXLINELEN+1;
+
+    Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
+    return(errbuf);
+}
+
+char *rtcpd_CtapeErrMsg() {
+    char *errbuf;
     int save_serrno;
 
     save_serrno = serrno > 0 ? serrno : errno;
-    Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
+    errbuf = rtcpd_GetCtapeErrBuf();
     if ( errbuf == NULL ) return(Unkn_errorstr);
     if ( *errbuf == '\0' ) {
         if ( save_serrno > 0 ) return(sstrerror(save_serrno));
@@ -85,9 +92,8 @@ char *rtcpd_CtapeErrMsg() {
 
 void rtcpd_ResetCtapeError() {
     char *errbuf;
-    int errbufsiz = CA_MAXLINELEN+1;
 
-    Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
+    errbuf = rtcpd_GetCtapeErrBuf();
     if ( errbuf != NULL ) *errbuf = '\0';
     serrno = 0;
     return;
