@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.119 2001/03/28 14:05:53 jdurand Exp $
+ * $Id: procio.c,v 1.120 2001/03/28 18:35:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.119 $ $Date: 2001/03/28 14:05:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.120 $ $Date: 2001/03/28 18:35:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -674,10 +674,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					hsmfiles = dummy;
 				}
-				if (Aflag && stcp_input[i].size != 0) {
+                /*
+				if (Aflag && (stcp_input[i].size != 0) && (req_type == STAGE_IN)) {
 					sendrep (rpfd, MSG_ERR, STG35, "-A deffered", "-s <size_in_MB>");
 					errflg++;
 				}
+                */
 				hsmfiles[nhsmfiles++] = (t_or_d == 'm' ? stcp_input[i].u1.m.xfile : stcp_input[i].u1.h.xfile);
 				if ((c = check_hsm_type(hsmfiles[nhsmfiles - 1],&nhpssfiles,&ncastorfiles,&nuserlevel,&nexplevel,&t_or_d)) != 0) {
 					errflg++;
@@ -1482,7 +1484,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					 * a partial file, and replace it if current
 					 * request is for a larger size.
 					 */
-					if ((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) &&
+					if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
 							(stgreq.size > stcp->size)) {
 						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR,
