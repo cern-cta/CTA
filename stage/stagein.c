@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.45 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stagein.c,v 1.46 2002/04/11 10:34:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.45 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.46 $ $Date: 2002/04/11 10:34:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -42,9 +42,12 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.45 $ $Date: 2002/03/05 14:44:0
 #include "stage_constants.h"
 #include "stage_messages.h"
 #include "stage_macros.h"
+#if VMGR
+#include "Ctape_constants.h"   /* For WRITE_ENABLE and WRITE_DISABLE */
+#include "vmgr_api.h"          /* For vmgrcheck() */
+#endif
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
-EXTERN_C int  DLL_DECL  sysreq _PROTO((char *, char *, int *, char *, int *));
 extern	char	*getenv();
 extern	char	*getconfent();
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
@@ -69,7 +72,12 @@ int side_flag = 0;
 int nocopy_flag = 0;
 
 #if TMS
-int tmscheck _PROTO((char *, char *, char *, char *, char *, int *, int *));
+static int tmscheck _PROTO((char *, char *, char *, char *, char *, int *, int *));
+EXTERN_C int DLL_DECL sysreq _PROTO((char *, char *, int *, char *, int *));
+#endif
+#if VMGR
+char vmgr_error_buffer[512];        /* Vmgr error buffer */
+static int stage_vmgrcheck _PROTO((char *, char *, char *, char *, char *, int));
 #endif
 int stagein_chkdirw _PROTO((char *));
 void cleanup _PROTO((int));
@@ -537,71 +545,96 @@ int main(argc, argv)
 		if (strcmp (den, "38K") == 0) strcpy (den, "38000");
 		/* setting defaults (from TMS if installed) */
 		for (i = 0; i < numvid; i++) {
+#if VMGR
+			if (stage_vmgrcheck(vid[i], vsn[i], dgn, den, lbl, ((req_type == STAGEOUT) || (req_type == STAGEWRT)) ? WRITE_ENABLE : WRITE_DISABLE) != 0) {
+#endif
 #if TMS
-			if ((errflg += tmscheck (vid[i], vsn[i], dgn, den, lbl, &fseq1, &fseq2)) == 0) {
-				if (stagetape && coff && (qopt != NULL)) {
-					if (((numvid > 0) && (numvid != 1)) ||
-						((numvsn > 0) && (numvsn != 1))) {
-						fprintf (stderr, STG33, "-c off option", "requires one -V or one -v other option");
-						errflg++;
-					} else {
-						if (((fseq1 > 0) && (fseq2 <= 0)) ||
-							((fseq2 > 0) && (fseq1 <= 0)) ||
-							((fseq1 > 0) && (fseq2 > 0) && (fseq2 < fseq1))) {
-							fprintf (stderr, "STG33 - TMS gives %s VIDMAP inconsistent info (fseq range [%d,%d])", vid[i], fseq1, fseq2);
-							errflg++;
-						} else if ((fseq1 > 0) && (fseq2 > 0)) {
-							char *dp;
-							int qvalue;
-							/* TMS says that this volume is VIDMAPped */
-							/* We verify consistency with -q option value */
-							stage_strtoi(&qvalue, qopt, &dp, 10);
-							if ((qvalue == INT_MIN) ||
-								(qvalue == INT_MAX) ||
-								(*dp != '-') ||
-								((*dp == '-') && (*(dp+1) != '\0'))) {
-								fprintf (stderr, STG06, "-q");
+#if VMGR
+				if (serrno == ETVUNKN) {
+					/* VMGR fails with acceptable serrno and TMS is available */
+#endif
+					if ((errflg += tmscheck (vid[i], vsn[i], dgn, den, lbl, &fseq1, &fseq2)) == 0) {
+						if (stagetape && coff && (qopt != NULL)) {
+							if (((numvid > 0) && (numvid != 1)) ||
+								((numvsn > 0) && (numvsn != 1))) {
+								fprintf (stderr, STG33, "-c off option", "requires one -V or one -v other option");
 								errflg++;
 							} else {
-								/* When user specifies -q<fseq>, in reality the fseq on tape is fseq1+<fseq>-1 */
-								/* so we have to verify that fseq1+<fseq>-1 does not exceed fseq2 */
-								if ((qvalue < 0) || ((qvalue + fseq1 - 1) > fseq2)) {
-									fprintf (stderr, "STG33 - For %s VIDMAP volume, -q option value must be in range [%d,%d]\n", vid[i], 1, fseq2 - fseq1 + 1);
+								if (((fseq1 > 0) && (fseq2 <= 0)) ||
+									((fseq2 > 0) && (fseq1 <= 0)) ||
+									((fseq1 > 0) && (fseq2 > 0) && (fseq2 < fseq1))) {
+									fprintf (stderr, "STG33 - TMS gives %s VIDMAP inconsistent info (fseq range [%d,%d])", vid[i], fseq1, fseq2);
 									errflg++;
-								} else {
-									size_t fseqlen;
-									/* The real starting fseq is fseq1+<fseq>-1 */
-									fseq1 += (qvalue - 1);
-                                    /* We create a string like q1,q2,etc... */
-									/* starting from fseq1 to fseq2, so: fseq2-fseq1+1 entries */
-                                    /* separated by as many ',' characters, each entry being maximum CA_MAXFSEQLEN length */
-									fseqlen = ((fseq2-fseq1+1) * CA_MAXFSEQLEN) + (fseq2-fseq1) + 1;
-									if ((qoptok = (char *) malloc(fseqlen)) == NULL) {
-										fprintf (stderr, STG02, "stagein", "malloc", strerror(errno));
+								} else if ((fseq1 > 0) && (fseq2 > 0)) {
+									char *dp;
+									int qvalue;
+									/* TMS says that this volume is VIDMAPped */
+									/* We verify consistency with -q option value */
+									stage_strtoi(&qvalue, qopt, &dp, 10);
+									if ((qvalue == INT_MIN) ||
+										(qvalue == INT_MAX) ||
+										(*dp != '-') ||
+										((*dp == '-') && (*(dp+1) != '\0'))) {
+										fprintf (stderr, STG06, "-q");
 										errflg++;
 									} else {
-										int iq;
-										char *qq = qoptok;
-
-										*qq = '\0';
-										for (iq = fseq1; iq <= fseq2; iq++) {
-											sprintf(qq, "%d", iq + qvalue - fseq1);
-											qq += strlen(qq);
-											if (iq != fseq2) {
-												*qq++ = ',';
-												*qq   = '\0';
+ 								/* When user specifies -q<fseq>, in reality the fseq on tape is fseq1+<fseq>-1 */
+								/* so we have to verify that fseq1+<fseq>-1 does not exceed fseq2 */
+										if ((qvalue < 0) || ((qvalue + fseq1 - 1) > fseq2)) {
+											fprintf (stderr, "STG33 - For %s VIDMAP volume, -q option value must be in range [%d,%d]\n", vid[i], 1, fseq2 - fseq1 + 1);
+											errflg++;
+										} else {
+											size_t fseqlen;
+											/* The real starting fseq is fseq1+<fseq>-1 */
+											fseq1 += (qvalue - 1);
+											/* We create a string like q1,q2,etc... */
+											/* starting from fseq1 to fseq2, so: fseq2-fseq1+1 entries */
+											/* separated by as many ',' characters, each entry being maximum CA_MAXFSEQLEN length */
+											fseqlen = ((fseq2-fseq1+1) * CA_MAXFSEQLEN) + (fseq2-fseq1) + 1;
+											if ((qoptok = (char *) malloc(fseqlen)) == NULL) {
+												fprintf (stderr, STG02, "stagein", "malloc", strerror(errno));
+												errflg++;
+											} else {
+												int iq;
+												char *qq = qoptok;
+												
+												*qq = '\0';
+												for (iq = fseq1; iq <= fseq2; iq++) {
+													sprintf(qq, "%d", iq + qvalue - fseq1);
+													qq += strlen(qq);
+													if (iq != fseq2) {
+														*qq++ = ',';
+														*qq   = '\0';
+													}
+												}
 											}
+											qoptforget = qopt;
+											qopt = qoptok;
 										}
 									}
-									qoptforget = qopt;
-									qopt = qoptok;
 								}
-                            }
+							}
 						}
 					}
+#if VMGR
+				} else {
+					/* VMGR fails with not acceptable serrno */
+					errflg++;
+					fprintf (stderr, STG02, vid[i][0] != '\0' ? vid[i] : vsn[i], "vmgrcheck", sstrerror(serrno));
+					break;
 				}
+#endif
+#elif (defined(VMGR))
+				/* VMGR fail and TMS isn't there */
+				errflg++;
+				fprintf (stderr, STG02, vid[i][0] != '\0' ? vid[i] : vsn[i], "vmgrcheck", sstrerror(serrno));
+				break;
+#endif /* TMS */
+#if VMGR
 			}
-#else
+#endif
+#if (! (defined(VMGR) || defined(TMS)))
+			/* No VMGR nor TMS */
 			if (vflag == 0)
 				strcpy (vsn[i], vid[i]);
 			if (gflag == 0)
@@ -741,7 +774,7 @@ int main(argc, argv)
 		marshall_STRING (sbp, pool_user);
 	}
 	for (i = Coptind; i < argc; i++) {
-		if ((c = build_linkname (argv[i], path, sizeof(path), req_type)) == SYERR) {
+		if ((c = build_linkname (argv[i], path, sizeof(path), req_type)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -765,7 +798,7 @@ int main(argc, argv)
 		}
 	}
 	if (fun) {
-		if ((c = build_Upath (fun, path, sizeof(path), req_type)) == SYERR) {
+		if ((c = build_Upath (fun, path, sizeof(path), req_type)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -819,11 +852,7 @@ int main(argc, argv)
 		}
 		if (c == 0 || serrno == EINVAL || serrno == ERTBLKSKPD || serrno == ERTTPE_LSZ ||
 				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == ESTCLEARED ||
-				serrno == ENOSPC || serrno == ESTKILLED) break;
-		if (serrno == ESTLNKNSUP) {	/* symbolic links not supported on that platform */
-			serrno = USERR;
-			break;
-		}
+				serrno == ENOSPC || serrno == ESTKILLED || serrno == ESTLNKNSUP) break;
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */
@@ -855,7 +884,7 @@ void freehsmfiles(nhsmfiles,hsmfiles)
 }
 
 #if TMS
-int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
+static int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
 		 char *vid;
 		 char *vsn;
 		 char *dgn;
@@ -972,6 +1001,44 @@ int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
       }
     }
 	return (errflg);
+}
+#endif
+
+#if VMGR
+int stage_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
+     char *vid;
+     char *vsn;
+     char *dgn;
+     char *den;
+     char *lbl;
+	 int mode;
+{
+    uid_t uid;
+    gid_t gid;
+	int rc;
+
+    /* Make sure error buffer of VMGR do not go to stderr */
+    vmgr_error_buffer[0] = '\0';
+    if (vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
+		return(serrno);
+    }
+
+    /* We need to know exact current uid/gid */
+    uid = getuid();
+    gid = getgid();
+
+#if defined(_WIN32)
+    if (uid < 0 || gid < 0) {
+		return(SEUSERUNKN);
+    }
+#endif
+
+	if ((rc = vmgrcheck(vid,vsn,dgn,den,lbl,mode,uid,gid)) != 0) {
+		serrno = rc;
+		return(1);
+	} else {
+		return(0);
+	}
 }
 #endif
 
