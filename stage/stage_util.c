@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.29 2003/09/08 15:53:14 jdurand Exp $
+ * $Id: stage_util.c,v 1.30 2003/10/31 20:01:53 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.29 $ $Date: 2003/09/08 15:53:14 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.30 $ $Date: 2003/10/31 20:01:53 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ int DLL_DECL stage_stgmagic()
   char *dp;
 
   /* We check existence of an STG STGMAGIC from environment variable or configuration */
-  if (((p = getenv("STAGE_STGMAGIC")) != NULL) || ((p = getconfent("STG","STGMAGIC")) != NULL)) {
+  if (((p = getenv("STAGE_STGMAGIC")) != NULL) || ((p = getconfent("STG","STGMAGIC",1)) != NULL)) {
     errno = 0;
     stgmagic = strtol(p, &dp, 0);
     if ((*dp != '\0') || (((stgmagic == LONG_MIN) || (stgmagic == LONG_MAX)) && (errno == ERANGE))) {
