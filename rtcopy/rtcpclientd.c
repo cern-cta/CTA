@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/22 07:00:34 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/05 15:38:39 $ $Author: motiakov $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/22 07:00:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/05 15:38:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -863,7 +863,8 @@ int rtcpcld_main(
       rc = rtcp_Listen(
                        *rtcpdSocket,
                        &acceptSocket,
-                       -1
+                       -1,
+		       RTCP_ACCEPT_FROM_SERVER
                        );
       if ( rc == -1 ) {
         (void)dlf_write(

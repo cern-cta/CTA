@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.1 2004/08/03 15:41:38 motiakov Exp $
+ * $Id: rtcp_SendRecv.c,v 1.2 2004/08/05 15:38:39 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.1 $ $Date: 2004/08/03 15:41:38 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.2 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -597,15 +597,20 @@ int rtcp_CloseConnection(SOCKET *s) {
 int rtcp_Connect(
                  SOCKET *connect_socket,
                  char *client_host,
-                 int *client_port
+                 int *client_port,
+		 int whereto        /* Indicates whether we are connecting to the server or to the client */
                  ) {
   struct hostent *hp = NULL;
   struct sockaddr_in sin ; /* Internet address */
 
 #ifdef CSEC
+  uid_t Csec_uid;
+  gid_t Csec_gid;
+  int Csec_service_type;
+  int c;
   char *p;
   int n;
-  Csec_context_t ctx;  
+  Csec_context_t sec_ctx;  
 #endif
 
   if ( connect_socket == NULL || client_host == NULL || 
@@ -653,29 +658,62 @@ int rtcp_Connect(
   }
 
 #ifdef CSEC
+  if (whereto == RTCP_CONNECT_TO_CLIENT) { /* We are the server */
+    /*
+     * Try to establish secure connection.
+     */
+    Csec_server_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
+    if (Csec_server_establish_context(&sec_ctx, *connect_socket) < 0) {
+      rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Could not establish server context\n");
+      closesocket(*connect_socket);
+      *connect_socket = INVALID_SOCKET;
+      serrno = SECOMERR;
+      return(-1);
+    }
+    /* Connection could be done from another castor service */
+    if ((c = Csec_server_is_castor_service(&sec_ctx)) >= 0) {
+      rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Client is castor service type %d\n", c);
+      Csec_service_type = c;
+    }
+    else {
+      if (Csec_server_get_client_username(&sec_ctx, &Csec_uid, &Csec_gid) != NULL) {
+	rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Client is %s (%d/%d)\n",
+		 Csec_server_get_client_username(&sec_ctx, NULL, NULL),
+		 Csec_uid,
+		 Csec_gid);
+	Csec_service_type = -1;
+      }
+      else {
+	closesocket(*connect_socket);
+	*connect_socket = INVALID_SOCKET;
+	serrno = SECOMERR;
+	return(-1);
+      }
+    }
 
-  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
-    rtcp_log(LOG_ERR, "rtcp_Connect() Could not init context\n");
-    closesocket(*connect_socket);
-    *connect_socket = INVALID_SOCKET;
-    serrno = ESEC_CTX_NOT_INITIALIZED;
-    return(-1);
-  }
+  } else { /* We are the client */
+    if (Csec_client_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+      rtcp_log(LOG_ERR, "rtcp_Connect() Could not init context\n");
+      closesocket(*connect_socket);
+      *connect_socket = INVALID_SOCKET;
+      serrno = ESEC_CTX_NOT_INITIALIZED;
+      return(-1);
+    }
 			
-  if(Csec_client_establish_context(&ctx, *connect_socket)< 0) {
-    rtcp_log(LOG_ERR, "rtcp_Connect() Could not establish context\n");
-    closesocket(*connect_socket);
-    *connect_socket = INVALID_SOCKET;
-    serrno = ESEC_NO_CONTEXT;
-    return(-1);
-  }
+    if(Csec_client_establish_context(&sec_ctx, *connect_socket)< 0) {
+      rtcp_log(LOG_ERR, "rtcp_Connect() Could not establish context\n");
+      closesocket(*connect_socket);
+      *connect_socket = INVALID_SOCKET;
+      serrno = ESEC_NO_CONTEXT;
+      return(-1);
+    }
 
-  p = Csec_client_get_service_name(&ctx);
-  n = Csec_client_get_service_type(&ctx);
-  Csec_trace ("rtcp_Connect", "Service name = %s, type = %d\n",p, n);
+    p = Csec_client_get_service_name(&sec_ctx);
+    n = Csec_client_get_service_type(&sec_ctx);
+    Csec_trace ("rtcp_Connect", "Service name = %s, type = %d\n",p, n);
   
-  Csec_clear_context(&ctx);
-
+    Csec_clear_context(&sec_ctx);
+  }
 #endif
 
   return(0);
@@ -685,7 +723,7 @@ int rtcpd_ConnectToClient(
                           char *client_host,
                           int *client_port
                           ) {
-  return(rtcp_Connect(connect_socket,client_host,client_port));
+  return(rtcp_Connect(connect_socket,client_host,client_port,RTCP_CONNECT_TO_CLIENT));
 }
 
 /** rtcp_ClientMsg() - send message to a SHIFT client (obsolete)

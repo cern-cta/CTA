@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/04 08:42:43 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.37 $ $Release$ $Date: 2004/08/05 15:38:39 $ $Author: motiakov $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.36 $ $Date: 2004/08/04 08:42:43 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.37 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1635,7 +1635,7 @@ int rtcpcldc_kill(
   server = tpList->vwAddress;
   port = atoi(++p);
 
-  rc = rtcp_Connect(&abortSocket,server,&port);
+  rc = rtcp_Connect(&abortSocket,server,&port,RTCP_CONNECT_TO_CLIENT);
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("rtcp_Connect()","");

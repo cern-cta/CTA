@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.2 2004/08/05 09:10:42 motiakov Exp $
+ * $Id: rtcp_Listen.c,v 1.3 2004/08/05 15:38:39 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.2 $ $Date: 2004/08/05 09:10:42 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.3 $ $Date: 2004/08/05 15:38:39 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.2 $ $Date: 
 #endif
 
 
-int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
+int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
     fd_set rfds, rfds_copy;
     struct sockaddr_in from;
     int fromlen, maxfd, rc;
@@ -55,6 +55,8 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
     Csec_context_t sec_ctx;
     int Csec_service_type;
     int c;
+    char *p;
+    int n;
 #endif
 
     if ( s == INVALID_SOCKET ) {
@@ -77,8 +79,6 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
      * Loop on select over all listen sockets. Break on valid
      * connection or true error.
      */
-    rtcp_log(LOG_INFO,"rtcp_Listen() called with s=%d, ns=%d, tout=%d\n",
-	     s, ns, timeout);
     for (;;) {
         if ( ns != NULL ) *ns = INVALID_SOCKET;
         rfds_copy = rfds;
@@ -116,37 +116,62 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
                     /*
                      * A valid connection has been found.
                      */
-		    rtcp_log(LOG_INFO,"rtcp_Listen() connection accepted\n");
 
 #ifdef CSEC
 		    /*
 		     * Try to establish secure connection.
 		     */
-		    Csec_server_reinit_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
-		    if (Csec_server_establish_context(&sec_ctx, *ns) < 0) {
-		      rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Could not establish cotext\n");
-		      closesocket(*ns);
-		      *ns = INVALID_SOCKET;
-		      return(-1);
-		    }
-		    /* Connection could be done from another castor service */
-		    if ((c = Csec_server_is_castor_service(&sec_ctx)) >= 0) {
-		      rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Client is castor service type %d\n", c);
-		      Csec_service_type = c;
-		    }
-		    else {
-		      if (Csec_server_get_client_username(&sec_ctx, &Csec_uid, &Csec_gid) != NULL) {
-		      rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Client is %s (%d/%d)\n",
-			       Csec_server_get_client_username(&sec_ctx, NULL, NULL),
-			       Csec_uid,
-			       Csec_gid);
-			Csec_service_type = -1;
-		      }
-		      else {
+		    if (wherefrom == RTCP_ACCEPT_FROM_CLIENT) { /* We are the server */
+		      Csec_server_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
+		      if (Csec_server_establish_context(&sec_ctx, *ns) < 0) {
+			rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Could not establish cotext\n");
 			closesocket(*ns);
 			*ns = INVALID_SOCKET;
 			return(-1);
 		      }
+		      rtcp_log(LOG_INFO,"rtcp_Listen() CSEC: server context established\n");
+		      /* Connection could be done from another castor service */
+		      if ((c = Csec_server_is_castor_service(&sec_ctx)) >= 0) {
+			rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Client is castor service type %d\n", c);
+			Csec_service_type = c;
+		      }
+		      else {
+			if (Csec_server_get_client_username(&sec_ctx, &Csec_uid, &Csec_gid) != NULL) {
+			  rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Client is %s (%d/%d)\n",
+				   Csec_server_get_client_username(&sec_ctx, NULL, NULL),
+				   Csec_uid,
+				   Csec_gid);
+			  Csec_service_type = -1;
+			}
+			else {
+			  closesocket(*ns);
+			  *ns = INVALID_SOCKET;
+			  return(-1);
+			}
+		      }
+		    }
+		    else { /* We are the client */
+		      if (Csec_client_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			rtcp_log(LOG_ERR, "rtcp_Listen() Could not init client context\n");
+			closesocket(*ns);
+			*ns = INVALID_SOCKET;
+			serrno = ESEC_CTX_NOT_INITIALIZED;
+			return(-1);
+		      }
+		      
+		      if(Csec_client_establish_context(&sec_ctx, *ns)< 0) {
+			rtcp_log(LOG_ERR, "rtcp_Listen() Could not establish client context\n");
+			closesocket(*ns);
+			*ns = INVALID_SOCKET;
+			serrno = ESEC_NO_CONTEXT;
+			return(-1);
+		      }
+		      
+		      p = Csec_client_get_service_name(&sec_ctx);
+		      n = Csec_client_get_service_type(&sec_ctx);
+		      Csec_trace ("rtcp_Listen", "Service name = %s, type = %d\n",p, n);
+  
+		      Csec_clear_context(&sec_ctx);
 		    }
 #endif   /* CSEC */
 		    /*

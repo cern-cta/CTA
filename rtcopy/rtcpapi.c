@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.2 $ $Date: 2004/06/07 14:48:09 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.3 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -86,7 +86,7 @@ extern int rtcp_RecvAckn _PROTO((SOCKET *, int));
 extern int rtcp_SendAckn _PROTO((SOCKET *, int));
 extern int rtcp_CloseConnection _PROTO((SOCKET *));
 
-extern int rtcp_Listen _PROTO((SOCKET, SOCKET *, int));
+extern int rtcp_Listen _PROTO((SOCKET, SOCKET *, int, int));
 extern int rtcp_CheckConnect _PROTO((SOCKET *, tape_list_t *));
 #if TMS
 extern int rtcp_CallTMS _PROTO((tape_list_t *, char *));
@@ -935,7 +935,7 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
     tapereq->VolReqID = reqID;
 
     rc = rtcp_Listen(*((*socks)->listen_socket),&((*socks)->accept_socket),
-                     RTCPC_PING_INTERVAL);
+                     RTCPC_PING_INTERVAL, RTCP_ACCEPT_FROM_SERVER);
     /*
      * Returned from a blocking call. Check if killed in meanwhile
      */
@@ -2065,7 +2065,8 @@ int rtcpc_runReq_ext(
       rc = rtcp_Listen(
                        *((*socks)->listen_socket),
                        &((*socks)->accept_socket),
-                       -1
+                       -1,
+		       RTCP_ACCEPT_FROM_SERVER
                        );
       if ( rc == -1 || (*socks)->accept_socket == INVALID_SOCKET ) {
         if ( save_serrno <=0 ) save_serrno = serrno;
