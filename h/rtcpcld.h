@@ -314,6 +314,10 @@ int rtcpcld_gettape _PROTO((
 int rtcpcld_tapeOK _PROTO((
                            tape_list_t *
                            ));
+int rtcpcld_handleTapeError _PROTO((
+                                    tape_list_t *,
+                                    file_list_t *
+                                    ));
 int rtcpcld_updateTape _PROTO((
                                tape_list_t *,
                                file_list_t *,
