@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)posovl.c,v 1.1 1999-11-04 17:58:11+01 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.3 $ $Date: 1999/11/08 07:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,6 +14,9 @@ static char sccsid[] = "@(#)posovl.c,v 1.1 1999-11-04 17:58:11+01 CERN IT-PDP/DM
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(_AIX) && defined(_IBMR2)
+#include <sys/select.h>
+#endif
 #include "Ctape.h"
 #include "marshall.h"
 #if SACCT
