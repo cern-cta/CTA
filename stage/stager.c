@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.163 2001/11/23 12:30:18 jdurand Exp $
+ * $Id: stager.c,v 1.164 2001/11/30 12:20:52 jdurand Exp $
  */
 
 /*
@@ -12,9 +12,6 @@
 
 /* Do you want to do the Cns_setsegattrs() under real uid/gid of the owner of file in Castor Name Server ? */
 /* #define SETSEGATTRS_WITH_OWNER_UID_GID */
-
-/* Do you want to check size of the file on disk v.s. size in the Castor Name Server ? */
-#define SKIP_CHECK_FILESIZE
 
 /* Do you want to hardcode the limit of number of file sequences on a tape ? */
 #define MAX_TAPE_FSEQ 9999
@@ -33,16 +30,21 @@
 /* If you want to always migrate the full data to tape do: */
 /* #define FULL_STAGEWRT_HSM */
 
+#ifdef STAGE_CSETPROCNAME
+#define STAGE_CSETPROCNAME_FORMAT_DISK "%s %s %s"
+#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s.%d"
+#define STAGE_CSETPROCNAME_FORMAT_CASTOR "%s %s %s.%d %s"
+#include "Csetprocname.h"
+#endif
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.163 $ $Date: 2001/11/23 12:30:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.164 $ $Date: 2001/11/30 12:20:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
 #include <unistd.h>                 /* For getcwd() etc... */
 #include <sys/time.h>
 #endif
-#include <grp.h>
-#include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -173,6 +175,9 @@ int callback_nok = 0;               /* Number of fseq transfered OK and seen in 
 int dont_change_srv = 0;            /* If != 0 means that we will not change tape_server if rtcpc() retry - Only stage_tape() */
 char tape_pool[CA_MAXPOOLNAMELEN + 1]; /* Global tape pool for write migration */
 int retryi_vmgr_gettape_enospc = 0; /* Retry Interval if vmgr_gettape() returns ENOSPC */
+#ifdef STAGE_CSETPROCNAME
+static char sav_argv0[1024+1];
+#endif
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -184,7 +189,8 @@ int retryi_vmgr_gettape_enospc = 0; /* Retry Interval if vmgr_gettape() returns 
 #ifdef STGSEGMENT_OK
 #undef STGSEGMENT_OK
 #endif
-#define STGSEGMENT_OK '-'
+static int segment_status;
+#define STGSEGMENT_OK(segment) ( ((segment).s_status == '-') && ((segment).vid[0] != '\0') && (vmgr_querytape((segment).vid, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &segment_status) == 0) && (! (((segment_status & DISABLED) == DISABLED) || ((segment_status & EXPORTED) == EXPORTED) || (((segment_status & ARCHIVED) == ARCHIVED)))) )
 
 #ifdef STGSEGMENT_NOTOK
 #undef STGSEGMENT_NOTOK
@@ -431,9 +437,73 @@ int save_euid, save_egid;
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-int main(argc, argv)
+/* Compatibility mode of a stager.c > version 1.3.4.6 with source code <= 1.3.4.6 */
+#ifndef ISTAPESERRNO
+#define ISTAPESERRNO(serrno) ((serrno == ETDNP)    || \
+                              (serrno == ETSYS)    || \
+                              (serrno == ETPRM)    || \
+                              (serrno == ETRSV)    || \
+                              (serrno == ETNDV)    || \
+                              (serrno == ETIDG)    || \
+                              (serrno == ETNRS)    || \
+                              (serrno == ETIDN)    || \
+                              (serrno == ETLBL)    || \
+                              (serrno == ETFSQ)    || \
+                              (serrno == ETINTR)   || \
+                              (serrno == ETEOV)    || \
+                              (serrno == ETRLSP)   || \
+                              (serrno == ETBLANK)  || \
+                              (serrno == ETCOMPA)  || \
+                              (serrno == ETHWERR)  || \
+                              (serrno == ETPARIT)  || \
+                              (serrno == ETUNREC)  || \
+                              (serrno == ETNOSNS)  || \
+                              (serrno == ETRSLT)   || \
+                              (serrno == ETVBSY)   || \
+                              (serrno == ETDCA)    || \
+                              (serrno == ETNRDY)   || \
+                              (serrno == ETABSENT) || \
+                              (serrno == ETARCH)   || \
+                              (serrno == ETHELD)   || \
+                              (serrno == ETNXPD)   || \
+                              (serrno == ETOPAB)   || \
+                              (serrno == ETVUNKN)  || \
+                              (serrno == ETWLBL)   || \
+                              (serrno == ETWPROT)  || \
+                              (serrno == ETWVSN))
+#endif
+#ifndef ISVDQMSERRNO
+#define ISVDQMSERRNO(serrno) ((serrno == EVQSYERR)     || \
+                              (serrno == EVQINCONSIST) || \
+                              (serrno == EVQREPLICA)   || \
+                              (serrno == EVQNOVOL)     || \
+                              (serrno == EVQNODRV)     || \
+                              (serrno == EVQNOSVOL)    || \
+                              (serrno == EVQNOSDRV)    || \
+                              (serrno == EVQALREADY)   || \
+                              (serrno == EVQUNNOTUP)   || \
+                              (serrno == EVQBADSTAT)   || \
+                              (serrno == EVQBADID)     || \
+                              (serrno == EVQBADJOBID)  || \
+                              (serrno == EVQNOTASS)    || \
+                              (serrno == EVQBADVOLID)  || \
+                              (serrno == EVQREQASS)    || \
+                              (serrno == EVQDGNINVL)   || \
+                              (serrno == EVQPIPEFULL)  || \
+                              (serrno == EVQHOLD)      || \
+                              (serrno == EVQEOQREACHED))
+#endif
+
+#ifdef STAGE_CSETPROCNAME
+int main(argc,argv,envp)
 		 int argc;
 		 char **argv;
+		 char **envp;
+#else
+int main(argc,argv)
+		 int argc;
+		 char **argv;
+#endif
 {
 	int c;
 	int l;
@@ -450,6 +520,14 @@ int main(argc, argv)
 
 	strcpy (func, "stager");
 	stglogit (func, "function entered\n");
+
+#ifdef STAGE_CSETPROCNAME
+	strncpy(sav_argv0,argv[0],1024);
+	sav_argv0[1024] = '\0';
+	if (Cinitsetprocname(argc,argv,envp) != 0) {
+		stglogit(func,"### Cinitsetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
+#endif
 
 #ifdef STAGER_DEBUG
 	{
@@ -687,11 +765,20 @@ int main(argc, argv)
 	if (stcs->t_or_d == 'd' || stcs->t_or_d == 'm') {
 		int exit_code;
 
-        for (stcp = stcs; stcp < stce; stcp++) {
-          if ((exit_code = filecopy (stcp, key, hostname)) & 0xFF) {
-            exit (SYERR);
-          }
-        }
+		for (stcp = stcs; stcp < stce; stcp++) {
+#ifdef STAGE_CSETPROCNAME
+			if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_DISK,
+							sav_argv0,
+							"STARTING",
+							stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile
+							) != 0) {
+				stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+			}
+#endif
+			if ((exit_code = filecopy (stcp, key, hostname)) & 0xFF) {
+				exit (SYERR);
+			}
+		}
 		free(stcs);
 		exit((exit_code >> 8) & 0xFF);
 	}
@@ -709,6 +796,16 @@ int main(argc, argv)
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
 		sleep(SLEEP_DEBUG);
 		RESTORE_EID;
+#endif
+#ifdef STAGE_CSETPROCNAME
+		if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
+						sav_argv0,
+						"STARTING",
+						"???",
+						0
+						) != 0) {
+			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+		}
 #endif
 		c = stage_tape ();
 	} else {
@@ -728,6 +825,17 @@ int main(argc, argv)
 			free(stcs);
 			exit(SYERR);
 		}
+#ifdef STAGE_CSETPROCNAME
+		if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_CASTOR,
+						sav_argv0,
+						"STARTING",
+						"???",
+						0,
+						"???"
+						) != 0) {
+			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+		}
+#endif
 		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			if (stcs->t_or_d == 'h') {
 				int have_tppool = 0;
@@ -1089,13 +1197,13 @@ int stagein_castor_hsm_file() {
 		hsm_startsegment[i] = -1;
 		hsm_endsegment[i] = -1;
 		for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
-			if (hsm_segments[i][isegments].s_status != STGSEGMENT_OK) {
+			if (! STGSEGMENT_OK(hsm_segments[i][isegments])) {
 				/* This copy number is not available for recall */
 	            /* We makes sure that all segments with the same copy number are really invalid */
 				for (jsegments = 0; jsegments < hsm_nsegments[i]; jsegments++) {
 					if (jsegments == isegments) continue;
 					if (hsm_segments[i][jsegments].copyno != hsm_segments[i][isegments].copyno) continue;
-					if (hsm_segments[i][jsegments].s_status == STGSEGMENT_OK) {
+					if (hsm_segments[i][jsegments].s_status == '-') {
 						SAVE_EID;
 						sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][isegments].copyno, jsegments, isegments);
 						RESTORE_EID;
@@ -1128,7 +1236,7 @@ int stagein_castor_hsm_file() {
 					/* If this last segment is not the first one, we just check that its status */
 					/* is correctly STGSEGMENT_OK */
 					if (jsegments != isegments) {
-						if (hsm_segments[i][jsegments].s_status == STGSEGMENT_OK) {
+						if (STGSEGMENT_OK(hsm_segments[i][jsegments])) {
 							hsm_startsegment[i] = isegments;
 							hsm_endsegment[i] = jsegments;
 							break;
@@ -1138,7 +1246,7 @@ int stagein_castor_hsm_file() {
 							for (ksegments = 0; ksegments < hsm_nsegments[i]; ksegments++) {
 								if (ksegments == jsegments) continue;
 								if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
-								if (hsm_segments[i][ksegments].s_status == STGSEGMENT_OK) {
+								if (hsm_segments[i][ksegments].s_status == '-') {
 									SAVE_EID;
 									sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][ksegments].copyno, ksegments, jsegments);
 									RESTORE_EID;
@@ -1156,14 +1264,14 @@ int stagein_castor_hsm_file() {
 				}
 				/* This segment does not have status STGSEGMENT_OK. This is not ok for us because we did */
 				/* have not yet determined the end inside of the segment list with the same copy number */
-				if (hsm_segments[i][jsegments].s_status != STGSEGMENT_OK) {
+				if (! STGSEGMENT_OK(hsm_segments[i][jsegments])) {
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG136, castor_hsm, hsm_segments[i][isegments].copyno, isegments, jsegments, hsm_segments[i][isegments].copyno);
 					RESTORE_EID;
 					for (ksegments = 0; ksegments < hsm_nsegments[i]; ksegments++) {
 						if (ksegments == jsegments) continue;
 						if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
-						if (hsm_segments[i][ksegments].s_status == STGSEGMENT_OK) {
+						if (hsm_segments[i][ksegments].s_status == '-') {
 							sendrep (rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][jsegments].copyno, ksegments, jsegments);
 							hsm_segments[i][ksegments].s_status = STGSEGMENT_NOTOK;
 						}
@@ -1200,7 +1308,7 @@ int stagein_castor_hsm_file() {
 					/* But here, we found no valid segment - are they all STGSEGMENT_NOTOK */
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-							"stagein", "File has no valid segment");
+							"stagein", "File has no valid or accessible segment");
 					RESTORE_EID;
 					RETURN (USERR);
 				}
@@ -1643,6 +1751,7 @@ int stagein_castor_hsm_file() {
 		   		if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
 			} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 			if (save_serrno == ETVBSY) {
 				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
@@ -1659,10 +1768,10 @@ int stagein_castor_hsm_file() {
 			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 			if (
 				(error_already_processed != 0) ||
-				/* Catch cases when error is a TAPE one not yet handle by stager_process_error() */
-				((save_serrno >= (ETBASEOFF+1)) && (save_serrno <= ETMAXERR)) ||
-				/* Catch cases when error is a VDQM one not yet handle by stager_process_error() */
-				((save_serrno >= (EVQBASEOFF+1)) && (save_serrno <= EVQMAXERR))
+				/* Catch cases when TAPE error not yet handle by stager_process_error() */
+				ISTAPESERRNO(save_serrno) ||
+				/* Catch cases when VDQM error not yet handle by stager_process_error() */
+				ISVDQMSERRNO(save_serrno)
 				) {
 				if (error_already_processed == 0) stager_process_error(&(rtcpcreqs[0]->tapereq),NULL,NULL);
 				forced_exit = 1;
@@ -1738,36 +1847,9 @@ int stagewrt_castor_hsm_file() {
 	/* We initialize those size arrays */
 	i = 0;
 	for (stcp = stcs; stcp < stce; stcp++, i++) {
-#ifndef SKIP_CHECK_FILESIZE
-		struct Cns_fileid Cnsfileid;
-#endif
 
 		SETEID(stcp->uid,stcp->gid);
-#ifndef SKIP_CHECK_FILESIZE
-		PRE_RFIO;
-		if (rfio_mstat(stcp->ipath, &statbuf) < 0) {
-			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_mstat",rfio_serror());
-			RESTORE_EID;
-			if (use_subreqid) {
-				SET_HSM_IGNORE(i,rfio_serrno());
-				continue;
-			}
-			RETURN (USERR);
-		}
-		if (statbuf.st_size == 0) {
-			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, "STG02 - %s is empty\n", stcp->ipath);
-			RESTORE_EID;
-			if (use_subreqid) {
-				SET_HSM_IGNORE(i,ENOENT);
-				continue;
-			}
-			RETURN (USERR);
-		}
-#else
 		statbuf.st_size = stcp->actual_size;
-#endif /* SKIP_CHECK_FILESIZE */
 
 		/* Search for castor a-la-unix path in the file to stagewrt */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
@@ -1778,34 +1860,6 @@ int stagewrt_castor_hsm_file() {
 		}
 
 		hsm_totalsize[i] = (u_signed64) statbuf.st_size;
-
-#ifndef SKIP_CHECK_FILESIZE
-		/* We compare with the stcp->actual_size - they have to match */
-		if (hsm_totalsize[i] != stcp->actual_size) {
-			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "stat()", "size mismatch v.s. previous stageupdc - updated");
-			RESTORE_EID;
-			stcp->actual_size = hsm_totalsize[i];
-            /* We set also the filesize in the nameserver */
-			strcpy(Cnsfileid.server,stcp->u1.h.server);
-			Cnsfileid.fileid = stcp->u1.h.fileid;
-#ifdef STAGER_DEBUG
-			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_setfsize(path=\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},correc_size=%s)\n",
-	                castor_hsm,
-    	            Cnsfileid.server,
-        	        u64tostr(Cnsfileid.fileid, tmpbuf1, 0),
-        	        u64tostr(hsm_totalsize[i], tmpbuf1, 0));
-			RESTORE_EID;
-#endif
-			if (Cns_setfsize(NULL,&Cnsfileid,hsm_totalsize[i]) != 0) {
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_setfsize", sstrerror(serrno));
-				RESTORE_EID;
-				RETURN (SYERR);
-			}
-		}
-#endif /* SKIP_CHECK_FILESIZE */
 
 #ifndef FULL_STAGEWRT_HSM
 		if (ISSTAGEWRT(stcs)) {
@@ -1827,10 +1881,6 @@ int stagewrt_castor_hsm_file() {
 		hsm_fseq[i] = -1;
 		hsm_vid[i] = NULL;
 	}
-
-#ifndef SKIP_CHECK_FILESIZE
-		rfio_end();
-#endif
 
 	while (1) {
 		u_signed64 totalsize_to_transfer;
@@ -2189,6 +2239,7 @@ int stagewrt_castor_hsm_file() {
 					if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
 				} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 				if (save_serrno == ETVBSY) {
 					sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 					sleep(RETRYI);
@@ -2346,6 +2397,16 @@ int stage_tape() {
 	rtcpc_kill_cleanup = 1;
 	error_already_processed = 0; /* Not used in stager_tape_callback() */
 	fatal_callback_error = callback_error = 0;
+#ifdef STAGE_CSETPROCNAME
+	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
+					sav_argv0,
+					"STARTING",
+					rtcpcreqs[0]->tapereq.vid,
+					0
+					) != 0) {
+		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
+#endif
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -2367,6 +2428,7 @@ int stage_tape() {
 		   		if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
 			} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 			if (save_serrno == ETVBSY) {
 				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
@@ -2375,10 +2437,21 @@ int stage_tape() {
 			}
 			RESTORE_EID;
 			if (concat_off_fseq > 0) {
-				int save_tapereq_err_max_tpretry = -1;
-				int save_tapereq_err_max_cpretry = -1;
+				file_list_t *fl;
+				int save_tapereq_err_max_tpretry = rtcpcreqs[0]->tapereq.err.max_tpretry;
+				int save_tapereq_err_max_cpretry = rtcpcreqs[0]->tapereq.err.max_cpretry;
 				int save_filereq_err_max_tpretry = -1;
 				int save_filereq_err_max_cpretry = -1;
+
+				/* We have to find what was the latest filereq that failed */
+				CLIST_ITERATE_BEGIN(rtcpcreqs[0]->file,fl) {
+					if (fl->filereq.proc_status != RTCP_FINISHED) {
+						/* Should be this one - remember that -c off request are processed sequentially */
+						save_filereq_err_max_tpretry = fl->filereq.err.max_tpretry;
+						save_filereq_err_max_cpretry = fl->filereq.err.max_cpretry;
+						break;
+					}
+				} CLIST_ITERATE_END(rtcpcreqs[0]->file,fl);
 				/* In concat off mode we have to take care of what has been already done */
 				if (callback_nok > 0) {
 					if (callback_fseq >= atoi((stce-1)->u1.t.fseq)) {
@@ -2392,10 +2465,6 @@ int stage_tape() {
 						callback_nok = callback_fseq = 0;
 						/* We reset the number of effective entries */
 						nbcat_ent = 1;
-						save_tapereq_err_max_tpretry = rtcpcreqs[0]->tapereq.err.max_tpretry;
-						save_tapereq_err_max_cpretry = rtcpcreqs[0]->tapereq.err.max_cpretry;
-						save_filereq_err_max_tpretry = rtcpcreqs[0]->file->filereq.err.max_tpretry;
-						save_filereq_err_max_cpretry = rtcpcreqs[0]->file->filereq.err.max_cpretry;
 					}
 				}
 				/* Build the request */
@@ -2421,8 +2490,15 @@ int stage_tape() {
 				}
 				rtcpcreqs[0]->tapereq.err.max_tpretry = save_tapereq_err_max_tpretry;
 				rtcpcreqs[0]->tapereq.err.max_cpretry = save_tapereq_err_max_cpretry;
-				rtcpcreqs[0]->file->filereq.err.max_tpretry = save_filereq_err_max_tpretry;
-				rtcpcreqs[0]->file->filereq.err.max_cpretry = save_filereq_err_max_cpretry;
+				/* We restore the latest max_[cp|tp]retry we found */
+				CLIST_ITERATE_BEGIN(rtcpcreqs[0]->file,fl) {
+					if (fl->filereq.proc_status != RTCP_FINISHED) {
+						/* Should be this one - remember that -c off request are processed sequentially */
+						fl->filereq.err.max_tpretry = save_filereq_err_max_tpretry;
+						fl->filereq.err.max_cpretry = save_filereq_err_max_cpretry;
+						break;
+					}
+				} CLIST_ITERATE_END(rtcpcreqs[0]->file,fl);
 			}
 			goto reselect;
 		}
@@ -2478,6 +2554,15 @@ int filecopy(stcp, key, hostname)
 		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, "Calling stage_updc_filcp(stageid=%s,...)\n",stageid);
 		RESTORE_EID;
+#endif
+#ifdef STAGE_CSETPROCNAME
+		if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_DISK,
+						sav_argv0,
+						"ASKING SPACE FOR",
+						stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile
+						) != 0) {
+			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+		}
 #endif
 		if (stage_updc_filcp (
 								stageid,                 /* Stage ID      */
@@ -2548,6 +2633,16 @@ int filecopy(stcp, key, hostname)
 	SAVE_EID;
 	stglogit (func, "execing command : %s\n", command);
 	RESTORE_EID;
+#endif
+
+#ifdef STAGE_CSETPROCNAME
+	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_DISK,
+					sav_argv0,
+					"COPYING",
+					stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile
+					) != 0) {
+		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
 #endif
 
 	SETID(stcp->uid,stcp->gid);
@@ -3050,7 +3145,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					}
 					if (stcp->u1.t.fseq[0] != 'n') {
 						if (trailing2 == '-') {
-#ifdef CONCAT_OFF
 							if (concat_off_fseq > 0 && fl[j_ok].filereq.tape_fseq >= concat_off_fseq) {
 								if (j >= (nbcat_ent_current - 1)) {
 									/* And last disk file is reached */
@@ -3062,7 +3156,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 									fl[j_ok].filereq.concat = NOCONCAT;
 								}
 							} else {
-#endif /* CONCAT_OFF */
 								if (api_flag == 0) {
 									/* command-line version */
 									/* equivalent to tpread -V <vid> -q<j_ok>- f1 f2 etc... */
@@ -3083,9 +3176,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 										fl[j_ok].filereq.concat = CONCAT;
 									}
 								}
-#ifdef CONCAT_OFF
 							}
-#endif /* CONCAT_OFF */
 						} else {
 							if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 								/* equivalent to tpwrite -V <vid> -q<j_ok> f1 f2 ... */
@@ -3659,6 +3750,18 @@ int stager_hsm_callback(tapereq,filereq)
 		return(-1);
 	}
 
+#ifdef STAGE_CSETPROCNAME
+	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_CASTOR,
+					sav_argv0,
+					(filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ? "COPIED" : "COPYING",
+					tapereq->vid,
+					filereq->tape_fseq,
+					castor_hsm
+					) != 0) {
+		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
+#endif
+
 	/* Successful or end of tape */
 	/* - 1st line :     OK and flagged as finished (consistency check) */
 	/* - 2nd line : NOT OK and flagged as failed   (consistency check) */
@@ -3984,6 +4087,17 @@ int stager_tape_callback(tapereq,filereq)
 	}
 
 	stager_hsm_or_tape_log_callback(tapereq,filereq);
+
+#ifdef STAGE_CSETPROCNAME
+	if (Csetprocname(STAGE_CSETPROCNAME_FORMAT_TAPE,
+					sav_argv0,
+					(filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ? "COPIED" : "COPYING",
+					tapereq->vid,
+					filereq->tape_fseq
+					) != 0) {
+		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
+	}
+#endif
 
 	/* Successful ? */
 	if (filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) {
