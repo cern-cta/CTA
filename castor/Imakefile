@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.58 $ $Release$ $Date: 2004/11/29 15:46:35 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.59 $ $Release$ $Date: 2004/11/30 11:27:57 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -121,6 +121,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamPtrCnv.cpp \
               io/StreamScheduleSubReqRequestCnv.cpp \
               io/StreamScheduleSubReqResponseCnv.cpp \
+              io/StreamUpdateRepRequestCnv.cpp \
+              io/StreamBasicResponseCnv.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
@@ -174,6 +176,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/RequestQueryResponseCInt.cpp \
               rh/ScheduleSubReqResponse.cpp \
               rh/ScheduleSubReqResponseCInt.cpp \
+              rh/BasicResponse.cpp \
+              rh/BasicResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
@@ -208,6 +212,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
 	      stager/RemoteStagerSvc.cpp \
               stager/ScheduleSubReqRequest.cpp \
               stager/ScheduleSubReqRequestCInt.cpp \
+              stager/UpdateRepRequest.cpp \
+              stager/UpdateRepRequestCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
               stager/SegmentStatusCodes.cpp \
@@ -261,8 +267,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/TapePoolCInt.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
-              db/DbAddress.cpp \
-              db/DbAddressCInt.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
