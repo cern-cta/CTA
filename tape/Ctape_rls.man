@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_rls.man,v $ $Revision: 1.4 $ $Date: 1999/10/11 10:12:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_rls.man,v $ $Revision: 1.5 $ $Date: 1999/11/09 11:00:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RLS l "$Date: 1999/10/11 10:12:59 $"
+.TH CTAPE_RLS l "$Date: 1999/11/09 11:00:38 $"
 .SH NAME
 Ctape_rls \- release tape resources
 .SH SYNOPSIS
@@ -33,24 +33,35 @@ is set to
 .BR TPRLS_ALL .
 .TP
 .I flags
-may be one of the following:
+may be a combination of the following:
 .RS
+.TP
+.B TPRLS_ALL
+releases all tape resources reserved by the job
 .TP
 .B TPRLS_PATH
 releases an explicit path
 .TP
 .B TPRLS_KEEP_RSV
-releases an explicit path but keep reservation
-.TP
-.B TPRLS_ALL
-releases all tape resources reserved by the job
-.TP
-.B TPRLS_NOWAIT
-returns without waiting for the release to complete
+keeps reservation
 .TP
 .B TPRLS_NOUNLOAD
 deassigns the drive but leaves the volume mounted
+.TP
+.B TPRLS_UNLOAD
+always unloads the volume
+.TP
+.B TPRLS_NOWAIT
+returns without waiting for the release to complete
 .RE
+.LP
+If
+.B TPRLS_ALL
+is set,
+.B TPRLS_PATH
+and
+.B TPRLS_KEEP_RSV
+cannot be set.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
