@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/24 15:15:07 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/27 16:32:40 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.17 $
- * @date $Date: 2005/01/24 15:15:07 $
+ * @version $Revision: 1.18 $
+ * @date $Date: 2005/01/27 16:32:40 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.17 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.18 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -859,6 +859,16 @@ struct stage_filequery_resp {
    */ 
   int nbAccesses;
 
+ /**
+   * Error code
+   */
+  int		errorCode;
+
+  /**
+   * Error message, if the error code indicates a problem
+   */
+  char		*errorMessage;
+
 };
 
 
@@ -914,6 +924,17 @@ struct stage_requestquery_resp {
    * Last modification time
    */
   TIME_T modificationTime;
+
+ /**
+   * Error code
+   */
+  int		errorCode;
+
+  /**
+   * Error message, if the error code indicates a problem
+   */
+  char		*errorMessage;
+
 };
 
 
@@ -1080,7 +1101,46 @@ EXTERN_C char* DLL_DECL stage_geturl _PROTO ((struct stage_io_fileresp *io));
 ////////////////////////////////////////////////////////////
 //    Utility to display status string                    //
 ////////////////////////////////////////////////////////////
+
+/**
+ * stage_statusName
+ * Returns the name of a request status
+ * \ingroup Functions
+ * 
+ * @param statusCode the code of the request
+ *
+ * @returns The status name as char*
+ *
+ * @deprecated Use stage_requestStatusName instead
+ */
 EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
+
+
+/**
+ * stage_requestStatusName
+ * Returns the name of a request status
+ * \ingroup Functions
+ * 
+ * @param statusCode the code of the request
+ *
+ * @returns The status name as char*
+ */
+EXTERN_C char* DLL_DECL stage_requestStatusName _PROTO((int statusCode));
+
+
+/**
+ * stage_fileStatusName
+ * Returns the name of a file status
+ * \ingroup Functions
+ * 
+ * @param statusCode the code of the request
+ *
+ * @returns The status name as char*
+ */
+EXTERN_C char* DLL_DECL stage_fileStatusName _PROTO((int statusCode));
+
+
+
 
 
 
