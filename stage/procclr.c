@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.27 2001/03/19 12:39:35 jdurand Exp $
+ * $Id: procclr.c,v 1.28 2001/03/28 14:02:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.27 $ $Date: 2001/03/19 12:39:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.28 $ $Date: 2001/03/28 14:02:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.27 $ $Date: 200
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "stage.h"
+#include "stage_api.h"
 #if SACCT
 #include "../h/sacct.h"
 #endif
@@ -35,7 +36,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.27 $ $Date: 200
 #include "Cgetopt.h"
 #include "rfio_api.h"
 
-void procclrreq _PROTO((char *, char *));
+void procclrreq _PROTO((int, int, char *, char *));
 
 extern char func[16];
 extern int nbcat_ent;
@@ -61,6 +62,7 @@ extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, 
 extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
+extern int stglogflags _PROTO(());
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 
@@ -68,7 +70,11 @@ int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, in
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-void procclrreq(req_data, clienthost)
+extern u_signed64 stage_uniqueid;
+
+void procclrreq(req_type, magic, req_data, clienthost)
+		 int req_type;
+		 int magic;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -104,98 +110,217 @@ void procclrreq(req_data, clienthost)
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
+	int t_or_d, nstcp_input, nstpp_input;
 
 	poolname[0] = '\0';
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
-	unmarshall_WORD (rbp, uid);
-	unmarshall_WORD (rbp, gid);
-	nargs = req2argv (rbp, &argv);
+	if (req_type > STAGE_00) {
+		unmarshall_LONG (rbp, uid);
+		unmarshall_LONG (rbp, gid);
+	} else {
+		unmarshall_WORD (rbp, uid);
+		unmarshall_WORD (rbp, gid);
+	}
+#ifndef __INSURE__
+	stglogit (func, STG92, (req_type > STAGE_00) ? "stage_clr" : "stageclr", user, uid, gid, clienthost);
+#endif
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGECLR, 0, 0, NULL, "");
+						 reqid, req_type, 0, 0, NULL, "");
 #endif
-
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
 	}
 	strcpy (group, gr->gr_name);
-	Coptind = 1;
-	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != -1) {
-		switch (c) {
-		case 'c':
-			cflag++;
-			break;
-		case 'F':
+
+	if (req_type > STAGE_00) {
+		u_signed64 flags;
+		struct stgcat_entry stcp_input;
+		struct stgpath_entry stpp_input;
+
+		unmarshall_HYPER (rbp, stage_uniqueid);
+		unmarshall_HYPER (rbp, flags);
+		{
+			char tmpbyte;
+			unmarshall_BYTE(rbp, tmpbyte);
+			t_or_d = tmpbyte;
+		}
+		unmarshall_LONG (rbp, nstcp_input);
+		unmarshall_LONG (rbp, nstpp_input);
+		/* We support one nstcp_input == 1 xor nstpp_input == 1 */
+		if (((nstcp_input >= 0) && (nstpp_input <= 0)) ||
+			((nstcp_input >  0) && (nstpp_input >  0)) ||
+			((nstcp_input >  0) && (nstcp_input != 1)) ||
+            ((nstpp_input >  0) && (nstpp_input != 1))) {
+			sendrep(rpfd, MSG_ERR, "STG02 - Only exactly one stcp (%d here) or one stpp (%d here) input is supported\n", nstcp_input, nstpp_input);
+			c = USERR;
+			goto reply;
+        }
+		/* We makes sure there is only one entry input, of any type, so no memory allocation needed */
+		if (nstcp_input > 0) {
+			memset((void *) &stcp_input, (int) 0, sizeof(struct stgcat_entry));
+			{
+				char logit[BUFSIZ + 1];
+				int struct_status = 0;
+
+				stcp_input.reqid = -1;
+				unmarshall_STAGE_CAT(STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
+				if (struct_status != 0) {
+					sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
+					c = SYERR;
+					goto reply;
+				}
+				logit[0] = '\0';
+				stcp_input.t_or_d = t_or_d;
+				if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
+					logit[BUFSIZ] = '\0';
+					stglogit("stage_clr","stcp[1/1] : %s\n",logit);
+	 			}
+			}
+			/* We set the flags */
+			switch (t_or_d) {
+			case 'd':
+				xfile = stcp_input.ipath;
+				break;
+			case 'm':
+			case 'h':
+				mfile = stcp_input.u1.m.xfile;
+				break;
+			case 't':
+				if (stcp_input.u1.t.lbl[0] != '\0') lbl = stcp_input.u1.t.lbl;
+				if (stcp_input.u1.t.fseq[0] != '\0') fseq = stcp_input.u1.t.fseq;
+				for (i = 0; i < MAXVSN; i++) {
+					if (stcp_input.u1.t.vid[i][0] != '\0') {
+						strcpy (vid[numvid], stcp_input.u1.t.vid[i]);
+						UPPER (vid[numvid]);
+						numvid++;
+					}
+				}
+				break;
+			}
+			if (stcp_input.poolname[0] != '\0') {
+				if (strcmp (stcp_input.poolname, "NOPOOL") == 0 ||
+						isvalidpool (stcp_input.poolname)) {
+					strcpy (poolname, stcp_input.poolname);
+				} else {
+					sendrep (rpfd, MSG_ERR, STG32, stcp_input.poolname);
+					c = USERR;
+					goto reply;
+				}
+			}
+        } else {
+			int path_status = 0;
+			unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input));
+			if (path_status != 0) {
+				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure)\n");
+				c = USERR;
+				goto reply;
+			}
+			stglogit(func,"stpp[1/1] : %s\n",stpp_input.upath);
+			/* We set the flags */
+			if ((flags & STAGE_LINKNAME) == STAGE_LINKNAME) linkname = stpp_input.upath;
+			if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) path = stpp_input.upath;
+			if ((linkname != NULL) && (path != NULL)) {
+				sendrep(rpfd, MSG_ERR, "STG02 - Both STAGE_LINKNAME and STAGE_PATHNAME is not allowed\n");
+				c = USERR;
+				goto reply;
+			}
+		}
+		if ((flags & STAGE_CONDITIONAL) == STAGE_CONDITIONAL) cflag = 1;
+		if ((flags & STAGE_FORCE) == STAGE_FORCE) {
 			if (uid != 0) {
 				/* The -F option is only valid from admin */
 				sendrep (rpfd, MSG_ERR, STG103);
-				errflg++;
+				c = USERR;
+				goto reply;
 			} else {
-				Fflag++;
+				Fflag = 1;
 			}
-			break;
-		case 'G':
-			break;
-		case 'h':
-			break;
-		case 'I':
-			xfile = Coptarg;
-			break;
-		case 'i':
-			break;
-		case 'L':
-			linkname = Coptarg;
-			break;
-		case 'l':	/* label type (al, nl, sl or blp) */
-			lbl = Coptarg;
-			break;
-		case 'M':
-			mfile = Coptarg;
-			break;
-		case 'm':
-			gc_stop_thresh = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0' || gc_stop_thresh > 100) {
-				sendrep (rpfd, MSG_ERR, STG06, "-m");
-				errflg++;
-			}
-			break;
-		case 'P':
-			path = Coptarg;
-			if (*path == '\0') {
+		}
+		if ((flags & STAGE_REMOVEHSM) == STAGE_REMOVEHSM) rflag = 1;
+		/* Print the flags */
+		stglogflags(func,flags);
+	} else {
+		nargs = req2argv (rbp, &argv);
+
+		Coptind = 1;
+		Copterr = 0;
+		while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != -1) {
+			switch (c) {
+			case 'c':
+				cflag++;
+				break;
+			case 'F':
+				if (uid != 0) {
+					/* The -F option is only valid from admin */
+					sendrep (rpfd, MSG_ERR, STG103);
+					errflg++;
+				} else {
+					Fflag++;
+				}
+				break;
+			case 'G':
+				break;
+			case 'h':
+				break;
+			case 'I':
+				xfile = Coptarg;
+				break;
+			case 'i':
+				break;
+			case 'L':
+				linkname = Coptarg;
+				break;
+			case 'l':	/* label type (al, nl, sl or blp) */
+				lbl = Coptarg;
+				break;
+			case 'M':
+				mfile = Coptarg;
+				break;
+			case 'm':
+				gc_stop_thresh = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0' || gc_stop_thresh > 100) {
+					sendrep (rpfd, MSG_ERR, STG06, "-m");
+					errflg++;
+				}
+				break;
+			case 'P':
+				path = Coptarg;
+				if (*path == '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-P");
-				errflg++;
+					errflg++;
+				}
+				break;
+			case 'p':
+				if (strcmp (Coptarg, "NOPOOL") == 0 ||
+						isvalidpool (Coptarg)) {
+					strcpy (poolname, Coptarg);
+				} else {
+					sendrep (rpfd, MSG_ERR, STG32, Coptarg);
+					errflg++;
+				}
+				break;
+			case 'q':	/* file sequence number(s) */
+				fseq = Coptarg;
+				break;
+			case 'r':
+				/* Coptarg is equal to emove_from_hsm */
+				/* because we only allows this in the stageclr command line */
+				rflag = 1;
+				break;
+			case 'V':	/* visual identifier(s) */
+				q = strtok (Coptarg, ":");
+				while (q != NULL) {
+					strcpy (vid[numvid], q);
+					UPPER (vid[numvid]);
+					numvid++;
+					q = strtok (NULL, ":");
+				}
+				break;
 			}
-			break;
-		case 'p':
-			if (strcmp (Coptarg, "NOPOOL") == 0 ||
-					isvalidpool (Coptarg)) {
-				strcpy (poolname, Coptarg);
-			} else {
-				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
-				errflg++;
-			}
-			break;
-		case 'q':	/* file sequence number(s) */
-			fseq = Coptarg;
-			break;
-		case 'r':
-			/* Coptarg is equal to emove_from_hsm */
-			/* because we only allows this in the stageclr command line */
-			rflag = 1;
-			break;
-		case 'V':	/* visual identifier(s) */
-			q = strtok (Coptarg, ":");
-			while (q != NULL) {
-				strcpy (vid[numvid], q);
-				UPPER (vid[numvid]);
-				numvid++;
-				q = strtok (NULL, ":");
-			}
-			break;
 		}
 	}
 	/* -L linkname and -remove_from_hsm is not allowed */
