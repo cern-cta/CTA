@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.4 $ $Date: 2000/02/10 11:15:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.5 $ $Date: 2000/02/16 13:35:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -28,12 +28,14 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 	char func[16];
 	gid_t gid;
 	int msglen;
+	int n;
 	char *q;
 	char *rbp;
 	char repbuf[41];
 	char *sbp;
 	struct vmgr_api_thread_info *thip;
 	char sendbuf[REQBUFSZ];
+	char tmpbuf[9];
 	uid_t uid;
 
         strcpy (func, "vmgr_gettape");
@@ -48,6 +50,15 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
                 return (-1);
         }
 #endif
+
+	if (! vid) {
+		serrno = EFAULT;
+		return (-1);
+	}
+	if ((poolname && strlen (poolname) > CA_MAXPOOLNAMELEN) || Size <= 0) {
+		serrno = EINVAL;
+		return (-1);
+	}
 
 	/* Build request header */
 
@@ -81,12 +92,24 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_STRING (rbp, vid);
-		unmarshall_STRING (rbp, vsn);
-		unmarshall_STRING (rbp, dgn);
-		unmarshall_STRING (rbp, density);
-		unmarshall_STRING (rbp, lbltype);
-		unmarshall_LONG (rbp, *fseq);
-		unmarshall_LONG (rbp, *blockid);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (vsn)
+			strcpy (vsn, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (dgn)
+			strcpy (dgn, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (density)
+			strcpy (density, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (lbltype)
+			strcpy (lbltype, tmpbuf);
+		unmarshall_LONG (rbp, n);
+		if (fseq)
+			*fseq = n;
+		unmarshall_LONG (rbp, n);
+		if (blockid)
+			*blockid = n;
 	}
 	return (c);
 }
