@@ -1,4 +1,6 @@
-# $Id: castor_db_setup,v 1.5 2004/06/21 21:06:44 jdurand Exp $
+# Generic setup used by CASTOR 'Jobs'
+
+# $Id: castor_db_setup,v 1.6 2004/06/21 21:09:45 jdurand Exp $
 # Copyright CERN/IT/ADC/CA 2004
 
 # Version 3.2.3 of the gcc compiler
