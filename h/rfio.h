@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.25 $ $Date: 2002/08/28 05:40:44 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.26 $ $Date: 2002/11/19 09:04:54 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -155,6 +155,14 @@ typedef struct {
 	/* RFIO Version 3 used ? */
 	int version3;   
 
+	/* RFIO Version64 used ? */
+	int     mode64;         /* mode 64 bits used                    */               
+	off64_t offset64;       /* current file offset                  */
+	off64_t lseekoff64;     /* Buffered lseek                       */
+	off64_t wrbyte_net64;   /* Write bytes to   network (V3)        */
+	off64_t rdbyte_net64;   /* Read  bytes from network (V3)        */
+	off64_t filesize64;     /* File size                (V3)        */
+        
 	FILE	*fp_save;	/* save ptr to FILE struct returned by popen */
 } RFILE ;
 
@@ -192,18 +200,19 @@ typedef RDIR DIR;
  * Define RFIO statistic structure
  */
 struct rfiostat	{
-	long readop ;                   /* read() count            	*/
-	long aheadop;			/* readahead() count 		*/ 
-	long writop ;                   /* write() count                */
-	long flusop ;                   /* flush() count                */
-	long statop ;                   /* stat() count                 */
-	long seekop ;                   /* seek() count                 */
-	long presop ;			/* preseek() count		*/
-        long mkdiop ;                   /* mkdir() count                */
-	long renaop ;			/* rename() count		*/
-	long lockop ;			/* lockf() count		*/
-	long rnbr ;                     /* byte read count              */
-	long wnbr ;                     /* byte written count           */
+	long    readop ;        /* read() count                 */
+	long    aheadop;        /* readahead() count            */ 
+	long    writop ;        /* write() count                */
+	long    flusop ;        /* flush() count                */
+	long    statop ;        /* stat() count                 */
+	long    seekop ;        /* seek() count                 */
+	long    presop ;        /* preseek() count              */
+	long    mkdiop ;        /* mkdir() count                */
+	long    renaop ;        /* rename() count               */
+	long    lockop ;        /* lockf() count                */
+	off64_t rnbr ;          /* byte read count              */
+	off64_t wnbr ;          /* byte written count           */
+	int     mode64;         /* Flag: true if 64bit in use   */
 } ;
 #endif /* RFIO_KERNEL */
 
@@ -212,6 +221,7 @@ struct rfiostat	{
 #endif /* _RFIO_API_H_INCLUDED_ */
 
 #if !defined(RFIO_KERNEL)
+#if !defined(RFIO_NOREDEFINE)   /* Inhibits redefinitions IN2P3 */
 #if defined(feof)
 #undef  feof
 #endif /* feof */
@@ -255,6 +265,19 @@ struct rfiostat	{
 #undef rewinddir
 #endif /* rewinddir */
 #define rewinddir       rfio_rewinddir
+
+#if !(defined(__alpha) && defined(__osf__)) && !defined(_WIN32)
+#define fopen64         rfio_fopen64
+#define fseeko64        rfio_fseeko64
+#define fstat64         rfio_fstat64
+#define ftello64        rfio_ftello64
+#define lockf64         rfio_lockf64
+#define lseek64         rfio_lseek64
+#define lstat64         rfio_lstat64
+#define open64          rfio_open64
+#define stat64(X,Y)     rfio_stat64(X,Y)
+#endif
+#endif /* RFIO_NOREDEFINE                         IN2P3 */
 #endif /* RFIO_KERNEL */
 
 #endif /* _RFIO_H_INCLUDED_ */

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_macros.h,v 1.2 2002/10/24 08:46:47 jdurand Exp $
+ * $Id: stage_macros.h,v 1.3 2002/11/19 09:04:58 baud Exp $
  */
 
 #ifndef __stage_macros_h
@@ -163,9 +163,9 @@
 	}
 
 
-#define RFIO_STAT(path,statbuf) ((findpoolname(path) == NULL) ? rfio_stat(path,statbuf) : rfio_mstat(path,statbuf))
+#define RFIO_STAT64(path,statbuf) ((findpoolname(path) == NULL) ? rfio_stat64(path,statbuf) : rfio_mstat64(path,statbuf))
 
-#define RFIO_STAT_FUNC(path) ((findpoolname(path) == NULL) ? "rfio_stat" : "rfio_mstat")
+#define RFIO_STAT64_FUNC(path) ((findpoolname(path) == NULL) ? "rfio_stat64" : "rfio_mstat64")
 
 #define RFIO_UNLINK(path) ((findpoolname(path) == NULL) ? rfio_unlink(path) : rfio_munlink(path))
 

@@ -1,14 +1,14 @@
 /*
- * $Id: sacct.h,v 1.13 2002/04/30 12:12:22 jdurand Exp $
+ * $Id: sacct.h,v 1.14 2002/11/19 09:04:57 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.13 $ $Date: 2002/04/30 12:12:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.14 $ $Date: 2002/11/19 09:04:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -32,6 +32,7 @@ struct accthdr {	/* header for accounting record */
 #define	ACCTNQS		5
 #define ACCTRTCPTIM     6
 #define	ACCTSTAGE2	7
+#define	ACCTRFIO64	11
 
 struct  acctsystem      {
 	int     subtype;
@@ -73,6 +74,48 @@ struct acctrfio {       /* accounting record for rfio software */
         int     nb_preseek;
         int     read_size;
         int     write_size;
+        int     remote_addr;
+        int     local_addr;
+        int     status;
+        int     rc;
+        int     len1;
+        int     len2;
+        char    filename[2*MAXPATH+1];
+};
+
+struct acctrfio64 {       /* accounting record for rfio64 software */
+	int	reqtype;
+        int     uid;
+        int     gid;
+        int     jid;
+        int     accept_socket;
+        union {
+	  struct {
+	    int     flag1;
+	    int     flag2;
+	  } anonymous;
+	  struct {
+	    int     flags;
+	    int     mode;
+	  } accesstypes;
+	  struct {
+	    int     owner;
+	    int     group;
+	  } chowntype;
+	  struct {
+	    int     function;
+	    int     operation;
+	  } lockftype;
+	} flags;
+        int     nb_read;
+        int     nb_write;
+        int     nb_ahead;
+        int     nb_stat;
+        int     nb_seek;
+        int     nb_preseek;
+        int     padding;
+        off64_t read_size;
+        off64_t write_size;
         int     remote_addr;
         int     local_addr;
         int     status;
