@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.1 $ $Releas
 extern char *geterr();
 WSADATA wsadata;
 #else /* _WIN32 */
+#include <unistd.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
@@ -49,11 +50,12 @@ WSADATA wsadata;
 #include <dlf_api.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
+#include <castor/stager/TapeStatusCodes.h>
+#include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <rtcp_api.h>
 #include <rtcpcld_constants.h>
-#include <rtcpcldCatalog.h>
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
 
@@ -75,8 +77,6 @@ int Debug = FALSE;
 int inChild = 0;
 Cuuid_t mainUuid;
 Cuuid_t childUuid;
-uid_t myUid = RTCPCLD_UID;
-gid_t myGid = RTCPCLD_GID;
 extern int use_port;
 extern char *getconfent _PROTO((char *, char *, int));
 extern int (*rtcpc_ClientCallback) _PROTO((
@@ -380,17 +380,17 @@ void  wait4VidWorker(
 
 void checkVidWorkerExit() 
 {
-  int pid, status, rc = 0, sig=0, stopped = 0;
+  int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;
   
   while ((pid = waitpid(-1,&status,WNOHANG)) > 0) {  
     if (WIFEXITED(status)) {
-      rc = WEXITSTATUS(status);
+      value = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
       sig = 1;
-      rc = WTERMSIG(status);
+      value = WTERMSIG(status);
     } else {
-      rc = 1;
+      value = 1;
       stopped = 1;
     }
     rc = getTapeRequestItem(
@@ -423,17 +423,18 @@ void checkVidWorkerExit()
                       (stopped == 1 ? "STOPPED" : 
                        (sig > 0 ? "SIGNAL" : "STATUS")),
                       DLF_MSG_PARAM_INT,
-                      rc
+                      value
                       );
-      if ( rc != 0 ) {
+      if ( value != 0 ) {
         (void)rtcpcld_setVIDFailedStatus(item->tape);
       }
+      (void)rtcpcld_delTape(&(item->tape));
       CLIST_DELETE(requestList,item);
       free(item);
     }
   }
   return;
-}     
+}
 
 static int startVidWorker(
                           s,
@@ -442,9 +443,10 @@ static int startVidWorker(
      SOCKET *s;
      tape_list_t *tape;
 {
+  ID_TYPE key;
   int usePipe = 0;
   int rc, c, argc, maxfds;
-  char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16];
+  char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
   char usePipeStr[16];
   char *cmd = RTCPCLD_VIDWORKER_CMD;
   
@@ -453,6 +455,25 @@ static int startVidWorker(
     serrno = EINVAL;
     return(-1);
   }
+  rc = rtcpcld_findTapeKey(tape,&key);
+  if ( rc == -1 ) {
+    (void)dlf_write(
+                    mainUuid,
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcpcld_findTapeKey()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    strerror(errno),
+                    RTCPCLD_LOG_WHERE
+                    );
+    return(-1);
+  }
+  
 #ifndef _WIN32
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
   maxfds = getdtablesize();
@@ -485,10 +506,10 @@ static int startVidWorker(
   /*
    * Count number of arguments
    */
-  argc=8; 
+  argc=10; 
   /* 
    * argv[0] = cmd plus the require options
-   * -U uuid -V vid -s side" and -r/-w
+   * -U <uuid> -V <vid> -s <side> -r/-w -k <key>
    */
   if ( *tape->tapereq.dgn != '\0' ) argc+=2;
   if ( *tape->tapereq.density != '\0' ) argc+=2;
@@ -526,7 +547,10 @@ static int startVidWorker(
   argv[5] = sideStr;
   argv[6] = "-U";
   argv[7] = rtcp_voidToString((void *)&mainUuid,sizeof(mainUuid));
-  c = 8;
+  argv[8] = "-k";
+  sprintf(keyStr,"%ld",key);  
+  argv[9] = keyStr;
+  c = 10;
   if ( *tape->tapereq.dgn != '\0' ) {
     argv[c++] = "-g";
     argv[c++] = tape->tapereq.dgn;
@@ -856,7 +880,7 @@ int rtcpcld_main(
                         sstrerror(serrno),
                         RTCPCLD_LOG_WHERE
                         );
-        rc = rtcpcld_updateVIDStatus(tape, TPINFO_WAITVDQM, TPINFO_FAILED);
+        rc = rtcpcld_updateVIDStatus(tape, TAPE_WAITVDQM, TAPE_FAILED);
       }
       break;    
     } else {
@@ -953,9 +977,8 @@ int main(
      int argc;
      char *argv[];
 {
-  int i, c, rc;
+  int c;
   char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
-  extern dlf_facility_info_t g_dlf_fac_info;
 
   Coptind = 1;
   Copterr = 1;

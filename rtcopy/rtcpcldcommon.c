@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 06:34:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 06:34:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.3 $ $Rele
 extern char *geterr();
 WSADATA wsadata;
 #else /* _WIN32 */
+#include <unistd.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>                 /* Socket interface             */
@@ -126,6 +127,50 @@ int rtcpcld_initLogging(
   return(0);
 }
 
+static int getServerNotifyAddr(
+                               serverHost,
+                               serverHostNameLen,
+                               serverPort
+                               )
+     char *serverHost;
+     int serverHostNameLen, *serverPort;
+{
+  char *p;
+  struct servent *sp;
+  
+  if ( serverPort != NULL ) {
+    if ( (p = getenv("RTCPCLD_NOTIFY_PORT")) != NULL ) {
+      *serverPort = atoi(p);
+    } else if ( (p = getconfent("RTCPCLD","NOTIFY_PORT",0)) != NULL ) {
+      *serverPort = atoi(p);
+    } else if ( (sp = Cgetservbyname("rtcpcld","udp")) != 
+                (struct servent *)NULL ) {
+      *serverPort = (int)ntohs(sp->s_port);
+    } else {
+#ifdef RTCPCLD_NOTIFY_PORT
+      *serverPort = RTCPCLD_NOTIFY_PORT;
+#else /* RTCPCLD_NOTIFY_PORT */
+      *serverPort = -1;
+#endif /* RTCPCLD_NOTIFY_PORT */
+    }
+  }
+  if ( (serverHost != NULL) && (serverHostNameLen > 0) ) {
+    serverHost[serverHostNameLen-1] = '\0';
+    if ( (p = getenv("RTCPCLD_NOTIFY_HOST")) != NULL ) {
+      strncpy(serverHost,p,serverHostNameLen-1);
+    } else if ( (p = getconfent("RTCPCLD","NOTIFY_HOST",0)) != NULL ) {
+      strncpy(serverHost,p,serverHostNameLen-1);
+    } else {
+#ifdef RTCPCLD_NOTIFY_HOST
+      strncpy(serverHost,RTCPCLD_NOTIFY_HOST,serverHostNameLen-1);
+#else /* RTCPCLD_NOTIFY_PORT */
+      *serverHost = '\0';
+#endif /* RTCPCLD_NOTIFY_PORT */
+    }
+  }
+  return(0);
+}
+
 int rtcpcld_initNotifyByPort(
                              notificationSocket,
                              usePort
@@ -134,9 +179,9 @@ int rtcpcld_initNotifyByPort(
      int *usePort;
 {
   struct sockaddr_in sin;
-  struct servent *sp;
-  char *p;
+#if defined(_WIN32)
   SOCKET tmp;
+#endif /* _WIN32 */
   int rc, len, notificationPort = -1;
 
   if ( notificationSocket == NULL ) {
@@ -167,18 +212,8 @@ int rtcpcld_initNotifyByPort(
 #endif /* _WIN32 */
 
   if ( notificationPort == -1 ) {
-    if ( (p = getenv("RTCPCLD_NOTIFY_PORT")) != NULL ) {
-      notificationPort = atoi(p);
-    } else if ( (p = getconfent("RTCPCLD","NOTIFY_PORT",0)) != NULL ) {
-      notificationPort = atoi(p);
-    } else if ( (sp = Cgetservbyname("rtcpcld","udp")) != 
-                (struct servent *)NULL ) {
-      notificationPort = (int)ntohs(sp->s_port);
-    } else {
-#ifdef RTCPCLD_NOTIFY_PORT
-      notificationPort = RTCPCLD_NOTIFY_PORT;
-#endif /* RTCPCLD_NOTIFY_PORT */
-    }
+    getServerNotifyAddr(NULL,-1,&notificationPort);
+    if ( notificationPort == -1 ) return(-1);
   }
   
   *notificationSocket = (SOCKET *)malloc(sizeof(SOCKET));
@@ -271,34 +306,18 @@ int rtcpcld_getNotify(
   return(rtcpcld_getNotifyWithAddr(s,NULL));
 }
 
-int rtcpcld_sendNotify(
-                       toAddrStr
-                       )
-     char *toAddrStr;
+int rtcpcld_sendNotifyByAddr(
+                             toHost,
+                             toPort
+                             )
+     char *toHost;
+     int toPort;
 {
   struct sockaddr_in to;
   struct hostent *hp;
   SOCKET s;
   char byteToSend;
-  int toPort = -1, rc;
-  char toHost[CA_MAXHOSTNAMELEN+1], *p;
-
-  if ( toAddrStr == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  /*
-   * toAddrStr format is host:port
-   */
-  strcpy(toHost,toAddrStr);
-  p = strstr(toHost,":");
-  if ( p == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  *p = '\0';
-  toPort = atoi(++p);
+  int rc;
 
   s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if ( s == INVALID_SOCKET ) {
@@ -324,8 +343,45 @@ int rtcpcld_sendNotify(
   }
 
   closesocket(s);
-  
   return(0);
+}
+
+int rtcpcld_sendNotify(
+                       toAddrStr
+                       )
+     char *toAddrStr;
+{
+  int toPort = -1;
+  char toHost[CA_MAXHOSTNAMELEN+1], *p;
+
+  if ( toAddrStr == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  /*
+   * toAddrStr format is host:port
+   */
+  strcpy(toHost,toAddrStr);
+  p = strstr(toHost,":");
+  if ( p == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  *p = '\0';
+  toPort = atoi(++p);
+
+  return(rtcpcld_sendNotifyByAddr(toHost,toPort));
+}
+
+int rtcpcld_notifyRtcpclientd() 
+{
+  char toHost[CA_MAXHOSTNAMELEN+1];
+  int toPort, rc;
+  
+  rc = getServerNotifyAddr(toHost,sizeof(toHost),&toPort);
+  if ( rc == -1 ) return(-1);
+  return(rtcpcld_sendNotifyByAddr(toHost,toPort));
 }
 
 int rtcpcld_setVIDFailedStatus(

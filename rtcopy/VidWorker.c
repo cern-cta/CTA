@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:42 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:42 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -40,16 +40,18 @@ WSADATA wsadata;
 #include <osdep.h>
 #include <trace.h>
 #include <serrno.h>
+#include <common.h>
 #include <Cgetopt.h>
 #include <Cinit.h>
 #include <Cuuid.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
-#include <Cthread_api.h>
+#include <Cpool_api.h>
 #include <dlf_api.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <vmgr_api.h>
+#include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
@@ -68,6 +70,7 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            rtcpFileRequest_t *
                                            ));
 
+static int callbackThreadPool = -1;
 Cuuid_t childUuid, mainUuid;
 tape_list_t *vidChildTape = NULL;
 
@@ -117,37 +120,6 @@ static int processGetMoreWorkCallback(
     return(-1);
   }  
 
-  /*
-   * We are called in a loop file-by-file. Since ach Catalogue lookup
-   * may return more than one file we must maintain an internal
-   * list of unprocessed files. The first thing to do is to
-   * check if there are unprocessed files in that list.
-   */
-  if ( vidChildTape == NULL ) {
-    rc = rtcp_NewTapeList(
-                          &vidChildTape,
-                          NULL,
-                          tapereq->mode
-                          );
-    if ( rc == -1 ) {
-      (void)dlf_write(
-                      childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcp_NewTapeList()",
-                      "ERROR_STRING",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      return(-1);
-    }
-    vidChildTape->tapereq = *tapereq;
-  }
   found = FALSE;
   CLIST_ITERATE_BEGIN(vidChildTape->file,fl) {
     if ( fl->filereq.proc_status == RTCP_WAITING ) {
@@ -343,7 +315,6 @@ int rtcpcld_Callback(
   int fseq = -1, proc_status = -1, msgNo = -1, rc, status, getMoreWork = 0;
   struct Cns_fileid fileId;
   Cuuid_t rtcpUuid, stgUuid;
-  file_list_t *fl = NULL;
 
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
@@ -509,10 +480,33 @@ int myDispatch(
      void *(*func)(void *);
      void *arg;
 {
-  return(Cthread_create_detached(
-                                 func,
-                                 arg
-                                 ));  
+  return(Cpool_assign(
+                      callbackThreadPool,
+                      func,
+                      arg,
+                      -1
+                      ));  
+}
+
+static int initThreadPool() 
+{
+  int poolsize;
+  char *p;
+
+  if ( (p = getenv("RTCPD_THREAD_POOL")) != (char *)NULL ) {
+    poolsize = atoi(p);
+  } else if ( ( p = getconfent("RTCPD","THREAD_POOL",0)) != (char *)NULL ) {
+    poolsize = atoi(p);
+  } else {
+#if defined(RTCPD_THREAD_POOL)
+    poolsize = RTCPD_THREAD_POOL;
+#else /* RTCPD_THREAD_POOL */
+    poolsize = 3;         /* Set some reasonable default */
+#endif /* RTCPD_TRHEAD_POOL */
+  }
+  callbackThreadPool = Cpool_create(poolsize,&poolsize);
+  if ( (callbackThreadPool == -1) || (poolsize <= 0) ) return(-1);
+  return(0);
 }
 
 static int updateClientInfo(
@@ -623,18 +617,18 @@ static int updateClientInfo(
 
 
 static int vidWorker(
-                     origSocket,
-                     tape
+                     origSocket
                      )
      SOCKET *origSocket;
-     tape_list_t *tape;
 {
   rtcpc_sockets_t *socks;
   rtcpHdr_t hdr;
-  int rc, port = -1, reqId;
+  tape_list_t *tapeCopy = NULL;
+  file_list_t *placeHolderFile = NULL;
+  int rc, port = -1, reqId, save_serrno;
 
-  if ( tape == NULL || 
-       *tape->tapereq.vid == '\0' ) {
+  if ( vidChildTape == NULL || 
+       *vidChildTape->tapereq.vid == '\0' ) {
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
@@ -661,16 +655,13 @@ static int vidWorker(
                   childUuid,
                   "",
                   DLF_MSG_PARAM_TPVID,
-                  tape->tapereq.vid,
+                  vidChildTape->tapereq.vid,
                   "MODE",
                   DLF_MSG_PARAM_INT,
-                  tape->tapereq.mode,
+                  vidChildTape->tapereq.mode,
                   "VOLREQID",
                   DLF_MSG_PARAM_INT,
-                  tape->tapereq.VolReqID,
-                  "PID",
-                  DLF_MSG_PARAM_INT,
-                  getpid()
+                  vidChildTape->tapereq.VolReqID
                   );
 
   /*
@@ -678,20 +669,25 @@ static int vidWorker(
    */
   errno = serrno = 0;
   rc = rtcpcld_anyReqsForVID(
-                             tape
+                             vidChildTape
                              );
   if ( rc == -1 ) {
+    save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SYSCALL,
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "rtcpcld_anyReqsForVID()",
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
+                    sstrerror(save_serrno),
                     RTCPCLD_LOG_WHERE
                     );
+    serrno = save_serrno;
     return(-1);
   }
 
@@ -706,6 +702,42 @@ static int vidWorker(
     return(0);
   }
 
+  rc = rtcp_NewTapeList(&tapeCopy,NULL,vidChildTape->tapereq.mode);
+  if ( (rc != -1) && tapeCopy != NULL ) {
+    tapeCopy->tapereq = vidChildTape->tapereq;
+    rc = rtcp_NewFileList(
+                          &tapeCopy,
+                          &placeHolderFile,
+                          vidChildTape->tapereq.mode
+                          );
+    if ( (rc != -1) && (placeHolderFile != NULL) ) {
+      placeHolderFile->filereq.concat = NOCONCAT;
+      placeHolderFile->filereq.convert = ASCCONV;
+      strcpy(placeHolderFile->filereq.recfm,"F");
+      placeHolderFile->filereq.proc_status = RTCP_REQUEST_MORE_WORK;
+    }
+  }
+  
+  if ( (rc == -1) || tapeCopy == NULL || tapeCopy->file == NULL ) {
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_SYSCALL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    (tapeCopy == NULL ? "rtcp_NewTapeList()" : "rtcp_NewFileList()"),
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = save_serrno;
+    return(-1);
+  }
+
   /*
    * Check the request and initialise our private listen socket
    * that we will use for further communication with rtcpd
@@ -714,9 +746,10 @@ static int vidWorker(
   rc = rtcpc_InitReq(
                      &socks,
                      &port,
-                     tape
+                     tapeCopy
                      );
   if ( rc == -1 ) {
+    save_serrno = serrno;
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
@@ -725,9 +758,10 @@ static int vidWorker(
                     RTCPCLD_NB_PARAMS+1,
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
-                    sstrerror(serrno),
+                    sstrerror(save_serrno),
                     RTCPCLD_LOG_WHERE
                     );
+    serrno = save_serrno;
     return(-1);
   }
 
@@ -740,7 +774,7 @@ static int vidWorker(
     rc = updateClientInfo(
                           origSocket,
                           port,
-                          tape
+                          tapeCopy
                           );
     if ( rc == -1 ) return(-1);  /* error already logged */
   } else {
@@ -749,15 +783,16 @@ static int vidWorker(
      */
     rc = vdqm_SendVolReq(
                          NULL,
-                         &(tape->tapereq.VolReqID),
-                         tape->tapereq.vid,
-                         tape->tapereq.dgn,
+                         &(vidChildTape->tapereq.VolReqID),
+                         vidChildTape->tapereq.vid,
+                         vidChildTape->tapereq.dgn,
                          NULL,
                          NULL,
-                         tape->tapereq.mode,
+                         vidChildTape->tapereq.mode,
                          port
                          );
     if ( rc == -1 ) {
+      save_serrno = serrno;
       (void)dlf_write(
                       childUuid,
                       DLF_LVL_ERROR,
@@ -766,9 +801,10 @@ static int vidWorker(
                       RTCPCLD_NB_PARAMS+1,
                       "ERROR_STR", 
                       DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
+                      sstrerror(save_serrno),
                       RTCPCLD_LOG_WHERE
                       );
+      serrno = save_serrno;
       return(-1);
     }
   }
@@ -777,34 +813,35 @@ static int vidWorker(
    * Run the request;
    */
   rtcpc_ClientCallback = rtcpcld_Callback;
+  rc = initThreadPool();
+  if ( rc == -1 ) return(-1);
 
-  reqId = tape->tapereq.VolReqID;
+  reqId = vidChildTape->tapereq.VolReqID;
   rc = rtcpc_SelectServer(
                           &socks,
-                          tape,
+                          tapeCopy,
                           NULL,
                           port,
                           &reqId
                           );
   if ( rc == -1 ) return(-1);
-  vidChildTape = NULL;
   hdr.magic = RTCOPY_MAGIC;
   rc = rtcpc_sendReqList(
                          &hdr,
                          &socks,
-                         tape
+                         tapeCopy
                          );
   if ( rc == -1 ) return(-1);
   rc = rtcpc_sendEndOfReq(
                           &hdr,
                           &socks,
-                          tape
+                          tapeCopy
                           );
   if ( rc == -1 ) return(-1);
   rc = rtcpc_runReq_ext(
                         &hdr,
                         &socks,
-                        tape,
+                        tapeCopy,
                         myDispatch
                         );
   return(rc);
@@ -963,7 +1000,6 @@ static int callVmgr(
 }
 
 static int initTapeReq(
-                       tape,
                        vid,
                        side,
                        mode,
@@ -973,7 +1009,6 @@ static int initTapeReq(
                        unit,
                        vdqmVolReqID
                        )
-     tape_list_t **tape;
      char *vid, *_dgn, *_density, *_lbltype, *unit;
      int side, mode, vdqmVolReqID;
 {
@@ -984,17 +1019,18 @@ static int initTapeReq(
   density = _density;
   lbltype = _lbltype;
 
-  if ( tape == NULL || vid == NULL ) {
+  if ( vid == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
-  
+
+  vidChildTape = NULL;
   rc = rtcp_NewTapeList(
-                        tape,
+                        &vidChildTape,
                         NULL,
                         mode
                         );
-  if ( rc == -1 || *tape == NULL ) {
+  if ( rc == -1 || vidChildTape == NULL ) {
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
@@ -1043,34 +1079,34 @@ static int initTapeReq(
   }
 
   strncpy(
-          (*tape)->tapereq.vid,
+          vidChildTape->tapereq.vid,
           vid,
-          sizeof((*tape)->tapereq.vid)-1
+          sizeof(vidChildTape->tapereq.vid)-1
           );
   strncpy(
-          (*tape)->tapereq.dgn,
+          vidChildTape->tapereq.dgn,
           dgn,
-          sizeof((*tape)->tapereq.dgn)-1
+          sizeof(vidChildTape->tapereq.dgn)-1
           );
   strncpy(
-          (*tape)->tapereq.density,
+          vidChildTape->tapereq.density,
           density,
-          sizeof((*tape)->tapereq.density)-1
+          sizeof(vidChildTape->tapereq.density)-1
           );
   strncpy(
-          (*tape)->tapereq.label,
+          vidChildTape->tapereq.label,
           lbltype,
-          sizeof((*tape)->tapereq.label)-1
+          sizeof(vidChildTape->tapereq.label)-1
           );
   if ( unit != NULL ) {
     strncpy(
-            (*tape)->tapereq.unit,
+            vidChildTape->tapereq.unit,
             unit,
-            sizeof((*tape)->tapereq.unit)-1
+            sizeof(vidChildTape->tapereq.unit)-1
             );
   }
-  
-  (*tape)->tapereq.VolReqID = vdqmVolReqID;
+
+  vidChildTape->tapereq.VolReqID = vdqmVolReqID;
   
   return(0);
 }
@@ -1082,7 +1118,6 @@ int main(
      int argc;
      char **argv;
 {
-  tape_list_t *tape = NULL;
   char *vid = NULL, *dgn = NULL, *lbltype = NULL, *density = NULL;
   char  *unit = NULL, *mainUuidStr = NULL, *shiftMsg;
   char *vidChildFacility = RTCPCLIENTD_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
@@ -1154,6 +1189,7 @@ int main(
     case 'k':
       key = atol(Coptarg);
       rtcpcld_setTapeKey(key);
+      break;
     case 'l':
       /*
        * Tape label type. If not provided, it will be taken from VMGR
@@ -1292,7 +1328,6 @@ int main(
                  );
   if ( rc == -1 ) return(2);
   rc = initTapeReq(
-                   &tape,
                    vid,
                    side,
                    mode,
@@ -1308,15 +1343,14 @@ int main(
    * Process the request
    */
   if ( tStartRequest <= 0 ) tStartRequest = (int)time(NULL);
-  tape->tapereq.TStartRequest = tStartRequest;
+  vidChildTape->tapereq.TStartRequest = tStartRequest;
   rc = vidWorker(
-                 (vdqmVolReqID >= 0 ? &origSocket : NULL),
-                 tape
+                 (vdqmVolReqID >= 0 ? &origSocket : NULL)
                  );
   save_serrno = serrno;
   retval = 0;
   if ( rc == -1 ) {
-    (void)rtcp_RetvalSHIFT(tape,NULL,&retval);
+    (void)rtcp_RetvalSHIFT(vidChildTape,NULL,&retval);
     if ( retval == 0 ) retval = UNERR;
   }
   switch (retval) {
@@ -1350,13 +1384,13 @@ int main(
                   7,
                   "",
                   DLF_MSG_PARAM_TPVID,
-                  tape->tapereq.vid,
+                  vidChildTape->tapereq.vid,
                   "MODE",
                   DLF_MSG_PARAM_INT,
-                  tape->tapereq.mode,
+                  vidChildTape->tapereq.mode,
                   "VOLREQID",
                   DLF_MSG_PARAM_INT,
-                  tape->tapereq.VolReqID,
+                  vidChildTape->tapereq.VolReqID,
                   "PID",
                   DLF_MSG_PARAM_INT,
                   getpid(),
@@ -1371,7 +1405,7 @@ int main(
                   shiftMsg
                   );
   if ( rc == -1 ) {
-    (void)rtcpcld_setVIDFailedStatus(tape);
+    (void)rtcpcld_setVIDFailedStatus(vidChildTape);
   }
   
   return(retval);
