@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 06:56:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 07:00:00 $ $Author: sponcec3 $
  *
  *
  *
@@ -66,14 +66,14 @@ namespace castor {
       /**
        * set the id of this address
        */
-      virtual const setId(const unsigned long id) { m_id = id; }
+      virtual void setId(const unsigned long id) { m_id = id; }
 
     private:
 
       /**
        * the id of this address
        */
-      const unsigned long m_id;
+      unsigned long m_id;
 
     };
 
