@@ -1,5 +1,5 @@
 /*
- * $Id: md5.h,v 1.2 1999/10/14 12:06:23 jdurand Exp $
+ * $Id: md5.h,v 1.3 1999/11/26 16:49:51 jdurand Exp $
  */
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include "marshall.h"
 #include "osdep.h"
+#include "Cdb_limits.h"
 
 /* typedef a 32-bit type */
 typedef U_LONG UINT4;
@@ -62,5 +63,5 @@ EXTERN_C int DLL_DECL MD5Update _PROTO((MD5_CTX *, unsigned char *, unsigned int
 EXTERN_C int DLL_DECL MD5Final _PROTO((MD5_CTX *));
 
 /*
- * Last Update: "Wednesday 13 October, 1999 at 13:29:01 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 26 November, 1999 at 11:44:56 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
