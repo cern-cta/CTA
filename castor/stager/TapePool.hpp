@@ -42,6 +42,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class SvcClass;
     class Stream;
 
     /**
@@ -124,6 +125,35 @@ namespace castor {
       }
 
       /**
+       * Add a SvcClass* object to the m_svcClassesVector list
+       */
+      void addSvcClasses(SvcClass* add_object) {
+        m_svcClassesVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a SvcClass* object from m_svcClassesVector
+       */
+      void removeSvcClasses(SvcClass* remove_object) {
+        for (unsigned int i = 0; i < m_svcClassesVector.size(); i++) {
+          SvcClass* item = m_svcClassesVector[i];
+          if (item == remove_object) {
+            std::vector<SvcClass*>::iterator it = m_svcClassesVector.begin() + i;
+            m_svcClassesVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of SvcClass* objects held by m_svcClassesVector
+       * @return list of SvcClass* objects held by m_svcClassesVector
+       */
+      std::vector<SvcClass*>& svcClasses() {
+        return m_svcClassesVector;
+      }
+
+      /**
        * Add a Stream* object to the m_streamsVector list
        */
       void addStreams(Stream* add_object) {
@@ -161,6 +191,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<SvcClass*> m_svcClassesVector;
 
       std::vector<Stream*> m_streamsVector;
 

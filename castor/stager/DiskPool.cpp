@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -50,6 +51,10 @@ castor::stager::DiskPool::~DiskPool() throw() {
     m_fileSystemsVector[i]->setDiskPool(0);
   }
   m_fileSystemsVector.clear();
+  for (unsigned int i = 0; i < m_svcClassesVector.size(); i++) {
+    m_svcClassesVector[i]->removeDiskPools(this);
+  }
+  m_svcClassesVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -73,6 +78,17 @@ void castor::stager::DiskPool::print(std::ostream& stream,
     std::vector<FileSystem*>::const_iterator it;
     for (it = m_fileSystemsVector.begin(), i = 0;
          it != m_fileSystemsVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
+  {
+    stream << indent << "SvcClasses : " << std::endl;
+    int i;
+    std::vector<SvcClass*>::const_iterator it;
+    for (it = m_svcClassesVector.begin(), i = 0;
+         it != m_svcClassesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

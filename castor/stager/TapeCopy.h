@@ -94,14 +94,19 @@ int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
                           int* ret);
 
 /**
- * Get the value of stream
+ * Add a struct Cstager_Stream_t* object to the stream list
  */
-int Cstager_TapeCopy_stream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t** var);
+int Cstager_TapeCopy_addStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* obj);
 
 /**
- * Set the value of stream
+ * Remove a struct Cstager_Stream_t* object from stream
  */
-int Cstager_TapeCopy_setStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* new_var);
+int Cstager_TapeCopy_removeStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* obj);
+
+/**
+ * Get the list of struct Cstager_Stream_t* objects held by stream
+ */
+int Cstager_TapeCopy_stream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t*** var, int* len);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <vector>
@@ -119,6 +120,35 @@ extern "C" {
   int Cstager_TapePool_setName(castor::stager::TapePool* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapePool_addSvcClasses
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_addSvcClasses(castor::stager::TapePool* instance, castor::stager::SvcClass* obj) {
+    instance->addSvcClasses(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapePool_removeSvcClasses
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_removeSvcClasses(castor::stager::TapePool* instance, castor::stager::SvcClass* obj) {
+    instance->removeSvcClasses(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapePool_svcClasses
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_svcClasses(castor::stager::TapePool* instance, castor::stager::SvcClass*** var, int* len) {
+    std::vector<castor::stager::SvcClass*> result = instance->svcClasses();
+    *len = result.size();
+    *var = (castor::stager::SvcClass**) malloc((*len) * sizeof(castor::stager::SvcClass*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

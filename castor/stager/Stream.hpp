@@ -45,6 +45,7 @@ namespace castor {
     // Forward declarations
     class TapePool;
     class TapeCopy;
+    class Tape;
 
     /**
      * class Stream
@@ -155,6 +156,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_tape
+       * @return the value of m_tape
+       */
+      Tape* tape() const {
+        return m_tape;
+      }
+
+      /**
+       * Set the value of m_tape
+       * @param new_var the new value of m_tape
+       */
+      void setTape(Tape* new_var) {
+        m_tape = new_var;
+      }
+
+      /**
        * Get the value of m_tapePool
        * @return the value of m_tapePool
        */
@@ -197,6 +214,8 @@ namespace castor {
       u_signed64 m_id;
 
       std::vector<TapeCopy*> m_tapeCopyVector;
+
+      Tape* m_tape;
 
       TapePool* m_tapePool;
 

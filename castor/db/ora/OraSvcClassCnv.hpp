@@ -37,6 +37,14 @@ namespace castor {
   // Forward declarations
   class IObject;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class SvcClass;
+
+  }; // end of namespace stager
+
   namespace db {
 
     namespace ora {
@@ -159,6 +167,22 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type TapePool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapePool(castor::stager::SvcClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type DiskPool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskPool(castor::stager::SvcClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -167,6 +191,22 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapePool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapePool(castor::stager::SvcClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskPool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskPool(castor::stager::SvcClass* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -218,6 +258,42 @@ namespace castor {
 
         /// SQL update statement object for member 
         oracle::occi::Statement *m_updateCastorFileStatement;
+
+        /// SQL insert statement for member tapePools
+        static const std::string s_insertTapePoolStatementString;
+
+        /// SQL insert statement object for member tapePools
+        oracle::occi::Statement *m_insertTapePoolStatement;
+
+        /// SQL delete statement for member tapePools
+        static const std::string s_deleteTapePoolStatementString;
+
+        /// SQL delete statement object for member tapePools
+        oracle::occi::Statement *m_deleteTapePoolStatement;
+
+        /// SQL select statement for member tapePools
+        static const std::string s_selectTapePoolStatementString;
+
+        /// SQL select statement object for member tapePools
+        oracle::occi::Statement *m_selectTapePoolStatement;
+
+        /// SQL insert statement for member diskPools
+        static const std::string s_insertDiskPoolStatementString;
+
+        /// SQL insert statement object for member diskPools
+        oracle::occi::Statement *m_insertDiskPoolStatement;
+
+        /// SQL delete statement for member diskPools
+        static const std::string s_deleteDiskPoolStatementString;
+
+        /// SQL delete statement object for member diskPools
+        oracle::occi::Statement *m_deleteDiskPoolStatement;
+
+        /// SQL select statement for member diskPools
+        static const std::string s_selectDiskPoolStatementString;
+
+        /// SQL select statement object for member diskPools
+        oracle::occi::Statement *m_selectDiskPoolStatement;
 
       }; // end of class OraSvcClassCnv
 

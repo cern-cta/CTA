@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -46,6 +47,10 @@ castor::stager::TapePool::TapePool() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::TapePool::~TapePool() throw() {
+  for (unsigned int i = 0; i < m_svcClassesVector.size(); i++) {
+    m_svcClassesVector[i]->removeTapePools(this);
+  }
+  m_svcClassesVector.clear();
   for (unsigned int i = 0; i < m_streamsVector.size(); i++) {
     m_streamsVector[i]->setTapePool(0);
   }
@@ -67,6 +72,17 @@ void castor::stager::TapePool::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "SvcClasses : " << std::endl;
+    int i;
+    std::vector<SvcClass*>::const_iterator it;
+    for (it = m_svcClassesVector.begin(), i = 0;
+         it != m_svcClassesVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
   {
     stream << indent << "Streams : " << std::endl;
     int i;

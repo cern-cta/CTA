@@ -167,6 +167,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::TapePool* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type Stream refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -183,6 +191,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::TapePool* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -230,6 +246,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member svcClasses
+        static const std::string s_insertSvcClassStatementString;
+
+        /// SQL insert statement object for member svcClasses
+        oracle::occi::Statement *m_insertSvcClassStatement;
+
+        /// SQL delete statement for member svcClasses
+        static const std::string s_deleteSvcClassStatementString;
+
+        /// SQL delete statement object for member svcClasses
+        oracle::occi::Statement *m_deleteSvcClassStatement;
+
+        /// SQL select statement for member svcClasses
+        static const std::string s_selectSvcClassStatementString;
+
+        /// SQL select statement object for member svcClasses
+        oracle::occi::Statement *m_selectSvcClassStatement;
 
         /// SQL select statement for member streams
         static const std::string s_selectStreamStatementString;

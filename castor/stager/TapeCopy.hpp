@@ -109,19 +109,32 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_stream
-       * @return the value of m_stream
+       * Add a Stream* object to the m_streamVector list
        */
-      Stream* stream() const {
-        return m_stream;
+      void addStream(Stream* add_object) {
+        m_streamVector.push_back(add_object);
       }
 
       /**
-       * Set the value of m_stream
-       * @param new_var the new value of m_stream
+       * Remove a Stream* object from m_streamVector
        */
-      void setStream(Stream* new_var) {
-        m_stream = new_var;
+      void removeStream(Stream* remove_object) {
+        for (unsigned int i = 0; i < m_streamVector.size(); i++) {
+          Stream* item = m_streamVector[i];
+          if (item == remove_object) {
+            std::vector<Stream*>::iterator it = m_streamVector.begin() + i;
+            m_streamVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of Stream* objects held by m_streamVector
+       * @return list of Stream* objects held by m_streamVector
+       */
+      std::vector<Stream*>& stream() {
+        return m_streamVector;
       }
 
       /**
@@ -192,7 +205,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      Stream* m_stream;
+      std::vector<Stream*> m_streamVector;
 
       std::vector<Segment*> m_segmentsVector;
 

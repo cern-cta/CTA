@@ -27,10 +27,13 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -46,6 +49,14 @@ castor::stager::SvcClass::SvcClass() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::SvcClass::~SvcClass() throw() {
+  for (unsigned int i = 0; i < m_tapePoolsVector.size(); i++) {
+    m_tapePoolsVector[i]->removeSvcClasses(this);
+  }
+  m_tapePoolsVector.clear();
+  for (unsigned int i = 0; i < m_diskPoolsVector.size(); i++) {
+    m_diskPoolsVector[i]->removeSvcClasses(this);
+  }
+  m_diskPoolsVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -65,6 +76,28 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "TapePools : " << std::endl;
+    int i;
+    std::vector<TapePool*>::const_iterator it;
+    for (it = m_tapePoolsVector.begin(), i = 0;
+         it != m_tapePoolsVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
+  {
+    stream << indent << "DiskPools : " << std::endl;
+    int i;
+    std::vector<DiskPool*>::const_iterator it;
+    for (it = m_diskPoolsVector.begin(), i = 0;
+         it != m_diskPoolsVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -263,11 +263,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL update statement for member stream
-        static const std::string s_updateStreamStatementString;
+        /// SQL insert statement for member stream
+        static const std::string s_insertStreamStatementString;
 
-        /// SQL update statement object for member stream
-        oracle::occi::Statement *m_updateStreamStatement;
+        /// SQL insert statement object for member stream
+        oracle::occi::Statement *m_insertStreamStatement;
+
+        /// SQL delete statement for member stream
+        static const std::string s_deleteStreamStatementString;
+
+        /// SQL delete statement object for member stream
+        oracle::occi::Statement *m_deleteStreamStatement;
+
+        /// SQL select statement for member stream
+        static const std::string s_selectStreamStatementString;
+
+        /// SQL select statement object for member stream
+        oracle::occi::Statement *m_selectStreamStatement;
 
         /// SQL select statement for member segments
         static const std::string s_selectSegmentStatementString;

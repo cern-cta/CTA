@@ -41,7 +41,6 @@
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::TapeCopy() throw() :
   m_id(),
-  m_stream(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
 };
@@ -50,9 +49,10 @@ castor::stager::TapeCopy::TapeCopy() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::~TapeCopy() throw() {
-  if (0 != m_stream) {
-    m_stream->removeTapeCopy(this);
+  for (unsigned int i = 0; i < m_streamVector.size(); i++) {
+    m_streamVector[i]->removeTapeCopy(this);
   }
+  m_streamVector.clear();
   for (unsigned int i = 0; i < m_segmentsVector.size(); i++) {
     m_segmentsVector[i]->setCopy(0);
     delete m_segmentsVector[i];
@@ -77,11 +77,16 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Stream : " << std::endl;
-  if (0 != m_stream) {
-    m_stream->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
+  {
+    stream << indent << "Stream : " << std::endl;
+    int i;
+    std::vector<Stream*>::const_iterator it;
+    for (it = m_streamVector.begin(), i = 0;
+         it != m_streamVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
   }
   {
     stream << indent << "Segments : " << std::endl;

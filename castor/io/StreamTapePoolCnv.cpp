@@ -38,6 +38,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <string>
@@ -129,6 +130,12 @@ void castor::io::StreamTapePoolCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    address->stream() << obj->svcClasses().size();
+    for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
+         it != obj->svcClasses().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     address->stream() << obj->streams().size();
     for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
          it != obj->streams().end();
@@ -154,6 +161,12 @@ castor::IObject* castor::io::StreamTapePoolCnv::unmarshalObject(castor::io::bini
   // Fill object with associations
   castor::stager::TapePool* obj = 
     dynamic_cast<castor::stager::TapePool*>(object);
+  unsigned int svcClassesNb;
+  ad.stream() >> svcClassesNb;
+  for (unsigned int i = 0; i < svcClassesNb; i++) {
+    IObject* objSvcClasses = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSvcClasses(dynamic_cast<castor::stager::SvcClass*>(objSvcClasses));
+  }
   unsigned int streamsNb;
   ad.stream() >> streamsNb;
   for (unsigned int i = 0; i < streamsNb; i++) {

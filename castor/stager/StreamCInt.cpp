@@ -28,6 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
+#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
@@ -149,6 +150,22 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_tape
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_tape(castor::stager::Stream* instance, castor::stager::Tape** var) {
+    *var = instance->tape();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setTape
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setTape(castor::stager::Stream* instance, castor::stager::Tape* new_var) {
+    instance->setTape(new_var);
     return 0;
   }
 

@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
@@ -41,6 +42,7 @@
 castor::stager::Stream::Stream() throw() :
   m_initialSizeToTransfer(),
   m_id(),
+  m_tape(0),
   m_tapePool(0),
   m_status(StreamStatusCodes(0)) {
 };
@@ -50,7 +52,7 @@ castor::stager::Stream::Stream() throw() :
 //------------------------------------------------------------------------------
 castor::stager::Stream::~Stream() throw() {
   for (unsigned int i = 0; i < m_tapeCopyVector.size(); i++) {
-    m_tapeCopyVector[i]->setStream(0);
+    m_tapeCopyVector[i]->removeStream(this);
   }
   m_tapeCopyVector.clear();
   if (0 != m_tapePool) {
@@ -83,6 +85,12 @@ void castor::stager::Stream::print(std::ostream& stream,
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
+  }
+  stream << indent << "Tape : " << std::endl;
+  if (0 != m_tape) {
+    m_tape->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
   stream << indent << "TapePool : " << std::endl;
   if (0 != m_tapePool) {

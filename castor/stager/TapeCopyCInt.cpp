@@ -109,18 +109,31 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapeCopy_stream
+  // Cstager_TapeCopy_addStream
   //----------------------------------------------------------------------------
-  int Cstager_TapeCopy_stream(castor::stager::TapeCopy* instance, castor::stager::Stream** var) {
-    *var = instance->stream();
+  int Cstager_TapeCopy_addStream(castor::stager::TapeCopy* instance, castor::stager::Stream* obj) {
+    instance->addStream(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapeCopy_setStream
+  // Cstager_TapeCopy_removeStream
   //----------------------------------------------------------------------------
-  int Cstager_TapeCopy_setStream(castor::stager::TapeCopy* instance, castor::stager::Stream* new_var) {
-    instance->setStream(new_var);
+  int Cstager_TapeCopy_removeStream(castor::stager::TapeCopy* instance, castor::stager::Stream* obj) {
+    instance->removeStream(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_stream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_stream(castor::stager::TapeCopy* instance, castor::stager::Stream*** var, int* len) {
+    std::vector<castor::stager::Stream*> result = instance->stream();
+    *len = result.size();
+    *var = (castor::stager::Stream**) malloc((*len) * sizeof(castor::stager::Stream*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

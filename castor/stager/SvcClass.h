@@ -30,7 +30,9 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_DiskPool_t;
 struct Cstager_SvcClass_t;
+struct Cstager_TapePool_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -127,5 +129,35 @@ int Cstager_SvcClass_name(struct Cstager_SvcClass_t* instance, const char** var)
  * the name of this SvcClass
  */
 int Cstager_SvcClass_setName(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Add a struct Cstager_TapePool_t* object to the tapePools list
+ */
+int Cstager_SvcClass_addTapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t* obj);
+
+/**
+ * Remove a struct Cstager_TapePool_t* object from tapePools
+ */
+int Cstager_SvcClass_removeTapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t* obj);
+
+/**
+ * Get the list of struct Cstager_TapePool_t* objects held by tapePools
+ */
+int Cstager_SvcClass_tapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t*** var, int* len);
+
+/**
+ * Add a struct Cstager_DiskPool_t* object to the diskPools list
+ */
+int Cstager_SvcClass_addDiskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t* obj);
+
+/**
+ * Remove a struct Cstager_DiskPool_t* object from diskPools
+ */
+int Cstager_SvcClass_removeDiskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t* obj);
+
+/**
+ * Get the list of struct Cstager_DiskPool_t* objects held by diskPools
+ */
+int Cstager_SvcClass_diskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t*** var, int* len);
 
 #endif // CASTOR_STAGER_SVCCLASS_H

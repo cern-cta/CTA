@@ -32,6 +32,7 @@
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
 struct Cstager_FileSystem_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -117,5 +118,20 @@ int Cstager_DiskPool_removeFileSystems(struct Cstager_DiskPool_t* instance, stru
  * Get the list of struct Cstager_FileSystem_t* objects held by fileSystems
  */
 int Cstager_DiskPool_fileSystems(struct Cstager_DiskPool_t* instance, struct Cstager_FileSystem_t*** var, int* len);
+
+/**
+ * Add a struct Cstager_SvcClass_t* object to the svcClasses list
+ */
+int Cstager_DiskPool_addSvcClasses(struct Cstager_DiskPool_t* instance, struct Cstager_SvcClass_t* obj);
+
+/**
+ * Remove a struct Cstager_SvcClass_t* object from svcClasses
+ */
+int Cstager_DiskPool_removeSvcClasses(struct Cstager_DiskPool_t* instance, struct Cstager_SvcClass_t* obj);
+
+/**
+ * Get the list of struct Cstager_SvcClass_t* objects held by svcClasses
+ */
+int Cstager_DiskPool_svcClasses(struct Cstager_DiskPool_t* instance, struct Cstager_SvcClass_t*** var, int* len);
 
 #endif // CASTOR_STAGER_DISKPOOL_H

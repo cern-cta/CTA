@@ -39,6 +39,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
+#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 #include <set>
@@ -56,7 +57,7 @@ const castor::IFactory<castor::IConverter>& OraStreamCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStreamCnv::s_insertStatementString =
-"INSERT INTO rh_Stream (initialSizeToTransfer, id, tapePool, status) VALUES (:1,:2,:3,:4)";
+"INSERT INTO rh_Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStreamCnv::s_deleteStatementString =
@@ -64,7 +65,7 @@ const std::string castor::db::ora::OraStreamCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStreamCnv::s_selectStatementString =
-"SELECT initialSizeToTransfer, id, tapePool, status FROM rh_Stream WHERE id = :1";
+"SELECT initialSizeToTransfer, id, tape, tapePool, status FROM rh_Stream WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStreamCnv::s_updateStatementString =
@@ -78,9 +79,21 @@ const std::string castor::db::ora::OraStreamCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraStreamCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member tapeCopy
+const std::string castor::db::ora::OraStreamCnv::s_insertTapeCopyStatementString =
+"INSERT INTO rh_Stream2TapeCopy (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member tapeCopy
+const std::string castor::db::ora::OraStreamCnv::s_deleteTapeCopyStatementString =
+"DELETE FROM rh_Stream2TapeCopy WHERE Parent = :1 AND Child = :2";
+
 /// SQL select statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
-"SELECT id from rh_TapeCopy WHERE stream = :1";
+"SELECT Child from rh_Stream2TapeCopy WHERE Parent = :1";
+
+/// SQL update statement for member tape
+const std::string castor::db::ora::OraStreamCnv::s_updateTapeStatementString =
+"UPDATE rh_Stream SET tape = : 1 WHERE id = :2";
 
 /// SQL update statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_updateTapePoolStatementString =
@@ -97,7 +110,10 @@ castor::db::ora::OraStreamCnv::OraStreamCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_insertTapeCopyStatement(0),
+  m_deleteTapeCopyStatement(0),
   m_selectTapeCopyStatement(0),
+  m_updateTapeStatement(0),
   m_updateTapePoolStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -120,7 +136,10 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertTapeCopyStatement);
+    deleteStatement(m_deleteTapeCopyStatement);
     deleteStatement(m_selectTapeCopyStatement);
+    deleteStatement(m_updateTapeStatement);
     deleteStatement(m_updateTapePoolStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -130,7 +149,10 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertTapeCopyStatement = 0;
+  m_deleteTapeCopyStatement = 0;
   m_selectTapeCopyStatement = 0;
+  m_updateTapeStatement = 0;
   m_updateTapePoolStatement = 0;
 }
 
@@ -161,6 +183,9 @@ void castor::db::ora::OraStreamCnv::fillRep(castor::IAddress* address,
   switch (type) {
   case castor::OBJ_TapeCopy :
     fillRepTapeCopy(obj);
+    break;
+  case castor::OBJ_Tape :
+    fillRepTape(obj);
     break;
   case castor::OBJ_TapePool :
     fillRepTapePool(obj);
@@ -200,7 +225,13 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
        it++) {
     std::set<int>::iterator item;
     if ((item = tapeCopyList.find((*it)->id())) == tapeCopyList.end()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_Stream);
+      cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertTapeCopyStatement) {
+        m_insertTapeCopyStatement = createStatement(s_insertTapeCopyStatementString);
+      }
+      m_insertTapeCopyStatement->setDouble(1, obj->id());
+      m_insertTapeCopyStatement->setDouble(2, (*it)->id());
+      m_insertTapeCopyStatement->executeUpdate();
     } else {
       tapeCopyList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -212,7 +243,59 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteTapeCopyStatement) {
+      m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
+    }
+    m_deleteTapeCopyStatement->setDouble(1, obj->id());
+    m_deleteTapeCopyStatement->setDouble(2, *it);
+    m_deleteTapeCopyStatement->executeUpdate();
   }
+}
+
+//------------------------------------------------------------------------------
+// fillRepTape
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 tapeId = (u_signed64)rset->getDouble(3);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(tapeId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != tapeId &&
+      0 != obj->tape() &&
+      obj->tape()->id() != tapeId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    tapeId = 0;
+  }
+  // Update remote object or create new one
+  if (tapeId == 0) {
+    if (0 != obj->tape()) {
+      cnvSvc()->createRep(&ad, obj->tape(), false);
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->tape(), false);
+  }
+  // Check update statement
+  if (0 == m_updateTapeStatement) {
+    m_updateTapeStatement = createStatement(s_updateTapeStatementString);
+  }
+  // Update local object
+  m_updateTapeStatement->setDouble(1, obj->tape()->id());
+  m_updateTapeStatement->setDouble(2, obj->id());
+  m_updateTapeStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -232,7 +315,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapePoolId = (u_signed64)rset->getDouble(3);
+  u_signed64 tapePoolId = (u_signed64)rset->getDouble(4);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(tapePoolId, " ", 0);
@@ -273,6 +356,9 @@ void castor::db::ora::OraStreamCnv::fillObj(castor::IAddress* address,
   switch (type) {
   case castor::OBJ_TapeCopy :
     fillObjTapeCopy(obj);
+    break;
+  case castor::OBJ_Tape :
+    fillObjTape(obj);
     break;
   case castor::OBJ_TapePool :
     fillObjTapePool(obj);
@@ -334,6 +420,45 @@ void castor::db::ora::OraStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
 }
 
 //------------------------------------------------------------------------------
+// fillObjTape
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::fillObjTape(castor::stager::Stream* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 tapeId = (u_signed64)rset->getDouble(3);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->tape() &&
+      (0 == tapeId ||
+       obj->tape()->id() != tapeId)) {
+    delete obj->tape();
+    obj->setTape(0);
+  }
+  // Update object or create new one
+  if (0 != tapeId) {
+    if (0 == obj->tape()) {
+      obj->setTape
+        (dynamic_cast<castor::stager::Tape*>
+         (cnvSvc()->getObjFromId(tapeId)));
+    } else if (obj->tape()->id() == tapeId) {
+      cnvSvc()->updateObj(obj->tape());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObjTapePool
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
@@ -350,7 +475,7 @@ void castor::db::ora::OraStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapePoolId = (u_signed64)rset->getDouble(3);
+  u_signed64 tapePoolId = (u_signed64)rset->getDouble(4);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -400,8 +525,9 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->initialSizeToTransfer());
     m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setDouble(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
-    m_insertStatement->setDouble(4, 0);
+    m_insertStatement->setDouble(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
+    m_insertStatement->setDouble(5, 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -426,6 +552,7 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
                     << "and parameters' values were :" << std::endl
                     << "  initialSizeToTransfer : " << obj->initialSizeToTransfer() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  tape : " << obj->tape() << std::endl
                     << "  tapePool : " << obj->tapePool() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
@@ -552,7 +679,7 @@ castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* addr
     // Now retrieve and set members
     object->setInitialSizeToTransfer((u_signed64)rset->getDouble(1));
     object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(4));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -600,7 +727,7 @@ void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::Stream*>(obj);
     object->setInitialSizeToTransfer((u_signed64)rset->getDouble(1));
     object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(4));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

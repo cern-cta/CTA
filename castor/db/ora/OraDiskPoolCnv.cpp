@@ -39,6 +39,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include <set>
 #include <vector>
 
@@ -80,6 +81,18 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_deleteTypeStatementString =
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementString =
 "SELECT id from rh_FileSystem WHERE diskPool = :1";
 
+/// SQL insert statement for member svcClasses
+const std::string castor::db::ora::OraDiskPoolCnv::s_insertSvcClassStatementString =
+"INSERT INTO rh_DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member svcClasses
+const std::string castor::db::ora::OraDiskPoolCnv::s_deleteSvcClassStatementString =
+"DELETE FROM rh_DiskPool2SvcClass WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member svcClasses
+const std::string castor::db::ora::OraDiskPoolCnv::s_selectSvcClassStatementString =
+"SELECT Child from rh_DiskPool2SvcClass WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -91,7 +104,10 @@ castor::db::ora::OraDiskPoolCnv::OraDiskPoolCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectFileSystemStatement(0) {}
+  m_selectFileSystemStatement(0),
+  m_insertSvcClassStatement(0),
+  m_deleteSvcClassStatement(0),
+  m_selectSvcClassStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -114,6 +130,9 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_selectFileSystemStatement);
+    deleteStatement(m_insertSvcClassStatement);
+    deleteStatement(m_deleteSvcClassStatement);
+    deleteStatement(m_selectSvcClassStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -123,6 +142,9 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_selectFileSystemStatement = 0;
+  m_insertSvcClassStatement = 0;
+  m_deleteSvcClassStatement = 0;
+  m_selectSvcClassStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -152,6 +174,9 @@ void castor::db::ora::OraDiskPoolCnv::fillRep(castor::IAddress* address,
   switch (type) {
   case castor::OBJ_FileSystem :
     fillRepFileSystem(obj);
+    break;
+  case castor::OBJ_SvcClass :
+    fillRepSvcClass(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -204,6 +229,56 @@ void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool
 }
 
 //------------------------------------------------------------------------------
+// fillRepSvcClass
+//------------------------------------------------------------------------------
+void castor::db::ora::OraDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* obj)
+  throw (castor::exception::Exception) {
+  // check select statement
+  if (0 == m_selectSvcClassStatement) {
+    m_selectSvcClassStatement = createStatement(s_selectSvcClassStatementString);
+  }
+  // Get current database data
+  std::set<int> svcClassesList;
+  m_selectSvcClassStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectSvcClassStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    svcClassesList.insert(rset->getInt(1));
+  }
+  m_selectSvcClassStatement->closeResultSet(rset);
+  // update svcClasses and create new ones
+  for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
+       it != obj->svcClasses().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = svcClassesList.find((*it)->id())) == svcClassesList.end()) {
+      cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertSvcClassStatement) {
+        m_insertSvcClassStatement = createStatement(s_insertSvcClassStatementString);
+      }
+      m_insertSvcClassStatement->setDouble(1, obj->id());
+      m_insertSvcClassStatement->setDouble(2, (*it)->id());
+      m_insertSvcClassStatement->executeUpdate();
+    } else {
+      svcClassesList.erase(item);
+      cnvSvc()->updateRep(0, *it, false);
+    }
+  }
+  // Delete old data
+  for (std::set<int>::iterator it = svcClassesList.begin();
+       it != svcClassesList.end();
+       it++) {
+    castor::db::DbAddress ad(*it, " ", 0);
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteSvcClassStatement) {
+      m_deleteSvcClassStatement = createStatement(s_deleteSvcClassStatementString);
+    }
+    m_deleteSvcClassStatement->setDouble(1, obj->id());
+    m_deleteSvcClassStatement->setDouble(2, *it);
+    m_deleteSvcClassStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraDiskPoolCnv::fillObj(castor::IAddress* address,
@@ -215,6 +290,9 @@ void castor::db::ora::OraDiskPoolCnv::fillObj(castor::IAddress* address,
   switch (type) {
   case castor::OBJ_FileSystem :
     fillObjFileSystem(obj);
+    break;
+  case castor::OBJ_SvcClass :
+    fillObjSvcClass(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -269,6 +347,53 @@ void castor::db::ora::OraDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
     obj->addFileSystems(dynamic_cast<castor::stager::FileSystem*>(item));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjSvcClass
+//------------------------------------------------------------------------------
+void castor::db::ora::OraDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectSvcClassStatement) {
+    m_selectSvcClassStatement = createStatement(s_selectSvcClassStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> svcClassesList;
+  m_selectSvcClassStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectSvcClassStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    svcClassesList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_selectSvcClassStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::SvcClass*> toBeDeleted;
+  for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
+       it != obj->svcClasses().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = svcClassesList.find((*it)->id())) == svcClassesList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      svcClassesList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::stager::SvcClass*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeSvcClasses(*it);
+    delete (*it);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = svcClassesList.begin();
+       it != svcClassesList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    obj->addSvcClasses(dynamic_cast<castor::stager::SvcClass*>(item));
   }
 }
 

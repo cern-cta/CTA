@@ -32,6 +32,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -39,6 +40,10 @@ namespace castor {
   class ObjectSet;
 
   namespace stager {
+
+    // Forward declarations
+    class TapePool;
+    class DiskPool;
 
     /**
      * class SvcClass
@@ -158,6 +163,64 @@ namespace castor {
         m_name = new_var;
       }
 
+      /**
+       * Add a TapePool* object to the m_tapePoolsVector list
+       */
+      void addTapePools(TapePool* add_object) {
+        m_tapePoolsVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a TapePool* object from m_tapePoolsVector
+       */
+      void removeTapePools(TapePool* remove_object) {
+        for (unsigned int i = 0; i < m_tapePoolsVector.size(); i++) {
+          TapePool* item = m_tapePoolsVector[i];
+          if (item == remove_object) {
+            std::vector<TapePool*>::iterator it = m_tapePoolsVector.begin() + i;
+            m_tapePoolsVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of TapePool* objects held by m_tapePoolsVector
+       * @return list of TapePool* objects held by m_tapePoolsVector
+       */
+      std::vector<TapePool*>& tapePools() {
+        return m_tapePoolsVector;
+      }
+
+      /**
+       * Add a DiskPool* object to the m_diskPoolsVector list
+       */
+      void addDiskPools(DiskPool* add_object) {
+        m_diskPoolsVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a DiskPool* object from m_diskPoolsVector
+       */
+      void removeDiskPools(DiskPool* remove_object) {
+        for (unsigned int i = 0; i < m_diskPoolsVector.size(); i++) {
+          DiskPool* item = m_diskPoolsVector[i];
+          if (item == remove_object) {
+            std::vector<DiskPool*>::iterator it = m_diskPoolsVector.begin() + i;
+            m_diskPoolsVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of DiskPool* objects held by m_diskPoolsVector
+       * @return list of DiskPool* objects held by m_diskPoolsVector
+       */
+      std::vector<DiskPool*>& diskPools() {
+        return m_diskPoolsVector;
+      }
+
     private:
 
     private:
@@ -175,6 +238,10 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<TapePool*> m_tapePoolsVector;
+
+      std::vector<DiskPool*> m_diskPoolsVector;
 
     }; // end of class SvcClass
 

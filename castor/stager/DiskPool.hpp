@@ -42,6 +42,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class SvcClass;
     class FileSystem;
 
     /**
@@ -153,6 +154,35 @@ namespace castor {
         return m_fileSystemsVector;
       }
 
+      /**
+       * Add a SvcClass* object to the m_svcClassesVector list
+       */
+      void addSvcClasses(SvcClass* add_object) {
+        m_svcClassesVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a SvcClass* object from m_svcClassesVector
+       */
+      void removeSvcClasses(SvcClass* remove_object) {
+        for (unsigned int i = 0; i < m_svcClassesVector.size(); i++) {
+          SvcClass* item = m_svcClassesVector[i];
+          if (item == remove_object) {
+            std::vector<SvcClass*>::iterator it = m_svcClassesVector.begin() + i;
+            m_svcClassesVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of SvcClass* objects held by m_svcClassesVector
+       * @return list of SvcClass* objects held by m_svcClassesVector
+       */
+      std::vector<SvcClass*>& svcClasses() {
+        return m_svcClassesVector;
+      }
+
     private:
 
     private:
@@ -164,6 +194,8 @@ namespace castor {
       u_signed64 m_id;
 
       std::vector<FileSystem*> m_fileSystemsVector;
+
+      std::vector<SvcClass*> m_svcClassesVector;
 
     }; // end of class DiskPool
 

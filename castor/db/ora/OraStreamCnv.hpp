@@ -175,6 +175,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type Tape refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTape(castor::stager::Stream* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type TapePool refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -199,6 +207,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeCopy(castor::stager::Stream* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type Tape refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTape(castor::stager::Stream* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -247,11 +263,29 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL insert statement for member tapeCopy
+        static const std::string s_insertTapeCopyStatementString;
+
+        /// SQL insert statement object for member tapeCopy
+        oracle::occi::Statement *m_insertTapeCopyStatement;
+
+        /// SQL delete statement for member tapeCopy
+        static const std::string s_deleteTapeCopyStatementString;
+
+        /// SQL delete statement object for member tapeCopy
+        oracle::occi::Statement *m_deleteTapeCopyStatement;
+
         /// SQL select statement for member tapeCopy
         static const std::string s_selectTapeCopyStatementString;
 
         /// SQL select statement object for member tapeCopy
         oracle::occi::Statement *m_selectTapeCopyStatement;
+
+        /// SQL update statement for member tape
+        static const std::string s_updateTapeStatementString;
+
+        /// SQL update statement object for member tape
+        oracle::occi::Statement *m_updateTapeStatement;
 
         /// SQL update statement for member tapePool
         static const std::string s_updateTapePoolStatementString;

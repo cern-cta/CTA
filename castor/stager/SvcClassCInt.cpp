@@ -26,8 +26,11 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -150,6 +153,64 @@ extern "C" {
   int Cstager_SvcClass_setName(castor::stager::SvcClass* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_addTapePools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_addTapePools(castor::stager::SvcClass* instance, castor::stager::TapePool* obj) {
+    instance->addTapePools(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_removeTapePools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_removeTapePools(castor::stager::SvcClass* instance, castor::stager::TapePool* obj) {
+    instance->removeTapePools(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_tapePools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_tapePools(castor::stager::SvcClass* instance, castor::stager::TapePool*** var, int* len) {
+    std::vector<castor::stager::TapePool*> result = instance->tapePools();
+    *len = result.size();
+    *var = (castor::stager::TapePool**) malloc((*len) * sizeof(castor::stager::TapePool*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_addDiskPools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_addDiskPools(castor::stager::SvcClass* instance, castor::stager::DiskPool* obj) {
+    instance->addDiskPools(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_removeDiskPools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_removeDiskPools(castor::stager::SvcClass* instance, castor::stager::DiskPool* obj) {
+    instance->removeDiskPools(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_diskPools
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_diskPools(castor::stager::SvcClass* instance, castor::stager::DiskPool*** var, int* len) {
+    std::vector<castor::stager::DiskPool*> result = instance->diskPools();
+    *len = result.size();
+    *var = (castor::stager::DiskPool**) malloc((*len) * sizeof(castor::stager::DiskPool*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

@@ -34,6 +34,7 @@ struct C_IObject_t;
 struct Cstager_Stream_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_TapePool_t;
+struct Cstager_Tape_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -118,6 +119,16 @@ int Cstager_Stream_removeTapeCopy(struct Cstager_Stream_t* instance, struct Csta
  * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopy
  */
 int Cstager_Stream_tapeCopy(struct Cstager_Stream_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
+
+/**
+ * Get the value of tape
+ */
+int Cstager_Stream_tape(struct Cstager_Stream_t* instance, struct Cstager_Tape_t** var);
+
+/**
+ * Set the value of tape
+ */
+int Cstager_Stream_setTape(struct Cstager_Stream_t* instance, struct Cstager_Tape_t* new_var);
 
 /**
  * Get the value of tapePool

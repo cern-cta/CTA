@@ -175,6 +175,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::DiskPool* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -191,6 +199,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjFileSystem(castor::stager::DiskPool* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::DiskPool* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -236,6 +252,24 @@ namespace castor {
 
         /// SQL select statement object for member fileSystems
         oracle::occi::Statement *m_selectFileSystemStatement;
+
+        /// SQL insert statement for member svcClasses
+        static const std::string s_insertSvcClassStatementString;
+
+        /// SQL insert statement object for member svcClasses
+        oracle::occi::Statement *m_insertSvcClassStatement;
+
+        /// SQL delete statement for member svcClasses
+        static const std::string s_deleteSvcClassStatementString;
+
+        /// SQL delete statement object for member svcClasses
+        oracle::occi::Statement *m_deleteSvcClassStatement;
+
+        /// SQL select statement for member svcClasses
+        static const std::string s_selectSvcClassStatementString;
+
+        /// SQL select statement object for member svcClasses
+        oracle::occi::Statement *m_selectSvcClassStatement;
 
       }; // end of class OraDiskPoolCnv
 

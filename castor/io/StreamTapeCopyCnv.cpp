@@ -131,7 +131,12 @@ void castor::io::StreamTapeCopyCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->stream(), address, alreadyDone);
+    address->stream() << obj->stream().size();
+    for (std::vector<castor::stager::Stream*>::iterator it = obj->stream().begin();
+         it != obj->stream().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     address->stream() << obj->segments().size();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -158,8 +163,12 @@ castor::IObject* castor::io::StreamTapeCopyCnv::unmarshalObject(castor::io::bini
   // Fill object with associations
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
-  IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setStream(dynamic_cast<castor::stager::Stream*>(objStream));
+  unsigned int streamNb;
+  ad.stream() >> streamNb;
+  for (unsigned int i = 0; i < streamNb; i++) {
+    IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addStream(dynamic_cast<castor::stager::Stream*>(objStream));
+  }
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {

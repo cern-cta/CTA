@@ -77,6 +77,10 @@ const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL update statement for member 
+const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
+"UPDATE rh_Tape SET  = : 1 WHERE id = :2";
+
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
 "SELECT id from rh_Segment WHERE tape = :1";
@@ -92,6 +96,7 @@ castor::db::ora::OraTapeCnv::OraTapeCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_updateStreamStatement(0),
   m_selectSegmentStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -114,6 +119,7 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_updateStreamStatement);
     deleteStatement(m_selectSegmentStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -123,6 +129,7 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_updateStreamStatement = 0;
   m_selectSegmentStatement = 0;
 }
 

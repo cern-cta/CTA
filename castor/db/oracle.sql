@@ -75,7 +75,7 @@ CREATE TABLE rh_TapePool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 
 /* SQL statements for type TapeCopy */
 DROP TABLE rh_TapeCopy;
-CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, stream INTEGER, castorFile INTEGER, status INTEGER);
+CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type CastorFile */
 DROP TABLE rh_CastorFile;
@@ -92,14 +92,20 @@ CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, rando
 /* SQL statements for type SvcClass */
 DROP TABLE rh_SvcClass;
 CREATE TABLE rh_SvcClass (policy VARCHAR(255), nbDrives NUMBER, name VARCHAR(255), id INTEGER PRIMARY KEY);
+DROP TABLE rh_SvcClass2TapePool;
+CREATE TABLE rh_SvcClass2TapePool (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type DiskPool */
 DROP TABLE rh_DiskPool;
 CREATE TABLE rh_DiskPool (name VARCHAR(255), id INTEGER PRIMARY KEY);
+DROP TABLE rh_DiskPool2SvcClass;
+CREATE TABLE rh_DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type Stream */
 DROP TABLE rh_Stream;
-CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tapePool INTEGER, status INTEGER);
+CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
+DROP TABLE rh_Stream2TapeCopy;
+CREATE TABLE rh_Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type FileClass */
 DROP TABLE rh_FileClass;
