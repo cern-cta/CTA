@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rdirfdt.c,v 1.5 2001/05/12 07:23:24 jdurand Exp $
+ * $Id: rfio_rdirfdt.c,v 1.6 2001/05/12 07:25:09 jdurand Exp $
  */
 
 /*
@@ -178,7 +178,7 @@ int DLL_DECL rfio_rdirfdt_freeentry(s)
     return(-1);
   }
   if (rdirfdt[s] != NULL) {
-    if (rdirfdt[s] != dummyrdir) free(rdirfdt[s]);
+    if (rdirfdt[s] != &dummyrdir) free(rdirfdt[s]);
     rdirfdt[s] = NULL;
   }
   if (Cmutex_unlock((void *) rdirfdt) != 0) {
@@ -186,7 +186,7 @@ int DLL_DECL rfio_rdirfdt_freeentry(s)
   }
 #else /* _WIN32 */
   if ((s >= 0) && (s < MAXRFD) && (rdirfdt[s] != NULL)) {
-    if (rdirfdt[s] != dummyrdir) free((char *)rdirfdt[s]);
+    if (rdirfdt[s] != &dummyrdir) free((char *)rdirfdt[s]);
     rdirfdt[s] = NULL;
   }
 #endif /* _WIN32 */
