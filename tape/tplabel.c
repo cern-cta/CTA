@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.10 $ $Date: 2002/04/08 09:09:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.11 $ $Date: 2002/08/08 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.10 $ $Date: 200
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+int Ctape_kill_needed;
 int reserve_done;
 char path[CA_MAXPATHLEN+1];
 
@@ -239,6 +240,7 @@ char	**argv;
 
 	/* mount the tape, check if blank tape and write the prelabel */
 
+	Ctape_kill_needed = 1;
 	for (side = 0; side < nbsides; side++) {
 		if (Ctape_label (path, vid, side, dgn, density, drive, vsn,
 		    lbltype, nbhdr, flags, 0))
@@ -253,7 +255,8 @@ int sig;
 {
 	signal (sig, SIG_IGN);
 
-	(void) Ctape_kill (path);
+	if (Ctape_kill_needed)
+		(void) Ctape_kill (path);
 	exit (USERR);
 }
 
