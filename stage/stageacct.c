@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.13 2002/04/30 13:06:21 jdurand Exp $
+ * $Id: stageacct.c,v 1.14 2002/09/06 07:05:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.13 $ $Date: 2002/04/30 13:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.14 $ $Date: 2002/09/06 07:05:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -17,7 +17,12 @@ static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.13 $ $Date: 2
 #include "stage.h"
 #include "sacct.h"
 
+#if defined(sun)
+/* On Sun old style declaration char promoted to int */
+void stageacct _PROTO(());
+#else
 void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
+#endif
 extern int wsacct _PROTO((int, char *, int));
 
 #ifdef hpux

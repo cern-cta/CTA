@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.57 2002/08/29 09:07:19 jdurand Exp $
+ * $Id: stage_api.h,v 1.58 2002/09/06 07:05:20 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -37,9 +37,10 @@ typedef struct stage_hsm stage_hsm_t;
 /* -------------------------------------------------------- */
 /* Generic STAGE_IN/STAGE_OUT/STAGE_WRT/STAGE_CAT interface */
 /* -------------------------------------------------------- */
-#ifdef hpux
+#if (defined(hpux) || defined(sun))
 /* Why does hpux's cc complain on the following proyotype when */
 /* compiled with -Ae ? */
+/* On Sun old style declaration char promoted to int */
 EXTERN_C int DLL_DECL stage_iowc _PROTO(());
 #else /* hpux */
 EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type */
@@ -112,9 +113,10 @@ EXTERN_C int  DLL_DECL  stage_updc_error _PROTO((char *, int, stage_hsm_t *));
 /* ---------------------------- */
 /* Generic STAGE_QRY interface  */
 /* ---------------------------- */
-#ifdef hpux
+#if (defined(hpux) || defined(sun))
 /* Why does hpux's cc complain on the following proyotype when */
 /* compiled with -Ae ? */
+/* On Sun old style declaration char promoted to int */
 EXTERN_C int DLL_DECL stage_qry _PROTO(());
 #else /* hpux */
 EXTERN_C int DLL_DECL stage_qry _PROTO((char,                      /* t_or_d */
@@ -167,9 +169,10 @@ EXTERN_C int DLL_DECL stageqry_Hsm _PROTO((u_signed64,                /* flags *
 /* ---------------------------- */
 /* Generic STAGE_CLR interface  */
 /* ---------------------------- */
-#ifdef hpux
+#if (defined(hpux) || defined(sun))
 /* Why does hpux's cc complain on the following proyotype when */
 /* compiled with -Ae ? */
+/* On Sun old style declaration char promoted to int */
 EXTERN_C int DLL_DECL stage_clr _PROTO(());
 #else /* hpux */
 EXTERN_C int DLL_DECL stage_clr _PROTO((char,                      /* t_or_d */
