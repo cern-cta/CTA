@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.4 $ $Date: 2000/02/16 10:04:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.5 $ $Date: 2000/02/18 15:26:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2000/02/16 10:04:43 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2000/02/18 15:26:34 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -19,7 +19,8 @@ vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .BI "char *" media_letter ,
 .BI "char *" manufacturer ,
 .BI "char *" sn ,
-.BI "char *" poolname )
+.BI "char *" poolname ,
+.BI "int " status )
 .SH DESCRIPTION
 .B vmgr_modifytape
 modifies an existing tape in the CASTOR Volume Manager.
@@ -65,15 +66,35 @@ or
 Default is
 .BR al .
 .TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
 .I manufacturer
 is an alphanumeric field CA_MAXMANUFLEN bytes long.
 .TP
 .I sn
 The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I status
+can be set to a combination of
+.BR TAPE_FULL ,
+.BR DISABLED ,
+.BR EXPORTED
+and
+.BR TAPE_RDONLY .
 .LP
 Only
 .I vid
-is mandatory. When a pointer to a field is NULL, the field is not modified.
+is mandatory. When a pointer to a field is NULL or a numeric value is negative,
+the field is not modified.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
