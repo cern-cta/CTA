@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2004/08/19 08:50:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.45 $ $Release$ $Date: 2004/08/20 11:16:32 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2004/08/19 08:50:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.45 $ $Release$ $Date: 2004/08/20 11:16:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2198,17 +2198,22 @@ int rtcpcld_updateVIDFileStatus(
                                        filereq->castorSegAttr.segmCksum);
         }
         if ( toStatus == SEGMENT_FAILED ) {
-          if ( (filereq->cprc != 0) ||
-               (filereq->err.errorcode > 0) ||
-               (filereq->err.severity != RTCP_OK) ||
-               (*filereq->err.errmsgtxt != '\0') ) {
-            Cstager_Segment_setErrorCode(segmItem,
-                                         filereq->err.errorcode);
-            Cstager_Segment_setErrMsgTxt(segmItem,
-                                         filereq->err.errmsgtxt);
-            Cstager_Segment_setSeverity(segmItem,
-                                        filereq->err.severity);
-          }
+          if (filereq->err.errorcode <= 0)
+            filereq->err.errorcode = SEINTERNAL;
+          Cstager_Segment_setErrorCode(segmItem,
+                                       filereq->err.errorcode);
+
+          if (filereq->err.severity == RTCP_OK)
+            filereq->err.severity = RTCP_FAILED|RTCP_UNERR;
+          Cstager_Segment_setSeverity(segmItem,
+                                      filereq->err.severity);
+
+          if (*filereq->err.errmsgtxt == '\0')
+            strncpy(filereq->err.errmsgtxt,
+                    sstrerror(fl->filereq.err.errorcode),
+                    sizeof(fl->filereq.err.errmsgtxt)-1);
+          Cstager_Segment_setErrMsgTxt(segmItem,
+                                       filereq->err.errmsgtxt);
         }
       }
       updated = 1;
@@ -2481,23 +2486,22 @@ int rtcpcld_setFileStatus(
                                    );
     }
     if ( newStatus == SEGMENT_FAILED ) {
-      if ( (filereq->cprc != 0) ||
-           (filereq->err.errorcode > 0) ||
-           (filereq->err.severity != RTCP_OK) ||
-           (*filereq->err.errmsgtxt != '\0') ) {
-        Cstager_Segment_setErrorCode(
-                                     segmItem,
-                                     filereq->err.errorcode
-                                     );
-        Cstager_Segment_setErrMsgTxt(
-                                     segmItem,
-                                     filereq->err.errmsgtxt
-                                     );
-        Cstager_Segment_setSeverity(
-                                    segmItem,
-                                    filereq->err.severity
-                                    );
-      }
+      if (filereq->err.errorcode <= 0)
+        filereq->err.errorcode = SEINTERNAL;
+      Cstager_Segment_setErrorCode(segmItem,
+                                   filereq->err.errorcode);
+      
+      if (filereq->err.severity == RTCP_OK)
+        filereq->err.severity = RTCP_FAILED|RTCP_UNERR;
+      Cstager_Segment_setSeverity(segmItem,
+                                  filereq->err.severity);
+      
+      if (*filereq->err.errmsgtxt == '\0')
+        strncpy(filereq->err.errmsgtxt,
+                sstrerror(filereq->err.errorcode),
+                sizeof(filereq->err.errmsgtxt)-1);
+      Cstager_Segment_setErrMsgTxt(segmItem,
+                                   filereq->err.errmsgtxt);
     }
 
     iObj = Cstager_Segment_getIObject(segmItem);
