@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.45 $ $Date: 2000/03/24 15:37:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.46 $ $Date: 2000/03/24 18:15:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1024,6 +1024,7 @@ void rtcpd_SetProcError(int code) {
     int set_code, rc, i;
 
     set_code = code;
+    rtcp_log(LOG_DEBUG,"rtcpd_SetProcError(%d) called\n",set_code);
     rc = rtcpd_ProcError(&set_code);
     if ( (rc != code) && 
          ((rc & RTCP_FAILED) == 0) && 
@@ -1051,6 +1052,8 @@ int rtcpd_WaitProcStatus(int what) {
             sstrerror(serrno));
         return(-1);
     } 
+    rtcp_log(LOG_DEBUG,"rtcpd_WaitProcStatus() current: %d, waiting for %d\n",
+             proc_cntl.ProcError,what);
     while ( (proc_cntl.ProcError & what) == 0 ) {
         rc = Cthread_cond_wait_ext(proc_cntl.ProcError_lock);
         if ( rc == -1 ) {
@@ -1059,6 +1062,8 @@ int rtcpd_WaitProcStatus(int what) {
             (void) Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
             return(-1);
         }
+        rtcp_log(LOG_DEBUG,"rtcpd_WaitProcStatus() current: %d, waiting for %d\n",
+                 proc_cntl.ProcError,what);
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
     if ( rc == -1 ) {

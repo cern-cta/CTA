@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.31 $ $Date: 2000/03/24 15:08:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.32 $ $Date: 2000/03/24 18:15:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -137,8 +137,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
              (filereq->proc_status == RTCP_WAITING && 
               (filereq->concat & NOCONCAT_TO_EOD) != 0 && status == ETFSQ) ) { 
 
-            if ( retry == 0 && (filereq->concat & CONCAT_TO_EOD) == 0 && 
-                 (rtcpd_LockForTpPos(1) == -1) ) {
+            if ( retry == 0 && (rtcpd_LockForTpPos(1) == -1) ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): %s\n",
                          sstrerror(serrno));
             }
@@ -181,6 +180,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 }
                 continue;
             } 
+            if ( (filereq->concat & CONCAT_TO_EOD) != 0 ||
+                 ((file->next->filereq.concat & CONCAT) != 0 &&
+                   file->next != tape->file) ) {
+                (void)rtcpd_LockForTpPos(0);
+            }
         } 
 
         if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
