@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STGDAEMON server daemon
 #
-# $Id: stgdaemon.scripts,v 1.4 2004/02/17 16:42:28 jdurand Exp $
+# $Id: stgdaemon.scripts,v 1.5 2004/03/09 19:11:59 jdurand Exp $
 #
-# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.4 $ $Date: 2004/02/17 16:42:28 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.5 $ $Date: 2004/03/09 19:11:59 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -129,6 +129,8 @@ case "$1" in
     export STAGE_CONNTIMEOUT
     STAGE_TIMEOUT=20
     export STAGE_TIMEOUT
+    STAGE_HOST=`hostname`
+    export STAGE_HOST
 	if [ -f $PIDFILE ]; then
 		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
         if [ -x $STAGESHUTDOWN ]; then
