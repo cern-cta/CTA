@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.88 $ $Date: 2003/09/18 10:52:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.89 $ $Date: 2003/10/01 10:15:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1689,6 +1689,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDR);
 
     cmd = rtcp_cmds[tapereq.mode];
+    sleep(15);
             
     /*
      * On UNIX: set client UID/GID
@@ -1742,6 +1743,16 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         return(-1);
     }
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDD);
+
+    /*
+     * Get default blocksize if not already set by client
+     * Error is not fatal
+     */
+    rc = rtcpd_drvinfo(tape);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
+                sstrerror(serrno));
+    }
 
     /*
      * Start a thread to listen to client socket (to receive ABORT).
