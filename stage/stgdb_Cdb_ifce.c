@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.6 1999/12/14 14:51:53 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.7 1999/12/15 08:18:55 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:51:53 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.7 $ $Date: 1999/12/15 08:18:55 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -811,17 +811,16 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
   insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_link",NULL,(void *) &link,NULL);
   
   if (insert_status != 0) {
-    stglogit("stgdb_ins_stgpath",
-             "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
-             __FILE__,__LINE__,(int) stpp->reqid,file,line);
-    return(-1);
-  } else {
     if (serrno == EDB_D_UNIQUE) {
       return(stgdb_upd_stgpath(dbfd,stpp));
     } else {
+      stglogit("stgdb_ins_stgpath",
+               "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
+               __FILE__,__LINE__,(int) stpp->reqid,file,line);
       return(-1);
     }
   }
+  return(0);
 #else
   return(0);
 #endif
