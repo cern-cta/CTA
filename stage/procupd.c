@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.78 2001/06/25 09:00:44 jdurand Exp $
+ * $Id: procupd.c,v 1.79 2001/06/25 18:30:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.78 $ $Date: 2001/06/25 09:00:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.79 $ $Date: 2001/06/25 18:30:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1148,7 +1148,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* Since the logic is the same : Deleted current migration records and save */
 						/* meaningful status in the other one, STAGED or STAGED|STAGED_RDONLY */
 						/* We decide to give precedence to the other migrated entry */
-						if ((save_stcp_rdonly.reqid > 0) && (save_stcp_other_migrated.reqid > 0))
+						if (save_stcp_other_migrated.reqid > 0)
 							save_stcp_rdonly = save_stcp_other_migrated;
 						if ((save_stcp_rdonly.reqid > 0) && (save_stcp_other_migration.reqid == 0)) {
 							/* Because of the delreq()s upper we must scan again the catalog */
@@ -1182,7 +1182,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 							}
 							if ((stcp_found_rdonly_or_migrated != NULL) || (stcp_found_staged != NULL)) {
 								if (stcp_found_rdonly_or_migrated != NULL) {
-									if (stcp_found_rdonly_or_migrated->reqid == save_stcp_rdonly.reqid)
+									if ((stcp_found_rdonly_or_migrated->status & STAGE_RDONLY) == STAGE_RDONLY)
 										stcp_found_rdonly_or_migrated->status = STAGEIN|STAGED;
 									if (stcp_found_rdonly_or_migrated->t_or_d == 'h')
 										stcp_found_rdonly_or_migrated->u1.h.tppool[0] = '\0'; /* We reset the poolname */
@@ -1217,6 +1217,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
 					stcp_found = stcp_other_migration_found = stcp_other_migrated_found = NULL;
 					for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+						if ((stcp_found != NULL) &&
+							(stcp_other_migrated_found != NULL) &&
+							(stcp_other_migration_found != NULL)
+							) break;
 						if (stcp_search->reqid == 0) break;
 						if ((save_stcp->poolname[0] != '\0') &&
 							(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
@@ -1227,6 +1231,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						if (stcp_found == NULL) {
 							if (stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
 								stcp_found = stcp_search;
+								continue;
 							}
 						}
 						if (stcp_other_migrated_found == NULL) {
@@ -1234,33 +1239,30 @@ procupdreq(req_type, magic, req_data, clienthost)
 								(stcp_search->status == (STAGEPUT|STAGED))
 								) {
 								stcp_other_migrated_found = stcp_search;
+								continue;
 							}
 						}
 						if (stcp_other_migration_found == NULL) {
 							if (! ISCASTORBEINGMIG(stcp_search)) continue;
 							if ((strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) != 0)) {
 								stcp_other_migration_found = stcp_search;
+								continue;
 							}
 						}
-						if ((stcp_found != NULL) &&
-							(stcp_other_migrated_found != NULL) &&
-							(stcp_other_migration_found != NULL)
-							) break;
 					}
-					if ((stcp_found != NULL) &&
-						(stcp_other_migrated_found != NULL)
-						) {
+					if ((stcp_found != NULL) && (stcp_other_migrated_found != NULL)) {
 						/* We give precedence to the other found migrated entry */
 						stcp_found = stcp_other_migrated_found;
                     }
 					if ((stcp_found != NULL) && (stcp_other_migration_found == NULL)) {
 						/* Here we are : the file has been migrated but has been accessed before the */
-						/* end of the migration in read-only mode */
+						/* end of the migration in read-only mode, or yet migrated (STAGEOUT|STAGED) */
+						/* There is no other migration for this file running */
 
-						/* We change the status of stcp to be a classic STAGEIN|STAGED one, adding */
-						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
-						/* nbaccesses as well as created a new entry with one for nbaccesses */
 						if ((stcp_found->status & STAGE_RDONLY) == STAGE_RDONLY)
+							/* We change the status of stcp to be a classic STAGEIN|STAGED one, adding */
+							/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
+							/* nbaccesses as well as created a new entry with one for nbaccesses */
 							stcp_found->status = (STAGEIN|STAGED);
 						if (stcp_found->t_or_d == 'h')
 							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname if any */
@@ -1276,9 +1278,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 						delreq(stcp,0);
 					} else if (stcp_found != NULL) {
 						/* The file has been migrated but has been accessed before the */
-						/* end of the migration in read-only mode and there is another migration running */
+						/* end of the migration in read-only mode, or yet migrated, and */
+						/* there is another migration running */
 
-                        /* We remove current migration stuff */
+						/* We remove current migration stuff */
 						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
 						/* nbaccesses as well as created a new entry with one for nbaccesses */
 						if (stcp_found->t_or_d == 'h')
@@ -1293,8 +1296,27 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* Be aware that this can shift the whole catalog in memory - that's why */
 						/* it has to be done at the very end of current processing */
 						delreq(stcp,0);
+					} else if (stcp_other_migrated_found != NULL) {
+						/* The file has been migrated and there is another instance of it yet marked */
+						/* as migrated - we know per construction that there is no other instance of */
+						/* running migration, or accessed in read-only mode, of that file */
+
+						/* We remove current migration stuff */
+						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
+						/* nbaccesses as well as created a new entry with one for nbaccesses */
+						if (stcp_other_migrated_found->t_or_d == 'h')
+							stcp_other_migrated_found->u1.h.tppool[0] = '\0'; /* We reset the poolname if any */
+						stcp_other_migrated_found->nbaccesses += (stcp->nbaccesses - 1);
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp_other_migrated_found) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+						/* And we delete the now virtual STAGEIN|STAGED|STAGE_RDONLY entry */
+						/* Be aware that this can shift the whole catalog in memory - that's why */
+						/* it has to be done at the very end of current processing */
+						delreq(stcp,0);
 					} else {
-						/* No other entry in status STAGEIN|STAGED|STAGE_RDONLY */
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1437,5 +1459,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Monday 25 June, 2001 at 10:32:03 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 25 June, 2001 at 20:29:35 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
