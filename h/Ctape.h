@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.42 2003/09/12 14:02:54 baud Exp $
+ * $Id: Ctape.h,v 1.43 2004/01/23 10:08:05 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.42 $ $Date: 2003/09/12 14:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.43 $ $Date: 2004/01/23 10:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -229,6 +229,7 @@
 #define	TP062	"TP062 - tape %s to be prelabelled %s%s"
 #define	TP063	"TP063 - invalid user %d\n"
 #define	TP064	"TP064 - invalid method for this label type\n"
+#define TP065	"TP065 - tape %s(%s) on drive %s@%s for %s %d has bad MIR | reply to acknowledge or cancel\n"
 
 			/* tape daemon internal tables */
 
