@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/01/07 07:44:06 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/03/01 14:58:55 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/01/07 07:44:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/03/01 14:58:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -122,12 +122,12 @@ int rtcpcld_initNsInterface()
 {
   char *p;
 
-  if ( ((p = getenv("STAGE_USE_CHECKSUM")) != NULL) ||
-       ((p = getconfent("STG","USE_CHECKSUM",0)) != NULL) ) {
+  if ( ((p = getenv("RTCPCLD_USE_CHECKSUM")) != NULL) ||
+       ((p = getconfent("RTCPCLD","USE_CHECKSUM",0)) != NULL) ) {
     if ( strcmp(p,"NO") == 0 ) use_checksum = 0;
   }
-  if ( ((p = getenv("STAGE_CHANGE_CHECKSUM_NAME")) != NULL) ||
-       ((p = getconfent("STG","CHANGE_CHECKSUM_NAME",0)) != NULL) ) {
+  if ( ((p = getenv("RTCPCLD_CHANGE_CHECKSUM_NAME")) != NULL) ||
+       ((p = getconfent("RTCPCLD","CHANGE_CHECKSUM_NAME",0)) != NULL) ) {
     if ( strcmp(p,"YES") == 0 ) change_checksum_name = 1;
   }
 
