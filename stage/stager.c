@@ -853,43 +853,13 @@ int stagewrt_castor_hsm_file() {
           /* Yet transfered */
           continue;
         }
-        if (estimated_free_space >= hsm_totalsize[i]) {
-          if (istart < 0) {
-            istart = i;
-          }
-          if (stcp_start == NULL) {
-            stcp_start = stcp;
-          }
-          estimated_free_space -= hsm_totalsize[i];
-        } else {
-          if (iend < 0 && istart >= 0) {
-            /* We reach this part of the code only if there are at least two elements, so i >= 1 */
-            iend = i - 1;
-            stcp_end = stcp;
-            break;
-          }
-        }
+        istart = i;
+        iend = nbcat_ent - 1;
+        stcp_start = stcp;
+        stcp_end = stce;
+        break;
       }
       
-      if (istart >= 0 && iend < 0) {
-        /* Then iend is the last entry */
-        iend = nbcat_ent - 1;
-        stcp_end = stce;
-      }
-      if (istart < 0 || iend < 0) {
-        i = 0;
-        /* Impossible to satisfy entirely this request for the first file - it will probably be fragmented */
-        for (stcp = stcs; stcp < stce; stcp++, i++) {
-          if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
-            /* Yet transfered */
-            continue;
-          }
-          stcp_start = stcp_end = stcp;
-          stcp_end++;
-          istart = iend = i;
-          break;
-        }
-      }
       if (istart < 0 || iend < 0) {
         /* This cannot be */
         serrno = SEINTERNAL;
