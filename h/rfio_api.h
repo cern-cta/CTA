@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.24 $ $Date: 2000/12/21 11:18:33 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.25 $ $Date: 2000/12/21 11:44:55 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -95,6 +95,8 @@ EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_symlink _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_unlink _PROTO((char *));
 EXTERN_C int DLL_DECL rfiosetopt _PROTO((int, int *, int));
+EXTERN_C int DLL_DECL rfio_chown _PROTO((char *, int, int));
+EXTERN_C int DLL_DECL rfio_readlink _PROTO((char *, char *, int));
 
 /*
  * RFIO library routines with different internal and external prototypes
