@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:00:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.4 $ $Date: 2000/08/15 15:09:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,7 +37,7 @@ vmgrlogit(va_alist) va_dcl
 	func = va_arg (args, char *);
 	msg = va_arg (args, char *);
 	(void) time (&current_time);		/* Get current time */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
 	(void) localtime_r (&current_time, &tmstruc);
 	tm = &tmstruc;
 #else
