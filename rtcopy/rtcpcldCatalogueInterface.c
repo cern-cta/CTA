@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.67 $ $Release$ $Date: 2004/11/02 11:24:59 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.68 $ $Release$ $Date: 2004/11/03 11:07:12 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.67 $ $Release$ $Date: 2004/11/02 11:24:59 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.68 $ $Release$ $Date: 2004/11/03 11:07:12 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2287,6 +2287,118 @@ int rtcpcld_returnStream(
   }
   return(0);
 }
+
+/**
+ * This method is called from methods used by both the migrator
+ * and the rtcpclientd processes after finishing with a tape (either
+ * FULL or some error). Reset all TapeCopy that are in TAPECOPY_SELECTED
+ * state (returned by bestTapeCopyForStream()) but not yet processed,
+ * allowing them to be picked up by another stream.
+ */
+
+int rtcpcld_restoreSelectedTapeCopies(
+                                      tape
+                                      )
+     tape_list_t *tape;
+{
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  struct Cstager_Tape_t *tp = NULL;
+  struct Cstager_Segment_t *segment;
+  struct Cstager_TapeCopy_t *tapeCopy;
+  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  file_list_t *file;
+  int rc, save_serrno, doCommit = 0;
+
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+
+  if ( tape->dbRef != NULL ) {
+    tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+  }
+
+  if ( tp == NULL ) {
+    /*
+     * Since the segments are normally only in memory there is
+     * nothing we can do if the tape object is not available in
+     * memory.
+     */
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LEVEL(RTCPCLD_MSG_INTERNAL),
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tape->tapereq.vid,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Error getting tape from DB",
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    return(-1);
+  }
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  CLIST_ITERATE_BEGIN(tape->file,file) 
+    {
+      if ( (file->filereq.proc_status != RTCP_FINISHED) &&
+           ((file->filereq.cprc == 0) ||
+            (file->filereq.err.errorcode == ENOSPC)) ) {
+        segment = NULL;
+        if ( file->dbRef != NULL ) {
+          segment = (struct Cstager_Segment_t *)file->dbRef->row;
+          if ( segment != NULL ) {
+            Cstager_Segment_copy(segment,&tapeCopy);
+            if ( tapeCopy != NULL ) {
+              Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
+              iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+              rc = C_Services_updateRep(
+                                        *svcs,
+                                        iAddr,
+                                        iObj,
+                                        0
+                                        );
+              if ( rc == -1 ) {
+                LOG_DBCALL_ERR(
+                               "C_Services_updateRep()",
+                               C_Services_errorMsg(*svcs)
+                               );
+              } else {
+                doCommit = 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  CLIST_ITERATE_END(tape->file,file);
+  if ( doCommit == 1 ) {
+    rc = C_Services_commit(
+                           *svcs,
+                           iAddr
+                           );
+    if ( rc == -1 ) {
+      LOG_DBCALL_ERR(
+                     "C_Services_commit()",
+                     C_Services_errorMsg(*svcs)
+                     );
+      return(-1);
+    }
+  }
+  return(0);
+}
+  
 
 /**
  * This method is called from methods used by the VidWorker childs
