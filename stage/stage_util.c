@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.9 2001/11/30 12:09:33 jdurand Exp $
+ * $Id: stage_util.c,v 1.10 2001/12/05 10:14:19 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -80,7 +80,8 @@ extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
 
 char *forced_endptr_error = "Z";
-static void stage_util_time _PROTO((time_t, char *));
+void DLL_DECL stage_util_time _PROTO((time_t, char *));
+void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
 
 void DLL_DECL stage_sleep(nsec)
      int nsec;
@@ -94,8 +95,6 @@ void DLL_DECL stage_sleep(nsec)
 }
 
 /* This function will return the preferred magic number used by the client */
-/* The default is STGMAGIC3, while STGMAGIC2 can be forced to dial with old */
-/* stager daemons */
 
 #define STGMAGIC_DEFAULT STGMAGIC2
 #define STGMAGIC_DEFAULT_STRING "STGMAGIC2"
@@ -344,7 +343,7 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 	return(rc);
 }
 
-static void stage_util_time(this,timestr)
+void DLL_DECL stage_util_time(this,timestr)
      time_t this;
      char *timestr;
 {
