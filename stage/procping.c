@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.9 2002/04/11 10:08:53 jdurand Exp $
+ * $Id: procping.c,v 1.10 2002/04/30 12:38:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.9 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.10 $ $Date: 2002/04/30 12:38:43 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -36,7 +36,14 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.9 $ $Date: 200
 
 void procpingreq _PROTO((int, int, char *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
+extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
+extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
+extern int sendrep _PROTO(());
+#endif
 
 extern char func[16];
 extern int rpfd;
@@ -63,8 +70,8 @@ void procpingreq(req_type, magic, req_data, clienthost)
 		{"verbose",            NO_ARGUMENT,        NULL,      'v'},
 		{NULL,                 0,                  NULL,        0}
 	};
-	u_signed64 flags;
-	int nargs;
+	u_signed64 flags = 0;
+	int nargs = 0;
 	int errflg = 0;
 	char **argv = NULL;
 #if defined(HPSSCLIENT)
