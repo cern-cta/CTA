@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.34 2002/05/07 07:03:15 jdurand Exp $
+ * $Id: stgconvert.c,v 1.35 2002/05/09 16:25:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.34 $ $Date: 2002/05/07 07:03:15 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.35 $ $Date: 2002/05/09 16:25:04 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -448,7 +448,7 @@ int main(argc,argv)
 			goto stgconvert_return;
 		}
 	} else {
-		ERROR_INIT(main);
+		Cdb_error_push("### error buffering initialization",0,__FILE__,__LINE__);
 		if (Cdb_lock_init() != 0) {
 			printf("### Cdb_lock_init error (%s)\n",sstrerror(serrno));
 			rc = EXIT_FAILURE;
