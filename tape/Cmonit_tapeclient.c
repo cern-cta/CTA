@@ -27,7 +27,6 @@
 #include "Cmonit_api.h"
 #include "serrno.h"
 #include "Cnetdb.h"
-#include "common.h"
 #include "Ctape.h"
 
 
