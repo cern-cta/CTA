@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.6 2000/05/02 06:33:23 baud Exp $
+ * $Id: opendir.c,v 1.7 2000/05/03 13:42:36 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.6 $ $Date: 2000/05/02 06:33:23 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:36 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -151,8 +151,20 @@ char  	*vmstr ;
    /*
     * The directory is local.
     */
+   host = NULL;
    if ( ! rfio_parse(dirpath,&host,&dirname) ) {
-      dp = (RDIR *)opendir(dirname);
+       /* if not a remote file, must be local or HSM  */
+       TRACE(2,"rfio","rfio_opendir(%s) rfio_parse returns host=%s",
+             dirpath,(host != NULL ? host : "(nil)"));
+       if ( host != NULL ) {
+           /*
+            * HSM file
+            */
+           rfio_errno = 0;
+           dp = (RDIR *)rfio_HsmIf_opendir(dirname);
+      } else {
+           dp = (RDIR *)opendir(dirname);
+      }
       END_TRACE() ; 
       return(dp);
    }

@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.7 2000/05/02 19:38:34 baud Exp $
+ * $Id: open.c,v 1.8 2000/05/03 13:42:36 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.7 $ $Date: 2000/05/02 19:38:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.8 $ $Date: 2000/05/03 13:42:36 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -263,6 +263,17 @@ char  	*vmstr ;
 	 * The file is local.
 	 */
    if ( ! rfio_parse(filepath,&host,&filename) ) {
+      /* if not a remote file, must be local or HSM  */
+      if ( host != NULL ) {
+          /*
+           * HSM file
+           */
+          TRACE(1,"rfio","rfio_open: %s is an HSM path",
+                filename);
+          END_TRACE();
+          rfio_errno = 0;
+          return(rfio_HsmIf_open(filename,flags,mode));
+      }
       status= open(filename, flags, mode) ;
       rfio_errno = 0;
       END_TRACE() ; 

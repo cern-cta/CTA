@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.4 1999/12/09 13:46:39 jdurand Exp $
+ * $Id: closedir.c,v 1.5 2000/05/03 13:42:34 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:39 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.5 $ $Date: 2000/05/03 13:42:34 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
@@ -45,8 +45,11 @@ RDIR *dirp;
     * The directory is local
     */
    if ( s < 0 || s >= MAXRFD || rdirfdt[s] == NULL ) {
-      TRACE(2, "rfio", "rfio_closedir: using local closedir(0x%x)",dirp) ; 
-      status= closedir((DIR *)dirp) ; 
+      TRACE(2, "rfio", "rfio_closedir: check if HSM directory");
+      if ( (status = rfio_HsmIf_closedir((DIR *)dirp)) != 0 ) {
+          TRACE(2, "rfio", "rfio_closedir: using local closedir(0x%x)",dirp) ; 
+          status= closedir((DIR *)dirp) ; 
+      }
       END_TRACE() ; 
       return status ;
    }

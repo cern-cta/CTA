@@ -1,5 +1,5 @@
 /*
- * $Id: chmod.c,v 1.5 1999/12/10 19:43:01 baran Exp $
+ * $Id: chmod.c,v 1.6 2000/05/03 13:42:33 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:43:01 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:33 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */
@@ -35,7 +35,17 @@ int		mode;              /* remote directory mode             */
 	TRACE(1, "rfio", "rfio_chmod(%s, %o)", dirpath, mode);
 
 	if (!rfio_parseln(dirpath,&host,&filename,NORDLINKS)) {
-  /* if not a remote file, must be local  */
+                /* if not a remote file, must be local or HSM  */
+                if ( host != NULL ) {
+                    /*
+                     * HSM file
+                     */
+                    TRACE(1,"rfio","rfio_chmod: %s is an HSM path",
+                          filename);
+                    END_TRACE();
+                    rfio_errno = 0;
+                    return(rfio_HsmIf_chmod(filename,mode));
+                }
 		TRACE(1, "rfio", "rfio_chmod: using local chmod(%s, %o)",
 			filename, mode);
 

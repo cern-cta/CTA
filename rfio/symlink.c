@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.6 1999/12/17 19:09:38 jdurand Exp $
+ * $Id: symlink.c,v 1.7 2000/05/03 13:42:38 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 19:09:38 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:38 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -53,6 +53,22 @@ char *n2 ;
    INIT_TRACE("RFIO_TRACE");
    TRACE( 1, "rfio", " rfio_%slink (%s,%s)",(un ? "un":"sym"),n1,n2 );
    if ( ! rfio_parseln(n2,&host,&filename,NORDLINKS) ) {
+       /* if not a remote file, must be local or HSM  */
+       if ( host != NULL ) {
+           /*
+            * HSM file.
+            */
+           TRACE(1,"rfio","rfio_%slink: %s is an HSM path",(un ? "un":"sym"),
+                 filename);
+           END_TRACE();
+           rfio_errno = 0;
+           if ( un ) status = rfio_HsmIf_unlink(filename);
+           else {
+               serrno = SEOPNOTSUP;
+               status = -1;
+           }
+           return(status);
+      }
       TRACE(2,"rfio","rfio_%slink local %s %s %s",(un ? "un":"sym"),filename,
 	    (un? "":"-> "),
 	    (un? "":n1) ) ;

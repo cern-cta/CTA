@@ -1,5 +1,5 @@
 /*
- * $Id: stat.c,v 1.3 1999/12/09 13:47:18 jdurand Exp $
+ * $Id: stat.c,v 1.4 2000/05/03 13:42:38 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:18 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.4 $ $Date: 2000/05/03 13:42:38 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */
@@ -30,9 +30,19 @@ struct stat *statbuf;           /* status buffer (subset of local used) */
 	TRACE(1, "rfio", "rfio_stat(%s, %x)", filepath, statbuf);
 
 	if (!rfio_parseln(filepath,&host,&filename,RDLINKS)) {
-		/* if not a remote file, must be local  */
+                /* if not a remote file, must be local or HSM  */
+                if ( host != NULL ) {
+                    /*
+                     * HSM file
+                     */
+                    TRACE(1,"rfio","rfio_stat: %s is an HSM path",
+                          filename);
+                    END_TRACE();
+                    rfio_errno = 0;
+                    return(rfio_HsmIf_stat(filename,statbuf));
+                }
 #if LOCAL_IO
-		TRACE(1, "rfio", "rfio_fopen: using local stat(%s, %x)",
+		TRACE(1, "rfio", "rfio_stat: using local stat(%s, %x)",
 			filename, statbuf);
 
 		END_TRACE();

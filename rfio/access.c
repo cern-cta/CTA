@@ -1,5 +1,5 @@
 /*
- * $Id: access.c,v 1.5 1999/12/10 19:42:21 baran Exp $
+ * $Id: access.c,v 1.6 2000/05/03 13:42:33 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:42:21 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:33 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
@@ -34,7 +34,16 @@ int 	mode ;			/* Access mode 				*/
 	TRACE(1, "rfio", "rfio_access(%s, %d)", filepath, mode);
 
 	if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
-		/* if not a remote file, must be local  */
+                /* if not a remote file, must be local or HSM  */
+                if ( host != NULL ) {
+                    /*
+                     * HSM file
+                     */
+                    TRACE(1,"rfio","rfio_access: %s is an HSM path",filename);
+                    END_TRACE();
+                    rfio_errno = 0;
+                    return(rfio_HsmIf_access(filename,mode));
+                }
 		TRACE(1, "rfio", "rfio_access: using local access(%s, %d)",
 			filename, mode);
 		END_TRACE();

@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.6 1999/12/14 14:38:00 jdurand Exp $
+ * $Id: mstat.c,v 1.7 2000/05/03 13:42:35 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:38:00 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -54,6 +54,15 @@ struct stat *statb;
    Cglobals_get(&rfindex_key, (void**)&rfindex, sizeof(int));
    TRACE(2, "rfio", "rfio_mstat: rfindex=%d", *rfindex);
    if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
+      /* if not a remote file, must be local or HSM  */
+      if ( host != NULL ) {
+          /*
+           * HSM file
+           */
+          rfio_errno = 0;
+          return(rfio_HsmIf_stat(filename,statb));
+      }
+
       /* The file is local */
       rc = stat(filename,statb) ;
       rfio_errno = 0;

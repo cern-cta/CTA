@@ -1,5 +1,5 @@
 /*
- * $Id: readdir.c,v 1.5 1999/12/10 19:47:12 baran Exp $
+ * $Id: readdir.c,v 1.6 2000/05/03 13:42:37 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:47:12 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:37 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -58,8 +58,11 @@ RDIR *dirp;
     * The directory is local.
     */
    if ( *s<0 || *s >= MAXRFD || rdirfdt[*s] == NULL) {
-      TRACE(2,"rfio","rfio_readdir: using local readdir(%x)", dirp);
-      de = readdir((DIR *)dirp);
+      TRACE(2,"rfio","rfio_readdir: check if HSM directory");
+      if ( (de = rfio_HsmIf_readdir((DIR *)dirp)) == NULL ) {
+          TRACE(2,"rfio","rfio_readdir: using local readdir(%x)", dirp);
+          de = readdir((DIR *)dirp);
+      }
       END_TRACE();
       return(de);
    }

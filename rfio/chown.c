@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.5 1999/12/10 19:43:08 baran Exp $
+ * $Id: chown.c,v 1.6 2000/05/03 13:42:34 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:43:08 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:34 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -36,7 +36,16 @@ int 		group ;		   /* Owner's gid */
 	TRACE(1, "rfio", "rfio_chown(%s, %d, %d)", file,owner,group);
 
 	if (!rfio_parseln(file,&host,&filename,NORDLINKS)) {
-  /* if not a remote file, must be local  */
+                if ( host != NULL ) {
+                    /*
+                     * HSM file
+                     */
+                    TRACE(1,"rfio","rfio_chown: %s is an HSM path",
+                          filename);
+                    END_TRACE();
+                    rfio_errno = 0;
+                    return(rfio_HsmIf_chown(filename,owner,group));
+                }
 		TRACE(1, "rfio", "rfio_chown: using local chown(%s, %d, %d)",
 			filename, owner, group);
 
