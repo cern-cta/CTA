@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.14 $ $Date: 2000/04/18 15:20:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.15 $ $Date: 2000/04/30 07:54:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -52,6 +52,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[25];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_delete_denmap_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
@@ -71,6 +72,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[24];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_delete_model_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
@@ -90,6 +92,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[23];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_delete_pool_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
@@ -109,6 +112,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[23];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_delete_tape_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
@@ -141,6 +145,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[22];
 	char rowid_value[19];
+	struct sqlca sqlca;
 	EXEC SQL DECLARE denmap_cursor CURSOR FOR
 		SELECT
 		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
@@ -194,6 +199,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[21];
 	char rowid_value[19];
+	struct sqlca sqlca;
 	EXEC SQL DECLARE model_cursor CURSOR FOR
 		SELECT
 		 M_MODEL, M_MEDIA_LETTER,
@@ -246,6 +252,7 @@ vmgr_dbrec_addr *rec_addr;
 {
 	char func[20];
 	char rowid_value[19];
+	struct sqlca sqlca;
 	char tot_free_space_str[21];
 	EXEC SQL DECLARE pool_cursor CURSOR FOR
 		SELECT
@@ -300,6 +307,7 @@ vmgr_dbrec_addr *rec_addr;
 	short mf_ind;	/* indicator variable for manufacturer column */
 	char rowid_value[19];
 	short sn_ind;	/* indicator variable for sn column */
+	struct sqlca sqlca;
 	EXEC SQL DECLARE tape_vid_cursor CURSOR FOR
 		SELECT
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
@@ -368,6 +376,7 @@ vmgr_dbrec_addr *rec_addr;
 	int reqsize = (Size + 1023) / 1024;
 	char rowid_value[19];
 	short sn_ind;	/* indicator variable for sn column */
+	struct sqlca sqlca;
 	EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
 		SELECT ROWID,
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
@@ -438,6 +447,7 @@ struct vmgr_dbfd *dbfd;
 struct vmgr_tape_denmap *denmap_entry;
 {
 	char func[25];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_insert_denmap_entry");
 	EXEC SQL INSERT INTO vmgr_tape_denmap
@@ -468,6 +478,7 @@ struct vmgr_dbfd *dbfd;
 struct vmgr_tape_media *model_entry;
 {
 	char func[24];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_insert_model_entry");
 	EXEC SQL INSERT INTO vmgr_tape_media
@@ -498,6 +509,7 @@ struct vmgr_dbfd *dbfd;
 struct vmgr_tape_pool *pool_entry;
 {
 	char func[23];
+	struct sqlca sqlca;
 	char tot_free_space_str[21];
 
 	strcpy (func, "vmgr_insert_pool_entry");
@@ -530,6 +542,7 @@ struct vmgr_dbfd *dbfd;
 struct vmgr_tape_info *tape_entry;
 {
 	char func[23];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_insert_tape_entry");
 	EXEC SQL INSERT INTO vmgr_tape_info
@@ -568,6 +581,7 @@ int bol;
 struct vmgr_tape_denmap *denmap_entry;
 {
 	char func[23];
+	struct sqlca sqlca;
 	EXEC SQL DECLARE list_denmap_cursor CURSOR FOR
 		SELECT
 		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
@@ -599,6 +613,7 @@ int bol;
 struct vmgr_tape_media *model_entry;
 {
 	char func[22];
+	struct sqlca sqlca;
 	EXEC SQL DECLARE list_model_cursor CURSOR FOR
 		SELECT
 		 M_MODEL, M_MEDIA_LETTER, NATIVE_CAPACITY, MEDIA_COST_GB
@@ -630,6 +645,7 @@ int bol;
 struct vmgr_tape_pool *pool_entry;
 {
 	char func[21];
+	struct sqlca sqlca;
 	char tot_free_space_str[21];
 	EXEC SQL DECLARE list_pool_cursor CURSOR FOR
 		SELECT
@@ -665,6 +681,7 @@ struct vmgr_tape_info *tape_entry;
 	char func[21];
 	short mf_ind;	/* indicator variable for manufacturer column */
 	short sn_ind;	/* indicator variable for sn column */
+	struct sqlca sqlca;
 	EXEC SQL DECLARE list_tape_cursor CURSOR FOR
 		SELECT
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
@@ -706,6 +723,7 @@ struct vmgr_dbfd *dbfd;
 	int c;
 	char func[16];
 	int ntries;
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_opendb");
 	ntries = 0;
@@ -738,6 +756,7 @@ struct vmgr_tape_media *model_entry;
 {
 	char func[24];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_update_model_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
@@ -761,6 +780,7 @@ struct vmgr_tape_pool *pool_entry;
 {
 	char func[23];
 	char rowid_value[19];
+	struct sqlca sqlca;
 	char tot_free_space_str[21];
 
 	strcpy (func, "vmgr_update_pool_entry");
@@ -787,6 +807,7 @@ struct vmgr_tape_info *tape_entry;
 {
 	char func[23];
 	char rowid_value[19];
+	struct sqlca sqlca;
 
 	strcpy (func, "vmgr_update_tape_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
