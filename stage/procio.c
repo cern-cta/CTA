@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.13 2000/02/11 11:06:52 jdurand Exp $
+ * $Id: procio.c,v 1.14 2000/02/16 10:06:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.13 $ $Date: 2000/02/11 11:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.14 $ $Date: 2000/02/16 10:06:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1243,7 +1243,7 @@ fseq_elem **fseq_list;
 		nbtpf = 0;
 		p = strtok (fseq, ",");
 		while (p != NULL) {
-			if (q = strchr (p, '-') != NULL) {
+			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
