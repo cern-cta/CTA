@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.1 $ $Date: 2000/01/26 16:43:30 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 11:22:40 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGSHIFT_CMP_SHIFT l "$Date: 2000/01/26 16:43:30 $"
+.TH STGSHIFT_CMP_SHIFT l "$Date: 2001/06/21 11:22:40 $"
 .SH NAME
 stgshift_cmp_shift \- Compares two SHIFT stager catalogs
 .SH SYNOPSIS
@@ -50,3 +50,6 @@ stgshift_cmp_shift /usr/spool/stage/stgcat.1 /usr/spool/stage/stgpath.1 /usr/spo
 
 .SH SEE ALSO
 \fBstgconvert\fP(1), \fBstgcastor_to_shift\fP(1), \fBstgshift_to_castor\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
