@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.30 2000/06/19 13:48:21 jdurand Exp $
+ * $Id: poolmgr.c,v 1.31 2000/06/19 14:03:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.30 $ $Date: 2000/06/19 13:48:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.31 $ $Date: 2000/06/19 14:03:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,7 +92,6 @@ int isvalidpool _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
-int selectfs _PROTO((char *, int *, char *, char));
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
