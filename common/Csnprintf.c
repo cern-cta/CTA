@@ -1,0 +1,35 @@
+/*
+ * $Id: Csnprintf.c,v 1.1 2003/11/04 13:02:35 jdurand Exp $
+ */
+
+#include "Csnprintf.h"
+
+/* Hide the snprintf and al. call v.s. different OS. */
+/* Sometimes a different name, sometimes do not exist */
+
+int DLL_DECL Csnprintf(char *str, size_t size, char *format, ...) {
+	int rc;
+	va_list args;
+
+	va_start (args, format);
+	/* Note: we cannot call sprintf again, because a va_list is a real */
+	/* parameter on its own - it cannot be changed to a real list of */
+	/* parameters on the stack without being not portable */
+	rc = Cvsnprintf(str,size,format,args);
+	va_end (args);
+	return(rc);
+}
+
+int DLL_DECL Cvsnprintf(char *str, size_t size, char *format, va_list args)
+{
+#if (defined(__osf__) && defined(__alpha))
+	return(vsprintf(str, format, args));
+#else
+#if defined(_WIN32)
+	return(_vsnprintf(str, size, format, args));
+#else
+	return(vsnprintf(str, size, format, args));
+#endif
+#endif
+}
+
