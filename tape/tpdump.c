@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.7 $ $Date: 1999/11/16 14:54:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.8 $ $Date: 1999/11/17 13:59:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -14,6 +14,7 @@ static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.7 $ $Date: 1999/
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <signal.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
 #endif
@@ -25,10 +26,14 @@ extern	char	*optarg;
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
+int Ctape_kill_needed;
 int code;
 char *dvrname;
+int infd = -1;
+char infil[CA_MAXPATHLEN+1];
 int irec;
 int maxbyte = -1;
+int reserve_done;
 
 main(argc, argv)
 int	argc;
@@ -39,6 +44,7 @@ char	**argv;
 	int blksiz = -1;
 	char *buffer;
 	int c;
+	void cleanup();
 	static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 	int count;
 	int den;
@@ -56,8 +62,6 @@ char	**argv;
 	float gap;
 	int goodrec;
 	int ignoreeoi = 0;
-	int infd;
-	char infil[CA_MAXPATHLEN+1];
 	char label[81];
 	static char lbltype[4] = "";
 	int lcode;
@@ -223,16 +227,25 @@ char	**argv;
 	}
 	if (errflg) {
 		usage (argv[0]);
-		exit (USERR);
+		exit_prog (USERR);
 	}
 
 	if (strcmp (dgn, "CT1") == 0) strcpy (dgn, "CART");
+
+#if ! defined(_WIN32)
+	signal (SIGHUP, cleanup);
+#endif
+	signal (SIGINT, cleanup);
+#if ! defined(_WIN32)
+	signal (SIGQUIT, cleanup);
+#endif
+	signal (SIGTERM, cleanup);
 
 	/* Get defaults from TMS (if installed) */
 
 #if TMS
 	if (tmscheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, NULL))
-		exit (USERR);
+		exit_prog (USERR);
 #else
 	if (*vsn == '\0')
 		strcpy (vsn, vid);
@@ -241,6 +254,7 @@ char	**argv;
 	if (strcmp (dgn, "TAPE") == 0 && *aden == '\0')
 		strcpy (aden, "6250");
 #endif
+	strcpy (infil, tempnam (NULL, "tp"));
 
 #if defined(_AIX) && defined(_IBMR2)
 	if (getdvrnam (infil, driver_name) < 0)
@@ -253,21 +267,23 @@ char	**argv;
 	strcpy (dgn_rsv.name, dgn);
 	dgn_rsv.num = 1;
 	count = 1;
-	if (c = Ctape_reserve (count, &dgn_rsv))
-		exit (c);
+	if (Ctape_reserve (count, &dgn_rsv))
+		exit_prog ((serrno == EINVAL || serrno == ETIDG) ? USERR : SYERR);
+	reserve_done = 1;
 
 	/* mount and position the input tape */
 
-	strcpy (infil, tempnam (NULL, "tp"));
-	if (c = Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
+	Ctape_kill_needed = 1;
+	if (Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
 	    NULL, "blp"))
-		exit (c);
-	if (c = Ctape_position (infil, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
+		exit_prog ((serrno == EACCES || serrno == EINVAL) ? USERR : SYERR);
+	if (Ctape_position (infil, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
 	    NULL, "U", 0, 0, 0, 0))
-		exit (c);
-	if (c = Ctape_info (infil, NULL, NULL, aden, devtype, drive, NULL,
+		exit_prog ((serrno == EINVAL) ? USERR : SYERR);
+	Ctape_kill_needed = 0;
+	if (Ctape_info (infil, NULL, NULL, aden, devtype, drive, NULL,
 	    NULL, NULL, NULL))
-		exit (c);
+		exit_prog (SYERR);
 
 	printf (" DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
 
@@ -324,7 +340,7 @@ char	**argv;
 		break;
 	default:
 		fprintf (stderr, TP006, "-d");
-		exit (USERR);
+		exit_prog (USERR);
 	}
 
 	if (blksiz < 0)
@@ -386,7 +402,7 @@ char	**argv;
 	if ((infd = open (infil, O_RDONLY)) < 0) {
 		fprintf (stderr, " DUMP ! ERROR OPENING TAPE FILE: %s\n",
 			sys_errlist[errno]);
-		exit (SYERR);
+		exit_prog (SYERR);
 	}
 
 	while (1) {
@@ -502,7 +518,7 @@ char	**argv;
 					printf (" *********************************************************************************************************************\n");
 					if (maxfile != 0 && nfile >= maxfile) {
 						printf (" DUMP - DUMPING PROGRAM COMPLETE.\n");
-						exit (0);
+						exit_prog (0);
 					}
 				} else if (! ignoreeoi) {
 					printf (" ***** DOUBLE TAPE MARK READ *****\n");
@@ -553,9 +569,7 @@ char	**argv;
 			printf (" *********************************************************************************************************************\n");
 		}
 		printf (" DUMP - DUMP ABORTED\n");
-		close (infd);
-		(void) Ctape_rls (NULL, TPRLS_ALL);
-		exit (USERR);
+		exit_prog (USERR);
 	}
 
 	if (den <= D6250) {
@@ -604,9 +618,7 @@ char	**argv;
 
 		if (ioctl (infd, SIOC_REQSENSE, sense) < 0) {
 			fprintf (stderr, " DUMP ! UNABLE TO DETERMINE TAPE OCCUPANCY");
-			close (infd);
-			(void) Ctape_rls (NULL, TPRLS_ALL);
-			exit (SYERR);
+			exit_prog (SYERR);
 		}
 		tach = sense[25];
 		wrap = sense[53];
@@ -648,12 +660,7 @@ char	**argv;
 			perc);
 	}
 	printf (" DUMP - DUMPING PROGRAM COMPLETE.\n");
-
-	/* release resources */
-
-	(void) Ctape_rls (NULL, TPRLS_ALL);
-
-	exit (0);
+	exit_prog (0);
 }
 
 dumpblock (buffer, nbytes)
@@ -840,6 +847,26 @@ char *label;
 	printf (" DENSITY:                    %.1s\n", label + 15);
 	printf (" DATA RECORDING:             %.1s\n", label + 34);
 	printf (" BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
+}
+
+void
+cleanup(sig)
+int sig;
+{
+	signal (sig, SIG_IGN);
+	if (Ctape_kill_needed)
+		(void) Ctape_kill (infil);
+	exit_prog (USERR);
+}
+
+exit_prog(exit_code)
+int exit_code;
+{
+	if (infd >= 0)
+		close (infd);
+	if (reserve_done)
+		(void) Ctape_rls (NULL, TPRLS_ALL);
+	exit (exit_code);
 }
 
 usage(cmd)
