@@ -1,17 +1,18 @@
 /*
- * $Id: packfseq.c,v 1.9 2000/03/23 01:41:04 jdurand Exp $
+ * $Id: packfseq.c,v 1.10 2000/05/05 09:28:02 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.10 $ $Date: 2000/05/05 09:28:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "stage.h"
 

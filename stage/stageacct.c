@@ -1,20 +1,21 @@
 /*
- * $Id: stageacct.c,v 1.7 2000/03/23 01:41:34 jdurand Exp $
+ * $Id: stageacct.c,v 1.8 2000/05/05 09:28:02 baud Exp $
  */
 
 /*
- * Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1995-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.7 $ $Date: 2000/03/23 01:41:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.8 $ $Date: 2000/05/05 09:28:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "stage.h"
-#include "../h/sacct.h"
+#include "sacct.h"
 
 stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp, tapesrvr)
 int subtype;
