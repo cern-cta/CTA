@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/30 15:35:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/30 17:01:10 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/30 15:35:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/30 17:01:10 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1194,7 +1194,7 @@ static int procReqsForVID(
   unsigned char *blockid;
   struct Cns_fileid fileid;
   int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, segmUpdated;
-  int newFileReqs = 0;
+  int newFileReqs = 0, incompleteSegments = 0;
 
   if ( tape == NULL ) {
     serrno = EINVAL;
@@ -1380,6 +1380,7 @@ static int procReqsForVID(
       } else if ( validPosition(segmArray[i]) == 1 ) {
         rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITPATH (%d)\n",
                  cmpStatus,SEGMENT_WAITPATH);
+        incompleteSegments = 1;
         if ( cmpStatus != SEGMENT_WAITPATH ) {
           updated = 1;
           segmUpdated = 1;
@@ -1388,6 +1389,7 @@ static int procReqsForVID(
       } else {
         rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITFSEQ (%d)\n",
                  cmpStatus,SEGMENT_WAITFSEQ);
+        incompleteSegments = 1;
         if ( cmpStatus != SEGMENT_WAITFSEQ ) {
           updated = 1;
           segmUpdated = 1;
@@ -1467,7 +1469,7 @@ static int procReqsForVID(
   C_IAddress_delete(iAddr);
   rtcp_log(LOG_DEBUG,"procReqsForVID() updated=%d, newFileReqs=%d, segmUpdated=%d\n",
            updated,newFileReqs,segmUpdated);
-  if ( updated == 1 ) (void)notifyTape(currentTape);
+  if ( (updated == 1) || (incompleteSegments == 1) ) (void)notifyTape(currentTape);
   if ( newFileReqs == 0 ) {
     serrno = EAGAIN;
     return(-1);
