@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/07 11:58:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -98,6 +98,28 @@ extern "C" {
       svcs->svcs->createRep(address, object, autocommit);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_updateRepNoRec
+  //------------------------------------------------------------------------------
+  int C_Services_updateRepNoRec(C_Services_t* svcs,
+                                castor::IAddress* address,
+                                castor::IObject* object,
+                                char autocommit = 1) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      svcs->svcs->updateRepNoRec(address, object, autocommit);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
       return -1;
     }

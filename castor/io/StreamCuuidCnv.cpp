@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 15:08:19 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
@@ -45,7 +45,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::io::StreamCuuidCnv> s_factoryStreamCuuidCnv;
-const castor::IFactory<castor::IConverter>& StreamCuuidCnvFactory = 
+const castor::IFactory<castor::IConverter>& StreamCuuidCnvFactory =
   s_factoryStreamCuuidCnv;
 
 //------------------------------------------------------------------------------
@@ -78,13 +78,13 @@ const unsigned int castor::io::StreamCuuidCnv::objType() const {
 // createRep
 //------------------------------------------------------------------------------
 void castor::io::StreamCuuidCnv::createRep(castor::IAddress* address,
-                                          castor::IObject* object,
-                                          castor::ObjectSet& alreadyDone,
-                                          bool autocommit)
+                                           castor::IObject* object,
+                                           castor::ObjectSet& alreadyDone,
+                                           bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::Cuuid* obj = 
+  castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);
-  StreamAddress* ad = 
+  StreamAddress* ad =
     dynamic_cast<StreamAddress*>(address);
   Cuuid_t content = obj->content();
   ad->stream() << content.time_low;
@@ -104,9 +104,10 @@ void castor::io::StreamCuuidCnv::createRep(castor::IAddress* address,
 // updateRep
 //------------------------------------------------------------------------------
 void castor::io::StreamCuuidCnv::updateRep(castor::IAddress* address,
-                                          castor::IObject* object,
-                                          castor::ObjectSet& alreadyDone,
-                                          bool autocommit)
+                                           castor::IObject* object,
+                                           castor::ObjectSet& alreadyDone,
+                                           bool autocommit,
+                                           bool recursive)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming.";
@@ -117,9 +118,9 @@ void castor::io::StreamCuuidCnv::updateRep(castor::IAddress* address,
 // deleteRep
 //------------------------------------------------------------------------------
 void castor::io::StreamCuuidCnv::deleteRep(castor::IAddress* address,
-                                          castor::IObject* object,
-                                          castor::ObjectSet& alreadyDone,
-                                          bool autocommit)
+                                           castor::IObject* object,
+                                           castor::ObjectSet& alreadyDone,
+                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot delete representation in case of streaming.";
@@ -130,9 +131,9 @@ void castor::io::StreamCuuidCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamCuuidCnv::createObj(castor::IAddress* address,
-                                                      castor::ObjectCatalog& newlyCreated)
+                                                       castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  StreamAddress* ad = 
+  StreamAddress* ad =
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
   castor::stager::Cuuid* object = new castor::stager::Cuuid();
@@ -144,8 +145,8 @@ castor::IObject* castor::io::StreamCuuidCnv::createObj(castor::IAddress* address
   ad->stream() >> content.clock_seq_hi_and_reserved;
   ad->stream() >> content.clock_seq_low;
   ad->stream() >> content.node[0] >> content.node[1]
-	       >> content.node[2] >> content.node[3]
-	       >> content.node[4] >> content.node[5];
+               >> content.node[2] >> content.node[3]
+               >> content.node[4] >> content.node[5];
   object->setContent(content);
   unsigned long id;
   ad->stream() >> id;

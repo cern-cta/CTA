@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/29 14:28:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/29 15:08:18 $ $Author: sponcec3 $
  *
  *
  *
@@ -134,7 +134,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
   }
   if (result.size() > 0) {
     castor::ObjectSet alreadyDone;
-    cnvSvc()->updateRep(0, searchItem, alreadyDone, true);
+    cnvSvc()->updateRep(0, searchItem, alreadyDone, true, false);
   }
   return result;
 }
@@ -152,7 +152,7 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
   if (result.size() > 0){
     searchItem->setStatus(castor::stager::TAPE_WAITMOUNT);
     castor::ObjectSet alreadyDone;
-    cnvSvc()->updateRep(0, searchItem, alreadyDone, true);
+    cnvSvc()->updateRep(0, searchItem, alreadyDone, true, false);
   }
   return result.size();
 }
@@ -207,7 +207,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       // Change tape status
       tape->setStatus(castor::stager::TAPE_WAITVDQM);
       castor::ObjectSet alreadyDone;
-      cnvSvc()->updateRep(0, tape, alreadyDone, false);
+      cnvSvc()->updateRep(0, tape, alreadyDone, false, false);
       result.push_back(tape);
     }
   } catch (oracle::occi::SQLException e) {

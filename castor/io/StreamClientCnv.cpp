@@ -101,7 +101,8 @@ void castor::io::StreamClientCnv::createRep(castor::IAddress* address,
 void castor::io::StreamClientCnv::updateRep(castor::IAddress* address,
                                             castor::IObject* object,
                                             castor::ObjectSet& alreadyDone,
-                                            bool autocommit)
+                                            bool autocommit,
+                                            bool recursive)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."

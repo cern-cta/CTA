@@ -86,7 +86,7 @@ namespace castor {
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**
@@ -99,12 +99,14 @@ namespace castor {
        * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
+       * @param recursive Not used here
        * @exception Exception throws an Exception in cas of error
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit,
+                             bool recursive)
         throw (castor::exception::Exception);
 
       /**
@@ -122,7 +124,7 @@ namespace castor {
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**

@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/29 15:08:19 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
@@ -86,7 +86,7 @@ namespace castor {
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**
@@ -99,12 +99,14 @@ namespace castor {
        * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
+       * @param recursive Not used here
        * @exception Exception throws an Exception in cas of error
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit,
+                             bool recursive)
         throw (castor::exception::Exception);
 
       /**
@@ -122,7 +124,7 @@ namespace castor {
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit = true)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**
