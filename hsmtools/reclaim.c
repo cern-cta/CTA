@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.1 $ $Date: 2000/05/15 15:10:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.2 $ $Date: 2001/01/25 08:45:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
@@ -36,8 +36,11 @@ char **argv;
 	FILE *tmpfile();
 	char *vid = NULL;
 
-	while ((c = getopt (argc, argv, "V:")) != EOF) {
+	while ((c = getopt (argc, argv, "h:V:")) != EOF) {
 		switch (c) {
+		case 'h':
+			host = optarg;
+			break;
 		case 'V':
 			vid = optarg;
 			break;
@@ -52,7 +55,7 @@ char **argv;
 		errflg++;
 	}
 	if (errflg) {
-		fprintf (stderr, "usage: %s -V vid\n", argv[0]);
+		fprintf (stderr, "usage: %s [-h name_server] -V vid\n", argv[0]);
 		exit (USERR);
 	}
 
@@ -82,7 +85,7 @@ char **argv;
 		exit (USERR);
 	}
 
-	if (Cns_hosts = getconfent ("CNS", "HOST", 1))
+	if (! host && (Cns_hosts = getconfent ("CNS", "HOST", 1)))
 		host = strtok (Cns_hosts, " \t\n");
 	while (1) {
 		flags = CNS_LIST_BEGIN;
