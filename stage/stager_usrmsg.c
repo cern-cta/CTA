@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.4 2000/03/30 07:43:37 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.5 2000/05/08 10:45:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.4 $ $Date: 2000/03/30 07:43:37 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.5 $ $Date: 2000/05/08 10:45:06 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -65,7 +65,7 @@ void stager_usrmsg(int level, ...)
 
 	format = va_arg(args, char *);
 	vsprintf(line,format,args);
-	sendrep(rpfd,(level == LOG_ERR) ? MSG_ERR : MSG_OUT,line,strlen(line)) ;
+	sendrep(rpfd,(level == LOG_INFO) ? MSG_OUT : MSG_ERR,line,strlen(line)) ;
 	va_end(args);
 }
 
