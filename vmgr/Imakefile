@@ -1,0 +1,662 @@
+COMM
+COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/07/15 16:20:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+ 
+COMM    Make volume manager programs.
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(..,h)
+#if _AIX
+LIBS = -L../lib -lshift
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../lib -lshift -so_archive
+#else
+#if hpux
+LIBS = -L../lib -lshift
+#else
+#if linux
+LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+#else
+#if sgi
+LIBS = -L../lib -lshift
+#else
+#if SOLARIS
+LIBS = -L../lib -lshift -lsocket -lnsl
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#if _WIN32
+VMGRLIB = vmgr.lib
+#else
+VMGRLIB = -L. -lvmgr
+#endif
+OPSGRP = OperatorGid
+SPOOL = VmgrSpool
+LOGFILE = FileName($(SPOOL),log)
+#if Accounting
+SACCTDIR = SacctDir
+SACCTFILE = FileName(SacctDir,sacct)
+ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
+#endif
+VMGRCONFIG = VmgrConfigFile
+VMGR_HOST = VmgrHost
+#if UseOracle
+DBOBJS = vmgr_oracle_ifce.Osuf
+ORAFLG = -DUSE_ORACLE
+#if defined(_WIN32)
+ORAINC = -I$(ORACLE_HOME)\PRO80\C\INCLUDE
+LIBORA = $(ORACLE_HOME)\PRO80\LIB\MSVC\SQLLIB80.LIB
+WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
+#else
+ORAINC = -I$(ORACLE_HOME)/precomp/public
+#endif
+#else
+#if UseMySQL
+DBOBJS = vmgr_mysql_ifce.Osuf
+MYSFLG = -DUSE_MYSQL
+MYSINC = -I/usr/include/mysql
+MYSLIB = /usr/lib/mysql/libmysqlclient.a
+LIBMYS = -L/usr/lib/mysql -lmysqlclient -lz
+#else
+#if UseRaima
+DBOBJS = vmgr_raima_ifce.Osuf
+#if _WIN32
+RDSFLG = -DUSE_RAIMA -DWIN32_NT
+#else
+RDSFLG = -DUSE_RAIMA -DUNIX
+#endif
+RDSHOME = RaimaDir
+RDSINC = -I$(RDSHOME)/include
+RDSLIB = $(RDSHOME)/lib/libCadm.so $(RDSHOME)/lib/libCrdm.so \
+	 $(RDSHOME)/lib/libCncp.so $(RDSHOME)/lib/libCrpc.so \
+	 $(RDSHOME)/lib/libCrm.so $(RDSHOME)/lib/libCenc.so
+LIBRDS = -L$(RDSHOME)/lib -lCadm -lCrdm -lCncp -lCrpc -lCrm -lCenc
+#else
+CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
+DBOBJS = Vmgr_db.Osuf vmgr_Cdb_ifce.Osuf
+#endif
+#endif
+#endif
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+LIBS+= -ldl
+#endif  
+COMM######################### FLAGS ##############################
+ 
+DFLAGS = -DBIN=\"$(BIN)\" -DVMGR_HOST=\"$(VMGR_HOST)\" \
+         -DLOGFILE=\"$(LOGFILE)\" \
+         -DVMGRCONFIG=\"$(VMGRCONFIG)\" \
+         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
+ 
+CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
+ 
+COMM######################### DEPENDENCY LIBRARIES ###############
+ 
+DEPLIB = DepLibraryTargetName(lib,shift)
+ 
+COMM######################### RULES ##############################
+
+MANPAGES = $(LIBMANDIR)/vmgr_deletedenmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deletedgnmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deletelibrary.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deletemodel.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deletepool.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deletetape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_deltag.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_enterdenmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_enterdgnmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_enterlibrary.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_entermodel.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_enterpool.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_entertape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_gettag.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_gettape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listdenmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listdgnmap.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listlibrary.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listmodel.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listpool.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_listtape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_modifylibrary.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_modifymodel.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_modifypool.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_modifytape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_querylibrary.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_querymodel.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_querypool.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_querytape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_reclaim.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_seterrbuf.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_settag.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_tpmounted.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/vmgr_updatetape.$(LIBMANSUFFIX) \
+	   $(MANDIR)/vmgr.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdaemon.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletedenmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletedgnmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletelibrary.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletemodel.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletepool.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeletetape.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrdeltag.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrenterdenmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrenterdgnmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrenterlibrary.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrentermodel.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrenterpool.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrentertape.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrgettag.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistdenmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistdgnmap.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistlibrary.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistmodel.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlistpool.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrlisttape.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrmodifylibrary.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrmodifypool.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrmodifytape.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrsettag.$(MANSUFFIX) \
+	   $(MANDIR)/vmgrshutdown.$(MANSUFFIX)
+EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deletedgnmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deletelibrary.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deletemodel.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deletepool.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deletetape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_deltag.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_enterdenmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_enterdgnmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_enterlibrary.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_entermodel.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_enterpool.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_entertape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_gettag.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_gettape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listdenmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listdgnmap.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listlibrary.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listmodel.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listpool.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_listtape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_modifylibrary.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_modifymodel.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_modifypool.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_modifytape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_querylibrary.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_querymodel.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_querypool.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_querytape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_reclaim.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_seterrbuf.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_settag.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_tpmounted.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/vmgr_updatetape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgr.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdaemon.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletedenmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletedgnmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletelibrary.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletemodel.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletepool.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeletetape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrdeltag.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrenterdenmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrenterdgnmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrenterlibrary.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrentermodel.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrenterpool.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrentertape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrgettag.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistdenmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistdgnmap.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistlibrary.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistmodel.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlistpool.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrlisttape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrmodifylibrary.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrmodifypool.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrmodifytape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrsettag.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/vmgrshutdown.$(MANSUFFIX)
+
+#if BuildVolumeMgrClient
+CLIENT = LibraryTargetName(vmgr) \
+	 ProgramTargetName(vmgrdeletedenmap) \
+	 ProgramTargetName(vmgrdeletedgnmap) \
+	 ProgramTargetName(vmgrdeletelibrary) \
+	 ProgramTargetName(vmgrdeletemodel) \
+	 ProgramTargetName(vmgrdeletepool) \
+	 ProgramTargetName(vmgrdeletetape) \
+	 ProgramTargetName(vmgrdeltag) \
+	 ProgramTargetName(vmgrenterdenmap) \
+	 ProgramTargetName(vmgrenterdgnmap) \
+	 ProgramTargetName(vmgrenterlibrary) \
+	 ProgramTargetName(vmgrentermodel) \
+	 ProgramTargetName(vmgrenterpool) \
+	 ProgramTargetName(vmgrentertape) \
+	 ProgramTargetName(vmgrgettag) \
+	 ProgramTargetName(vmgrlistdenmap) \
+	 ProgramTargetName(vmgrlistdgnmap) \
+	 ProgramTargetName(vmgrlistlibrary) \
+	 ProgramTargetName(vmgrlistmodel) \
+	 ProgramTargetName(vmgrlistpool) \
+	 ProgramTargetName(vmgrlisttape) \
+	 ProgramTargetName(vmgrmodifylibrary) \
+	 ProgramTargetName(vmgrmodifypool) \
+	 ProgramTargetName(vmgrmodifytape) \
+	 ProgramTargetName(vmgrsettag) \
+	 ProgramTargetName(vmgrshutdown)
+IPROGS_C = FileName($(BIN),ProgramTargetName(vmgrdeletedenmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeletedgnmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeletelibrary)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeletemodel)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeletepool)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeletetape)) \
+	   FileName($(BIN),ProgramTargetName(vmgrdeltag)) \
+	   FileName($(BIN),ProgramTargetName(vmgrenterdenmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrenterdgnmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrenterlibrary)) \
+	   FileName($(BIN),ProgramTargetName(vmgrentermodel)) \
+	   FileName($(BIN),ProgramTargetName(vmgrenterpool)) \
+	   FileName($(BIN),ProgramTargetName(vmgrentertape)) \
+	   FileName($(BIN),ProgramTargetName(vmgrgettag)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistdenmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistdgnmap)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistlibrary)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistmodel)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlistpool)) \
+	   FileName($(BIN),ProgramTargetName(vmgrlisttape)) \
+	   FileName($(BIN),ProgramTargetName(vmgrmodifylibrary)) \
+	   FileName($(BIN),ProgramTargetName(vmgrmodifypool)) \
+	   FileName($(BIN),ProgramTargetName(vmgrmodifytape)) \
+	   FileName($(BIN),ProgramTargetName(vmgrsettag)) \
+	   FileName($(BIN),ProgramTargetName(vmgrshutdown))
+EPROGS_C = $(EXPORTBIN)/vmgrdeletedenmap \
+	   $(EXPORTBIN)/vmgrdeletedgnmap \
+	   $(EXPORTBIN)/vmgrdeletelibrary \
+	   $(EXPORTBIN)/vmgrdeletemodel \
+	   $(EXPORTBIN)/vmgrdeletepool \
+	   $(EXPORTBIN)/vmgrdeletetape \
+	   $(EXPORTBIN)/vmgrdeltag \
+	   $(EXPORTBIN)/vmgrenterdenmap \
+	   $(EXPORTBIN)/vmgrenterdgnmap \
+	   $(EXPORTBIN)/vmgrenterlibrary \
+	   $(EXPORTBIN)/vmgrentermodel \
+	   $(EXPORTBIN)/vmgrenterpool \
+	   $(EXPORTBIN)/vmgrentertape \
+	   $(EXPORTBIN)/vmgrgettag \
+	   $(EXPORTBIN)/vmgrlistdenmap \
+	   $(EXPORTBIN)/vmgrlistdgnmap \
+	   $(EXPORTBIN)/vmgrlistlibrary \
+	   $(EXPORTBIN)/vmgrlistmodel \
+	   $(EXPORTBIN)/vmgrlistpool \
+	   $(EXPORTBIN)/vmgrlisttape \
+	   $(EXPORTBIN)/vmgrmodifylibrary \
+	   $(EXPORTBIN)/vmgrmodifypool \
+	   $(EXPORTBIN)/vmgrmodifytape \
+	   $(EXPORTBIN)/vmgrsettag \
+	   $(EXPORTBIN)/vmgrshutdown
+#endif
+#if BuildVolumeMgrDaemon
+PROGS_D = ProgramTargetName(vmgrdaemon)
+IPROGS_D = FileName($(BIN),ProgramTargetName(vmgrdaemon))
+EPROGS_D = $(EXPORTBIN)/vmgrdaemon
+#endif
+
+VMGRDAEMON_OBJS	=	vmgr_main.Osuf \
+			$(DBOBJS) \
+			vmgr_procreq.Osuf \
+			sendrep.Osuf \
+			vmgrlogit.Osuf
+VMGRLIB_OBJS	=	vmgr_apiinit.Osuf \
+			vmgr_deletedenmap.Osuf \
+			vmgr_deletedgnmap.Osuf \
+			vmgr_deletelibrary.Osuf \
+			vmgr_deletemodel.Osuf \
+			vmgr_deletepool.Osuf \
+			vmgr_deletetape.Osuf \
+			vmgr_deltag.Osuf \
+			vmgr_enterdenmap.Osuf \
+			vmgr_enterdgnmap.Osuf \
+			vmgr_enterlibrary.Osuf \
+			vmgr_entermodel.Osuf \
+			vmgr_enterpool.Osuf \
+			vmgr_entertape.Osuf \
+			vmgr_errmsg.Osuf \
+			vmgr_gettag.Osuf \
+			vmgr_gettape.Osuf \
+			vmgr_listdenmap.Osuf \
+			vmgr_listdgnmap.Osuf \
+			vmgr_listlibrary.Osuf \
+			vmgr_listmodel.Osuf \
+			vmgr_listpool.Osuf \
+			vmgr_listtape.Osuf \
+			vmgr_modifylibrary.Osuf \
+			vmgr_modifymodel.Osuf \
+			vmgr_modifypool.Osuf \
+			vmgr_modifytape.Osuf \
+			vmgr_querylibrary.Osuf \
+			vmgr_querymodel.Osuf \
+			vmgr_querypool.Osuf \
+			vmgr_querytape.Osuf \
+			vmgr_reclaim.Osuf \
+			vmgr_settag.Osuf \
+			vmgr_tpmounted.Osuf \
+			vmgr_updatetape.Osuf \
+			send2vmgr.Osuf \
+			vmgrcheck.Osuf
+
+all: $(CLIENT) $(PROGS_D)
+
+#undef YES
+vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
+	proc INAME=vmgr_oracle_ifce INCLUDE=$(INCLUDES) THREADS=YES CHAR_MAP=STRING PARSE=FULL $(WNT_SYS_INCLUDE)
+#define YES 1
+
+Vmgr_db.c Vmgr_db.h: $(CDBANA) Vmgr_db.des FileName($(INCLUDES),Castor_limits.h)
+	$(CDBANA) -c Vmgr_db.c -h Vmgr_db.h Vmgr_db.des
+
+#if UseOracle && !defined(_WIN32)
+vmgrdaemon: $(VMGRDAEMON_OBJS) $(DEPLIB)
+	$(MAKE) -f oralink.mk vmgrdaemon VMGRDAEMON_OBJS="$(VMGRDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
+#else
+NormalProgramTarget(vmgrdaemon,$(VMGRDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS) $(LIBMYS))
+#endif
+NormalProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletelibrary,vmgrdeletelibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletemodel,vmgrdeletemodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletepool,vmgrdeletepool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletetape,vmgrdeletetape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeltag,vmgrdeltag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrshutdown,vmgrshutdown.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterdenmap,vmgrenterdenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterlibrary,vmgrenterlibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrentermodel,vmgrentermodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterpool,vmgrenterpool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrentertape,vmgrentertape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrgettag,vmgrgettag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistdenmap,vmgrlistdenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistdgnmap,vmgrlistdgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistlibrary,vmgrlistlibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistmodel,vmgrlistmodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistpool,vmgrlistpool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlisttape,vmgrlisttape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifypool,vmgrmodifypool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifytape,vmgrmodifytape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrsettag,vmgrsettag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+
+NormalLibraryTarget(vmgr,$(VMGRLIB_OBJS))
+
+MakeDepLibrary(lib,shift)
+
+#if UseOracle == NO && UseRaima == NO && UseMySQL == NO
+#if defined(_WIN32)
+$(CDBANA): FORCE
+	pushd ..\db & $(MAKE) Cdbana.exe & popd
+#else
+$(CDBANA): FORCE
+	cd ../db ; $(MAKE) Cdbana
+#endif
+#endif
+
+#if BuildVolumeMgrDaemon
+install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
+#else
+install: $(BIN) $(IPROGS_C)
+#endif
+
+InstallProgram(vmgrdaemon,$(BIN),root,bin,750)
+IEXPORT(vmgrdaemon,$(EXPORTBIN),750);
+
+InstallProgram(vmgrdeletedenmap,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletedenmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeletedgnmap,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletedgnmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeletelibrary,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletelibrary,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeletemodel,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletemodel,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeletepool,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletepool,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeletetape,$(BIN),root,bin,755)
+IEXPORT(vmgrdeletetape,$(EXPORTBIN),755);
+
+InstallProgram(vmgrdeltag,$(BIN),root,bin,755)
+IEXPORT(vmgrdeltag,$(EXPORTBIN),755);
+
+InstallProgram(vmgrenterdenmap,$(BIN),root,bin,755)
+IEXPORT(vmgrenterdenmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrenterdgnmap,$(BIN),root,bin,755)
+IEXPORT(vmgrenterdgnmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrenterlibrary,$(BIN),root,bin,755)
+IEXPORT(vmgrenterlibrary,$(EXPORTBIN),755);
+
+InstallProgram(vmgrentermodel,$(BIN),root,bin,755)
+IEXPORT(vmgrentermodel,$(EXPORTBIN),755);
+
+InstallProgram(vmgrenterpool,$(BIN),root,bin,755)
+IEXPORT(vmgrenterpool,$(EXPORTBIN),755);
+
+InstallProgram(vmgrentertape,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrentertape,$(EXPORTBIN),755);
+
+InstallProgram(vmgrgettag,$(BIN),root,bin,755)
+IEXPORT(vmgrgettag,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistdenmap,$(BIN),root,bin,755)
+IEXPORT(vmgrlistdenmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistdgnmap,$(BIN),root,bin,755)
+IEXPORT(vmgrlistdgnmap,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistlibrary,$(BIN),root,bin,755)
+IEXPORT(vmgrlistlibrary,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistmodel,$(BIN),root,bin,755)
+IEXPORT(vmgrlistmodel,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlistpool,$(BIN),root,bin,755)
+IEXPORT(vmgrlistpool,$(EXPORTBIN),755);
+
+InstallProgram(vmgrlisttape,$(BIN),root,bin,755)
+IEXPORT(vmgrlisttape,$(EXPORTBIN),755);
+
+InstallProgram(vmgrmodifylibrary,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrmodifylibrary,$(EXPORTBIN),755);
+
+InstallProgram(vmgrmodifypool,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrmodifypool,$(EXPORTBIN),755);
+
+InstallProgram(vmgrmodifytape,$(BIN),root,$(OPSGRP),755)
+IEXPORT(vmgrmodifytape,$(EXPORTBIN),755);
+
+InstallProgram(vmgrsettag,$(BIN),root,bin,755)
+IEXPORT(vmgrsettag,$(EXPORTBIN),755);
+
+InstallProgram(vmgrshutdown,$(BIN),root,bin,755)
+IEXPORT(vmgrshutdown,$(EXPORTBIN),755);
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+ 
+#if Accounting
+MakeDir($(SACCTDIR),root,bin,0777)
+#endif
+
+install.man: $(MANDIR) $(MANPAGES)
+
+MakeDir($(MANDIR),root,bin,0755)
+
+IMANPAGE(vmgr_deletedenmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deletedgnmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deletelibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deletemodel,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deletepool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deletetape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_deltag,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_enterdenmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_enterdgnmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_enterlibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_entermodel,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_enterpool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_entertape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_gettag,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_gettape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listdenmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listdgnmap,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listlibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listmodel,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listpool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_listtape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_modifylibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_modifymodel,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_modifypool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_modifytape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_querylibrary,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_querymodel,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_querypool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_querytape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_reclaim,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_seterrbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_settag,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_tpmounted,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr_updatetape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vmgr,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdaemon,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletedenmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletedgnmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletelibrary,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletemodel,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletepool,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeletetape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrdeltag,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrenterdenmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrenterdgnmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrenterlibrary,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrentermodel,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrenterpool,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrentertape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrgettag,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistdenmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistdgnmap,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistlibrary,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistmodel,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlistpool,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrlisttape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrmodifylibrary,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrmodifypool,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrmodifytape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrsettag,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vmgrshutdown,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(vmgr_deletedenmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deletedgnmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deletelibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deletemodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deletepool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deletetape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_deltag,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_enterdenmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_enterdgnmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_enterlibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_entermodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_enterpool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_entertape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_gettag,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_gettape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listdenmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listdgnmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listlibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listmodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listpool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_listtape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_modifylibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_modifymodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_modifypool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_modifytape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_querylibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_querymodel,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_querypool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_querytape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_reclaim,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_seterrbuf,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_settag,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_tpmounted,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr_updatetape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(vmgr,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletedenmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletedgnmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletelibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletemodel,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletepool,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeletetape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrdeltag,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrenterdenmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrenterdgnmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrenterlibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrentermodel,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrenterpool,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrentertape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrgettag,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistdenmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistdgnmap,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistlibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistmodel,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlistpool,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrlisttape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrmodifylibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrmodifypool,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrmodifytape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrsettag,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(vmgrshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
+
+export: $(EPROGS_C) $(EPROGS_D)
+
+exportman: $(EXPORTMANPAGES)
+
+exportshr:
+
+COMM###################### CLEANING RULES ########################
+ 
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(CLIENT) $(PROGS_D))
+ 
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(DFLAGS) -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+ 
+FORCE:
+
+COMM###################### DEPENDENCIES ##########################
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
