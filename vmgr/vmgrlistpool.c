@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.3 $ $Date: 2000/03/20 14:38:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.4 $ $Date: 2000/04/11 05:46:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -24,6 +24,9 @@ char **argv;
 {
 	int c;
 	int errflg = 0;
+	int flags;
+	vmgr_list list;
+	struct vmgr_tape_pool *lp;
 	gid_t pool_gid = 0;
 	char *pool_name = NULL;
 	uid_t pool_uid = 0;
@@ -58,6 +61,12 @@ char **argv;
 		}
 		listentry (pool_name, pool_uid, pool_gid, tot_free_space);
 	} else {
+		flags = VMGR_LIST_BEGIN;
+		while ((lp = vmgr_listpool (flags, &list)) != NULL) {
+			listentry (lp->name, lp->uid, lp->gid, lp->tot_free_space);
+			flags = VMGR_LIST_CONTINUE;
+		}
+		(void) vmgr_listpool (VMGR_LIST_END, &list);
 	}
 	exit (0);
 }
