@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.13 $ $Date: 2002/05/23 10:29:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.14 $ $Date: 2002/09/17 12:24:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2002/05/23 10:29:57 $"
+.TH STAGECLR l "$Date: 2002/09/17 12:24:20 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -43,13 +43,12 @@ stageclr \- remove staged files
 .BI \-m " minfree"
 ] [
 .BI \-p " pool"
-]
-.BI \-I " external_filename"
 ] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
 ]
+.BI \-I " external_filename"
 .br
 .B stageclr
 [
@@ -80,13 +79,12 @@ stageclr \- remove staged files
 .BI \-h " host"
 ] [
 .BI \-m " minfree"
-]
-.BI \-P " pathname"
 ] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
 ]
+.BI \-P " pathname"
 .br
 .B stageclr
 [
@@ -97,26 +95,24 @@ stageclr \- remove staged files
 .BI \-h " host"
 ] [
 .BI \-m " minfree"
-]
-.BI \-i
 ] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
 ]
+.BI \-i
 .br
 .B stageclr
 [
 .BI \-h " host"
 ] [
 .BI \-F
-]
-.BI \-L " link_name"
 ] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
 ]
+.BI \-L " link_name"
 .SH DESCRIPTION
 .B stageclr
 removes staged files from disk if the requestor is in the same group as the
@@ -157,9 +153,10 @@ removed.
 Label type:
 .BR al ,
 .BR nl ,
-.B sl
+.BR sl ,
+.B blp
 or
-.BR blp .
+.BR aul .
 .TP
 .BI \-M " hsmfile"
 clears in the stager catalog the entry corresponding to this HSM file and
