@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.9 $ $Date: 1999/11/19 17:08:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.10 $ $Date: 1999/11/25 06:37:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -88,7 +88,9 @@ char	**argv;
 	int prelabel;
 	struct passwd *pwd;
 	fd_set readfds;
+	char repbuf[REPBUFSZ];
 	char rings[9];
+	char *sbp;
 	int scsi;
 	int sonyraw;
 	int status;
@@ -628,6 +630,13 @@ positp:
 		goto reply;
 	}
 
+	if (c == 0) {
+		sbp = repbuf;
+		marshall_STRING (sbp, devtype);
+		marshall_WORD (sbp, den);
+		marshall_WORD (sbp, lblcode);
+		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
+	}
 reply:
 	if (c < 0) c = -c;
 	if (c) {
