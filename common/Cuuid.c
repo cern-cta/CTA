@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.5 2004/03/18 18:26:14 jdurand Exp $
+ * $Id: Cuuid.c,v 1.6 2004/11/02 11:13:40 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.5 $ $Date: 2004/03/18 18:26:14 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.6 $ $Date: 2004/11/02 11:13:40 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -726,6 +726,7 @@ static void _Cuuid_get_random_info(seed)
     } randomness;
     randomness r;
 	
+    memset(&r,'\0',sizeof(r));
     _Cuuid_MD5Init(&c);
     /* memory usage stats */
     GlobalMemoryStatus(&r.m);
@@ -782,6 +783,7 @@ static void _Cuuid_get_random_info(seed)
 #endif
     randomness r;
 	
+    memset(&r,'\0',sizeof(r));
     _Cuuid_MD5Init(&c);
 #if (defined(aix) || defined(hpux))
 #ifdef aix
