@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mounttape.c,v 1.22 2000/04/07 09:05:07 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.24 $ $Date: 2000/04/07 14:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,6 +28,7 @@ static char sccsid[] = "@(#)mounttape.c,v 1.22 2000/04/07 09:05:07 CERN IT-PDP/D
 #include <sys/select.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "marshall.h"
 #if SACCT
 #include "sacct.h"
@@ -64,6 +65,7 @@ char	**argv;
 	int c;
 	unsigned int demountforce;
 	int den;
+	struct devinfo *devinfo;
 	char *dgn;
 	char *drive;
 	char *dvn;
@@ -95,6 +97,7 @@ char	**argv;
 	int scsi;
 	int sonyraw;
 	int status;
+	int Tflag = 0;
 	struct timeval timeval;
 	int tplbl;
 	int tpmode;
@@ -137,6 +140,10 @@ char	**argv;
 	prelabel = atoi (argv[19]);
 	vdqm_reqid = atoi (argv[20]);
 
+	if (prelabel > 2) {
+		prelabel -= DOUBLETM;
+		Tflag = 1;
+	}
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
 #else
@@ -650,10 +657,10 @@ positp:
 			}
 		}
 		if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
-		if (strncmp (devtype, "DLT", 3) && strcmp (devtype, "3590") &&
-		    strcmp (devtype, "SD3") && strcmp (devtype, "9840"))
+		devinfo = Ctape_devinfo (devtype);
+		if (devinfo->eoitpmrks == 2 || Tflag)
 			if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
-		if (strcmp (devtype, "SD3") == 0)	/* flush buffer */
+		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */
 			if  ((c = wrttpmrk (tapefd, path, 0)) < 0) goto reply;
 #if SONYRAW
 	    } else {
