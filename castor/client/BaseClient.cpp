@@ -170,7 +170,6 @@ void castor::client::BaseClient::run(int argc, char** argv)
     bool stop = false;
     while (!stop) {
       IObject* result = waitForCallBack();
-      printResult(*result);
       if (OBJ_EndResponse == result->type()) {
         stop = true;
       } else {
