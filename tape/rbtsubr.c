@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.9 $ $Date: 2002/07/24 07:25:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.10 $ $Date: 2002/07/29 10:27:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1128,6 +1128,7 @@ char *loader;
 	struct smc_element_info element_info;
 	char func[16];
 	char *msgaddr;
+	char *p;
 	struct smc_status smc_status;
 
 	ENTRY (smcmount);
@@ -1136,10 +1137,12 @@ char *loader;
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s\n", msg);
-		else
+			usrmsg (func, "%s\n", msgaddr);
+		else {
+			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "find_cartridge",
-				strrchr (msgaddr, ':') + 2);
+				p ? p + 2 : msgaddr);
+		}
 		RETURN (c);
 	}
 	if (c == 0) {
@@ -1158,8 +1161,9 @@ char *loader;
 		if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
 		else {
+			p = strrchr (msgaddr, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
-				strrchr (msgaddr, ':') + 2);
+				p ? p + 2 : msgaddr);
 			usrmsg (func, "%s\n", msg);
 		}
 		RETURN (c);
@@ -1176,6 +1180,7 @@ int force;
 	struct smc_element_info element_info;
 	char func[16];
 	char *msgaddr;
+	char *p;
 	struct smc_status smc_status;
 
 	ENTRY (smcdismount);
@@ -1185,10 +1190,12 @@ int force;
 	    robot_info.device_start+drvord, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s\n", msg);
-		else
+			usrmsg (func, "%s\n", msgaddr);
+		else {
+			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "read_elem_status",
-				strrchr (msgaddr, ':') + 2);
+				p ? p + 2 : msgaddr);
+		}
 		RETURN (c);
 	}
 	if (*vid && !force && strcmp (element_info.name, vid)) {
@@ -1202,8 +1209,9 @@ int force;
 		if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
 		else {
+			p = strrchr (msgaddr, ':');
 			sprintf (msg, TP041, "demount", vid, cur_unm,
-				strrchr (msgaddr, ':') + 2);
+				p ? p + 2 : msgaddr);
 			usrmsg (func, "%s\n", msg);
 		}
 		RETURN (c);
