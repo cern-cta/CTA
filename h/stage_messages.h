@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.2 2001/12/05 10:00:46 jdurand Exp $
+ * $Id: stage_messages.h,v 1.3 2001/12/10 15:36:10 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -143,5 +143,6 @@
 #define STG161  "STG161 - Stage not available or in pause mode - Please wait\n"
 #define STG162  "STG162 - Stage will shutdown - Please retry later\n"
 #define STG163  "STG163 - Pool %s have gc_start_thresh (%d) >= gc_stop_thread (%d)\n"
+#define STG164  "STG164 - %s : wrong poolname \"%s\" - changed to \"%s\"\n"
 
 #endif /* __stage_messages_h */
