@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.53 2001/02/13 12:29:20 jdurand Exp $
+ * $Id: procupd.c,v 1.54 2001/02/13 15:08:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.53 $ $Date: 2001/02/13 12:29:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.54 $ $Date: 2001/02/13 15:08:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -678,154 +678,158 @@ procupdreq(req_data, clienthost)
 #endif
 		}
 	}
-	wqp->nb_subreqs--;
-	wqp->nbdskf--;
-	rpfd = wqp->rpfd;
-	if (((stcp->status & STAGEWRT) == STAGEWRT) ||
-		((stcp->status & STAGEPUT) == STAGEPUT)) {
-		n = 1;
-		if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
-			n += wqp->nbdskf;
-			wqp->nbdskf = 0;
-		}
-		for (i = 0; i < n; i++, wfp++) {
-			int ifileclass;
+	if (wfp->size_yet_recalled >= wfp->size_to_recall) {
+		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
+		/* (always the case it it is not a recall of CASTOR file) */
+		wqp->nb_subreqs--;
+		wqp->nbdskf--;
+		rpfd = wqp->rpfd;
+		if (((stcp->status & STAGEWRT) == STAGEWRT) ||
+			((stcp->status & STAGEPUT) == STAGEPUT)) {
+			n = 1;
+			if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
+				n += wqp->nbdskf;
+				wqp->nbdskf = 0;
+			}
+			for (i = 0; i < n; i++, wfp++) {
+				int ifileclass;
 
-			if (stcp->t_or_d == 'h')
-				ifileclass = upd_fileclass(NULL,stcp);
-			else
-				ifileclass = -1;
-			for (stcp = stcs; stcp < stce; stcp++)
-				if (stcp->reqid == wfp->subreqid) break;
-			if (wqp->copytape)
-				sendinfo2cptape (rpfd, stcp);
-			if (! stcp->keep && stcp->nbaccesses <= 1) {
-				/* No -K option and only one access */
-				struct stgcat_entry *stcp_search, *stcp_found;
-				if (((stcp->status == STAGEWRT) ||
-					((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
-					(stcp->poolname[0] == '\0')) {
+				if (stcp->t_or_d == 'h')
+					ifileclass = upd_fileclass(NULL,stcp);
+				else
+					ifileclass = -1;
+				for (stcp = stcs; stcp < stce; stcp++)
+					if (stcp->reqid == wfp->subreqid) break;
+				if (wqp->copytape)
+					sendinfo2cptape (rpfd, stcp);
+				if (! stcp->keep && stcp->nbaccesses <= 1) {
+					/* No -K option and only one access */
+					struct stgcat_entry *stcp_search, *stcp_found;
+					if (((stcp->status == STAGEWRT) ||
+						((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
+						(stcp->poolname[0] == '\0')) {
+						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+							update_migpool(stcp,-1,0);
+						}
+						delreq (stcp,0);
+					} else {
+						struct stgcat_entry *save_stcp = stcp;
+						int save_status = stcp->status;
+						if ((save_stcp->t_or_d == 'h') && (((save_stcp->status & 0xF) == STAGEWRT) || ((save_stcp->status & 0xF) == STAGEPUT)) && HAVE_SENSIBLE_STCP(save_stcp)) {
+							/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
+							/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
+							stcp_found = NULL;
+							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+								if (stcp_search->reqid == 0) break;
+								if (! ISCASTORBEINGMIG(stcp_search)) continue;
+								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
+									if (stcp_found == NULL) {
+										stcp_found = stcp_search;
+										break;
+									}
+								}
+							}
+							if (stcp_found == NULL) {
+								/* This is acceptable only if the request is an explicit STAGEPUT */
+								if (stcp->status != STAGEPUT) {
+									sendrep (rpfd, MSG_ERR, STG22);
+									continue;
+								} else {
+									stcp_found = stcp;
+								}
+							}
+							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+								update_migpool(stcp_found,-1,0);
+								stcp_found->status &= ~CAN_BE_MIGR;
+							}
+							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
+							stcp_found->status |= STAGED;
+							update_hsm_a_time(stcp_found);
+#ifdef USECDB
+							if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							}
+#endif
+							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
+						}
+						if (stcp_found != NULL) {
+							if ((stcp_found != save_stcp) || ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) {
+								int continue_flag = 0;
+								/* The found element is not the STAGEWRT itself, or is the STAGEPUT */
+								/* this means it was a migration request */
+								if (ifileclass >= 0) {
+									time_t thistime = time(NULL);
+									/* Fileclass's retention period on disk larger than current lifetime ? */
+									if (((int) (thistime - stcp_found->a_time)) < retenp_on_disk(ifileclass)) {
+										stglogit(func, STG131, stcp_found->u1.h.xfile, retenp_on_disk(ifileclass), (thistime - stcp_found->a_time));
+										continue_flag = 1;
+									} else {
+										stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (thistime - stcp_found->a_time));
+									}
+								}
+								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+									update_migpool(save_stcp,-1,0);
+								}
+								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) delreq(save_stcp,0);
+								if (continue_flag != 0) {
+									continue;
+								} else {
+									goto delete_entry;
+								}
+							} else {
+							delete_entry:
+								/* We can delete this entry */
+								if (delfile (stcp_found, 0, 1, 1, ((save_status & STAGEWRT) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0) < 0) {
+									sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
+												 "rfio_unlink", rfio_serror());
+								}
+							}
+						}
+					}
+				} else {
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 						update_migpool(stcp,-1,0);
+						stcp->status &= ~CAN_BE_MIGR;
 					}
-					delreq (stcp,0);
-				} else {
-					struct stgcat_entry *save_stcp = stcp;
-					int save_status = stcp->status;
-						if ((save_stcp->t_or_d == 'h') && (((save_stcp->status & 0xF) == STAGEWRT) || ((save_stcp->status & 0xF) == STAGEPUT)) && HAVE_SENSIBLE_STCP(save_stcp)) {
-						/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
-						/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
-						stcp_found = NULL;
-						for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
-							if (stcp_search->reqid == 0) break;
-							if (! ISCASTORBEINGMIG(stcp_search)) continue;
-							if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
-								if (stcp_found == NULL) {
-									stcp_found = stcp_search;
-									break;
-								}
-							}
-						}
-						if (stcp_found == NULL) {
-							/* This is acceptable only if the request is an explicit STAGEPUT */
-							if (stcp->status != STAGEPUT) {
-								sendrep (rpfd, MSG_ERR, STG22);
-								continue;
-							} else {
-								stcp_found = stcp;
-							}
-						}
-						if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpool(stcp_found,-1,0);
-							stcp_found->status &= ~CAN_BE_MIGR;
-						}
-						stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
-						stcp_found->status |= STAGED;
-						update_hsm_a_time(stcp_found);
+					stcp->status |= STAGED;
+					update_hsm_a_time(stcp);
 #ifdef USECDB
-						if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
-							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-						}
-#endif
-						if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
-					if (stcp_found != NULL) {
-						if ((stcp_found != save_stcp) || ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) {
-							int continue_flag = 0;
-							/* The found element is not the STAGEWRT itself, or is the STAGEPUT */
-							/* this means it was a migration request */
-							if (ifileclass >= 0) {
-								time_t thistime = time(NULL);
-								/* Fileclass's retention period on disk larger than current lifetime ? */
-								if (((int) (thistime - stcp_found->a_time)) < retenp_on_disk(ifileclass)) {
-									stglogit(func, STG131, stcp_found->u1.h.xfile, retenp_on_disk(ifileclass), (thistime - stcp_found->a_time));
-									continue_flag = 1;
-								} else {
-									stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (thistime - stcp_found->a_time));
-								}
-							}
-							if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-								update_migpool(save_stcp,-1,0);
-							}
-							if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) delreq(save_stcp,0);
-							if (continue_flag != 0) {
-								continue;
-							} else {
-								goto delete_entry;
-							}
-						} else {
-						delete_entry:
-							/* We can delete this entry */
-							if (delfile (stcp_found, 0, 1, 1, ((save_status & STAGEWRT) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0) < 0) {
-								sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
-											 "rfio_unlink", rfio_serror());
-							}
-						}
-					}
-				}
-			} else {
-				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					update_migpool(stcp,-1,0);
-					stcp->status &= ~CAN_BE_MIGR;
-				}
-				stcp->status |= STAGED;
-				update_hsm_a_time(stcp);
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
 #endif
-				if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+				}
 			}
-		}
-		i = 0;		/* reset these variables changed by the above loop */
-		wfp = wqp->wf;	/* and needed in the loop below */
-	} else {	/* STAGEIN */
-		stcp->status |= STAGED;
-		if (rc == BLKSKPD || rc == TPE_LSZ || rc == MNYPARI)
-			stcp->status |= STAGED_TPE;
-		if (rc == LIMBYSZ || rc == TPE_LSZ)
-			stcp->status |= STAGED_LSZ;
+			i = 0;		/* reset these variables changed by the above loop */
+			wfp = wqp->wf;	/* and needed in the loop below */
+		} else {	/* STAGEIN */
+			stcp->status |= STAGED;
+			if (rc == BLKSKPD || rc == TPE_LSZ || rc == MNYPARI)
+				stcp->status |= STAGED_TPE;
+			if (rc == LIMBYSZ || rc == TPE_LSZ)
+				stcp->status |= STAGED_LSZ;
 #ifdef USECDB
-		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-		}
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-		if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
-		if (wqp->copytape)
-			sendinfo2cptape (rpfd, stcp);
-		if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-			create_link (stcp, wfp->upath);
-		if (wqp->Upluspath && *((wfp+1)->upath) &&
-				strcmp (stcp->ipath, (wfp+1)->upath))
-			create_link (stcp, (wfp+1)->upath);
-		updfreespace (stcp->poolname, stcp->ipath,
-									(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
-		check_waiting_on_req (subreqid, STAGED);
-	}
-	savereqs();
-	for ( ; i < wqp->nbdskf; i++, wfp++) {
-		memcpy(wfp,wfp+1,sizeof(struct waitf));
+			if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+			if (wqp->copytape)
+				sendinfo2cptape (rpfd, stcp);
+			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
+				create_link (stcp, wfp->upath);
+			if (wqp->Upluspath && *((wfp+1)->upath) &&
+					strcmp (stcp->ipath, (wfp+1)->upath))
+				create_link (stcp, (wfp+1)->upath);
+			updfreespace (stcp->poolname, stcp->ipath,
+										(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
+			check_waiting_on_req (subreqid, STAGED);
+		}
+		savereqs();
+		for ( ; i < wqp->nbdskf; i++, wfp++) {
+			memcpy(wfp,wfp+1,sizeof(struct waitf));
+		}
 	}
 	if (rc == MNYPARI) wqp->status = rc;
 #ifdef STAGER_DEBUG
