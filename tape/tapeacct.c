@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.2 $ $Date: 1999/10/22 09:42:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:12:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "osdep.h"
 #include "sacct.h"

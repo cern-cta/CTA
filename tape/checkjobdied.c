@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.2 $ $Date: 1999/10/03 06:33:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:09:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #ifndef hpux
