@@ -1,7 +1,10 @@
 /*
- * $Id: rfio.h,v 1.7 2000/03/28 09:21:03 obarring Exp $
+ * $Id: rfio.h,v 1.8 2000/05/03 14:14:49 obarring Exp $
  *
  * $Log: rfio.h,v $
+ * Revision 1.8  2000/05/03 14:14:49  obarring
+ * Add rfio_HsmIf prototypes
+ *
  * Revision 1.7  2000/03/28 09:21:03  obarring
  * Increase CNTRL timeout to 20 seconds
  *
@@ -48,6 +51,8 @@
 #include <sys/types.h>          /* standard data types                  */
 #include <dirent.h>             /* standard directory definitions       */
 #endif /* _WIN32 */
+
+#include <osdep.h>
 
 #if !defined(_WIN32)
 #ifndef min
@@ -466,6 +471,24 @@ extern void striptb();          /* strip trailing blanks                */
 extern char *getconfent();      /* get configuration file entry         */
 extern char *getacct();         /* get account string name              */
 extern char *lun2fn();          /* resolve lun to filename translation  */
+
+EXTERN_C int DLL_DECL rfio_HsmIf_access _PROTO((const char *, int));
+EXTERN_C int DLL_DECL rfio_HsmIf_chdir _PROTO((const char *));
+EXTERN_C int DLL_DECL rfio_HsmIf_chmod _PROTO((const char *, mode_t));
+EXTERN_C int DLL_DECL rfio_HsmIf_chown _PROTO((const char *, uid_t, gid_t)); 
+EXTERN_C int DLL_DECL rfio_HsmIf_close _PROTO((int));
+EXTERN_C int DLL_DECL rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
+EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t)); 
+EXTERN_C int DLL_DECL rfio_HsmIf_rename _PROTO((const char *, const char *));
+EXTERN_C int DLL_DECL rfio_HsmIf_rmdir _PROTO((const char *));
+EXTERN_C int DLL_DECL rfio_HsmIf_stat _PROTO((const char *, struct stat *));
+EXTERN_C int DLL_DECL rfio_HsmIf_unlink _PROTO((const char *));
+#if !defined(_WIN32)
+EXTERN_C int DLL_DECL rfio_HsmIf_closedir _PROTO((DIR *));
+EXTERN_C struct dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
+EXTERN_C DIR DLL_DECL *rfio_HsmIf_opendir _PROTO((const char *));
+EXTERN_C void DLL_DECL rfio_HsmIf_rewinddir _PROTO((DIR *));
+#endif /* !_WIN32 */
 
 #else   /* !RFIO_KERNEL */
 
