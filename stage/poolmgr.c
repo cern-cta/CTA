@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.13 2000/05/12 12:28:20 jdurand Exp $
+ * $Id: poolmgr.c,v 1.14 2000/05/12 13:37:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.13 $ $Date: 2000/05/12 12:28:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.14 $ $Date: 2000/05/12 13:37:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1166,6 +1166,7 @@ int migpoolfiles(pool_p)
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
+		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
 		if (strcmp (pool_p->name, stcp->poolname)) continue;
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
@@ -1302,6 +1303,7 @@ int migpoolfiles(pool_p)
                 }
               }
               /* Next round */
+              memset((void *) files, 0, nfiles_per_request * sizeof(stage_hsm_t));
               nfiles = 0;
             }
           }
