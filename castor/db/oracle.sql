@@ -924,7 +924,8 @@ BEGIN
     SELECT FileSystem.id INTO fsIds(i)
       FROM FileSystem, DiskServer
      WHERE FileSystem.mountPoint = fileSystems(i)
-       AND DiskServer.name = machines(i);
+       AND DiskServer.name = machines(i)
+       AND FileSystem.diskServer = DiskServer.id;
    END LOOP;
    OPEN c1 FOR
     SELECT FileSystem.mountPoint, Diskserver.name,
@@ -952,7 +953,6 @@ BEGIN
  END IF;
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;
- updateFsFileOpened(ds, fs, dev, minFree);
 END;
 
 /* PL/SQL method implementing anySegmentsForTape */
