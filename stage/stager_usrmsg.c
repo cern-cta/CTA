@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.1 2000/03/23 00:37:24 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.2 2000/03/29 16:36:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.1 $ $Date: 2000/03/23 00:37:24 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char cvsId[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.2 $ $Date: 2000/03/29 16:36:40 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -48,6 +48,11 @@ void stager_usrmsg(int level, ...)
 	char    line[BUFSIZ] ;  /* Formatted log message                */
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 	int     level;          /* Level of the message                 */
+
+	if (level == LOG_DEBUG) {
+		/* Do nothing if level is LOG_DEBUG */
+		return;
+    }
 
 	va_start(args);         /* initialize to beginning of list      */
 	level = va_arg(args, int);
