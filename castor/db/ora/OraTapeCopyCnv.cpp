@@ -83,15 +83,15 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_deleteTypeStatementString =
 
 /// SQL insert statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_insertStreamStatementString =
-"INSERT INTO rh_Stream2TapeCopy (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO rh_Stream2TapeCopy (Child, Parent) VALUES (:1, :2)";
 
 /// SQL delete statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteStreamStatementString =
-"DELETE FROM rh_Stream2TapeCopy WHERE Parent = :1 AND Child = :2";
+"DELETE FROM rh_Stream2TapeCopy WHERE Child = :1 AND Parent = :2";
 
 /// SQL select statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectStreamStatementString =
-"SELECT Child from rh_Stream2TapeCopy WHERE Parent = :1";
+"SELECT Parent from rh_Stream2TapeCopy WHERE Child = :1";
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementString =

@@ -92,15 +92,15 @@ const std::string castor::db::ora::OraSvcClassCnv::s_selectTapePoolStatementStri
 
 /// SQL insert statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_insertDiskPoolStatementString =
-"INSERT INTO rh_DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO rh_DiskPool2SvcClass (Child, Parent) VALUES (:1, :2)";
 
 /// SQL delete statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteDiskPoolStatementString =
-"DELETE FROM rh_DiskPool2SvcClass WHERE Parent = :1 AND Child = :2";
+"DELETE FROM rh_DiskPool2SvcClass WHERE Child = :1 AND Parent = :2";
 
 /// SQL select statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_selectDiskPoolStatementString =
-"SELECT Child from rh_DiskPool2SvcClass WHERE Parent = :1";
+"SELECT Parent from rh_DiskPool2SvcClass WHERE Child = :1";
 
 //------------------------------------------------------------------------------
 // Constructor

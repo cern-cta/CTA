@@ -332,6 +332,14 @@ void CppCppOraCnvWriter::writeConstants() {
       Member* firstMember = 0;
       Member* secondMember = 0;
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
+      QString firstRole, secondRole;
+      if (firstMember == &as->localPart) {
+        firstRole = "Parent";
+        secondRole = "Child";
+      } else {
+        firstRole = "Child";
+        secondRole = "Parent";        
+      }
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
                 << as->remotePart.name
@@ -346,7 +354,8 @@ void CppCppOraCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " (Parent, Child) VALUES (:1, :2)\";"
+                << " (" << firstRole << ", " << secondRole
+                << ") VALUES (:1, :2)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
                 << as->remotePart.name
@@ -361,7 +370,8 @@ void CppCppOraCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " WHERE Parent = :1 AND Child = :2\";"
+                << " WHERE " << firstRole << " = :1 AND "
+                << secondRole << " = :2\";"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
                 << as->remotePart.name
@@ -372,11 +382,12 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"SELECT Child from rh_"
+                << "\"SELECT " << secondRole << " from rh_"
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " WHERE Parent = :1\";" << endl << endl;
+                << " WHERE " << firstRole << " = :1\";"
+                << endl << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
@@ -1795,7 +1806,9 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "// check whether something needs to be done"
             << endl << getIndent()
-            << "if (0 == obj) return;" << endl;
+            << "if (0 == obj) return;" << endl
+            << getIndent()
+            << "if (0 != obj->id()) return;" << endl;
   // Start of try block for database statements
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;

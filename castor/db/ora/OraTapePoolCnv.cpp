@@ -80,15 +80,15 @@ const std::string castor::db::ora::OraTapePoolCnv::s_deleteTypeStatementString =
 
 /// SQL insert statement for member svcClasses
 const std::string castor::db::ora::OraTapePoolCnv::s_insertSvcClassStatementString =
-"INSERT INTO rh_SvcClass2TapePool (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO rh_SvcClass2TapePool (Child, Parent) VALUES (:1, :2)";
 
 /// SQL delete statement for member svcClasses
 const std::string castor::db::ora::OraTapePoolCnv::s_deleteSvcClassStatementString =
-"DELETE FROM rh_SvcClass2TapePool WHERE Parent = :1 AND Child = :2";
+"DELETE FROM rh_SvcClass2TapePool WHERE Child = :1 AND Parent = :2";
 
 /// SQL select statement for member svcClasses
 const std::string castor::db::ora::OraTapePoolCnv::s_selectSvcClassStatementString =
-"SELECT Child from rh_SvcClass2TapePool WHERE Parent = :1";
+"SELECT Parent from rh_SvcClass2TapePool WHERE Child = :1";
 
 /// SQL select statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString =
