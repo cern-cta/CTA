@@ -1,3 +1,13 @@
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+ 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 11:56:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+ 
+#include <errno.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #if TMS
@@ -61,7 +71,7 @@ char *acctname;
 		break;
 	}
 	if (errflg)
-		return (ETSYS);
+		return (EINVAL);
 	strncpy (tmsvsn, tmrepbuf, 6);
 	tmsvsn[6] = '\0';
 	for  (j = 0; tmsvsn[j]; j++)
