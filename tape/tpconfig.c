@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 12:27:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.2 $ $Date: 1999/11/12 11:01:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
@@ -50,11 +50,13 @@ char	**argv;
 		usage (argv[0]);
 		exit (USERR);
 	}
-	if (strcmp (argv[2], "up") == 0)
+	if (strcmp (argv[2], "up") == 0) {
 		status = CONF_UP;
-	else if (strcmp (argv[2], "down") == 0)
+		reason = TPCU_OPS;
+	} else if (strcmp (argv[2], "down") == 0) {
 		status = CONF_DOWN;
-	else {
+		reason = TPCD_OPS;
+	} else {
 		usage (argv[0]);
 		exit (USERR);
 	}
