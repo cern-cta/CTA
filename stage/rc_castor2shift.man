@@ -1,0 +1,80 @@
+.\" $Id: rc_castor2shift.man,v 1.1 2002/10/05 07:24:23 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rc_castor2shift.man,v $ $Revision: 1.1 $ $Date: 2002/10/05 07:24:23 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH RC_CASTOR2SHIFT "3" "$Date: 2002/10/05 07:24:23 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+rc_castor2shift \- Convert a CASTOR error number to a process exit code
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int rc_castor2shift (int " serrno ");"
+
+.SH DESCRIPTION
+The \fBrc_castor2shift\fP API method is used to exit with a correct code from the application, but based on an error number after a stage API call that failed.
+
+.SH PARAMETERS
+.TP 1.5i
+.I serrno
+Error number. Supported error numbers are:
+.RS
+.TP
+.I ETHELD
+converted to ETHELDERR (188)
+.TP
+.I ERTBLKSKPD
+converted to BLKSKPD (193)
+.TP
+.I ERTTPE_LSZ
+converted to TPE_LSZ (194)
+.TP
+.I ERTMNYPARY,ETPARIT
+converted to MNYPARI (195)
+.TP
+.I ERTLIMBYSZ
+converted to LIMBYSZ (197)
+.TP
+.I EACCES,EINVAL,ENOENT,EPERM,SENAMETOOLONG,SENOSHOST
+converted to USERR (1)
+.TP
+.I SESYSERR,SEOPNOTSUP,SECONNDROP,SECOMERR
+converted to SYERR (2)
+.TP
+.I ESTNACT
+converted to SHIFT_ESTNACT (198)
+.TP
+.I ESTKILLED
+converted to REQKILD (196)
+.TP
+.I ESTCLEARED
+converted to CLEARED (192)
+.TP
+.I ESTCONF
+converted to CONFERR (4)
+.TP
+.I ESTLNKNSUP
+converted to LNKNSUP (189)
+.TP
+.I ECUPVNACT
+converted to SHIFT_ECUPVNACT (187)
+.RE
+
+.SH RETURN VALUE
+Depends on the 
+.I serrno
+in input. If 
+.I serrno
+matches none of the values above, return code of
+.I rc_castor2shift
+is the
+.I serrno
+unchanged.
+
+.SH SEE ALSO
+\fBstage_constants\fP(3), \fBserrno\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
