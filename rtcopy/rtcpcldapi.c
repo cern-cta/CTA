@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/09 15:17:48 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.43 $ $Release$ $Date: 2004/08/10 09:33:39 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.42 $ $Date: 2004/08/09 15:17:48 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.43 $ $Date: 2004/08/10 09:33:39 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -542,6 +542,40 @@ static int newOrUpdatedSegment(
   return(newSegment + (updatedSegment*2));
 }
 
+static int updateSegment(
+                         segment
+                         )
+     RtcpcldSegmentList_t *segment;
+{
+  tape_list_t *tape;
+  rtcpFileRequest_t *filereq;
+  int rc, save_serrno;
+  ID_TYPE key = 0;
+  
+  if ( segment == NULL || segment->segment == NULL || segment->file == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  filereq = &(segment->file->filereq);
+  tape = segment->file->tape;
+  
+  Cstager_Segment_setDiskPath(
+                              segment->segment,
+                              filereq->file_path
+                              );
+  Cstager_Segment_setFseq(
+                          segment->segment,
+                          filereq->tape_fseq
+                          );
+  Cstager_Segment_setBlockid(
+                             segment->segment,
+                             filereq->blockid
+                             );
+  return(0);
+}
+  
+
 static int updateSegmentInDB(
                              segment
                              )
@@ -563,19 +597,6 @@ static int updateSegmentInDB(
 
   filereq = &(segment->file->filereq);
   tape = segment->file->tape;
-  
-  Cstager_Segment_setDiskPath(
-                              segment->segment,
-                              filereq->file_path
-                              );
-  Cstager_Segment_setFseq(
-                          segment->segment,
-                          filereq->tape_fseq
-                          );
-  Cstager_Segment_setBlockid(
-                             segment->segment,
-                             filereq->blockid
-                             );
   
   serrno = 0;
   rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
@@ -806,6 +827,7 @@ static void dumpSegmList(
   int fseq;
   unsigned char *blkid;
   char *diskPath;  
+  enum Cstager_SegmentStatusCodes_t status;
   RtcpcldSegmentList_t *segment;
 
   rtcp_log(LOG_DEBUG,"Dumping all segments\n");
@@ -816,15 +838,17 @@ static void dumpSegmList(
       Cstager_Segment_blockid(segment->segment,(CONST unsigned char **)&blkid);
       diskPath = NULL;
       Cstager_Segment_diskPath(segment->segment,(CONST char **)&diskPath);
+      Cstager_Segment_status(segment->segment,&status);
       Cstager_Segment_id(segment->segment,&key);
       rtcp_log(LOG_DEBUG,
-               "    Segment: FSEQ=%d, blkid=%.2d%.2d%.2d%.2d, path=%s, DBkey=%lu\n",
+               "    Segment: FSEQ=%d, blkid=%.2d%.2d%.2d%.2d, path=%s, status=%d, DBkey=%lu\n",
                fseq,
                (int)blkid[0],
                (int)blkid[1],
                (int)blkid[2],
                (int)blkid[3],
                diskPath,
+               status,
                key);
     }
   CLIST_ITERATE_END(tpList->segments,segment);
@@ -938,12 +962,84 @@ static int doFullUpdate(
      RtcpcldTapeList_t *tpList;
      tape_list_t *tape;
 {
+  struct C_IObject_t *tapeIObj = NULL;
+  struct C_Services_t **dbSvc;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr;
   tape_list_t *tl;
   file_list_t *fl;
   RtcpcldSegmentList_t *segm = NULL;
-  int rc = 0;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  int rc = 0, updates = 0, save_serrno;
 
   if ( rtcpcld_killed(tape) == 1 ) return(-1);
+
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()","");
+    *dbSvc = NULL;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
+    save_serrno = serrno;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  rc = rtcpcld_getStgDbSvc(&stgSvc);
+  if ( rc == -1 || stgSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getStgDbSvc()","");
+    stgSvc = NULL;
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+  rc = Cstager_IStagerSvc_selectTape(
+                                     stgSvc,
+                                     &tpList->tp,
+                                     tape->tapereq.vid,
+                                     tape->tapereq.side,
+                                     tape->tapereq.mode
+                                     );
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()",
+                    C_Services_errorMsg(*dbSvc));
+    if ( serrno == 0 ) serrno = errno;
+    save_serrno = serrno;
+    rtcp_log(LOG_ERR,"doFullUpdate() Cstager_IStagerSvc_selectTape(%s,%d,%d) DB error: %s\n",
+             tape->tapereq.vid,
+             tape->tapereq.side,
+             tape->tapereq.mode,
+             Cstager_IStagerSvc_errorMsg(stgSvc));
+    strncpy(tape->tapereq.err.errmsgtxt,
+            Cstager_IStagerSvc_errorMsg(stgSvc),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+    (void)C_Services_rollback(*dbSvc,iAddr);
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
   CLIST_ITERATE_BEGIN(tape,tl) 
     {
       CLIST_ITERATE_BEGIN(tl->file,fl) 
@@ -959,10 +1055,11 @@ static int doFullUpdate(
             break;
           } else if ( rc == 1 ) {
             rtcp_log(LOG_DEBUG,
-                     "doFullUpdate(): %s/%d(%s) new segment fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     "doFullUpdate(): %s/%d(%s) new segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
                      tl->tapereq.vid,
                      tl->tapereq.side,
                      (tl->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.disk_fseq,
                      fl->filereq.tape_fseq,
                      (int)fl->filereq.blockid[0],
                      (int)fl->filereq.blockid[1],
@@ -977,19 +1074,21 @@ static int doFullUpdate(
                             &segm
                             );
             if ( rc == -1 ) break;
-            if ( segm != NULL ) {
-              rc = addSegmentToDB(
-                                  &fl->filereq,
-                                  segm
-                                  );
-              if ( rc == -1 ) break;
-            }
+            updates = 1;
+/*             if ( segm != NULL ) { */
+/*               rc = addSegmentToDB( */
+/*                                   &fl->filereq, */
+/*                                   segm */
+/*                                   ); */
+/*               if ( rc == -1 ) break; */
+/*             } */
           } else if ( (rc == 2) && (segm != NULL) ) {
             rtcp_log(LOG_DEBUG,
-                     "doFullUpdate(): %s/%d(%s) update segment fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     "doFullUpdate(): %s/%d(%s) update segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
                      tl->tapereq.vid,
                      tl->tapereq.side,
                      (tl->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.disk_fseq,
                      fl->filereq.tape_fseq,
                      (int)fl->filereq.blockid[0],
                      (int)fl->filereq.blockid[1],
@@ -997,15 +1096,53 @@ static int doFullUpdate(
                      (int)fl->filereq.blockid[3],
                      fl->filereq.file_path
                      );
-            rc = updateSegmentInDB(segm);
+            rc = updateSegment(segm);
             if ( rc == -1 ) break;
+            updates = 1;
+/*             rc = updateSegmentInDB(segm); */
+/*             if ( rc == -1 ) break; */
           }
         }
       CLIST_ITERATE_END(tl->file,fl);
       if ( rc == -1 ) break;
     }
   CLIST_ITERATE_END(tape,tl);
-  
+
+  if ( rc == -1 || updates == 0 ) {
+    save_serrno = serrno;
+    rtcp_log((rc == -1 ? LOG_ERR : LOG_DEBUG),
+             "doFullUpdate() break out from segment loop with RC=%d, update=%d, serrno=%d\n",
+             rc,
+             updates,
+             save_serrno);
+    (void)C_Services_rollback(*dbSvc,iAddr);
+  } else {
+    rtcp_log(LOG_DEBUG,"doFullUpdate() commit updates\n");
+    tapeIObj = Cstager_Tape_getIObject(tpList->tp);
+    
+    if ( rtcpcld_killed(tape) != 0 ) {
+      save_serrno = serrno;
+      (void)C_Services_rollback(*dbSvc,iAddr);
+      rtcp_log(LOG_ERR,"Request aborted\n");
+    }
+    
+    rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
+    if ( rc != 0 ) {
+      LOG_FAILED_CALL("C_Services_updateRep()",
+                      C_Services_errorMsg(*dbSvc));
+      save_serrno = serrno;
+      (void)C_Services_rollback(*dbSvc,iAddr);
+      tape->tapereq.err.errorcode = save_serrno;
+      strncpy(tape->tapereq.err.errmsgtxt,
+              C_Services_errorMsg(*dbSvc),
+              sizeof(tape->tapereq.err.errmsgtxt)-1);
+      tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+      rtcp_log(LOG_ERR,"DB error: %s\n",
+               tape->tapereq.err.errmsgtxt);
+    }
+  }
+  C_IAddress_delete(iAddr);
+  if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
 
@@ -1735,6 +1872,7 @@ void rtcpcldc_cleanup(tape)
   
   if ( tape == NULL ) return;
   rc = rtcpcld_findTpReqMap(tape,&tpList);
+  (void)Cmutex_lock(tape,-1);
   if ( rc == 1 ) {
     while ( (tpItem = tpList) != NULL ) {
       while ( (segmItem = tpItem->segments) != NULL ) {
@@ -1757,6 +1895,7 @@ void rtcpcldc_cleanup(tape)
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
   }
+  (void)Cmutex_unlock(tape);
   return;
 }
 
@@ -1839,8 +1978,8 @@ int rtcpcldc(tape)
             sizeof(tape->tapereq.err.errmsgtxt)-1);
     tape->tapereq.err.errorcode = save_serrno;
     tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-    rtcpcldc_cleanup(tape);
     (void)Cmutex_unlock(tape);
+    rtcpcldc_cleanup(tape);
     serrno = save_serrno;
     return(-1);
   }
@@ -1853,8 +1992,8 @@ int rtcpcldc(tape)
     LOG_FAILED_CALL("rtcpcld_getStgDbSvc()","");
     stgSvc = NULL;
     C_IAddress_delete(iAddr);
-    rtcpcldc_cleanup(tape);
     (void)Cmutex_unlock(tape);
+    rtcpcldc_cleanup(tape);
     serrno = save_serrno;
     return(-1);
   }
@@ -1866,8 +2005,8 @@ int rtcpcldc(tape)
         LOG_FAILED_CALL("calloc()","");
         C_IAddress_delete(iAddr);
         (void)C_Services_rollback(*dbSvc,iAddr);
-        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
+        rtcpcldc_cleanup(tape);
         serrno = SESYSERR;
         return(-1);
       }
@@ -1877,8 +2016,8 @@ int rtcpcldc(tape)
         save_serrno = serrno;
         (void)C_Services_rollback(*dbSvc,iAddr);
         C_IAddress_delete(iAddr);
-        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
+        rtcpcldc_cleanup(tape);
         serrno = save_serrno;
         return(-1);
       }
@@ -1906,8 +2045,8 @@ int rtcpcldc(tape)
         tl->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         (void)C_Services_rollback(*dbSvc,iAddr);
         C_IAddress_delete(iAddr);
-        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
+        rtcpcldc_cleanup(tape);
         serrno = save_serrno;
         return(-1);
       }
@@ -1951,8 +2090,8 @@ int rtcpcldc(tape)
             save_serrno = serrno;
             (void)C_Services_rollback(*dbSvc,iAddr);
             C_IAddress_delete(iAddr);
-            rtcpcldc_cleanup(tape);
             (void)Cmutex_unlock(tape);
+            rtcpcldc_cleanup(tape);
             serrno = save_serrno;
             return(-1);
           }
@@ -1969,8 +2108,8 @@ int rtcpcldc(tape)
         save_serrno = serrno;
         (void)C_Services_rollback(*dbSvc,iAddr);
         C_IAddress_delete(iAddr);
-        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
+        rtcpcldc_cleanup(tape);
         rtcp_log(LOG_ERR,"Request aborted\n");
         serrno = save_serrno;
         return(-1);
@@ -1988,8 +2127,8 @@ int rtcpcldc(tape)
                sizeof(rtcpcldTp->tape->tapereq.err.errmsgtxt)-1);
         rtcpcldTp->tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         C_IAddress_delete(iAddr);
-        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
+        rtcpcldc_cleanup(tape);
         rtcp_log(LOG_ERR,"DB error: %s\n",
                  rtcpcldTp->tape->tapereq.err.errmsgtxt);
         serrno = save_serrno;
