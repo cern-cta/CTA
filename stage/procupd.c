@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.41 2000/11/25 11:17:44 jdurand Exp $
+ * $Id: procupd.c,v 1.42 2000/12/12 14:43:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.41 $ $Date: 2000/11/25 11:17:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.42 $ $Date: 2000/12/12 14:43:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,12 +37,11 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.41 $ $Date: 200
 #include "osdep.h"
 #include "rfio_api.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 
 void procupdreq _PROTO((char *, char *));
 void update_hsm_a_time _PROTO((struct stgcat_entry *));
 
-extern char *optarg;
-extern int optind;
 extern char func[16];
 extern int reqid;
 extern int rpfd;
@@ -125,67 +124,64 @@ procupdreq(req_data, clienthost)
 	ifce = unknown;
 	upd_reqid = reqid;
 	upd_rpfd = rpfd;
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "b:D:F:f:h:I:L:q:R:s:T:U:W:Z:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:I:L:q:R:s:T:U:W:Z:")) != -1) {
 		switch (c) {
 		case 'b':
-			blksize = strtol (optarg, &dp, 10);
+			blksize = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-b");
 				errflg++;
 			}
 			break;
 		case 'D':
-			dvn = optarg;
+			dvn = Coptarg;
 			break;
 		case 'F':
-			recfm = optarg;
+			recfm = Coptarg;
 			break;
 		case 'f':
-			fid = optarg;
+			fid = Coptarg;
 			break;
 		case 'h':
 			break;
 		case 'I':
-			ifce = optarg;
+			ifce = Coptarg;
 			break;
 		case 'L':
-			lrecl = strtol (optarg, &dp, 10);
+			lrecl = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-L");
 				errflg++;
 			}
 			break;
 		case 'q':
-			fseq = optarg;
+			fseq = Coptarg;
 			break;
 		case 'R':
-			rc = strtol (optarg, &dp, 10);
+			rc = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-R");
 				errflg++;
 			}
 			break;
 		case 's':
-			size = strtol (optarg, &dp, 10);
+			size = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
 			}
 			break;
 		case 'T':
-			transfer_time = strtol (optarg, &dp, 10);
+			transfer_time = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-T");
 				errflg++;
 			}
 			break;
 		case 'W':
-			waiting_time = strtol (optarg, &dp, 10);
+			waiting_time = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-W");
 				errflg++;
@@ -193,7 +189,7 @@ procupdreq(req_data, clienthost)
 			break;
 		case 'Z':
 			Zflag++;
-			if ((p = strtok (optarg, ".")) != NULL) {
+			if ((p = strtok (Coptarg, ".")) != NULL) {
 				reqid = strtol (p, &dp, 10);
 				if ((p = strtok (NULL, "@")) != NULL) {
 					key = strtol (p, &dp, 10);
@@ -202,7 +198,7 @@ procupdreq(req_data, clienthost)
 			break;
 		}
 	}
-	if (Zflag && nargs > optind) {
+	if (Zflag && nargs > Coptind) {
 		sendrep (rpfd, MSG_ERR, STG16);
 		errflg++;
 	}
@@ -210,10 +206,16 @@ procupdreq(req_data, clienthost)
 		c = USERR;
 		goto reply;
 	}
-	if (nargs > optind) {
-		for  (i = optind; i < nargs; i++)
-			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL))
-				goto reply;
+	if (nargs > Coptind) {
+		for  (i = Coptind; i < nargs; i++)
+			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL)) {
+				if (c != CLEARED) {
+					goto reply;
+				} else {
+					/* This is not formally an error to do an updc on a zero-length file */
+					c = 0;
+				}
+			}
 		goto reply;
 	}
 	found = 0;
@@ -221,10 +223,8 @@ procupdreq(req_data, clienthost)
 	while (wqp) {
 		if (wqp->reqid == reqid &&
 			wqp->key == key &&
-			(wqp->StageIDflag != 0 ?
-				(stpasswd->pw_uid == uid && stpasswd->pw_gid == gid) :
-				(wqp->uid         == uid && wqp->gid         == gid)
-			)
+			wqp->rtcp_uid == uid &&
+			wqp->rtcp_gid == gid
 		) {
 			found = 1;
 			break;
@@ -236,16 +236,15 @@ procupdreq(req_data, clienthost)
 		/* We log information because this might be a bug */
 		wqp = waitqp;
 		while (wqp) {
-			stglogit(func,"Compared (reqid,key,uid,gid)=(%d,%d,%d,%d) with wqp's (reqid,key,uid,gid)=(%d,%d,%d,%d)\n",
+			stglogit(func,"Compared (reqid,key,uid,gid)=(%d,%d,%d,%d) with wqp's (reqid,key,rtcp_uid,rtcp_gid)=(%d,%d,%d,%d)\n",
 					(int) reqid,
 					(int) key,
 					(int) uid,
 					(int) gid,
 					(int) wqp->reqid,
 					(int) wqp->key,
-					(int) (wqp->StageIDflag != 0 ? stpasswd->pw_uid : wqp->uid),
-					(int) (wqp->StageIDflag != 0 ? stpasswd->pw_gid : wqp->gid)
-			);
+					(int) wqp->rtcp_uid,
+					(int) wqp->rtcp_gid);
 			wqp = wqp->next;
 		}
 		c = USERR;
@@ -424,7 +423,7 @@ procupdreq(req_data, clienthost)
 		}
 	}
 #if SACCT
-	stageacct (STGFILS, wqp->uid, wqp->gid, wqp->clienthost,
+	stageacct (STGFILS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 						 wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost);
 #endif
 	if (rc == 211) {	/* no more file on tape */
