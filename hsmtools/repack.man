@@ -1,0 +1,129 @@
+.\" @(#)$RCSfile: repack.man,v $ $Revision: 1.1 $ $Date: 2003/10/14 13:05:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH REPACK 1 "$Date: 2003/10/14 13:05:48 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+repack \- copy the active segments from a set of volumes to another set
+.SH SYNOPSIS
+.B repack
+[
+.BI -d " density"
+] [
+.BI -h " name_server"
+] [
+.B -i
+] [
+.BI -n " max_vol_to_repack"
+] [
+.BI -P " poolname"
+] [
+.BI -V " vid"
+] [
+.BI --help
+] [
+.BI --li " library"
+] [
+.BI --mo " model"
+] [
+.BI --nodelete
+] [
+.BI --otp " output_tppool"
+]
+.SH DESCRIPTION
+.B repack
+copies the active segments from a set of volumes to another set.
+Only volumes having
+.B FULL
+status may be repacked.
+One can either specify a single volume using
+.B -V
+option, a list of volumes on stdin (option
+.BR -i )
+or a given tape pool (option
+.BR -P ).
+In the latter case, the list can be restricted by specifying a density, a
+library name, a model or a maximum number of volumes.
+When the repack has been successfully completed, the volume can be reclaimed.
+.LP
+This command requires ADMIN privilege in the Cupv database.
+.TP
+.I density
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590E cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges,
+.B 110G
+or
+.B 110GC
+for SDLT cartridges.
+.TP
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+The list of models can be obtained with
+.BR vmgrlistmodel .
+.TP
+.I output_tppool
+is the output tape pool to be used, if different from the original tape pool.
+It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
+.TP
+.I vid
+is the volume visual identifier of the single volume to be repacked.
+It must be at most CA_MAXVIDLEN characters long.
+.SH EXAMPLE
+.nf
+.ft CW
+repack -V RT0001
+
+repack -P alicemdc3_9940 --li STK_ACS0
+
+repack -P lhcb --mo 9840
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_listtape(3) ,
+.BR reclaim(1) ,
+.BR vmgr_listtape(3) ,
+.BR vmgr_querypool(3) ,
+.B vmgr_querytape(3)
