@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.30 $ $Date: 2004/03/17 18:13:05 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.31 $ $Date: 2004/03/17 18:34:33 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -2014,7 +2014,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					}
 				}
 #endif
-				if (((current->forceid == -1) ? Cthread_mutex_trylock_ext(current->state_cthread_structure[i]) : Cthread_mutex_lock_ext(current->state_cthread_structure[i])) == 0) {
+				if (((current->forceid == -1) ? Cthread_mutex_trylock_ext(current->state_cthread_structure[i]) : (timeout > 0 ? Cthread_mutex_timedlock_ext(current->state_cthread_structure[i], timeout) : Cthread_mutex_lock_ext(current->state_cthread_structure[i]))) == 0) {
 #ifdef CPOOL_DEBUG
 					if (Cpool_debug != 0) {
 						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : current->state[%d]=%d, current->forceid=%d\n",
