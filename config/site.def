@@ -297,7 +297,7 @@
 
 #define IDMech ID
 
-#define CSEC_Mechlist \"KRB5Mech GSIMech KRB4Mech IDMech\"
+#define CSEC_Mechlist KRB5Mech GSIMech KRB4Mech IDMech
 
 
 #endif /* BuildSecurity */
