@@ -80,6 +80,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_STAGED,
     RTCPCLD_MSG_IGNORE_ENOENT,
     RTCPCLD_MSG_ZEROSIZE,
+    RTCPCLD_MSG_COPYFAILED,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -110,7 +111,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_EXTERR, DLF_LVL_ERROR, "External logger error message"},
     { RTCPCLD_MSG_VDQMINFO, DLF_LVL_SYSTEM, "Request successfully submitted to VDQM"},
     { RTCPCLD_MSG_NOREQS, DLF_LVL_SYSTEM, "Nothing left to do for this VID"},
-    { RTCPCLD_MSG_CALLBACK_GETW, DLF_LVL_DEBUG, "rtcopy client daemon callback: get more work"},
+    { RTCPCLD_MSG_CALLBACK_GETW, DLF_LVL_SYSTEM, "rtcopy client daemon callback: get more work"},
     { RTCPCLD_MSG_RECALLER_ENDED, DLF_LVL_SYSTEM, "recaller ended"},
     { RTCPCLD_MSG_MIGRATOR_ENDED, DLF_LVL_SYSTEM, "migrator ended"},
     { RTCPCLD_MSG_DBSVC, DLF_LVL_ERROR, "Database service error"},
@@ -144,11 +145,12 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_VMGRFATAL, DLF_LVL_ALERT,"VMGR error requiring admin intervention"},
     { RTCPCLD_MSG_RESTORETPCP, DLF_LVL_SYSTEM,"Re-enable TapeCopy for selection"},
     { RTCPCLD_MSG_RESETSTREAM, DLF_LVL_SYSTEM,"Reset Stream"},
-    { RTCPCLD_MSG_CPEXIST, DLF_LVL_ALERT,"Dual copy already exist on same tape"},
+    { RTCPCLD_MSG_CPEXIST, DLF_LVL_WARNING,"Dual copy on same tape. Detached from stream."},
     { RTCPCLD_MSG_REMAININGSEGMS, DLF_LVL_SYSTEM,"Not all segments staged for file"},
     { RTCPCLD_MSG_STAGED, DLF_LVL_SYSTEM,"File staged"},
-    { RTCPCLD_MSG_IGNORE_ENOENT, DLF_LVL_SYSTEM,"File removed during migration. Error ignored"},
+    { RTCPCLD_MSG_IGNORE_ENOENT, DLF_LVL_WARNING,"File removed during migration. Error ignored"},
     { RTCPCLD_MSG_ZEROSIZE, DLF_LVL_SYSTEM,"Zero size disk file rejected"},
+    { RTCPCLD_MSG_COPYFAILED, DLF_LVL_ERROR,"Copy failed"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
