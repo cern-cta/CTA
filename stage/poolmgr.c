@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.240 2003/03/11 16:03:43 jdurand Exp $
+ * $Id: poolmgr.c,v 1.241 2003/04/17 07:29:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.240 $ $Date: 2003/03/11 16:03:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.241 $ $Date: 2003/04/17 07:29:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -5968,15 +5968,7 @@ Sigfunc *_stage_signal(signo, func)
 		act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
 	}
-#ifdef __INSURE__
-	/* Insure don't like the value I give to sigaction... */
-	_Insure_set_option("runtime","off");
-#endif
 	n = sigaction(signo, &act, &oact);
-#ifdef __INSURE__
-	/* Restore runtime checking */
-	_Insure_set_option("runtime","on");
-#endif
 	if (n < 0) {
 		return(SIG_ERR);
 	}
