@@ -37,6 +37,520 @@ static char sccsid[] = "@(#)stage_updc.c,v 1.3 2003/10/31 07:03:57 CERN IT-PDP/D
 #endif /* _REENTRANT || _THREAD_SAFE */
 #endif /* _WIN32 */
 
+int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_time, transfer_time, blksize, drive, fid, fseq, lrecl, recfm, path)
+     char *stageid;
+     int subreqid;
+     int copyrc;
+     char *ifce;
+     u_signed64 size;
+     int waiting_time;
+     int transfer_time;
+     int blksize;
+     char *drive;
+     char *fid;
+     int fseq;
+     int lrecl;
+     char *recfm;
+     char *path;
+{
+  int c;
+  char *dp;
+  int errflg = 0;
+  gid_t egid;
+  int key;
+  int msglen;
+  int nargs;
+  int ntries = 0;
+  int nstg161 = 0;
+  char *p;
+  struct passwd *pw;
+  char *q, *q2;
+  char *rbp;
+  char repbuf[CA_MAXPATHLEN+1];
+  int reqid;
+  char *sbp;
+  char *sendbuf;
+  size_t sendbuf_size;
+  char *stghost = NULL;
+  char tmpbuf[21];
+  uid_t euid;
+  char Zparm[CA_MAXSTGRIDLEN+1];
+  char *func = "stage_updc_filcp";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+  euid = geteuid();
+  egid = getegid();
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+  if (! stageid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (stageid[0] == '\0') {
+    serrno = EFAULT;
+    return (-1);
+  }
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
+
+  /* check stager request id */
+
+  if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
+    strcpy (Zparm, stageid);
+    if ((p = strtok (Zparm, ".")) != NULL) {
+      stage_strtoi(&reqid, p, &dp, 10);
+      if (*dp != '\0' || reqid <= 0 ||
+          (p = strtok (NULL, "@")) == NULL) {
+        errflg++;
+      } else {
+        stage_strtoi(&key, p, &dp, 10);
+        if (*dp != '\0' ||
+            (stghost = strtok (NULL, " ")) == NULL) {
+          errflg++;
+        }
+      }
+    } else {
+      errflg++;
+    }
+  } else
+    errflg++;
+  if (errflg) {
+    serrno = EINVAL;
+    return (-1);
+  }
+
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    serrno = SEUSERUNKN;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                       /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;           /* Login name */
+  sendbuf_size += 3 * WORDSIZE;                      /* euid, egid, nargs */
+  sendbuf_size += strlen(func) + 1;               /* Func name */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      sendbuf_size += strlen("-D") + strlen(drive) + 2; /* -D option and value */
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      sendbuf_size += strlen("-F") + strlen(recfm) + 2; /* -F option and value */
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      sendbuf_size += strlen("-f") + strlen(fid) + 2; /* -f option and value */
+    }
+  }
+  if (ifce) {
+    if (ifce[0] != '\0') {
+      sendbuf_size += strlen("-I") + strlen(ifce) + 2; /* -I option and value */
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    sendbuf_size += strlen("-L") + strlen(tmpbuf) + 2; /* -L option and value */
+  }
+  if (size > 0) {
+    u64tostr((u_signed64) size, tmpbuf, 0);
+    sendbuf_size += strlen("-s") + strlen(tmpbuf) + 2; /* -s option and value */
+  }
+  /* if (copyrc >= 0) { */
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
+    sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
+	/* } */
+  if (transfer_time > 0) {
+    sprintf (tmpbuf, "%d", transfer_time);
+    sendbuf_size += strlen("-T") + strlen(tmpbuf) + 2; /* -T option and value */
+  }
+  if (waiting_time > 0) {
+    sprintf (tmpbuf, "%d", waiting_time);
+    sendbuf_size += strlen("-W") + strlen(tmpbuf) + 2; /* -W option and value */
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    sendbuf_size += strlen("-q") + strlen(tmpbuf) + 2; /* -q option and value */
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return (-1);
+  }
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STAGEUPDC);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+  marshall_STRING (sbp, pw->pw_name);	/* login name */
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
+  q2 = sbp;	/* save pointer. The next field will be updated */
+  nargs = 1;
+  marshall_WORD (sbp, nargs);
+  marshall_STRING (sbp, func);
+
+  marshall_STRING (sbp, "-Z");
+  marshall_STRING (sbp, stageid);
+  nargs += 2;
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    marshall_STRING (sbp,"-b");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      marshall_STRING (sbp,"-D");
+      marshall_STRING (sbp, drive);
+      nargs += 2;
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      marshall_STRING (sbp,"-F");
+      marshall_STRING (sbp, recfm);
+      nargs += 2;
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      marshall_STRING (sbp,"-f");
+      marshall_STRING (sbp, fid);
+      nargs += 2;
+    }
+  }
+  if (ifce) {
+    if (ifce[0] != '\0') {
+      marshall_STRING (sbp,"-I");
+      marshall_STRING (sbp, ifce);
+      nargs += 2;
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    marshall_STRING (sbp,"-L");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (size > 0) {
+    u64tostr((u_signed64) size, tmpbuf, 0);
+    marshall_STRING (sbp,"-s");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  /* if (copyrc >= 0) { */
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
+    marshall_STRING (sbp, "-R");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+	/* } */
+  if (transfer_time > 0) {
+    sprintf (tmpbuf, "%d", transfer_time);
+    marshall_STRING (sbp, "-T");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (waiting_time > 0) {
+    sprintf (tmpbuf, "%d", waiting_time);
+    marshall_STRING (sbp, "-W");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    marshall_STRING (sbp,"-q");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  marshall_WORD (q2, nargs);	/* update nargs */
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  while (1) {
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
+	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  if (c == 0 && path != NULL && repbuf[0] != '\0') {
+    rbp = repbuf;
+    unmarshall_STRING (rbp, path);
+  }
+  free(sendbuf);
+  return (c == 0 ? 0 : -1);
+}
+
+int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fseq, lrecl, recfm, path)
+     char *stageid;
+     int subreqid;
+     int status;
+     int blksize;
+     char *drive;
+     char *fid;
+     int fseq;
+     int lrecl;
+     char *recfm;
+     char *path;
+{
+  int c;
+  char *dp;
+  int errflg = 0;
+  gid_t egid;
+  int key;
+  int msglen;
+  int n;
+  int nargs;
+  int ntries = 0;
+  int nstg161 = 0;
+  char *p;
+  struct passwd *pw;
+  char *q, *q2;
+  char *rbp;
+  char repbuf[CA_MAXPATHLEN+1];
+  int reqid;
+  char *sbp;
+  char *sendbuf;
+  size_t sendbuf_size;
+  char *stghost = NULL;
+  char tmpbuf[21];
+  uid_t euid;
+  char Zparm[CA_MAXSTGRIDLEN+1];
+  char *func = "stage_updc_tppos";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+  euid = geteuid();
+  egid = getegid();
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+  if (! stageid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (stageid[0] == '\0') {
+    serrno = EFAULT;
+    return (-1);
+  }
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
+
+  /* check stager request id */
+
+  if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
+    strcpy (Zparm, stageid);
+    if ((p = strtok (Zparm, ".")) != NULL) {
+      stage_strtoi(&reqid, p, &dp, 10);
+      if (*dp != '\0' || reqid <= 0 ||
+          (p = strtok (NULL, "@")) == NULL) {
+        errflg++;
+      } else {
+        stage_strtoi(&key, p, &dp, 10);
+        if (*dp != '\0' ||
+            (stghost = strtok (NULL, " ")) == NULL) {
+          errflg++;
+        }
+      }
+    } else {
+      errflg++;
+    }
+  } else
+    errflg++;
+  if (errflg) {
+    serrno = EINVAL;
+    return (-1);
+  }
+
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    serrno = SEUSERUNKN;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                        /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
+  sendbuf_size += 3 * LONGSIZE;                       /* euid, egid, nargs */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      sendbuf_size += strlen("-D") + strlen(drive) + 2; /* -D option and value */
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      sendbuf_size += strlen("-F") + strlen(recfm) + 2; /* -F option and value */
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      sendbuf_size += strlen("-f") + strlen(fid) + 2; /* -f option and value */
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    sendbuf_size += strlen("-L") + strlen(tmpbuf) + 2; /* -L option and value */
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    sendbuf_size += strlen("-q") + strlen(tmpbuf) + 2; /* -q option and value */
+  }
+  if (status == ETFSQ) {
+    n = 211;	/* emulate old (SHIFT) ETFSQ */
+    sprintf (tmpbuf, "%d", n);
+    sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STAGEUPDC);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+
+  marshall_STRING (sbp, pw->pw_name);	/* login name */
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
+  q2 = sbp;	/* save pointer. The next field will be updated */
+  nargs = 1;
+  marshall_WORD (sbp, nargs);
+  marshall_STRING (sbp, func);
+
+  marshall_STRING (sbp, "-Z");
+  marshall_STRING (sbp, stageid);
+  nargs += 2;
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    marshall_STRING (sbp,"-b");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      marshall_STRING (sbp,"-D");
+      marshall_STRING (sbp, drive);
+      nargs += 2;
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      marshall_STRING (sbp,"-F");
+      marshall_STRING (sbp, recfm);
+      nargs += 2;
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      marshall_STRING (sbp,"-f");
+      marshall_STRING (sbp, fid);
+      nargs += 2;
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    marshall_STRING (sbp,"-L");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    marshall_STRING (sbp,"-q");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (status == ETFSQ) {
+    n = 211;	/* emulate old (SHIFT) ETFSQ */
+    sprintf (tmpbuf, "%d", n);
+    marshall_STRING (sbp, "-R");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  marshall_WORD (q2, nargs);	/* update nargs */
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  while (1) {
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
+	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  if (c == 0 && path != NULL && repbuf[0] != '\0') {
+    rbp = repbuf;
+    unmarshall_STRING (rbp, path);
+  }
+  free(sendbuf);
+  return (c == 0 ? 0 : -1);
+}
+
 int DLL_DECL stage_updc_user(stghost,hsmstruct)
      char *stghost;
      stage_hsm_t *hsmstruct;
