@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.38 $ $Release$ $Date: 2005/02/09 17:05:37 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.39 $ $Release$ $Date: 2005/03/04 14:59:13 $ $Author: jiltsov $
 #
 # Make Castor DB libraries
 #
@@ -48,6 +48,7 @@ ORALIB_SRCS = OraBaseCnv.cpp \
               OraDiskServerCnv.cpp \
               OraFileSystemCnv.cpp \
               OraFileClassCnv.cpp \
+              OraFiles2DeleteCnv.cpp \
               OraFilesDeletedCnv.cpp \
               OraGetUpdateStartRequestCnv.cpp \
               OraGetUpdateDoneCnv.cpp \
