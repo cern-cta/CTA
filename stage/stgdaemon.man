@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.6 $ $Date: 2001/03/26 07:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.7 $ $Date: 2001/04/29 09:41:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2001/03/26 07:52:47 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2001/04/29 09:41:05 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -34,10 +34,7 @@ All error messages and statistical information are kept in a log.
 .B stgdaemon
 keeps the catalog in a database managed by
 .BR Cdb .
-On all client hosts and on the stager host there should be entries for the
-stager in
-.B /etc/services
-like:
+On all client hosts and on the stager host the following default ports and protocol are used:
 .RS
 .HP
 rfio             5001/tcp                        # Remote File Access System
@@ -50,6 +47,9 @@ cns             5010/tcp                        # CASTOR name server
 .HP
 vmgr           5013/tcp                        # CASTOR volume manager
 .RE
+There should be entries in 
+.B /etc/services
+if you want to modify them site-wide.
 .LP
 On all client hosts there should be an entry in
 .B /etc/shift.conf
@@ -60,7 +60,7 @@ For example:
 STG     HOST            shd02
 .RE
 The stager hostname may also be specified thru the environment variable
-STAGE_HOST.
+STAGE_HOST. Otherwise default stager is "stagepublic".
 .LP
 If TMS is used, there should also be an entry in
 .B /etc/services
