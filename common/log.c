@@ -155,7 +155,7 @@ void DLL_DECL logit(int level, char *format, ...)
         (void) vsprintf(line+strlen(line),format,args);
         if (strlen(logfilename)!=0) {
             if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
-                O_APPEND,0666)) == -1 ) {
+                O_APPEND,0664)) == -1 ) {
                 syslog(LOG_ERR,"open: %s: %m", logfilename);
                 /* FH we probably should retry */
                 return;
@@ -164,7 +164,7 @@ void DLL_DECL logit(int level, char *format, ...)
                  * To be sure that file access is enables
                  * even if root umask is not 0 
                  */
-                 (void) chmod( logfilename, 0666 );           
+                 (void) chmod( logfilename, 0664 );           
         } else {
             if  (strlen(logfilename)==0)
                 fd= fileno (stderr); /* standard error */
