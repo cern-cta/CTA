@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.15 $ $Date: 2004/02/12 15:59:08 $ CERN IT/ADC Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.16 $ $Date: 2004/04/28 08:37:43 $ CERN IT/ADC Claire Redmond";
 #endif /* not lint */
 
 #if !defined(_WIN32)
@@ -2393,6 +2393,8 @@ struct requests **rp;
     int skip_insert = 0;	/* set if record deleted */
     struct tapeseq *tpseq;
     struct requests *rq = NULL;
+
+    if ( rp != NULL ) *rp = NULL;
     
     if (rtcp->subtype == RTCPPRC)
     {
