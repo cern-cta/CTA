@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.87 2002/05/06 17:17:16 jdurand Exp $
+ * $Id: procqry.c,v 1.88 2002/05/15 06:42:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.87 $ $Date: 2002/05/06 17:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.88 $ $Date: 2002/05/15 06:42:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -388,7 +388,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			noregexp_flag++;
 		}
 		if ((flags & STAGE_ALLOCED) == STAGE_ALLOCED) {
-			if ((t_or_d != 'a') && (t_or_d == 'd')) {
+			if ((t_or_d != 'a') && (t_or_d != 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = EINVAL;
 				goto reply;
@@ -422,7 +422,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			fflag++;
         }
 		if ((flags & STAGE_EXTERNAL) == STAGE_EXTERNAL) {
-			if ((t_or_d != 'a') && (t_or_d == 'd')) {
+			if ((t_or_d != 'a') && (t_or_d != 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
 				c = EINVAL;
 				goto reply;
