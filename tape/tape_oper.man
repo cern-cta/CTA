@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.4 $ $Date: 2000/02/03 10:44:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.5 $ $Date: 2000/02/03 13:32:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPE_OPER 1 "$Date: 2000/02/03 10:44:43 $" CASTOR "Ctape Administrator Commands"
+.TH TAPE_OPER 1 "$Date: 2000/02/03 13:32:03 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tape_oper \- operator interface to tape subsystem
 .SH DESCRIPTION
@@ -89,6 +89,6 @@ to be prelabelled is an NL tape, ok to continue?
 type "ok" or "yes" to continue, any other reply will cancel the prelabel.
 .RE
 .SH SEE ALSO
-.BR oper (l),
-.BR rep (l),
-.BR tpconfig (l)
+.BR oper (1),
+.BR rep (1),
+.BR tpconfig (1)
