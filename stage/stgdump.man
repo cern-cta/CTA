@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stgdump.man,v $ $Revision: 1.2 $ $Date: 2002/05/21 07:53:13 $ CERN IT/DS/HSM Jean-Damien Durand
+.\" $Id: stgdump.man,v 1.3 2002/10/03 14:02:21 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stgdump.man,v $ $Revision: 1.3 $ $Date: 2002/10/03 14:02:21 $ CERN IT/DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDUMP l "$Date: 2002/05/21 07:53:13 $"
+.TH STGDUMP l "$Date: 2002/10/03 14:02:21 $"
 .SH NAME
 stgdump \- Ask a stager deamon to dump its in\-memory catalog and save it in flat file format - for backup purpose
 .SH SYNOPSIS
