@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 13:05:21 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/18 14:49:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 13:05:21 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -64,6 +64,7 @@ extern int inChild;
 extern Cuuid_t mainUuid;
 extern Cuuid_t childUuid;
 
+#ifdef RTCPCLDSERVER
 /*
  * Only used when rtcpcld calls RTCOPY or other libraries
  * that may do internal logging.
@@ -124,6 +125,7 @@ int rtcpcld_initLogging(
   rtcp_log = rtcpcld_extlog;
   return(0);
 }
+#endif /* RTCPCLDSERVER */
 
 int rtcpcld_initNotifyByPort(
                              notificationSocket,
@@ -327,6 +329,7 @@ int rtcpcld_sendNotify(
   return(0);
 }
 
+#ifdef USEFAKECATALOGUE
 int rtcpcld_setVIDFailedStatus(
                                tape
                                ) 
@@ -356,4 +359,5 @@ int rtcpcld_setVIDFailedStatus(
   if ( failed > 0 ) return(-1);
   else return(0);
 }
+#endif /* USEFAKECATALOGUE */
 
