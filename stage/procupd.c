@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.112 2002/07/18 11:13:39 jdurand Exp $
+ * $Id: procupd.c,v 1.113 2002/07/27 07:22:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.112 $ $Date: 2002/07/18 11:13:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.113 $ $Date: 2002/07/27 07:22:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -327,10 +327,6 @@ procupdreq(req_type, magic, req_data, clienthost)
 					errflg++;
 				} else {
 					size = strutou64(Coptarg); /* Default unit is byte there */
-					if (size < 0) {
-						sendrep (rpfd, MSG_ERR, STG06, "-s");
-						errflg++;
-					}
 				}
 				break;
 			case 'T':
