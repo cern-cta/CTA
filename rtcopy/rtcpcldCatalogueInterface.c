@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.89 $ $Release$ $Date: 2004/11/30 10:14:57 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.90 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.89 $ $Release$ $Date: 2004/11/30 10:14:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.90 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -549,13 +549,12 @@ int rtcpcld_getTapesToDo(
   struct C_IAddress_t *iAddr;
   struct C_BaseAddress_t *baseAddr;
   struct Cstager_Tape_t **tpArray = NULL, *tp;
-  struct Cstager_Segment_t *segm;
   struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
   struct C_Services_t **dbSvc;
   struct Cstager_TapePool_t *tapePool;
   rtcpTapeRequest_t *tapereq;
-  tape_list_t *tmpTapeArray, *tape = NULL, *tl;
+  tape_list_t *tape = NULL, *tl;
   char *vid, *tapePoolName;
   int i, rc = 0, nbTpItems = 0, nbStreamItems = 0, nbItems = 0;
   int save_serrno, mode, side = 0;
@@ -1372,8 +1371,7 @@ int nextSegmentToMigrate(
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
   char *diskServer = NULL, *mountPoint = NULL, *relPath = NULL, *nsHost = NULL;
-  struct Cns_fileid *fileid;
-  int rc, i, nbItems = 0, save_serrno, nbDskCps = 0;
+  int rc, save_serrno, nbDskCps = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ) {
     serrno = EINVAL;
@@ -1783,7 +1781,7 @@ int deleteSegmentFromDB(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
-  int rc = 0, nbTapeCopies, save_serrno, i;
+  int rc = 0, save_serrno;
   ID_TYPE key;
 
   rc = getDbSvc(&svcs);
@@ -1911,8 +1909,7 @@ int deleteTapeCopyFromDB(
                          )
      struct Cstager_TapeCopy_t *tapeCopy;
 {
-  struct Cstager_Stream_t *stream = NULL, **streamArray;
-  struct Cstager_CastorFile_t *castorFile = NULL;
+  struct Cstager_Stream_t **streamArray = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
@@ -2041,10 +2038,9 @@ int rtcpcld_updcMigrFailed(
      tape_list_t *tape;
      file_list_t *file;
 {
-  struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
-  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  struct Cstager_TapeCopy_t *tapeCopy;
   struct Cstager_Stream_t **streamArray = NULL;
-  struct Cstager_Segment_t **segmentArray, *segment;
+  struct Cstager_Segment_t *segment;
   struct Cstager_Tape_t *tp;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -2052,8 +2048,7 @@ int rtcpcld_updcMigrFailed(
   struct C_Services_t **svcs = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
-  int rc = 0, nbTapeCopies, nbStreams, save_serrno, i, j;
-  ID_TYPE key;
+  int rc = 0, nbStreams, save_serrno, i;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
        (file == NULL) ) {
@@ -2215,10 +2210,7 @@ int rtcpcld_updcRecallFailed(
      tape_list_t *tape;
      file_list_t *file;
 {
-  struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
-  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
-  struct Cstager_Stream_t **streamArray = NULL;
-  struct Cstager_Segment_t **segmentArray, *segment;
+  struct Cstager_Segment_t *segment;
   struct Cstager_Tape_t *tp;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -2226,8 +2218,7 @@ int rtcpcld_updcRecallFailed(
   struct C_Services_t **svcs = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
-  int rc = 0, nbTapeCopies, nbStreams, save_serrno, i, j;
-  ID_TYPE key;
+  int rc = 0, save_serrno;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE ) ||
        (file == NULL) || (file->dbRef == NULL) ) {
@@ -2321,15 +2312,11 @@ int rtcpcld_updcFileRecalled(
      tape_list_t *tape;
      file_list_t *file;
 {
-  struct Cstager_TapeCopy_t *tapeCopy = NULL, **tapeCopyArray = NULL;
-  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
-  struct Cstager_DiskCopy_t **diskCopyArray = NULL, *diskCopy = NULL;
-  enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   struct Cstager_Segment_t **segmentArray = NULL, *segment = NULL;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
   struct Cstager_Tape_t *tp;
-  struct Cstager_Stream_t **streamArray;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
@@ -2337,9 +2324,8 @@ int rtcpcld_updcFileRecalled(
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
-  int rc = 0, nbSegments = 0, nbTapeCopies = 0, doUpdate = 1;
-  int save_serrno, i, j;
-  ID_TYPE key;
+  int rc = 0, nbSegments = 0, doUpdate = 1;
+  int save_serrno, i;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ||
        (tape->dbRef == NULL) || (file == NULL) || (file->dbRef == NULL) ) {
@@ -2550,20 +2536,18 @@ int rtcpcld_updcFileMigrated(
   struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   struct Cstager_CastorFile_t *castorFile;
-  struct Cstager_DiskCopy_t **diskCopyArray, *diskCopy;
+  struct Cstager_DiskCopy_t **diskCopyArray;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
-  struct Cstager_Segment_t **segmentArray, *segment;
+  struct Cstager_Segment_t *segment;
   struct Cstager_Tape_t *tp;
-  struct Cstager_Stream_t **streamArray;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
-  int rc = 0, nbTapeCopies, nbDiskCopies, nbSegments, nbStreams;
-  int save_serrno, i, j;
-  ID_TYPE key;
+  int rc = 0, nbTapeCopies, nbDiskCopies;
+  int save_serrno, i;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
        (file == NULL) ) {
@@ -2875,7 +2859,6 @@ int rtcpcld_returnStream(
   struct Cstager_Stream_t *stream = NULL;
   enum Cstager_TapeStatusCodes_t tpStatus;  
   struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
-  struct Cstager_TapePool_t *tapePool = NULL;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   int i, waitingFound = 0, rc = 0, save_serrno, nbTapeCopies = 0;
   ID_TYPE key = 0;
@@ -3070,9 +3053,8 @@ int rtcpcld_restoreSelectedTapeCopies(
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Segment_t *segment;
   struct Cstager_TapeCopy_t *tapeCopy;
-  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   file_list_t *file;
-  int rc, save_serrno, doCommit = 0;
+  int rc, doCommit = 0;
   struct Cns_fileid *fileId = NULL;
 
   rc = getDbSvc(&svcs);

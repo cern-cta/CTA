@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 11:47:34 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 11:47:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -48,10 +48,12 @@ WSADATA wsadata;
 #include <Cgrp.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
+#include <u64subr.h>
 #include <dlf_api.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <castor/Constants.h>
+#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>

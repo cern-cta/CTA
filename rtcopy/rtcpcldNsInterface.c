@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/26 14:33:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/26 14:33:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -102,8 +102,6 @@ int inChild;
  */
 Cuuid_t childUuid, mainUuid;
 
-static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
-
 static int use_checksum = 1, change_checksum_name = 0;
 
 int rtcpcld_initNsInterface() 
@@ -134,7 +132,6 @@ static int checkSegment(
   struct Cstager_TapeCopy_t *tapeCopy;
   struct Cstager_CastorFile_t *castorFile;
   u_signed64 fileSize = 0;
-  int rc = 0, i, save_serrno;
 
   if ( (tape == NULL) || (file == NULL) ||
        (tape->dbRef == NULL) || (file->dbRef == NULL) ||
@@ -186,8 +183,7 @@ int rtcpcld_updateNsSegmentAttributes(
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
-  int rc, i, save_serrno, nbSegms = 0, errorCode, severity, compressionFactor;
-  int mode, side;
+  int rc, save_serrno, nbSegms = 0, compressionFactor;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
   char *blkid = NULL;
@@ -389,7 +385,7 @@ int rtcpcld_checkNsSegment(
   struct Cns_fileid *castorFileId = NULL;
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
-  char *blkid = NULL, *p;
+  char *blkid = NULL;
   
   if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
@@ -672,18 +668,6 @@ int rtcpcld_checkCastorFile(
   if ( castorFileId != NULL ) free(castorFileId);  
   return(rc);
 }
-
-int geNbCopies(
-               file,
-               fileClassId
-               )
-     file_list_t *file;
-{
-  int rc;
-  struct Cns_fileclass fileClass;
-  
-}
-
 
 /** assure that all copies are on different tapes
  */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,9 +25,10 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
@@ -65,6 +66,7 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <Cnetdb.h>
+#include <u64subr.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -740,7 +742,6 @@ int rtcpcld_runWorker(
   rtcpc_sockets_t *socks;
   rtcpHdr_t hdr;
   tape_list_t *internalTapeList = NULL;
-  file_list_t *placeHolderFile = NULL;
   int rc, i, port = -1, reqId, save_serrno;
 
   if ( (tape == NULL) || (*tape->tapereq.vid == '\0') ||
@@ -1179,7 +1180,7 @@ int rtcpcld_parseWorkerCmd(
   char *vid = NULL, *dgn = NULL, *lbltype = NULL, *density = NULL;
   char  *unit = NULL, *mainUuidStr = NULL, optstr[3];
   file_list_t *fl;
-  int i, vdqmVolReqID = -1, c, rc, side = 0, tStartRequest = 0;
+  int vdqmVolReqID = -1, c, rc, side = 0, tStartRequest = 0;
   ID_TYPE key;
   
   if ( (argc < 0) || (argv == NULL) || (tape == NULL) || (sock == NULL) ) {
@@ -1347,7 +1348,6 @@ static void setErrorInfo(
      char *errMsgTxt;
      int errorCode;
 {
-  file_list_t *fl;
   int rc = 0, segmFailed = 0;
   
   if ( tape == NULL ) return;

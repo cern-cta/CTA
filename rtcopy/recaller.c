@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 10:18:33 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 10:18:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -66,6 +66,7 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <vmgr_api.h>
+#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -182,41 +183,6 @@ static int updateSegmCount(
   return(0);
 }
 
-static int nbRunningSegms() 
-{
-  int rc, nbRunning;
-  rc = Cthread_mutex_lock_ext(segmCountLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_lock_ext()");
-    return(-1);
-  }
-  if ( segmFailed > 0 ) nbRunning = 0;
-  else nbRunning = segmSubmitted - segmCompleted;
-  (void)dlf_write(
-                  childUuid,
-                  DLF_LVL_DEBUG,
-                  RTCPCLD_MSG_SEGMCNTS,
-                  (struct Cns_fileid *)NULL,
-                  RTCPCLD_NB_PARAMS+3,
-                  "SUBM",
-                  DLF_MSG_PARAM_INT,
-                  segmSubmitted,
-                  "COMPL",
-                  DLF_MSG_PARAM_INT,
-                  segmCompleted,
-                  "FAILED",
-                  DLF_MSG_PARAM_INT,
-                  segmFailed,
-                  RTCPCLD_LOG_WHERE
-                  );
-  rc = Cthread_mutex_unlock_ext(segmCountLock);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
-    return(-1);
-  }
-  return(nbRunning);
-}
-
 static int checkAborted(
                         segmFailed
                         )
@@ -268,7 +234,7 @@ int recallerCallbackFileCopied(
      rtcpFileRequest_t *filereq;
 {
   file_list_t *file = NULL;
-  int rc, save_serrno, tapeCopyNb = 0;
+  int rc;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid;
 
@@ -360,8 +326,7 @@ int recallerCallbackMoreWork(
      rtcpFileRequest_t *filereq;
 {
   static int requestToProcess = 0;
-  int rc, save_serrno, totalWaittime = 0;
-  time_t tBefore, tNow;
+  int rc, save_serrno;
   file_list_t *file = NULL;
   
   if ( rtcpcld_lockTape() == -1 ) {

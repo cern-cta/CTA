@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/04 15:48:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/30 11:19:29 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/04 15:48:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/30 11:19:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,8 +96,6 @@ int inChild;
  */
 Cuuid_t childUuid, mainUuid;
 
-static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
-
 /** Imported from old stage_util.c . Gives the max fseq that fits in label */
 static int maxTapeFseq(
                        labeltype
@@ -137,7 +135,7 @@ char *rtcpcld_tapeStatusStr(
 {
   static int statusStrKey = -1;
   static char *unknown = "(unknown)";
-  char *buf = NULL, *p;
+  char *buf = NULL;
   int rc, i;
   int statusCodes[] = {
     DISABLED,
@@ -183,7 +181,6 @@ int getVmgrErrBuf(
                   )
      char **vmgrErrBuf;
 {
-  static int nsErrBufKey = -1;
   static int vmgrErrBufKey = -1;
   void *tmpBuf = NULL;
   int rc;

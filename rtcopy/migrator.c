@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/15 07:37:01 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/15 07:37:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -66,6 +66,7 @@ WSADATA wsadata;
 #include <vdqm_api.h>
 #include <vmgr_api.h>
 #include <castor/Constants.h>
+#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -357,7 +358,7 @@ int migratorCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  int rc = 0, save_serrno, msgNo, level = DLF_LVL_SYSTEM;
+  int rc = 0, msgNo, level = DLF_LVL_SYSTEM;
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
   char *blkid = NULL, *func = NULL;
