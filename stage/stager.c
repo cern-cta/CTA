@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.97 2000/11/24 14:08:05 jdurand Exp $
+ * $Id: stager.c,v 1.98 2000/11/24 18:08:50 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.97 $ $Date: 2000/11/24 14:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.98 $ $Date: 2000/11/24 18:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1111,10 +1111,10 @@ int stagein_castor_hsm_file() {
 		if (callback_error != 0) {
 			/* This is a callback error - considered as fatal */
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, "STG02 - %s\n", "Callback Error - Exit");
+			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "callback error", sstrerror(serrno));
 			RESTORE_EID;
 			free(stcp_start);
-			RETURN (USERR);
+			RETURN (SYERR);
 		}
 
 		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
@@ -1507,9 +1507,9 @@ int stagewrt_castor_hsm_file() {
 				if (callback_error != 0) {
 					/* This is a callback error - considered as fatal */
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s\n", "Callback Error - Exit");
+					sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback error", sstrerror(serrno));
 					RESTORE_EID;
-					RETURN (USERR);
+					RETURN (SYERR);
 				}
 
 				if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
@@ -1657,9 +1657,9 @@ int stage_tape() {
     if (callback_error != 0) {
 		/* This is a callback error - considered as fatal */
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error", sstrerror(serrno));
+		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "callback error", sstrerror(serrno));
 		RESTORE_EID;
-		RETURN (USERR);
+		RETURN (SYERR);
 	}
 
 	if (rtcp_rc < 0) {
@@ -3311,5 +3311,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Friday 24 November, 2000 at 15:01:47 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 24 November, 2000 at 19:07:29 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
