@@ -7,7 +7,7 @@
 
 void *doit _PROTO((void *));
 
-#define NTHREAD 2
+#define NTHREADS 2
 
 #define FILE1 "castor5:/tmp/file1"
 #define FILE2 "castor5:/tmp/file2"
@@ -18,7 +18,7 @@ int main()
 
   putenv("RFIO_TRACE=3");
 
-  for (i = 0; i < NTHREAD; i++) {
+  for (i = 0; i < NTHREADS; i++) {
     Cthread_create(&doit, NULL);
     sleep(1);
   }
