@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.36 2002/10/30 16:26:44 jdurand Exp $
+ * $Id: stageqry.c,v 1.37 2002/11/20 09:49:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.36 $ $Date: 2002/10/30 16:26:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.37 $ $Date: 2002/11/20 09:49:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,9 +34,12 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.36 $ $Date: 20
 #include "serrno.h"
 #include "u64subr.h"
 
+#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+#endif
+
 #define THEMAX(a,b) ((a) > (b) ? (a) : (b))
 
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
