@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.43 2000/08/23 13:59:12 obarring Exp $
+ * Cthread.c,v 1.43 2000/08/23 13:59:12 obarring Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.43 $ $Date: 2000/08/23 13:59:12 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)Cthread.c,v 1.43 2000/08/23 13:59:12 CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -3036,6 +3036,7 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
+    struct timeval ts;
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -3073,8 +3074,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
-        /* usleep is in micro-seconds, not milli seconds... */
-        usleep((Timeout * 1000)/20);
+        ts.tv_sec = Timeout;
+        ts.tv_usec = 0;
+        select(0,NULL,NULL,NULL,&ts);
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
@@ -3275,6 +3277,7 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
+    struct timeval ts;
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -3312,8 +3315,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
-        /* usleep is in micro-seconds, not milli seconds... */
-        usleep((Timeout * 1000)/20);
+        ts.tv_sec = Timeout;
+        ts.tv_usec = 0;
+        select(0,NULL,NULL,NULL,&ts);
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
