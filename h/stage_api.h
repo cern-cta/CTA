@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.8 2000/05/11 07:56:32 jdurand Exp $
+ * $Id: stage_api.h,v 1.9 2000/05/15 07:49:01 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -8,6 +8,13 @@
 #include <osdep.h>
 #include <stage.h>
 #include <rtcp_api.h>
+
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 struct stage_hsm {
   char *xfile;         /* Recommended size: (CA_MAXHOSTNAMELEN+MAXPATH)+1 */
