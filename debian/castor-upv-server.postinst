@@ -27,7 +27,7 @@ case "$1" in
 	if [ "$2" = "" ] ; then
 	    action="start"
 	else
-	    action="restart"
+	    action="condrestart"
 	fi
 	if [ -x /sbin/service ]; then
 	    /sbin/service $servicename $action
