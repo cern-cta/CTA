@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -45,7 +46,7 @@ namespace castor {
      * class StageAbortRequest
      * 
      */
-    class StageAbortRequest : public virtual FileRequest {
+    class StageAbortRequest : public virtual FileRequest, public virtual ReqIdRequest {
 
     public:
 

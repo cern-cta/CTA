@@ -29,6 +29,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -39,6 +40,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StageAbortRequest::StageAbortRequest() throw() :
   FileRequest(),
+  ReqIdRequest(),
   m_id(0) {
 };
 
@@ -62,6 +64,7 @@ void castor::stager::StageAbortRequest::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->FileRequest::print(stream, indent, alreadyPrinted);
+  this->ReqIdRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

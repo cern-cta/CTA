@@ -282,4 +282,14 @@ int Cstager_StagePutDoneRequest_id(struct Cstager_StagePutDoneRequest_t* instanc
  */
 int Cstager_StagePutDoneRequest_setId(struct Cstager_StagePutDoneRequest_t* instance, u_signed64 new_var);
 
+/**
+ * Get the value of parent
+ */
+int Cstager_StagePutDoneRequest_parent(struct Cstager_StagePutDoneRequest_t* instance, struct Cstager_FileRequest_t** var);
+
+/**
+ * Set the value of parent
+ */
+int Cstager_StagePutDoneRequest_setParent(struct Cstager_StagePutDoneRequest_t* instance, struct Cstager_FileRequest_t* new_var);
+
 #endif // CASTOR_STAGER_STAGEPUTDONEREQUEST_H

@@ -32,6 +32,7 @@
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_FileRequest_t;
+struct Cstager_ReqIdRequest_t;
 struct Cstager_Request_t;
 struct Cstager_StageAbortRequest_t;
 struct Cstager_SubRequest_t;
@@ -62,6 +63,16 @@ struct Cstager_FileRequest_t* Cstager_StageAbortRequest_getFileRequest(struct Cs
  * Dynamic cast from FileRequest
  */
 struct Cstager_StageAbortRequest_t* Cstager_StageAbortRequest_fromFileRequest(struct Cstager_FileRequest_t* obj);
+
+/**
+ * Cast into ReqIdRequest
+ */
+struct Cstager_ReqIdRequest_t* Cstager_StageAbortRequest_getReqIdRequest(struct Cstager_StageAbortRequest_t* obj);
+
+/**
+ * Dynamic cast from ReqIdRequest
+ */
+struct Cstager_StageAbortRequest_t* Cstager_StageAbortRequest_fromReqIdRequest(struct Cstager_ReqIdRequest_t* obj);
 
 /**
  * Cast into Request
@@ -111,6 +122,20 @@ int Cstager_StageAbortRequest_removeSubRequests(struct Cstager_StageAbortRequest
  * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
  */
 int Cstager_StageAbortRequest_subRequests(struct Cstager_StageAbortRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+
+/*************************************************/
+/* Implementation of ReqIdRequest abstract class */
+/*************************************************/
+
+/**
+ * Get the value of parent
+ */
+int Cstager_StageAbortRequest_parent(struct Cstager_StageAbortRequest_t* instance, struct Cstager_FileRequest_t** var);
+
+/**
+ * Set the value of parent
+ */
+int Cstager_StageAbortRequest_setParent(struct Cstager_StageAbortRequest_t* instance, struct Cstager_FileRequest_t* new_var);
 
 /********************************************/
 /* Implementation of Request abstract class */

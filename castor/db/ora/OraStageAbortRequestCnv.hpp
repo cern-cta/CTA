@@ -178,6 +178,14 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type FileRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileRequest(castor::stager::StageAbortRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type SvcClass refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -210,6 +218,15 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSubRequest(castor::stager::StageAbortRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FileRequest refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileRequest(castor::stager::StageAbortRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -295,6 +312,12 @@ namespace castor {
 
         /// SQL remote update statement object for member subRequests
         oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
+
+        /// SQL update statement for member parent
+        static const std::string s_updateFileRequestStatementString;
+
+        /// SQL update statement object for member parent
+        oracle::occi::Statement *m_updateFileRequestStatement;
 
         /// SQL checkExist statement for member svcClass
         static const std::string s_checkSvcClassExistStatementString;

@@ -39,6 +39,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -57,7 +58,7 @@ const castor::ICnvFactory& OraStageAbortRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_insertStatementString =
-"INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12) RETURNING id INTO :13";
+"INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementString =
@@ -65,7 +66,7 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementStr
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client FROM StageAbortRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateStatementString =
@@ -99,6 +100,10 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteSubRequestSt
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_remoteUpdateSubRequestStatementString =
 "UPDATE SubRequest SET request = :1 WHERE id = :2";
 
+/// SQL update statement for member parent
+const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateFileRequestStatementString =
+"UPDATE StageAbortRequest SET parent = : 1 WHERE id = :2";
+
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_checkSvcClassExistStatementString =
 "SELECT id from SvcClass WHERE id = :1";
@@ -127,6 +132,7 @@ castor::db::ora::OraStageAbortRequestCnv::OraStageAbortRequestCnv(castor::ICnvSv
   m_selectSubRequestStatement(0),
   m_deleteSubRequestStatement(0),
   m_remoteUpdateSubRequestStatement(0),
+  m_updateFileRequestStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
   m_updateIClientStatement(0) {}
@@ -156,6 +162,7 @@ void castor::db::ora::OraStageAbortRequestCnv::reset() throw() {
     deleteStatement(m_deleteSubRequestStatement);
     deleteStatement(m_selectSubRequestStatement);
     deleteStatement(m_remoteUpdateSubRequestStatement);
+    deleteStatement(m_updateFileRequestStatement);
     deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
     deleteStatement(m_updateIClientStatement);
@@ -172,6 +179,7 @@ void castor::db::ora::OraStageAbortRequestCnv::reset() throw() {
   m_selectSubRequestStatement = 0;
   m_deleteSubRequestStatement = 0;
   m_remoteUpdateSubRequestStatement = 0;
+  m_updateFileRequestStatement = 0;
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
@@ -205,6 +213,9 @@ void castor::db::ora::OraStageAbortRequestCnv::fillRep(castor::IAddress* address
     switch (type) {
     case castor::OBJ_SubRequest :
       fillRepSubRequest(obj);
+      break;
+    case castor::OBJ_FileRequest :
+      fillRepFileRequest(obj);
       break;
     case castor::OBJ_SvcClass :
       fillRepSvcClass(obj);
@@ -281,6 +292,21 @@ void castor::db::ora::OraStageAbortRequestCnv::fillRepSubRequest(castor::stager:
 }
 
 //------------------------------------------------------------------------------
+// fillRepFileRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageAbortRequestCnv::fillRepFileRequest(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // Check update statement
+  if (0 == m_updateFileRequestStatement) {
+    m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
+  }
+  // Update local object
+  m_updateFileRequestStatement->setDouble(1, 0 == obj->parent() ? 0 : obj->parent()->id());
+  m_updateFileRequestStatement->setDouble(2, obj->id());
+  m_updateFileRequestStatement->executeUpdate();
+}
+
+//------------------------------------------------------------------------------
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageAbortRequestCnv::fillRepSvcClass(castor::stager::StageAbortRequest* obj)
@@ -339,6 +365,9 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObj(castor::IAddress* address
   switch (type) {
   case castor::OBJ_SubRequest :
     fillObjSubRequest(obj);
+    break;
+  case castor::OBJ_FileRequest :
+    fillObjFileRequest(obj);
     break;
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
@@ -406,6 +435,44 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjSubRequest(castor::stager:
 }
 
 //------------------------------------------------------------------------------
+// fillObjFileRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageAbortRequestCnv::fillObjFileRequest(castor::stager::StageAbortRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 parentId = (u_signed64)rset->getDouble(12);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->parent() &&
+      (0 == parentId ||
+       obj->parent()->id() != parentId)) {
+    obj->setParent(0);
+  }
+  // Update object or create new one
+  if (0 != parentId) {
+    if (0 == obj->parent()) {
+      obj->setParent
+        (dynamic_cast<castor::stager::FileRequest*>
+         (cnvSvc()->getObjFromId(parentId)));
+    } else {
+      cnvSvc()->updateObj(obj->parent());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageAbortRequestCnv::fillObjSvcClass(castor::stager::StageAbortRequest* obj)
@@ -422,7 +489,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjSvcClass(castor::stager::S
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(12);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -460,7 +527,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjIClient(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(13);
+  u_signed64 clientId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -498,7 +565,7 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(13, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(14, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -517,10 +584,11 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(11, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(13));
+    obj->setId((u_signed64)m_insertStatement->getDouble(14));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -558,6 +626,7 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  parent : " << obj->parent() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
     throw ex;

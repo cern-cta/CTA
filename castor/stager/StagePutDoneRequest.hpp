@@ -114,10 +114,28 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_parent
+       * @return the value of m_parent
+       */
+      FileRequest* parent() const {
+        return m_parent;
+      }
+
+      /**
+       * Set the value of m_parent
+       * @param new_var the new value of m_parent
+       */
+      void setParent(FileRequest* new_var) {
+        m_parent = new_var;
+      }
+
     private:
 
       /// The id of this object
       u_signed64 m_id;
+
+      FileRequest* m_parent;
 
     }; // end of class StagePutDoneRequest
 

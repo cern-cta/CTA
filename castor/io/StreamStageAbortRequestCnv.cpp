@@ -38,6 +38,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -173,6 +174,7 @@ void castor::io::StreamStageAbortRequestCnv::marshalObject(castor::IObject* obje
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
@@ -201,6 +203,9 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::unmarshalObject(castor:
     IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));

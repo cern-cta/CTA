@@ -39,6 +39,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -57,7 +58,7 @@ const castor::ICnvFactory& OraStagePutDoneRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_insertStatementString =
-"INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12) RETURNING id INTO :13";
+"INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client, parent) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_deleteStatementString =
@@ -65,7 +66,7 @@ const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_deleteStatementS
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client FROM StagePutDoneRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client, parent FROM StagePutDoneRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_updateStatementString =
@@ -111,6 +112,10 @@ const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_updateSvcClassSt
 const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_updateIClientStatementString =
 "UPDATE StagePutDoneRequest SET client = : 1 WHERE id = :2";
 
+/// SQL update statement for member parent
+const std::string castor::db::ora::OraStagePutDoneRequestCnv::s_updateFileRequestStatementString =
+"UPDATE StagePutDoneRequest SET parent = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -129,7 +134,8 @@ castor::db::ora::OraStagePutDoneRequestCnv::OraStagePutDoneRequestCnv(castor::IC
   m_remoteUpdateSubRequestStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
-  m_updateIClientStatement(0) {}
+  m_updateIClientStatement(0),
+  m_updateFileRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -159,6 +165,7 @@ void castor::db::ora::OraStagePutDoneRequestCnv::reset() throw() {
     deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
     deleteStatement(m_updateIClientStatement);
+    deleteStatement(m_updateFileRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -175,6 +182,7 @@ void castor::db::ora::OraStagePutDoneRequestCnv::reset() throw() {
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
+  m_updateFileRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -211,6 +219,9 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillRep(castor::IAddress* addre
       break;
     case castor::OBJ_IClient :
       fillRepIClient(obj);
+      break;
+    case castor::OBJ_FileRequest :
+      fillRepFileRequest(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -328,6 +339,21 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillRepIClient(castor::stager::
 }
 
 //------------------------------------------------------------------------------
+// fillRepFileRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagePutDoneRequestCnv::fillRepFileRequest(castor::stager::StagePutDoneRequest* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // Check update statement
+  if (0 == m_updateFileRequestStatement) {
+    m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
+  }
+  // Update local object
+  m_updateFileRequestStatement->setDouble(1, 0 == obj->parent() ? 0 : obj->parent()->id());
+  m_updateFileRequestStatement->setDouble(2, obj->id());
+  m_updateFileRequestStatement->executeUpdate();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagePutDoneRequestCnv::fillObj(castor::IAddress* address,
@@ -345,6 +371,9 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObj(castor::IAddress* addre
     break;
   case castor::OBJ_IClient :
     fillObjIClient(obj);
+    break;
+  case castor::OBJ_FileRequest :
+    fillObjFileRequest(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -482,6 +511,44 @@ void castor::db::ora::OraStagePutDoneRequestCnv::fillObjIClient(castor::stager::
 }
 
 //------------------------------------------------------------------------------
+// fillObjFileRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagePutDoneRequestCnv::fillObjFileRequest(castor::stager::StagePutDoneRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 parentId = (u_signed64)rset->getDouble(14);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->parent() &&
+      (0 == parentId ||
+       obj->parent()->id() != parentId)) {
+    obj->setParent(0);
+  }
+  // Update object or create new one
+  if (0 != parentId) {
+    if (0 == obj->parent()) {
+      obj->setParent
+        (dynamic_cast<castor::stager::FileRequest*>
+         (cnvSvc()->getObjFromId(parentId)));
+    } else {
+      cnvSvc()->updateObj(obj->parent());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagePutDoneRequestCnv::createRep(castor::IAddress* address,
@@ -498,7 +565,7 @@ void castor::db::ora::OraStagePutDoneRequestCnv::createRep(castor::IAddress* add
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(13, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(14, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -519,8 +586,9 @@ void castor::db::ora::OraStagePutDoneRequestCnv::createRep(castor::IAddress* add
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setDouble(11, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setDouble(12, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(13));
+    obj->setId((u_signed64)m_insertStatement->getDouble(14));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -559,7 +627,8 @@ void castor::db::ora::OraStagePutDoneRequestCnv::createRep(castor::IAddress* add
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl;
+                    << "  client : " << obj->client() << std::endl
+                    << "  parent : " << obj->parent() << std::endl;
     throw ex;
   }
 }

@@ -28,6 +28,7 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
@@ -63,6 +64,20 @@ extern "C" {
   // Cstager_StageAbortRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_getReqIdRequest
+  //----------------------------------------------------------------------------
+  castor::stager::ReqIdRequest* Cstager_StageAbortRequest_getReqIdRequest(castor::stager::StageAbortRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_fromReqIdRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromReqIdRequest(castor::stager::ReqIdRequest* obj) {
     return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
   }
 
@@ -136,6 +151,22 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_parent
+  //----------------------------------------------------------------------------
+  int Cstager_StageAbortRequest_parent(castor::stager::StageAbortRequest* instance, castor::stager::FileRequest** var) {
+    *var = instance->parent();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_setParent
+  //----------------------------------------------------------------------------
+  int Cstager_StageAbortRequest_setParent(castor::stager::StageAbortRequest* instance, castor::stager::FileRequest* new_var) {
+    instance->setParent(new_var);
     return 0;
   }
 

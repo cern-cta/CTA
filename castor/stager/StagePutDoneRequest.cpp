@@ -39,7 +39,8 @@
 //------------------------------------------------------------------------------
 castor::stager::StagePutDoneRequest::StagePutDoneRequest() throw() :
   FileRequest(),
-  m_id(0) {
+  m_id(0),
+  m_parent(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -65,6 +66,12 @@ void castor::stager::StagePutDoneRequest::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Parent : " << std::endl;
+  if (0 != m_parent) {
+    m_parent->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------

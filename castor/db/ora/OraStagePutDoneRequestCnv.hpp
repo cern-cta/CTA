@@ -194,6 +194,14 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type FileRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileRequest(castor::stager::StagePutDoneRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -226,6 +234,15 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjIClient(castor::stager::StagePutDoneRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FileRequest refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileRequest(castor::stager::StagePutDoneRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -313,6 +330,12 @@ namespace castor {
 
         /// SQL update statement object for member client
         oracle::occi::Statement *m_updateIClientStatement;
+
+        /// SQL update statement for member parent
+        static const std::string s_updateFileRequestStatementString;
+
+        /// SQL update statement object for member parent
+        oracle::occi::Statement *m_updateFileRequestStatement;
 
       }; // end of class OraStagePutDoneRequestCnv
 

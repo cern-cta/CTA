@@ -38,6 +38,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -175,6 +176,7 @@ void castor::io::StreamStagePutDoneRequestCnv::marshalObject(castor::IObject* ob
     }
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -207,6 +209,9 @@ castor::IObject* castor::io::StreamStagePutDoneRequestCnv::unmarshalObject(casto
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));
   return object;
 }
 

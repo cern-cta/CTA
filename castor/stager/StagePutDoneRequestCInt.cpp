@@ -370,4 +370,20 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_parent
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_parent(castor::stager::StagePutDoneRequest* instance, castor::stager::FileRequest** var) {
+    *var = instance->parent();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_setParent
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_setParent(castor::stager::StagePutDoneRequest* instance, castor::stager::FileRequest* new_var) {
+    instance->setParent(new_var);
+    return 0;
+  }
+
 } // End of extern "C"
