@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.28 2001/02/02 15:31:27 jdurand Exp $
+ * $Id: stagein.c,v 1.29 2001/03/02 18:13:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.28 $ $Date: 2001/02/02 15:31:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.29 $ $Date: 2001/03/02 18:13:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.28 $ $Date: 2001/02/02 15:31:2
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "Castor_limits.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 EXTERN_C int  DLL_DECL  sysreq _PROTO((char *, char *, int *, char *, int *));
@@ -57,7 +58,7 @@ int nowait_flag = 0;
 int tppool_flag = 0;
 
 #if TMS
-int tmscheck _PROTO((char *, char *, char *, char *, char *));
+int tmscheck _PROTO((char *, char *, char *, char *, char *, int *, int *));
 #endif
 int stagein_chkdirw _PROTO((char *));
 void cleanup _PROTO((int));
@@ -90,10 +91,10 @@ int main(argc, argv)
 	mode_t mask;
 #endif
 	int msglen;
-	int nargs;
+	int nargs, nargsdelta;
 	int ntries = 0;
 	int numvid, numvsn;
-	char *p, *q;
+	char *p, *q, *qnargs;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int pflag = 0;
 	char *pool_user = NULL;
@@ -106,6 +107,7 @@ int main(argc, argv)
 	int stagetape = 0;
 	int copytape = 0;
 	int uflag = 0;
+	int Aflag = 0;
 	uid_t uid;
 	char vid[MAXVSN][7];
 	char vsn[MAXVSN][7];
@@ -113,10 +115,20 @@ int main(argc, argv)
 	char xvsn[7*MAXVSN];
 	char **hsmfiles = NULL;
 	int nhsmfiles = 0;
+	int fseq1 = -1;
+	int fseq2 = -1;
+	int coff = 0;
+	char *qopt = NULL;
+	char *coffopt = NULL;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
 	char *tppool = NULL;
+	char *qoptok = NULL;
+	char *qoptforget = NULL;
+	int enospc_retry = -1;
+	int enospc_retryint = -1;
+	int enospc_ntries = 0;
 	static struct Coptions longopts[] =
 	{
 		{"allocation_mode",    REQUIRED_ARGUMENT,  NULL,      'A'},
@@ -175,6 +187,17 @@ int main(argc, argv)
 		errflg++;
 	}
 	
+	if (req_type == STAGEOUT) {
+		if (((p = getenv("STAGE_ENOSPC_RETRY")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRY")) != NULL)) {
+			enospc_retry = atoi(p);
+			if (((p = getenv("STAGE_ENOSPC_RETRYINT")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRYINT")) != NULL)) {
+				enospc_retryint = atoi(p);
+			} else {
+				enospc_retryint = RETRYI;
+			}
+		}
+	}
+
 	uid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
@@ -191,12 +214,15 @@ int main(argc, argv)
 	while ((c = Cgetopt_long (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'A':
+			Aflag++;
 			break;
 		case 'b':
 			break;
 		case 'C':
 			break;
 		case 'c':
+			coff++;
+			coffopt = Coptarg;
 			break;
 		case 'd':
 			stagetape++;
@@ -360,6 +386,7 @@ int main(argc, argv)
 			pflag++;
 			break;
 		case 'q':
+			qopt = Coptarg;
 			stagetape++;
 			break;
 		case 'S':
@@ -478,7 +505,69 @@ int main(argc, argv)
 		/* setting defaults (from TMS if installed) */
 		for (i = 0; i < numvid; i++) {
 #if TMS
-			errflg += tmscheck (vid[i], vsn[i], dgn, den, lbl);
+			if ((errflg += tmscheck (vid[i], vsn[i], dgn, den, lbl, &fseq1, &fseq2)) == 0) {
+				if (stagetape && coff && (qopt != NULL)) {
+					if (((numvid > 0) && (numvid != 1)) ||
+						((numvsn > 0) && (numvsn != 1))) {
+						fprintf (stderr, STG33, "-c off option", "requires one -V or one -v other option");
+						errflg++;
+					} else {
+						if (((fseq1 > 0) && (fseq2 <= 0)) ||
+							((fseq2 > 0) && (fseq1 <= 0)) ||
+							((fseq1 > 0) && (fseq2 > 0) && (fseq2 < fseq1))) {
+							fprintf (stderr, "STG33 - TMS gives %s VIDMAP inconsistent info (fseq range [%d,%d])", vid[i], fseq1, fseq2);
+							errflg++;
+						} else if ((fseq1 > 0) && (fseq2 > 0)) {
+							char *dp;
+							int qvalue;
+							/* TMS says that this volume is VIDMAPped */
+							/* We verify consistency with -q option value */
+							qvalue = (int) strtol(qopt, &dp, 10);
+							if ((qvalue == LONG_MIN) ||
+								(qvalue == LONG_MAX) ||
+								(*dp != '-') ||
+								((*dp == '-') && (*(dp+1) != '\0'))) {
+								fprintf (stderr, STG06, "-q");
+								errflg++;
+							} else {
+								/* When user specifies -q<fseq>, in reality the fseq on tape is fseq1+<fseq>-1 */
+								/* so we have to verify that fseq1+<fseq>-1 does not exceed fseq2 */
+								if ((qvalue + fseq1 - 1) > fseq2) {
+									fprintf (stderr, "STG33 - For %s VIDMAP volume, -q option value must be in range [%d,%d]\n", vid[i], 1, fseq2 - fseq1 + 1);
+									errflg++;
+								} else {
+									size_t fseqlen;
+									/* The real starting fseq is fseq1+<fseq>-1 */
+									fseq1 += (qvalue - 1);
+                                    /* We create a string like q1,q2,etc... */
+									/* starting from fseq1 to fseq2, so: fseq2-fseq1+1 entries */
+                                    /* separated by as many ',' characters, each entry being maximum CA_MAXFSEQLEN length */
+									fseqlen = ((fseq2-fseq1+1) * CA_MAXFSEQLEN) + (fseq2-fseq1) + 1;
+									if ((qoptok = (char *) malloc(fseqlen)) == NULL) {
+										fprintf (stderr, STG02, "stagein", "malloc", strerror(errno));
+										errflg++;
+									} else {
+										int iq;
+										char *qq = qoptok;
+
+										*qq = '\0';
+										for (iq = fseq1; iq <= fseq2; iq++) {
+											sprintf(qq, "%d", iq + qvalue - fseq1);
+											qq += strlen(qq);
+											if (iq != fseq2) {
+												*qq++ = ',';
+												*qq   = '\0';
+											}
+										}
+									}
+									qoptforget = qopt;
+									qopt = qoptok;
+								}
+                            }
+						}
+					}
+				}
+			}
 #else
 			if (vflag == 0)
 				strcpy (vsn[i], vid[i]);
@@ -494,7 +583,8 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-            freehsmfiles(nhsmfiles, hsmfiles);
+			freehsmfiles(nhsmfiles, hsmfiles);
+			if (qoptok != NULL) free(qoptok);
 			exit (1);
 		}
 		
@@ -552,9 +642,44 @@ int main(argc, argv)
 	pid = getpid();
 	marshall_WORD (sbp, pid);
 	
+	qnargs = sbp;	/* save pointer. The next field will be updated */
+	nargsdelta = 0;
 	marshall_WORD (sbp, nargs);
-	for (i = 0; i < Coptind; i++)
+	for (i = 0; i < Coptind; i++) {
+		if (qoptforget != NULL) {
+			/* The -q option value has been overwriten */
+			if (strstr(argv[i],"-q") == argv[i]) {
+				nargsdelta--;
+				continue;
+			}
+			if (argv[i] == qoptforget) {
+				/* Special case when -q option and value are not attached */
+				nargsdelta--;
+				continue;
+			}
+			/* and the -c off one has to be withdrawn */
+			if (strstr(argv[i],"-c") == argv[i]) {
+				nargsdelta--;
+				continue;
+			}
+			if (argv[i] == coffopt) {
+				/* Special case when -c option and value are not attached */
+				nargsdelta--;
+				continue;
+			}
+		}
 		marshall_STRING (sbp, argv[i]);
+	}
+	if (qoptforget != NULL) {
+		marshall_STRING (sbp, "-q");
+		marshall_STRING (sbp, qopt);
+		nargsdelta += 2;
+		if (! Aflag) {
+			marshall_STRING (sbp, "-A");
+			marshall_STRING (sbp, "deferred");
+			nargsdelta += 2;
+		}
+	}
 	if (numvsn || numvid) {		/* tape staging */
 		if (vflag == 0) {
 			marshall_STRING (sbp, "-v");
@@ -630,12 +755,18 @@ int main(argc, argv)
 		WSACleanup();
 #endif
         freehsmfiles(nhsmfiles, hsmfiles);
+		if (qoptok != NULL) free(qoptok);
 		exit (1);
 	}
 	
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 	
+	if (nargsdelta != 0) {
+		nargs += nargsdelta;
+		marshall_WORD (qnargs, nargs);	/* update number of arguments field */
+	}
+
 #if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -647,6 +778,11 @@ int main(argc, argv)
 	
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if ((req_type == STAGE_OUT) && (serrno == ENOSPC) && (enospc_retry > 0) && (enospc_retryint > 0)) {
+			if (++enospc_ntries > enospc_retry) break;
+			sleep(enospc_retryint);
+			continue;
+		}
 		if (c == 0 || serrno == EINVAL || serrno == ERTBLKSKPD || serrno == ERTTPE_LSZ ||
 				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == CLEARED ||
 				serrno == ENOSPC) break;
@@ -661,7 +797,8 @@ int main(argc, argv)
 	WSACleanup();
 #endif
     freehsmfiles(nhsmfiles, hsmfiles);
-	exit (c == 0 ? 0 : serrno);
+	if (qoptok != NULL) free(qoptok);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void freehsmfiles(nhsmfiles,hsmfiles)
@@ -682,12 +819,14 @@ void freehsmfiles(nhsmfiles,hsmfiles)
 }
 
 #if TMS
-int tmscheck(vid, vsn, dgn, den, lbl)
+int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
 		 char *vid;
 		 char *vsn;
 		 char *dgn;
 		 char *den;
 		 char *lbl;
+		 int *fseq1;
+		 int *fseq2;
 {
 	int c, j;
 	int errflg = 0;
@@ -774,6 +913,28 @@ int tmscheck(vid, vsn, dgn, den, lbl)
 	} else {
 		strcpy (lbl, tmslbl);
 	}
+    if ((fseq1 != NULL) && (fseq2 != NULL) && (strlen(tmrepbuf) >= 89)) {
+      char tmpfseq[6];
+      char *dp;
+      /* In principle the indexes 78 to 82 contains the first fseq of a vidmapped volume */
+      /*              the indexes 84 to 88 contains the 2nd   fseq of a vidmapped volume */
+      memcpy(tmpfseq, tmrepbuf + 78, 5);
+      tmpfseq[5] = '\0';
+      *fseq1 = (int) strtol(tmpfseq, &dp, 10);
+      if ((*fseq1 == LONG_MIN) || (*fseq1 == LONG_MAX) || (*dp != '\0')) {
+        *fseq1 = -1;
+		fprintf (stderr, STG02, tmpfseq, strtol, strerror(errno));
+		errflg++;
+      }
+      memcpy(tmpfseq, tmrepbuf + 84, 5);
+      tmpfseq[5] = '\0';
+      *fseq2 = (int) strtol(tmpfseq, &dp, 10);
+      if ((*fseq2 == LONG_MIN) || (*fseq2 == LONG_MAX) || (*dp != '\0')) {
+        *fseq2 = -1;
+		fprintf (stderr, STG02, tmpfseq, strtol, strerror(errno));
+		errflg++;
+      }
+    }
 	return (errflg);
 }
 #endif
