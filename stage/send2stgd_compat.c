@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.10 2002/04/30 12:58:58 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.11 2002/10/21 14:52:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.10 $ $Date: 2002/04/30 12:58:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.11 $ $Date: 2002/10/21 14:52:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,6 +71,8 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 	char *stagehost = STAGEHOST;
 	int stg_service = 0;
 	int stage_timeout;
+	int connect_timeout;
+	int connect_rc;
 	int save_serrno;
 
 	strcpy (func, "send2stgd");
@@ -109,6 +111,13 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 		stage_timeout = atoi(p);
 	}
 
+	if ((p = getenv ("STAGE_CONNTIMEOUT")) == NULL &&
+		(p = getconfent("STG", "CONNTIMEOUT",0)) == NULL) {
+		connect_timeout = -1;
+	} else {
+		connect_timeout = atoi(p);
+	}
+
 	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
@@ -128,7 +137,12 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
 	serrno = 0;
-	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+	if (connect_timeout > 0) {
+		connect_rc = netconnect_timeout (stg_s, (struct sockaddr *) &sin, sizeof(sin), connect_timeout);
+	} else {
+		connect_rc = connect (stg_s, (struct sockaddr *) &sin, sizeof(sin));
+	}
+	if (connect_rc < 0) {
 		if (
 #if defined(_WIN32)
 				WSAGetLastError() == WSAECONNREFUSED
