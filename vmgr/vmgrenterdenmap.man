@@ -1,18 +1,18 @@
-.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.1 $ $Date: 2000/03/07 08:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.2 $ $Date: 2000/03/07 10:20:30 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERMODEL 1 "$Date: 2000/03/07 08:38:49 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERDENMAP 1 "$Date: 2000/03/07 10:20:30 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
-vmgrentermodel \- enter a new triplet model/media_letter/density in the CASTOR
+vmgrenterdenmap \- enter a new triplet model/media_letter/density in the CASTOR
 Volume Manager
 .SH SYNOPSIS
-.B vmgrentermodel
+.B vmgrenterdenmap
 .BI -d " density"
 .BI --ml " media_letter"
 .BI --mo " model"
 .SH DESCRIPTION
-.B vmgrentermodel
+.B vmgrenterdenmap
 enters a new triplet model/media_letter/density in the CASTOR Volume Manager.
 .TP
 .I density
