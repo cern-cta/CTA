@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.57 2002/10/16 22:58:54 jdurand Exp $
+ * $Id: stage_api.c,v 1.58 2002/10/26 13:18:23 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.57 $ $Date: 2002/10/16 22:58:54 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.58 $ $Date: 2002/10/26 13:18:23 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -272,7 +272,10 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   }
 
   /* We check existence of an STG POOL from environment variable or configuration */
-  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+  if ((p = getenv("STAGE_POOL")) != NULL) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else if ((p = getconfent("STG","POOL")) != NULL) {
     strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
     stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
   } else {
@@ -380,6 +383,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   switch (t_or_d) {                     /* This method supports only */
   case 't':                             /* - tape files */
   case 'd':                             /* - disk files */
+  case 'a':                             /* - allocated files */
   case 'm':                             /* - non-CASTOR HSM files */
   case 'h':                             /* - CASTOR HSM files */
     break;
@@ -1172,7 +1176,10 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   }
 
   /* We check existence of an STG POOL from environment variable or configuration */
-  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+  if ((p = getenv("STAGE_POOL")) != NULL) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else if ((p = getconfent("STG","POOL")) != NULL) {
     strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
     stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
   } else {
@@ -1198,6 +1205,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 	  t_or_d = 't';                     /* - Dummy value */
   case 't':                             /* - tape files */
   case 'd':                             /* - disk files */
+  case 'a':                             /* - allocated files */
   case 'm':                             /* - non-CASTOR HSM files */
   case 'h':                             /* - CASTOR HSM files */
     break;
@@ -1987,6 +1995,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   switch (t_or_d) {                     /* This method supports only */
   case 't':                             /* - tape files */
   case 'd':                             /* - disk files */
+  case 'a':                             /* - allocated files */
   case 'm':                             /* - non-CASTOR HSM files */
   case 'h':                             /* - CASTOR HSM files */
     flagsok &= ~STAGE_LINKNAME;
@@ -3257,7 +3266,10 @@ int DLL_DECL stage_alloc_or_get(req_type,flags,openmode,hostname,pooluser,filena
   }
 
   /* We check existence of an STG POOL from environment variable or configuration */
-  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+  if ((p = getenv("STAGE_POOL")) != NULL) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else if ((p = getconfent("STG","POOL")) != NULL) {
     strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
     stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
   } else {
