@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.2 $ $Date: 2003/10/07 13:52:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,7 +60,7 @@ int user_repbuf_len;
 	}
 	if (host && *host)
 		strcpy (rmchost, host);
-	else if ((p = getenv ("RMC_HOST")) || (p = getconfent ("RMC", "HOST")))
+	else if ((p = getenv ("RMC_HOST")) || (p = getconfent ("RMC", "HOST", 0)))
 		strcpy (rmchost, p);
 	else
 		gethostname (rmchost, CA_MAXHOSTNAMELEN+1);
