@@ -1,32 +1,17 @@
 /*
- * $Id: vdqm_CloseConn.c,v 1.4 1999/09/02 15:20:38 obarring Exp $
- * $Log: vdqm_CloseConn.c,v $
- * Revision 1.4  1999/09/02 15:20:38  obarring
- * Add osdep.h because of new u_signed64 decl. in vdqm.h
- *
- * Revision 1.3  1999/09/01 15:07:11  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/29 09:17:50  obarring
- * Replace TABs with 4 SPACEs
- *
- * Revision 1.1  1999/07/27 09:19:42  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:06:00 $ CERN IT-PDP/DM Olof Barr
+ing";
+#endif /* not lint */
+
+
 /*
  * vdqm_CloseConn.c - close a VDQM connections.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_CloseConn.c,v 1.4 1999/09/02 15:20:38 obarring Exp $";
-#endif /* not lint */
 
 #include <stdlib.h>
 #if defined(_WIN32)
