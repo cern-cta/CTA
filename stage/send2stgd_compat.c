@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.9 2002/04/11 10:11:30 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.10 2002/04/30 12:58:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.9 $ $Date: 2002/04/11 10:11:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.10 $ $Date: 2002/04/30 12:58:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -36,6 +36,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.9 $ $D
 #include "stage_struct.h"
 #include "stage_messages.h"
 #include "socket_timeout.h"
+#include "stage_api.h"
 
 extern int dosymlink _PROTO((char *, char *));
 extern void dounlink _PROTO((char *));
