@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.19 1999/10/20 18:36:56 jdurand Exp $
+ * $Id: Cthread.c,v 1.20 1999/10/26 11:44:37 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.19 $ $Date: 1999/10/20 18:36:56 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.20 $ $Date: 1999/10/26 11:44:37 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -2034,26 +2034,33 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
   if (timeout <= 0) {
     /* No timeout : pthread_cond_wait */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
+    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx))) != 0) {
       errno = n;
-      serrno = SECTHREADERR;
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
       rc = -1;
     } else {
       rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    if (pthread_cond_wait(&(current->cond),&(current->mtx))) {
-      serrno = SECTHREADERR;
+    if (pthread_cond_wait(&(current->cond),&(current->mtx)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
       rc = -1;
     } else {
       rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     /* On linux pthread_cond_wait never returns an error code... */
-    pthread_cond_wait(&(current->cond),&(current->mtx));
-    rc = 0;
+    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx))) != 0) {
+      errno = n;
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      rc = -1;
+    } else {
+      rc = 0;
+    }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1);
+    if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+    }
 #else
     serrno = SEOPNOTSUP;
     rc = -1;
@@ -2073,27 +2080,24 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
       /* microsec to nanosec */
       ts.tv_nsec = tv.tv_usec * 1000;
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-      if ((n = pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts))) {
+      if ((n = pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts)) != 0) {
         errno = n;
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
       }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-      if (pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts)) {
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      if (pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts) != 0) {
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
       }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-      if ((n = pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts))) {
+      if ((n = pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts)) != 0) {
         errno = n;
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
@@ -2104,7 +2108,9 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
 #  endif
 	}
 #else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
-    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
+    if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+    }
 #endif
   }
 
@@ -2211,26 +2217,33 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
   if (timeout <= 0) {
     /* No timeout : pthread_cond_wait */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
+    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx))) != 0) {
       errno = n;
-      serrno = SECTHREADERR;
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
       rc = -1;
     } else {
       rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    if (pthread_cond_wait(&(current->cond),&(current->mtx))) {
-      serrno = SECTHREADERR;
+    if (pthread_cond_wait(&(current->cond),&(current->mtx)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
       rc = -1;
     } else {
       rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     /* On linux pthread_cond_wait never returns an error code... */
-    pthread_cond_wait(&(current->cond),&(current->mtx));
-    rc = 0;
+    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx))) != 0) {
+      errno = n;
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      rc = -1;
+    } else {
+      rc = 0;
+    }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1);
+    if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+    }
 #else
     serrno = SEOPNOTSUP;
     rc = -1;
@@ -2250,27 +2263,24 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
       /* microsec to nanosec */
       ts.tv_nsec = tv.tv_usec * 1000;
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-      if ((n = pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts))) {
+      if ((n = pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts)) != 0) {
         errno = n;
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
       }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-      if (pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts)) {
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+      if (pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts)) {
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
       }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-      if ((n = pthread_cond_timedwait(&(current->cond),
-                                      &(current->mtx),&ts))) {
+      if ((n = pthread_cond_timedwait(&(current->cond),&(current->mtx),&ts))) {
         errno = n;
-        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
         rc = -1;
       } else {
         rc = 0;
@@ -2281,7 +2291,9 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
 #  endif
 	}
 #else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
-    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
+    if ((rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout)) != 0) {
+      serrno = ( errno == ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+    }
 #endif
   }
 
