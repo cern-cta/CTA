@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.93 2002/07/27 06:49:54 jdurand Exp $
+ * $Id: procqry.c,v 1.94 2002/07/27 07:19:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.93 $ $Date: 2002/07/27 06:49:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.94 $ $Date: 2002/07/27 07:19:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -943,7 +943,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				strcpy (p_size, "*");
 			else
 				if ((stcp->size / ONE_MB) <= (u_signed64) INT_MAX)
-					sprintf (p_size, "%d", stcp->size / ONE_MB); /* Compatibility with old stageqry output */
+					sprintf (p_size, "%d", (int) (stcp->size / ONE_MB)); /* Compatibility with old stageqry output */
 				else
 					sprintf (p_size, "%s", u64tostru(stcp->size,tmpbuf,0)); /* Cannot represent this quantity with an integer - switch to u64 mode */
 		else if (stcp->status == (STAGEIN|STAGED))
