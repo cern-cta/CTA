@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.56 2001/02/14 15:27:45 jdurand Exp $
+ * $Id: procupd.c,v 1.57 2001/02/21 15:51:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.56 $ $Date: 2001/02/14 15:27:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.57 $ $Date: 2001/02/21 15:51:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -750,6 +750,9 @@ procupdreq(req_data, clienthost)
 							}
 #endif
 							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
+						} else {
+							stcp_found = stcp;
+							goto delete_entry;
 						}
 						if (stcp_found != NULL) {
 							if ((stcp_found != save_stcp) || ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) {
