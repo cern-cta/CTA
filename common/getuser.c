@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Felix Hassine";
+static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.9 $ $Date: 2000/06/15 12:28:13 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,9 +41,11 @@ static char *infile = MAPPING_FILE;
 #endif  /* WIN32 */
 
 
+#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+#endif
 
 /*
  * function finds the corresponding entry in the
