@@ -201,7 +201,7 @@ castor::IObject* castor::db::OraCnvSvc::createObj (castor::IAddress* address,
       dynamic_cast<castor::db::DbAddress*>(address);
     unsigned int type = getTypeFromId(ad->id());
     if (0 == type) return 0;
-    ad->setObjType(getTypeFromId(ad->id()));
+    ad->setObjType(type);
   }
   // call method of parent object
   return this->BaseCnvSvc::createObj(address, newlyCreated);
