@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.4 $ $Date: 2004/01/28 15:09:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.5 $ $Date: 2005/01/20 16:28:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,9 +29,6 @@ static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.4 $ $Date: 200
 #include "rmc.h"
 #include "scsictl.h"
 #include "serrno.h"
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 
 int being_shutdown;
 char func[16];
@@ -100,7 +97,7 @@ struct main_args *main_args;
 	   (open is done in send_scsi_cmd for the other platforms */
 
 	if ((extended_robot_info.smc_fd = open (extended_robot_info.smc_ldr, O_RDWR)) < 0) {
-		rmclogit (func, RMC02, "open", sys_errlist[errno]);
+		rmclogit (func, RMC02, "open", strerror(errno));
 		exit (SYERR);
 	}
 #else
@@ -273,7 +270,7 @@ char **clienthost;
 		if (l > 0)
 			rmclogit (func, RMC04, l);
 		else if (l < 0)
-			rmclogit (func, RMC02, "netread", sys_errlist[errno]);
+			rmclogit (func, RMC02, "netread", strerror(errno));
 		return (ERMCUNREC);
 	}
 }
