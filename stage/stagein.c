@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.42 2002/01/15 08:36:42 jdurand Exp $
+ * $Id: stagein.c,v 1.43 2002/02/20 15:42:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.42 $ $Date: 2002/01/15 08:36:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.43 $ $Date: 2002/02/20 15:42:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,6 +60,7 @@ char user[15];	/* login name */
 int nowait_flag = 0;
 int tppool_flag = 0;
 int nohsmcreat_flag = 0;
+int noretry_flag = 0;
 int rdonly_flag = 0;
 int silent_flag = 0;
 #ifdef STAGER_SIDE_CLIENT_SUPPORT
@@ -139,6 +140,7 @@ int main(argc, argv)
 	int enospc_retry = -1;
 	int enospc_retryint = -1;
 	int enospc_ntries = 0;
+	int maxretry = MAXRETRY;
 	static struct Coptions longopts[] =
 	{
 		{"allocation_mode",    REQUIRED_ARGUMENT,  NULL,      'A'},
@@ -180,6 +182,7 @@ int main(argc, argv)
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
+		{"noretry",           NO_ARGUMENT,  &noretry_flag,  1},
 		{"rdonly",            NO_ARGUMENT,  &rdonly_flag,       1},
 		{NULL,                 0,                  NULL,        0}
 	};
@@ -213,6 +216,8 @@ int main(argc, argv)
 				enospc_retryint = RETRYI;
 			}
 		}
+		/* Anyway, if --noretry is set, it takes precedence */
+		if (noretry_flag != 0) enospc_retry = 0;
 	}
 
 	uid = getuid();
@@ -463,6 +468,7 @@ int main(argc, argv)
 		fprintf (stderr, STG07);
 		errflg++;
 	}
+	if (noretry_flag != 0) maxretry = 0;
 	if ((tppool_flag != 0) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
 		fprintf (stderr, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
 		errflg++;
@@ -815,7 +821,8 @@ int main(argc, argv)
 			break;
 		}
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+		if (serrno != ESTNACT && ntries++ > maxretry) break;
+		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
@@ -1041,7 +1048,7 @@ void usage(cmd)
 					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
 					 "[-X xparm]\n",
-					 "[--nohsmcreat] [--nocopy] [--nowait] [--side sidenumber] [--silent] [--tppool tapepool] [--rdonly]\n",
+					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--side sidenumber] [--silent] [--tppool tapepool] [--rdonly]\n",
 					 "pathname(s)\n");
 #else
 	fprintf (stderr, "%s%s%s%s%s%s%s%s%s",
@@ -1052,7 +1059,7 @@ void usage(cmd)
 					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
 					 "[-X xparm]\n",
-					 "[--nohsmcreat] [--nocopy] [--nowait] [--silent] [--tppool tapepool] [--rdonly]\n",
+					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--silent] [--tppool tapepool] [--rdonly]\n",
 					 "pathname(s)\n");
 #endif
 }

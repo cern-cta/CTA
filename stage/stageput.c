@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.28 2001/12/05 10:10:18 jdurand Exp $
+ * $Id: stageput.c,v 1.29 2002/02/20 15:44:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.28 $ $Date: 2001/12/05 10:10:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.29 $ $Date: 2002/02/20 15:44:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,6 +45,7 @@ static struct passwd *pw;
 char *stghost;
 int tppool_flag = 0;
 int nowait_flag = 0;
+int noretry_flag = 0;
 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
@@ -83,6 +84,7 @@ int main(argc, argv)
 	WSADATA wsadata;
 #endif
 	char *tppool = NULL;
+	int maxretry = MAXRETRY;
 	static struct Coptions longopts[] =
 	{
 		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
@@ -93,6 +95,7 @@ int main(argc, argv)
 		{"fortran_unit",       REQUIRED_ARGUMENT,  NULL,      'U'},
 		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
+		{"noretry",            NO_ARGUMENT,  &noretry_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{NULL,                 0,                  NULL,        0}
 	};
@@ -363,12 +366,14 @@ int main(argc, argv)
 #endif
 	signal (SIGTERM, cleanup);
 	
+	if (noretry_flag != 0) maxretry = 0;
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTLIMBYSZ || serrno == ESTCLEARED ||
 				serrno == ENOSPC || serrno == ESTKILLED) break;
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+		if (serrno != ESTNACT && ntries++ > maxretry) break;
+		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
