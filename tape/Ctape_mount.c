@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.6 $ $Date: 1999/11/19 10:28:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.7 $ $Date: 1999/11/19 17:03:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -23,7 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.6 $ $Date: 
 #include "serrno.h"
 extern char *sys_errlist[];
 
-Ctape_mount(path, vid, partition, dgn, density, drive, mode, vsn, lbltype)
+Ctape_mount(path, vid, partition, dgn, density, drive, mode, vsn, lbltype, vdqm_reqid)
 char *path;
 char *vid;
 int partition;
@@ -33,6 +33,7 @@ char *drive;
 int mode;
 char *vsn;
 char *lbltype;
+int vdqm_reqid;
 {
 	char acctname[7];
 	char actual_den[6];
@@ -197,6 +198,7 @@ char *lbltype;
 	marshall_STRING (sbp, actual_vsn);
 	marshall_STRING (sbp, actual_lbltype);
 	marshall_WORD (sbp, prelabel);
+	marshall_LONG (sbp, vdqm_reqid);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
