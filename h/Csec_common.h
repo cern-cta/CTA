@@ -33,12 +33,13 @@ int *C__Csec_errno();
 
 /** Structure with thread specific information */
 struct Csec_api_thread_info {
-  char *errbufp;
-  int	errbuflen;
+/*   char *errbufp; */
+/*   int	errbuflen; */
+  char  errbuf[ERRBUFSIZE+1];
   int	sec_errno;
   int   init_done;
   int   trace_mode;
-  char  trace_file[CA_MAXNAMELEN];
+  char  trace_file[CA_MAXNAMELEN+1];
 };
 
 /* Magic number for authentication tokens */
@@ -145,22 +146,49 @@ typedef struct Csec_context {
 int DLL_DECL check_ctx _PROTO ((Csec_context *, char *));
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context *)); 
 int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context *, int, int)) ;
-/*int DLL_DECL Csec_init_protocol _PROTO ((Csec_context *, char *));*/
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
+char *DLL_DECL Csec_geterrmsg _PROTO(());
 int DLL_DECL Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
 int DLL_DECL Csec_seterrbuf _PROTO((char *buffer, int buflen));
-int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
 int DLL_DECL Csec_trace _PROTO((char *func, char *msg, ...));
 int DLL_DECL Csec_setup_trace _PROTO(());
 int DLL_DECL _Csec_recv_token _PROTO ((int s, gss_buffer_t tok, int timeout, int *token_type));
 int DLL_DECL _Csec_send_token _PROTO ((int s, gss_buffer_t tok, int timeout, int token_type));
 void DLL_DECL  _Csec_print_token _PROTO((gss_buffer_t tok));
 
+/* Protocol functions */
 int DLL_DECL Csec_client_negociate_protocol _PROTO((int, int, Csec_context *));
 int DLL_DECL Csec_client_send_protocol _PROTO((int, int, Csec_context *));
 int DLL_DECL Csec_client_receive_server_reponse _PROTO((int, int, Csec_context *));
 int DLL_DECL Csec_server_receive_protocol _PROTO((int, int, Csec_context *, char *, int));
 int DLL_DECL Csec_server_send_response _PROTO ((int, int, Csec_context *, int));   
+
+/* Misc utils */
+int DLL_DECL  Csec_server_establish_context_ext _PROTO ((Csec_context *ctx,
+                                                         int s,
+                                                         char *buf,
+                                                         int len));
+
+int DLL_DECL Csec_map2name _PROTO((Csec_context *ctx,
+                                   char *principal,
+                                   char *name,
+                                   int maxnamelen));
+
+
+int DLL_DECL Csec_get_service_name _PROTO ((Csec_context *ctx,
+                                            int service_type,
+                                            char *host,
+                                            char *domain,
+                                            char *service_name,
+                                            int service_namelen));
+
+int DLL_DECL Csec_map2id _PROTO((Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid));
+int DLL_DECL Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
+int DLL_DECL Csec_get_peer_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
+                                                 char *service_name, int service_namelen));
+int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
+                                                  char *service_name, int service_namelen));
+
 
 
 #endif /* _CSEC_COMMON_H */
