@@ -1,0 +1,297 @@
+.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.1 $ $Date: 2000/09/19 08:33:41 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
+.\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RTSTAT 1 "$Date: 2000/09/19 08:33:41 $" CASTOR "RTCOPY User Commands"
+
+.SH NAME
+rtstat \- gives local or global statistics on rtcopy requests, the number which are successful 
+and the number failed.  Details of types of error along with the messages are also given, and
+details of specifically tape errors are provided
+.SH SYNOPSIS
+.B rtstat 
+[
+.BI -c
+] [
+.BI -e " end_time"
+] [
+.BI -f " accounting file"
+] [
+.BI -g " device_group"
+] [
+.BI -S " server_name"
+] [
+.BI -s " start_time"
+] [
+.BI -v
+] [
+.BI -w " week_number"
+]
+.SH DESCRIPTION
+.B rtstat 
+obtains information on the number of rtcopy requests along with their success or failure by 
+reading the 
+.B sacct
+accounting file. If the 
+.B -c
+switch is set this program must be run on a system with an up to date
+.B shift.conf
+file. Otherwise the tape server information will be taken from the global
+Volume and Drive Queue Manager (VDQM). 
+
+The details of the errors are given globally, by server and by device type or device group 
+if requested.  For each catergory the number and types of the errors are displayed in detail, 
+and any unknown errors are printed.  Requests which have failed but have no matching entry in 
+the error file are displayed with the job id and timestamp of the request and the server on 
+which it failed.  Finally full details of the tape errors are provided, sorted first by volume
+ID then by unit name.
+
+The statistics can be requested for specific servers, or device groups, or given globally. 
+
+.SH OPTIONS
+.TP
+.BI \-c
+Use the local
+.B shift.conf
+file instead of VDQM to find out available tape servers and device groups.
+.TP
+.BI \-e " end time"
+The date and time up to which information should be collated.  If not specified the default is
+the time of the last relevant entry in the accounting file.  The format for date input
+is
+.BR mmddhhmm [ yy ].
+.B yy
+is the year in the century and is optional:
+if yy between 00 and 37, 21th century is assumed,
+if yy between 70 and 99, 20th century is assumed
+else the command fails.
+.TP
+.BI \-f " accounting_file"
+The file from which information is to be read.  If not specified the default is the current
+.B sacct 
+file.   
+.TP
+.BI \-g " device_group"
+If this option is specified then the details are provided for device groups and not for device
+types. The information is then given only on the specified device group.
+.TP
+.BI \-S " server_name"
+If this option is specified then the details are given only for the specified server.
+.TP
+.BI \-s " start_time"
+The date and time from which to begin collating information. If not specified
+the default is the time of the first record in the accounting file. The format for
+date input is
+.BR mmddhhmm [ yy ].
+.B yy
+is the year in the century and is optional:
+if yy between 00 and 37, 21th century is assumed,
+if yy between 70 and 99, 20th century is assumed
+else the command fails.
+If the value input with the
+.B -s
+option is negative then information is collated for
+the current time minus the input value. This value should be given in seconds  i.e.
+.B rtstat -s -3600
+information is  collated for the previous hour only
+.TP
+.B \-v 
+.br
+Displays opening messages for each accounting and error file
+.TP
+.BI \-w " week_number"
+If not specified then the 
+.B sacct
+file read will be the current weeks.  If specified then the files for the given week will be
+analysed.  The format for week number input is
+.B yyww
+where 'yy' is the year in the century and 'ww' is the week number.
+.SH EXAMPLES
+To get details for rtcopy requests on shd05 for week 27 of 1996, type the following:
+.br
+
+.B rtstat -S shd05 -w 9627 
+.br
+
+Your results will be displayed in the following format :
+
+.br
+.nf
+.cs R 18
+Rtcopy Statistics for the period :  (01/07/1996 09:24:46  -  07/07/1996 23:53:22)
+
+Summarising week 9627 for shd05
+...............................
+
+USER COMMANDS SUCCESSFUL : 23
+DEV COMMANDS SUCCESSFUL : 0
+USER COMMANDS FAILED : 18
+DEV COMMANDS FAILED : 0
+
+ANALYSED FAILURES :  43.90 % - 18
+USER ERRORS :  21.95 % - 9
+TAPE ERRORS :  17.07 % - 7
+SHIFT ERRORS :   2.44 % - 1
+ROBOT ERRORS :   0.00 % - 0
+NETWORK ERRORS :   0.00 % - 0
+OTHER ERRORS :   0.00 % - 0
+UNKNOWN ERRORS :   2.44 % - 1
+NO MESSAGE :   0.00 % - 0
+
+USER ERRORS (DETAIL)
+IS AN INVALID LABEL TYPE  ->  2.44 % - 1
+TP021 - label type mismatch  ->  2.44 % - 1
+TP024 - file  ->  9.76 % - 4
+TP045 - cannot write file  ->  7.32 % - 3
+
+TAPE ERRORS (DETAIL)
+I/O ERROR WRITING ON TAPE: Medium error  ->  7.32 % - 3
+I/O ERROR WRITING ON TAPE: No sense  ->  7.32 % - 3
+No sense  ->  2.44 % - 1
+
+SHIFT ERRORS (DETAIL)
+STG02 -  : connect error : Connection timed out  ->  2.44 % - 1
+
+UNKNOWN ERRORS FOUND
+shd05   :: TMS02 -  Volume in use on this system: XZ0128  ->  2.44 % - 1
+
+DETAILS OF TAPE ERRORS - SORTED BY VID
+Req Time             Server  VID     UNM       No.Occ  Error Message
+01/07/1996 13:23:07  shd05   AX0553  exab05         2  I/O ERROR WRITING ON TAPE: No sense
+01/07/1996 18:41:32          AX0553  exab05            I/O ERROR WRITING ON TAPE: No sense
+02/07/1996 11:00:01  shd05   AX0554  exab05         1  I/O ERROR WRITING ON TAPE: No sense
+02/07/1996 14:17:40  shd05   AX0554  exab06         1  I/O ERROR WRITING ON TAPE: Medium error
+03/07/1996 09:02:02  shd05   AX0554  exab07         2  I/O ERROR WRITING ON TAPE: Medium error
+03/07/1996 09:26:36          AX0554  exab07            I/O ERROR WRITING ON TAPE: Medium error
+03/07/1996 09:15:21  shd05   AX0554  exab05         1  No sense
+.cs R
+.fi
+.sp
+.nf
+.cs R 18
+
+DETAILS OF TAPE ERRORS - SORTED BY UNM
+Req Time             Server  VID     UNM       No.Occ  Error Message
+01/07/1996 13:23:07  shd05   AX0553  exab05         2  I/O ERROR WRITING ON TAPE: No sense
+01/07/1996 18:41:32          AX0553  exab05            I/O ERROR WRITING ON TAPE: No sense
+02/07/1996 11:00:01  shd05   AX0554  exab05         1  I/O ERROR WRITING ON TAPE: No sense
+03/07/1996 09:15:21  shd05   AX0554  exab05         1  No sense
+02/07/1996 14:17:40  shd05   AX0554  exab06         1  I/O ERROR WRITING ON TAPE: Medium error
+03/07/1996 09:02:02  shd05   AX0554  exab07         2  I/O ERROR WRITING ON TAPE: Medium error
+03/07/1996 09:26:36          AX0554  exab07            I/O ERROR WRITING ON TAPE: Medium error
+
+.cs R
+.fi
+
+To get statistics on  requests for the device group CART on server shd02 for week 26 of 1996
+type the following:
+.br
+
+.B rtstat -g CART -S shd02 
+.B  -w 9626 
+.br
+
+Your results will be displayed in the following format :
+
+.br
+.nf
+.cs R 18
+
+Rtcopy Statistics for the period :  (23/06/1996 23:56:28  -  30/06/1996 23:49:58)
+
+Summarising week 9626 for shd02
+...............................
+
+USER COMMANDS SUCCESSFUL : 450
+DEV COMMANDS SUCCESSFUL : 0
+USER COMMANDS FAILED : 13
+DEV COMMANDS FAILED : 0
+
+ANALYSED FAILURES :   2.81 % - 13
+USER ERRORS :   1.94 % - 9
+TAPE ERRORS :   0.43 % - 2
+SHIFT ERRORS :   0.00 % - 0
+ROBOT ERRORS :   0.00 % - 0
+NETWORK ERRORS :   0.00 % - 0
+OTHER ERRORS :   0.43 % - 2
+UNKNOWN ERRORS :   0.00 % - 0
+NO MESSAGE :   0.00 % - 0
+
+USER ERRORS (DETAIL)
+ERROR OPENING DISK FILE: Permission denied  ->  0.22 % - 1
+INCORRECT OR MISSING TRAILER LABEL ON TAPE  ->  1.30 % - 6
+TP024 - file  ->  0.43 % - 2
+
+TAPE ERRORS (DETAIL)
+Block ID Sequence Error  ->  0.43 % - 2
+
+OTHER ERRORS (DETAIL)
+TP023 - mount cancelled by operator  ->  0.43 % - 2
+
+DETAILS OF TAPE ERRORS - SORTED BY VID
+Req Time             Server  VID     UNM       No.Occ  Error Message
+26/06/1996 03:05:17  shd02   LH1078  cart0F9F       2  Block ID Sequence Error
+.cs R
+.fi
+.sp
+.nf
+.cs R 18
+26/06/1996 03:49:31          LH1078  cart0F9F          Block ID Sequence Error
+
+DETAILS OF TAPE ERRORS - SORTED BY UNM
+Req Time             Server  VID     UNM       No.Occ  Error Message
+26/06/1996 03:05:17  shd02   LH1078  cart0F9F       2  Block ID Sequence Error
+26/06/1996 03:49:31          LH1078  cart0F9F          Block ID Sequence Error
+
+.cs R
+.fi
+
+To get details of all requests made between the times 26/06/1996 00:00:00 and 29/06/1996 00:00:00
+for the server shd34, type the following command:
+.br
+
+.B rtstat -s 0626000096 -e 0629000096 
+.B  -w 9626 -S shd34
+.br
+
+Your results will be displayed in the following format :
+ 
+.br
+.nf
+.cs R 18
+
+Rtcopy Statistics for the period :  (26/06/1996 00:00:00  -  29/06/1996 00:00:00)
+
+Summarising week 9626 for shd34
+...............................
+
+USER COMMANDS SUCCESSFUL : 556
+DEV COMMANDS SUCCESSFUL : 0
+USER COMMANDS FAILED : 8
+DEV COMMANDS FAILED : 0
+
+ANALYSED FAILURES :   1.42 % - 8
+USER ERRORS :   1.42 % - 8
+TAPE ERRORS :   0.00 % - 0
+SHIFT ERRORS :   0.00 % - 0
+ROBOT ERRORS :   0.00 % - 0
+NETWORK ERRORS :   0.00 % - 0
+OTHER ERRORS :   0.00 % - 0
+UNKNOWN ERRORS :   0.00 % - 0
+NO MESSAGE :   0.00 % - 0
+
+
+USER ERRORS (DETAIL)
+ERROR OPENING DISK FILE: Permission denied  ->  1.06 % - 6
+TP021 - label type mismatch  ->  0.35 % - 2
+
+
+.cs R
+.fi
+
+.SH RETURN CODES
+0	Ok.
+.br
+1	User error.
+.br
+2	System error.
