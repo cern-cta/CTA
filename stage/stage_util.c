@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.13 2002/01/23 13:54:30 jdurand Exp $
+ * $Id: stage_util.c,v 1.14 2002/01/24 10:46:43 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -43,6 +43,14 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define PRINT_VAL(st,member) fprintf(stdout, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define DUMP_VALHEX(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define PRINT_VALHEX(st,member) fprintf(stdout, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
+#define DUMP_VALSTATUS(rpfd,st,member) { \
+	char statusstring[1024]; \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
+}
+#define PRINT_VALSTATUS(st,member) { \
+	char statusstring[1024]; \
+	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
+}
 #define DUMP_TIME(rpfd,st,member) {                                         \
     char tmpbuf[21];                                                        \
 	char timestr[64] ;                                                      \
@@ -79,8 +87,11 @@ extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
 
 char *forced_endptr_error = "Z";
-void DLL_DECL stage_util_time _PROTO((time_t, char *));
-void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
+
+struct flag2name {
+	u_signed64 flag;
+	char *name;
+};
 
 void DLL_DECL stage_sleep(nsec)
      int nsec;
@@ -181,7 +192,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	DUMP_VAL(rpfd,stcp,uid);
 	DUMP_VAL(rpfd,stcp,gid);
 	DUMP_VAL(rpfd,stcp,mask);
-	DUMP_VALHEX(rpfd,stcp,status);
+	DUMP_VALSTATUS(rpfd,stcp,status);
 	DUMP_U64(rpfd,stcp,actual_size);
 	DUMP_TIME(rpfd,stcp,c_time);
 	DUMP_TIME(rpfd,stcp,a_time);
@@ -281,7 +292,7 @@ void DLL_DECL print_stcp(stcp)
 	PRINT_VAL(stcp,uid);
 	PRINT_VAL(stcp,gid);
 	PRINT_VAL(stcp,mask);
-	PRINT_VALHEX(stcp,status);
+	PRINT_VALSTATUS(stcp,status);
 	PRINT_U64(stcp,actual_size);
 	PRINT_TIME(stcp,c_time);
 	PRINT_TIME(stcp,a_time);
@@ -412,3 +423,103 @@ void DLL_DECL stage_util_time(this,timestr)
     strftime(timestr,64,strftime_format,tp);
   }
 }
+
+int DLL_DECL stage_util_status2string(output, maxsize, status)
+	char *output;
+	size_t maxsize;
+	int status;
+{
+	char *thisp;
+	int i;
+	struct stgcat_entry static_stcp;
+	struct stgcat_entry *stcp = &static_stcp;
+	int okflag;
+
+	struct flag2name status2name0[] = { /* Must be ANDed with 0xF */
+		{ STAGEIN    , "STAGEIN"    },
+		{ STAGEOUT   , "STAGEOUT"   },
+		{ STAGEWRT   , "STAGEWRT"   },
+		{ STAGEPUT   , "STAGEPUT"   },
+		{ STAGEALLOC , "STAGEALLOC" },
+        { 0                , NULL   }
+	};
+
+	struct flag2name status2name1[] = { /* Must be ANDed with 0xF0 */
+		{ WAITING_SPC  , "WAITING_SPC"    },
+		{ WAITING_REQ  , "WAITING_REQ"    },
+		{ STAGED       , "STAGED"         },
+		{ KILLED       , "KILLED"         },
+		{ STG_FAILED   , "STG_FAILED"     },
+		{ PUT_FAILED   , "PUT_FAILED"     },
+        { 0            , NULL             }
+	};
+
+	struct flag2name status2name2[] = { /* Can be checked directly */
+		{ STAGED_LSZ   , "STAGED_LSZ"     },
+		{ STAGED_TPE   , "STAGED_TPE"     },
+		{ CAN_BE_MIGR  , "CAN_BE_MIGR"    },
+		{ LAST_TPFILE  , "LAST_TPFILE"    },
+		{ BEING_MIGR   , "BEING_MIGR"     },
+		{ WAITING_MIGR , "WAITING_MIGR"   },
+		{ WAITING_NS   , "WAITING_NS"     },
+		{ STAGE_RDONLY , "STAGE_RDONLY"   },
+        { 0            , NULL             }
+	};
+
+	if (output == NULL) {
+		serrno = EFAULT;
+		return(-1);
+	}
+
+	stcp->status = status;
+	thisp = output;
+	*thisp = '\0';
+
+	/* Do the main status first */
+	i = -1;
+	while (1) {
+		if (status2name0[++i].name == NULL) break;
+		if ((stcp->status & 0xF) == status2name0[i].flag) {
+			if (strlen(output) > (maxsize - 3)) break;
+			if (*thisp != '\0') {
+				strcat(thisp, "|");
+			}
+			if (strlen(thisp) > (maxsize - 1 - strlen(status2name0[i].name) - 1)) break;
+			strcat(thisp, status2name0[i].name);
+		}
+	}
+
+	/* Do then the secondary status */
+	i = -1;
+	while (1) {
+		if (status2name1[++i].name == NULL) break;
+		if ((stcp->status & 0xF0) == status2name1[i].flag) {
+			if (strlen(output) > (maxsize - 3)) break;
+			if (*thisp != '\0') {
+				strcat(thisp, "|");
+			}
+			if (strlen(thisp) > (maxsize - 1 - strlen(status2name1[i].name) - 1)) break;
+			strcat(thisp, status2name1[i].name);
+		}
+	}
+
+	/* And the end */
+	i = -1;
+	while (1) {
+		if (status2name2[++i].name == NULL) break;
+		if ((stcp->status & status2name2[i].flag) == status2name2[i].flag) {
+			if (strlen(output) > (maxsize - 3)) break;
+			if (*thisp != '\0') {
+				strcat(thisp, "|");
+			}
+			if (strlen(thisp) > (maxsize - 1 - strlen(status2name2[i].name) - 1)) break;
+			strcat(thisp, status2name2[i].name);
+		}
+	}
+
+	if (! *thisp) {
+		serrno = ENOENT;
+	}
+	return(*thisp != '\0' ? 0 : -1);
+}
+
