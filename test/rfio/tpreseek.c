@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpreseek.c,v $ $Revision: 1.2 $ $Date: 2001/05/29 06:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpreseek.c,v $ $Revision: 1.3 $ $Date: 2001/05/29 09:30:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpreseek - write NBRECORDS_TOWRITE records and
@@ -39,7 +39,7 @@ char **argv;
 	 * Each record is filled with the record index
 	 */
 
-	if ((fd = rfio_open (argv[1], O_WRONLY|O_CREAT|O_TRUNC)) < 0) {
+	if ((fd = rfio_open (argv[1], O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
 		rfio_perror ("rfio_open");
 		exit (1);
 	}
