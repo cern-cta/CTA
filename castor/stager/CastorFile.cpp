@@ -53,10 +53,10 @@ castor::stager::CastorFile::CastorFile() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::CastorFile::~CastorFile() throw() {
-  for (unsigned int i = 0; i < m_diskFileCopiesVector.size(); i++) {
-    m_diskFileCopiesVector[i]->setCastorFile(0);
+  for (unsigned int i = 0; i < m_diskCopiesVector.size(); i++) {
+    m_diskCopiesVector[i]->setCastorFile(0);
   }
-  m_diskFileCopiesVector.clear();
+  m_diskCopiesVector.clear();
   for (unsigned int i = 0; i < m_copiesVector.size(); i++) {
     m_copiesVector[i]->setCastorFile(0);
     delete m_copiesVector[i];
@@ -94,11 +94,11 @@ void castor::stager::CastorFile::print(std::ostream& stream,
     stream << indent << "  null" << std::endl;
   }
   {
-    stream << indent << "DiskFileCopies : " << std::endl;
+    stream << indent << "DiskCopies : " << std::endl;
     int i;
     std::vector<DiskCopy*>::const_iterator it;
-    for (it = m_diskFileCopiesVector.begin(), i = 0;
-         it != m_diskFileCopiesVector.end();
+    for (it = m_diskCopiesVector.begin(), i = 0;
+         it != m_diskCopiesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

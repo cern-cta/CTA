@@ -253,12 +253,6 @@ namespace castor {
         /// SQL update statement object for member 
         oracle::occi::Statement *m_updateSubRequestStatement;
 
-        /// SQL update statement for member 
-        static const std::string s_updateTapeCopyForMigrationStatementString;
-
-        /// SQL update statement object for member 
-        oracle::occi::Statement *m_updateTapeCopyForMigrationStatement;
-
         /// SQL update statement for member fileSystem
         static const std::string s_updateFileSystemStatementString;
 

@@ -195,32 +195,32 @@ namespace castor {
       }
 
       /**
-       * Add a DiskCopy* object to the m_diskFileCopiesVector list
+       * Add a DiskCopy* object to the m_diskCopiesVector list
        */
-      void addDiskFileCopies(DiskCopy* add_object) {
-        m_diskFileCopiesVector.push_back(add_object);
+      void addDiskCopies(DiskCopy* add_object) {
+        m_diskCopiesVector.push_back(add_object);
       }
 
       /**
-       * Remove a DiskCopy* object from m_diskFileCopiesVector
+       * Remove a DiskCopy* object from m_diskCopiesVector
        */
-      void removeDiskFileCopies(DiskCopy* remove_object) {
-        for (unsigned int i = 0; i < m_diskFileCopiesVector.size(); i++) {
-          DiskCopy* item = m_diskFileCopiesVector[i];
+      void removeDiskCopies(DiskCopy* remove_object) {
+        for (unsigned int i = 0; i < m_diskCopiesVector.size(); i++) {
+          DiskCopy* item = m_diskCopiesVector[i];
           if (item == remove_object) {
-            std::vector<DiskCopy*>::iterator it = m_diskFileCopiesVector.begin() + i;
-            m_diskFileCopiesVector.erase(it);
+            std::vector<DiskCopy*>::iterator it = m_diskCopiesVector.begin() + i;
+            m_diskCopiesVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of DiskCopy* objects held by m_diskFileCopiesVector
-       * @return list of DiskCopy* objects held by m_diskFileCopiesVector
+       * Get the list of DiskCopy* objects held by m_diskCopiesVector
+       * @return list of DiskCopy* objects held by m_diskCopiesVector
        */
-      std::vector<DiskCopy*>& diskFileCopies() {
-        return m_diskFileCopiesVector;
+      std::vector<DiskCopy*>& diskCopies() {
+        return m_diskCopiesVector;
       }
 
       /**
@@ -272,7 +272,7 @@ namespace castor {
 
       FileClass* m_fileClass;
 
-      std::vector<DiskCopy*> m_diskFileCopiesVector;
+      std::vector<DiskCopy*> m_diskCopiesVector;
 
       std::vector<TapeCopy*> m_copiesVector;
 

@@ -150,19 +150,19 @@ int Cstager_CastorFile_fileClass(struct Cstager_CastorFile_t* instance, struct C
 int Cstager_CastorFile_setFileClass(struct Cstager_CastorFile_t* instance, struct Cstager_FileClass_t* new_var);
 
 /**
- * Add a struct Cstager_DiskCopy_t* object to the diskFileCopies list
+ * Add a struct Cstager_DiskCopy_t* object to the diskCopies list
  */
-int Cstager_CastorFile_addDiskFileCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t* obj);
+int Cstager_CastorFile_addDiskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t* obj);
 
 /**
- * Remove a struct Cstager_DiskCopy_t* object from diskFileCopies
+ * Remove a struct Cstager_DiskCopy_t* object from diskCopies
  */
-int Cstager_CastorFile_removeDiskFileCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t* obj);
+int Cstager_CastorFile_removeDiskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskCopy_t* objects held by diskFileCopies
+ * Get the list of struct Cstager_DiskCopy_t* objects held by diskCopies
  */
-int Cstager_CastorFile_diskFileCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
+int Cstager_CastorFile_diskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
 
 /**
  * Add a struct Cstager_TapeCopy_t* object to the copies list

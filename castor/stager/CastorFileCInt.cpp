@@ -190,26 +190,26 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_addDiskFileCopies
+  // Cstager_CastorFile_addDiskCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_addDiskFileCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy* obj) {
-    instance->addDiskFileCopies(obj);
+  int Cstager_CastorFile_addDiskCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy* obj) {
+    instance->addDiskCopies(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_removeDiskFileCopies
+  // Cstager_CastorFile_removeDiskCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_removeDiskFileCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy* obj) {
-    instance->removeDiskFileCopies(obj);
+  int Cstager_CastorFile_removeDiskCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy* obj) {
+    instance->removeDiskCopies(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_diskFileCopies
+  // Cstager_CastorFile_diskCopies
   //----------------------------------------------------------------------------
-  int Cstager_CastorFile_diskFileCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy*** var, int* len) {
-    std::vector<castor::stager::DiskCopy*> result = instance->diskFileCopies();
+  int Cstager_CastorFile_diskCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy*** var, int* len) {
+    std::vector<castor::stager::DiskCopy*> result = instance->diskCopies();
     *len = result.size();
     *var = (castor::stager::DiskCopy**) malloc((*len) * sizeof(castor::stager::DiskCopy*));
     for (int i = 0; i < *len; i++) {

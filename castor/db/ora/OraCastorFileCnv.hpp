@@ -297,10 +297,10 @@ namespace castor {
         /// SQL update statement object for member fileClass
         oracle::occi::Statement *m_updateFileClassStatement;
 
-        /// SQL select statement for member diskFileCopies
+        /// SQL select statement for member diskCopies
         static const std::string s_selectDiskCopyStatementString;
 
-        /// SQL select statement object for member diskFileCopies
+        /// SQL select statement object for member diskCopies
         oracle::occi::Statement *m_selectDiskCopyStatement;
 
         /// SQL select statement for member copies

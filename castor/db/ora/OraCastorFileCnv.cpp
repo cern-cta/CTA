@@ -91,7 +91,7 @@ const std::string castor::db::ora::OraCastorFileCnv::s_updateSvcClassStatementSt
 const std::string castor::db::ora::OraCastorFileCnv::s_updateFileClassStatementString =
 "UPDATE rh_CastorFile SET fileClass = : 1 WHERE id = :2";
 
-/// SQL select statement for member diskFileCopies
+/// SQL select statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectDiskCopyStatementString =
 "SELECT id from rh_DiskCopy WHERE castorFile = :1";
 
@@ -307,28 +307,28 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
     m_selectDiskCopyStatement = createStatement(s_selectDiskCopyStatementString);
   }
   // Get current database data
-  std::set<int> diskFileCopiesList;
+  std::set<int> diskCopiesList;
   m_selectDiskCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectDiskCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    diskFileCopiesList.insert(rset->getInt(1));
+    diskCopiesList.insert(rset->getInt(1));
   }
   m_selectDiskCopyStatement->closeResultSet(rset);
-  // update diskFileCopies and create new ones
-  for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskFileCopies().begin();
-       it != obj->diskFileCopies().end();
+  // update diskCopies and create new ones
+  for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskCopies().begin();
+       it != obj->diskCopies().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = diskFileCopiesList.find((*it)->id())) == diskFileCopiesList.end()) {
+    if ((item = diskCopiesList.find((*it)->id())) == diskCopiesList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
-      diskFileCopiesList.erase(item);
+      diskCopiesList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
     }
   }
   // Delete old data
-  for (std::set<int>::iterator it = diskFileCopiesList.begin();
-       it != diskFileCopiesList.end();
+  for (std::set<int>::iterator it = diskCopiesList.begin();
+       it != diskCopiesList.end();
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
@@ -492,24 +492,24 @@ void castor::db::ora::OraCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFi
     m_selectDiskCopyStatement = createStatement(s_selectDiskCopyStatementString);
   }
   // retrieve the object from the database
-  std::set<int> diskFileCopiesList;
+  std::set<int> diskCopiesList;
   m_selectDiskCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectDiskCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    diskFileCopiesList.insert(rset->getInt(1));
+    diskCopiesList.insert(rset->getInt(1));
   }
   // Close ResultSet
   m_selectDiskCopyStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::DiskCopy*> toBeDeleted;
-  for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskFileCopies().begin();
-       it != obj->diskFileCopies().end();
+  for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskCopies().begin();
+       it != obj->diskCopies().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = diskFileCopiesList.find((*it)->id())) == diskFileCopiesList.end()) {
+    if ((item = diskCopiesList.find((*it)->id())) == diskCopiesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
-      diskFileCopiesList.erase(item);
+      diskCopiesList.erase(item);
       cnvSvc()->updateObj((*it));
     }
   }
@@ -517,15 +517,15 @@ void castor::db::ora::OraCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFi
   for (std::vector<castor::stager::DiskCopy*>::iterator it = toBeDeleted.begin();
        it != toBeDeleted.end();
        it++) {
-    obj->removeDiskFileCopies(*it);
+    obj->removeDiskCopies(*it);
     delete (*it);
   }
   // Create new objects
-  for (std::set<int>::iterator it = diskFileCopiesList.begin();
-       it != diskFileCopiesList.end();
+  for (std::set<int>::iterator it = diskCopiesList.begin();
+       it != diskCopiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addDiskFileCopies(dynamic_cast<castor::stager::DiskCopy*>(item));
+    obj->addDiskCopies(dynamic_cast<castor::stager::DiskCopy*>(item));
   }
 }
 

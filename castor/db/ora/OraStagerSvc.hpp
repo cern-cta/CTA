@@ -85,38 +85,7 @@ namespace castor {
         void reset() throw ();
 
       public:
-        /*
-         * Get the array of segments currently waiting for a given tape.
-         * Search the catalog for all eligible segments that
-         * are waiting for the given tape VID to become ready.
-         * The matching Segments entries must have the status
-         * SEGMENT_UNPROCESSED.
-         * Before return this function atomically updates the
-         * matching catalog entries Tape status to TAPE_MOUNTED.
-         * @param searchItem the tape information used for the search
-         * @return vector with all waiting segments
-         * @exception in case of error
-         */
-        virtual std::vector<castor::stager::Segment*>
-        segmentsForTape(castor::stager::Tape* searchItem)
-          throw (castor::exception::Exception);
 
-        /*
-         * Get the best TapeCopy currently waiting for a given Stream.
-         * Search the catalog for the best eligible TapeCopies that
-         * is waiting for the given Stream to become ready.
-         * The matching TapeCopies entry must have the status
-         * TAPECOPY_WAITINSTREAMS.
-         * Before return this function atomically updates the
-         * matching catalog entry Stream status to STREAM_RUNNING.
-         * @param searchItem the Stream information used for the search
-         * @return vector with all waiting TapeCopies
-         * @exception in case of error
-         */
-        virtual castor::stager::TapeCopyForMigration*
-        bestTapeCopyForStream(castor::stager::Stream* searchItem)
-          throw (castor::exception::Exception);
-        
         /**
          * Check if there still are any segments waiting for a given tape.
          * Before a tape is physically mounted, the VidWorker process will
@@ -137,6 +106,42 @@ namespace castor {
         virtual int anySegmentsForTape(castor::stager::Tape* searchItem)
           throw (castor::exception::Exception);
 
+        /*
+         * Get the array of segments currently waiting for a given tape.
+         * Search the catalog for all eligible segments that
+         * are waiting for the given tape VID to become ready.
+         * The matching Segments entries must have the status
+         * SEGMENT_UNPROCESSED.
+         * Before return this function atomically updates the
+         * matching catalog entries Tape status to TAPE_MOUNTED.
+         * @param searchItem the tape information used for the search
+         * @return vector with all waiting segments
+         * @exception in case of error
+         */
+        virtual std::vector<castor::stager::Segment*>
+        segmentsForTape(castor::stager::Tape* searchItem)
+          throw (castor::exception::Exception);
+
+        /**
+         * Finds the best filesystem for a given segment.
+         * Looks for a filesystem where to write the segment content
+         * once it will be retrieved from tape. This file system
+         * must have enough space and the one with the biggest weight
+         * will be taken (if any).
+         * If a filesystem is chosen, then the link with the only
+         * DiskCopy available for the CastorFile the segment belongs
+         * to is created.
+         * @param segment the segment we are dealing with
+         * @return The only DiskCopy available for the CastorFile the
+         * segment belongs too. A DiskCopyForRecall is actually returned
+         * that contains additionnal information. The Castorfile associated
+         * is also created
+         * @exception in case of error
+         */
+        virtual castor::stager::DiskCopyForRecall* bestFileSystemForSegment
+        (castor::stager::Segment *segment)
+          throw (castor::exception::Exception);
+
         /**
          * Check if there still is any tapeCopy waiting for a stream.
          * The matching TapeCopies entry must have the status
@@ -150,6 +155,22 @@ namespace castor {
         virtual bool anyTapeCopyForStream(castor::stager::Stream* searchItem)
           throw (castor::exception::Exception);
 
+        /*
+         * Get the best TapeCopy currently waiting for a given Stream.
+         * Search the catalog for the best eligible TapeCopies that
+         * is waiting for the given Stream to become ready.
+         * The matching TapeCopies entry must have the status
+         * TAPECOPY_WAITINSTREAMS.
+         * Before return this function atomically updates the
+         * matching catalog entry Stream status to STREAM_RUNNING.
+         * @param searchItem the Stream information used for the search
+         * @return vector with all waiting TapeCopies
+         * @exception in case of error
+         */
+        virtual castor::stager::TapeCopyForMigration*
+        bestTapeCopyForStream(castor::stager::Stream* searchItem)
+          throw (castor::exception::Exception);
+        
         /**
          * Get an array of the tapes to be processed.
          * This method searches the request catalog for all tapes that are

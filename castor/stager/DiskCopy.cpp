@@ -53,7 +53,7 @@ castor::stager::DiskCopy::~DiskCopy() throw() {
     m_fileSystem->removeCopies(this);
   }
   if (0 != m_castorFile) {
-    m_castorFile->removeDiskFileCopies(this);
+    m_castorFile->removeDiskCopies(this);
   }
 };
 
