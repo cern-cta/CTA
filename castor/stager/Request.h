@@ -65,6 +65,10 @@ struct Cstager_Request_t* Cstager_Request_fromIObject(struct C_IObject_t* obj);
  */
 int Cstager_Request_print(struct Cstager_Request_t* instance);
 
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
+
 /**
  * Get the value of flags
  */

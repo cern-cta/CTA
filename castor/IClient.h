@@ -72,6 +72,10 @@ int C_IClient_sendRep(struct C_IClient_t* instance);
  */
 int C_IClient_print(struct C_IClient_t* instance);
 
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
+
 /**
  * Get the value of request
  */
