@@ -1,5 +1,5 @@
 /*
- * $Id: sendscsicmd.c,v 1.4 1999/12/09 13:39:44 jdurand Exp $
+ * $Id: sendscsicmd.c,v 1.5 1999/12/14 11:58:36 fabien Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:44 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.5 $ $Date: 1999/12/14 11:58:36 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -653,8 +653,8 @@ char **msgaddr;
 	}
 	if (! do_not_open) close (fd);
 	if (sg_hd->sense_buffer[0]) {
-		memcpy (sense, sg_hd->sense_buffer, 16);
-		*nb_sense_ret = 16;
+		memcpy (sense, sg_hd->sense_buffer, sizeof(sg_hd->sense_buffer));
+		*nb_sense_ret = sizeof(sg_hd->sense_buffer);
 	}
 	if (sg_hd->sense_buffer[0] & 0x80) {	/* valid */
 		resid = sg_hd->sense_buffer[3] << 24 | sg_hd->sense_buffer[4] << 16 |
