@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.14 $ $Date: 2000/01/21 13:29:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.15 $ $Date: 2000/01/24 16:34:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -202,6 +202,18 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         }
     }
     /*
+     * Tape files must be in sequence on write
+     */
+    if ( mode == WRITE_ENABLE && file != tape->file && 
+         filereq->concat == NOCONCAT &&
+        (file->prev->filereq.tape_fseq != filereq->tape_fseq - 1) ) {
+        serrno = EINVAL;
+        sprintf(errmsgtxt,RT151,"CPDSKTP");
+        SET_REQUEST_ERR(filereq,RTCP_SYERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    }
+
+    /*
      * If concatenate to EOD: insert a dummy file list element
      * so that the diskIOthread waits for the tapeIOthread to
      * signal EOD.
@@ -322,7 +334,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Check and signal eventual truncation.
          */
         rfio_errno = serrno = 0;
-        rc = rfio_stat(filereq->file_path,&st);
+        rc = rfio_mstat(filereq->file_path,&st);
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
@@ -398,7 +410,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) return(rc);
             }
             rfio_errno = serrno = 0;
-            rc = rfio_stat(filereq->file_path,&st);
+            rc = rfio_mstat(filereq->file_path,&st);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
                 serrno = EISDIR;
@@ -415,7 +427,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                     dir_delim = *p;
                     *p = '\0';
                 }
-                rc = rfio_stat(filereq->file_path,&st);
+                rc = rfio_mstat(filereq->file_path,&st);
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;
@@ -490,6 +502,7 @@ int rtcp_CheckReq(SOCKET *client_socket, tape_list_t *tape) {
 
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
+    rfio_end();
     return(rc);
 }
 
