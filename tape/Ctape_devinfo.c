@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.8 $ $Date: 2001/07/26 06:53:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.9 $ $Date: 2002/11/06 10:12:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_devinfo - table of device characteristics */
@@ -30,7 +30,7 @@ static struct devinfo devinfo[] = {
 	"QIC",  0, 2, 0,-1, 512,    512,    512, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"DIR1",  0, 0, 1,-1, 144432, 144432, 144432, 0x00, SRAW, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"SD3",  1, 1, 1, 0, 1,   262144, 262144, 0x10, D10G, 0, D25G, 0, D50G, 0, D10GC, 0, D25GC, 0, D50GC, 0, 0, 0, 0, 0,
-	"SDLT", 1, 1, 1,-1, 4, 16777212,  32760, 0x10, D20G, 0x1A, D35G, 0x1B, D40G, 0x41, D100G, 0x48, D20GC, 0x1A, D35GC, 0x1B, D40GC, 0x41, D100GC, 0x48,
+	"SDLT", 1, 1, 1,-1, 4, 16777212,  32760, 0x10, D20G, 0x1A, D35G, 0x1B, D40G, 0x41, D110G, 0x48, D20GC, 0x1A, D35GC, 0x1B, D40GC, 0x41, D110GC, 0x48,
 
 	/* new devices should be added here */
 
