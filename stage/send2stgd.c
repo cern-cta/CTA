@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.26 2001/05/31 12:27:43 jdurand Exp $
+ * $Id: send2stgd.c,v 1.27 2001/09/18 21:07:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.26 $ $Date: 2001/05/31 12:27:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.27 $ $Date: 2001/09/18 21:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -58,6 +58,8 @@ int rc_shift2castor(rc)
 	/* Input  is a SHIFT  return code */
 	/* Output is a CASTOR return code */
 	switch (rc) {
+	case ETHELDERR:
+		return(ETHELD);
 	case BLKSKPD:
 		return(ERTBLKSKPD);
 	case TPE_LSZ:

@@ -148,6 +148,8 @@ int rc_shift2castor(rc)
 	/* Input  is a SHIFT  return code */
 	/* Output is a CASTOR return code */
 	switch (rc) {
+	case ETHELDERR:
+		return(ETHELD);
 	case BLKSKPD:
 		return(ERTBLKSKPD);
 	case TPE_LSZ:
