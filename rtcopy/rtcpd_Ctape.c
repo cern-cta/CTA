@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.30 $ $Date: 2000/04/10 16:45:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.31 $ $Date: 2000/04/11 06:44:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,9 @@ extern char *geterr();
 #include <serrno.h>
 
 #define CTP_ERRTXT rtcpd_CtapeErrMsg()
+#ifndef EBUSY_RETRIES
+#define EBUSY_RETRIES 10
+#endif /* EBUSY_RETRIES */
 
 static int Ctape_key = -1;
 static char Unkn_errorstr[] = "unknown error";
@@ -243,7 +246,10 @@ int rtcpd_Mount(tape_list_t *tape) {
         sprintf(filereq->tape_path,"PATH%d.%d",jobID,++j);
     }
 
-    for (retry=0; retry<10; retry++) {
+    /*
+     * Retry loop on EBUSY.
+     */
+    for (retry=0; retry<EBUSY_RETRIES; retry++) {
         rtcp_log(LOG_DEBUG,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
                  filereq->tape_path,
                  tapereq->vid,
@@ -365,8 +371,8 @@ int rtcpd_Mount(tape_list_t *tape) {
                 severity = RTCP_FAILED | RTCP_USERR;
                 break;
             case EBUSY:
-                rtcp_log(LOG_INFO,"rtcpd_Mount() retry on EBUSY, drive=%s\n",
-                         tapereq->unit);
+                rtcp_log(LOG_INFO,"rtcpd_Mount() retry %d on EBUSY, drive=%s\n",
+                         retry,tapereq->unit);
                 sleep(5);
                 break;
             default:
@@ -376,8 +382,12 @@ int rtcpd_Mount(tape_list_t *tape) {
             if ( save_serrno != EBUSY ) 
                 rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
         } /* if ( rc == -1 ) */
-        if ( rc == -1 && save_serrno != EBUSY ) break;
-    } /* for (;;)  */
+        /*
+         * Retry on EBUSY since this can be a transient status while 
+         * previous job is release from the drive
+         */
+        if ( rc == 0 || (rc == -1 && save_serrno != EBUSY) ) break;
+    } /* for (retry==0; retry<EBUSY_RETRIES; retry++) */
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
