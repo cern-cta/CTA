@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.30 2001/02/05 10:10:17 jdurand Exp $
+ * $Id: stage_api.h,v 1.31 2001/02/05 10:50:03 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -33,7 +33,7 @@ typedef struct stage_hsm stage_hsm_t;
 #define UPPER(s) \
 	{ \
 	char *q; \
-	if (*q != '\0') \
+	if (((s) != NULL) && (*(s) != '\0')) \
 		for (q = s; *q; q++) \
 			if (*q >= 'a' && *q <= 'z') *q = *q + ('A' - 'a'); \
 	}
