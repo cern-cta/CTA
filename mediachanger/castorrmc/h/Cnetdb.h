@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: Cnetdb.h,v $ $Revision: 1.9 $ $Date: 2000/05/12 15:57:50 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cnetdb.h,v $ $Revision: 1.10 $ $Date: 2000/05/31 10:35:17 $ CERN IT-PDP/DM Olof Barring
  */
 
 
@@ -21,8 +21,8 @@ EXTERN_C int DLL_DECL *C__h_errno _PROTO((void));
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 
-EXTERN_C struct hostent DLL_DECL *Cgethostbyname _PROTO((const char *));
-EXTERN_C struct hostent DLL_DECL *Cgethostbyaddr _PROTO((const void *, size_t, int));
-EXTERN_C struct servent DLL_DECL *Cgetservbyname _PROTO((const char *, const char *));
+EXTERN_C struct hostent DLL_DECL *Cgethostbyname _PROTO((CONST char *));
+EXTERN_C struct hostent DLL_DECL *Cgethostbyaddr _PROTO((CONST void *, size_t, int));
+EXTERN_C struct servent DLL_DECL *Cgetservbyname _PROTO((CONST char *, CONST char *));
 
 #endif /* _CNETDB_H */
