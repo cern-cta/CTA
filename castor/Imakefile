@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.73 $ $Release$ $Date: 2004/12/21 22:23:39 $ $Author: jdurand $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.74 $ $Release$ $Date: 2005/01/03 11:03:50 $ $Author: jdurand $
 #
 # Make Castor libraries and executables
 #
@@ -302,7 +302,7 @@ STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 #endif
 
 
-#if BuildDlfClient
+#if BuildDlfLibrary
 STGLIB_SRCS += DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
