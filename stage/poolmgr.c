@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.168 2001/12/20 12:50:23 jdurand Exp $
+ * $Id: poolmgr.c,v 1.169 2002/01/14 15:05:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.168 $ $Date: 2001/12/20 12:50:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.169 $ $Date: 2002/01/14 15:05:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -418,6 +418,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           if ((p = strtok (NULL, " \t\n")) == NULL ||
               strchr (p, ':') == NULL ) {
             stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+          if ((int) strlen(p) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+            stglogit (func, STG27, "garbage collector", p);
             errflg++;
             goto reply;
           }
@@ -932,7 +937,7 @@ findpoolname(path)
   /* If we find a ":/" set - it is a hostname specification if there is no '/' before */
   if (((p = strstr (path, ":/")) != NULL) && (strchr(path, '/') > p)) {
     /* Note that per construction strchr() returns != NULL, because we know there is a '/' */
-    strncpy (server, path, p - path);
+    strncpy (server, path, (size_t) (p - path));
     server[p - path] = '\0';
   } else {
     p = NULL;
@@ -970,7 +975,7 @@ findfs(path,found_server,found_dirpath)
   /* If we find a ":/" set - it is a hostname specification if there is no '/' before */
   if (((p = strstr (path, ":/")) != NULL) && (strchr(path, '/') > p)) {
     /* Note that per construction strchr() returns != NULL, because we know there is a '/' */
-    strncpy (server, path, p - path);
+    strncpy (server, path, (size_t) (p - path));
     server[p - path] = '\0';
   } else {
     p = NULL;
@@ -1617,7 +1622,7 @@ rwcountersfs(poolname, ipath, status, req_type)
     return;      
   }
   if ((p = strchr (ipath, ':')) != NULL) {
-    strncpy (server, ipath, p - ipath);
+    strncpy (server, ipath, (size_t) (p - ipath));
     *(server + (p - ipath)) = '\0';
   }
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
@@ -1691,7 +1696,7 @@ updfreespace(poolname, ipath, incr)
   if (*poolname == '\0')
     return (0);
   if ((p = strchr (ipath, ':')) != NULL) {
-    strncpy (server, ipath, p - ipath);
+    strncpy (server, ipath, (size_t) (p - ipath));
     *(server + (p - ipath)) = '\0';
   }
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
@@ -4190,21 +4195,43 @@ void stglogfileclass(Cnsfileclass)
 
   if (Cnsfileclass->uid != sav_uid) {
     sav_uid = Cnsfileclass->uid;
-		if (sav_uid == 0)
-          strcpy (sav_uidstr, "-");
-		else if ((pw = Cgetpwuid (sav_uid)) != NULL)
-          strcpy (sav_uidstr, pw->pw_name);
-		else
-          sprintf (sav_uidstr, "%-8u", sav_uid);
+    if (sav_uid == 0) {
+      strcpy (sav_uidstr, "-");
+    } else if ((pw = Cgetpwuid (sav_uid)) != NULL) {
+      strncpy (sav_uidstr, pw->pw_name, (size_t) CA_MAXUSRNAMELEN);
+      sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
+    } else {
+#if (defined(__osf__) && defined(__alpha))
+      sprintf (sav_uidstr, "%-8u", sav_uid);
+#else
+#if defined(_WIN32)
+      _snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
+#else
+      snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
+#endif
+#endif
+      sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
+    }
   }
   if (Cnsfileclass->gid != sav_gid) {
     sav_gid = Cnsfileclass->gid;
-    if (sav_gid == 0)
+    if (sav_gid == 0) {
       strcpy (sav_gidstr, "-");
-    else if ((gr = Cgetgrgid (sav_gid)) != NULL)
-      strcpy (sav_gidstr, gr->gr_name);
-    else
+    } else if ((gr = Cgetgrgid (sav_gid)) != NULL) {
+      strncpy (sav_gidstr, gr->gr_name, (size_t) 6);
+      sav_gidstr[6] = '\0';
+    } else {
+#if (defined(__osf__) && defined(__alpha))
       sprintf (sav_gidstr, "%-6u", sav_gid);
+#else
+#if defined(_WIN32)
+      _snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
+#else
+      snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
+#endif
+#endif
+      sav_gidstr[6] = '\0';
+    }
   }
   p = Cnsfileclass->tppools;
 
@@ -4264,21 +4291,43 @@ void printfileclass(rpfd,fileclass)
 
   if (fileclass->Cnsfileclass.uid != sav_uid) {
     sav_uid = fileclass->Cnsfileclass.uid;
-		if (sav_uid == 0)
-          strcpy (sav_uidstr, "-");
-		else if ((pw = Cgetpwuid (sav_uid)) != NULL)
-          strcpy (sav_uidstr, pw->pw_name);
-		else
-          sprintf (sav_uidstr, "%-8u", sav_uid);
+    if (sav_uid == 0) {
+      strcpy (sav_uidstr, "-");
+    } else if ((pw = Cgetpwuid (sav_uid)) != NULL) {
+      strncpy (sav_uidstr, pw->pw_name, (size_t) CA_MAXUSRNAMELEN);
+      sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
+    } else {
+#if (defined(__osf__) && defined(__alpha))
+      sprintf (sav_uidstr, "%-8u", sav_uid);
+#else
+#if defined(_WIN32)
+      _snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
+#else
+      snprintf (sav_uidstr, (size_t) CA_MAXUSRNAMELEN, "%-8u", sav_uid);
+#endif
+#endif
+      sav_uidstr[CA_MAXUSRNAMELEN] = '\0';
+    }
   }
   if (fileclass->Cnsfileclass.gid != sav_gid) {
     sav_gid = fileclass->Cnsfileclass.gid;
-    if (sav_gid == 0)
+    if (sav_gid == 0) {
       strcpy (sav_gidstr, "-");
-    else if ((gr = Cgetgrgid (sav_gid)) != NULL)
-      strcpy (sav_gidstr, gr->gr_name);
-    else
+    } else if ((gr = Cgetgrgid (sav_gid)) != NULL) {
+      strncpy (sav_gidstr, gr->gr_name, (size_t) 6);
+      sav_gidstr[6] = '\0';
+    } else {
+#if (defined(__osf__) && defined(__alpha))
       sprintf (sav_gidstr, "%-6u", sav_gid);
+#else
+#if defined(_WIN32)
+      _snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
+#else
+      snprintf (sav_gidstr, (size_t) 6, "%-6u", sav_gid);
+#endif
+#endif
+      sav_gidstr[6] = '\0';
+    }
   }
   p = fileclass->Cnsfileclass.tppools;
 
