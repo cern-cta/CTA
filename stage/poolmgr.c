@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.39 2000/10/09 06:24:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.40 2000/10/11 06:47:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.39 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.40 $ $Date: 2000/10/11 06:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -986,6 +986,7 @@ selectfs(poolname, size, path)
 	int i;
 	struct pool *pool_p;
 	long reqsize;
+	char tmpbuf[21];
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
@@ -1013,8 +1014,8 @@ selectfs(poolname, size, path)
 		strcpy (path, elemp->dirpath);
 	else
 		sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
-	stglogit ("selectfs", "%s reqsize=%ld, elemp->free=%ld, pool_p->free=%ld\n",
-						path, reqsize, elemp->free, pool_p->free);
+	stglogit ("selectfs", "%s reqsize=%ld, elemp->free=%ld, pool_p->free=%s\n",
+						path, reqsize, elemp->free, u64tostr((u_signed64) pool_p->free, tmpbuf, 0));
 	return (1);
 }
 
@@ -1030,6 +1031,7 @@ updfreespace(poolname, ipath, incr)
 	char path[MAXPATH];
 	struct pool *pool_p;
 	char server[CA_MAXHOSTNAMELEN + 1];
+	char tmpbuf[21];
 
 	if (*poolname == '\0')
 		return (0);
@@ -1056,8 +1058,8 @@ updfreespace(poolname, ipath, incr)
 	if (j < pool_p->nbelem && elemp->bsize != 0) {
 		elemp->free += incr / elemp->bsize;
 		pool_p->free += incr / 512;
-		stglogit ("updfreespace", "%s incr=%d, elemp->free=%ld, pool_p->free=%ld\n",
-					path, incr, elemp->free, pool_p->free);
+		stglogit ("updfreespace", "%s incr=%d, elemp->free=%ld, pool_p->free=%s\n",
+					path, incr, elemp->free, u64tostr((u_signed64) pool_p->free, tmpbuf, 0));
 	}
 	return (0);
 }
