@@ -1,8 +1,7 @@
 #ifndef _CSEC_PLUGIN_H
 #define _CSEC_PLUGIN_H
 
-#include <Csec_api_common.h>
-#include <Csec_util.h>
+#include <Csec_common.h>
 
 int DLL_DECL  Csec_init_context_impl _PROTO ((Csec_context *ctx));
 int DLL_DECL  Csec_reinit_context_impl _PROTO ((Csec_context *ctx));

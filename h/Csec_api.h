@@ -1,8 +1,8 @@
 #ifndef _CSEC_API_H
 #define _CSEC_API_H
 
-#include <Csec_api_common.h>
-#include <Csec_util.h>
+#include <sys/types.h>
+#include <Csec_common.h>
 
 int DLL_DECL  Csec_init_context _PROTO ((Csec_context *ctx));
 int DLL_DECL  Csec_reinit_context _PROTO ((Csec_context *ctx));
@@ -40,5 +40,13 @@ int DLL_DECL Csec_get_service_name _PROTO ((Csec_context *ctx,
                                             char *domain,
                                             char *service_name,
                                             int service_namelen));
+
+int DLL_DECL Csec_map2id _PROTO((Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid));
+int DLL_DECL Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
+int DLL_DECL Csec_get_peer_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
+                                                 char *service_name, int service_namelen));
+int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context *ctx, int s, int service_type,
+                                                  char *service_name, int service_namelen));
+
 
 #endif
