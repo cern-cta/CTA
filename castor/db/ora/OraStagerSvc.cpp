@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.105 $ $Release$ $Date: 2005/01/17 17:15:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.106 $ $Release$ $Date: 2005/01/18 08:18:04 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -96,11 +96,11 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
 
 /// SQL statement for anyTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatementString =
-  "SELECT id FROM TapeCopy, Stream2TapeCopy WHERE status = 2 and child = id and parent = :1 and ROWNUM < 2";
+  "BEGIN anyTapeCopyForStream(:1, :2); END;";
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
-  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
+  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for streamsForTapePool
 const std::string castor::db::ora::OraStagerSvc::s_streamsForTapePoolStatementString =
@@ -412,13 +412,13 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
     if (0 == m_anyTapeCopyForStreamStatement) {
       m_anyTapeCopyForStreamStatement =
         createStatement(s_anyTapeCopyForStreamStatementString);
+      m_anyTapeCopyForStreamStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
     }
     m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
-    oracle::occi::ResultSet *rset =
-      m_anyTapeCopyForStreamStatement->executeQuery();
+    m_anyTapeCopyForStreamStatement->executeUpdate();
     bool result =
-      oracle::occi::ResultSet::END_OF_FETCH != rset->next();
-    m_anyTapeCopyForStreamStatement->closeResultSet(rset);
+      1 == m_anyTapeCopyForStreamStatement->getInt(2);
     if (result) {
       searchItem->setStatus(castor::stager::STREAM_WAITMOUNT);
       castor::BaseAddress ad;
@@ -449,30 +449,24 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     if (0 == m_bestTapeCopyForStreamStatement) {
       m_bestTapeCopyForStreamStatement =
         createStatement(s_bestTapeCopyForStreamStatementString);
-      m_bestTapeCopyForStreamStatement->setInt
-        (2, castor::stager::TAPECOPY_WAITINSTREAMS);
-      m_bestTapeCopyForStreamStatement->setInt
-        (3, castor::stager::TAPECOPY_SELECTED);
-      m_bestTapeCopyForStreamStatement->setInt
-        (4, castor::stager::STREAM_RUNNING);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
+        (2, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING, 2048);
+        (3, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 2048);
+        (4, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (8, oracle::occi::OCCIDOUBLE);
+        (5, oracle::occi::OCCIDOUBLE);
+      m_bestTapeCopyForStreamStatement->registerOutParam
+        (6, oracle::occi::OCCIDOUBLE);
+      m_bestTapeCopyForStreamStatement->registerOutParam
+        (7, oracle::occi::OCCIDOUBLE);
+      m_bestTapeCopyForStreamStatement->registerOutParam
+        (8, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (9, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
-      m_bestTapeCopyForStreamStatement->registerOutParam
-        (11, oracle::occi::OCCISTRING, 2048);
-      m_bestTapeCopyForStreamStatement->registerOutParam
-        (12, oracle::occi::OCCIDOUBLE);
-      m_bestTapeCopyForStreamStatement->registerOutParam
-        (13, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
     m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
@@ -487,22 +481,22 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     // Create result
     castor::stager::TapeCopyForMigration* result =
       new castor::stager::TapeCopyForMigration();
-    result->setDiskServer(m_bestTapeCopyForStreamStatement->getString(5));
-    result->setMountPoint(m_bestTapeCopyForStreamStatement->getString(6));
+    result->setDiskServer(m_bestTapeCopyForStreamStatement->getString(2));
+    result->setMountPoint(m_bestTapeCopyForStreamStatement->getString(3));
     castor::stager::DiskCopy* diskCopy =
       new castor::stager::DiskCopy();
-    diskCopy->setPath(m_bestTapeCopyForStreamStatement->getString(7));
-    diskCopy->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(8));
+    diskCopy->setPath(m_bestTapeCopyForStreamStatement->getString(4));
+    diskCopy->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(5));
     castor::stager::CastorFile* castorFile =
       new castor::stager::CastorFile();
     castorFile->setId
-      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(6));
     castorFile->setFileId
-      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
-    castorFile->setNsHost(m_bestTapeCopyForStreamStatement->getString(11));
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(7));
+    castorFile->setNsHost(m_bestTapeCopyForStreamStatement->getString(8));
     castorFile->setFileSize
-      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(12));
-    result->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(13));
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
+    result->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
     diskCopy->setCastorFile(castorFile);
     castorFile->addDiskCopies(diskCopy);
     result->setCastorFile(castorFile);

@@ -70,9 +70,30 @@ BEGIN
   WHERE SubRequest.id = subreqId;
 END;
 
+/* PL/SQL method implementing anyTapeCopyForStream */
+CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT INTEGER) AS
+  unused INTEGER;
+BEGIN
+  SELECT TapeCopy.id INTO unused
+  FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+   WHERE DiskServer.id = FileSystem.diskserver
+    AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+    AND FileSystem.id = DiskCopy.filesystem
+    AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+    AND DiskCopy.castorfile = CastorFile.id
+    AND TapeCopy.castorfile = Castorfile.id
+    AND Stream2TapeCopy.child = TapeCopy.id
+    AND Stream2TapeCopy.parent = streamId
+    AND TapeCopy.status = 2 -- WAITInSTREAMS
+    AND ROWNUM < 2;
+  res = 1;
+EXCEPTION
+ WHEN NO_DATA_FOUND
+  res = 0;
+END;
+
 /* PL/SQL method implementing bestTapeCopyForStream */
-CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyStatus IN NUMBER,
-                                                  newTapeCopyStatus IN NUMBER, newStreamStatus IN NUMBER,
+CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   diskServerName OUT VARCHAR, mountPoint OUT VARCHAR,
                                                   path OUT VARCHAR, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
@@ -92,17 +113,20 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
     AND TapeCopy.castorfile = Castorfile.id
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
-    AND TapeCopy.status = tapeCopyStatus
+    AND TapeCopy.status = 2 -- WAITINSTREAMS
    ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
  FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
  CLOSE c1;
- UPDATE TapeCopy SET status = newTapeCopyStatus WHERE id = tapeCopyId;
- UPDATE Stream SET status = newStreamStatus WHERE id = streamId;
+ UPDATE TapeCopy SET status = 3 -- SELECTED
+  WHERE id = tapeCopyId;
+ UPDATE Stream SET status = 3 -- RUNNING
+  WHERE id = streamId;
  UPDATE FileSystem SET weight = weight - deviation
   WHERE diskServer = fsDiskServer;
- UPDATE FileSystem SET fsDeviation = 2 * deviation WHERE id = fileSystemId;
+ UPDATE FileSystem SET fsDeviation = 2 * deviation
+  WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
