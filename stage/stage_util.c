@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.27 2002/10/16 22:32:31 jdurand Exp $
+ * $Id: stage_util.c,v 1.28 2003/06/30 10:05:06 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.27 $ $Date: 2002/10/16 22:32:31 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.28 $ $Date: 2003/06/30 10:05:06 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -450,9 +450,13 @@ void DLL_DECL stage_util_time(this,timestr)
   tp = localtime(&(this));
 #endif /* _REENTRANT || _THREAD_SAFE */
   if ((this_time >= this) && ((this_time - this) > SIXMONTHS)) {
-    strftime(timestr,64,strftime_format_sixmonthsold,tp);
+	  /* Too much in past */
+	  strftime(timestr,64,strftime_format_sixmonthsold,tp);
+  } else if ((this_time < this) && ((this - this_time) > SIXMONTHS)) {
+	  /* Too much in feature...! */
+	  strftime(timestr,64,strftime_format_sixmonthsold,tp);
   } else {
-    strftime(timestr,64,strftime_format,tp);
+	  strftime(timestr,64,strftime_format,tp);
   }
 }
 
