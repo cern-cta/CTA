@@ -1,10 +1,10 @@
-.\" $Id: stagein_disk.man,v 1.1 2002/10/08 07:37:41 jdurand Exp $
+.\" $Id: stagein_disk.man,v 1.2 2002/10/08 07:47:57 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagein_disk.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 07:37:41 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagein_disk.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 07:47:57 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEIN_DISK "3" "$Date: 2002/10/08 07:37:41 $" "CASTOR" "Stage Library Functions"
+.TH STAGEIN_DISK "3" "$Date: 2002/10/08 07:47:57 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stagein_disk \- Asks for one or more disks files to be staged on disk
 .SH SYNOPSIS
@@ -66,7 +66,17 @@ must be a valid user name and belong to the same group as the requestor.
 Number of stcp_input entries.
 .TP
 .I stcp_input
-Entries describing the files you want to be staged. Only the member xfile of the structures is mandatory. Others members should all be setted to zero in order to avoid your request to possibly misbehave. See example below.
+Entries describing the files you want to be staged. Only the member xfile of the structures is mandatory. Other members of interest are:
+.RS
+.TP
+.I size
+Gives how many bytes should be allocated rather than the default
+.TP
+.I poolname
+Specify explicitely a disk pool
+.LP
+Others members should all be setted to zero in order to avoid your request to possibly misbehave. See example below.
+.RE
 .TP
 .I nstcp_output
 Filled with the number of staged entries at return.
