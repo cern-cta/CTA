@@ -4,7 +4,7 @@
  */
 
 #if !defined(lint)
-static char sccsid[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] =  "@(#)socket.c,v 1.7 2000/05/31 10:33:54 CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 
 /* socket.c     Generalized network interface                           */
@@ -297,9 +297,11 @@ char DLL_DECL *
 s_errmsg()                              /* return last error message    */
 {
 #if !defined(_WIN32)
-    return((char *)sys_errlist[errno]);
+    if ( serrno != 0 ) return((char *)sstrerror(serrno));
+    else return((char *)sstrerror(errno));
 #else /* _WIN32 */
-    return(geterr());
+    if ( serrno != 0 ) return((char *)sstrerror(serrno));
+    else return(geterr());
 #endif /* _WIN32 */
 }
 
