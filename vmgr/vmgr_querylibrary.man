@@ -1,0 +1,67 @@
+.\" @(#)$RCSfile: vmgr_querylibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_QUERYLIBRARY 3 "$Date: 2001/03/08 15:22:15 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_querylibrary \- query about a tape library in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_querylibrary (const char *" library_name ,
+.BI "int *" capacity ,
+.BI "int *" nb_free_slots ,
+.BI "int *" status )
+.SH DESCRIPTION
+.B vmgr_querylibrary
+queries about a tape library in the CASTOR Volume Manager.
+.TP
+.I library_name
+is the name of the tape library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I capacity
+is the total number of slots.
+.TP
+.I nb_free_slots
+is the number of free slots.
+.LP
+Only
+.I library_name
+is mandatory. When a pointer to a field is NULL, the field value is not returned.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named library does not exist.
+.TP
+.B EFAULT
+.I library_name
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I library_name
+exceeds
+.BR CA_MAXTAPELIBLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_enterlibrary(3)

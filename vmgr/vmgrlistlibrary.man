@@ -1,0 +1,43 @@
+.\" @(#)$RCSfile: vmgrlistlibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTLIBRARY 1 "$Date: 2001/03/08 15:22:16 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistlibrary \- query the CASTOR Volume Manager about a given library or list all existing tape libraries
+.SH SYNOPSIS
+.B vmgrlistlibrary
+[
+.BI --name " library_name"
+]
+.SH DESCRIPTION
+.B vmgrlistlibrary
+queries the CASTOR Volume Manager about a given library or lists all existing tape
+libraries in tabular form:
+.HP 1.2i
+library_name	name of the tape library.
+.HP
+capacity		the total number of slots.
+.HP
+nb_free_slots	the number of free slots.
+.HP
+status		the library status.
+.SH OPTIONS
+.TP
+.I library_name
+is the name of the tape library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistlibrary --name STK_ACS0
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_enterlibrary(3) ,
+.BR vmgrenterlibrary(1) ,
+.B vmgr_querylibrary(3)

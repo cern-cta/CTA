@@ -1,0 +1,35 @@
+.\" @(#)$RCSfile: vmgrmodifylibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRMODIFYLIBRARY 1 "$Date: 2001/03/08 15:22:17 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrmodifylibrary \- modify the definition of an existing tape library in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrmodifylibrary
+.BI --name " library_name"
+[
+.BI --capacity " nb_slots"
+] [
+.BI --status " status"
+]
+.SH DESCRIPTION
+.B vmgrmodifylibrary
+modifies the definition of an existing tape library in the CASTOR Volume Manager.
+.TP
+.I library_name
+is the name of the tape library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I capacity
+is the new total number of slots.
+.LP
+Only
+.I library_name
+is mandatory. When an option is not specified, the field is not modified.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_modifylibrary(3)

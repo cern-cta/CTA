@@ -1,0 +1,31 @@
+.\" @(#)$RCSfile: vmgrlistdgnmap.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTDGNMAP 1 "$Date: 2001/03/08 15:22:20 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistdgnmap \- list all existing triplets dgn/model/library in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrlistdgnmap
+.SH DESCRIPTION
+.B vmgrlistdgnmap
+lists all existing triplets dgn/model/library in the CASTOR Volume
+Manager in tabular form:
+.HP 1.2i
+dgn		device group name.
+.HP
+model		model of cartridge.
+.HP
+library		tape library name.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistdgnmap
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR vmgr_enterdgnmap(3) ,
+.B vmgrenterdgnmap(1)

@@ -1,0 +1,40 @@
+.\" @(#)$RCSfile: vmgrenterdgnmap.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERDGNMAP 1 "$Date: 2001/03/08 15:22:19 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrenterdgnmap \- enter a new triplet dgn/model/library in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrenterdgnmap
+.BI -g " dgn"
+.BI --library " library_name"
+.BI --mo " model"
+.SH DESCRIPTION
+.B vmgrenterdgnmap
+enters a new triplet dgn/model/library in the CASTOR Volume Manager.
+.TP
+.I dgn
+is the device group name associated with the pair model/library.
+It must be at most CA_MAXDGNLEN characters long.
+.TP
+.I library_name
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrenterdgnmap -g 9840R --library STK_ACS0 --mo 9840
+vmgrenterdgnmap -g NTR3 --library STK_ACS3 --mo 3590E
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_enterdgnmap(3)

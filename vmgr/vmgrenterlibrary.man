@@ -1,0 +1,36 @@
+.\" @(#)$RCSfile: vmgrenterlibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERLIBRARY 1 "$Date: 2001/03/08 15:22:16 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrenterlibrary \- define a new tape library in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrenterlibrary
+.BI --name " library_name"
+.BI --capacity " nb_slots"
+[
+.BI --status " status"
+]
+.SH DESCRIPTION
+.B vmgrenterlibrary
+defines a new tape library in the CASTOR Volume Manager.
+.TP
+.I library_name
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I capacity
+is the total number of slots.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrenterlibrary --name STK_ACS0 --capacity 24000
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_enterlibrary(3)
