@@ -1,5 +1,5 @@
 /*
- * $Id: socket_timeout.c,v 1.8 1999/12/09 13:39:48 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.9 2000/04/05 09:55:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:39:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.9 $ $Date: 2000/04/05 09:55:25 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -69,6 +69,12 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
 #ifndef _WIN32
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
+
+  /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
+  if (n <= 0) {
+    serrno = SEINVAL;
+    return(-1);
+  }
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
@@ -144,6 +150,12 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
   int     select_status = 0;
+
+  /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
+  if (n <= 0) {
+    serrno = SEINVAL;
+    return(-1);
+  }
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
