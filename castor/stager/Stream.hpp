@@ -33,6 +33,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -43,6 +44,7 @@ namespace castor {
 
     // Forward declarations
     class TapePool;
+    class TapeCopy;
 
     /**
      * class Stream
@@ -124,6 +126,35 @@ namespace castor {
       }
 
       /**
+       * Add a TapeCopy* object to the m_tapeCopyVector list
+       */
+      void addTapeCopy(TapeCopy* add_object) {
+        m_tapeCopyVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a TapeCopy* object from m_tapeCopyVector
+       */
+      void removeTapeCopy(TapeCopy* remove_object) {
+        for (unsigned int i = 0; i < m_tapeCopyVector.size(); i++) {
+          TapeCopy* item = m_tapeCopyVector[i];
+          if (item == remove_object) {
+            std::vector<TapeCopy*>::iterator it = m_tapeCopyVector.begin() + i;
+            m_tapeCopyVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of TapeCopy* objects held by m_tapeCopyVector
+       * @return list of TapeCopy* objects held by m_tapeCopyVector
+       */
+      std::vector<TapeCopy*>& tapeCopy() {
+        return m_tapeCopyVector;
+      }
+
+      /**
        * Get the value of m_tapePool
        * @return the value of m_tapePool
        */
@@ -164,6 +195,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<TapeCopy*> m_tapeCopyVector;
 
       TapePool* m_tapePool;
 

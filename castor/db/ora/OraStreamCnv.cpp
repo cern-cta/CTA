@@ -78,7 +78,7 @@ const std::string castor::db::ora::OraStreamCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraStreamCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL select statement for member 
+/// SQL select statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
 "SELECT id from rh_TapeCopy WHERE stream = :1";
 
@@ -187,28 +187,28 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // Get current database data
-  std::set<int> List;
+  std::set<int> tapeCopyList;
   m_selectTapeCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    List.insert(rset->getInt(1));
+    tapeCopyList.insert(rset->getInt(1));
   }
   m_selectTapeCopyStatement->closeResultSet(rset);
-  // update  and create new ones
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->().begin();
-       it != obj->().end();
+  // update tapeCopy and create new ones
+  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopy().begin();
+       it != obj->tapeCopy().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = List.find((*it)->id())) == List.end()) {
+    if ((item = tapeCopyList.find((*it)->id())) == tapeCopyList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_Stream);
     } else {
-      List.erase(item);
+      tapeCopyList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
     }
   }
   // Delete old data
-  for (std::set<int>::iterator it = List.begin();
-       it != List.end();
+  for (std::set<int>::iterator it = tapeCopyList.begin();
+       it != tapeCopyList.end();
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
@@ -296,24 +296,24 @@ void castor::db::ora::OraStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // retrieve the object from the database
-  std::set<int> List;
+  std::set<int> tapeCopyList;
   m_selectTapeCopyStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    List.insert(rset->getInt(1));
+    tapeCopyList.insert(rset->getInt(1));
   }
   // Close ResultSet
   m_selectTapeCopyStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::TapeCopy*> toBeDeleted;
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->().begin();
-       it != obj->().end();
+  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopy().begin();
+       it != obj->tapeCopy().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = List.find((*it)->id())) == List.end()) {
+    if ((item = tapeCopyList.find((*it)->id())) == tapeCopyList.end()) {
       toBeDeleted.push_back(*it);
     } else {
-      List.erase(item);
+      tapeCopyList.erase(item);
       cnvSvc()->updateObj((*it));
     }
   }
@@ -321,4 +321,305 @@ void castor::db::ora::OraStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
   for (std::vector<castor::stager::TapeCopy*>::iterator it = toBeDeleted.begin();
        it != toBeDeleted.end();
        it++) {
-    obj->remove
+    obj->removeTapeCopy(*it);
+    delete (*it);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = tapeCopyList.begin();
+       it != tapeCopyList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    obj->addTapeCopy(dynamic_cast<castor::stager::TapeCopy*>(item));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjTapePool
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 tapePoolId = (u_signed64)rset->getDouble(3);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->tapePool() &&
+      (0 == tapePoolId ||
+       obj->tapePool()->id() != tapePoolId)) {
+    delete obj->tapePool();
+    obj->setTapePool(0);
+  }
+  // Update object or create new one
+  if (0 != tapePoolId) {
+    if (0 == obj->tapePool()) {
+      obj->setTapePool
+        (dynamic_cast<castor::stager::TapePool*>
+         (cnvSvc()->getObjFromId(tapePoolId)));
+    } else if (obj->tapePool()->id() == tapePoolId) {
+      cnvSvc()->updateObj(obj->tapePool());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// createRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
+                                              castor::IObject* object,
+                                              bool autocommit,
+                                              unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::Stream* obj = 
+    dynamic_cast<castor::stager::Stream*>(object);
+  // check whether something needs to be done
+  if (0 == obj) return;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // Get an id for the new object
+    obj->setId(cnvSvc()->getIds(1));
+    // Now Save the current object
+    m_storeTypeStatement->setDouble(1, obj->id());
+    m_storeTypeStatement->setInt(2, obj->type());
+    m_storeTypeStatement->executeUpdate();
+    m_insertStatement->setDouble(1, obj->initialSizeToTransfer());
+    m_insertStatement->setDouble(2, obj->id());
+    m_insertStatement->setDouble(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
+    m_insertStatement->setDouble(4, 0);
+    m_insertStatement->executeUpdate();
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in insert request :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_insertStatementString << std::endl
+                    << "and parameters' values were :" << std::endl
+                    << "  initialSizeToTransfer : " << obj->initialSizeToTransfer() << std::endl
+                    << "  id : " << obj->id() << std::endl
+                    << "  tapePool : " << obj->tapePool() << std::endl
+                    << "  status : " << obj->status() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// updateRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::updateRep(castor::IAddress* address,
+                                              castor::IObject* object,
+                                              bool autocommit)
+  throw (castor::exception::Exception) {
+  castor::stager::Stream* obj = 
+    dynamic_cast<castor::stager::Stream*>(object);
+  // check whether something needs to be done
+  if (0 == obj) return;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_updateStatement) {
+      m_updateStatement = createStatement(s_updateStatementString);
+    }
+    // Update the current object
+    m_updateStatement->setDouble(1, obj->initialSizeToTransfer());
+    m_updateStatement->setDouble(2, obj->id());
+    m_updateStatement->executeUpdate();
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in update request :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_updateStatementString << std::endl
+                    << "and id was " << obj->id() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::deleteRep(castor::IAddress* address,
+                                              castor::IObject* object,
+                                              bool autocommit)
+  throw (castor::exception::Exception) {
+  castor::stager::Stream* obj = 
+    dynamic_cast<castor::stager::Stream*>(object);
+  // check whether something needs to be done
+  if (0 == obj) return;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_deleteStatement) {
+      m_deleteStatement = createStatement(s_deleteStatementString);
+    }
+    if (0 == m_deleteTypeStatement) {
+      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
+    }
+    // Now Delete the object
+    m_deleteTypeStatement->setDouble(1, obj->id());
+    m_deleteTypeStatement->executeUpdate();
+    m_deleteStatement->setDouble(1, obj->id());
+    m_deleteStatement->executeUpdate();
+    if (autocommit) {
+      cnvSvc()->getConnection()->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in delete request :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_deleteStatementString << std::endl
+                    << "and id was " << obj->id() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createObj
+//------------------------------------------------------------------------------
+castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  castor::db::DbAddress* ad = 
+    dynamic_cast<castor::db::DbAddress*>(address);
+  try {
+    // Check whether the statement is ok
+    if (0 == m_selectStatement) {
+      m_selectStatement = createStatement(s_selectStatementString);
+    }
+    // retrieve the object from the database
+    m_selectStatement->setDouble(1, ad->id());
+    oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::exception::NoEntry ex;
+      ex.getMessage() << "No object found for id :" << ad->id();
+      throw ex;
+    }
+    // create the new Object
+    castor::stager::Stream* object = new castor::stager::Stream();
+    // Now retrieve and set members
+    object->setInitialSizeToTransfer((u_signed64)rset->getDouble(1));
+    object->setId((u_signed64)rset->getDouble(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(4));
+    m_selectStatement->closeResultSet(rset);
+    return object;
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in select request :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_selectStatementString << std::endl
+                    << "and id was " << ad->id() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_selectStatement) {
+      m_selectStatement = createStatement(s_selectStatementString);
+    }
+    // retrieve the object from the database
+    m_selectStatement->setDouble(1, obj->id());
+    oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::exception::NoEntry ex;
+      ex.getMessage() << "No object found for id :" << obj->id();
+      throw ex;
+    }
+    // Now retrieve and set members
+    castor::stager::Stream* object = 
+      dynamic_cast<castor::stager::Stream*>(obj);
+    object->setInitialSizeToTransfer((u_signed64)rset->getDouble(1));
+    object->setId((u_signed64)rset->getDouble(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(4));
+    m_selectStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in update request :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_updateStatementString << std::endl
+                    << "and id was " << obj->id() << std::endl;;
+    throw ex;
+  }
+}
+

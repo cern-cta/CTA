@@ -32,6 +32,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_Stream_t;
+struct Cstager_TapeCopy_t;
 struct Cstager_TapePool_t;
 
 //------------------------------------------------------------------------------
@@ -102,6 +103,21 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
+
+/**
+ * Add a struct Cstager_TapeCopy_t* object to the tapeCopy list
+ */
+int Cstager_Stream_addTapeCopy(struct Cstager_Stream_t* instance, struct Cstager_TapeCopy_t* obj);
+
+/**
+ * Remove a struct Cstager_TapeCopy_t* object from tapeCopy
+ */
+int Cstager_Stream_removeTapeCopy(struct Cstager_Stream_t* instance, struct Cstager_TapeCopy_t* obj);
+
+/**
+ * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopy
+ */
+int Cstager_Stream_tapeCopy(struct Cstager_Stream_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
 
 /**
  * Get the value of tapePool

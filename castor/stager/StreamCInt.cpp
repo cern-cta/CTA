@@ -28,8 +28,10 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
+#include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -118,6 +120,35 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Stream_setInitialSizeToTransfer(castor::stager::Stream* instance, u_signed64 new_var) {
     instance->setInitialSizeToTransfer(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_addTapeCopy
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_addTapeCopy(castor::stager::Stream* instance, castor::stager::TapeCopy* obj) {
+    instance->addTapeCopy(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_removeTapeCopy
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_removeTapeCopy(castor::stager::Stream* instance, castor::stager::TapeCopy* obj) {
+    instance->removeTapeCopy(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_tapeCopy
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_tapeCopy(castor::stager::Stream* instance, castor::stager::TapeCopy*** var, int* len) {
+    std::vector<castor::stager::TapeCopy*> result = instance->tapeCopy();
+    *len = result.size();
+    *var = (castor::stager::TapeCopy**) malloc((*len) * sizeof(castor::stager::TapeCopy*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

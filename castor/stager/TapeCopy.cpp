@@ -50,6 +50,9 @@ castor::stager::TapeCopy::TapeCopy() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::~TapeCopy() throw() {
+  if (0 != m_stream) {
+    m_stream->removeTapeCopy(this);
+  }
   for (unsigned int i = 0; i < m_segmentsVector.size(); i++) {
     m_segmentsVector[i]->setCopy(0);
     delete m_segmentsVector[i];

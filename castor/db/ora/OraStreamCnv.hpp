@@ -247,10 +247,10 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member 
+        /// SQL select statement for member tapeCopy
         static const std::string s_selectTapeCopyStatementString;
 
-        /// SQL select statement object for member 
+        /// SQL select statement object for member tapeCopy
         oracle::occi::Statement *m_selectTapeCopyStatement;
 
         /// SQL update statement for member tapePool

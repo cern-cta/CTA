@@ -28,10 +28,12 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -47,6 +49,10 @@ castor::stager::Stream::Stream() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::Stream::~Stream() throw() {
+  for (unsigned int i = 0; i < m_tapeCopyVector.size(); i++) {
+    m_tapeCopyVector[i]->setStream(0);
+  }
+  m_tapeCopyVector.clear();
   if (0 != m_tapePool) {
     m_tapePool->removeStreams(this);
   }
@@ -67,6 +73,17 @@ void castor::stager::Stream::print(std::ostream& stream,
   stream << indent << "initialSizeToTransfer : " << m_initialSizeToTransfer << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "TapeCopy : " << std::endl;
+    int i;
+    std::vector<TapeCopy*>::const_iterator it;
+    for (it = m_tapeCopyVector.begin(), i = 0;
+         it != m_tapeCopyVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
   stream << indent << "TapePool : " << std::endl;
   if (0 != m_tapePool) {
     m_tapePool->print(stream, indent + "  ", alreadyPrinted);
