@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.33 2000/11/20 17:16:40 jdurand Exp $
+ * $Id: procqry.c,v 1.34 2000/11/20 17:40:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.33 $ $Date: 2000/11/20 17:16:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.34 $ $Date: 2000/11/20 17:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -776,7 +776,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			if (step (p, expbuf) == 0) continue;
 #endif
 		}
-		if (rfio_mstat (stcp->ipath, &st) == 0) {
+		if (stcp->ipath[0] != '\0' && rfio_mstat(stcp->ipath, &st) == 0) {
 			int has_been_updated = 0;
 
 			if (st.st_size > stcp->actual_size) {
