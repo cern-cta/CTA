@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.23 $ $Date: 2000/02/02 12:01:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.24 $ $Date: 2000/02/02 16:48:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1654,7 +1654,7 @@ n",
                      * request from being assigned.
                      */
                     DrvReq->status  = VDQM_VOL_UNMOUNT;
-                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
+                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
                     volrec = NULL;
                 } else {
                     volrec->drv = drvrec;
