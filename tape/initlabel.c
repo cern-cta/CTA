@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.7 $ $Date: 2001/05/11 06:48:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.8 $ $Date: 2002/04/08 08:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,13 +114,14 @@ int lblcode;
 
 /*	setlabelinfo - set label information for label processing routines */
 
-setlabelinfo (path, flags, fseq, vol1, hdr1, hdr2)
+setlabelinfo (path, flags, fseq, vol1, hdr1, hdr2, uhl1)
 char *path;
 int flags;
 int fseq;
 char *vol1;
 char *hdr1;
 char *hdr2;
+char *uhl1;
 {
 	struct devlblinfo  *dlip;
 	int i;
@@ -130,9 +131,10 @@ char *hdr2;
 
 	dlip->flags = flags;
 	dlip->fseq = fseq;
-	if (dlip->lblcode == AL || dlip->lblcode == SL) {
+	if (dlip->lblcode == AL || dlip->lblcode == AUL || dlip->lblcode == SL) {
 		strcpy (dlip->vol1, vol1);
 		strcpy (dlip->hdr1, hdr1);
 		strcpy (dlip->hdr2, hdr2);
+		strcpy (dlip->uhl1, uhl1);
 	}
 }
