@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.47 2002/05/09 17:40:03 jdurand Exp $
+ * $Id: stage_api.c,v 1.48 2002/05/15 06:43:07 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -229,6 +229,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   u_signed64 uniqueid = 0;
   int maxretry = MAXRETRY;
   int magic = stage_stgmagic();
+  int nm = 0;
+  int nh = 0;
 
   /* It is not allowed to have no input */
   if (nstcp_input <= 0) {
@@ -520,32 +522,58 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
             return(-1);
           }
         }
-      } else if (thiscat->u1.h.xfile[0] != '/') {
-        char *thiscwd;
-        char dummy[STAGE_MAX_HSMLENGTH+1];
-
-        /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
-
-        if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
-          /* We check that we have enough room for such a CASTOR full pathname */
-          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
-            free(thiscwd);
-            serrno = EFAULT;
-            return(-1);
-          }
-          strcpy(dummy, thiscwd);
-          strcat(dummy, "/");
-          strcat(dummy, thiscat->u1.h.xfile);
-          strcpy(thiscat->u1.h.xfile, dummy);
-          free(thiscwd);
-        }
-      }
+		++nm;
+      } else {
+		  if (thiscat->u1.h.xfile[0] != '/') {
+			  char *thiscwd;
+			  char dummy[STAGE_MAX_HSMLENGTH+1];
+			  
+			  /* This is a non-absolute non-HPSS (e.g. CASTOR) HSM file */
+			  
+			  if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
+				  /* We check that we have enough room for such a CASTOR full pathname */
+				  if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
+					  free(thiscwd);
+					  serrno = EFAULT;
+					  return(-1);
+				  }
+				  strcpy(dummy, thiscwd);
+				  strcat(dummy, "/");
+				  strcat(dummy, thiscat->u1.h.xfile);
+				  strcpy(thiscat->u1.h.xfile, dummy);
+				  free(thiscwd);
+			  }
+		  }
+		  ++nh;
+	  }
       break;
     default:
       break;
     }
     thiscat->t_or_d = t_or_d;
   }
+  if ((nm > 0) || (nh > 0)) {
+	  /* There were HSM files in the request */
+	  if (nm == nstcp_input) {
+		  /* And they are all non-CASTOR files */
+		  t_or_d = 'm';
+	  } else if (nh == nstcp_input) {
+		  /* And they are all CASTOR files */
+		  t_or_d = 'h';
+	  } else {
+		  stage_errmsg(func, "Non-CASTOR and CASTOR files on the same api call is not allowed\n");
+		  serrno = EINVAL;
+#if defined(_WIN32)
+		  WSACleanup();
+#endif
+		  return(-1);
+	  }
+	  /* We make sure all t_or_d's are correct */
+	  for (istcp = 0; istcp < nstcp_input; istcp++) {
+		  stcp_input[istcp].t_or_d = (nm > 0) ? 'm' : 'h';
+	  }
+  }
+
   sendbuf_size += (nstcp_input * sizeof(struct stgcat_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
   for (istpp = 0; istpp < nstpp_input; istpp++) {
@@ -899,6 +927,7 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
     /* V3 macro == V2 macro except that V3 logs arguments >= 0 while V2 logs when it is != 0 */
     STVAL2BUF_V3(stcp,u1.h.retenp_on_disk," --retenp_on_disk",buf,bufsize);
     STVAL2BUF_V3(stcp,u1.h.mintime_beforemigr," --mintime_beforemigr",buf,bufsize);
+    STVAL2BUF_V2(stcp,u1.h.flag," --flag",buf,bufsize);
     break;
   default:
     serrno = EFAULT;
@@ -1028,6 +1057,8 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   int maxretry = MAXRETRY;
   struct stgcat_entry stcp_dummy;
   int magic = stage_stgmagic();
+  int nm = 0;
+  int nh = 0;
 
   /* It is not allowed to have anything else but one single entry in input, or none only if t_or_d == '\0' */
   if (nstcp_input > 1) {
@@ -1150,7 +1181,44 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
       strcpy(thiscat->poolname, stgpool_forced);
     }
 
+    switch (t_or_d) {
+    case 't':                              /* For tape request we do some internal check */
+      /* tape request */
+      break;
+    case 'm':
+    case 'h':
+      /* The stager daemon will take care to verify if it is a valid HSM file... */
+      if (ISHPSS(thiscat->u1.m.xfile)) {
+		++nm;
+      } else {
+		  ++nh;
+	  }
+      break;
+    default:
+      break;
+    }
     thiscat->t_or_d = t_or_d;
+  }
+  if ((nm > 0) || (nh > 0)) {
+	  /* There were HSM files in the request */
+	  if (nm == nstcp_input) {
+		  /* And they are all non-CASTOR files */
+		  t_or_d = 'm';
+	  } else if (nh == nstcp_input) {
+		  /* And they are all CASTOR files */
+		  t_or_d = 'h';
+	  } else {
+		  stage_errmsg(func, "Non-CASTOR and CASTOR files on the same api call is not allowed\n");
+		  serrno = EINVAL;
+#if defined(_WIN32)
+		  WSACleanup();
+#endif
+		  return(-1);
+	  }
+	  /* We make sure all t_or_d's are correct */
+	  for (istcp = 0; istcp < nstcp_input; istcp++) {
+		  stcp_input[istcp].t_or_d = (nm > 0) ? 'm' : 'h';
+	  }
   }
   sendbuf_size += (nstcp_input * sizeof(struct stgcat_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
@@ -1688,6 +1756,8 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   u_signed64 flagsok = flags;
   int maxretry = MAXRETRY;
   int magic = stage_stgmagic();
+  int nm = 0;
+  int nh = 0;
 
   /* It is not allowed to have no input */
   if ((nstcp_input <= 0) && (nstpp_input <= 0)) {
@@ -1866,31 +1936,56 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
             return(-1);
           }
         }
-      } else if (thiscat->u1.h.xfile[0] != '/') {
-        char *thiscwd;
-        char dummy[STAGE_MAX_HSMLENGTH+1];
-
-        /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
-
-        if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
-          /* We check that we have enough room for such a CASTOR full pathname */
-          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
-            free(thiscwd);
-            serrno = EFAULT;
-            return(-1);
-          }
-          strcpy(dummy, thiscwd);
-          strcat(dummy, "/");
-          strcat(dummy, thiscat->u1.h.xfile);
-          strcpy(thiscat->u1.h.xfile, dummy);
-          free(thiscwd);
-        }
-      }
+		++nm;
+      } else {
+		  if (thiscat->u1.h.xfile[0] != '/') {
+			  char *thiscwd;
+			  char dummy[STAGE_MAX_HSMLENGTH+1];
+			  
+			  /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
+			  
+			  if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
+				  /* We check that we have enough room for such a CASTOR full pathname */
+				  if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile)) > STAGE_MAX_HSMLENGTH) {
+					  free(thiscwd);
+					  serrno = EFAULT;
+					  return(-1);
+				  }
+				  strcpy(dummy, thiscwd);
+				  strcat(dummy, "/");
+				  strcat(dummy, thiscat->u1.h.xfile);
+				  strcpy(thiscat->u1.h.xfile, dummy);
+				  free(thiscwd);
+			  }
+		  }
+		  ++nh;
+	  }
       break;
     default:
       break;
     }
     thiscat->t_or_d = t_or_d;
+  }
+  if ((nm > 0) || (nh > 0)) {
+	  /* There were HSM files in the request */
+	  if (nm == nstcp_input) {
+		  /* And they are all non-CASTOR files */
+		  t_or_d = 'm';
+	  } else if (nh == nstcp_input) {
+		  /* And they are all CASTOR files */
+		  t_or_d = 'h';
+	  } else {
+		  stage_errmsg(func, "Non-CASTOR and CASTOR files on the same api call is not allowed\n");
+		  serrno = EINVAL;
+#if defined(_WIN32)
+		  WSACleanup();
+#endif
+		  return(-1);
+	  }
+	  /* We make sure all t_or_d's are correct */
+	  for (istcp = 0; istcp < nstcp_input; istcp++) {
+		  stcp_input[istcp].t_or_d = (nm > 0) ? 'm' : 'h';
+	  }
   }
   sendbuf_size += (nstcp_input * sizeof(struct stgcat_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
