@@ -93,7 +93,7 @@ exportshr:
 	 ) ; done ; \
 	) ;
 
-deploy: FORCE 
+deploy: install FORCE 
 	@(cd deploy ; perl ./proto_deploy.pl)
 
 FORCE:
