@@ -2989,15 +2989,18 @@ void checkwaitq()
 				}
 				wqp->save_nbsubreqid = wqp->nbdskf;
 			}
-			if (fork_exec_stager (wqp) != 0) {
-				/* If this fails it will be retried at next loop */
-				/* wqp->nretry is automatically updated only when a forked */
-				/* process exits. In this case we are even not able to */
-				/* execute fork_exec_stager ... */
-				wqp->nretry++;
-				if (! (wqp->nretry < (wqp->noretry ? 0 : MAXRETRY))) {
-					/* Has reached the maximum number of retries : there is a system error in here... */
-					wqp->status = SESYSERR;
+			{
+				int c;
+				if ((c = fork_exec_stager (wqp)) != 0) {
+					/* If this fails it will be retried at next loop */
+					/* wqp->nretry is automatically updated only when a forked */
+					/* process exits. In this case we are even not able to */
+					/* execute fork_exec_stager ... */
+					wqp->nretry++;
+					if (! (wqp->nretry < (wqp->noretry ? 0 : MAXRETRY))) {
+						/* Has reached the maximum number of retries : there is a system error in here... */
+						wqp->status = c;
+					}
 				}
 			}
 			wqp = wqp->next;
