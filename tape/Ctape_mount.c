@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.21 $ $Date: 2002/07/30 05:40:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.22 $ $Date: 2002/09/16 09:11:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -105,7 +105,7 @@ int vdqm_reqid;
 			Ctape_errmsg (func, TP038);
 			errflg++;
 		}
-		if (chkdirw (fullpath)) {
+		if (*fullpath == '/' && chkdirw (fullpath)) {
 			Ctape_errmsg (func, "TP002 - %s : access error : %s\n",
 				fullpath, sys_errlist[errno]);
 			errflg++;
