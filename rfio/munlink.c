@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.7 2002/02/25 16:49:52 jdurand Exp $
+ * $Id: munlink.c,v 1.8 2002/02/26 08:04:14 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.7 $ $Date: 2002/02/25 16:49:52 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.8 $ $Date: 2002/02/26 08:04:14 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -116,8 +116,7 @@ static int rfio_smunlink(s,filename)
   char *nbuf ;
   char *n1 = "";
 
-  INIT_TRACE("RFIO_TRACE");
-  TRACE(1, "rfio", "rfio_smunlink(%s)", filename);
+  TRACE(3, "rfio", "rfio_smunlink(%s)", filename);
 
   if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
     *old_uid = -1;
@@ -129,8 +128,7 @@ static int rfio_smunlink(s,filename)
   if ( uid != *old_uid ) {
     pw_tmp = Cgetpwuid(uid);
     if( pw_tmp  == NULL ) {
-      TRACE(2, "rfio" ,"rfio_smunlink: Cgetpwuid(): ERROR occured (errno=%d)",errno);
-      END_TRACE();
+      TRACE(3, "rfio" ,"rfio_smunlink: Cgetpwuid(): ERROR occured (errno=%d)",errno);
       rfio_unend_this(s,1);
       return(-1) ;
     }	
@@ -143,16 +141,14 @@ static int rfio_smunlink(s,filename)
   marshall_LONG(p, status) ;
 
   if (netwrite_timeout(s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
-    TRACE(2, "rfio", "smunlink: write(): ERROR occured (errno=%d)",
+    TRACE(3, "rfio", "smunlink: write(): ERROR occured (errno=%d)",
           errno);
-    END_TRACE();
     rfio_unend_this(s,0);
     return(-1);
   }
   nbuf = (char *) malloc( status ) ;
   if ( nbuf == NULL ) {
-    TRACE(2, "rfio", "smunlink:  malloc () failed");
-    END_TRACE();
+    TRACE(3, "rfio", "smunlink:  malloc () failed");
     rfio_unend_this(s,1);
     return(-1);
   }
@@ -166,8 +162,7 @@ static int rfio_smunlink(s,filename)
   marshall_STRING( p, pw->pw_name) ;
 	
   if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
-    TRACE(2, "rfio", "smunlink: write(): ERROR occured (errno=%d)",errno);
-    END_TRACE();
+    TRACE(3, "rfio", "smunlink: write(): ERROR occured (errno=%d)",errno);
     rfio_unend_this(s,0);
     free(nbuf);
     return(-1);
@@ -178,8 +173,7 @@ static int rfio_smunlink(s,filename)
    * Getting back status
    */ 
   if ((rc = netread_timeout(s, buf, WORDSIZE + 2*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (WORDSIZE+ 2*LONGSIZE))  {
-    TRACE(2, "rfio", "rfio_smunlink: read(): ERROR occured (errno=%d)", errno);
-    END_TRACE();
+    TRACE(3, "rfio", "rfio_smunlink: read(): ERROR occured (errno=%d)", errno);
     rfio_unend_this(s, (rc <= 0 ? 0 : 1));
     return(-1);
   }
@@ -189,19 +183,16 @@ static int rfio_smunlink(s,filename)
   unmarshall_LONG( p, rcode ) ;
 
   if ( ans_req != RQST_MSYMLINK ) {
-    TRACE(1,"rfio","rfio_smunlink: ERROR: answer does not correspond to request !");
-    END_TRACE();
+    TRACE(3,"rfio","rfio_smunlink: ERROR: answer does not correspond to request !");
     rfio_unend_this(s,1);
     return(-1);
   }
   
-  TRACE(1,"rfio","rfio_smunlink: return %d",rcode);
+  TRACE(3,"rfio","rfio_smunlink: return %d",rcode);
   rfio_errno = rcode ;
   if ( status < 0 ) {
-    END_TRACE();
     return(-1);
   }
-  END_TRACE();
   return(0) ;
 }
 
@@ -264,8 +255,6 @@ static int rfio_unend_this(s,flag)
   char *p=buf ;
   int rc = 0;
 
-  INIT_TRACE("RFIO_TRACE");
-
   Cglobals_getTid(&Tid);
 
   TRACE(3,"rfio","rfio_unend_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
@@ -273,7 +262,6 @@ static int rfio_unend_this(s,flag)
   TRACE(3,"rfio","rfio_unend_this: Lock munlink_tab");
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_unend_this: Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
@@ -302,7 +290,6 @@ static int rfio_unend_this(s,flag)
     rc = -1;
   }
 
-  END_TRACE();
   return(rc);
 }
 
