@@ -64,7 +64,8 @@ struct rmjob {
 	int signal; /* In case it was signalled : value of the signal */
 	int rm_child_mode; /* Internal use */
 	int openflags; /* Hint to say O_RDONLY, O_WRONLY, etc... Any value >= 0 is meaningful - default is -1 */
-	char fs[CA_MAXPATHLEN+1]; /* name of wished filesystem in which job must run */
+	char rfs[CA_MAXPATHLEN+1]; /* name of wished filesystems in which job must run */
+	char fs[CA_MAXLINELEN+1]; /* name of filesystem selected by job */
 	u_signed64 processid; /* processid, the one receiving a signal if the job is killed */
 	char partitionmask[RM_MAXPARTITIONLEN+1]; /* partition mask */
 	char requestid[CUUID_STRING_LEN+1];

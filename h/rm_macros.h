@@ -242,6 +242,7 @@
         marshall_HYPER(p, (rmjob)->clientStructLenWithNullByte);  \
 	if ((rmjob)->clientStructLenWithNullByte > 0) marshall_STRING(p, (rmjob)->clientStruct); \
 	marshall_STRING(p, (rmjob)->hostlist);              \
+	marshall_STRING(p, (rmjob)->rfs);                   \
 }
 
 #define unmarshall_RMJOB(p, rmjob, status) {                  \
@@ -303,6 +304,7 @@
           (rmjob)->clientStruct = NULL;                       \
         }                                                     \
 	unmarshall_STRING(p, (rmjob)->hostlist);              \
+	unmarshall_STRING(p, (rmjob)->rfs);                   \
 }
 
 #define overwrite_RMJOB(out,in,status) {                                            \
