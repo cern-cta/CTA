@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.83 $ $Date: 2000/05/30 14:29:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.84 $ $Date: 2000/08/04 10:25:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -462,7 +462,7 @@ static int DiskFileOpen(int pool_index,
                 rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_RESELECT_SERV | 
                                                          RTCP_UNERR);
             else if ( serrno = SETIMEDOUT && rfio_errno == 0 &&
-                      filereq->err.max_cpretry >= 0 ) {
+                      filereq->err.max_cpretry > 0 ) {
                 filereq->err.max_cpretry--;
                 rtcpd_SetReqStatus(NULL,file,serrno,RTCP_RESELECT_SERV|
                                                     RTCP_UNERR);
@@ -831,7 +831,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     }
                     if ( save_serrno != ENOSPC ) {
                         if ( last_errno == ENODEV &&
-                             filereq->err.max_cpretry >= 0 ) {
+                             filereq->err.max_cpretry > 0 ) {
                             filereq->err.max_cpretry--;
                             rtcpd_SetReqStatus(NULL,file,last_errno,
                                                RTCP_LOCAL_RETRY);

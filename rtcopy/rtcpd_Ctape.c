@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.34 $ $Date: 2000/06/14 13:02:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.35 $ $Date: 2000/08/04 10:25:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -331,7 +331,7 @@ int rtcpd_Mount(tape_list_t *tape) {
             case ETHWERR:
             case ETNOSNS:
                 if ( severity & RTCP_NORETRY ) {
-                    tapereq->err.max_tpretry = -1;
+                    tapereq->err.max_tpretry = 0;
                 } else {
                     tapereq->err.max_tpretry--;
                     severity |= RTCP_RESELECT_SERV;
@@ -584,7 +584,7 @@ int rtcpd_Position(tape_list_t *tape,
                 /*
                  * Problem with the tape. Don't retry.
                  */
-                filereq->err.max_tpretry = -1;
+                filereq->err.max_tpretry = 0;
                 severity = RTCP_FAILED | RTCP_SYERR;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
@@ -621,7 +621,7 @@ int rtcpd_Position(tape_list_t *tape,
                  * reset max_tpretry so that the client won't retry
                  * on another server
                  */
-                filereq->err.max_tpretry = -1;
+                filereq->err.max_tpretry = 0;
                 do_retry = 0;
             } else {
                 if ( (severity & RTCP_LOCAL_RETRY) ||
@@ -629,7 +629,7 @@ int rtcpd_Position(tape_list_t *tape,
                      filereq->err.max_tpretry--;
 
                 if ( !(severity & RTCP_LOCAL_RETRY) ||
-                      (filereq->err.max_tpretry<0) ) do_retry = 0;
+                      (filereq->err.max_tpretry<=0) ) do_retry = 0;
             }
         } else do_retry = 0;
     } /* end while (do_retry) */

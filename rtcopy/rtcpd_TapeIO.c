@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.26 $ $Date: 2000/08/01 13:07:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.27 $ $Date: 2000/08/04 10:25:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -184,7 +184,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
         if ( (severity & RTCP_NORETRY) != 0 ) {
             /* 
              * If configured error action says noretry we
-             * reset max_tpretry so that the client won't retry
+             * reset max_cpretry so that the client won't retry
              * on another server
              */
             filereq->err.max_cpretry = 0;
@@ -334,7 +334,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
         if ( (severity & RTCP_NORETRY) != 0 ) {
             /* 
              * If configured error action says noretry we
-             * reset max_tpretry so that the client won't retry
+             * reset max_cpretry so that the client won't retry
              * on another server
              */
             filereq->err.max_cpretry = 0;
