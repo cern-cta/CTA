@@ -33,7 +33,7 @@ struct rmjob {
 	char gname[RM_MAXGRPNAMELEN+1]; /* groupid under which job will run */
 	u_signed64 gid;      /* corresponding gid */
 	char account[RM_MAXACCOUNTNAMELEN+1]; /* accountid under which job will run */
-	char rfeatures[1024]; /* list of features required on node */
+	char rfeatures[RM_MAXFEATURELEN+1]; /* list of features required on node */
 	char rnetwork[CRM_IFCONF_MAXNAMELEN+1]; /* network adapter required by job */
 	char dnetwork[CRM_IFCONF_MAXNAMELEN+1]; /* network adapter which must be dedicated to job */
 	char ropsys[1024]; /* operating system required by job */
@@ -63,7 +63,7 @@ struct rmjob {
 	int signal; /* In case it was signalled : value of the signal */
 	int rm_child_mode; /* Internal use */
 	int openflags; /* Hint to say O_RDONLY, O_WRONLY, etc... Any value >= 0 is meaningful - default is -1 */
-	char fs[CA_MAXPATHLEN+1]; /* name of wished fielsystem in which job must run */
+	char fs[CA_MAXPATHLEN+1]; /* name of wished filesystem in which job must run */
 	u_signed64 processid; /* processid, the one receiving a signal if the job is killed */
 	struct rmjob *next;
 	struct rmjob *prev;
