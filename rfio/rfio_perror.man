@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_perror.man,v 1.3 2003/10/07 14:28:15 baud Exp $
+.\" $Id: rfio_perror.man,v 1.4 2003/10/07 14:31:03 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_perror.man,v $ $Revision: 1.3 $ $Date: 2003/10/07 14:28:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_perror.man,v $ $Revision: 1.4 $ $Date: 2003/10/07 14:31:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_PERROR 3 "$Date: 2003/10/07 14:28:15 $" CASTOR "Rfio Library Functions"
+.TH RFIO_PERROR 3 "$Date: 2003/10/07 14:31:03 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_perror \- print error message corresponding to the last RFIO function failure
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ rfio_perror \- print error message corresponding to the last RFIO function failu
 .sp
 .BI "void rfio_perror (const char *" umsg ");"
 .sp
-.BI "char *rfio_serrno ();"
+.BI "int rfio_serrno ();"
 .sp
 .BI "char *rfio_serror ();"
 .SH DESCRIPTION
