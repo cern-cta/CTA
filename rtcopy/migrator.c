@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 13:58:58 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 14:10:47 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 13:58:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 14:10:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -239,6 +239,7 @@ int migratorCallbackMoreWork(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
+  file_list_t *fl;
   static int moreWorkDone = 0; /* We're always called from a serialized context */
   int rc = 0, save_serrno;
 
@@ -295,6 +296,13 @@ int migratorCallbackMoreWork(
    * We got a new file to migrate. Assign the next
    * tape fseq.
    */
+  fl = tape->file->prev;
+  if ( (fl->filereq.proc_status != RTCP_WAITING) ||
+       (rtcpcld_validPosition(fl->filereq.tape_fseq,NULL) == 1) ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  *filereq = fl->filereq;
   filereq->tape_fseq = rtcpcld_getAndIncrementTapeFseq();
   diskFseq++;
   filereq->disk_fseq = diskFseq;
