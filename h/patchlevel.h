@@ -1,9 +1,9 @@
 /*
- * patchlevel.h,v 1.3 1999/12/09 13:46:17 jdurand Exp
+ * $Id: patchlevel.h,v 1.5 2000/03/26 06:27:48 baud Exp $
  */
 
 /*
- * @(#)patchlevel.h,v 1.3 1999/12/09 13:46:17 CERN IT-PDP/CS F. Hemmer
+ * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.5 $ $Date: 2000/03/26 06:27:48 $ CERN IT-PDP/CS F. Hemmer
  */
 
 /*
