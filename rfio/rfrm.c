@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.3 1999/12/09 13:47:13 jdurand Exp $
+ * $Id: rfrm.c,v 1.4 2000/01/06 06:43:32 baud Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:13 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.4 $ $Date: 2000/01/06 06:43:32 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.3 $ $Date: 1999/12
 #include <rfio.h>
 static char *ckpath();
 char *getconfent();
+static int rm_recursive(); 
 
 char *cmd;
 main(argc, argv) 
