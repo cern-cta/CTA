@@ -1,14 +1,10 @@
 /*
- * $Id: Cnetdb.h,v 1.7 1999/12/14 16:40:04 obarring Exp $
- */
-
-/*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * $RCSfile: Cnetdb.h,v $ $Revision: 1.7 $ $Date: 1999/12/14 16:40:04 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cnetdb.h,v $ $Revision: 1.8 $ $Date: 1999/12/14 16:43:12 $ CERN IT-PDP/DM Olof Barring
  */
 
 
