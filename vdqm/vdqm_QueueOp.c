@@ -913,7 +913,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
          * If a specific server (and maybe also drive) has been
          * specified, we check for that first
          */
-        log(LOG_INFO,"SelectVolAndDrv(): PopVolRecord() returned VolReqID: %d, VID: %s, server=%s\n",volrec->vol.VolReqID,volrec->vol.volid,volreq->vol.server);
+        log(LOG_INFO,"SelectVolAndDrv(): PopVolRecord() returned VolReqID: %d, VID: %s, server=%s\n",volrec->vol.VolReqID,volrec->vol.volid,volrec->vol.server);
         if ( *volrec->vol.server != '\0' ) {
             rc = AnyFreeDrvOnSrv(dgn_context,volrec,&drvrec);
             log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyFreeDrvOnSrv(%s) returned rc=%d\n",
