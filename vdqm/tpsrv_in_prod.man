@@ -1,0 +1,45 @@
+.\" @(#)$RCSfile: tpsrv_in_prod.man,v $ $Revision: 1.1 $ $Date: 2000/11/06 13:01:50 $ CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPSRV_IN_PROD 1 "$Date: 2000/11/06 13:01:50 $" CASTOR "Set tape server mode"
+.SH NAME
+tpsrv_in_prod \- toggle tape server production/development status
+.SH SYNOPSIS
+.BI "tpsrv_in_prod [ -t [production|development]]"
+
+.SH DESCRIPTION
+.B tpsrv_in_prod
+toggles production/development status of a tape server. A tape server is
+in development if all drives are dedicated to requests started on
+that server only.
+
+.SH PARAMETERS
+.BI "-t production|development"
+\- sets "production" or "development" (can be abbrivated "prod", "dev")
+mode. Default is production mode if \fB-t\fP is not specified.
+
+.SH EXAMPLE
+.nf
+.ft CW
+% showqueues -S shd80
+ntr3091@shd80 (976036 MB) FREE vid:  last update Nov 06 12:57:44
+98403196@shd80 (7345853 MB) FREE vid:  last update Nov 06 13:39:13
+% \fBtpsrv_in_prod\fP -t dev
+Dedicate ntr3091@shd80 to host=shd80
+Dedicate 98403196@shd80 to host=shd80
+% showqueues -S shd80
+ntr3091@shd80 (976036 MB) FREE vid:  last update Nov 06 12:57:44
+Dedicated: uid=.*,gid=.*,name=.*,host=shd80,vid=.*,mode=.*,datestr=.*,timestr=.*,age=.*
+98403196@shd80 (7347330 MB) RELEASE vid: R01961 last update Nov 06 13:56:12
+Dedicated: uid=.*,gid=.*,name=.*,host=shd80,vid=.*,mode=.*,datestr=.*,timestr=.*,age=.*
+% \fBtpsrv_in_prod\fP -t prod
+ntr3091@shd80 (976036 MB) FREE vid:  last update Nov 06 12:57:44
+98403196@shd80 (7347330 MB) FREE vid:  last update Nov 06 13:56:46
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BI showqueues(1)
