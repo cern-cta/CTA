@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/27 16:25:43 $ $Author: bcouturi $
  *
  *
  *
@@ -35,6 +35,13 @@
 namespace castor {
 
   namespace stager {
+
+    /**
+     * Constants for the configuration variables
+     */
+    extern const char* RMTSTGSVC_CATEGORY_CONF;
+    extern const char* TIMEOUT_CONF;
+    extern const int   DEFAULT_REMOTESTGSVC_TIMEOUT;
 
     /**
      * Implementation of the IStagerSvc for Oracle
@@ -569,6 +576,12 @@ namespace castor {
        std::string* mountPoint,
        std::string* diskServer)
         throw (castor::exception::Exception);
+
+
+    protected:
+      
+      virtual int getRemoteStagerClientTimeout();
+
 
     }; // end of class RemoteStagerSvc
 

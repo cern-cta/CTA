@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/27 16:25:43 $ $Author: bcouturi $
  *
  *
  *
@@ -48,6 +48,16 @@
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <list>
+
+EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
+
+//------------------------------------------------------------------------------
+// Constants
+//------------------------------------------------------------------------------
+const char* RMTSTGSVC_CATEGORY_CONF = "REMOTESTGSVC";
+const char* TIMEOUT_CONF = "TIMEOUT";
+const int   DEFAULT_REMOTESTGSVC_TIMEOUT = 1800;
+
 
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -329,7 +339,7 @@ castor::stager::RemoteStagerSvc::getUpdateStart
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
   // Uses a BaseClient to handle the request
-  castor::client::BaseClient client;
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
   // return
   return result;
@@ -383,7 +393,7 @@ castor::stager::RemoteStagerSvc::putStart
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
   // Uses a BaseClient to handle the request
-  castor::client::BaseClient client;
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
   // return
   return result;
@@ -529,7 +539,7 @@ void castor::stager::RemoteStagerSvc::disk2DiskCopyDone
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
-  castor::client::BaseClient client;
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
 }
 
@@ -562,7 +572,7 @@ void castor::stager::RemoteStagerSvc::prepareForMigration
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
-  castor::client::BaseClient client;
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
 }
 
@@ -595,4 +605,28 @@ void castor::stager::RemoteStagerSvc::bestFileSystemForJob
     << "RemoteStagerSvc implementation is not complete"
     << std::endl << "This method is not supported.";
   throw ex;
+}
+
+
+// -----------------------------------------------------------------------
+// bestFileSystemForJob
+// -----------------------------------------------------------------------
+int getRemoteStagerClientTimeout() {
+
+  int ret_timeout = castor::stager::DEFAULT_REMOTESTGSVC_TIMEOUT;
+
+  char *strtimeout = getconfent((char *)castor::stager::RMTSTGSVC_CATEGORY_CONF,
+				(char *)castor::stager::TIMEOUT_CONF, 
+				0);
+  if (strtimeout != 0) {
+    char* dp = strtimeout;
+    int itimeout = strtoul(strtimeout, &dp, 0);
+    if (*dp != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Bad RemoteStgSvc timeout value:" << strtimeout << std::endl;
+      throw e;
+    }
+  }
+
+  return ret_timeout;
 }
