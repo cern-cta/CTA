@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.169 2002/01/14 15:05:38 jdurand Exp $
+ * $Id: poolmgr.c,v 1.170 2002/01/15 08:30:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.169 $ $Date: 2002/01/14 15:05:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.170 $ $Date: 2002/01/15 08:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,9 +50,6 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.169 $ $Date: 20
 #include "Castor_limits.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
-
-#undef  unmarshall_STRING
-#define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 
 #ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
@@ -2205,6 +2202,66 @@ int update_migpool(stcp,flag,immediate)
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies,
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools);
+    /* We mark it as staged */
+    (*stcp)->status |= STAGED;
+    if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+      /* And not as a migration candidate */
+      (*stcp)->status &= ~CAN_BE_MIGR;
+    }
+#ifdef USECDB
+    if (stgdb_upd_stgcat(&dbfd,*stcp) != 0) {
+      stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+    }
+#endif
+    savereqs();
+    /* But we still returns ok... */
+    return(0);
+  }
+
+  /* If this fileclass specifies a minimum filesize we check it */
+  if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize > 0) &&
+      ((*stcp)->actual_size < (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize * ONE_MB))) {
+    char tmpbuf1[21];
+    char tmpbuf2[21];
+    sendrep(rpfd, MSG_ERR, STG168,
+            (*stcp)->u1.h.xfile, 
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
+            pool_p->migr->fileclass[ifileclass]->server,
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
+            "minimum",
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize,
+            u64tostr ((*stcp)->actual_size , tmpbuf1, 0),
+            u64tostru((*stcp)->actual_size , tmpbuf2, 0));
+    /* We mark it as staged */
+    (*stcp)->status |= STAGED;
+    if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+      /* And not as a migration candidate */
+      (*stcp)->status &= ~CAN_BE_MIGR;
+    }
+#ifdef USECDB
+    if (stgdb_upd_stgcat(&dbfd,*stcp) != 0) {
+      stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+    }
+#endif
+    savereqs();
+    /* But we still returns ok... */
+    return(0);
+  }
+
+  /* If this fileclass specifies a maximum filesize we check it */
+  if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize > 0) &&
+      ((*stcp)->actual_size > (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize * ONE_MB))) {
+    char tmpbuf1[21];
+    char tmpbuf2[21];
+    sendrep(rpfd, MSG_ERR, STG168,
+            (*stcp)->u1.h.xfile, 
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
+            pool_p->migr->fileclass[ifileclass]->server,
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
+            "maximum",
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize,
+            u64tostr ((*stcp)->actual_size , tmpbuf1, 0),
+            u64tostru((*stcp)->actual_size , tmpbuf2, 0));
     /* We mark it as staged */
     (*stcp)->status |= STAGED;
     if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
