@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.9 2000/01/09 11:40:21 jdurand Exp $
+ * $Id: stage.h,v 1.10 2000/03/07 17:29:12 jdurand Exp $
  */
 
 /*
@@ -14,13 +14,6 @@
 
 #include "Castor_limits.h"
 #include <osdep.h>
-
-/* ==================== */
-/* Malloc Debug Library */
-/* ==================== */
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
@@ -309,6 +302,9 @@ struct pool {
 	int	ovl_pid;
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
+	char tape_pool[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* Tape poolname */
+	int free4mig;	/* Tape migration policy (%) */
+	char mig[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* Tape migration script */
 };
 
 struct pool_element {
