@@ -33,6 +33,7 @@ typedef struct RtcpcldVIDChild {
 typedef struct RtcpcldTapeList 
 {
   tape_list_t *tape;
+  enum Cstager_TapeStatusCodes_t oldStatus;
   struct Cstager_Tape_t *tp;
   struct RtcpcldSegmentList *segments;
   struct RtcpcldTapeList *next;
@@ -43,12 +44,22 @@ RtcpcldTapeList_t;
 typedef struct RtcpcldSegmentList 
 {
   file_list_t *file;
+  enum Cstager_SegmentStatusCodes_t oldStatus;
   struct Cstager_Segment_t *segment;
   struct RtcpcldTapeList *tp;
   struct RtcpcldSegmentList *next;
   struct RtcpcldSegmentList *prev;
 }
 RtcpcldSegmentList_t;
+
+typedef struct TpReqMap 
+{
+  tape_list_t *tape;
+  RtcpcldTapeList_t *tpList;
+  struct TpReqMap *next;
+  struct TpReqMap *prev;
+}
+TpReqMap_t;
 #endif /* CASTOR_STAGER_TAPE_H && CASTOR_STAGER_SEGMENT_H */
 
 int rtcpcld_InitNW  _PROTO((
