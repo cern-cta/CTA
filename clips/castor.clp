@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.2 2005/01/12 15:01:01 jdurand Exp $
+; $Id: castor.clp,v 1.3 2005/01/25 20:31:54 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -40,12 +40,14 @@
 	?*procSign* = 1                 ; Does increase of proc increase weight?
 	?*loadSign* = -1                ; Does increase of load increase weight?
 	?*ioSign* = -1                  ; Does increase of i/o increase weight?
+	?*streamSign* = -1              ; Does increase of number of stream increase weight?
 	?*ramImportance* = 1.           ; How ram counts into a diskserver weight
 	?*memImportance* = 1.           ; How mem counts into a diskserver weight
 	?*swapImportance* = 1.          ; How swap counts into a diskserver weight
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
 	?*loadImportance* = 3.          ; How load counts into a diskserver weight
 	?*ioImportance* = 2.            ; How i/o counts into a diskserver weight
+	?*streamImportance* = 1.        ; How number of streams counts into a diskserver weight
 	?*filesystemReadImportance* = 1.; How readRate counts into a filesystem weight
 	?*filesystemWriteImportance* = 1.; How writeRate counts into a filesystem weight
 	?*readImportance* = 1.          ; How a read stream counts into a diskserver weight
@@ -580,6 +582,12 @@
 	)
 	(slot diskserverIoImportance	; I/o importance
 		(default ?*ioImportance*)
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers pattern-matching
+		(type FLOAT)		; Is an integer
+	)
+	(slot diskserverStreamImportance; Number of streams importance
+		(default ?*streamImportance*)
 		(visibility public)	; Any instance can see that slot
 		(pattern-match reactive); Changes triggers pattern-matching
 		(type FLOAT)		; Is an integer
