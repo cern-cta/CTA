@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.22 2000/09/01 13:18:12 jdurand Exp $
+ * $Id: procupd.c,v 1.23 2000/09/20 11:29:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.22 $ $Date: 2000/09/01 13:18:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.23 $ $Date: 2000/09/20 11:29:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -50,6 +50,12 @@ extern struct waitq *waitqp;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
+extern int upd_stageout _PROTO((int, char *, int *, int));
+extern struct waitf *add2wf _PROTO((struct waitq *));
+extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
+extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
+extern int check_waiting_on_req _PROTO((int, int));
+extern struct stgcat_entry *newreq _PROTO(());
 
 void
 procupdreq(req_data, clienthost)
@@ -198,7 +204,7 @@ procupdreq(req_data, clienthost)
 	}
 	if (nargs > optind) {
 		for  (i = optind; i < nargs; i++)
-			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid))
+			if (c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1))
 				goto reply;
 		goto reply;
 	}
@@ -241,6 +247,7 @@ procupdreq(req_data, clienthost)
 	for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++)
 		if (! wfp->waiting_on_req) break;
 	subreqid = wfp->subreqid;
+
 	found = 0;
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
@@ -254,12 +261,83 @@ procupdreq(req_data, clienthost)
 		c = USERR;
 		goto reply;
 	}
+#ifdef STAGER_DEBUG
+    sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
+#endif
+	if (rc == 0 && wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+		struct stgcat_entry *stcp_ok;
+		int save_nextreqid;
+		struct waitf *wfp_ok;
+
+        /* ==> Recall that "i" is the index of the found wf... <== */
+
+		/* If this is a tape file copy callback from concat_off and for the last entry */
+		/* we prepare the next round */
+
+		/* We are extending the number of files in this waiting member of the waitq */
+
+		if ((wfp_ok = add2wf(wqp)) == NULL) {
+			c = SYERR;
+			goto reply;
+		}
+		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem has been realloced) */
+		stcp_ok = newreq();
+		save_nextreqid = nextreqid();
+		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
+		stcp_ok->reqid = save_nextreqid;
+		/* Current stcp is "<X>-", new one is "<X+1>-" */
+		sprintf(stcp_ok->u1.t.fseq,"%d",atoi(fseq) + 1);
+		strcat(stcp_ok->u1.t.fseq,"-");
+		/* And it is a deffered allocation */
+		stcp_ok->ipath[0] = '\0';
+		wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
+		memset((char *) wfp_ok,0,sizeof(struct waitf));
+		wfp_ok->subreqid = stcp_ok->reqid;
+		/* Current stcp become "<X>" */
+		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq));
+#ifdef USECDB
+		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
+		if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
+			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		}
+#endif
+		savereqs ();
+		stglogit(func, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+
+		/* We extend the others that are also waiting on wfp */
+		if (add2otherwf(wqp,fseq,wfp,wfp_ok) != 0) {
+			c = SYERR;
+			goto reply;
+		}
+	}
 	if ( rc < 0) {	/* -R not specified, i.e. tape mounted and positionned */
 		int has_been_modified = 0;
-		if (stcp->ipath[0] == '\0') {	/* deferred allocation */
-			c = build_ipath (wfp->upath, stcp, wqp->pool_user);
-			if (c > 0) goto reply;
+
+		/* deferred allocation */
+		if (stcp->ipath[0] == '\0') {
+			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+				/* We remove the trailing '-' */
+				if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] != '-') {
+					sendrep (rpfd, MSG_ERR, "STG02 - Internal error : Did not found expected character '-' for tppos callback of fseq %s\n",stcp->u1.t.fseq);
+					c = SYERR;
+					goto reply;
+				} else {
+					stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
+				}
+			}
+			c = build_ipath (NULL, stcp, wqp->pool_user);
+			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+				/* We restore the trailing '-' */
+				strcat(stcp->u1.t.fseq,"-");
+			}
+			if (c > 0) {
+				sendrep (rpfd, MSG_ERR, "STG02 - build_ipath error\n");
+				goto reply;
+            }
 			if (c < 0) {
+				sendrep (rpfd, MSG_ERR, "STG02 - build_ipath reaching out of space\n");
 				wqp->clnreq_reqid = upd_reqid;
 				wqp->clnreq_rpfd = rpfd;
 				stcp->status |= WAITING_SPC;
@@ -315,7 +393,7 @@ procupdreq(req_data, clienthost)
 #endif
 		}
 	} else {
-		stglogit (func, "### Warning : stcp->ipath == NULL\n");
+		stglogit (func, "### Warning : stcp->ipath == NULL (stcp == 0x%lx)\n",(unsigned long) stcp);
 	}
 #if SACCT
 	stageacct (STGFILS, wqp->uid, wqp->gid, wqp->clienthost,
@@ -476,9 +554,9 @@ procupdreq(req_data, clienthost)
 				}
 			} else {
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-                  stcp->status &= ~CAN_BE_MIGR;
-                  update_migpool(stcp,-1);
-                }
+					stcp->status &= ~CAN_BE_MIGR;
+					update_migpool(stcp,-1,0);
+				}
 				stcp->status |= STAGED;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -508,7 +586,7 @@ procupdreq(req_data, clienthost)
 				strcmp (stcp->ipath, (wfp+1)->upath))
 			create_link (stcp, (wfp+1)->upath);
 		updfreespace (stcp->poolname, stcp->ipath,
-									stcp->size*1024*1024 - (int)stcp->actual_size);
+									stcp->size * ONE_MB - (int)stcp->actual_size);
 		check_waiting_on_req (subreqid, STAGED);
 	}
 	savereqs  ();
@@ -518,6 +596,19 @@ procupdreq(req_data, clienthost)
 		strcpy (wfp->upath, (wfp+1)->upath);
 	}
 	if (rc == MNYPARI) wqp->status = rc;
+#ifdef STAGER_DEBUG
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
+      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+        for (stcp = stcs; stcp < stce; stcp++) {
+          if (wfp->subreqid == stcp->reqid) {
+            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+            break;
+          }
+        }
+      }
+    }
+#endif
  reply:
 	free (argv);
 	reqid = upd_reqid;
