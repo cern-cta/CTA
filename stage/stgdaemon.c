@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.181 2002/03/08 13:08:50 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.182 2002/03/08 14:34:47 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.181 $ $Date: 2002/03/08 13:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.182 $ $Date: 2002/03/08 14:34:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -234,8 +234,6 @@ extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern void procupdreq _PROTO((int, int, char *, char *));
-int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
-int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern void checkfile2mig _PROTO(());
@@ -3715,80 +3713,6 @@ void stgdaemon_usage() {
 				 "  -L <%%d> Listen backlog\n"
 				 "\n"
 				 );
-}
-
-#define VAL_CMP(x,y) (((x) < (y)) ? -1 : 1)
-#define VAL_CHK(s1,s2,member) { \
-  if (((s1)->member    != 0) && ((s1)->member != (s2)->member)) return(VAL_CMP((s1)->member,(s2)->member)); \
-}
-#define STR_CHK(s1,s2,member) { \
-  if (((s1)->member[0] != '\0') && (strcmp((s1)->member,(s2)->member) != 0)) return(strcmp((s1)->member,(s2)->member)); \
-}
-
-int stcp_cmp(stcp1,stcp2)
-	struct stgcat_entry *stcp1;
-	struct stgcat_entry *stcp2;
-{
-	/* stcp1 is the reference from which we decide to do or not the comparison */
-	VAL_CHK(stcp1,stcp2,blksize);
-	VAL_CHK(stcp1,stcp2,charconv);
-	VAL_CHK(stcp1,stcp2,keep);
-	VAL_CHK(stcp1,stcp2,lrecl);
-	VAL_CHK(stcp1,stcp2,nread);
-	STR_CHK(stcp1,stcp2,poolname);
-	STR_CHK(stcp1,stcp2,recfm);
-	VAL_CHK(stcp1,stcp2,size);
-	STR_CHK(stcp1,stcp2,ipath);
-	VAL_CHK(stcp1,stcp2,t_or_d);
-	STR_CHK(stcp1,stcp2,group);
-	STR_CHK(stcp1,stcp2,user);
-	VAL_CHK(stcp1,stcp2,uid);
-	VAL_CHK(stcp1,stcp2,gid);
-	VAL_CHK(stcp1,stcp2,mask);
-	VAL_CHK(stcp1,stcp2,reqid);
-	VAL_CHK(stcp1,stcp2,status);
-	VAL_CHK(stcp1,stcp2,actual_size);
-	VAL_CHK(stcp1,stcp2,c_time);
-	VAL_CHK(stcp1,stcp2,a_time);
-	VAL_CHK(stcp1,stcp2,nbaccesses);
-	switch (stcp1->t_or_d) {
-	case 't':
-		{
-			int __i_stage_api;
-			STR_CHK(stcp1,stcp2,u1.t.den);
-			STR_CHK(stcp1,stcp2,u1.t.dgn);
-			STR_CHK(stcp1,stcp2,u1.t.fid);
-			VAL_CHK(stcp1,stcp2,u1.t.filstat);
-			STR_CHK(stcp1,stcp2,u1.t.fseq);
-			STR_CHK(stcp1,stcp2,u1.t.lbl);
-			VAL_CHK(stcp1,stcp2,u1.t.retentd);
-			STR_CHK(stcp1,stcp2,u1.t.tapesrvr);
-			VAL_CHK(stcp1,stcp2,u1.t.E_Tflags);
-			for (__i_stage_api = 0; __i_stage_api < MAXVSN; __i_stage_api++) {
-				STR_CHK(stcp1,stcp2,u1.t.vid[__i_stage_api]);
-				STR_CHK(stcp1,stcp2,u1.t.vsn[__i_stage_api]);
-			}
-		}
-		break;
-	case 'd':
-		STR_CHK(stcp1,stcp2,u1.d.xfile);
-		STR_CHK(stcp1,stcp2,u1.d.Xparm);
-		break;
-	case 'a':
-		STR_CHK(stcp1,stcp2,u1.d.xfile);
-		break;
-	case 'm':
-		STR_CHK(stcp1,stcp2,u1.m.xfile);
-		break;
-	case 'h':
-		STR_CHK(stcp1,stcp2,u1.h.xfile);
-		STR_CHK(stcp1,stcp2,u1.h.server);
-		VAL_CHK(stcp1,stcp2,u1.h.fileid);
-		break;
-	}
-
-	/* All relevant (.e.g non-zero) fields are the same */
-	return(0);
 }
 
 int verif_euid_egid(euid,egid,username,group)
