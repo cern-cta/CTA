@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.40 2003/05/12 12:49:19 jdurand Exp $
+ * $Id: stager_castor.c,v 1.41 2003/05/13 06:47:26 jdurand Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.40 $ $Date: 2003/05/12 12:49:19 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.41 $ $Date: 2003/05/13 06:47:26 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -722,10 +722,13 @@ int main(argc,argv,envp)
 	}
 #endif
 	/* We detect if tape server have been explicitely given on command-line */
+	/* This have a meaning ONLY for tape requests : we comment this */
+	/*
 	if (stcs->u1.t.tapesrvr[0] != '\0') {
 		dont_change_srv = 1;
 	}
-
+	*/
+											
 	if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 		int have_tppool = 0;
 		/* We check if there the tppool member is specified for any of the */
