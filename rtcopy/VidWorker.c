@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/20 14:02:21 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/09/17 15:39:36 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/20 14:02:21 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/09/17 15:39:36 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1728,6 +1728,21 @@ int main(
     setErrorInfo(vidChildTape,save_serrno,shiftMsg);
     (void)rtcpcld_setVIDFailedStatus(vidChildTape);
   } else {
+    (void)rtcpcld_updateVIDStatus(
+                                  vidChildTape,
+                                  TAPE_PENDING,
+                                  TAPE_FINISHED
+                                  );
+    (void)rtcpcld_updateVIDStatus(
+                                  vidChildTape,
+                                  TAPE_WAITVDQM,
+                                  TAPE_FINISHED
+                                  );
+    (void)rtcpcld_updateVIDStatus(
+                                  vidChildTape,
+                                  TAPE_WAITMOUNT,
+                                  TAPE_FINISHED
+                                  );
     (void)rtcpcld_updateVIDStatus(
                                   vidChildTape,
                                   TAPE_MOUNTED,
