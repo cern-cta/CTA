@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/12/21 22:31:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2005/01/23 08:47:29 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM 	Make tape daemon programs. 
 
@@ -518,7 +518,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
 
 clobber:	clean
-	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_Z) $(DUMPTAPE) LibraryTargetName(tape))
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_Z) $(DUMPTAPE) LibraryTargetName(tape) sendscsicmd.c usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c)
 
 #if _WIN32
 depend:
