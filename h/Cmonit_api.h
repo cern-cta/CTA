@@ -1,5 +1,5 @@
 /*
- * $Id: Cmonit_api.h,v 1.2 2002/05/30 12:42:57 bcouturi Exp $
+ * $Id: Cmonit_api.h,v 1.3 2002/10/21 14:02:49 bcouturi Exp $
  * Copyright (C) 2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -33,6 +33,8 @@ EXTERN_C int DLL_DECL Cmonit_get_monitor_address _PROTO ((char *));
 
 EXTERN_C int DLL_DECL Cmonit_send_disk_rec _PROTO ((int , int , 
 						    int , int));
+
+EXTERN_C int DLL_DECL Cmonit_get_monitor_address _PROTO((char *));
 
 
 #endif /*  _MONITOR_H_INCLUDED_ */

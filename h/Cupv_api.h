@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_api.h,v 1.1 2002/05/28 09:47:41 bcouturi Exp $
+ * $Id: Cupv_api.h,v 1.2 2002/10/21 14:02:50 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_api.h,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:47:41 $ CERN IT-PDP/DM Ben Couturier
+ * @(#)$RCSfile: Cupv_api.h,v $ $Revision: 1.2 $ $Date: 2002/10/21 14:02:50 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_API_H
@@ -47,7 +47,7 @@ EXTERN_C int DLL_DECL Cupv_add _PROTO ((uid_t, gid_t, const char *, const char *
 EXTERN_C int DLL_DECL Cupv_check _PROTO ((uid_t, gid_t, const char *, const char *, int));
 EXTERN_C int DLL_DECL Cupv_modify _PROTO ((uid_t, gid_t, const char *, const char *, const char *, const char *, int));
 EXTERN_C int DLL_DECL Cupv_delete _PROTO ((uid_t, gid_t, const char *, const char *));
-
+EXTERN_C int DLL_DECL Cupv_seterrbuf _PROTO ((char *, int));
 #endif
 
 
