@@ -405,7 +405,8 @@ void CppHOraCnvWriter::writeMembers() {
                   << "Statement;"
                   << endl << endl;
       }
-      if (as->type.multiRemote == MULT_ONE) {
+      if (as->type.multiRemote == MULT_ONE &&
+          as->remotePart.name != "") {
         // * to 1
         if (!as->remotePart.abstract) {
           *m_stream << getIndent()

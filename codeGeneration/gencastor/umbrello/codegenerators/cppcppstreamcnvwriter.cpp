@@ -278,7 +278,8 @@ void CppCppStreamCnvWriter::writeMarshal() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       // don't consider enums
       if (isEnum(as->remotePart.typeName)) continue;
       // One to one association
@@ -378,6 +379,7 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
        as = assocs.next()) {
     if (first &&
         ((as->type.multiRemote == MULT_ONE &&
+          as->remotePart.name != "" &&
           !isEnum(as->remotePart.typeName)) ||
          as->type.multiRemote == MULT_N)) {
       // Get the precise object
@@ -391,6 +393,7 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
       first = false;
     }
     if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
       addInclude("\"castor/Constants.hpp\"");

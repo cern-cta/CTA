@@ -239,20 +239,24 @@ void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
                                                      bool& first) {
   if (m_classInfo->id() == a->getRoleId(A) ||
       m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
-    if (parseMulti(a->getMulti(B)) == MULT_ONE) {
-      QString className = a->getObject(B)->getName();
-      if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleName(B),
-                              className,
-                              first);
+    if (a->getRoleName(B) != "") {
+      if (parseMulti(a->getMulti(B)) == MULT_ONE) {
+        QString className = a->getObject(B)->getName();
+        if (!isEnum(className)) className.append("*");
+        writeInitInConstructor (QString("m_") + a->getRoleName(B),
+                                className,
+                                first);
+      }
     }
   } else {
-    if (parseMulti(a->getMulti(A)) == MULT_ONE) {
-      QString className = a->getObject(A)->getName();
-      if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleName(A),
-                              className,
-                              first);
+    if (a->getRoleName(A) != "") {
+      if (parseMulti(a->getMulti(A)) == MULT_ONE) {
+        QString className = a->getObject(A)->getName();
+        if (!isEnum(className)) className.append("*");
+        writeInitInConstructor (QString("m_") + a->getRoleName(A),
+                                className,
+                                first);
+      }
     }
   }
 }
@@ -267,64 +271,71 @@ void CppCppClassWriter::writeDeleteInDestructor(QString name,
                                                 bool fulldelete) {
   switch (multi) {
   case MULT_N :
-    *m_stream << getIndent()
-              << "for (unsigned int i = 0; i < m_"
-              << name << "Vector.size(); i++) {" << endl;
-    m_indent++;
-    switch (backMulti) {
-    case MULT_N :
-      *m_stream << getIndent() << "m_" << name
-                << "Vector[i]->remove"
-                << capitalizeFirstLetter(backName)
-                << "(this);" << endl;
-      break;
-    case MULT_ONE :
-      *m_stream << getIndent() << "m_" << name
-                << "Vector[i]->set"
-                << capitalizeFirstLetter(backName)
-                << "(0);" << endl;
-      if (fulldelete) {
-        *m_stream << getIndent()
-                  << "delete m_" << name
-                  << "Vector[i];" << endl;
+    if (backName != "") {
+      *m_stream << getIndent()
+                << "for (unsigned int i = 0; i < m_"
+                << name << "Vector.size(); i++) {" << endl;
+      m_indent++;
+      switch (backMulti) {
+      case MULT_N :
+        *m_stream << getIndent() << "m_" << name
+                  << "Vector[i]->remove"
+                  << capitalizeFirstLetter(backName)
+                  << "(this);" << endl;
+        break;
+      case MULT_ONE :
+        *m_stream << getIndent() << "m_" << name
+                  << "Vector[i]->set"
+                  << capitalizeFirstLetter(backName)
+                  << "(0);" << endl;
+        if (fulldelete) {
+          *m_stream << getIndent()
+                    << "delete m_" << name
+                    << "Vector[i];" << endl;
+        }
+        break;
+      case MULT_UNKNOWN :
+        break;
       }
-      break;
-    case MULT_UNKNOWN :
-      break;
+      m_indent--;
+      *m_stream << getIndent() << "}" << endl;
     }
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl << getIndent()
-              << "m_" << name << "Vector.clear();" << endl;
+    *m_stream << getIndent() << "m_" << name
+              << "Vector.clear();" << endl;
     break;
   case MULT_ONE :
-    *m_stream << getIndent() << "if (0 != m_" << name
-              << ") {" << endl;
-    m_indent++;
-    switch (backMulti) {
-    case MULT_N :
-      *m_stream << getIndent() << "m_" << name
-                << "->remove"
-                << capitalizeFirstLetter(backName)
-                << "(this);" << endl;
-      break;
-    case MULT_ONE :
-      *m_stream << getIndent() << "m_" << name << "->set"
-                << capitalizeFirstLetter(backName)
-                << "(0);" << endl;
+    if (backName != "" || fulldelete) {
+      *m_stream << getIndent() << "if (0 != m_" << name
+                << ") {" << endl;
+      m_indent++;
+      if (backName != "") {    
+        switch (backMulti) {
+        case MULT_N :
+          *m_stream << getIndent() << "m_" << name
+                    << "->remove"
+                    << capitalizeFirstLetter(backName)
+                    << "(this);" << endl;
+          break;
+        case MULT_ONE :
+          *m_stream << getIndent() << "m_" << name << "->set"
+                    << capitalizeFirstLetter(backName)
+                    << "(0);" << endl;
+          break;
+        case MULT_UNKNOWN :
+          break;
+        }
+      }
+      if (fulldelete) {
+        *m_stream << getIndent() << "delete m_" << name << ";"
+                  << endl << getIndent() << "m_" << name
+                  << " = 0;" << endl;
+      }
+      m_indent--;
+      *m_stream << getIndent() << "}" << endl;
       break;
     case MULT_UNKNOWN :
       break;
     }
-    if (fulldelete) {
-      *m_stream << getIndent() << "delete m_" << name << ";"
-                << endl << getIndent() << "m_" << name
-                << " = 0;" << endl;
-    }
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    break;
-  case MULT_UNKNOWN :
-    break;
   }
 }
 
@@ -334,9 +345,9 @@ void CppCppClassWriter::writeDeleteInDestructor(QString name,
 void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
   Multiplicity multA = parseMulti(a->getMulti(A));
   Multiplicity multB = parseMulti(a->getMulti(B));
-  if (a->getRoleName(B) != "" && a->getRoleName(A) != "") {
-    if (m_classInfo->id() == a->getRoleId(A) ||
-        m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
+  if (m_classInfo->id() == a->getRoleId(A) ||
+      m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
+    if (a->getRoleName(B) != "") {
       UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(B));
       if (0 == cl || !cl->isEnumeration()) {
         fixTypeName(a->getObject(B)->getName(),
@@ -347,7 +358,9 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
            multB, multA,
            a->getAssocType() == Uml::at_Composition);
       }
-    } else {
+    }
+  } else {
+    if (a->getRoleName(A) != "") {
       UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(A));
       if (0 == cl || !cl->isEnumeration()) {
         fixTypeName(a->getObject(A)->getName(),

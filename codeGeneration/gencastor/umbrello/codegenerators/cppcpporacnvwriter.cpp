@@ -194,7 +194,8 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       // One to One associations
       if (n > 0) *m_stream << ", ";
       *m_stream << as->remotePart.name;
@@ -238,7 +239,8 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       if (n > 0) *m_stream << ", ";
       *m_stream << as->remotePart.name;
       n++;
@@ -514,7 +516,8 @@ void CppCppOraCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       // One to One associations
       if (n > 0) stream << ", ";
       stream << as->remotePart.name << " INTEGER";
@@ -1955,7 +1958,8 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
     if (isEnum(as->remotePart.typeName)) {
       writeSingleSetIntoStatement("insert", as->remotePart, n, true);
       n++;
-    } else if (as->type.multiRemote == MULT_ONE) {
+    } else if (as->type.multiRemote == MULT_ONE &&
+               as->remotePart.name != "") {
       *m_stream << getIndent()
                 << "m_insertStatement->setDouble("
                 << n << ", ";
@@ -2665,7 +2669,8 @@ void CppCppOraCnvWriter::printSQLError(QString name,
     for (Assoc* as = assocs.first();
          0 != as;
          as = assocs.next()) {
-      if (as->type.multiRemote == MULT_ONE) {
+      if (as->type.multiRemote == MULT_ONE &&
+          as->remotePart.name != "") {
         *m_stream << endl << getIndent()
                   << "                << \"  "
                   << as->remotePart.name << " : \" << obj->"
