@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.1 $ $Date: 2000/04/09 09:16:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.2 $ $Date: 2000/12/15 16:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYTAPE 1 "$Date: 2000/04/09 09:16:20 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYTAPE 1 "$Date: 2000/12/15 16:34:39 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -102,7 +102,7 @@ and
 .LP
 Only
 .I vid
-is mandatory. When an option is not specified, the fiels is not modified.
+is mandatory. When an option is not specified, the field is not modified.
 .SH EXAMPLE
 .nf
 .ft CW
