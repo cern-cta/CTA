@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 08:44:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 11:59:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -894,6 +894,8 @@ void *tapeIOthread(void *arg) {
     tape = ((thread_arg_t *)arg)->tape;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     free(arg);
+    nexttape = NULL;
+    nextfile = NULL;
 
     /*
      * Initialize the tapeIO processing status
@@ -1008,7 +1010,7 @@ void *tapeIOthread(void *arg) {
                              nextfile->filereq.tape_fseq ) break;
                         tmpfile->filereq.blocksize = nextfile->filereq.blocksize;
                         tmpfile->filereq.recordlength = nextfile->filereq.recordlength;
-                        tmpfile->filereq.proc_status == RTCP_POSITIONED;
+                        tmpfile->filereq.proc_status = RTCP_POSITIONED;
                         tmpfile->filereq.TStartPosition = nextfile->filereq.TStartPosition;
                         tmpfile->filereq.TEndPosition = nextfile->filereq.TEndPosition;
                     } CLIST_ITERATE_END(nextfile,tmpfile);
