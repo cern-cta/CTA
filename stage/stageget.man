@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.7 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+.\" $Id: stageget.man,v 1.8 2002/10/03 14:03:56 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.8 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1996-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEGET l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGEGET "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS
@@ -13,10 +15,6 @@ stageget \- find file allocated in a disk pool with stagealloc
 .BI \-P 
 ] [
 .BI \-p " pool"
-] [
-.BI \-U " fun"
-] [
-.BI \-u " user"
 ]
 .I file
 .SH DESCRIPTION
@@ -55,29 +53,12 @@ prints on stdout the internal path name.
 .BI \-p " poolname"
 Restricts the search to the pool
 .IR poolname .
-.TP
-.BI \-U " fun"
-Fortran unit number.
-This is internally converted to a local path
-.BR "fort.fun" .
-The
-.B \-U
-option and the
-.I file
-parameter may be both specified but at least one of them must be present.
-.TP
-.BI \-u " user"
-restricts the search to the subdirectories
-.I user
-of the pool.
-This may also be specified thru the environment variable STAGE_USER.
-The default subdirectory name is
-.BR stage .
+
 .SH EXAMPLES
 .TP
 A first session could save a large program in the pool:
 .sp
-stagealloc \-s 20 \-u baud MyDice_XXX.sav
+stagealloc \-s 20 MyDice_XXX.sav
 .br
 rfcp MyDice_XXX MyDice_XXX.sav
 .br
@@ -85,11 +66,12 @@ stageupdc MyDice_XXX.sav
 .TP
 A new job could retrieve it and use it by saying:
 .sp
-stageget \-u baud MyDice_XXX.sav
+stageget MyDice_XXX.sav
 .br
 rfcp MyDice_XXX.sav MyDice_XXX
 .br
 MyDice_XXX
+
 .SH RETURN CODES
 \
 .br
@@ -100,5 +82,9 @@ MyDice_XXX
 2	System error.
 .br
 4	Configuration error.
+
+.SH SEE ALSO
+\fBstage_other_options\fP(1)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

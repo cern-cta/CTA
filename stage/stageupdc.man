@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.9 $ $Date: 2002/05/03 04:47:41 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" $Id: stageupdc.man,v 1.10 2002/10/03 14:03:56 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.10 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "$Date: 2002/05/03 04:47:41 $"
+.TH STAGEUPDC "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
@@ -10,36 +12,18 @@ stageupdc \- update the stager catalog
 [
 .BI \-h " host"
 ] [
-.BI \-U " fun"
-] [
 .I files
 ]
 .LP
 .B stageupdc
-[
-.BI \-b " max_block_size"
-] [
-.BI \-D " tape_drive"
-] [
-.BI \-F " record_format"
-] [
-.BI \-f " file_id"
 ] [
 .BI \-h " host"
-] [
-.BI \-I " network_ifce"
-] [
-.BI \-L " record_length"
-] [
-.BI \-q " file_sequence_number"
 ] [
 .BI \-R " exit_code"
 ] [
 .BI \-s " size"
 ] [
 .BI \-T " transfer_time"
-] [
-.BI \-W " wait_time"
 ]
 .BI \-Z " stage_reqid"
 .SH DESCRIPTION
@@ -62,39 +46,19 @@ may be a local path, the combination
 .I machine:fullpath
 (NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
 .LP
+When applied on a CASTOR HSM file, previously created with
+.B stageout
+, 
+.B stageupdc
+makes it eligible for automatic migration.
+.LP
 The second format is used by rtcopy to send back information to the stager.
 .SH OPTIONS
-.TP
-.BI \-b " blocksize"
-Specifies the maximum block size.
-.TP
-.BI \-D " tape_drive"
-Identifies the drive where the tape is mounted.
-.TP
-.BI \-F " recfm"
-Specifies the record format of the data on the tape. It may be
-.BR U ,
-.B F
-or
-.BR FB .
-.TP
-.BI \-f " fid"
-Specifies the fileid in HDR1.
 .TP
 .BI \-h " host"
 Sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
-.TP
-.BI \-I " network_ifce"
-Identifies the network interface used for the transfer between the tape server
-and the disk server.
-.TP
-.BI \-L " lrecl"
-Specifies the logical record length for fixed length record format files.
-.TP
-.BI \-q " fseq"
-Specifies the file sequence number of the tape file.
 .TP
 .BI \-R " exit_code"
 Exit code for the file stage subrequest.
@@ -103,28 +67,12 @@ Exit code for the file stage subrequest.
 Gives the actual filesize in bytes. Only digits followed by eventual unit are accepted. The unit can be 'b' for byte (default), 'k' for kilo-byte, 'M' for Mega-byte, 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte.
 .TP
 .BI \-T " transfer_time"
-Time spent transferring data between tape and disk server.
-.TP
-.BI \-U " fun"
-Fortran unit number.
-This is internally converted to a local path
-.BI ftn fun
-(HP-UX) or
-.BI fort. fun
-(all other platforms).
-The
-.B \-U
-option and the
-.I file
-parameter may not be both specified at the same time.
-.TP
-.BI \-W " wait_time"
-Time spent waiting for a drive to become available and for the volume to get
-mounted.
+Time spent transferring data between store and disk server.
 .TP
 .BI \-Z " stage_reqid"
 The value is in the form
 .BR "reqid.key@stagehost" .
+
 .SH RETURN CODES
 \
 .br
@@ -135,6 +83,10 @@ The value is in the form
 2       System error.
 .br
 4       Configuration error.
+
+.SH SEE ALSO
+\fBstageout\fP(1), \fBstage_other_options\fP(1)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 

@@ -1,113 +1,13 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.22 $ $Date: 2002/09/27 06:30:43 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" $Id: stageqry.man,v 1.23 2002/10/03 14:03:56 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.23 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2002/09/27 06:30:43 $"
+.TH STAGEQRY "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stage User Commands"
 .SH NAME
-stageqry \- give the status of all staged tapes
+stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
-.B stageqry
-[
-.BI \-a
-] [
-.BI \-h " host"
-] [
-.BI \-L
-] [
-.BI \-l
-] [
-.BI \-P
-] [
-.BI \-p " pool"
-] [
-.BI \-q " file_sequence_number"
-] [
-.BI \-Q " file_sequence_range"
-] [
-.BI \-S
-] [
-.BI \-T
-] [
-.BI \-u
-] [
-.BI \-V " visual_identifier(s)"
-] [
-.BI \-x
-] [
-.BI \-\-dump
-] [
-.BI \-\-format " formatstring"
-] [
-.BI \-\-mintime
-] [
-.BI \-\-noheader
-] [
-.BI \-\-output " filename"
-] [
-.BI \-\-reqid " reqid"
-] [
-.BI \-\-withna
-] [
-.BI \-\-withunit
-] [
-.BI \-\-withstatusnumber
-] [
-.BI \-\-withtimenumber
-] [
-.BI \-\-retenp
-.\" ] [
-.\" .BI \-\-side " sidenumber"
-.\" ] [
-.\" .BI \-\-display_side
-]
-.LP
-.B stageqry
-[
-.BI \-a
-] [
-.BI \-f
-] [
-.BI \-h " host"
-] [
-.BI \-I " external_filename"
-] [
-.BI \-L
-] [
-.BI \-l
-] [
-.BI \-P
-] [
-.BI \-p " pool"
-] [
-.BI \-S
-] [
-.BI \-u
-] [
-.BI \-x
-] [
-.BI \-\-dump
-] [
-.BI \-\-format " formatstring"
-] [
-.BI \-\-mintime
-] [
-.BI \-\-noheader
-] [
-.BI \-\-output " filename"
-] [
-.BI \-\-reqid " reqid"
-] [
-.BI \-\-withna
-] [
-.BI \-\-withunit
-] [
-.BI \-\-withstatusnumber
-] [
-.BI \-\-withtimenumber
-] [
-.BI \-\-retenp
-]
-.LP
 .B stageqry
 [
 .BI \-a
@@ -159,53 +59,6 @@ stageqry \- give the status of all staged tapes
 .LP
 .B stageqry
 [
-.BI \-A " pattern"
-] [
-.BI \-a
-] [
-.BI \-f
-] [
-.BI \-h " host"
-] [
-.BI \-L
-] [
-.BI \-l
-] [
-.BI \-P
-] [
-.BI \-p " pool"
-] [
-.BI \-S
-] [
-.BI \-u
-] [
-.BI \-x
-] [
-.BI \-\-dump
-] [
-.BI \-\-format " formatstring"
-] [
-.BI \-\-mintime
-] [
-.BI \-\-noheader
-] [
-.BI \-\-output " filename"
-] [
-.BI \-\-reqid " reqid"
-] [
-.BI \-\-withna
-] [
-.BI \-\-withunit
-] [
-.BI \-\-withstatusnumber
-] [
-.BI \-\-withtimenumber
-] [
-.BI \-\-retenp
-]
-.LP
-.B stageqry
-[
 .BI \-h " host"
 ] [
 .BI \-p " pool"
@@ -225,32 +78,16 @@ stageqry \- give the status of all staged tapes
 .BI \-\-retenp
 ]
 .SH DESCRIPTION
+In its first form, 
 .B stageqry
-gives the status of all tapes which are staged or currently requested
-in tabular form:
-.HP
-Vid	visual identifier.
-.HP
-Fseq	file sequence number.
-.HP
-Lbl	label type:
-.BR al ,
-.BR nl ,
-.B sl
-or
-.BR blp .
-.HP
-Recfm	record format:
-.BR F ,
-.B FB
-or
-.BR U .
-.TP
-Lrecl	logical record length.
-.HP
-Blksiz	maximum block size.
-.HP
-State	current status:
+gives the status of files which are staged or currently requested
+in tabular form.
+.LP
+In its second form, 
+.B stageqry
+gives global status on pools, waiting queue, and more.
+.LP
+For the first form, default output start with a header which, for backward compatibility reasons, is mentionning Vid, Fseq, Lbl, Recfm and Blksiz, meaningful only for tape files. For HSM files (\-M option), the basename of the HSM name is printed instead under a column 'File name'. Then, a column 'status' gives current status of the found record, and can be:
 .RS
 STAGEALLOC	space has been reserved with stagealloc
 .TP
@@ -281,34 +118,22 @@ WAITING_NS	waiting for creation in nameserver (CASTOR HSM only)
 WAITING_MIGR	waiting for automatic migration request (CASTOR HSM only)
 .RE
 .HP
-Nbaccess number of requests for this disk file.
+Nbaccess column gives the number of requests for this file.
 .HP
-Size	actual size / requested size (in Mbytes).
+Size gives the actual size / requested size (in Mbytes).
 .SH OPTIONS
-.TP
-.BI \-A " pattern"
-searches for files allocated with
-.B stagealloc
-and whose name matches the specified pattern.
-.B stageqry
-treats a pattern as a basic regular expression which should be surrounded
-by single quotes to avoid unwanted shell substitutions.
 .TP
 .BI \-a
 gives the status for all files. If this option is absent, only the files
 that belong to the requestor's group are displayed.
 .TP
 .BI \-f
-gives on an extra line the full external_filename or the full HSM filename.
+gives on an extra line the full HSM filename.
 .TP
 .BI \-h " host"
 sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
-.TP
-.BI \-I " external_filename"
-prints the catalog entry corresponding to this external disk file.
-.TP
 .BI \-L
 gives the link name(s) for the selected files.
 .TP
@@ -330,17 +155,6 @@ gives the internal path name(s) for the selected files.
 .BI \-p " poolname"
 restricts the query to a given pool.
 .TP
-.BI \-q " file_sequence_number"
-restricts the search to tape files having this given sequence number.
-The option value is considered as a single file sequence (case of concatenation).
-It is exclusive with \-Q option.
-.TP
-.BI \-Q " file_sequence_range"
-restricts the search to tape files having the sequence numbers within the given range.
-Multiple file numbers may be separated by commas or specified as a range
-using the dash as separator.
-It is exclusive with \-q option.
-.TP
 .BI \-S
 gives on stdout a list of staged files sorted in ascending order of last access
 time weighted by file size.
@@ -352,18 +166,6 @@ in Mbytes, number of accesses, internal path and user path.
 .TP
 .BI \-s
 gives statistics on pool utilization.
-.TP
-.BI \-T
-gives on standard output, as an option string, the main characteristics of a
-tape file. The information is taken from the header labels. This includes
-block size (\-b), record format (\-F), file identifier (\-f) and record length (\-L).
-.TP
-.BI \-u
-restricts the query to files that belong to the requestor.
-.TP
-.BI \-V " vid(s)"
-restricts the search to files corresponding to given vids.
-Multiple vids will be separated by colons.
 .TP
 .BI \-x
 adds two columns to the output: they give the request id and the internal
@@ -505,7 +307,7 @@ gives statistics on migration rules. Used only if \-s option is set.
 gives current minimum time before migration. This concerns only entries that are in the CAN_BE_MIGR state.
 .TP
 .BI \-\-noregexp
-prevents regular expression to be applied in case of \-A of \-M options. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
+prevents regular expression to be applied in case of \-M option. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
 .TP
 .BI \-\-queue
 gives CASTOR's waiting queue content.
@@ -519,7 +321,7 @@ gives current retention period on disk. This period will be showed in terms of e
 .\" .BI \-\-side " sidenumber "
 .\" outputs only entries coming from multi-sided media (like DVD). Only with
 .BI \-V
-option. Please see the NOTES section.
+option.
 .\" .TP
 .\" .BI \-\-display_side
 .\" Forces 'tape' files with a side number greater than zero to follow the multi-sided format as quoted in the NOTES section below. Please see the NOTES section.
@@ -527,72 +329,16 @@ option. Please see the NOTES section.
 .TP
 .nf
 .cs R 18
-stageqry -V P07000 --format user,group,vid,vsn,den,dgn,lbl,reqid     
-user           group vid    vsn    den      dgn    lbl reqid
-cscct          c3    P07000 P07000 60GC     9940R  al  495049
-cscct          c3    P07000 P07000 60GC     9940R  al  495050
-.cs R
-.fi
-.TP
-stageqry
-.nf
-.cs R 18
-Vid    Fseq Lbl Recfm Lrecl Blksiz State      Nbaccess     Size    Pool
-CZ0134    1 al  U         *  32760 STAGED            3    0.3/200  stagetest
-CZ0134    2 al  U         *  32760 STAGEIN           1    0.0/200  stagetest
-.cs R
-.fi
-.TP
-stageqry \-A '^MyDice' 
-.nf
-.cs R 18
-File name                          State      Nbaccess     Size    Pool
-MyDice.sav                         STAGED            2    0.2/1    stagetest
-.cs R
-.fi
-.TP
-stageqry \-l
-.nf
-.cs R 18
-Vid    Fseq Lbl Recfm Lrecl Blksiz State      Nbaccess     Size    Pool
-CZ0134    1 al  U         *  32760 STAGED            3    0.3/200  stagetest
-			created by  baud      c3  1994/01/12 17:54:45
-			last access               1994/01/13 07:18:28
-CZ0134    2 al  U         *  32760 STAGED            1    0.6/200
-			created by  baud      c3  1994/01/13 07:18:28
-			last access               1994/01/13 07:30:04
-.cs R
-.fi
-.TP
-stageqry \-L
-.nf
-.cs R 18
-shd02:/u4/c3/baud/SHIFT/stage/fort.41
-shd02:/u4/c3/baud/SHIFT/stage/xxx
-.cs R
-.fi
-.TP
-stageqry \-M run1193.raw \-f
-.nf
-.cs R 18
+stageqry -M $CASTOR_HOME -flx
 File name                            State      Nbacc.     Size    Pool
-run1193.raw                           STAGED         1  191.7/250  wa97_stage
- hpss1d01:/hpss/cern.ch/user/c/cdrna57/raw/1997/run1193.raw
-.cs R
-.fi
-.TP
-stageqry \-P
-.nf
-.cs R 18
-shd02:/stage/c3/stage/CZ0134.1.al
-shd02:/stage/c3/stage/CZ0134.2.al
-.cs R
-.fi
-.TP
-stageqry \-S
-.nf
-.cs R 18
-1994/01/13 07:18:28    0.3    3 shd02:/stage/c3/stage/CZ0134.1.al shd02:/tmp/fort.41
+file03                               STAGED          1    0.0/0    castordev         305 castordev:/tmp/stage_castordev/c3/stage/file03.305
+ /castor/cern.ch/user/j/jdurand/2002/09/30/file03
+                        created by  jdurand   c3  2002/09/30 18:47:37
+                        last access               2002/09/30 18:48:10
+testforstagecat                      STAGED          1    0.0/0    castordev         352 castordev:/tmp/stage_castordev/c3/stage/testfile02
+ /castor/cern.ch/user/j/jdurand/testforstagecat
+                        created by  jdurand   c3  2002/10/01 15:13:38
+                        last access               2002/10/01 15:13:38
 .cs R
 .fi
 .TP
@@ -602,13 +348,6 @@ stageqry \-s
 POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
                               CAPACITY 492.00M FREE 476.39M ( 96.8%)
   shd02 /stage CAPACITY 492.00M FREE 476.39M ( 96.8%)
-.cs R
-.fi
-.TP
-stageqry \-T
-.nf
-.cs R 18
-\-b 32760 \-F U \-f SOMEDATA \-L 32760
 .cs R
 .fi
 .\" .SH NOTES
@@ -623,8 +362,10 @@ stageqry \-T
 2	System error.
 .br
 4	Configuration error.
+
 .SH SEE ALSO
-\fBstagechng\fP(3), \fBstage_struct\fP(3)
+\fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 

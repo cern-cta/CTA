@@ -1,55 +1,13 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.14 $ $Date: 2002/09/17 12:24:20 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" $Id: stageclr.man,v 1.15 2002/10/03 14:03:56 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2002/09/17 12:24:20 $"
+.TH STAGECLR "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
-.B stageclr
-[
-.BI \-c
-] [
-.BI \-F
-] [
-.BI \-h " host"
-] [
-.BI \-l " label_type"
-] [
-.BI \-m " minfree"
-] [
-.BI \-p " pool"
-] [
-.BI \-q " file_sequence_number"
-] [
-.BI \-\-reqid " reqid"
-] [
-.BI \-Q " file_sequence_range"
-] [
-.BI \-\-nodisk
-]
-.BI \-V " visual_identifier(s)"
-.\" ] [
-.\" .BI \-\-side " sidenumber"
-.br
-.B stageclr
-[
-.BI \-c
-] [
-.BI \-F
-] [
-.BI \-h " host"
-] [
-.BI \-m " minfree"
-] [
-.BI \-p " pool"
-] [
-.BI \-\-nodisk
-] [
-.BI \-\-reqid " reqid"
-]
-.BI \-I " external_filename"
-.br
 .B stageclr
 [
 .BI \-c
@@ -69,7 +27,7 @@ stageclr \- remove staged files
 .BI \-\-reqid " reqid"
 ]
 .BI \-M " hsmfile"
-.br
+.P
 .B stageclr
 [
 .BI \-c
@@ -85,7 +43,7 @@ stageclr \- remove staged files
 .BI \-\-reqid " reqid"
 ]
 .BI \-P " pathname"
-.br
+.P
 .B stageclr
 [
 .BI \-c
@@ -101,7 +59,7 @@ stageclr \- remove staged files
 .BI \-\-reqid " reqid"
 ]
 .BI \-i
-.br
+.P
 .B stageclr
 [
 .BI \-h " host"
@@ -132,11 +90,6 @@ Forces request to be deleted - admin user only except when used with with \-M op
 Sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
-.TP
-.BI \-I " external_filename"
-clears in the catalog the entry corresponding to this external disk file and
-remove the staged file from the pool.
-.TP
 .BI \-i
 the list of pathnames to be removed is read from
 .IR stdin .
@@ -148,15 +101,6 @@ to the first failure.
 .BI \-L " link_name"
 gives the pathname of the user link to be removed. The data file is not
 removed.
-.TP
-.BI \-l " label_type"
-Label type:
-.BR al ,
-.BR nl ,
-.BR sl ,
-.B blp
-or
-.BR aul .
 .TP
 .BI \-M " hsmfile"
 clears in the stager catalog the entry corresponding to this HSM file and
@@ -181,17 +125,6 @@ either full internal name or user link name.
 .BI \-p " poolname"
 restricts the action to a given pool.
 .TP
-.BI \-q " file_sequence_number(s)"
-restricts the action to tape files having this given sequence number.
-The option value is considered as a single file sequence (case of concatenation).
-It is exclusive with \-Q option.
-.TP
-.BI \-Q " file_sequence_range"
-restricts the action to tape files having the sequence numbers within the given range.
-Multiple file numbers may be separated by commas or specified as a range
-using the dash as separator.
-It is exclusive with \-q option.
-.TP
 .BI \-\-nodisk
 Prevent stager daemon to do disk access. The entry is removed from the catalog, but stager do not attempt to remove it physically. Thus space knowledge of the corresponding filesystem is unchanged.
 .TP
@@ -200,15 +133,12 @@ to remove the file from the Hierarchical Storage Management System as well.
 .TP
 .BI \-\-reqid " reqid"
 to remove only entry that has this explicit request ID.
-.TP
-.BI \-V " vid(s)"
-restricts the search to files corresponding to given vids.
-Multiple vids will be separated by colons.
 .\" .TP
 .\" .B \-\-side "sidenumber"
 .\" Tells which side of the device you refer to (applies to multi-side medias files yet in the disk pool, like DVD). Only when used with
 .\" .B \-V
 .\" option.
+
 .SH RETURN CODES
 \
 .br
@@ -219,5 +149,9 @@ Multiple vids will be separated by colons.
 2	System error.
 .br
 4	Configuration error.
+
+.SH SEE ALSO
+\fBstage_other_options\fP(1)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
