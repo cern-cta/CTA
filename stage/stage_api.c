@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.8 2001/02/02 08:56:52 jdurand Exp $
+ * $Id: stage_api.c,v 1.9 2001/02/04 23:07:07 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -206,7 +206,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     if (enospc_retry < 0) {
       /* Invalid value */
       enospc_retry = MAXRETRY;
-      stage_errmsg(func, "ENOSPC_RETRY value set to %d\n", enospc_retry);
+      /* stage_errmsg(func, "ENOSPC_RETRY value set to %d\n", enospc_retry); */
     }
     /* Grab the ENOSPC_RETRYINT configuration */
     if (((p = getenv("STAGE_ENOSPC_RETRYINT")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRYINT")) != NULL)) {
@@ -215,7 +215,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     if (enospc_retryint < 0) {
       /* Invalid value */
       enospc_retryint = RETRYI;
-      stage_errmsg(func, "ENOSPC_RETRYINT value set to %d\n", enospc_retryint);
+      /* stage_errmsg(func, "ENOSPC_RETRYINT value set to %d\n", enospc_retryint); */
     }
     break;
   case STAGE_WRT:                       /* - stagewrt */
