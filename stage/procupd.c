@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.25 2000/09/27 15:34:45 jdurand Exp $
+ * $Id: procupd.c,v 1.26 2000/09/27 17:53:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.25 $ $Date: 2000/09/27 15:34:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.26 $ $Date: 2000/09/27 17:53:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -265,15 +265,20 @@ procupdreq(req_data, clienthost)
 #ifdef STAGER_DEBUG
     sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
-	if (rc == 0 && wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+	if (rc == 0 && wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
 		struct stgcat_entry *stcp_ok;
 		int save_nextreqid;
 		struct waitf *wfp_ok;
 
-        /* ==> Recall that "i" is the index of the found wf... <== */
+		/* ==> Recall that "i" is the index of the found wf... <== */
 
 		/* If this is a tape file copy callback from concat_off and for the last entry */
-		/* we prepare the next round */
+		/* and IF this last entry has a trailing, we prepare the next round */
+
+		/* Note that is is possible that the last does not have a trailing because this */
+		/* request was, for example, waiting on another one that failed because fseq did */
+		/* not exist. In such a case the entry with the trailing '-' is removed from the */
+		/* waitf of this waitq. */
 
 		/* We are extending the number of files in this waiting member of the waitq */
 
@@ -318,18 +323,19 @@ procupdreq(req_data, clienthost)
 
 		/* deferred allocation */
 		if (stcp->ipath[0] == '\0') {
+			int has_trailing = 0;
 			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
 				/* We remove the trailing '-' */
-				if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] != '-') {
-					sendrep (rpfd, MSG_ERR, "STG02 - Internal error : Did not found expected character '-' for tppos callback of fseq %s\n",stcp->u1.t.fseq);
-					c = SYERR;
-					goto reply;
-				} else {
+				/* It can happen that the tppos on the first file is for a waitf */
+				/* that does not have a trailing when the request is splitted because */
+				/* of previous one(s) on the same VID */
+				if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
+					has_trailing = 1;
 					stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
 				}
 			}
 			c = build_ipath (NULL, stcp, wqp->pool_user);
-			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
+			if (has_trailing != 0) {
 				/* We restore the trailing '-' */
 				strcat(stcp->u1.t.fseq,"-");
 			}
@@ -401,7 +407,7 @@ procupdreq(req_data, clienthost)
 	if (rc == 211) {	/* no more file on tape */
 		/* flag previous file as last file on tape */
 		cur = stcp;
-		sprintf (prevfseq, "%d", atoi (stcp->u1.t.fseq) - 1);
+		sprintf (prevfseq, "%d", atoi(stcp->u1.t.fseq) - 1);
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (stcp->t_or_d != 't') continue;

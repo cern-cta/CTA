@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.61 2000/09/27 15:33:49 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.62 2000/09/27 17:53:55 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.61 $ $Date: 2000/09/27 15:33:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.62 $ $Date: 2000/09/27 17:53:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1137,6 +1137,7 @@ check_waiting_on_req(subreqid, state)
 					}
 					stcp->status &= 0xF;
 					if (! wqp->Aflag) {
+                      /* Note that "-c off" request always have a Aflag */
 						if ((c = build_ipath (wfp->upath, stcp,
 																	wqp->pool_user)) < 0) {
 							stcp->status |= WAITING_SPC;
@@ -1164,9 +1165,25 @@ check_waiting_on_req(subreqid, state)
 						}
 #endif
 					}
-					wqp->nb_waiting_on_req--;
-					wfp->waiting_on_req = -1;
-					firstreqid = wfp->subreqid;
+					if (wqp->concat_off_fseq > 0) {
+						/* If this waiting request is a "-c off" */
+						/* one then it does not have to stop  */
+						/* Instead we remove the dependency to */
+						/* the stagein on this fseq that failed */
+						delreq (stcp,0);
+						wqp->nb_waiting_on_req--;
+						wqp->nb_subreqs--;
+						wqp->nbdskf--;
+						for ( ; i < wqp->nb_subreqs; i++, wfp++) {
+							wfp->subreqid = (wfp+1)->subreqid;
+							wfp->waiting_on_req = (wfp+1)->waiting_on_req;
+							strcpy (wfp->upath, (wfp+1)->upath);
+						}
+					} else {
+						wqp->nb_waiting_on_req--;
+						wfp->waiting_on_req = -1;
+						firstreqid = wfp->subreqid;
+					}
 				} else {
 					wfp->waiting_on_req = firstreqid;
 				}
@@ -1178,16 +1195,16 @@ check_waiting_on_req(subreqid, state)
 	rpfd = saverpfd;
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
-      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
-        for (stcp = stcs; stcp < stce; stcp++) {
-          if (wfp->subreqid == stcp->reqid) {
-            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
-            break;
-          }
-        }
-      }
-    }
+		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : Waitq->wf : \n");
+		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wfp->subreqid == stcp->reqid) {
+					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					break;
+				}
+			}
+		}
+	}
 #endif
 	return (found);
 }
@@ -1301,16 +1318,16 @@ void checkwaitq()
 	}
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-      sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : Waitq->wf : \n");
-      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
-        for (stcp = stcs; stcp < stce; stcp++) {
-          if (wfp->subreqid == stcp->reqid) {
-            sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
-            break;
-          }
-        }
-      }
-    }
+		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : Waitq->wf : \n");
+		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wfp->subreqid == stcp->reqid) {
+					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					break;
+				}
+			}
+		}
+	}
 #endif
 }
 
