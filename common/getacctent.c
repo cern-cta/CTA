@@ -1,6 +1,9 @@
 /*
- * $Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp $
+ * $Id: getacctent.c,v 1.4 1999/07/22 12:32:36 obarring Exp $
  * $Log: getacctent.c,v $
+ * Revision 1.4  1999/07/22 12:32:36  obarring
+ * Remove the _r.
+ *
  * Revision 1.3  1999/07/21 16:58:07  jdurand
  * *** empty log message ***
  *
@@ -15,7 +18,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp $";
+static char sccsid[] = "$Id: getacctent.c,v 1.4 1999/07/22 12:32:36 obarring Exp $";
 #endif /* not lint */
 
 
@@ -30,9 +33,9 @@ static char sccsid[] = "$Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp 
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POXIS release
  */
-#if defined(_REENTRANT)
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif
+#endif /* _REENTRANT || _THREAD_SAFE */
 #endif /* !_WIN32 */
 
 
@@ -40,7 +43,7 @@ static char sccsid[] = "$Id: getacctent.c,v 1.3 1999/07/21 16:58:07 jdurand Exp 
 
 extern char *ypgetacctent();
 
-char    *getacctent_r(pwd, acct, buf, buflen)
+char    *getacctent(pwd, acct, buf, buflen)
     struct passwd   *pwd;       /* Pointer to the password entry */
     char        *acct;      /* optional non-default acct     */
     char        *buf;
@@ -52,7 +55,9 @@ char    *getacctent_r(pwd, acct, buf, buflen)
         FILE      *fp = NULL; /* Pointer to /etc/account file  */
         char acct_file[256];
         char *p;
+#if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
         char *last = NULL;
+#endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
 
         if (pwd == (struct passwd *)NULL) return(NULL);
 
