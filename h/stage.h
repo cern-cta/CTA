@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.3 1999/12/09 13:46:24 jdurand Exp $
+ * $Id: stage.h,v 1.4 1999/12/16 12:38:38 jdurand Exp $
  */
 
 /*
@@ -13,6 +13,13 @@
 #define __stage_h
 
 #include <osdep.h>
+
+/* ==================== */
+/* Malloc Debug Library */
+/* ==================== */
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
