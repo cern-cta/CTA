@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.146 2001/06/06 16:40:09 jdurand Exp $
+ * $Id: stager.c,v 1.147 2001/06/07 08:23:06 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.146 $ $Date: 2001/06/06 16:40:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.147 $ $Date: 2001/06/07 08:23:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3370,7 +3370,7 @@ int stager_hsm_callback(tapereq,filereq)
 	if ((stager_client_callback_i < 0) || (stager_client_callback_i > iend) || (stager_client_true_i >= nbcat_ent) || (stager_client_true_i < 0)) {
 		serrno = SEINTERNAL;
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",strerror(errno));
+		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",sstrerror(serrno));
 		RESTORE_EID;
 		fatal_callback_error = callback_error = 1;
 		return(-1);
@@ -3842,6 +3842,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 06 June, 2001 at 18:37:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 07 June, 2001 at 10:22:32 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
