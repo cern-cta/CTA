@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.9 2001/06/08 15:06:05 jdurand Exp $
+ * $Id: stage_put.c,v 1.10 2001/06/08 15:12:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.9 $ $Date: 2001/06/08 15:06:05 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.10 $ $Date: 2001/06/08 15:12:21 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,36 +45,36 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	char *q, *q2;
 	int nargs;
 	char *sendbuf = NULL;
-    size_t sendbuf_size = 0;
+	size_t sendbuf_size = 0;
 	int msglen;
 	int c;
 	int ntries = 0;
-    char *stghost_ok = NULL;
-    int pid;
+	char *stghost_ok = NULL;
+	int pid;
 	char repbuf[CA_MAXPATHLEN+1];
-    stage_hsm_t *hsm;
-    char *command = "stage_put_hsm";
+	stage_hsm_t *hsm;
+	char *command = "stage_put_hsm";
 
 	euid = geteuid();
 	egid = getegid();
 #if defined(_WIN32)
 	if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
-      serrno = SENOMAPFND;
-      return (-1);
+		serrno = SENOMAPFND;
+		return (-1);
 	}
 #endif
     
-    if (hsmstruct == NULL) {
-      serrno = EFAULT;
-      return (-1);
-    }
+	if (hsmstruct == NULL) {
+		serrno = EFAULT;
+		return (-1);
+	}
 
-    /* Makes sure stghost is valid if any */
-    if (stghost != NULL) {
-      if (stghost[0] != '\0') {
-        stghost_ok = stghost;
-      }
-    }
+	/* Makes sure stghost is valid if any */
+	if (stghost != NULL) {
+		if (stghost[0] != '\0') {
+			stghost_ok = stghost;
+		}
+	}
 
 	if ((pw = Cgetpwuid (euid)) == NULL) {
 		serrno = SEUSERUNKN;
@@ -91,7 +91,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	sendbuf_size += WORDSIZE;                      /* Narg */
 	sendbuf_size += strlen(command) + 1;           /* Command */
 	if (migratorflag != 0) {
-      sendbuf_size += strlen("-m") + 1;            /* Migrator flag */
+		sendbuf_size += strlen("-m") + 1;            /* Migrator flag */
 	}
 	hsm = hsmstruct;
 	while (hsm != NULL) {
@@ -132,16 +132,16 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	marshall_STRING (sbp, command);
 
 	if (migratorflag != 0) {
-      marshall_STRING (sbp,"-m");
-      nargs += 1;
+		marshall_STRING (sbp,"-m");
+		nargs += 1;
 	}
 
-    hsm = hsmstruct;
-    while (hsm != NULL) {
-      marshall_STRING (sbp,"-M");
-      marshall_STRING (sbp, hsm->xfile);
-      nargs += 2;
-      hsm = hsm->next;
+	hsm = hsmstruct;
+	while (hsm != NULL) {
+		marshall_STRING (sbp,"-M");
+		marshall_STRING (sbp, hsm->xfile);
+		nargs += 2;
+		hsm = hsm->next;
 	}
 
 	marshall_WORD (q2, nargs);	/* update nargs */
