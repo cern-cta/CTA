@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.36 2000/09/01 13:17:27 jdurand Exp $
+ * $Id: procio.c,v 1.37 2000/09/02 06:26:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.36 $ $Date: 2000/09/01 13:17:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.37 $ $Date: 2000/09/02 06:26:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -951,10 +951,19 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			if (stgreq.t_or_d == 'h') {
 				if (rfio_stat (upath, &st) == 0) {
-		            /* We set the size in the name server */
+					u_signed64 correct_size;
+
+					correct_size = (u_signed64) st.st_size;
+					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+						/* If use specified a maxsize of bytes to transfer and if this */
+						/* maxsize is lower than physical file size, then the size of */
+						/* of the migrated file will be the minimum of the twos */
+						correct_size = (u_signed64) (stgreq.size * ONE_MB);
+					}
+					/* We set the size in the name server */
 					setegid(stgreq.gid);
 					seteuid(stgreq.uid);
-					if (Cns_setfsize(NULL,&(hsmfileids[ihsmfiles]),(u_signed64) st.st_size) != 0) {
+					if (Cns_setfsize(NULL,&(hsmfileids[ihsmfiles]),correct_size) != 0) {
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
 							"Cns_setfsize", sstrerror(serrno));
 						setegid(0);
