@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Date: 2005/02/09 17:05:36 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Date: 2005/02/22 17:02:51 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -139,9 +139,9 @@ STAGELIBTARGET=LibraryTargetName(stager)
 #endif
 
 #if BuildStageClient
-PROGS_STAGERCLIENT=ProgramTargetName(stagein)
-IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stagein)) 
-EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stagein) 
+PROGS_STAGERCLIENT=ProgramTargetName(stagein) ProgramTargetName(stageqry)
+IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stagein)) FileName($(BIN),ProgramTargetName(stageqry))
+EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stagein) FileName($(EXPORTBIN),stageqry)
 #endif
 
 
@@ -154,6 +154,7 @@ NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIB
 #if BuildStageClient
 STAGEIN_OBJS=stagein.Osuf
 NormalProgramTarget(stagein,$(STAGEIN_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stageqry,stageqry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 #endif
 
 MakeDepLibrary(lib,shift)
@@ -170,8 +171,10 @@ install: $(BIN) $(IPROGS_STAGER) $(IPROGS_STAGERCLIENT) $(SPOOL)
 
 InstallProgram(stager,$(BIN),root,bin,0750)
 InstallProgram(stageradmin,$(BIN),root,bin,0750)
+#if BuildStageClient
 InstallProgram(stagein,$(BIN),root,bin,0755)
-
+InstallProgram(stageqry,$(BIN),root,bin,0755)
+#endif
 install.man: $(MANDIR) $(MANPAGES_STAGER)
 
 IMANPAGE(stager,$(MANDIR),$(MANSUFFIX))
@@ -181,8 +184,10 @@ export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 
 IEXPORT(stager,$(EXPORTBIN),755)
 IEXPORT(stageradmin,$(EXPORTBIN),755)
+#if BuildStageClient
 IEXPORT(stagein,$(EXPORTBIN),755)
-
+IEXPORT(stageqry,$(EXPORTBIN),755)
+#endif
 exportman: $(EMANPAGES_STAGER)
 
 EMANPAGE(stager,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
