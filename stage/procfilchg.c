@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.13 2001/09/25 07:53:02 jdurand Exp $
+ * $Id: procfilchg.c,v 1.14 2001/09/30 06:31:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.13 $ $Date: 2001/09/25 07:53:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.14 $ $Date: 2001/09/30 06:31:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -376,11 +376,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (donestatus) { /* --status */
 				u_signed64 actual_size_block;
 				struct stat st;
+				int save_stcp_status;
 
 				switch (thisstatus) {
 				case STAGEOUT|CAN_BE_MIGR:
-					/* Will work only if this stcp is in STAGEOUT|CAN_BE_MIGR|PUT_FAILED */
+					/* Will work only if this stcp is in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED */
 					switch (stcp->status) {
+					case STAGEOUT|PUT_FAILED:
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 						/* We simulate a stageout followed by a stageupdc */
 						if (rfio_stat (stcp->ipath, &st) == 0) {
@@ -393,6 +395,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							/* No block information - assume mismatch with actual_size will be acceptable */
 							actual_size_block = stcp->actual_size;
 						}
+						save_stcp_status = stcp->status;
 						stcp->status = STAGEOUT;
 						updfreespace (
 										stcp->poolname,
@@ -402,6 +405,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
 							if (c != CLEARED) {
+								stcp->status = save_stcp_status;
+#ifdef USECDB
+								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+									stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								}
+#endif
+								savereqs();
 								goto reply;
 							} else {
 								/* This is not formally an error to do an updc on a zero-length file */
@@ -413,7 +423,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						}
 						break;
 					default:
-						sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED status");
+						sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED status");
 						c = USERR;
 						goto reply;			
 					}
