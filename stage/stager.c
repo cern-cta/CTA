@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.148 2001/06/07 09:09:13 jdurand Exp $
+ * $Id: stager.c,v 1.149 2001/06/07 13:32:34 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.148 $ $Date: 2001/06/07 09:09:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.149 $ $Date: 2001/06/07 13:32:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -78,7 +78,7 @@ void cleanup _PROTO(());
 void stagekilled _PROTO(());
 int build_rtcpcreq _PROTO((int *, tape_list_t ***, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *));
 char *hsmpath _PROTO((struct stgcat_entry *));
-int hsmidx_vs_ipath _PROTO((char *, int));
+int hsmidx_vs_ipath _PROTO((char *));
 int hsmidx _PROTO((struct stgcat_entry *));
 void free_rtcpcreq _PROTO((tape_list_t ***));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **));
@@ -137,6 +137,7 @@ blockid_t nullblockid = { '\0', '\0', '\0', '\0' };
 blockid_t *hsm_blockid = NULL;      /* Current file sequence on current tape (vid) */
 int *hsm_flag = NULL;               /* Flag saying to hsmidx() not to consider this entry while scanning */
 int *hsm_ignore = NULL;             /* Flag saying to completely ignore this entry - use for migration stagewrt */
+int *hsm_map = NULL;                /* Map File Disk No <-> Index in [stcs,stce-1] */
 char **hsm_vid = NULL;              /* Current vid pointer or NULL if not in current rtcpc request */
 char cns_error_buffer[512];         /* Cns error buffer */
 char vmgr_error_buffer[512];        /* Vmgr error buffer */
@@ -287,6 +288,7 @@ int save_euid, save_egid;
       (hsm_blockid = (blockid_t *) calloc(nbcat_ent,sizeof(blockid_t)))            == NULL ||              \
       (hsm_flag = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_ignore = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
+      (hsm_map = (int *) calloc(nbcat_ent,sizeof(int)))                            == NULL ||              \
       (hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
       (hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {              \
     SAVE_EID;                                    \
@@ -315,6 +317,7 @@ int save_euid, save_egid;
   if (hsm_blockid != NULL) free(hsm_blockid);                                \
   if (hsm_flag != NULL) free(hsm_flag);                                      \
   if (hsm_ignore != NULL) free(hsm_ignore);                                  \
+  if (hsm_map != NULL) free(hsm_map);                                        \
   if (hsm_status != NULL) free(hsm_status);                                  \
   if (hsm_vid != NULL) free(hsm_vid);                                        \
 }
@@ -842,9 +845,8 @@ int getnamespace(namespace,path)
 
 /* This routine will return the index in the nbcat_ent entries of an HSM file       */
 /* given its internal path */
-int hsmidx_vs_ipath(ipath,use_flags)
+int hsmidx_vs_ipath(ipath)
      char *ipath;
-     int use_flags;
 {
 	struct stgcat_entry *stcx;
 	int i;
@@ -877,12 +879,10 @@ int hsmidx_vs_ipath(ipath,use_flags)
 		path1[0] = '\0';
 	}
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
-		if (use_flags) {
-			/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
-			/* if hsm_ignore[] != 0 this mean we have to ignore it */
-			/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
-			if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
-		}
+		/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
+		/* if hsm_ignore[] != 0 this mean we have to ignore it */
+		/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
+		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
 		strcpy(save_ipath,stcx->ipath);
 		(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
 		if (host != NULL) {
@@ -2493,6 +2493,14 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 		}
 	}
 	
+	/* We initialize the mapping */
+	if (hsm_map != NULL) {
+		/* This is for sure an HSM request and hsm_map[] has already been malloced */
+		for (i = 0; i < nbcat_ent; i++) {
+			hsm_map[i] = -1;
+		}
+	}
+
 	/* We makes sure it is a circular list and correctly initialized */
 	for (i = 0; i < *nrtcpcreqs_in; i++) {
 		switch (i) {
@@ -2949,7 +2957,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				RESTORE_EID;
 				return(-1);
 			}
-			if ((ihsm = hsmidx_vs_ipath(stcp->ipath,1)) < 0) {
+			if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
 				if ((ihsm = hsmidx(stcp)) < 0) {
 					serrno = SEINTERNAL;
 					SAVE_EID;
@@ -3070,6 +3078,10 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.file_path, stcp->ipath);
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.disk_fseq = nfile_list;
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.recfm, "F");
+
+            /* We keep in memory the mapping diskfseq <-> ihsm */
+            hsm_map[nfile_list-1] = ihsm;
+
             /*
              * For HSM files - if the file is renamed, then the check on fid will NOT work.
              * We set fid on write, but not on read, to prevent recall failure on renamed files.
@@ -3365,17 +3377,23 @@ int stager_hsm_callback(tapereq,filereq)
 	stager_hsm_or_tape_log_callback(tapereq,filereq);
 
 	stager_client_callback_i = filereq->disk_fseq - 1;
-	stager_client_true_i = stager_client_callback_i + istart;
-	if ((stager_client_true_i = hsmidx_vs_ipath(filereq->file_path,1)) < 0) {
-		if ((stager_client_true_i = hsmidx(&stcp_start[stager_client_callback_i])) < 0) {
-			stager_client_true_i = hsmidx_vs_ipath(filereq->file_path,0);
-		}
+
+	if ((stager_client_callback_i < 0) || (stager_client_callback_i >= nbcat_ent)) {
+		/* This cannot be in HSM mode */
+		serrno = SEINTERNAL;
+		SAVE_EID;
+		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback [(stager_client_callback_i < 0) || (stager_client_callback_i >= nbcat_ent)]",sstrerror(serrno));
+		RESTORE_EID;
+		fatal_callback_error = callback_error = 1;
+		return(-1);
 	}
+
+	stager_client_true_i = hsm_map[stager_client_callback_i];
 
 	if ((stager_client_callback_i < 0) || (stager_client_callback_i > iend) || (stager_client_true_i >= nbcat_ent) || (stager_client_true_i < 0)) {
 		serrno = SEINTERNAL;
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",sstrerror(serrno));
+		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback [(stager_client_callback_i < 0) || (stager_client_callback_i > iend) || (stager_client_true_i >= nbcat_ent) || (stager_client_true_i < 0)]",sstrerror(serrno));
 		RESTORE_EID;
 		fatal_callback_error = callback_error = 1;
 		return(-1);
@@ -3847,6 +3865,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 07 June, 2001 at 11:06:46 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 07 June, 2001 at 15:30:39 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
