@@ -21,4 +21,6 @@
 #define RTCPCLD_CATPOLL_TIMEOUT (30)   /* Timeout between two polls on the catalogue */
 #define RTCPCLD_VDQMPOLL_TIMEOUT (600) /* Timeout between two polls on a VDQM request */
 #define RTCPCLD_VIDWORKER_CMD "VidWorker"
+
+#define RTCPCLD_NOTIFYTIMEOUT (30)
 #endif /* RTCPCLD_CONSTANTS_H */
