@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.18 2002/04/23 12:02:35 jdurand Exp $
+ * $Id: buildupath.c,v 1.19 2002/04/30 12:24:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.18 $ $Date: 2002/04/23 12:02:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.19 $ $Date: 2002/04/30 12:24:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.18 $ $Date: 
 #include "stage_messages.h"
 #include "Cglobals.h"
 #include "serrno.h"
+#include "stage_api.h"
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -43,8 +44,6 @@ static int initialized = 0;
 static char nfsroot[MAXPATH];
 */
 
-int  DLL_DECL  build_linkname _PROTO((char *, char *, size_t, int));
-int  DLL_DECL  build_Upath _PROTO((int, char *, size_t, int));
 static int init_cwd_hostname _PROTO(());
 static int resolvelinks _PROTO((char *, char *, int, int));
 
