@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.86 2001/11/30 12:01:16 jdurand Exp $
+ * $Id: procupd.c,v 1.87 2001/12/05 10:07:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.86 $ $Date: 2001/11/30 12:01:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.87 $ $Date: 2001/12/05 10:07:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1489,7 +1489,3 @@ void update_hsm_a_time(stcp)
 		break;
 	}
 }
-
-/*
- * Last Update: "Wednesday 14 November, 2001 at 18:14:13 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
- */
