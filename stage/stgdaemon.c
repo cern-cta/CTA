@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.38 2000/05/23 12:32:32 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.39 2000/05/25 14:00:34 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.38 $ $Date: 2000/05/23 12:32:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.39 $ $Date: 2000/05/25 14:00:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -511,6 +511,9 @@ main(argc,argv)
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
 							(int)stcp->actual_size - stcp->size*1024*1024);
+				} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					/* This is a file for automatic migration */
+					update_migpool(stcp,1);
 				}
 			}
 			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
