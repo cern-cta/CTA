@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.26 2002/05/31 08:09:22 jdurand Exp $
+ * $Id: sendrep.c,v 1.27 2002/08/27 08:44:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.26 $ $Date: 2002/05/31 08:09:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.27 $ $Date: 2002/08/27 08:44:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,16 +59,16 @@ int sendrep(va_alist) va_dcl
 	int req_type;
 	char repbuf[REPBUFSZ];
 	int repsize;
-	int rpfd;
+	int *rpfd;
 	static char savebuf[256];
 	static int saveflag = 0;
 	u_signed64 uniqueid;
 	int magic_client;
 
 	va_start (args);
-	rpfd = va_arg (args, int);
+	rpfd = va_arg (args, int *);
 
-	if (rpfd > 0) {
+	if (*rpfd > 0) {
 		func = func_sendrep;
 	} else {
 		func = func_stgdaemon;
@@ -199,22 +199,34 @@ int sendrep(va_alist) va_dcl
 	default:
 		va_end (args);
 		stglogit (func, "STG02 - unknown rep_type (%d)\n", rep_type);
-		if (rpfd >= 0) close (rpfd);
+		if (*rpfd >= 0) netclose (*rpfd);
+		*rpfd = -1;
 		return (-1);
 	}
  sndmsg:
 	va_end (args);
 	repsize = rbp - (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
-	if (rpfd >= 0) {
-      /* At the startup, rpfd is < 0 */
-		if (netwrite_timeout (rpfd, (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf)), repsize, STGTIMEOUT) != repsize) {
-			stglogit (func, STG02, "", "write", sys_errlist[errno]);
-			if (rep_type == STAGERC)
-				close (rpfd);
+	if (*rpfd >= 0) {
+      /* At the startup, *rpfd is < 0 */
+		errno = serrno = 0;
+		if (netwrite_timeout (*rpfd, (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf)), repsize, STGTIMEOUT) != repsize) {
+			stglogit (func, STG02, "", "write", errno ? strerror(errno) : sstrerror(serrno));
+			if ((errno == EPIPE) ||
+				(errno == ECONNRESET) ||
+				(errno == ECHILD) ||
+				(errno == ENOENT) ||
+				(errno == ENOTCONN) ||
+				(errno == EBADF) ||
+				(errno == EACCES)) {
+				stglogit (func, STG02, "", "write", "Closing connection");
+				netclose (*rpfd);
+				*rpfd = -1;
+			}
 			return (-1);
+		} else if (rep_type == STAGERC) {
+			netclose (*rpfd);
+			*rpfd = -1;
 		}
-		if (rep_type == STAGERC)
-			close (rpfd);
 	}
 	return (0);
 }
