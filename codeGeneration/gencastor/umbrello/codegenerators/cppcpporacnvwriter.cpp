@@ -1935,7 +1935,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl << getIndent()
             << "m_insertStatement->registerOutParam("
             << n
-            << ", oracle::occi::OCCIINT);" << endl;
+            << ", oracle::occi::OCCIDOUBLE);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   if (isRequest()) {

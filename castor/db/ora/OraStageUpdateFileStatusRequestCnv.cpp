@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/12/15 15:04:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/15 15:48:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -498,7 +498,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::createRep(castor::IAdd
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(13, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(13, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);

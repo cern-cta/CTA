@@ -498,7 +498,7 @@ void castor::db::ora::OraStagePrepareToGetRequestCnv::createRep(castor::IAddress
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(13, oracle::occi::OCCIINT);
+      m_insertStatement->registerOutParam(13, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
