@@ -4,7 +4,7 @@
  */
 
 /*
- * %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.2 $ $Date: 1999/09/20 12:45:55 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -51,7 +51,7 @@ struct rsv_status {		/* resource reservation status reply entry */
 			/* function prototypes */
 
 #if defined(__STDC__)
-extern int Ctape_config(char *, int, char *);
+extern int Ctape_config(char *, int, int);
 extern int Ctape_info(char *, int *, unsigned int *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
