@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.4 2000/05/26 08:38:13 jdurand Exp $
+ * $Id: stage_updc.c,v 1.5 2000/05/26 12:42:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.4 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.5 $ $Date: 2000/05/26 12:42:41 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -585,6 +585,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
       return (-1);
     }
     sendbuf_size += strlen(hsm->upath) + 1;        /* user path */
+    hsm = hsm->next;
   }
 
   /* Allocate memory */
