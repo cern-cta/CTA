@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.13 $ $Date: 2000/01/19 12:02:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.14 $ $Date: 2000/01/19 18:15:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -995,6 +995,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Clean up allocated resources and return
      */
+    rtcpd_CleanUpDiskIO(thPoolId);
     rtcpd_FreeResources(&client_socket,&client,&tape);
 
     return(0);

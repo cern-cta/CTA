@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.23 $ $Date: 2000/01/19 18:05:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.24 $ $Date: 2000/01/19 18:15:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -69,6 +69,8 @@ typedef struct thread_arg {
     tape_list_t *tape;
     file_list_t *file;
 } thread_arg_t;
+
+thread_arg_t *thargs = NULL;
 
 extern int Debug;
 
@@ -1295,6 +1297,11 @@ int rtcpd_InitDiskIO(int *poolsize) {
 }
 
 int rtcpd_CleanUpDiskIO(int poolID) {
+    if ( thargs != NULL ) free(thargs);
+    return(0);
+}
+
+int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                       tape_list_t *tape,
                       file_list_t *file,
                       int poolID, int poolsize) {
@@ -1306,7 +1313,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
-    thread_arg_t *thargs,*tharg;
+    int rc, save_serrno, indxp, offset, last_file,end_of_tpfile, spill;
     int rc, indxp, offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, next_bufsz, thIndex;
     register int convert;
@@ -1368,7 +1375,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
                         sstrerror(serrno));
                     rtcpd_SetProcError(RTCP_FAILED);
-                    free(thargs);
                 }
                 /*
 
@@ -1378,7 +1384,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                 if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
                     rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
                     proc_cntl.diskIOfinished = 1;
-                    free(thargs);
                     return(0);
                 }
             }
@@ -1407,7 +1412,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                             sstrerror(serrno));
                         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                         rtcpd_SetProcError(RTCP_FAILED);
-                        free(thargs);
                         return(-1);
                     }
                     /*
@@ -1417,7 +1421,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                     if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
                         rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
                         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-                        free(thargs);
                         /* It's not our error */
                         return(0);
                     }
@@ -1467,7 +1470,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                         RTCP_FAILED | RTCP_RESELECT_SERV);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
                         sstrerror(serrno));
-                    free(thargs);
                     return(-1);
                 }
             /* 
@@ -1555,7 +1557,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                         RTCP_FAILED | RTCP_RESELECT_SERV);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                         sstrerror(serrno));
-                    free(thargs);
                     return(-1);
                 }
                 tharg = &thargs[thIndex];
@@ -1570,7 +1571,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcp_ConnectToClient(%s,%d): %s\n",
                         client->clienthost,client->clientport,sstrerror(serrno));
-                    free(thargs);
                     return(-1);
                 }
 
@@ -1597,7 +1597,6 @@ int rtcpd_CleanUpDiskIO(int poolID) {
             } /* if ( ... ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
     } CLIST_ITERATE_END(tape,nexttape);
-    free(thargs);
     return(0);
 }
 
