@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.17 2000/05/08 10:02:58 jdurand Exp $
+ * $Id: stage.h,v 1.18 2000/05/12 15:49:32 jdurand Exp $
  */
 
 /*
@@ -92,9 +92,9 @@
 #define	KILLED		0x40	/* stage killed */
 #define	STG_FAILED	0x50	/* stage failed */
 #define	PUT_FAILED	0x60	/* stageput failed */
-#define	CAN_BE_MIGR	0x70	/* file can be migrated */
 #define	STAGED_LSZ	0x100	/* stage limited by size */
 #define	STAGED_TPE	0x200	/* blocks with parity error have been skipped */
+#define	CAN_BE_MIGR	0x400	/* file can be migrated */
 #define	LAST_TPFILE	0x1000	/* last file on this tape */
 
 			/* stage daemon messages */
