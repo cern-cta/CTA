@@ -109,24 +109,24 @@ NTSERVICEO=service.obj
 #endif
 FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
 #if defined(__alpha) && defined(__osf__)
-LDLIBS = -no_so -L../lib -lshift -so_archive
+LDLIBS = -no_so -L../shlib -lshift -so_archive
 #else
 #if linux
 LDLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl $(MTLDLIBS)
 #else
 #if SOLARIS
-LDLIBS = -L../lib -lshift -lsocket -lnsl
+LDLIBS = -L../shlib -lshift -lsocket -lnsl
 #else
 #if sgi
-LDLIBS =  -L../lib -lshift $(MTLDLIBS)
+LDLIBS =  -L../shlib -lshift $(MTLDLIBS)
 #else
 #if __Lynx__
 LDLIBS = -L../lib -lshift -lnsl -lbsd
 #else
 #if _WIN32
-LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib mpr.lib
+LDLIBS = ..\shlib\shift.lib ws2_32.lib advapi32.lib mpr.lib
 #else
-LDLIBS = -L../lib -lshift $(MTLDLIBS)
+LDLIBS = -L../shlib -lshift $(MTLDLIBS)
 #endif
 #endif
 #endif
@@ -323,7 +323,7 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		xyread.Osuf xywrite.Osuf \
 		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
-		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf
+		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
 
 all:    $(CLIENT) $(SERVER) $(DUMPLOG)
 
@@ -348,11 +348,11 @@ $(ERFIODSCRIPT): rfiod.scripts
 NormalLibraryTarget(rfio,$(RFIOLIB_OBJS))
 
 #if BuildHpssServer
-NormalProgramTarget(rfiod,$(SRVOBJS),DepLibraryTargetName(lib,shift) \
+NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift) \
  DepLibraryTargetName(hpss,rfio_hpss), \
  $(LDLIBS) $(HPSSLIBS))
 #else
-NormalProgramTarget(rfiod,$(SRVOBJS),DepLibraryTargetName(lib,shift), \
+NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
  $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS))
 #endif
 
@@ -372,34 +372,34 @@ NormalProgramTarget(dump_log,dump_log.Osuf,DepLibraryTargetName(common,common), 
  $(LDLIBS))
 
 NormalProgramTarget(rfcat,rfcat.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 NormalProgramTarget(rfchmod,rfchmod.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 #if BuildHpssClient
 NormalProgramTarget(rfcp,rfcp.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift) DepLibraryTargetName(hpss,hpss_common), \
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift) DepLibraryTargetName(hpss,hpss_common), \
  $(RFIOLIB) $(HPSSCLIBS) $(LDLIBS))
 #else
 NormalProgramTarget(rfcp,rfcp.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 #endif
 
 NormalProgramTarget(rfstat,rfstat.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 NormalProgramTarget(rfrm,rfrm.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 NormalProgramTarget(rfdir,rfdir.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 NormalProgramTarget(rfmkdir,rfmkdir.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 NormalProgramTarget(rfrename,rfrename.Osuf, \
- LibraryTargetName(rfio) DepLibraryTargetName(lib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
 
 InstallProgram(rfiod,$(BIN),root,bin,755)
 IEXPORT(rfiod,$(EXPORTBIN),755)
@@ -588,7 +588,7 @@ depend:
 Makefiles:
 
 MakeDepLibrary(common,common)
-MakeDepLibrary(lib,shift)
+MakeDepSharedLibrary(shlib,shift)
 #if BuildHpssServer
 MakeDepLibrary(hpss,rfio_hpss)
 #endif
