@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.71 $ $Date: 2000/04/06 09:08:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.72 $ $Date: 2000/04/07 15:43:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -343,9 +343,12 @@ static int DiskFileOpen(int pool_index,
                     flags = O_CREAT | O_WRONLY | O_APPEND | binmode;
             } else {
                 /*
-                 * New disk file
+                 * New disk file unless an offset has been specified.
                  */
-                flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
+                if ( filereq->offset > 0 ) 
+                    flags = O_CREAT| O_WRONLY | binmode;
+                else 
+                    flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
             }
         }
         /* Activate new transfer mode for source file */
@@ -354,7 +357,7 @@ static int DiskFileOpen(int pool_index,
 
         serrno = 0;
         rfio_errno = 0;
-        rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x\n",filereq->file_path,
+        rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x)\n",filereq->file_path,
             flags);
         DK_STATUS(RTCP_PS_OPEN);
         rc = rfio_open(filereq->file_path,flags,0666);
