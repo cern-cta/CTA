@@ -1,7 +1,10 @@
 /*
- * $Id: rfio.h,v 1.6 2000/02/15 15:29:30 fabien Exp $
+ * $Id: rfio.h,v 1.7 2000/03/28 09:21:03 obarring Exp $
  *
  * $Log: rfio.h,v $
+ * Revision 1.7  2000/03/28 09:21:03  obarring
+ * Increase CNTRL timeout to 20 seconds
+ *
  * Revision 1.6  2000/02/15 15:29:30  fabien
  * Added support for initial lseek in RFIO version 3 protocol
  *
@@ -33,7 +36,7 @@
 #ifndef _RFIO_H_INCLUDED_
 #define _RFIO_H_INCLUDED_
 
-#define RFIO_CTRL_TIMEOUT 10
+#define RFIO_CTRL_TIMEOUT 20
 #define RFIO_DATA_TIMEOUT 300
 
 #include <stdio.h>              /* standard Input/Output                */
