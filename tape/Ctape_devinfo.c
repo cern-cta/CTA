@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.2 $ $Date: 2000/03/09 08:42:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.3 $ $Date: 2000/05/29 12:02:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_devinfo - table of device characteristics */
@@ -15,8 +15,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.2 $ $Date
 #include "Ctape_api.h"
 
 static struct devinfo devinfo[] = {
-	"3480", 1, 2, 0, 1,   262144,  32760, 0x10, D38000, 0, D38KD, 0, D38KC, 0, D38KDC, 0, 0, 0, 0, 0,
+	"3480", 1, 2, 0, 1,   262144,  32760, 0x10, D38000, 0, 0, 0, D38KC, 0, 0, 0, 0, 0, 0, 0,
+	"3490", 1, 2, 0, 1,   262144,  32760, 0x10, D38000, 0, D38KD, 0, D38KC, 0, D38KDC, 0, 0, 0, 0, 0,
 	"3590", 1, 1, 1, 1,  2097152,  32760, 0x10, D10G, 0, D10GC, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	"4280", 1, 2, 0, 1,   262144,  32760, 0x10, D38000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"8200", 1, 2, 0, 1,   245760,  32760, 0x00, D8200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"8500", 1, 2, 0, 1,   245760,  32760, 0x00, D8200, 0x14, D8500, 0x15, 0, 0, 0, 0, 0, 0, 0, 0,
 	"8505", 1, 2, 0, 1,   245760,  32760, 0x00, D8200, 0x14, D8500, 0x15, D8200C, 0x90, D8500C, 0x8C, 0, 0, 0, 0,
