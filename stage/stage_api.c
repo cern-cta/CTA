@@ -1,9 +1,10 @@
 /*
- * $Id: stage_api.c,v 1.7 2001/02/01 18:09:28 jdurand Exp $
+ * $Id: stage_api.c,v 1.8 2001/02/02 08:56:52 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
 #include <stddef.h>            /* For NULL definition */
+#include <string.h>
 #include "osdep.h"             /* For OS dependencies */
 #include "serrno.h"            /* For CASTOR's errno */
 #include "Castor_limits.h"     /* Get all hardcoded CASTOR constants */
