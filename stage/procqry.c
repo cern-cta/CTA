@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.27 2000/09/20 11:26:03 jdurand Exp $
+ * $Id: procqry.c,v 1.28 2000/10/24 06:17:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.27 $ $Date: 2000/09/20 11:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.28 $ $Date: 2000/10/24 06:17:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -270,54 +270,48 @@ void procqryreq(req_data, clienthost)
 	c = 0;
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
-	if (aflag || lflag || Sflag) {	/* run long requests with rfio_stat calls in a child */
-		if ((pid = fork ()) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
-			c = SYERR;
-			goto reply;
-		}
-		if (pid) {
-			stglogit (func, "forking procqry, pid=%d\n", pid);
+	/* We systematically run procqry requests in a forked child */
+	if ((pid = fork ()) < 0) {
+		sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+		c = SYERR;
+		goto reply;
+	}
+	if (pid) {
+		stglogit (func, "forking procqry, pid=%d\n", pid);
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-			if (afile || mfile)
-				regfree (&preg);
+		if (afile || mfile)
+			regfree (&preg);
 #endif
-			free (argv);
-			close (rpfd);
-			if (fseq_list != NULL) free(fseq_list);
-			return;
-		} else {
-			/* We are in the child : we open a new connection to the Database Server so that   */
-			/* it will not clash with current one owned by the main process.                   */
-
-#ifdef USECDB
-			strcpy(dbfd_in_fork.username,dbfd.username);
-			strcpy(dbfd_in_fork.password,dbfd.password);
-
-			if (stgdb_login(&dbfd_in_fork) != 0) {
-				stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
-				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
-				exit(SYERR);
-			}
-
-			/* Open the database */
-			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
-				stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
-				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
-				exit(SYERR);
-			}
-
-			/* There is no need to ask for a dump of the catalog : we use the one that is */
-			/* already in memory.                                                         */
-
-			/* We set the pointer to use to the correct dbfd structure */
-			dbfd_query = &dbfd_in_fork;
-#endif
-		}
+		free (argv);
+		close (rpfd);
+		if (fseq_list != NULL) free(fseq_list);
+		return;
 	} else {
+		/* We are in the child : we open a new connection to the Database Server so that   */
+		/* it will not clash with current one owned by the main process.                   */
+
 #ifdef USECDB
-		/* No fork : the dbfd to use is the one of the main process */
-		dbfd_query = &dbfd;
+		strcpy(dbfd_in_fork.username,dbfd.username);
+		strcpy(dbfd_in_fork.password,dbfd.password);
+
+		if (stgdb_login(&dbfd_in_fork) != 0) {
+			stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
+			exit(SYERR);
+		}
+
+		/* Open the database */
+		if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
+			stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
+			exit(SYERR);
+		}
+
+		/* There is no need to ask for a dump of the catalog : we use the one that is */
+		/* already in memory.                                                         */
+
+		/* We set the pointer to use to the correct dbfd structure */
+		dbfd_query = &dbfd_in_fork;
 #endif
 	}
 
@@ -614,16 +608,26 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	int inbtpf;
+	int loop_on_stcp = 0;
 
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
-	if (numvid == 0 && fseq == NULL && fseq_list == NULL && afile == NULL && mfile == NULL && xfile == NULL) {
+
+	/* We check if we have to loop on stcp */
+	if (poolflag < 0) {	/* -p NOPOOL */
+		++loop_on_stcp;
+	} else if (*poolname) { /* -p <somepool> */
+		++loop_on_stcp;
+	}
+
+	if (numvid == 0 && fseq == NULL && fseq_list == NULL && afile == NULL && mfile == NULL && xfile == NULL && loop_on_stcp == 0) {
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			sendrep (rpfd, MSG_OUT, "%s\n", stpp->upath);
 		}
 		return;
 	}
+
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if ((stcp->status & 0xF0) != STAGED) continue;
