@@ -1,10 +1,10 @@
-.\" $Id: stage_struct.man,v 1.3 2002/09/14 06:03:16 jdurand Exp $
+.\" $Id: stage_struct.man,v 1.4 2002/09/14 06:19:07 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.3 $ $Date: 2002/09/14 06:03:16 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.4 $ $Date: 2002/09/14 06:19:07 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_STRUCT "3" "$Date: 2002/09/14 06:03:16 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_STRUCT "3" "$Date: 2002/09/14 06:19:07 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage structures \- Definition of the stager structures used by daemon and clients
 .SH SYNOPSIS
@@ -23,12 +23,12 @@ The \fBstage structures\fP are the the basis of stage information bookkeeping. T
 is the main structure.
 .TP
 .BI stgpath_entry
-described user links, and is joined to stgcat_entry structures.
+describes user links, and is joined to stgcat_entry structures.
 
 .SH DEFINITION
 Below is the definition of
 .BI stgcat_entry
-structures. Each member of the structure is described with a keyword that can be TAPE, DISK, CASTOR, HSM or ALL, refering to the type of data it is describing, or in which case it is meaningful.
+structures. Each member of the structure is described below with a keyword that can be TAPE, DISK, CASTOR, HSM or ALL, refering to the type of data it is refering.
 .ft CW
 .nf
 .sp
@@ -143,11 +143,11 @@ gives the pool name to which belong the internal disk file (c.f. ipath below)
 specifies the record format of the data on the tape. It can be:
 .TP 2.0i
 .HP
-.I F
-, suitable for use with direct access Fortran unformatted I/O or C I/O, 
+.BI F " or " FS
+is suitable for use with direct access Fortran unformatted I/O or C I/O, 
 .TP
 .HP
-.I FB
+.BI FB " or " FBS
 to group several records of lrecl bytes into tape blocks of blksize bytes, 
 .TP
 .HP
@@ -275,16 +275,16 @@ this (castor) file is waiting on successful creation in the CASTOR Name Server
 .TP
 .HP
 .BI STAGE_RDONLY
-this record described a readonly access to a CASTOR file
+this record describes a readonly access to a CASTOR file
 .P
 .BI actual_size
-gives known size on disk last time it was accessed, current size in case of running requests (like 
+gives known size on disk last time it was accessed, current size in case of querying about running requests (like 
 .I STAGEIN
 or
 .I STAGEOUT)
 .sp
 .BI c_time
-gives the creation time (using clock on the host where is running the stager daemon)
+gives the creation time from stage point of view (using clock on the host where is running the stager daemon)
 .sp
 .BI a_time
 gives the last known access time from stage point of view (using clock on the host where is running the stager daemon)
@@ -336,7 +336,17 @@ for positioning by fileid
 .TP
 .HP
 .BI lbl
-gives the label type. This can be "al" (ANSI label), "blp" (bypass label), "nl" (no label), "sl" (standard IBM label) or "aul" (ANSI user label)
+gives the label type. This can be 
+.I al
+for ANSI label,
+.I blp
+to bypass label,
+.I nl
+for unlabelled tape,
+.I sl
+for standard IBM label, or 
+.I aul
+for ANSI user label
 .TP
 .HP
 .BI retentd
@@ -460,6 +470,12 @@ command to be installed.
 structure needs the 
 .BI rfcp
 command to support HSM files not of the CASTOR type.
+.sp
+Using more than one entry in the
+.I vid
+or
+.I vsn
+arrays is meaningul only for volume spanning
 
 .SH LIMITS
 Because catalog is maintained in memory (the disk version is used only for the creation/updates/deletions), stage impose lower limit on strings, in particular:
