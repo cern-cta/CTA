@@ -76,7 +76,7 @@ namespace castor {
       /**
        * constructor
        */
-      BaseClient(int acceptTimeout = 1800) throw();
+      BaseClient(int acceptTimeout = 2592000) throw();
 
       /**
        * destructor
