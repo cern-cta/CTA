@@ -36,6 +36,7 @@ main(argc, argv)
   int errflg = 0;
   int verbose = 0;
   int tmp;
+  int priv_specified = 0;
 
   Cupv_entry_list list;
   struct Cupv_userpriv *lp;
@@ -107,6 +108,7 @@ main(argc, argv)
       break;
     case OPT_PRV:
       priv = Cupv_parse_privstring(Coptarg);
+      priv_specified = 1;
       break;
     case 'v':
       verbose = 1;
@@ -133,13 +135,9 @@ main(argc, argv)
     }
   }
 
-  if (Coptind < argc) { 
-    priv = strtol(argv[Coptind], (char **)NULL, 10);
-  }
-
   if (errflg) {
-    fprintf (stderr, "usage: %s %s%s", argv[0],
-	     "[--uid uid | --user username]  [--gid gid | --group groupname] \n\t [--src SourceHost] [--tgt TargetHost] [--priv privilege]\n",  "Where priv is one of: OPER, TP_OPER, ADMIN, GRP_ADMIN, UPV_ADMIN or TP_SYSTEM\n");
+    fprintf (stderr, "usage: %s %s%s%s%s", argv[0],
+	     "[--uid uid | --user username]  [--gid gid | --group groupname] \n\t [--src SourceHost] [--tgt TargetHost] [--priv privilege]\n",  "Where priv is one of:", STR_PRIV_LIST, "\n");
     exit (USERR);
   }
  
@@ -158,13 +156,19 @@ main(argc, argv)
     }
   }
 
+  if (priv == -1 && priv_specified == 1) {
+      fprintf (stderr, "%s: The privilege must be one of: %s\n", argv[0],
+               STR_PRIV_LIST);
+      exit(USERR);
+
+
+  }
 
   filter.uid = uid;
   filter.gid = gid;
   strcpy(filter.srchost, src);
   strcpy(filter.tgthost, tgt); 
   filter.privcat = priv;
-
 
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
