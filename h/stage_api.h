@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.66 2003/11/17 09:56:03 jdurand Exp $
+ * $Id: stage_api.h,v 1.67 2004/04/01 12:00:54 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -310,6 +310,8 @@ EXTERN_C int  DLL_DECL stage_util_charconv2string _PROTO((char *, size_t, int));
 EXTERN_C int  DLL_DECL stage_util_E_Tflags2string _PROTO((char *, size_t, int));
 EXTERN_C int  DLL_DECL stage_util_maxtapefseq _PROTO((char*));
 EXTERN_C int  DLL_DECL stage_util_check_for_strutou64 _PROTO((char*));
+EXTERN_C int  DLL_DECL stage_util_max_stcp_per_request _PROTO(());
+EXTERN_C int  DLL_DECL stage_util_max_stpp_per_request _PROTO(());
 
 /* ------------------------------------------- */
 /* Utilities used by the API (stage_usrmsg.c)  */

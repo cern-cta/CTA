@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.34 2003/11/17 11:01:35 jdurand Exp $
+ * $Id: stage_util.c,v 1.35 2004/04/01 12:00:59 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.34 $ $Date: 2003/11/17 11:01:35 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.35 $ $Date: 2004/04/01 12:00:59 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -857,3 +857,29 @@ static int stage_util_newacct(pwd,gid)
     }
     return(-1);
 }
+
+int  DLL_DECL stage_util_max_stcp_per_request() {
+	/* Stager protocol must not exceed MAX_NETDATA_SIZE bytes */
+	/* We let 1000 bytes for the header, the rest for the structures */
+	/* and we want:
+	   total_reqzise < MAX_NETDATA_SIZE
+	   x * sizeof(struct stgcat_entry) + 1000 < MAX_NETDATA_SIZE
+	   x < (MAX_NETDATA_SIZE - 1000) / sizeof(struct stgcat_entry)
+	*/
+
+	return((MAX_NETDATA_SIZE - 1000) / sizeof(struct stgcat_entry));
+}
+
+int  DLL_DECL stage_util_max_stpp_per_request() {
+	/* Stager protocol must not exceed MAX_NETDATA_SIZE bytes */
+	/* We let 1000 bytes for the header, the rest for the structures */
+	/* and we want:
+	   total_reqzise < MAX_NETDATA_SIZE
+	   x * sizeof(struct stgpath_entry) + 1000 < MAX_NETDATA_SIZE
+	   x < (MAX_NETDATA_SIZE - 1000) / sizeof(struct stgpath_entry)
+	*/
+
+	return((MAX_NETDATA_SIZE - 1000) / sizeof(struct stgpath_entry));
+}
+
+
