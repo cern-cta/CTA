@@ -365,6 +365,7 @@
           }                                                   \
     }                                                         \
     if ((in)->hostlist[0] != '\0') strcpy((out)->hostlist,(in)->hostlist);          \
+    if ((in)->rfs[0] != '\0') strcpy((out)->rfs,(in)->rfs);                         \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -417,6 +418,7 @@
     if ((filter)->clientStructLenWithNullByte > 0 && (ref)->clientStructLenWithNullByte != (filter)->clientStructLenWithNullByte) status++;  \
     if ((filter)->clientStruct != NULL && memcmp((ref)->clientStruct, (filter)->clientStruct, (filter)->clientStructLenWithNullByte) != 0) status++;  \
     if ((filter)->hostlist[0] != '\0' && strcmp((ref)->hostlist,(filter)->hostlist) != 0)          status++;  \
+    if ((filter)->rfs[0] != '\0' && strcmp((ref)->rfs,(filter)->rfs) != 0)                         status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
