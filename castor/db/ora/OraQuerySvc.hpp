@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/02/03 18:21:35 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/02/11 16:51:56 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -99,16 +99,41 @@ namespace castor {
         listDiskCopies ()
           throw (castor::exception::Exception);
 
+        /**
+         * Gets all DiskCopies for a given request.
+         * @param requestId the CASTOR ID of the request
+         * @return the list of DiskCopies available
+         * @exception in case of error
+         */
+        virtual std::list<castor::stager::DiskCopyInfo*>
+        diskCopies4Request (std::string requestId)
+          throw (castor::exception::Exception);
+
+
+	/**
+         * Gets all DiskCopies for a given request Usertag.
+         * @param requestId the CASTOR ID of the request
+         * @return the list of DiskCopies available
+         * @exception in case of error
+         */
+        virtual std::list<castor::stager::DiskCopyInfo*>
+        diskCopies4Usertag (std::string usertag)
+          throw (castor::exception::Exception);
 
       private:
 
         /// SQL statement for function tapesToDo
         static const std::string s_diskCopies4FileStatementString;
         static const std::string s_listDiskCopiesStatementString;
+        static const std::string s_diskCopies4RequestStatementString;
+	static const std::string s_diskCopies4UsertagStatementString;
+
 
         /// SQL statement object for function tapesToDo
         oracle::occi::Statement *m_diskCopies4FileStatement;
         oracle::occi::Statement *m_listDiskCopiesStatement;
+        oracle::occi::Statement *m_diskCopies4RequestStatement;
+        oracle::occi::Statement *m_diskCopies4UsertagStatement;
 
       }; // end of class OraQuerySvc
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/02/03 18:21:35 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/02/11 16:51:56 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -34,6 +34,7 @@
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 
+#include <sstream>
 #include <string>
 #include <list>
 
@@ -58,12 +59,23 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString
 const std::string castor::db::ora::OraQuerySvc::s_listDiskCopiesStatementString =
 "SELECT  castorfile.fileid, castorfile.nshost, DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1) FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg WHERE DiskCopy.castorFile = Castorfile.id AND castorfile.id = tpseg.castorfile (+) ";
 
+
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString = 
+"select  castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1)   from subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where reqid like :1 union  select id from stagepreparetoputrequest where reqid like :1 UNION select id from stagepreparetoupdaterequest where reqid like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND  Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost ";
+
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString = 
+"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1)   from subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :1 UNION select id from stagepreparetoupdaterequest where usertag like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost ";
+
+
 // -----------------------------------------------------------------------
 // OraQuerySvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   BaseSvc(name), OraBaseObj(0),
-  m_diskCopies4FileStatement(0) {}
+  m_diskCopies4FileStatement(0),
+  m_listDiskCopiesStatement(0),
+  m_diskCopies4RequestStatement(0),
+  m_diskCopies4UsertagStatement(0) {}
 
 // -----------------------------------------------------------------------
 // ~OraQuerySvc
@@ -94,10 +106,14 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     deleteStatement(m_diskCopies4FileStatement);
+    deleteStatement(m_diskCopies4RequestStatement);
+    deleteStatement(m_diskCopies4UsertagStatement);
     deleteStatement(m_listDiskCopiesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_diskCopies4FileStatement = 0;
+  m_diskCopies4RequestStatement = 0;
+  m_diskCopies4UsertagStatement = 0;
   m_listDiskCopiesStatement = 0;
 }
 
@@ -124,8 +140,8 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       castor::stager::DiskCopyInfo* item =
         new castor::stager::DiskCopyInfo();
-       item->setId(rset->getInt(1));
-       item->setDiskCopyPath(rset->getString(2));
+      item->setId(rset->getInt(1));
+      item->setDiskCopyPath(rset->getString(4));
       item->setSize(rset->getInt(3));
       item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
                               rset->getInt(4));
@@ -155,7 +171,7 @@ castor::db::ora::OraQuerySvc::listDiskCopies
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
-    if (0 == m_diskCopies4FileStatement) {
+    if (0 == m_listDiskCopiesStatement) {
       m_listDiskCopiesStatement =
         createStatement(s_listDiskCopiesStatementString);
     }
@@ -167,11 +183,10 @@ castor::db::ora::OraQuerySvc::listDiskCopies
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       castor::stager::DiskCopyInfo* item =
         new castor::stager::DiskCopyInfo();
+      item->setFileId(rset->getInt(1));
+      item->setNsHost(rset->getString(2));
       item->setId(rset->getInt(3));
-      std::string filename =  rset->getString(1) 
-        + std::string("@") 
-        + rset->getString(2);
-      item->setDiskCopyPath(filename);
+      item->setDiskCopyPath(rset->getString(4));
       item->setSize(rset->getInt(5));
       item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
                               rset->getInt(6));
@@ -185,6 +200,97 @@ castor::db::ora::OraQuerySvc::listDiskCopies
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in listDiskCopies."
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
+// -----------------------------------------------------------------------
+// diskCopies4Request
+// -----------------------------------------------------------------------
+std::list<castor::stager::DiskCopyInfo*>
+castor::db::ora::OraQuerySvc::diskCopies4Request
+(std::string requestId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_diskCopies4RequestStatement) {
+      m_diskCopies4RequestStatement =
+        createStatement(s_diskCopies4RequestStatementString);
+    }
+    // execute the statement and see whether we found something
+    m_diskCopies4RequestStatement->setString(1, requestId);
+    oracle::occi::ResultSet *rset =
+      m_diskCopies4RequestStatement->executeQuery();
+    // Gather the results
+    std::list<castor::stager::DiskCopyInfo*> result;
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      castor::stager::DiskCopyInfo* item =
+        new castor::stager::DiskCopyInfo();
+      item->setFileId(rset->getInt(1));
+      item->setNsHost(rset->getString(2));
+      item->setId(rset->getInt(3));
+      item->setDiskCopyPath(rset->getString(4));
+      item->setSize(rset->getInt(5));
+      item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
+                              rset->getInt(6));
+      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
+                              rset->getInt(7));
+      item->setSegmentStatus((castor::stager::SegmentStatusCodes)
+                              rset->getInt(8));
+      result.push_back(item);
+    }
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in diskCopies4Request."
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
+// -----------------------------------------------------------------------
+// diskCopies4Usertag
+// -----------------------------------------------------------------------
+std::list<castor::stager::DiskCopyInfo*>
+castor::db::ora::OraQuerySvc::diskCopies4Usertag
+(std::string usertag)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_diskCopies4UsertagStatement) {
+      m_diskCopies4UsertagStatement =
+        createStatement(s_diskCopies4UsertagStatementString);
+    }
+    // execute the statement and see whether we found something
+    m_diskCopies4UsertagStatement->setString(1, usertag);
+    oracle::occi::ResultSet *rset =
+      m_diskCopies4UsertagStatement->executeQuery();
+    // Gather the results
+    std::list<castor::stager::DiskCopyInfo*> result;
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      castor::stager::DiskCopyInfo* item =
+        new castor::stager::DiskCopyInfo();
+
+      item->setFileId(rset->getInt(1));
+      item->setNsHost(rset->getString(2));
+      item->setId(rset->getInt(3));
+      item->setDiskCopyPath(rset->getString(4));
+      item->setSize(rset->getInt(5));
+      item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
+                              rset->getInt(6));
+      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
+                              rset->getInt(7));
+      item->setSegmentStatus((castor::stager::SegmentStatusCodes)
+                              rset->getInt(8));
+      result.push_back(item);
+    }
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in diskCopies4Usertag."
                     << std::endl << e.what();
     throw ex;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/02/03 18:21:48 $ $Author: bcouturi $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/11 16:51:56 $ $Author: bcouturi $
  *
  * 
  *
@@ -74,6 +74,27 @@ namespace castor {
       virtual std::list<castor::stager::DiskCopyInfo*>
       listDiskCopies ()
         throw (castor::exception::Exception) = 0;
+
+    /**
+     * Gets all DiskCopies for a given request.
+     * @param requestId the CASTOR ID of the request
+     * @return the list of DiskCopies available
+     * @exception in case of error
+     */
+      virtual std::list<castor::stager::DiskCopyInfo*>
+      diskCopies4Request (std::string requestId)
+	throw (castor::exception::Exception) = 0;
+
+    /**
+     * Gets all DiskCopies for a given usertag
+     * @param usertag The usertag of the requests
+     * @return the list of DiskCopies available
+     * @exception in case of error
+     */
+      virtual std::list<castor::stager::DiskCopyInfo*>
+      diskCopies4Usertag (std::string requestId)
+	throw (castor::exception::Exception) = 0;
+
 
 
     }; // end of class IQuerySvc
