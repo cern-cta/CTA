@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.118 2001/03/14 13:31:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.119 2001/03/14 15:18:57 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.118 $ $Date: 2001/03/14 13:31:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.119 $ $Date: 2001/03/14 15:18:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2873,32 +2873,11 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 				return(CLEARED);
 			} else {
 				if (stcp->t_or_d == 'h') {
-					struct Cns_fileid Cnsfileid;
-					u_signed64 correct_size;
+					extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t));
+					int thisrc;
 
 					/* This is a CASTOR HSM file */
-					strcpy(Cnsfileid.server,stcp->u1.h.server);
-					Cnsfileid.fileid = stcp->u1.h.fileid;
-					setegid(stcp->gid);
-					seteuid(stcp->uid);
-					correct_size = (u_signed64) stcp->actual_size;
-#ifdef U1H_WRT_WITH_MAXSIZE
-					if (stcp->size && ((u_signed64) (stcp->size * ONE_MB) < correct_size)) {
-						/* If use specified a maxsize of bytes to transfer and if this */
-						/* maxsize is lower than physical file size, then the size of */
-						/* of the migrated file will be the minimum of the twos */
-						correct_size = (u_signed64) (stcp->size * ONE_MB);
-					}
-#endif
-					if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
-								"Cns_setfsize", sstrerror(serrno));
-						setegid(0);
-						seteuid(0);
-						return(SYERR);
-					}
-					setegid(0);
-					seteuid(0);
+					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid)) != 0) return(thisrc);
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
