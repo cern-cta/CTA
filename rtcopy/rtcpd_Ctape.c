@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.46 $ $Date: 2000/09/18 11:43:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.47 $ $Date: 2000/09/25 10:09:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -195,6 +195,7 @@ int rtcpd_Deassign(int VolReqID,
 #endif /* CTAPE_DUMMIES */
         (void)rtcpd_Reserve(tape);
         *(nexttape->tapereq.dgn) = '\0';
+        nexttape->tapereq.mode = WRITE_DISABLE;
         rc = rtcpd_Mount(tape);
         (void)rtcpd_Release(tape,NULL);
 
@@ -487,9 +488,10 @@ int rtcpd_Position(tape_list_t *tape,
         else {
             rtcpd_AppendClientMsg(NULL, file,"rtcpd_Position(): cannot determine tape path\n");
             rtcp_log(LOG_DEBUG,"rtcpd_Position(): cannot determine tape path\n");
-            serrno = SEINTERNAL;
-            filereq->err.severity = RTCP_FAILED;
-            filereq->err.errorcode = serrno;
+            severity = RTCP_FAILED|RTCP_UNERR;
+            save_serrno = SEINTERNAL;
+            rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
+            serrno = save_serrno;
             return(-1);
         }
     }
