@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.72 $ $Release$ $Date: 2004/11/03 15:45:49 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.73 $ $Release$ $Date: 2004/11/03 16:14:31 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.72 $ $Release$ $Date: 2004/11/03 15:45:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.73 $ $Release$ $Date: 2004/11/03 16:14:31 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2130,7 +2130,6 @@ int rtcpcld_updcFileMigrated(
       serrno = save_serrno;
       return(-1);
     }
-    Cstager_TapeCopy_delete(tapeCopyArray[i]);
   }
   if ( tapeCopyArray != NULL ) free(tapeCopyArray);  
   /*
