@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.1 2000/02/04 07:53:10 jdurand Exp $
+.\" $Id: Castor_limits.man,v 1.2 2000/02/16 10:32:36 baud Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "3" "$Date: 2000/02/04 07:53:10 $" "CASTOR" "Castor Library Functions"
+.TH CASTOR_LIMITS "4" "$Date: 2000/02/16 10:32:36 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -139,6 +139,11 @@ Default value: 14
 .TP
 .B CA_MAXVIDLEN
 maximum length for a VID
+.br
+Default value: 6
+.TP
+.B CA_MAXVSNLEN
+maximum length for a VSN
 .br
 Default value: 6
 
