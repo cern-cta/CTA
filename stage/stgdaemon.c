@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.154 2001/12/04 10:55:06 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.155 2001/12/05 10:12:36 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.154 $ $Date: 2001/12/04 10:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.155 $ $Date: 2001/12/05 10:12:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -170,6 +170,7 @@ int have_ipaddrlocal;
 time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
 time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
+time_t started_time;
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -232,6 +233,7 @@ int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, 
 extern void checkfile2mig _PROTO(());
 extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, int, char *, char *));
+extern void procpingreq _PROTO((int, int, char *, char *));
 extern void procputreq _PROTO((int, char *, char *));
 extern void procqryreq _PROTO((int, int, char *, char *));
 extern void procclrreq _PROTO((int, int, char *, char *));
@@ -274,13 +276,13 @@ extern int sendrep _PROTO(());
  * nbhost for the rfio_munlink()
  */
 extern int nbhost;
-static int nwaitq = 0;
+int nwaitq = 0;
 
 #define RESERVED_FD (4 + nwaitq + 2 * nbhost)
 #define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
 
+int stgdaemon_port = 0;
 #ifdef STAGE_CSETPROCNAME
-static int stgdaemon_port = 0;
 static char sav_argv0[1024+1];
 #endif
 
@@ -326,6 +328,7 @@ int main(argc,argv)
 	struct passwd root_passwd;
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1]; /* 11 == strlen("STAGE_HOST=") */
 	char *upd_fileclasses_int_p;
+	size_t read_size;
 
 	Coptind = 1;
 	Copterr = 0;
@@ -396,6 +399,7 @@ int main(argc,argv)
 #endif
 	strcpy (func, "stgdaemon");
 	stglogit (func, "started\n");
+	started_time = time(NULL);
 #if SACCT
 	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "");
 #endif
@@ -501,14 +505,10 @@ int main(argc,argv)
 	if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
 		stglogit (func, STG148, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
 		sin.sin_port = htons((u_short) STAGE_PORT);
-#ifdef STAGE_CSETPROCNAME
 		stgdaemon_port = STAGE_PORT;
-#endif
 	} else {
 		sin.sin_port = sp->s_port;
-#ifdef STAGE_CSETPROCNAME
 		stgdaemon_port = ntohs(sp->s_port);
-#endif
 	}
 	sin.sin_family = AF_INET ;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -762,25 +762,9 @@ int main(argc,argv)
 	/* main loop */
 	while (1) {
 
-		int upd_fileclasses_int_old_value;
-
 		/* Before accept() we execute some automatic thing that are client disconnected */
 		rpfd = -1;
 
-		upd_fileclasses_int_old_value = upd_fileclasses_int;
-		/* Run-time update upd_fileclasses parameter from configuration if needed */
-		if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
-			if ((upd_fileclasses_int = atoi(upd_fileclasses_int_p)) <= 0) {
-				stglogit(func, STG02, "upd_fileclasses_int update", "upd_fileclasses_int value from config", upd_fileclasses_int_p);
-				stglogit(func, STG33, "upd_fileclasses_int update - value unchanged", u64tostr((u_signed64) upd_fileclasses_int_old_value, tmpbuf, 0));
-				upd_fileclasses_int = upd_fileclasses_int_old_value;
-			} else if (upd_fileclasses_int != upd_fileclasses_int_old_value) {
-				/* Should happen very frequently... */
-				stglogit(func, STG33, "upd_fileclasses_int update - value changed", upd_fileclasses_int_p);
-			}
-		} else if ((upd_fileclasses_int = upd_fileclasses_int_default) != upd_fileclasses_int_old_value) {
-			stglogit(func, STG33, "upd_fileclasses_int update - value changed", u64tostr((u_signed64) upd_fileclasses_int_default, tmpbuf, 0));
-		}
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
 		check_delaymig (); /* move delay_migr to can_be_migr if any */
 		check_child_exit(); /* check childs [pid,status] */
@@ -877,7 +861,6 @@ int main(argc,argv)
 			reqid = nextreqid();
 			l = netread_timeout (rqfd, req_hdr, sizeof(req_hdr), STGTIMEOUT);
 			if (l == sizeof(req_hdr)) {
-				size_t read_size;
 
 				rbp = req_hdr;
 				unmarshall_LONG (rbp, magic);
@@ -906,7 +889,7 @@ int main(argc,argv)
 					close(rqfd);
 					goto endreq;
 				}
-				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT))) {
+				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT)) == l) {
 					if (req_type == STAGEIN   || req_type == STAGEOUT  || req_type == STAGEALLOC  ||
 						req_type == STAGEWRT  || req_type == STAGEPUT  ||
 
@@ -940,7 +923,7 @@ int main(argc,argv)
 
 					if (FREE_FD <= 0) {
 						/* There is no more available free connections if we process this new one */
-						/* We are at the limit - Sorry we have to reject *
+						/* We are at the limit - Sorry we have to reject */
 						/* We count on the client retry some time later saying him we are not */
 						/* available for the moment - with ESTNACT */
 						sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
@@ -964,6 +947,10 @@ int main(argc,argv)
 					case STAGE_QRY:
 					case STAGEQRY:
 						procqryreq (req_type, magic, req_data, clienthost);
+						break;
+					case STAGE_PING:
+					case STAGEPING:
+						procpingreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGE_CLR:
 					case STAGECLR:
@@ -1000,12 +987,12 @@ int main(argc,argv)
 				} else {
 					close (rqfd);
 					if (l != 0)
-						stglogit (func, "Network read error from %s\n",clienthost);
+						stglogit (func, STG04, "body", (int) l, (int) read_size, clienthost, errno, strerror(errno), serrno, sstrerror(serrno));
 				}
 			} else {
 				close (rqfd);
 				if (l != 0)
-					stglogit (func, STG04, l, clienthost, strerror(errno), sstrerror(serrno));
+					stglogit (func, STG04, "header", (int) l, (int) sizeof(req_hdr), clienthost, errno, strerror(errno), serrno, sstrerror(serrno));
 			}
 		endreq:
 			FD_CLR (rqfd, &readfd);
@@ -2275,7 +2262,9 @@ void checkwaitq()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp, *wqp1;
+	int save_reqid;
 
+	save_reqid = reqid;
 	wqp = waitqp;
 	while (wqp) {
 		reqid = wqp->reqid;
@@ -2453,8 +2442,9 @@ void checkwaitq()
 			wqp1 = wqp;
 			wqp = wqp->next;
 			rmfromwq (wqp1);
-		} else
+		} else {
 			wqp = wqp->next;
+		}
 	}
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
@@ -2486,6 +2476,7 @@ void checkwaitq()
 		}
 	}
 #endif
+	reqid = save_reqid;
 }
 
 int create_dir(dirname, uid, gid, mask)
@@ -3602,7 +3593,3 @@ void check_upd_fileclasses() {
 		last_upd_fileclasses = time(NULL);
 	}
 }
-
-/*
- * Last Update: "Tuesday 04 December, 2001 at 11:51:52 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
- */
