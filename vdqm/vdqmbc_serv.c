@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.1 $ $Date: 2001/02/05 11:06:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.2 $ $Date: 2001/08/31 17:14:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.1 $ $Date: 
 #include <net.h>
 #include <log.h>
 #include <serrno.h>
+#include <Cinit.h>
 #include <Castor_limits.h>
 #include <Cthread_api.h>
 #include <vdqm_constants.h>
@@ -171,7 +172,6 @@ static int NextUpdate(vdqmHdr_t *hdr, vdqmVolReq_t *vol, vdqmDrvReq_t *drv) {
 }
 
 static int InitNWBroadcast(vdqmnw_t **nw) {
-    char env[20];
     int rc, vdqm_bc_port;
 #if !defined(VDQMBC_PORT)
     vdqm_bc_port = 8890;
@@ -290,7 +290,7 @@ int vdqm_AddUpdate(vdqmHdr_t *hdr, vdqmVolReq_t *vol, vdqmDrvReq_t *drv) {
 int vdqmbc_main() {
     vdqmnw_t *nw = NULL;
     char *vdqm_host = NULL;
-    int i, rc;
+    int rc;
     extern int DLL_DECL (*vdqm_broadcast_upd) _PROTO((vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *));
 
     hold = 1;
@@ -306,14 +306,15 @@ int vdqmbc_main() {
     log(LOG_INFO,"******* VDQM replication broadcast server generated at %s %s.\n",
              __DATE__,__TIME__);
 #endif /* __DATE__ && __TIME__ */
-    if ( (vdqm_host = getconfent("VDQM","HOST",0)) != NULL ) {
-        vdqm_host = "castor5";
+    if ( (vdqm_host = getconfent("VDQM","HOST",0)) == NULL ) {
+        log(LOG_ERR,"FATAL ERROR: No primary VDQM host configured\n");
+        exit(1);
     }
     log(LOG_INFO,"Using primary host %s\n",vdqm_host);
 
-    rc = vdqm_InitQueueLock();
+    rc = vdqm_InitQueueOp();
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_InitQueueLock() %d %d\n",serrno,errno);
+        log(LOG_ERR,"vdqm_InitQueueOp() %d %d\n",serrno,errno);
         exit(1);
     }
 
