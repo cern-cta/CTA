@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.6 2002/02/14 18:36:50 jdurand Exp $
+ * $Id: stager_tape.c,v 1.7 2002/04/11 10:37:08 jdurand Exp $
  */
 
 /*
@@ -9,10 +9,6 @@
 
 /* Do we want to maintain maxsize for the transfert... ? */
 /* #define SKIP_FILEREQ_MAXSIZE */
-
-/* Do you want to hardcode the limit of number of file sequences on a tape ? */
-/* Not the default in TAPE mode */
-/* #define MAX_TAPE_FSEQ 9999 */
 
 /* Do you want to hardcode the limit of number of files per rtcpc() request ? */
 #define MAX_RTCPC_FILEREQ 1000
@@ -33,7 +29,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.6 $ $Date: 2002/02/14 18:36:50 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.7 $ $Date: 2002/04/11 10:37:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -592,7 +588,7 @@ int stage_tape() {
 		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
 		RESTORE_EID;
-		RETURN (SYERR);
+		RETURN ((serrno == EINVAL) ? USERR : SYERR);
 	}
 
 
@@ -695,7 +691,7 @@ int stage_tape() {
 					rtcpcreqs = NULL;
 				}
 				if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
-					RETURN (USERR);
+					RETURN ((serrno == EINVAL) ? USERR : USERR);
 				}
 				if (nrtcpcreqs <= 0) {
 					serrno = SEINTERNAL;
@@ -708,7 +704,7 @@ int stage_tape() {
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
 					RESTORE_EID;
-					RETURN (SYERR);
+					RETURN ((serrno == EINVAL) ? USERR : SYERR);
 				}
 				rtcpcreqs[0]->tapereq.err.max_tpretry = save_tapereq_err_max_tpretry;
 				rtcpcreqs[0]->tapereq.err.max_cpretry = save_tapereq_err_max_cpretry;
@@ -816,6 +812,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	int stcp_nbtpf = 0;
 	int stcp_inbtpf = 0;
 	int j_ok;
+	int max_tape_fseq;
+
+	max_tape_fseq = stage_util_maxtapefseq(stcs->u1.t.lbl);
 
 	if (nrtcpcreqs_in == NULL || fixed_stcs == NULL || fixed_stce == NULL) {
 		serrno = SEINTERNAL;
@@ -1092,14 +1091,13 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			default:
 				fl[j_ok].filereq.position_method = TPPOSIT_FSEQ;
 				fl[j_ok].filereq.tape_fseq = atoi (fseq_list[stcp_inbtpf++]);
-#ifdef MAX_TAPE_FSEQ
-				if (fl[j_ok].filereq.tape_fseq > MAX_TAPE_FSEQ) {
+				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d\n", stcp->u1.t.vid, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
+					serrno = EINVAL;
 					RETURN (USERR);
 				}
-#endif
 				break;
 			}
 		} else {
@@ -1119,14 +1117,13 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			default:
 				fl[j_ok].filereq.position_method = TPPOSIT_FSEQ;
 				fl[j_ok].filereq.tape_fseq = atoi (fseq_list[stcp_inbtpf]);
-#ifdef MAX_TAPE_FSEQ
-				if (fl[j_ok].filereq.tape_fseq > MAX_TAPE_FSEQ) {
+				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d\n", stcp->u1.t.vid, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
+					serrno = EINVAL;
 					RETURN (USERR);
 				}
-#endif
 				break;
 			}
 			stcp_inbtpf++;
@@ -1241,14 +1238,13 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			if (callback_nok > 0 && callback_fseq > 0 && nbfiles <= 0 && j == (nbfiles_orig - 1)) {
 				/* We are dealing with the last file of a concatenation : starting fseq depends on previous round */
 				fl[j_ok].filereq.tape_fseq = callback_fseq + 1;
-#ifdef MAX_TAPE_FSEQ
-				if (fl[j_ok].filereq.tape_fseq > MAX_TAPE_FSEQ) {
+				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d\n", stcp->u1.t.vid, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
+					serrno = EINVAL;
 					RETURN (USERR);
 				}
-#endif
 			}
 		}
 		fl[j_ok].filereq.maxnbrec = stcp->nread;

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.14 2002/04/03 13:25:24 jdurand Exp $
+ * $Id: stager_castor.c,v 1.15 2002/04/11 10:37:08 jdurand Exp $
  */
 
 /*
@@ -12,9 +12,6 @@
 
 /* Do you want to do the Cns_setsegattrs() under real uid/gid of the owner of file in Castor Name Server ? */
 /* #define SETSEGATTRS_WITH_OWNER_UID_GID */
-
-/* Do you want to hardcode the limit of number of file sequences on a tape ? */
-#define MAX_TAPE_FSEQ 9999
 
 /* Do you want to hardcode the limit of number of files per rtcpc() request ? */
 #define MAX_RTCPC_FILEREQ 1000
@@ -33,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.14 $ $Date: 2002/04/03 13:25:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.15 $ $Date: 2002/04/11 10:37:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -453,6 +450,9 @@ int main(argc,argv,envp)
 
 	strcpy (func, "stager");
 	stglogit (func, "function entered\n");
+
+	/* Some intialization */
+	lbltype[0] = '\0';
 
 #ifdef STAGE_CSETPROCNAME
 	strncpy(sav_argv0,argv[0],1024);
@@ -1721,7 +1721,7 @@ int stagein_castor_hsm_file() {
 		sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
 		RESTORE_EID;
 		free(stcp_start);
-		RETURN (SYERR);
+		RETURN ((serrno == EINVAL) ? USERR : SYERR);
 	}
 
 	/* By construction, rtcpcreqs has only one indice: 0 */
@@ -1876,6 +1876,7 @@ int stagewrt_castor_hsm_file() {
 	int save_serrno;
 	int fseq_start;
 	int fseq_end;
+	int max_tape_fseq;
 
 	ALLOCHSM;
 
@@ -1972,10 +1973,10 @@ int stagewrt_castor_hsm_file() {
 				&fseq,                  /* fseq      (output)              */
 				&estimated_free_space   /* freespace (output)              */
 				) == 0) {
-#ifdef MAX_TAPE_FSEQ
-				if (fseq > MAX_TAPE_FSEQ) {
+				max_tape_fseq = stage_util_maxtapefseq(lbltype);
+				if ((max_tape_fseq > 0) && (fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s/%d : vmgr_gettape returns fseq > MAX_TAPE_FSEQ=%d\n", vid, side, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s/%d : vmgr_gettape returns fseq > max_tape_fseq=%d (label type \"%s\")\n", vid, side, max_tape_fseq, lbltype);
 					sendrep (rpfd, MSG_ERR, "STG02 - %s/%d : Flagging tape RDONLY\n", vid, side);
 					RESTORE_EID;
 					if (vmgr_updatetape(vid,
@@ -1997,7 +1998,6 @@ int stagewrt_castor_hsm_file() {
 					side = -1;
 					continue;
 				}
-#endif
 				break;
 			}
 
@@ -2129,19 +2129,17 @@ int stagewrt_castor_hsm_file() {
 				hsm_fseq[i] = fseq++;
 				fseq_end = hsm_fseq[i];
 				if (fseq_start == -1) fseq_start = fseq_end;
-#ifdef MAX_TAPE_FSEQ
-				if (fseq_end >= MAX_TAPE_FSEQ) {
+				if ((max_tape_fseq > 0) && (fseq_end >= max_tape_fseq)) {
 					/* We reached the last allowed tape sequence number */
 					if (i < iend) {
 						SAVE_EID;
-						sendrep (rpfd, MSG_ERR, "STG02 - stagewrt_castor_hsm_file : MAX_TAPE_FSEQ=%d reached. Migration will be sequentially splitted\n",MAX_TAPE_FSEQ);
+						sendrep (rpfd, MSG_ERR, "STG02 - stagewrt_castor_hsm_file : max_tape_fseq=%d reached (label type \"%s\"). Migration will be sequentially splitted\n",max_tape_fseq, lbltype);
 						RESTORE_EID;
 						/* By changing iend now we make sure next iteration will not go in there */
 						iend = i;
 						stcp_end = stcp_start + (iend - istart + 1);
 					}
 				}
-#endif
 			} else {
 				hsm_vid[i] = NULL;
 				hsm_side[i] = -1;
@@ -2197,7 +2195,7 @@ int stagewrt_castor_hsm_file() {
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
 			RESTORE_EID;
 			Flags = 0;
-			RETURN (SYERR);
+			RETURN ((serrno == EINVAL) ? USERR : SYERR);
 		}
 
 #ifdef STAGER_DEBUG
@@ -2455,6 +2453,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	char *castor_hsm = NULL;
 	int ihsm;                                /* Correct hsm index */
 	int nfile_list = 0;                      /* Number of file lists in case of hsm */
+	int max_tape_fseq;
+
+	max_tape_fseq = stage_util_maxtapefseq(lbltype);
 
 	if (nrtcpcreqs_in == NULL || fixed_stcs == NULL || fixed_stce == NULL) {
 		serrno = SEINTERNAL;
@@ -2677,14 +2678,13 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
 		}
 		(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
-#ifdef MAX_TAPE_FSEQ
-		if ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq > MAX_TAPE_FSEQ) {
+		if ((max_tape_fseq > 0) && ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq > max_tape_fseq)) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, "STG02 - %s : %s : Tape sequence must be <= %d\n", stcp->u1.m.xfile, (*rtcpcreqs_in)[i]->tapereq.vid, MAX_TAPE_FSEQ);
+			sendrep (rpfd, MSG_ERR, "STG02 - %s : %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.m.xfile, (*rtcpcreqs_in)[i]->tapereq.vid, max_tape_fseq, lbltype);
 			RESTORE_EID;
+			serrno = EINVAL;
 			RETURN (USERR);
 		}
-#endif
 		/* We set the hsm_flag[ihsm] so that this entry cannot be returned twice */
 		hsm_flag[ihsm] = 1;
 #ifndef SKIP_FILEREQ_MAXSIZE
@@ -2798,6 +2798,7 @@ int stager_hsm_callback(tapereq,filereq)
 	struct stgcat_entry *stcp;
 	char *castor_hsm;
 	struct Cns_fileid Cnsfileid;
+	int max_tape_fseq;
 
 	if (tapereq == NULL || filereq == NULL) {
 		serrno = EINVAL;
@@ -3108,10 +3109,10 @@ int stager_hsm_callback(tapereq,filereq)
 					/* that the transfer of this HSM file IS ok                 */
 					hsm_status[stager_client_true_i] = 1;
 				}
-#ifdef MAX_TAPE_FSEQ
-				if (filereq->tape_fseq >= MAX_TAPE_FSEQ) {
+				max_tape_fseq = stage_util_maxtapefseq(lbltype);
+				if ((max_tape_fseq > 0) && (filereq->tape_fseq >= max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Reached MAX_TAPE_FSEQ=%d\n", tapereq->vid, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Reached max_tape_fseq=%d (label type \"%s\")\n", tapereq->vid, max_tape_fseq, lbltype);
 					sendrep (rpfd, MSG_ERR, "STG02 - %s : Flagging tape RDONLY\n", tapereq->vid);
 					RESTORE_EID;
 					if (vmgr_updatetape(tapereq->vid,
@@ -3130,7 +3131,6 @@ int stager_hsm_callback(tapereq,filereq)
 						RESTORE_EID;
 					}
 				}
-#endif
 			} else {
 				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG123,
