@@ -69,11 +69,17 @@ typedef struct TpReqMap
 TpReqMap_t;
 #endif /* CASTOR_STAGER_TAPE_H && CASTOR_STAGER_SEGMENT_H */
 
-#if defined(C_SERVICES_H)
+#if defined(CASTOR_SERVICES_H)
 int rtcpcld_getDbSvc _PROTO((
-                             C_Services_t ***
+                             struct C_Services_t ***
                              ));
-#endif /* C_SERVICES_H */
+#endif /* CASTOR_SERVICES_H */
+
+#if defined(CASTOR_ISTAGERSVC_H)
+int rtcpcld_getStgDbSvc _PROTO((
+                                struct Cstager_IStagerSvc_t **
+                                ));
+#endif /* CASTOR_ISTAGERSVC_H */
 
 int rtcpcld_InitNW  _PROTO((
                             SOCKET **
