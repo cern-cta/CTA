@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 18:03:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.19 $ $Date: 2000/03/01 15:23:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -80,7 +80,7 @@ void rtcpd_ResetCtapeError() {
     int errbufsiz = CA_MAXLINELEN+1;
 
     Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
-    if ( errbuf == NULL ) *errbuf = '\0';
+    if ( errbuf != NULL ) *errbuf = '\0';
     serrno = 0;
     return;
 }
@@ -714,7 +714,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     save_serrno = serrno;
 
     if ( tapereq != NULL ) tapereq->TEndUnmount = (int)time(NULL);
-    if ( rc == -1 ) {
+    if ( rc == -1 && save_serrno != ETRLSP) {
         rtcp_log(LOG_ERR,"rtcpd_Release() Ctape_rls() %s\n",
             CTP_ERRTXT);
         if ( file != NULL ) {
@@ -742,8 +742,10 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
         }
         if ( file != NULL && rc == -1 ) 
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
-    } else
+    } else {
+        rc = 0;
         rtcp_log(LOG_DEBUG,"rtcpd_Release() Ctape_rls() successful\n");
+    }
 
     serrno = save_serrno;
     return(rc);
