@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.9 2002/09/20 06:59:35 baud Exp $
+ * $Id: popen.c,v 1.10 2003/09/14 06:38:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.9 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.10 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -24,12 +24,11 @@ static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.9 $ $Date: 2002/0
 #include <sys/param.h>          /* For MAXHOSTNAMELEN definition  */
 #endif
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include "rfio.h"
 #include "rfio_rfilefdt.h"
 extern RFILE *rfilefdt[MAXRFD] ;
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif
 #if (defined(_AIX) && defined(_IBMESA)) || (defined(__osf__) && defined(__alpha)) || defined(_WIN32) || defined(linux)
 extern char *cuserid();
 #endif
@@ -154,7 +153,7 @@ char *type 	;
 		
    p= buf ;
    if ( (uname=cuserid(NULL)) == NULL) {
-      TRACE(2, "rfio" ,"rfio_popen: cuserid error %s",sys_errlist[errno]);
+	   TRACE(2, "rfio" ,"rfio_popen: cuserid error %s",strerror(errno));
       (void) free((char *)rfp);
       END_TRACE();
       return NULL ;

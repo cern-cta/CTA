@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.8 2003/06/27 05:18:50 baud Exp $
+ * $Id: xyopen.c,v 1.9 2003/09/14 06:38:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.8 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.9 $ $Date: 2003/09/14 06:38:58 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -36,6 +36,8 @@ static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.8 $ $Date: 2003/
 #else 
 #include <sys/param.h>
 #endif
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
 #include <pwd.h>
 #include <Cpwd.h>
@@ -44,9 +46,6 @@ RFILE DLL_DECL *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 
 extern char *getacct();
 extern int DLL_DECL switch_open();
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif
 
 int DLL_DECL rfio_xysock(lun) 
 int lun ;
@@ -272,7 +271,7 @@ char *reqhost;
    ftnlun[lun]=fd;
 
    if ( (pw = Cgetpwuid(geteuid()) ) == NULL ) {
-      TRACE(2, "rfio" ,"rfio_open: Cgetpwuid() error %s",sys_errlist[errno]);
+      TRACE(2, "rfio" ,"rfio_open: Cgetpwuid() error %s",strerror(errno));
       free ((char *)fd);
       END_TRACE();
       return(errno);

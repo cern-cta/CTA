@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.2 2003/06/27 05:18:50 baud Exp $
+ * $Id: stream64.c,v 1.3 2003/09/14 06:38:58 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.2 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.3 $ $Date: 2003/09/14 06:38:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
 
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
 
+#include <errno.h>
+#include <string.h>
 #include <syslog.h>             /* system logger                        */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -57,10 +59,6 @@ static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.2 $ $Date: 200
 #define	PDP_ENDIAN	3412
 #endif
 #include <netinet/tcp.h>
-#endif
-
-#ifndef linux
-extern char *sys_errlist[];     /* system error list            */
 #endif
 
 EXTERN_C int DLL_DECL data_rfio_connect _PROTO((char *, int *, int, int));
@@ -239,7 +237,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    }
    tolen=sizeof(to);
    if (getpeername(rfp->s,(struct sockaddr *)&to, &tolen)<0)        {
-      syslog(LOG_ALERT, "rfio: rfio_open64_ext_v3: getpeername: %s\n",sys_errlist[errno]);
+      syslog(LOG_ALERT, "rfio: rfio_open64_ext_v3: getpeername: %s\n",strerror(errno));
    }
    hp = Cgethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family);
    if (hp == NULL){
@@ -282,7 +280,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /* Set the keepalive option on socket */
    yes = 1;
    if (setsockopt(rfp->s,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepalive on ctrl: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepalive on ctrl: %s",strerror(errno));
    }
    TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepalive on ctrl done");
 
@@ -290,7 +288,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /* Set the keepalive interval to 20 mns instead of the default 2 hours */
    yes = 20 * 60;
    if (setsockopt(rfp->s,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepidle on ctrl: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepidle on ctrl: %s",strerror(errno));
    }
    TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt keepidle on ctrl done (%d s)",yes);
 #endif
@@ -298,7 +296,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
 #if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
    yes = 1;
    if (setsockopt(rfp->s,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt nodelay on ctrl: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt nodelay on ctrl: %s",strerror(errno));
    }
    TRACE(2,"rfio","rfio_open64_ext_v3: setsockopt nodelay option set on ctrl socket");
 #endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
@@ -315,7 +313,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
 
    if ( (pw = Cgetpwuid(geteuid()) ) == NULL ) {
       save_errno = errno; save_serrno = serrno;
-      TRACE(2, "rfio" ,"rfio_open64_ext_v3: Cgetpwuid() error %s",sys_errlist[errno]);
+      TRACE(2, "rfio" ,"rfio_open64_ext_v3: Cgetpwuid() error %s",strerror(errno));
       rfio_cleanup_v3(rfp->s);
       END_TRACE();
       serrno = save_serrno; errno = save_errno;
@@ -357,7 +355,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       TRACE(2,"rfio","rfio_open64_v3: write(): ERROR occured (errno=%d)", errno) ;
       syslog(LOG_ALERT,
          "rfio: open64_v3: %s (error %d , serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
-         sys_errlist[errno > 0 ? errno : serrno], errno, serrno, 
+         strerror(errno > 0 ? errno : serrno), errno, serrno, 
          rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
          RQSTSIZE+len);
       rfio_cleanup_v3(rfp->s) ;
@@ -400,7 +398,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
             rb, errno, serrno);
 	 syslog(LOG_ALERT,
             "rfio: open64_v3: %s (error %d, serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
-            sys_errlist[errno > 0 ? errno : serrno], errno, serrno, 
+            strerror(errno > 0 ? errno : serrno), errno, serrno, 
             rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
             rlen);
 	 rfio_cleanup_v3(rfp->s);
@@ -460,7 +458,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /* Set the keepalive option on both sockets */
    yes = 1;
    if (setsockopt(rfp->lseekhow,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-      TRACE(2,"rfio","open64_v3: setsockopt keepalive on data: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","open64_v3: setsockopt keepalive on data: %s",strerror(errno));
    }
    TRACE(2,"rfio","open64_v3: setsockopt keepalive on data done");
 
@@ -468,14 +466,14 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /* Set the keepalive interval to 20 mns instead of the default 2 hours */
    yes = 20 * 60;
    if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-      TRACE(2,"rfio","open64_v3: setsockopt keepidle on data: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","open64_v3: setsockopt keepidle on data: %s",strerror(errno));
    }
    TRACE(2,"rfio","open64_v3: setsockopt keepidle on data done (%d s)",yes);
 #endif	    
 #if !(defined(__osf__) && defined(__alpha) && defined(DUXV4))
    yes = 1;
    if (setsockopt(rfp->lseekhow,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-      TRACE(2,"rfio","open64_v3: setsockopt nodelay on data: %s",sys_errlist[errno]);
+      TRACE(2,"rfio","open64_v3: setsockopt nodelay on data: %s",strerror(errno));
    }
    TRACE(2,"rfio","open64_v3: setsockopt nodelay option set on data socket");
 #endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
@@ -620,7 +618,7 @@ int     ctrl_sock, size;
 	 if (n == 0)
 	    TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", sstrerror(serrno));
 	 else
-	    TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", sys_errlist[errno]);
+	    TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", strerror(errno));
 	 END_TRACE();
 	 return -1 ;
       }
@@ -679,7 +677,7 @@ int     ctrl_sock, size;
 	    }
 	    else
 	    {
-	       TRACE(2, "rfio","read64_v3: read ctrl socket: read(): %s", sys_errlist[errno]);
+	       TRACE(2, "rfio","read64_v3: read ctrl socket: read(): %s", strerror(errno));
 	       END_TRACE() ;
 	       return -1 ;
 	    }
@@ -891,7 +889,7 @@ int     ctrl_sock, size;
 	 if (n == 0)
 	    TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", sstrerror(serrno));
 	 else
-	    TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", sys_errlist[errno]);
+	    TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", strerror(errno));
 	 END_TRACE();
 	 return -1 ;
       }

@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.11 2002/09/20 06:59:35 baud Exp $
+ * $Id: pclose.c,v 1.12 2003/09/14 06:38:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.12 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -18,12 +18,11 @@ static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.11 $ $Date: 2002
 #else
 #include <sys/wait.h>
 #endif
+#include <errno.h>
+#include <string.h>
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
 #include "rfio_rfilefdt.h"
-#ifndef linux
-extern char     *sys_errlist[]; /* External error list          	*/
-#endif
 
 /*
  * remote pclose
@@ -86,7 +85,7 @@ RFILE 	*fs ;
    p = buf ;
    if ( netread_timeout( fs->s , buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != 2*LONGSIZE)  {
       fss = fs->s;
-      TRACE(2,"rfio", "pclose: write(): %s", sys_errlist[errno]);
+      TRACE(2,"rfio", "pclose: write(): %s", strerror(errno));
       (void) free((char *)fs) ;
       (void)close(fss) ;
       END_TRACE() ;

@@ -1,5 +1,5 @@
 /*
- * $Id: read64.c,v 1.1 2002/11/19 10:51:22 baud Exp $
+ * $Id: read64.c,v 1.2 2003/09/14 06:38:57 jdurand Exp $
  */
 
 /*
@@ -8,16 +8,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:22 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: read64.c,v $ $Revision: 1.2 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* read64.c       Remote File I/O - read  a file                          */
 
 
 #include <syslog.h>             /* system logger 			*/
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif
+#include <errno.h>
+#include <string.h>
 
 /*
  * System remote file I/O definitions
@@ -161,7 +160,7 @@ int     s, size;
       TRACE(2, "rfio", "rfio_read64: setsockopt(SOL_SOCKET, SO_RCVBUF): for %s : %d", ifce, bufsize);
       if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&(bufsize), sizeof(bufsize)) == -1) {
 	 TRACE(2, "rfio" ,"rfio_read64: setsockopt(SO_RCVBUF)");
-	 syslog(LOG_ALERT, "rfio: setsockopt(SO_RCVBUF): %s", sys_errlist[errno]);
+	 syslog(LOG_ALERT, "rfio: setsockopt(SO_RCVBUF): %s", strerror(errno));
       }
    }
    /*

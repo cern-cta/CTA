@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.15 2003/06/27 05:18:50 baud Exp $
+ * $Id: opendir.c,v 1.16 2003/09/14 06:38:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.15 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.16 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -17,6 +17,8 @@ static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.15 $ $Date: 200
 #include <syslog.h>             /* system logger                        */
 #include <pwd.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfio_rdirfdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
@@ -25,10 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.15 $ $Date: 200
 #endif /* _WIN32 */
 #include <Cpwd.h>
 extern char *getacct();
-
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif /* linux */
 
 RDIR  *rdirfdt[MAXRFD];         /* File descriptors tables             */
 
@@ -172,7 +170,7 @@ char  	*vmstr ;
    }
    tolen=sizeof(to);
    if (getpeername(rdp->s,(struct sockaddr *)&to, &tolen)<0)        {
-      syslog(LOG_ALERT, "rfio: opendir: getpeername: %s\n",sys_errlist[errno]);
+      syslog(LOG_ALERT, "rfio: opendir: getpeername: %s\n",strerror(errno));
    }
    if ((hp = gethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){
       strncpy(rdp->host, (char *)inet_ntoa(to.sin_addr), RESHOSTNAMELEN );
@@ -215,10 +213,10 @@ char  	*vmstr ;
    rcode = 1 ;
    if (setsockopt(rdp->s, SOL_SOCKET, SO_KEEPALIVE,(char *)&rcode, sizeof (int) ) == -1) {
       TRACE(2, "rfio" ,"rfio_opendir: setsockopt(SO_KEEPALIVE) failed");
-      syslog(LOG_ALERT, "rfio: opendir: setsockopt(SO_KEEPALIVE): %s", sys_errlist[errno]);
+      syslog(LOG_ALERT, "rfio: opendir: setsockopt(SO_KEEPALIVE): %s", strerror(errno));
    }
    if ( (pw = Cgetpwuid(geteuid()) ) == NULL ) {
-      TRACE(2, "rfio" ,"rfio_opendir: Cgetpwuid() error %s",sys_errlist[errno]);
+      TRACE(2, "rfio" ,"rfio_opendir: Cgetpwuid() error %s",strerror(errno));
       rfio_dircleanup(rdp->s);
       END_TRACE();
       return(NULL) ;
@@ -252,7 +250,7 @@ char  	*vmstr ;
    if (netwrite_timeout(rdp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2,"rfio","rfio_opendir: write(): ERROR occured (errno=%d)", errno) ;
       syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
-	     sys_errlist[errno], errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, rfio_buf, RQSTSIZE+len);
+	     strerror(errno), errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, rfio_buf, RQSTSIZE+len);
       rfio_dircleanup(rdp->s) ;
       END_TRACE() ;
       return(NULL) ;
@@ -264,7 +262,7 @@ char  	*vmstr ;
    if (netread_timeout(rdp->s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
       TRACE(2, "rfio", "rfio_opendir: read(): ERROR occured (errno=%d)", errno);
       syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
-	     sys_errlist[errno], errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, 
+	     strerror(errno), errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, 
 	     rfio_buf, WORDSIZE+3*LONGSIZE);
       rfio_dircleanup(rdp->s);
       END_TRACE();

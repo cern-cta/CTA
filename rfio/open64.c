@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.2 2003/06/27 05:18:50 baud Exp $
+ * $Id: open64.c,v 1.3 2003/09/14 06:38:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.2 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.3 $ $Date: 2003/09/14 06:38:56 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* open64.c       Remote File I/O - open file a file                      */
@@ -16,6 +16,8 @@ static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.2 $ $Date: 2003/
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
 
 #include <syslog.h>             /* system logger                        */
+#include <errno.h>
+#include <string.h>
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfio_rfilefdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
@@ -25,10 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.2 $ $Date: 2003/
 #include <pwd.h>
 #include <stdlib.h>
 #include <Cpwd.h>
-
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif
 
 extern RFILE *rfilefdt[MAXRFD];        /* File descriptors tables       */
 
@@ -245,7 +243,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    }
    tolen=sizeof(to);
    if (getpeername(rfp->s,(struct sockaddr *)&to, &tolen)<0)        {
-      syslog(LOG_ALERT, "rfio: open64: getpeername: %s\n",sys_errlist[errno]);
+      syslog(LOG_ALERT, "rfio: open64: getpeername: %s\n",strerror(errno));
    }
    if ((hp = gethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){
       strncpy(rfp->host, (char *)inet_ntoa(to.sin_addr), RESHOSTNAMELEN );
@@ -291,7 +289,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    rcode = 1 ;
    if (setsockopt(rfp->s, SOL_SOCKET, SO_KEEPALIVE,(char *)&rcode, sizeof (int) ) == -1) {
       TRACE(2, "rfio" ,"rfio_open64_ext: setsockopt(SO_KEEPALIVE) failed");
-      syslog(LOG_ALERT, "rfio: open64: setsockopt(SO_KEEPALIVE): %s", sys_errlist[errno]);
+      syslog(LOG_ALERT, "rfio: open64: setsockopt(SO_KEEPALIVE): %s", strerror(errno));
    }
 
    /*
@@ -312,7 +310,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    }
 
    if ( (pw = Cgetpwuid(geteuid()) ) == NULL ) {
-      TRACE(2, "rfio" ,"rfio_open64_ext: Cgetpwuid() error %s",sys_errlist[errno]);
+      TRACE(2, "rfio" ,"rfio_open64_ext: Cgetpwuid() error %s",strerror(errno));
       rfio_cleanup(rfp->s);
       END_TRACE();
       return -1 ;
@@ -350,7 +348,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    if (netwrite_timeout(rfp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2,"rfio","rfio_open64_ext: write(): ERROR occured (errno=%d)", errno) ;
       syslog(LOG_ALERT, "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
-	     sys_errlist[errno], errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
+	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
       rfio_cleanup(rfp->s) ;
       END_TRACE() ;
       return -1 ;
@@ -376,7 +374,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       else {
          syslog(LOG_ALERT,
             "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
-            sys_errlist[errno], errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, replen);
+            strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, replen);
          rfio_cleanup(rfp->s);
          return(-1);
       }

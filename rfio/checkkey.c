@@ -1,5 +1,5 @@
 /*
- * $Id: checkkey.c,v 1.4 1999/12/10 19:42:49 baran Exp $
+ * $Id: checkkey.c,v 1.5 2003/09/14 06:38:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.4 $ $Date: 1999/12/10 19:42:49 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.5 $ $Date: 2003/09/14 06:38:56 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.4 $ $Date: 199
 #include <netdb.h>
 #endif
 #include <log.h>
+#include <string.h>
 #include <errno.h>
 #include <serrno.h>
 #if defined(HPSS) /* Clash with marshall.h in /usr/include/dce */
@@ -35,10 +36,6 @@ static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.4 $ $Date: 199
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1
 
-#ifndef linux 
-extern char *sys_errlist[] ;
-#endif
-extern int errno;
 extern int (*recvfunc)();       /* Network receive function */
 extern int (*sendfunc)();	/* Network send function */
 
@@ -64,7 +61,7 @@ int connecttpread(host,aport)
          * Creating socket.
          */
         if (( sock= socket(AF_INET,SOCK_STREAM,0)) == -1 ) {
-                log(LOG_ERR,"socket(): %s\n",sys_errlist[errno]) ;
+                log(LOG_ERR,"socket(): %s\n",strerror(errno)) ;
                 return -1 ;
         }
 
@@ -89,7 +86,7 @@ int connecttpread(host,aport)
          * Connecting the socket.
          */
         if ( connect(sock, (struct sockaddr *) &sin, sizeof(sin))  == -1 ) {
-                log(LOG_ERR,"connect(): %s\n",sys_errlist[errno]) ;
+                log(LOG_ERR,"connect(): %s\n",strerror(errno)) ;
                 return -1 ;
         }
 
@@ -128,14 +125,14 @@ u_short  key;
          * Sending key.
          */
         if ( netwrite_timeout(sock,marsh_buf,3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (3*LONGSIZE) ) {
-                log(LOG_ERR,"netwrite(): %s\n", sys_errlist[errno]) ;
+                log(LOG_ERR,"netwrite(): %s\n", strerror(errno)) ;
                 return -1 ;
         }
 	/*
 	 * Waiting for ok akn.
 	 */
 	if ( (rcode= netread_timeout(sock,marsh_buf,LONGSIZE*3,RFIO_CTRL_TIMEOUT)) != (LONGSIZE*3) ) {
-                log(LOG_ERR,"netread(): %s\n",sys_errlist[errno]) ;
+                log(LOG_ERR,"netread(): %s\n",strerror(errno)) ;
                 (void) close(sock) ;
                 return -1 ;
 	}

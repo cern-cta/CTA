@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.10 2002/09/20 06:59:36 baud Exp $
+ * $Id: symlink.c,v 1.11 2003/09/14 06:38:58 jdurand Exp $
  */
 
 
@@ -9,18 +9,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.11 $ $Date: 2003/09/14 06:38:58 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
 #include "rfio.h"
 #include <Cpwd.h>
 
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>            /* malloc prototype */
-
-#ifndef linux
-extern char *sys_errlist[];     /* system error list */
-#endif
 
 /*
  * returns -1 if an error occured or no information is available at the
@@ -84,7 +82,7 @@ char *n2 ;
    gid = getegid () ;
    if ( (pw = Cgetpwuid(uid) ) == NULL ) {
       TRACE(2, "rfio" ,"rfio_symlink: Cgetpwuid() error %s",
-	    sys_errlist[errno]);
+			strerror(errno));
       END_TRACE();
       return -1 ;
    }

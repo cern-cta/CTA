@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rdirfdt.c,v 1.7 2001/05/12 07:33:42 jdurand Exp $
+ * $Id: rfio_rdirfdt.c,v 1.8 2003/09/14 06:38:58 jdurand Exp $
  */
 
 /*
@@ -18,10 +18,6 @@
 #include <stdlib.h>
 #include "rfio.h"
 #include "rfio_rdirfdt.h"
-
-#ifndef linux
-extern char *sys_errlist[];     /* system error list                    */
-#endif
 
 extern RDIR *rdirfdt[MAXRFD];
 
