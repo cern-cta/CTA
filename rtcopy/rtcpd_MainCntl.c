@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.69 $ $Date: 2000/05/04 08:34:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.70 $ $Date: 2000/05/04 10:08:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1574,14 +1574,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                 break;
             }
             tapereq.TStartRtcpd = (int)time(NULL);
+            nexttape->tapereq = tapereq;
+            CLIST_INSERT(tape,nexttape);
             if ( tapereq.VolReqID != client->VolReqID ) {
                 rtcp_log(LOG_ERR,"rtcpd_MainCntl() wrong VolReqID %d, should be %d\n",
                     tapereq.VolReqID, client->VolReqID);
                 rc = -1;
                 break;
             }
-            nexttape->tapereq = tapereq;
-            CLIST_INSERT(tape,nexttape);
             rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, unit %s, VolReqID=%d,mode=%d\n",
                 tapereq.vid,tapereq.dgn,tapereq.unit,tapereq.VolReqID,
                 tapereq.mode);
