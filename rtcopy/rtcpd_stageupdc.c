@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.14 $ $Date: 2000/02/28 07:41:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.15 $ $Date: 2000/03/01 10:40:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -46,7 +46,7 @@ extern char *geterr();
 #include <Ctape_api.h>
 #include <serrno.h>
 
-#if !defined(USE_STAGEAPI)
+#if defined(USE_STAGECMD)
 #define ADD_COPT(X,Y,Z) {if (Z!=NULL && *Z!='\0') sprintf(&X[strlen(X)],Y,Z);}
 #define ADD_NOPT(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y,Z);}
 #define ADD_SWITCH(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y);}
@@ -60,7 +60,7 @@ extern char *geterr();
 #if !defined(STGCMD)
 #define STGCMD "stageupdc"
 #endif /* STGCMD */
-#endif /* USE_STAGEAPI */
+#endif /* USE_STAGECMD */
 
 int rtcpd_stageupdc(tape_list_t *tape,
                     file_list_t *file) {
@@ -68,12 +68,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
-#if !defined(USE_STAGEAPI)
+#if defined(USE_STAGECMD)
     char stageupdc_cmd[CA_MAXLINELEN+1];
     FILE *stgupdc_fd;
-#else  /* !USE_STAGEAPI */
+#else  /* USE_STAGECMD */
     u_signed64 nb_bytes;
-#endif /* !USE_STAGEAPI */
+#endif /* USE_STAGECMD */
 
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
@@ -93,7 +93,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                        (time_t)filereq->TEndPosition;
 
 
-#if defined(USE_STAGEAPI)
+#if !defined(USE_STAGECMD)
     status = filereq->err.errorcode;
     want_reply = 0 ;
     if ( filereq->proc_status == RTCP_POSITIONED ) {
@@ -146,7 +146,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
         }
 
     }
-#else /* USE_STAGEAPI */
+#else /* !USE_STAGECMD */
     sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
     if ( filereq->cprc < 0 && 
         (filereq->err.severity & (RTCP_FAILED | RTCP_EOD)) ) {
@@ -211,7 +211,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     rc = PCLOSE(stgupdc_fd);
     signal(SIGCHLD,SIG_IGN);
-#endif /* !USE_STAGEAPI */
+#endif /* !USE_STAGECMD */
 
     if ( rc == 0 &&  tapereq->mode == WRITE_DISABLE && *newpath != '\0' && 
          strcmp(newpath,filereq->file_path) ) {
