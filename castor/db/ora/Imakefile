@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/05 14:13:33 $ $Author: jdurand $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Release$ $Date: 2004/07/05 14:19:26 $ $Author: jdurand $
 #
 # Make Castor DB libraries
 #
@@ -34,12 +34,8 @@ DEBUG  = -g
 #endif
 #endif
 
-DEPLIB = DepSharedLibraryTargetName(FileName(FileName(..,..),shlib),shift)
-
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -L FileName(FileName(FileName(..,..),..),shlib) -lshift
 
 ORALIB_SRCS = OraBaseObj.cpp \
               OraBaseCnv.cpp \
@@ -68,7 +64,7 @@ ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 COMMONLIB = LibraryTargetName(castorCommonOra)
 LD = g++
 
-all: $(DEPLIB) $(COMMONLIB)
+all: $(COMMONLIB)
 
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
 
