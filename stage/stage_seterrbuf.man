@@ -1,0 +1,50 @@
+.\" @(#)$RCSfile: stage_seterrbuf.man,v $ $Revision: 1.1 $ $Date: 2001/03/28 09:03:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGE_SETERRBUF 3 "$Date: 2001/03/28 09:03:57 $" CASTOR "stage Library Functions"
+.SH NAME
+stage_seterrbuf \- set receiving buffer for error messages
+.SH SYNOPSIS
+.BI "int stage_seterrbuf (char *" buffer ,
+.BI "int " buflen )
+.LP
+.BI "int stage_setoutbuf (char *" buffer ,
+.BI "int " buflen )
+.LP
+.BI "int stage_setlog (void (*logfunction) (int, char *))
+.SH DESCRIPTION
+.B stage_seterrbuf
+tells the stage client API the address and the size of the buffer
+to be used for error messages. If this routine is not called, the messages
+are printed on
+.BR stderr .
+.LP
+.B stage_setoutbuf
+tells the stage client API the address and the size of the buffer
+to be used for output messages. If this routine is not called, the messages
+are printed on
+.BR stdout .
+.LP
+.B stage_setlog
+gives the name of the user routine to be executed for logging a stager message.
+The first argument of the logging function is the message type
+.B MSG_ERR
+or
+.BR MSG_OUT .
+The second argument is the message itself.
+.LP 
+.B stage_setlog
+has priority over
+.B stage_seterrbuf
+and
+.BR stage_setoutbuf .
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+memory could not be allocated for the thread specific information.
