@@ -84,6 +84,10 @@ const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementS
 const std::string castor::db::ora::OraFileClassCnv::s_deleteCastorFileStatementString =
 "UPDATE rh_CastorFile SET fileClass = 0 WHERE fileClass = :1";
 
+/// SQL remote update statement for member 
+const std::string castor::db::ora::OraFileClassCnv::s_remoteUpdateCastorFileStatementString =
+"UPDATE rh_CastorFile SET fileClass = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -96,7 +100,8 @@ castor::db::ora::OraFileClassCnv::OraFileClassCnv() :
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_selectCastorFileStatement(0),
-  m_deleteCastorFileStatement(0) {}
+  m_deleteCastorFileStatement(0),
+  m_remoteUpdateCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -120,6 +125,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_deleteCastorFileStatement);
     deleteStatement(m_selectCastorFileStatement);
+    deleteStatement(m_remoteUpdateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -130,6 +136,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_selectCastorFileStatement = 0;
   m_deleteCastorFileStatement = 0;
+  m_remoteUpdateCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -197,6 +204,14 @@ void castor::db::ora::OraFileClassCnv::fillRepCastorFile(castor::stager::FileCla
     if ((item = List.find((*it)->id())) == List.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileClass);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateCastorFileStatement) {
+        m_remoteUpdateCastorFileStatement = createStatement(s_remoteUpdateCastorFileStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateCastorFileStatement->setDouble(1, obj->id());
+      m_remoteUpdateCastorFileStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateCastorFileStatement->executeUpdate();
       List.erase(item);
     }
   }

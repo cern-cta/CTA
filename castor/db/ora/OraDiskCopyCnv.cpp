@@ -77,14 +77,6 @@ const std::string castor::db::ora::OraDiskCopyCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL select statement for member 
-const std::string castor::db::ora::OraDiskCopyCnv::s_selectSubRequestStatementString =
-"SELECT id from rh_SubRequest WHERE diskcopy = :1";
-
-/// SQL delete statement for member 
-const std::string castor::db::ora::OraDiskCopyCnv::s_deleteSubRequestStatementString =
-"UPDATE rh_SubRequest SET diskcopy = 0 WHERE diskcopy = :1";
-
 /// SQL existence statement for member fileSystem
 const std::string castor::db::ora::OraDiskCopyCnv::s_checkFileSystemExistStatementString =
 "SELECT id from rh_FileSystem WHERE id = :1";
@@ -112,8 +104,6 @@ castor::db::ora::OraDiskCopyCnv::OraDiskCopyCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectSubRequestStatement(0),
-  m_deleteSubRequestStatement(0),
   m_checkFileSystemExistStatement(0),
   m_updateFileSystemStatement(0),
   m_checkCastorFileExistStatement(0),
@@ -139,8 +129,6 @@ void castor::db::ora::OraDiskCopyCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_deleteSubRequestStatement);
-    deleteStatement(m_selectSubRequestStatement);
     deleteStatement(m_checkFileSystemExistStatement);
     deleteStatement(m_updateFileSystemStatement);
     deleteStatement(m_checkCastorFileExistStatement);
@@ -153,8 +141,6 @@ void castor::db::ora::OraDiskCopyCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_selectSubRequestStatement = 0;
-  m_deleteSubRequestStatement = 0;
   m_checkFileSystemExistStatement = 0;
   m_updateFileSystemStatement = 0;
   m_checkCastorFileExistStatement = 0;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageOutRequestCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 14:48:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -299,6 +299,12 @@ namespace castor {
         /// SQL delete statement object for member subRequests
         oracle::occi::Statement *m_deleteSubRequestStatement;
 
+        /// SQL remote update statement for member subRequests
+        static const std::string s_remoteUpdateSubRequestStatementString;
+
+        /// SQL remote update statement object for member subRequests
+        oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
+
         /// SQL select statement for member client
         static const std::string s_selectIClientStatementString;
 
@@ -310,6 +316,12 @@ namespace castor {
 
         /// SQL delete statement object for member client
         oracle::occi::Statement *m_deleteIClientStatement;
+
+        /// SQL remote update statement for member client
+        static const std::string s_remoteUpdateIClientStatementString;
+
+        /// SQL remote update statement object for member client
+        oracle::occi::Statement *m_remoteUpdateIClientStatement;
 
         /// SQL checkExist statement for member client
         static const std::string s_checkIClientExistStatementString;

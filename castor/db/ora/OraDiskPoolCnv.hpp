@@ -259,6 +259,12 @@ namespace castor {
         /// SQL delete statement object for member fileSystems
         oracle::occi::Statement *m_deleteFileSystemStatement;
 
+        /// SQL remote update statement for member fileSystems
+        static const std::string s_remoteUpdateFileSystemStatementString;
+
+        /// SQL remote update statement object for member fileSystems
+        oracle::occi::Statement *m_remoteUpdateFileSystemStatement;
+
         /// SQL insert statement for member svcClasses
         static const std::string s_insertSvcClassStatementString;
 

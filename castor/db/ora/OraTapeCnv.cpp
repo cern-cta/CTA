@@ -87,6 +87,10 @@ const std::string castor::db::ora::OraTapeCnv::s_selectStreamStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteStreamStatementString =
 "UPDATE rh_Stream SET tape = 0 WHERE tape = :1";
 
+/// SQL remote update statement for member stream
+const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateStreamStatementString =
+"UPDATE rh_Stream SET tape = : 1 WHERE id = :2";
+
 /// SQL existence statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString =
 "SELECT id from rh_Stream WHERE id = :1";
@@ -103,6 +107,10 @@ const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteSegmentStatementString =
 "UPDATE rh_Segment SET tape = 0 WHERE tape = :1";
 
+/// SQL remote update statement for member segments
+const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateSegmentStatementString =
+"UPDATE rh_Segment SET tape = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -116,10 +124,12 @@ castor::db::ora::OraTapeCnv::OraTapeCnv() :
   m_deleteTypeStatement(0),
   m_selectStreamStatement(0),
   m_deleteStreamStatement(0),
+  m_remoteUpdateStreamStatement(0),
   m_checkStreamExistStatement(0),
   m_updateStreamStatement(0),
   m_selectSegmentStatement(0),
-  m_deleteSegmentStatement(0) {}
+  m_deleteSegmentStatement(0),
+  m_remoteUpdateSegmentStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -143,10 +153,12 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_deleteStreamStatement);
     deleteStatement(m_selectStreamStatement);
+    deleteStatement(m_remoteUpdateStreamStatement);
     deleteStatement(m_checkStreamExistStatement);
     deleteStatement(m_updateStreamStatement);
     deleteStatement(m_deleteSegmentStatement);
     deleteStatement(m_selectSegmentStatement);
+    deleteStatement(m_remoteUpdateSegmentStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -157,10 +169,12 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_selectStreamStatement = 0;
   m_deleteStreamStatement = 0;
+  m_remoteUpdateStreamStatement = 0;
   m_checkStreamExistStatement = 0;
   m_updateStreamStatement = 0;
   m_selectSegmentStatement = 0;
   m_deleteSegmentStatement = 0;
+  m_remoteUpdateSegmentStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -243,6 +257,15 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->stream(), false, OBJ_Tape);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateStreamStatement) {
+        m_remoteUpdateStreamStatement = createStatement(s_remoteUpdateStreamStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateStreamStatement->setDouble(1, obj->id());
+      m_remoteUpdateStreamStatement->setDouble(2, obj->stream()->id());
+      m_remoteUpdateStreamStatement->executeUpdate();
     }
     // Close resultset
     m_checkStreamExistStatement->closeResultSet(rset);
@@ -282,6 +305,14 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_Tape);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateSegmentStatement) {
+        m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateSegmentStatement->setDouble(1, obj->id());
+      m_remoteUpdateSegmentStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateSegmentStatement->executeUpdate();
       segmentsList.erase(item);
     }
   }

@@ -356,7 +356,8 @@ void CppHOraCnvWriter::writeMembers() {
                 << "Statement;"
                 << endl << endl;
     } else {
-      if (as->type.multiLocal == MULT_ONE) {
+      if (as->type.multiLocal == MULT_ONE &&
+          as->type.multiRemote != MULT_UNKNOWN) {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -384,6 +385,20 @@ void CppHOraCnvWriter::writeMembers() {
                   << as->remotePart.name
                   << endl << getIndent()
                   << "oracle::occi::Statement *m_delete"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement;"
+                  << endl << endl << getIndent()
+                  << "/// SQL remote update statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "static const std::string s_remoteUpdate"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "StatementString;"
+                  << endl << endl << getIndent()
+                  << "/// SQL remote update statement object for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "oracle::occi::Statement *m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
                   << endl << endl;

@@ -100,6 +100,10 @@ const std::string castor::db::ora::OraStreamCnv::s_selectTapeStatementString =
 const std::string castor::db::ora::OraStreamCnv::s_deleteTapeStatementString =
 "UPDATE rh_Tape SET stream = 0 WHERE stream = :1";
 
+/// SQL remote update statement for member tape
+const std::string castor::db::ora::OraStreamCnv::s_remoteUpdateTapeStatementString =
+"UPDATE rh_Tape SET stream = : 1 WHERE id = :2";
+
 /// SQL existence statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_checkTapeExistStatementString =
 "SELECT id from rh_Tape WHERE id = :1";
@@ -132,6 +136,7 @@ castor::db::ora::OraStreamCnv::OraStreamCnv() :
   m_selectTapeCopyStatement(0),
   m_selectTapeStatement(0),
   m_deleteTapeStatement(0),
+  m_remoteUpdateTapeStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
   m_checkTapePoolExistStatement(0),
@@ -162,6 +167,7 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
     deleteStatement(m_selectTapeCopyStatement);
     deleteStatement(m_deleteTapeStatement);
     deleteStatement(m_selectTapeStatement);
+    deleteStatement(m_remoteUpdateTapeStatement);
     deleteStatement(m_checkTapeExistStatement);
     deleteStatement(m_updateTapeStatement);
     deleteStatement(m_checkTapePoolExistStatement);
@@ -179,6 +185,7 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
   m_selectTapeCopyStatement = 0;
   m_selectTapeStatement = 0;
   m_deleteTapeStatement = 0;
+  m_remoteUpdateTapeStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
   m_checkTapePoolExistStatement = 0;
@@ -315,6 +322,15 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_Stream);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateTapeStatement) {
+        m_remoteUpdateTapeStatement = createStatement(s_remoteUpdateTapeStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateTapeStatement->setDouble(1, obj->id());
+      m_remoteUpdateTapeStatement->setDouble(2, obj->tape()->id());
+      m_remoteUpdateTapeStatement->executeUpdate();
     }
     // Close resultset
     m_checkTapeExistStatement->closeResultSet(rset);

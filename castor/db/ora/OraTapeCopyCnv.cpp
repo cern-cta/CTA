@@ -100,6 +100,10 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementStrin
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteSegmentStatementString =
 "UPDATE rh_Segment SET copy = 0 WHERE copy = :1";
 
+/// SQL remote update statement for member segments
+const std::string castor::db::ora::OraTapeCopyCnv::s_remoteUpdateSegmentStatementString =
+"UPDATE rh_Segment SET copy = : 1 WHERE id = :2";
+
 /// SQL existence statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_checkCastorFileExistStatementString =
 "SELECT id from rh_CastorFile WHERE id = :1";
@@ -124,6 +128,7 @@ castor::db::ora::OraTapeCopyCnv::OraTapeCopyCnv() :
   m_selectStreamStatement(0),
   m_selectSegmentStatement(0),
   m_deleteSegmentStatement(0),
+  m_remoteUpdateSegmentStatement(0),
   m_checkCastorFileExistStatement(0),
   m_updateCastorFileStatement(0) {}
 
@@ -152,6 +157,7 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
     deleteStatement(m_selectStreamStatement);
     deleteStatement(m_deleteSegmentStatement);
     deleteStatement(m_selectSegmentStatement);
+    deleteStatement(m_remoteUpdateSegmentStatement);
     deleteStatement(m_checkCastorFileExistStatement);
     deleteStatement(m_updateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -167,6 +173,7 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
   m_selectStreamStatement = 0;
   m_selectSegmentStatement = 0;
   m_deleteSegmentStatement = 0;
+  m_remoteUpdateSegmentStatement = 0;
   m_checkCastorFileExistStatement = 0;
   m_updateCastorFileStatement = 0;
 }
@@ -289,6 +296,14 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
     if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_TapeCopy);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateSegmentStatement) {
+        m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateSegmentStatement->setDouble(1, obj->id());
+      m_remoteUpdateSegmentStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateSegmentStatement->executeUpdate();
       segmentsList.erase(item);
     }
   }

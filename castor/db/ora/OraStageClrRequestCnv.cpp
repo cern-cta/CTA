@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/26 12:57:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/26 14:48:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -103,6 +103,10 @@ const std::string castor::db::ora::OraStageClrRequestCnv::s_selectSubRequestStat
 const std::string castor::db::ora::OraStageClrRequestCnv::s_deleteSubRequestStatementString =
 "UPDATE rh_SubRequest SET request = 0 WHERE request = :1";
 
+/// SQL remote update statement for member subRequests
+const std::string castor::db::ora::OraStageClrRequestCnv::s_remoteUpdateSubRequestStatementString =
+"UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
+
 /// SQL select statement for member client
 const std::string castor::db::ora::OraStageClrRequestCnv::s_selectIClientStatementString =
 "SELECT id from rh_IClient WHERE request = :1";
@@ -110,6 +114,10 @@ const std::string castor::db::ora::OraStageClrRequestCnv::s_selectIClientStateme
 /// SQL delete statement for member client
 const std::string castor::db::ora::OraStageClrRequestCnv::s_deleteIClientStatementString =
 "UPDATE rh_IClient SET request = 0 WHERE request = :1";
+
+/// SQL remote update statement for member client
+const std::string castor::db::ora::OraStageClrRequestCnv::s_remoteUpdateIClientStatementString =
+"UPDATE rh_IClient SET request = : 1 WHERE id = :2";
 
 /// SQL existence statement for member client
 const std::string castor::db::ora::OraStageClrRequestCnv::s_checkIClientExistStatementString =
@@ -136,8 +144,10 @@ castor::db::ora::OraStageClrRequestCnv::OraStageClrRequestCnv() :
   m_updateSvcClassStatement(0),
   m_selectSubRequestStatement(0),
   m_deleteSubRequestStatement(0),
+  m_remoteUpdateSubRequestStatement(0),
   m_selectIClientStatement(0),
   m_deleteIClientStatement(0),
+  m_remoteUpdateIClientStatement(0),
   m_checkIClientExistStatement(0),
   m_updateIClientStatement(0) {}
 
@@ -167,8 +177,10 @@ void castor::db::ora::OraStageClrRequestCnv::reset() throw() {
     deleteStatement(m_updateSvcClassStatement);
     deleteStatement(m_deleteSubRequestStatement);
     deleteStatement(m_selectSubRequestStatement);
+    deleteStatement(m_remoteUpdateSubRequestStatement);
     deleteStatement(m_deleteIClientStatement);
     deleteStatement(m_selectIClientStatement);
+    deleteStatement(m_remoteUpdateIClientStatement);
     deleteStatement(m_checkIClientExistStatement);
     deleteStatement(m_updateIClientStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -185,8 +197,10 @@ void castor::db::ora::OraStageClrRequestCnv::reset() throw() {
   m_updateSvcClassStatement = 0;
   m_selectSubRequestStatement = 0;
   m_deleteSubRequestStatement = 0;
+  m_remoteUpdateSubRequestStatement = 0;
   m_selectIClientStatement = 0;
   m_deleteIClientStatement = 0;
+  m_remoteUpdateIClientStatement = 0;
   m_checkIClientExistStatement = 0;
   m_updateIClientStatement = 0;
 }
@@ -292,6 +306,14 @@ void castor::db::ora::OraStageClrRequestCnv::fillRepSubRequest(castor::stager::S
     if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_Request);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateSubRequestStatement) {
+        m_remoteUpdateSubRequestStatement = createStatement(s_remoteUpdateSubRequestStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateSubRequestStatement->setDouble(1, obj->id());
+      m_remoteUpdateSubRequestStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateSubRequestStatement->executeUpdate();
       subRequestsList.erase(item);
     }
   }
@@ -344,6 +366,15 @@ void castor::db::ora::OraStageClrRequestCnv::fillRepIClient(castor::stager::Stag
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->client(), false, OBJ_Request);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateIClientStatement) {
+        m_remoteUpdateIClientStatement = createStatement(s_remoteUpdateIClientStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateIClientStatement->setDouble(1, obj->id());
+      m_remoteUpdateIClientStatement->setDouble(2, obj->client()->id());
+      m_remoteUpdateIClientStatement->executeUpdate();
     }
     // Close resultset
     m_checkIClientExistStatement->closeResultSet(rset);

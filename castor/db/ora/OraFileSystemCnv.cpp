@@ -95,6 +95,10 @@ const std::string castor::db::ora::OraFileSystemCnv::s_selectDiskCopyStatementSt
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteDiskCopyStatementString =
 "UPDATE rh_DiskCopy SET fileSystem = 0 WHERE fileSystem = :1";
 
+/// SQL remote update statement for member copies
+const std::string castor::db::ora::OraFileSystemCnv::s_remoteUpdateDiskCopyStatementString =
+"UPDATE rh_DiskCopy SET fileSystem = : 1 WHERE id = :2";
+
 /// SQL existence statement for member diskserver
 const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskServerExistStatementString =
 "SELECT id from rh_DiskServer WHERE id = :1";
@@ -118,6 +122,7 @@ castor::db::ora::OraFileSystemCnv::OraFileSystemCnv() :
   m_updateDiskPoolStatement(0),
   m_selectDiskCopyStatement(0),
   m_deleteDiskCopyStatement(0),
+  m_remoteUpdateDiskCopyStatement(0),
   m_checkDiskServerExistStatement(0),
   m_updateDiskServerStatement(0) {}
 
@@ -145,6 +150,7 @@ void castor::db::ora::OraFileSystemCnv::reset() throw() {
     deleteStatement(m_updateDiskPoolStatement);
     deleteStatement(m_deleteDiskCopyStatement);
     deleteStatement(m_selectDiskCopyStatement);
+    deleteStatement(m_remoteUpdateDiskCopyStatement);
     deleteStatement(m_checkDiskServerExistStatement);
     deleteStatement(m_updateDiskServerStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -159,6 +165,7 @@ void castor::db::ora::OraFileSystemCnv::reset() throw() {
   m_updateDiskPoolStatement = 0;
   m_selectDiskCopyStatement = 0;
   m_deleteDiskCopyStatement = 0;
+  m_remoteUpdateDiskCopyStatement = 0;
   m_checkDiskServerExistStatement = 0;
   m_updateDiskServerStatement = 0;
 }
@@ -264,6 +271,14 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyst
     if ((item = copiesList.find((*it)->id())) == copiesList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileSystem);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateDiskCopyStatement) {
+        m_remoteUpdateDiskCopyStatement = createStatement(s_remoteUpdateDiskCopyStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateDiskCopyStatement->setDouble(1, obj->id());
+      m_remoteUpdateDiskCopyStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateDiskCopyStatement->executeUpdate();
       copiesList.erase(item);
     }
   }

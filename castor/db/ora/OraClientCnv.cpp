@@ -83,6 +83,10 @@ const std::string castor::db::ora::OraClientCnv::s_selectRequestStatementString 
 const std::string castor::db::ora::OraClientCnv::s_deleteRequestStatementString =
 "UPDATE rh_Request SET client = 0 WHERE client = :1";
 
+/// SQL remote update statement for member request
+const std::string castor::db::ora::OraClientCnv::s_remoteUpdateRequestStatementString =
+"UPDATE rh_Request SET client = : 1 WHERE id = :2";
+
 /// SQL existence statement for member request
 const std::string castor::db::ora::OraClientCnv::s_checkRequestExistStatementString =
 "SELECT id from rh_Request WHERE id = :1";
@@ -104,6 +108,7 @@ castor::db::ora::OraClientCnv::OraClientCnv() :
   m_deleteTypeStatement(0),
   m_selectRequestStatement(0),
   m_deleteRequestStatement(0),
+  m_remoteUpdateRequestStatement(0),
   m_checkRequestExistStatement(0),
   m_updateRequestStatement(0) {}
 
@@ -129,6 +134,7 @@ void castor::db::ora::OraClientCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_deleteRequestStatement);
     deleteStatement(m_selectRequestStatement);
+    deleteStatement(m_remoteUpdateRequestStatement);
     deleteStatement(m_checkRequestExistStatement);
     deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -141,6 +147,7 @@ void castor::db::ora::OraClientCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_selectRequestStatement = 0;
   m_deleteRequestStatement = 0;
+  m_remoteUpdateRequestStatement = 0;
   m_checkRequestExistStatement = 0;
   m_updateRequestStatement = 0;
 }
@@ -222,6 +229,15 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->request(), false, OBJ_IClient);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateRequestStatement) {
+        m_remoteUpdateRequestStatement = createStatement(s_remoteUpdateRequestStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateRequestStatement->setDouble(1, obj->id());
+      m_remoteUpdateRequestStatement->setDouble(2, obj->request()->id());
+      m_remoteUpdateRequestStatement->executeUpdate();
     }
     // Close resultset
     m_checkRequestExistStatement->closeResultSet(rset);

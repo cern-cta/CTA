@@ -279,18 +279,6 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member 
-        static const std::string s_selectSubRequestStatementString;
-
-        /// SQL select statement object for member 
-        oracle::occi::Statement *m_selectSubRequestStatement;
-
-        /// SQL delete statement for member 
-        static const std::string s_deleteSubRequestStatementString;
-
-        /// SQL delete statement object for member 
-        oracle::occi::Statement *m_deleteSubRequestStatement;
-
         /// SQL checkExist statement for member svcClass
         static const std::string s_checkSvcClassExistStatementString;
 
@@ -327,6 +315,12 @@ namespace castor {
         /// SQL delete statement object for member diskCopies
         oracle::occi::Statement *m_deleteDiskCopyStatement;
 
+        /// SQL remote update statement for member diskCopies
+        static const std::string s_remoteUpdateDiskCopyStatementString;
+
+        /// SQL remote update statement object for member diskCopies
+        oracle::occi::Statement *m_remoteUpdateDiskCopyStatement;
+
         /// SQL select statement for member copies
         static const std::string s_selectTapeCopyStatementString;
 
@@ -338,6 +332,12 @@ namespace castor {
 
         /// SQL delete statement object for member copies
         oracle::occi::Statement *m_deleteTapeCopyStatement;
+
+        /// SQL remote update statement for member copies
+        static const std::string s_remoteUpdateTapeCopyStatementString;
+
+        /// SQL remote update statement object for member copies
+        oracle::occi::Statement *m_remoteUpdateTapeCopyStatement;
 
       }; // end of class OraCastorFileCnv
 

@@ -378,7 +378,8 @@ void CppCppOraCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(secondMember->typeName)
                 << " WHERE Parent = :1\";" << endl << endl;
     } else {
-      if (as->type.multiLocal == MULT_ONE) {
+      if (as->type.multiLocal == MULT_ONE &&
+          as->type.multiRemote != MULT_UNKNOWN) {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -409,7 +410,21 @@ void CppCppOraCnvWriter::writeConstants() {
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
                   << " = 0 WHERE " << as->localPart.name
-                  << " = :1\";" << endl << endl;
+                  << " = :1\";" << endl << endl
+                  << getIndent()
+                  << "/// SQL remote update statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "const std::string "
+                  << m_classInfo->fullPackageName
+                  << "Ora" << m_classInfo->className
+                  << "Cnv::s_remoteUpdate"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "StatementString =" << endl << getIndent()
+                  << "\"UPDATE rh_"
+                  << as->remotePart.typeName
+                  << " SET " << as->localPart.name
+                  << " = : 1 WHERE id = :2\";" << endl << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
@@ -598,13 +613,17 @@ void CppCppOraCnvWriter::writeConstructors() {
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)";
     } else {
-      if (as->type.multiLocal == MULT_ONE) {
+      if (as->type.multiLocal == MULT_ONE &&
+          as->type.multiRemote != MULT_UNKNOWN) {
         // 1 to * association
         *m_stream << "," << endl << getIndent()
                   << "  m_select"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement(0)" << "," << endl
                   << getIndent() << "  m_delete"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement(0)," << endl << getIndent()
+                  << "  m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement(0)";
       }
@@ -690,13 +709,18 @@ void CppCppOraCnvWriter::writeReset() {
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl;
     } else {
-      if (as->type.multiLocal == MULT_ONE) {
+      if (as->type.multiLocal == MULT_ONE &&
+          as->type.multiRemote != MULT_UNKNOWN) {
         // 1 to * association
         *m_stream << getIndent()
                   << "deleteStatement(m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement);" << endl << getIndent()
                   << "deleteStatement(m_select"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement);" << endl
+                  << getIndent()
+                  << "deleteStatement(m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement);" << endl;
       }
@@ -705,8 +729,8 @@ void CppCppOraCnvWriter::writeReset() {
         *m_stream << getIndent()
                   << "deleteStatement(m_check"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatement);" << endl;
-        *m_stream << getIndent()
+                  << "ExistStatement);" << endl
+                  << getIndent()
                   << "deleteStatement(m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement);" << endl;
@@ -758,12 +782,15 @@ void CppCppOraCnvWriter::writeReset() {
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl;
     } else {
-      if (as->type.multiLocal == MULT_ONE) {
+      if (as->type.multiLocal == MULT_ONE &&
+          as->type.multiRemote != MULT_UNKNOWN) {
         // 1 to * association
         *m_stream << getIndent()
                   << "m_select" << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement = 0;" << endl << getIndent()
                   << "m_delete" << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement = 0;" << endl << getIndent()
+                  << "m_remoteUpdate" << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement = 0;" << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
@@ -1116,8 +1143,39 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
   }
   *m_stream << ");" << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  *m_stream << getIndent() << "// Close resultset" << endl
+  if (as->type.multiLocal == MULT_ONE) {
+    *m_stream << getIndent() << "} else {" << endl;
+    m_indent++;
+    *m_stream << getIndent() << "// Check remote update statement"
+              << endl << getIndent()
+              << "if (0 == m_remoteUpdate" << as->remotePart.typeName
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement = createStatement(s_remoteUpdate"
+              << as->remotePart.typeName
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl << getIndent()
+              << "// Update remote object"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(2, obj->"
+              << as->remotePart.name
+              << "()->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->executeUpdate();"
+              << endl;
+    m_indent--;
+  }
+  *m_stream << getIndent() << "}" << endl
+            << getIndent() << "// Close resultset" << endl
             << getIndent()
             << "m_check"
             << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1127,7 +1185,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
   *m_stream << getIndent() << "}" << endl;
   // Last bit, still common to all * to 1 associations :
   // update the local object
-*m_stream << getIndent() << "// Check update statement"
+  *m_stream << getIndent() << "// Check update statement"
             << endl << getIndent()
             << "if (0 == m_update" << as->remotePart.typeName
             << "Statement) {" << endl;
@@ -1413,6 +1471,32 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
+  if (as->type.multiLocal == MULT_ONE) {
+    *m_stream << getIndent() << "// Check remote update statement"
+              << endl << getIndent()
+              << "if (0 == m_remoteUpdate" << as->remotePart.typeName
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement = createStatement(s_remoteUpdate"
+              << as->remotePart.typeName
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl << getIndent()
+              << "// Update remote object"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(2, (*it)->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->executeUpdate();"
+              << endl;
+  }
   *m_stream << getIndent() << as->remotePart.name
             << "List.erase(item);"
             << endl;

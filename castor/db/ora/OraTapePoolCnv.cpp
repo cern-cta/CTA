@@ -97,6 +97,10 @@ const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString
 const std::string castor::db::ora::OraTapePoolCnv::s_deleteStreamStatementString =
 "UPDATE rh_Stream SET tapePool = 0 WHERE tapePool = :1";
 
+/// SQL remote update statement for member streams
+const std::string castor::db::ora::OraTapePoolCnv::s_remoteUpdateStreamStatementString =
+"UPDATE rh_Stream SET tapePool = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -112,7 +116,8 @@ castor::db::ora::OraTapePoolCnv::OraTapePoolCnv() :
   m_deleteSvcClassStatement(0),
   m_selectSvcClassStatement(0),
   m_selectStreamStatement(0),
-  m_deleteStreamStatement(0) {}
+  m_deleteStreamStatement(0),
+  m_remoteUpdateStreamStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -139,6 +144,7 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_deleteStreamStatement);
     deleteStatement(m_selectStreamStatement);
+    deleteStatement(m_remoteUpdateStreamStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -152,6 +158,7 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
   m_selectSvcClassStatement = 0;
   m_selectStreamStatement = 0;
   m_deleteStreamStatement = 0;
+  m_remoteUpdateStreamStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -269,6 +276,14 @@ void castor::db::ora::OraTapePoolCnv::fillRepStream(castor::stager::TapePool* ob
     if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_TapePool);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateStreamStatement) {
+        m_remoteUpdateStreamStatement = createStatement(s_remoteUpdateStreamStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateStreamStatement->setDouble(1, obj->id());
+      m_remoteUpdateStreamStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateStreamStatement->executeUpdate();
       streamsList.erase(item);
     }
   }

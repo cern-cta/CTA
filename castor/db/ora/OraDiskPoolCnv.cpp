@@ -85,6 +85,10 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementSt
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteFileSystemStatementString =
 "UPDATE rh_FileSystem SET diskPool = 0 WHERE diskPool = :1";
 
+/// SQL remote update statement for member fileSystems
+const std::string castor::db::ora::OraDiskPoolCnv::s_remoteUpdateFileSystemStatementString =
+"UPDATE rh_FileSystem SET diskPool = : 1 WHERE id = :2";
+
 /// SQL insert statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_insertSvcClassStatementString =
 "INSERT INTO rh_DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
@@ -110,6 +114,7 @@ castor::db::ora::OraDiskPoolCnv::OraDiskPoolCnv() :
   m_deleteTypeStatement(0),
   m_selectFileSystemStatement(0),
   m_deleteFileSystemStatement(0),
+  m_remoteUpdateFileSystemStatement(0),
   m_insertSvcClassStatement(0),
   m_deleteSvcClassStatement(0),
   m_selectSvcClassStatement(0) {}
@@ -136,6 +141,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_deleteFileSystemStatement);
     deleteStatement(m_selectFileSystemStatement);
+    deleteStatement(m_remoteUpdateFileSystemStatement);
     deleteStatement(m_insertSvcClassStatement);
     deleteStatement(m_deleteSvcClassStatement);
     deleteStatement(m_selectSvcClassStatement);
@@ -149,6 +155,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_selectFileSystemStatement = 0;
   m_deleteFileSystemStatement = 0;
+  m_remoteUpdateFileSystemStatement = 0;
   m_insertSvcClassStatement = 0;
   m_deleteSvcClassStatement = 0;
   m_selectSvcClassStatement = 0;
@@ -222,6 +229,14 @@ void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool
     if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
       cnvSvc()->createRep(0, *it, false, OBJ_DiskPool);
     } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateFileSystemStatement) {
+        m_remoteUpdateFileSystemStatement = createStatement(s_remoteUpdateFileSystemStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateFileSystemStatement->setDouble(1, obj->id());
+      m_remoteUpdateFileSystemStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateFileSystemStatement->executeUpdate();
       fileSystemsList.erase(item);
     }
   }

@@ -259,6 +259,12 @@ namespace castor {
         /// SQL delete statement object for member stream
         oracle::occi::Statement *m_deleteStreamStatement;
 
+        /// SQL remote update statement for member stream
+        static const std::string s_remoteUpdateStreamStatementString;
+
+        /// SQL remote update statement object for member stream
+        oracle::occi::Statement *m_remoteUpdateStreamStatement;
+
         /// SQL checkExist statement for member stream
         static const std::string s_checkStreamExistStatementString;
 
@@ -282,6 +288,12 @@ namespace castor {
 
         /// SQL delete statement object for member segments
         oracle::occi::Statement *m_deleteSegmentStatement;
+
+        /// SQL remote update statement for member segments
+        static const std::string s_remoteUpdateSegmentStatementString;
+
+        /// SQL remote update statement object for member segments
+        oracle::occi::Statement *m_remoteUpdateSegmentStatement;
 
       }; // end of class OraTapeCnv
 

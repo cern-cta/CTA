@@ -77,22 +77,6 @@ const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL select statement for member 
-const std::string castor::db::ora::OraSvcClassCnv::s_selectRequestStatementString =
-"SELECT id from rh_Request WHERE svcClass = :1";
-
-/// SQL delete statement for member 
-const std::string castor::db::ora::OraSvcClassCnv::s_deleteRequestStatementString =
-"UPDATE rh_Request SET svcClass = 0 WHERE svcClass = :1";
-
-/// SQL select statement for member 
-const std::string castor::db::ora::OraSvcClassCnv::s_selectCastorFileStatementString =
-"SELECT id from rh_CastorFile WHERE svcClass = :1";
-
-/// SQL delete statement for member 
-const std::string castor::db::ora::OraSvcClassCnv::s_deleteCastorFileStatementString =
-"UPDATE rh_CastorFile SET svcClass = 0 WHERE svcClass = :1";
-
 /// SQL insert statement for member tapePools
 const std::string castor::db::ora::OraSvcClassCnv::s_insertTapePoolStatementString =
 "INSERT INTO rh_SvcClass2TapePool (Parent, Child) VALUES (:1, :2)";
@@ -128,10 +112,6 @@ castor::db::ora::OraSvcClassCnv::OraSvcClassCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectRequestStatement(0),
-  m_deleteRequestStatement(0),
-  m_selectCastorFileStatement(0),
-  m_deleteCastorFileStatement(0),
   m_insertTapePoolStatement(0),
   m_deleteTapePoolStatement(0),
   m_selectTapePoolStatement(0),
@@ -159,10 +139,6 @@ void castor::db::ora::OraSvcClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_deleteRequestStatement);
-    deleteStatement(m_selectRequestStatement);
-    deleteStatement(m_deleteCastorFileStatement);
-    deleteStatement(m_selectCastorFileStatement);
     deleteStatement(m_insertTapePoolStatement);
     deleteStatement(m_deleteTapePoolStatement);
     deleteStatement(m_selectTapePoolStatement);
@@ -177,10 +153,6 @@ void castor::db::ora::OraSvcClassCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_selectRequestStatement = 0;
-  m_deleteRequestStatement = 0;
-  m_selectCastorFileStatement = 0;
-  m_deleteCastorFileStatement = 0;
   m_insertTapePoolStatement = 0;
   m_deleteTapePoolStatement = 0;
   m_selectTapePoolStatement = 0;

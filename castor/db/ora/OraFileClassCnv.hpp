@@ -243,6 +243,12 @@ namespace castor {
         /// SQL delete statement object for member 
         oracle::occi::Statement *m_deleteCastorFileStatement;
 
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateCastorFileStatementString;
+
+        /// SQL remote update statement object for member 
+        oracle::occi::Statement *m_remoteUpdateCastorFileStatement;
+
       }; // end of class OraFileClassCnv
 
     }; // end of namespace ora
