@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: repack.man,v $ $Revision: 1.1 $ $Date: 2003/10/14 13:05:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: repack.man,v $ $Revision: 1.2 $ $Date: 2004/03/08 17:16:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH REPACK 1 "$Date: 2003/10/14 13:05:48 $" CASTOR "vmgr Administrator Commands"
+.TH REPACK 1 "$Date: 2004/03/08 17:16:43 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 repack \- copy the active segments from a set of volumes to another set
 .SH SYNOPSIS
@@ -118,8 +118,17 @@ repack -P lhcb --mo 9840
 .ft
 .fi
 .SH EXIT STATUS
-This program returns 0 if the operation was successful or >0 if the operation
-failed.
+This program returns 0 if the operation was successful or >0 if the operation failed:
+
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+200	Bad checksum.
+
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR Cns_listtape(3) ,
