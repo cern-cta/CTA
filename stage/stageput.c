@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.10 2000/03/24 10:10:07 jdurand Exp $
+ * $Id: stageput.c,v 1.11 2000/05/08 10:21:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.10 $ $Date: 2000/03/24 10:10:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.11 $ $Date: 2000/05/08 10:21:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.10 $ $Date: 20
 #include "marshall.h"
 #include "stage.h"
 
+extern	char	*getenv();
 extern	char	*getconfent();
 extern	int	optind;
 extern	char	*optarg;
@@ -40,6 +41,7 @@ char *stghost;
 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
+void freehsmfiles _PROTO((int, char **));
 
 int main(argc, argv)
 		 int	argc;
@@ -53,6 +55,8 @@ int main(argc, argv)
 	char Gname[15];
 	uid_t Guid;
 	struct group *gr;
+	char *hsm_host;
+	char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int Iflag = 0;
 	int Mflag = 0;
 	int msglen;
@@ -64,6 +68,10 @@ int main(argc, argv)
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
+	char **hsmfiles = NULL;
+	int nhsmfiles = 0;
+	int ihsmfiles;
+	int stagemig = 0;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -107,6 +115,84 @@ int main(argc, argv)
 			break;
 		case 'M':
 			Mflag = 1;
+			if (stagemig == nhsmfiles) {
+				if (nhsmfiles == 0) {
+					if ((hsmfiles = (char **) malloc(sizeof(char *))) == NULL) {
+						fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+						errflg++;
+					} else {
+						stagemig++;
+						hsmfiles[0] = NULL;
+					}
+				} else {
+					char **dummy;
+					if ((dummy = (char **) realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+						fprintf(stderr,"realloc error (%s)\n",strerror(errno));
+						errflg++;
+					} else {
+						hsmfiles = dummy;
+						stagemig++;
+						hsmfiles[nhsmfiles] = NULL;
+					}
+				}
+				if (stagemig == nhsmfiles + 1) {
+					int attached = 0;
+					char *dummy;
+
+					/* Check if the option -M is attached or not */
+					if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
+						attached = 1;
+					}
+					/* We want to know if there is no ':' in the string or, if there is such a ':' */
+					/* if there is no '/' before (then is will indicate a hostname)                */
+					if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
+						if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+							strcpy (hsm_path, hsm_host);
+							strcat (hsm_path, ":");
+							strcat (hsm_path, optarg);
+							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+								errflg++;
+							} else {
+								if (attached != 0) {
+									strcpy(hsmfiles[nhsmfiles],"-M");
+									strcat(hsmfiles[nhsmfiles++],hsm_path);
+								} else {
+									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+								}
+							}
+						} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+							strcpy (hsm_path, hsm_host);
+							strcat (hsm_path, ":");
+							strcat (hsm_path, optarg);
+							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+								errflg++;
+							} else {
+								if (attached != 0) {
+									strcpy(hsmfiles[nhsmfiles],"-M");
+									strcat(hsmfiles[nhsmfiles++],hsm_path);
+								} else {
+									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+								}
+							}
+						} else {
+							fprintf (stderr, STG54);
+							errflg++;
+						}
+						argv[optind - 1] = hsmfiles[nhsmfiles - 1];
+					} else {
+						/* Here we believe that the user gave a hostname */
+						hsmfiles[nhsmfiles++] = NULL;
+                    }
+				} else {
+					fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
+					errflg++;
+				}
+			} else {
+				fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
+				errflg++;
+			}
 			break;
 		case 'U':
 			fun = strtol (optarg, &dp, 10);
@@ -157,6 +243,7 @@ int main(argc, argv)
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
 		fprintf (stderr, STG11, p);
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (SYERR);
 	}
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
@@ -177,6 +264,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, STG51);
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (SYERR);
 	}
 #endif
@@ -185,6 +273,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
+            freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c) {
 			errflg++;
@@ -203,6 +292,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
+            freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c)
 			errflg++;
@@ -216,6 +306,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (1);
 	}
 	
@@ -241,7 +332,25 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
+    freehsmfiles(nhsmfiles, hsmfiles);
 	exit (c == 0 ? 0 : serrno);
+}
+
+void freehsmfiles(nhsmfiles,hsmfiles)
+     int nhsmfiles;
+     char **hsmfiles;
+{
+  int i;
+
+  if (hsmfiles == NULL) return;
+
+  for (i = 0; i < nhsmfiles; i++) {
+    if (hsmfiles[i] != NULL) {
+      free(hsmfiles[i]);
+    }
+  }
+
+  free(hsmfiles);
 }
 
 void cleanup(sig)
