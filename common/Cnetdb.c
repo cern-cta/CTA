@@ -6,13 +6,14 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.3 $ $Date: 1999/11/22 17:53:37 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.4 $ $Date: 1999/12/14 14:32:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * Cnetdb.c - CASTOR MT-safe wrappers on netdb routines.
  */ 
 
+#include <stddef.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else /* _WIN32 */
@@ -23,6 +24,11 @@ static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.3 $ $Date: 1999/11/22
 
 #include <Cglobals.h>
 #include <Cnetdb.h>
+
+#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+extern struct hostent *gethostbyname_r(const char *, struct hostent *, char *, int, int *);
+extern struct hostent *gethostbyaddr_r(const void *, size_t, int, struct hostent *, char *, int, int *);
+#endif
 
 struct hostent *Cgethostbyname(name)
 const char *name;
