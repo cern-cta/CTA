@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2004/10/28 10:00:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2004/10/28 10:11:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -360,7 +360,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     diskCopy->setCastorFile(castorFile);
     castorFile->addDiskCopies(diskCopy);
     result->setCastorFile(castorFile);
-    castorfile->addTapeCopies(result);
+    castorFile->addTapeCopies(result);
     // Fill result for TapeCopy, Segments and Tape
     cnvSvc()->updateObj(result);
     castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
