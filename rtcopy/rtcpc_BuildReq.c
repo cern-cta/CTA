@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.19 $ $Date: 2000/02/16 10:02:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.20 $ $Date: 2000/02/16 17:09:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2158,7 +2158,7 @@ int dumpFileReq(file_list_t *fl) {
     DUMPI64(indent,filereq->blockid);
     DUMPI64(indent,filereq->bytes_in);
     DUMPI64(indent,filereq->bytes_out);
-    DUMPI64(indent,filereq->bytes_from_host);
+    DUMPI64(indent,filereq->host_bytes);
 
     DUMPI64(indent,filereq->maxnbrec);
     DUMPI64(indent,filereq->maxsize);

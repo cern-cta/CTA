@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.30 $ $Date: 2000/02/14 13:20:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.31 $ $Date: 2000/02/16 17:09:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1381,8 +1381,8 @@ void *tapeIOthread(void *arg) {
                         nextfile->prev->filereq.TEndPosition;
                     nextfile->filereq.nbrecs = 
                         nextfile->prev->filereq.nbrecs;
-                    nextfile->filereq.bytes_from_host = 
-                        nextfile->prev->filereq.bytes_from_host;
+                    nextfile->filereq.host_bytes = 
+                        nextfile->prev->filereq.host_bytes;
                     nextfile->filereq.bytes_out = 
                         nextfile->prev->filereq.bytes_out;
                     strcpy(nextfile->filereq.ifce,nextfile->prev->filereq.ifce);
