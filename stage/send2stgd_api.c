@@ -846,9 +846,11 @@ int send2stgd_api_cmp(stcp1,stcp2)
 	if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  {
 		return(-1);
 	}
+	/*
 	if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) {
 		return(-1);
 	}
+	*/
 	if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) {
 		return(-1);
 	}
