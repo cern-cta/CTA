@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.29 2002/11/07 15:37:06 jdurand Exp $
+.\" $Id: stageqry.man,v 1.30 2002/12/10 12:37:09 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.29 $ $Date: 2002/11/07 15:37:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.30 $ $Date: 2002/12/10 12:37:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/11/07 15:37:06 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/12/10 12:37:09 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -188,13 +188,15 @@ gives CASTOR's read/write counters for stageout pools. Those counters are used t
 .BI \-\-dump
 dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of \-L option.
 .TP
-.BI \-\-delimiter
-If you use the
+.BI \-\-delimiter " delimiter"
+Modifies the 
 .BI \-\-format
-mode, this option will use this option value instead of the default delimiter, e.g. a space, between structure members printed out.
+behaviour. This option will use
+.I delimiter
+between structure members printed out.
 .TP
-.BI \-\-format
-will switch off the default output in favour to a user defined
+.BI \-\-format " formatstring"
+will switch off the default output in favour of a user defined
 .I formatstring
 , that is a comma separated list of structure members. If you don't specify the 
 .BI \-L
@@ -240,38 +242,38 @@ option, the format string can be composed of
 .BI retenp_on_disk
 and
 .BI mintime_beforemigr .
-With -L, it can composed of
+With -L, it can be composed of
 .BI reqid
 and
 .BI upath
 only.
 .TP
 .BI \-\-noheader
-If you use the
+Modifies the
 .BI \-\-format
-mode, this option will prevent the default header, that is taking all the arguments in the format string as input, to be printed.
+behaviour. This option will prevent the default header, that is taking all the arguments in the format string as input, to be printed.
 .TP
-.BI \-\-output
-If you use the
+.BI \-\-output " filename"
+Modifies the
 .BI \-\-format
-mode, this option will redirect all the output (including errors) to a given
+behaviour. This option will redirect all the output (including errors) to
 .I filename.
 .TP
 .BI \-\-withna
-If you use the
+Modifies the
 .BI \-\-format
-mode, this option will print
+behaviour. This option will print
 .B N/A
 instead of blanks, in case you want to parse the output and you depend on an exact number of columns.
 .TP
 .BI \-\-withunit
-If you use the
+Modifies the
 .BI \-\-format
-mode, this option will print the
+behaviour. This option will print the
 .BI size
 and
 .BI actual_size
-with an unit instead of the default, which is without unit, e.g. in bytes. Units can be
+with an unit. Units can be
 .I k
 for kilo\-bytes,
 .I M
@@ -281,37 +283,48 @@ for giga\-bytes,
 .I T
 for tera\-bytes and
 .I P
-for peta\-bytes.
+for peta\-bytes, and nothing for byte.
 .TP
 .BI \-\-withstatusnumber
-If you use the
+Modifies the
 .BI \-\-format
-mode, this option will print
+behaviour. This option will print
 .I status
-with an user-friendly string, instead of the default, that is its raw value. These strings can be
+in its raw format, a decimal number. This number is a logical \fBor\fP of
 .I STAGEALLOC,
 .I STAGEIN,
 .I STAGEOUT,
 .I STAGEWRT,
 .I STAGEPUT,
+.I WAITING_SPC,
+.I WAITING_REQ,
+.I STAGED,
+.I PUT_FAILED,
 .I STAGED_LSZ,
 .I STAGED_TPE,
 .I CAN_BE_MIGR,
+.I LAST_TPFILE,
+.I BEING_MIGR,
 .I WAITING_MIGR,
 .I WAITING_NS,
-.I WAITING_SPC,
-.I WAITING_REQ
+.I STAGE_RDONLY,
+.I STAGE_IN,
+.I STAGE_OUT,
+.I STAGE_WRT,
+.I STAGE_PUT,
 and
-.I STAGED.
+.I STAGE_ALLOC
+constants, as found in the stage API header file.
+Please see \fBstage_constants\fP(3) for meaning of these constants and their values.
 .TP
 .BI \-\-withtimenumber
-If you use the
+Modifies the
 .BI \-\-format
-mode, this option will print
+behaviour. This option will print
 .I c_time
 and
 .I a_time
-in a formatted string status instead of the default, that is its raw value (elapsed seconds since the Epoch (00:00:00 UTC, January 1, 1970).
+in their raw format, e.g. the number of elapsed seconds since the Epoch (00:00:00 UTC, January 1, 1970).
 .TP
 .BI \-\-migrator
 gives statistics on migration rules. Used only if \-s option is set.
@@ -380,7 +393,7 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 2	System error.
 
 .SH SEE ALSO
-\fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3), \fBCns_queryclass\fP(3)
+\fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3), \fBstage_constants\fP(3), \fBCns_queryclass\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
