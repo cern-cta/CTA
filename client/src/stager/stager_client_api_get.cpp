@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.2 2004/11/08 17:29:40 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.3 2004/11/09 10:42:07 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/08 17:29:40 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/09 10:42:07 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -114,6 +114,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
+      subreq->setPriority(requests[i].priority);
       subreq->setRequest(&req);
 
     }
