@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.32 2001/03/13 13:06:21 jdurand Exp $
+ * $Id: stagein.c,v 1.33 2001/03/22 11:00:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.32 $ $Date: 2001/03/13 13:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.33 $ $Date: 2001/03/22 11:00:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,6 +57,7 @@ char *stghost;
 char user[15];	/* login name */
 int nowait_flag = 0;
 int tppool_flag = 0;
+int nohsmcreat_flag = 0;
 
 #if TMS
 int tmscheck _PROTO((char *, char *, char *, char *, char *, int *, int *));
@@ -165,6 +166,7 @@ int main(argc, argv)
 		{"copytape",           NO_ARGUMENT,        NULL,      'z'},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
+		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -1015,6 +1017,6 @@ void usage(cmd)
 					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
 					 "[-X xparm]\n",
-					 "[--nowait] [--tppool tapepool]\n",
+					 "[--nohsmcreat] [--nowait] [--tppool tapepool]\n",
 					 "pathname(s)\n");
 }
