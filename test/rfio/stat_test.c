@@ -10,7 +10,7 @@ int main(argc,argv)
   struct stat statbuf;
 
   if (argc == 1) {
-    fprintf(stderr,"Usage: %s file1_to_delete [file2_to_delete [...]]\n", argv[0]);
+    fprintf(stderr,"Usage: %s file1_to_stat [file2_to_stat [...]]\n", argv[0]);
     exit(1);
   }
 

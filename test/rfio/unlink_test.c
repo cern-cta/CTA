@@ -9,7 +9,7 @@ int main(argc,argv)
   int i;
 
   if (argc == 1) {
-    fprintf(stderr,"Usage: %s file1_to_delete [file2_to_delete [...]]\n", argv[0]);
+    fprintf(stderr,"Usage: %s file1_to_unlink [file2_to_unlink [...]]\n", argv[0]);
     exit(1);
   }
 
