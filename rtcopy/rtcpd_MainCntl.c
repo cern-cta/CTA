@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:33:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 17:06:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -787,6 +787,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rc = rtcpd_AllocBuffers();
     if ( rc == -1 ) {
+        (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcp_MainCntl() failed to allocate buffers\n");
         (void)rtcpd_AppendClientMsg(tape,NULL,RT105,sstrerror(serrno));
         (void)tellClient(client_socket,tape,NULL,-1);
@@ -804,6 +805,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     CLThId = rtcpd_ClientListen(*client_socket);
     if ( CLThId == -1 ) {
+        (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_ClientListen(): %s\n",
             sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
@@ -816,6 +818,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     if ( thPoolId == -1 ) thPoolId = rtcpd_InitDiskIO(&thPoolSz);
     if ( thPoolId == -1 || thPoolSz <= 0 ) {
+        (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_InitDiskIO(0x%lx): %s\n",
             &thPoolSz,sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
@@ -840,6 +843,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
          */
         rc = rtcpd_StartTapeIO(client,tape);
         if ( rc == -1 ) {
+            (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,
                 "rtcp_MainCntl() failed to start Tape I/O thread\n");
             (void)rtcpd_Deassign(client->VolReqID,&tapereq);
@@ -850,8 +854,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * Start disk and network IO thread
          */
-        rc = rtcpd_StartDiskIO(client,nexttape,nextfile,thPoolId,thPoolSz);
+        rc = rtcpd_StartDiskIO(client,tape,tape->file,thPoolId,thPoolSz);
         if ( rc == -1 ) {
+            (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,"rtcp_MainCntl() failed to start disk I/O thread\n");
             rtcpd_SetProcError(RTCP_FAILED);
             rtcpd_FreeResources(&client_socket,&client,&tape);
