@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/28 10:29:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/28 10:29:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -235,8 +235,9 @@ int rtcpcld_updateNsSegmentAttributes(
    * there is only one segment per castor file since file segmentation
    * is not allowed (feature request #5179).
    */
+  nbSegms = 1;
   nsSegAttrs = (struct Cns_segattrs *)calloc(
-                                             1,
+                                             nbSegms,
                                              sizeof(struct Cns_segattrs)
                                              );
   if ( nsSegAttrs == NULL ) {
