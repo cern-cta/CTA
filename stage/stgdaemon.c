@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.87 2000/12/21 15:36:39 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.88 2001/01/12 08:40:50 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.87 $ $Date: 2000/12/21 15:36:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.88 $ $Date: 2001/01/12 08:40:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -869,7 +869,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, c
 	wqp->Upluspath = Upluspath;
 	wqp->reqid = reqid;
 	wqp->req_type = req_type;
-	wqp->key = time (0) & 0xFFFF;
+	wqp->key = time(NULL) & 0xFFFF;
 	wqp->rpfd = rpfd;
 	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
@@ -2331,7 +2331,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 			stcp->status |= STAGED;
 		}
 	}
-	stcp->a_time = time (0);
+	stcp->a_time = time(NULL);
 	*subreqid = stcp->reqid;
 
 #ifdef USECDB
@@ -2381,7 +2381,7 @@ int upd_staged(upath)
 		return (USERR);
 	}
 	stcp->status = STAGEOUT;
-	stcp->a_time = time (0);
+	stcp->a_time = time(NULL);
 	stcp->nbaccesses++;
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.69 2000/12/21 15:36:36 jdurand Exp $
+ * $Id: procio.c,v 1.70 2001/01/12 08:36:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.69 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.70 $ $Date: 2001/01/12 08:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -797,7 +797,7 @@ void procioreq(req_type, req_data, clienthost)
 				else
 					stcp->reqid = reqid;
 				stcp->status = STAGEIN;
-				stcp->c_time = time (0);
+				stcp->c_time = time(NULL);
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
 				stcp->status |= WAITING_REQ;
@@ -890,7 +890,7 @@ void procioreq(req_type, req_data, clienthost)
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 				}
-				stcp->a_time = time (0);
+				stcp->a_time = time(NULL);
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -941,7 +941,7 @@ void procioreq(req_type, req_data, clienthost)
 				else
 					stcp->reqid = reqid;
 				stcp->status = STAGEIN;
-				stcp->c_time = time (0);
+				stcp->c_time = time(NULL);
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
 				if (!wqp) {
@@ -1068,7 +1068,7 @@ void procioreq(req_type, req_data, clienthost)
 			else
 				stcp->reqid = reqid;
 			stcp->status = STAGEOUT;
-			stcp->c_time = time(0);
+			stcp->c_time = time(NULL);
 			stcp->a_time = stcp->c_time;
 			stcp->nbaccesses++;
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
@@ -1189,7 +1189,7 @@ void procioreq(req_type, req_data, clienthost)
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
 					stgreq.u1.h.fileid = Cnsfileid.fileid;
 				}
-				hsmmtime = time(0);
+				hsmmtime = time(NULL);
 				/* Here, in any case, Cnsfileid is filled */
 				break;
 			case 'm':
@@ -1297,7 +1297,7 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->actual_size = correct_size;
 				stcp->c_time = hsmmtime;
 			}
-			stcp->a_time = time (0);
+			stcp->a_time = time(NULL);
 			strcpy (stcp->ipath, upath);
 			stcp->nbaccesses = 1;
 			if (Aflag) {
@@ -1674,7 +1674,7 @@ void procputreq(req_data, clienthost)
 					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}
 			stcp->status = STAGEPUT;
-			stcp->a_time = time (0);
+			stcp->a_time = time(NULL);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1738,7 +1738,7 @@ void procputreq(req_data, clienthost)
 					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}
 			stcp->status = STAGEPUT;
-			stcp->a_time = time (0);
+			stcp->a_time = time(NULL);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1803,7 +1803,7 @@ void procputreq(req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
-					hsmfilesstcp[ihsmfiles]->a_time = time (0);
+					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 				} else {
 					int save_status;
 
