@@ -1,5 +1,5 @@
 /*
- * $Id: check_struct_len.c,v 1.5 2000/05/30 12:06:16 jdurand Exp $
+ * $Id: check_struct_len.c,v 1.6 2000/05/31 06:51:01 jdurand Exp $
  */
 
 #include <stddef.h>            /* for NULL */
@@ -16,12 +16,8 @@
 #ifdef offsetofchar
 #undef offsetofchar
 #endif
-#if (defined(__osf__) && defined(__alpha))
 #define offsetofchar(s_name, s_member) \
 				((size_t)((char *)((s_name *)NULL)->s_member - (char *)NULL))
-#else
-#define offsetofchar(s_name, s_member) offsetof(s_name, s_member)
-#endif /* (defined(__osf__) && defined(__alpha)) */
 
 int main() {
 	struct stgcat_entry_old  stcp_old;
