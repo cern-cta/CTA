@@ -1,14 +1,14 @@
 /*
- * $Id: stagein.c,v 1.15 2000/05/30 11:07:23 jdurand Exp $
+ * $Id: stagein.c,v 1.16 2000/08/14 13:19:30 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.15 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.16 $ $Date: 2000/08/14 13:19:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.15 $ $Date: 2000/05/30 11:07:2
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <string.h>
 #if defined(_WIN32)
 #define W_OK 2
