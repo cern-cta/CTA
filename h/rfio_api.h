@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.21 $ $Date: 2000/09/04 13:24:17 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.22 $ $Date: 2000/09/05 14:41:01 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -29,10 +29,10 @@ struct rfstatfs {
         long totnods  ;      /* Total number of inodes       */
         long freenods ;      /* Number of free inodes        */
 } ;
-#if !defined(RFIO_KERNEL)
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#if !defined(RFIO_KERNEL)
 #if defined(_WIN32)
 typedef void * DIR;
 #endif

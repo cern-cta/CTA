@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.13 $ $Date: 2000/09/03 07:37:15 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.14 $ $Date: 2000/09/05 14:41:00 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -15,22 +15,13 @@
 #define _RFIO_H_INCLUDED_
 
 #include <stdio.h>              /* standard Input/Output                */
-#if !defined(apollo) && ! defined(_WIN32)
-#include <unistd.h>		/* Standardized definitions		*/
-#endif	/* !apollo */
+#include <sys/types.h>          /* standard data types                  */
 
 #if !defined(_WIN32)
-#include <sys/types.h>          /* standard data types                  */
+#include <unistd.h>		/* Standardized definitions		*/
 #else /* _WIN32 */
 #include <statbits.h>           /* File access macros for WIN32         */
 #endif /* _WIN32 */
-
-#include <dirent.h>             /* standard directory definitions       */
-#include <sys/stat.h>           /* file status definitions              */
-
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(HPUX1010) || defined(IRIX6) || defined(linux) || defined(AIX42) || defined(IRIX5)
-#include <sys/uio.h>
-#endif /* SOLARIS || (__osf__ && __alpha) || HPUX1010 || IRIX6 || linux || AIX42|| IRIX5 */
 
 /*
  * Common includes needed by internal (kernel) routines.
@@ -44,44 +35,27 @@
 #include <netdb.h>              /* network database                     */
 #endif
 #include <errno.h>              /* standard error numbers               */
-#if !defined(apollo)
 #include <string.h>             /* string handling routines             */
-#else
-#include <strings.h>            /* strings operations                   */
-#endif  /* ! apollo     */
 #if ! defined(_WIN32)
 #include <sys/file.h>           /* define L_XTND, L_INCR and L_SET      */
 #endif
-#if defined(_WIN32)
+#if defined(_AIX) && defined(_IBMR2)
+#include <sys/select.h>         /*some of the defs are in this file     */
+#endif /* AIX */
 #include <time.h>
-#else
-#include <sys/time.h>           /* for time declarations                */
-#endif
 #if defined(HPSS) /* To avoid clash with dce    */
 #include "../h/marshall.h"
 #else /*  HPSS */
 #include <marshall.h>           /* marshalling macros and definitions   */
 #endif /* HPSS */
 #include <serrno.h>             /* special error numbers                */
-#include <rfio_errno.h>
 #include <trace.h>              /* tracing definitions                  */
-
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>         /*some of the defs are in this file     */
-#endif /* AIX */
 
 #include <net.h>                        /* networking specifics         */
 
 #include <socket_timeout.h>             /* socket timeout routines */
 
 #endif /* RFIO_KERNEL */
-
-#ifndef _OSDEP_H_INCLUDED_
-#include <osdep.h>
-#endif
-#ifndef _RFIO_CONSTANTS_H_INCLUDED_
-#include <rfio_constants.h>
-#endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
 
 #if !defined(_WIN32)
 #ifndef min
@@ -215,12 +189,6 @@ struct rfiostat	{
 	long rnbr ;                     /* byte read count              */
 	long wnbr ;                     /* byte written count           */
 } ;
-#else /* RFIO_KERNEL */
-
-#if defined(_WIN32)
-typedef void *  DIR;
-#endif /* _WIN32 */
-
 #endif /* RFIO_KERNEL */
 
 #ifndef _RFIO_API_H_INCLUDED_
