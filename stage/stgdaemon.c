@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.97 2001/02/02 12:12:51 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.98 2001/02/04 22:52:26 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.97 $ $Date: 2001/02/02 12:12:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.98 $ $Date: 2001/02/04 22:52:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -3008,5 +3008,7 @@ void check_upd_fileclasses() {
 	if ((this_time - last_upd_fileclasses) > upd_fileclasses_int) {
 		stglogit(func, "Automatic update of CASTOR fileclasses\n");
 		upd_fileclasses();
+		/* Update check_upd_fileclasses time */
+		last_upd_fileclasses = time(NULL);
 	}
 }
