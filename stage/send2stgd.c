@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.16 2000/03/23 01:41:25 jdurand Exp $
+ * $Id: send2stgd.c,v 1.17 2000/03/27 09:06:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.16 $ $Date: 2000/03/23 01:41:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.17 $ $Date: 2000/03/27 09:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -317,8 +317,8 @@ dounlink (path)
 		}
 		nb_ovl++;
 	}
-}
 #endif
+}
 
 #if !defined(_WIN32)
 void wait4child()
