@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.15 $ $Date: 2000/01/28 11:15:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.16 $ $Date: 2000/02/08 16:06:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -117,7 +117,7 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     for (j=0; j<OPT_MAX; j++) local_repeated[j] = 0;
 
     while ( (c = getopt(argc,argv,opts)) != EOF ) {
-        if ( c != 'q' && c != 'i' ) continue;
+        if ( c != 'q' && c != 'i' && c != 'x' ) continue;
         if ( c == '?' ) return(-1);
         if ( local_repeated[c-'A'] != 0 ) {
             rtcp_log(LOG_ERR,"REPEATED OPTION -%c NOT ALLOWED\n",c);
@@ -143,7 +143,7 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     for (j=0; j<OPT_MAX; j++) local_repeated[j] = 0;
 
     while ( (c = getopt(argc,argv,opts)) != EOF ) {
-        if ( c == 'q' || c == 'i' ) continue;
+        if ( c == 'q' || c == 'i' || c == 'x' ) continue;
         if ( c == '?' ) return(-1);
         if ( local_repeated[c-'A'] != 0 ) {
             rtcp_log(LOG_ERR,"REPEATED OPTION -%c NOT ALLOWED\n",c);
@@ -1710,7 +1710,7 @@ static int rtcpc_diskfiles(int mode,
     rtcpFileRequest_t *filereq;
     char *last_filename;
 
-    if ( tape == NULL || *tape == NULL ) {
+    if ( tape == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -1726,12 +1726,13 @@ static int rtcpc_diskfiles(int mode,
     tl = *tape;
 
     if ( filename != NULL ) {
-        if ( tl->file == NULL ) {
+        if ( tl == NULL || tl->file == NULL ) {
             /*
              * -q option was not specified. Default is -q 1
              */
             rc = newFileList(tape,&fl,mode);
             if ( fl != NULL ) fl->filereq.tape_fseq = 1;
+            tl = *tape;
         } 
         toomany = 1;
         CLIST_ITERATE_BEGIN(tl->file,fl) {
