@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.17 2000/04/14 13:35:27 baud Exp $
+ * $Id: procio.c,v 1.18 2000/04/14 13:54:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.17 $ $Date: 2000/04/14 13:35:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.18 $ $Date: 2000/04/14 13:54:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -479,7 +479,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				/* No recognizes type ? */
 				if (nhpssfiles == 0 && ncastorfiles == 0) {
-					sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS not CASTOR)\n");
+					sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
 					c = USERR;
 					goto reply;
 				}
