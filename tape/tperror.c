@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: tperror.c,v $ $Revision: 1.5 $ $Date: 2000/01/09 14:35:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.6 $ $Date: 2000/01/09 17:57:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -221,7 +221,11 @@ int tapefd;
 char *path;
 char **msgaddr;
 {
+#ifndef NOTRACE
+	extern char *devtype;
+#else
 	char *devtype;
+#endif
 	struct devlblinfo  *dlip;
 	extern char *dvrname;
 	int rc;
@@ -247,11 +251,13 @@ char **msgaddr;
 #endif
 
 	save_errno = errno;
+#ifdef NOTRACE
 	if (getlabelinfo (path, &dlip) < 0) {
 		devtype = NULL;
 		errno = save_errno;
 	} else
 		devtype = dlip->devtype;
+#endif
 #ifndef _AIX
 #if defined(DUXV4) && EEI_VERSION == 1
 	deveei.version = EEI_VERSION;
