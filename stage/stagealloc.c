@@ -1,4 +1,13 @@
 /*
+ * $Id: stagealloc.c,v 1.2 1999/07/20 17:29:20 jdurand Exp $
+ *
+ * $Log: stagealloc.c,v $
+ * Revision 1.2  1999/07/20 17:29:20  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1995-1997 by CERN/CN/PDP/DH
  * All rights reserved
  */

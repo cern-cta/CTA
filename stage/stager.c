@@ -1,4 +1,13 @@
 /*
+ * $Id: stager.c,v 1.2 1999/07/20 17:29:25 jdurand Exp $
+ *
+ * $Log: stager.c,v $
+ * Revision 1.2  1999/07/20 17:29:25  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
  * All rights reserved
  */

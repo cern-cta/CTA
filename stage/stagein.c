@@ -1,4 +1,13 @@
 /*
+ * $Id: stagein.c,v 1.2 1999/07/20 17:29:22 jdurand Exp $
+ *
+ * $Log: stagein.c,v $
+ * Revision 1.2  1999/07/20 17:29:22  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */

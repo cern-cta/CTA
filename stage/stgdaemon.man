@@ -1,3 +1,11 @@
+.\"
+.\" $Id: stgdaemon.man,v 1.2 1999/07/20 17:29:27 jdurand Exp $
+.\"
+.\" $Log: stgdaemon.man,v $
+.\" Revision 1.2  1999/07/20 17:29:27  jdurand
+.\" Added Id and Log CVS's directives
+.\"
+.\"
 .\" @(#)stgdaemon.man	1.8 05/18/95 CERN CN-PDP/DH Jean-Philippe Baud
 .\" Copyright (C) 1994-1995 by CERN/CN/PDP/DH
 .\" All rights reserved

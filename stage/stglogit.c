@@ -1,4 +1,13 @@
 /*
+ * $Id: stglogit.c,v 1.2 1999/07/20 17:29:28 jdurand Exp $
+ *
+ * $Log: stglogit.c,v $
+ * Revision 1.2  1999/07/20 17:29:28  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993,1994 by CERN/CN/PDP/DH
  * All rights reserved
  */

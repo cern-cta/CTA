@@ -1,4 +1,13 @@
 /*
+ * $Id: stgdaemon.c,v 1.3 1999/07/20 17:29:27 jdurand Exp $
+ *
+ * $Log: stgdaemon.c,v $
+ * Revision 1.3  1999/07/20 17:29:27  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
  * All rights reserved
  */

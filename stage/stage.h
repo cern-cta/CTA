@@ -1,3 +1,12 @@
+/*
+ * $Id: stage.h,v 1.3 1999/07/20 17:29:19 jdurand Exp $
+ *
+ * $Log: stage.h,v $
+ * Revision 1.3  1999/07/20 17:29:19  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
 #ifndef __stage_h
 #define __stage_h
 

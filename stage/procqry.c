@@ -1,4 +1,13 @@
 /*
+ * $Id: procqry.c,v 1.3 1999/07/20 17:29:18 jdurand Exp $
+ *
+ * $Log: procqry.c,v $
+ * Revision 1.3  1999/07/20 17:29:18  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
  * All rights reserved
  */

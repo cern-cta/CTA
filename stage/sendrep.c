@@ -1,4 +1,13 @@
 /*
+ * $Id: sendrep.c,v 1.3 1999/07/20 17:29:19 jdurand Exp $
+ *
+ * $Log: sendrep.c,v $
+ * Revision 1.3  1999/07/20 17:29:19  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1993-1995 by CERN/CN/PDP/DH
  * All rights reserved
  */

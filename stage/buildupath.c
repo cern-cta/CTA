@@ -1,4 +1,13 @@
 /*
+ * $Id: buildupath.c,v 1.2 1999/07/20 17:29:15 jdurand Exp $
+ *
+ * $Log: buildupath.c,v $
+ * Revision 1.2  1999/07/20 17:29:15  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
+/*
  * Copyright (C) 1994-1999 by CERN/CN/PDP/DH
  * All rights reserved
  */

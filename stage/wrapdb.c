@@ -1,3 +1,12 @@
+/*
+ * $Id: wrapdb.c,v 1.2 1999/07/20 17:29:29 jdurand Exp $
+ *
+ * $Log: wrapdb.c,v $
+ * Revision 1.2  1999/07/20 17:29:29  jdurand
+ * Added Id and Log CVS's directives
+ *
+ */
+
 #include "wrapdb.h"
 #include <stdio.h>
 #include <stdlib.h>
