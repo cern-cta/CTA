@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.3 $ $Date: 2001/01/03 08:28:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 06:10:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listtape - list all existing tapes */
@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.3 $ $Date
 #include "vmgr.h"
 
 struct vmgr_tape_info *
-vmgr_listtape(char *pool_name, int flags, vmgr_list *listp)
+vmgr_listtape(char *vid, char *pool_name, int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
@@ -79,7 +79,7 @@ vmgr_listtape(char *pool_name, int flags, vmgr_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, VMGR_MAGIC);
+		marshall_LONG (sbp, VMGR_MAGIC2);
 		if (flags == VMGR_LIST_END) {
 			marshall_LONG (sbp, VMGR_ENDLIST);
 		} else {
@@ -94,6 +94,11 @@ vmgr_listtape(char *pool_name, int flags, vmgr_list *listp)
 		marshall_LONG (sbp, uid);
 		marshall_LONG (sbp, gid);
 		marshall_WORD (sbp, listentsz);
+		if (vid) {
+			marshall_STRING (sbp, vid);
+		} else {
+			marshall_STRING (sbp, "");
+		}
 		if (pool_name) {
 			marshall_STRING (sbp, pool_name);
 		} else {
@@ -126,18 +131,25 @@ vmgr_listtape(char *pool_name, int flags, vmgr_list *listp)
 		while (nbentries--) {
 			unmarshall_STRING (rbp, lp->vid);
 			unmarshall_STRING (rbp, lp->vsn);
-			unmarshall_STRING (rbp, lp->dgn);
+			unmarshall_STRING (rbp, lp->library);
 			unmarshall_STRING (rbp, lp->density);
 			unmarshall_STRING (rbp, lp->lbltype);
 			unmarshall_STRING (rbp, lp->model);
 			unmarshall_STRING (rbp, lp->media_letter);
 			unmarshall_STRING (rbp, lp->manufacturer);
 			unmarshall_STRING (rbp, lp->sn);
+			unmarshall_WORD (rbp, lp->nbsides);
+			unmarshall_TIME_T (rbp, lp->etime);
+			unmarshall_WORD (rbp, lp->side);
 			unmarshall_STRING (rbp, lp->poolname);
 			unmarshall_LONG (rbp, lp->estimated_free_space);
 			unmarshall_LONG (rbp, lp->nbfiles);
 			unmarshall_LONG (rbp, lp->rcount);
 			unmarshall_LONG (rbp, lp->wcount);
+			unmarshall_STRING (rbp, lp->rhost);
+			unmarshall_STRING (rbp, lp->whost);
+			unmarshall_LONG (rbp, lp->rjid);
+			unmarshall_LONG (rbp, lp->wjid);
 			unmarshall_TIME_T (rbp, lp->rtime);
 			unmarshall_TIME_T (rbp, lp->wtime);
 			unmarshall_LONG (rbp, lp->status);
