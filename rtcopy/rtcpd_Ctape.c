@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.56 $ $Date: 2001/01/30 17:26:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.57 $ $Date: 2001/03/12 12:01:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -191,6 +191,7 @@ int rtcpd_Deassign(int VolReqID,
         nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
         CLIST_INSERT(tape->file,nextfile);
         nexttape->tapereq = *tapereq;
+        if ( tapereq->VolReqID <= 0 ) nexttape->tapereq.VolReqID = VolReqID;
         strcpy(nexttape->tapereq.vid,vid);
         *(nexttape->tapereq.density) = '\0';
         *(nexttape->tapereq.vsn) = '\0';
