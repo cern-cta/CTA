@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:57 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.2 $ $Date: 2002/06/04 13:43:17 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -51,6 +51,19 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 		serrno = EINVAL;
 		return (-1);
 	}
+
+	/* Applying a first check to see if the request is for root */
+	/* In this case just return without asking the server */
+
+	if (priv_uid == 0) {
+	  if (src == NULL && tgt == NULL) {
+	    /* Both NULL, authorized */
+	    return(0);
+	  } else if (strcmp(src, tgt)==0) {
+	    /* src == tmp */
+	    return(0);
+	  }
+	} /* In other cases, a message is sent to the server for validation */
  
 	/* Build request header */
 	sbp = sendbuf;
