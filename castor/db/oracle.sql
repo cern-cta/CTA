@@ -717,7 +717,7 @@ BEGIN
     WHERE Segment.id = segmentId
      AND Segment.copy = TapeCopy.id
      AND DiskCopy.castorfile = TapeCopy.castorfile
-     AND DiskCopy.status = 4; -- WAITTAPERECALL
+     AND DiskCopy.status = 2; -- WAITTAPERECALL
  -- Check if the DiskCopy had a FileSystem associated
  IF fileSystemId > 0 THEN
    BEGIN
