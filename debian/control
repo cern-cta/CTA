@@ -8,193 +8,232 @@ Standards-Version: 3.6.1
 Package: castor-commands
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - general commands
+Description: castor (Cern Advanced STORage system)
+ general commands
 
 Package: castor-devel
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - API
+Description: castor (Cern Advanced STORage system)
+ API
 
 Package: castor-dlf-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Distributed Logging Facility clients
+Description: castor (Cern Advanced STORage system)
+ Distributed Logging Facility clients
 
 Package: castor-dlf-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Distributed Logging Facility server
+Description: castor (Cern Advanced STORage system)
+ Distributed Logging Facility server
 
 Package: castor-doc
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - General documentation - currently provides information on an obsolete feature herited from SHIFT
+Description: castor (Cern Advanced STORage system)
+ General documentation.
+ Currently provides information on an obsolete feature herited from SHIFT.
 
 Package: castor-expert-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Expert server, used to trigger policies
+Description: castor (Cern Advanced STORage system)
+ Expert server, used to trigger policies
 
 Package: castor-gc-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Garbage collector, running on every worker node
+Description: castor (Cern Advanced STORage system)
+ Garbage collector, running on every worker node
 
 Package: castor-hsmtools
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Administration tools e.g. reclaim, repack and tapetohsm
+Description: castor (Cern Advanced STORage system)
+ Administration tools e.g. reclaim, repack and tapetohsm
 
 Package: castor-job
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - The job giving user access to data on the worder nodes
+Description: castor (Cern Advanced STORage system)
+ The job giving user access to data on the worder nodes
 
 Package: castor-lib
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Static and shared libraries for end-users
+Description: castor (Cern Advanced STORage system)
+ Static and shared libraries for end-users
 
 Package: castor-lib-oracle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Static and shared libraries for Oracle access
+Description: castor (Cern Advanced STORage system)
+ Static and shared libraries for Oracle access
 
 Package: castor-monitor-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Monitoring server
+Description: castor (Cern Advanced STORage system)
+ Monitoring server
 
 Package: castor-msg-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Messaging clients - used to control when necessary tape access, usually used by an operator
+Description: castor (Cern Advanced STORage system)
+ Messaging clients.
+ Used to control when necessary tape access, usually used by an operator.
 
 Package: castor-msg-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Messaging server - used to control when necessary tape access, usually needed by an operator
+Description: castor (Cern Advanced STORage system)
+ Messaging server.
+ Used to control when necessary tape access, usually needed by an operator
 
 Package: castor-ns-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Name server clients
+Description: castor (Cern Advanced STORage system)
+ Name server clients
 
 Package: castor-ns-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Name server server
+Description: castor (Cern Advanced STORage system)
+ Name server daemon
 
 Package: castor-policies
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Policies used by the expert system
+Description: castor (Cern Advanced STORage system)
+ Policies used by the expert system
 
 Package: castor-rfio-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - RFIO clients
+Description: castor (Cern Advanced STORage system)*
+ RFIO clients
 
 Package: castor-rfio-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - RFIO server
+Description: castor (Cern Advanced STORage system)
+ RFIO server
 
 Package: castor-rh-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Request Handler server
+Description: castor (Cern Advanced STORage system)
+ Request Handler server
 
 Package: castor-rmc-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Remote Media Controller server
+Description: castor (Cern Advanced STORage system)
+ Remote Media Controller server
 
 Package: castor-rmmaster-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Resource Monitoring Master clients
+Description: castor (Cern Advanced STORage system)
+ Resource Monitoring Master clients
 
 Package: castor-rmmaster-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Resource Monitoring Master server
+Description: castor (Cern Advanced STORage system)
+ Resource Monitoring Master server
 
 Package: castor-rmnode-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Resource Monitoring running on each worker node
+Description: castor (Cern Advanced STORage system)
+ Resource Monitoring running on each worker node
 
 Package: castor-rtcopy-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Remote Tape Copy clients
+Description: castor (Cern Advanced STORage system)
+ Remote Tape Copy clients
 
 Package: castor-rtcopy-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Remote Tape Copy server running on a tape server
+Description: castor (Cern Advanced STORage system)
+ Remote Tape Copy server running on a tape server
 
 Package: castor-rtcopy-clientserver
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Remote Tape Copy Client Server running on top of a database, will generate raw RTCOPY commands understood by the rtcopy-server running on tape server
+Description: castor (Cern Advanced STORage system)
+ Remote Tape Copy Client Server running on top of a database.
+ This will generate raw RTCOPY commands understood by the rtcopy-server
+ running on tape server.
 
 Package: castor-stager-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Stager clients
+Description: castor (Cern Advanced STORage system)
+ Stager clients
 
 Package: castor-stager-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Stager server
+Description: castor (Cern Advanced STORage system)
+ Stager server
 
 Package: castor-sysconfig
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Configuration files readed by every server
+Description: castor (Cern Advanced STORage system)
+ Configuration files readed by every server
 
 Package: castor-tape-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Tape clients
+Description: castor (Cern Advanced STORage system)
+ Tape clients
 
 Package: castor-tape-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Tape server
+Description: castor (Cern Advanced STORage system)
+ Tape server
 
 Package: castor-upv-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - User Privilege clients
+Description: castor (Cern Advanced STORage system)
+ User Privilege clients
 
 Package: castor-upv-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - User Privilege server
+Description: castor (Cern Advanced STORage system)
+ User Privilege server
 
 Package: castor-vdqm-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Volume Drive and Queue Manager clients
+Description: castor (Cern Advanced STORage system)
+ Volume Drive and Queue Manager clients
 
 Package: castor-vdqm-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Volume Drive and Queue Manager server
+Description: castor (Cern Advanced STORage system)
+ Volume Drive and Queue Manager server
 
 Package: castor-vmgr-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Volume Manager clients
+Description: castor (Cern Advanced STORage system)
+ Volume Manager clients
 
 Package: castor-vmgr-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Cern Advanced STORage system - Volume Manager server
-
-
-
-
+Description: castor (Cern Advanced STORage system)
+ Volume Manager server
