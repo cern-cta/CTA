@@ -47,6 +47,8 @@
 
 void *Cmonit_recv_from_clients(void *);
 void *Cmonit_process_stager_request(void *);
+void *Cmonit_process_stager_list_request(void *);
+void *Cmonit_process_stager_detail_request(void *);
 void *Cmonit_process_tape_status_request(void *);
 void *Cmonit_process_tapeserver_status_request(void *);
 void *Cmonit_send_request_not_recognized(void *);
@@ -94,6 +96,7 @@ Cthread_rwlock_t tape_lock;    /* Used to lock the Access to the Tape data */
 struct Cmonit_client_request_arg {
   int sd;
   struct sockaddr_in *clientAddress;
+  char param[MAXPARAMLEN+1];
 };
 
 /* ---------------------------------------
