@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.145 2001/07/12 17:32:14 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.146 2001/07/13 12:30:11 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.145 $ $Date: 2001/07/12 17:32:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.146 $ $Date: 2001/07/13 12:30:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -3038,6 +3038,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 	struct stat st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
+	int done_a_time = 0;
 
 	found = 0;
 	if (forced_stcp == NULL) {
@@ -3113,6 +3114,8 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
+						done_a_time = 1;
+						stcp->a_time = time(NULL);
 						update_migpool(&stcp,1,0);
 					}
 				}
@@ -3121,7 +3124,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 			stcp->status |= STAGED;
 		}
 	}
-	stcp->a_time = time(NULL);
+	if (! done_a_time) stcp->a_time = time(NULL);
 	if (subreqid != NULL) *subreqid = stcp->reqid;
 
 #ifdef USECDB
@@ -3356,5 +3359,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Thursday 12 July, 2001 at 19:28:04 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 13 July, 2001 at 14:16:56 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
