@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2003 by CERN/IT/ADC/CA
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.9 $ $Date: 2000/06/15 12:28:13 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.10 $ $Date: 2003/03/11 12:37:48 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ int *to_gid ;
 #endif
    
     if  ( (fsin=fopen(infile,"r"))==NULL ) {
-       log(LOG_ERR, "Could not open file %s, errno %d", infile, errno);
+       log(LOG_ERR, "Could not open file %s, errno %d\n", infile, errno);
        serrno = ENOENT;
        return -ENOENT ;
     }
