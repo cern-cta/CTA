@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.18 2002/05/06 16:14:24 jdurand Exp $
+ * $Id: stage_util.c,v 1.19 2002/05/15 06:43:51 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -70,10 +70,20 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 	funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) ,	        \
 				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
 }
+#define DUMP_U64_WITH_COMMENT(rpfd,st,member,comment) {                     \
+    char tmpbuf[21];                                                        \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	        \
+				 u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
+}
 #define PRINT_U64(st,member) {                                              \
     char tmpbuf[21];                                                        \
 	fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) ,	                \
 				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
+}
+#define PRINT_U64_WITH_COMMENT(st,member,comment) {                         \
+    char tmpbuf[21];                                                        \
+	fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	            \
+				 u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
 }
 
 #define DUMP_CHAR(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20c\n", NAMEOFVAR(member) , st->member != '\0' ? st->member : ' ')
@@ -182,7 +192,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	DUMP_VAL(rpfd,stcp,nread);
 	DUMP_STRING(rpfd,stcp,poolname);
 	DUMP_STRING(rpfd,stcp,recfm);
-	DUMP_U64(rpfd,stcp,size);
+	DUMP_U64_WITH_COMMENT(rpfd,stcp,size,"bytes");
 	DUMP_STRING(rpfd,stcp,ipath);
 	DUMP_CHAR(rpfd,stcp,t_or_d);
 	DUMP_STRING(rpfd,stcp,group);
@@ -244,6 +254,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_STRING(rpfd,stcp,u1.h.tppool);
 		DUMP_VAL(rpfd,stcp,u1.h.retenp_on_disk);
 		DUMP_VAL(rpfd,stcp,u1.h.mintime_beforemigr);
+		DUMP_VAL(rpfd,stcp,u1.h.flag);
 		break;
 	}
 }
@@ -280,7 +291,7 @@ void DLL_DECL print_stcp(stcp)
 	PRINT_VAL(stcp,nread);
 	PRINT_STRING(stcp,poolname);
 	PRINT_STRING(stcp,recfm);
-	PRINT_U64(stcp,size);
+	PRINT_U64_WITH_COMMENT(stcp,size,"bytes");
 	PRINT_STRING(stcp,ipath);
 	PRINT_CHAR(stcp,t_or_d);
 	PRINT_STRING(stcp,group);
@@ -342,6 +353,7 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_STRING(stcp,u1.h.tppool);
 		PRINT_VAL(stcp,u1.h.retenp_on_disk);
 		PRINT_VAL(stcp,u1.h.mintime_beforemigr);
+		PRINT_VAL(stcp,u1.h.flag);
 		break;
 	}
 }
