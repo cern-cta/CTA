@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.117 2001/02/02 12:18:16 jdurand Exp $
+ * $Id: stager.c,v 1.118 2001/02/02 15:30:36 jdurand Exp $
  */
 
 /*
@@ -15,9 +15,10 @@
 /* Otherwise you can also specify two tape servers depending if a tape ends with odd or an even number: */
 /* #define TAPESRVR_ODD "shd65" */
 /* #define TAPESRVR_EVEN "shd79" */
+#define USE_SUBREQID
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.117 $ $Date: 2001/02/02 12:18:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.118 $ $Date: 2001/02/02 15:30:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3293,6 +3294,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Friday 02 February, 2001 at 13:17:59 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 02 February, 2001 at 16:23:12 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
