@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.36 2000/04/07 06:53:58 jdurand Exp $
+ * $Id: stager.c,v 1.37 2000/04/07 07:04:54 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
 /* For ALICE data challenge : compile the stager with -DALICETEST */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.36 $ $Date: 2000/04/07 06:53:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.37 $ $Date: 2000/04/07 07:04:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -249,7 +249,7 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGETAPE] GO ON WITH gdb /usr/local/bin/stager %d, then break stage_tape\n",getpid());
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGETAPE] sleep(10)\n");
-		sleep(10);
+		/* sleep(10); */
 #endif
 		c = stage_tape ();
 	} else {
@@ -266,14 +266,14 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] GO ON WITH gdb /usr/local/bin/stager %d, then break stagewrt_castor_hsm_file\n",getpid());
 				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] sleep(10)\n");
-				sleep(10);
+				/* sleep(10); */
 #endif
 			c = stagewrt_castor_hsm_file ();
 		} else {
 #ifdef STAGER_DEBUG
 				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] GO ON WITH gdb /usr/local/bin/stager %d, then break stagein_castor_hsm_file\n",getpid());
 				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] sleep(10)\n");
-				sleep(10);
+				/* sleep(10); */
 #endif
 			c = stagein_castor_hsm_file ();
 		}
