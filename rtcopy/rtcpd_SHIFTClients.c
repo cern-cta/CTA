@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.7 $ $Date: 2000/01/03 13:09:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 09:59:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -364,9 +364,6 @@ static int rtcp_SendRC(SOCKET *s,
                         rtcpHdr_t *hdr,
                         int *status,
                         shift_client_t *req) {
-    tape_list_t *tl;
-    file_list_t *fl;
-    rtcpErrMsg_t *err;
     int retval, rc;
     char msgbuf[4*LONGSIZE], *p;
 
@@ -376,38 +373,9 @@ static int rtcp_SendRC(SOCKET *s,
         return;
     }
 
-    err = NULL;
     if ( req->tape != NULL ) {
-        CLIST_ITERATE_BEGIN(req->tape,tl) {
-            if ( tl->tapereq.tprc != 0 ) {
-                err = &(tl->tapereq.err);
-                break;
-            }
-            CLIST_ITERATE_BEGIN(tl->file,fl) {
-                if ( fl->filereq.cprc != 0 ) {
-                    err = &(fl->filereq.err);
-                    break;
-                }
-            } CLIST_ITERATE_END(tl->file,fl);
-            if ( fl->filereq.cprc != 0 ) break;
-        } CLIST_ITERATE_END(req->tape,tl);
-
-        if ( err != NULL ) {
-            if ( (err->severity & RTCP_FAILED) != 0 ) {
-                if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval == RSLCT;
-                else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
-                else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
-                else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
-                else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
-                else retval = UNERR;
-            } else {
-                if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
-                else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
-                else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
-                else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
-                else retval = 0;
-            } 
-        } else retval = 0;
+        rc = rtcp_RetvalSHIFT(req->tape,&retval);
+        if ( rc == -1 ) retval = UNERR;
         *status = retval;
     } else retval = *status;
     p = msgbuf;
