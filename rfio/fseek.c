@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: fseek.c,v 1.7 2000/11/20 15:01:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Fabien Collin";
+static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.7 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Fabien Collin";
 #endif /* not lint */
 
 /* fseek.c      Remote File I/O - fseek library call */
@@ -43,7 +43,7 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
     return -1;
   }
 
-  if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
+  if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
     TRACE(2,"rfio","rfio_fseek() : using local fseek() ");
     rc = fseek((FILE *)fp, offset, whence);
     rfio_errno = 0;

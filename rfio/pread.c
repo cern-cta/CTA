@@ -1,5 +1,5 @@
 /*
- * $Id: pread.c,v 1.8 2000/11/13 17:29:44 jdurand Exp $
+ * $Id: pread.c,v 1.9 2000/11/20 15:01:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.8 $ $Date: 2000/11/13 17:29:44 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.9 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/
@@ -31,7 +31,7 @@ RFILE   *fp;                            /* remote file pointer          */
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_pread(%x, %d, %d, %x)", ptr, size, items, fp);
 
-        if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
+        if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
 		TRACE(3,"rfio","local pread(%x,%d,%d,%x)",ptr, size, items, &(fp->fp));
 		status = fread(ptr, size, items, fp->fp_save) ;
 		END_TRACE();

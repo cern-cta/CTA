@@ -1,5 +1,5 @@
 /*
- * $Id: readdir.c,v 1.10 2000/10/02 08:02:32 jdurand Exp $
+ * $Id: readdir.c,v 1.11 2000/11/20 15:01:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.10 $ $Date: 2000/10/02 08:02:32 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.11 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -48,7 +48,7 @@ RDIR *dirp;
     * Search internal table for this directory pointer
     * Check first that it's not the last one used
     */
-   s_index = rfio_rdirfdt_findentry(dirp->s,FINDRDIR_WITH_SCAN);
+   s_index = rfio_rdirfdt_findptr(dirp,FINDRDIR_WITH_SCAN);
 
    /* 
     * The directory is local.

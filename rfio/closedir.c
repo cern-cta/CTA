@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.9 2000/10/02 08:02:29 jdurand Exp $
+ * $Id: closedir.c,v 1.10 2000/11/20 15:01:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.9 $ $Date: 2000/10/02 08:02:29 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.10 $ $Date: 2000/11/20 15:01:16 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
@@ -37,7 +37,7 @@ RDIR *dirp;
    /*
     * Search internal table for this directory pointer
     */
-   s_index = rfio_rdirfdt_findentry(dirp->s,FINDRDIR_WITH_SCAN);
+   s_index = rfio_rdirfdt_findptr(dirp,FINDRDIR_WITH_SCAN);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_closedir(0x%x)", dirp);

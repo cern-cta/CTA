@@ -1,5 +1,5 @@
 /*
- * $Id: fread.c,v 1.7 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: fread.c,v 1.8 2000/11/20 15:01:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.8 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fread.c      Remote File I/O - write a binary file                   */
@@ -43,7 +43,7 @@ int DLL_DECL rfio_fread(ptr, size, items, fp)
 		return 0 ;
 	}
 
-	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
+	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
 		TRACE(2,"rfio","rfio_fread() : using local fread() ") ;
 		rfio_errno = 0;
 		rc= fread(ptr, size, items, (FILE *)fp) ;

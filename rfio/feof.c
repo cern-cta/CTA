@@ -1,5 +1,5 @@
 /*
- * $Id: feof.c,v 1.5 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: feof.c,v 1.6 2000/11/20 15:01:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.5 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.6 $ $Date: 2000/11/20 15:01:16 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* feof.c      Remote File I/O - tell if the eof has been reached       */
@@ -38,7 +38,7 @@ int rfio_feof(fp)
 	/*
 	 * The file is local
 	 */
-	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1 ) {
+	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
 		rc= feof((FILE *)fp) ; 
 		END_TRACE() ; 
 		rfio_errno = 0;

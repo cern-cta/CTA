@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.7 2000/10/02 08:02:29 jdurand Exp $
+ * $Id: fclose.c,v 1.8 2000/11/20 15:01:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:29 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.8 $ $Date: 2000/11/20 15:01:16 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -41,7 +41,7 @@ RFILE *fp;                      /* Remote file pointer                  */
    /*
     * The file is local : this is the only way to detect it !
     */
-   if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
+   if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
       status= fclose((FILE *)fp) ;
       END_TRACE() ; 
       rfio_errno = 0;

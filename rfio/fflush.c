@@ -1,5 +1,5 @@
 /*
- * $Id: fflush.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: fflush.c,v 1.7 2000/11/20 15:01:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.7 $ $Date: 2000/11/20 15:01:17 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */
@@ -38,7 +38,7 @@ int DLL_DECL rfio_fflush(fp)
 		return -1 ;
 	}
 
-	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1 ) {
+	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
 		status= fflush((FILE *)fp) ;
 		END_TRACE() ; 
 		rfio_errno = 0;

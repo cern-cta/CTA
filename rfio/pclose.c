@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.8 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: pclose.c,v 1.9 2000/11/20 15:01:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.8 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.9 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -41,7 +41,7 @@ RFILE 	*fs ;
    /*
     * The file is local
     */
-   if (rfio_rfilefdt_findentry(fs->s,FINDRFILE_WITH_SCAN) == -1 ) {
+   if (rfio_rfilefdt_findptr(fs,FINDRFILE_WITH_SCAN) == -1 ) {
       TRACE(2, "rfio", "rfio_pclose: using local pclose") ; 
 #if defined(_WIN32)
       status = _pclose(fs->fp_save);

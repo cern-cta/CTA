@@ -1,5 +1,5 @@
 /*
- * $Id: rewinddir.c,v 1.11 2000/10/10 20:33:49 jdurand Exp $
+ * $Id: rewinddir.c,v 1.12 2000/11/20 15:01:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.11 $ $Date: 2000/10/10 20:33:49 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.12 $ $Date: 2000/11/20 15:01:19 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
@@ -38,7 +38,7 @@ RDIR *dirp;
     * Search internal table for this directory pointer
     * Check first that it's not the last one used
     */
-   s_index = rfio_rdirfdt_findentry(dirp->s,FINDRDIR_WITH_SCAN);
+   s_index = rfio_rdirfdt_findptr(dirp,FINDRDIR_WITH_SCAN);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_rewinddir(0x%x)", dirp);
