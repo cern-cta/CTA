@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.72 $ $Release$ $Date: 2004/12/17 14:27:36 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.73 $ $Release$ $Date: 2004/12/21 22:23:39 $ $Author: jdurand $
 #
 # Make Castor libraries and executables
 #
@@ -28,8 +28,8 @@
 
 RH_HOST=RhHost
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR)
 
 #if _AIX
 OSLIBS = -L FileName(..,shlib) -lshift
@@ -309,7 +309,9 @@ STGLIB_SRCS += DlfMsgSvc.cpp \
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
+#if BuildCastorClientCPPLibrary
 COMMONLIB = LibraryTargetName(castorClient)
+#endif
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
