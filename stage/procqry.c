@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.79 2002/02/05 15:26:49 jdurand Exp $
+ * $Id: procqry.c,v 1.80 2002/02/18 09:43:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.79 $ $Date: 2002/02/05 15:26:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.80 $ $Date: 2002/02/18 09:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -728,6 +728,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
+			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
 #ifdef USECDB
 			strcpy(dbfd_in_fork.username,dbfd.username);
 			strcpy(dbfd_in_fork.password,dbfd.password);

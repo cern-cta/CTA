@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.171 2002/02/14 13:06:58 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.172 2002/02/18 09:43:49 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.171 $ $Date: 2002/02/14 13:06:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.172 $ $Date: 2002/02/18 09:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3060,6 +3060,8 @@ int fork_exec_stager(wqp)
 		wqp->ovl_pid = sav_ovl_pid;
 		return (SYERR);
 	} else if (pid == 0) {	/* we are in the child */
+		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
 #ifdef __INSURE__
 		c = 0;
 		if (c != pfd[0] && c != wqp->rpfd) close (c);

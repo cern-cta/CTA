@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.185 2002/02/15 18:01:36 jdurand Exp $
+ * $Id: poolmgr.c,v 1.186 2002/02/18 09:43:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.185 $ $Date: 2002/02/15 18:01:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.186 $ $Date: 2002/02/18 09:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -891,7 +891,9 @@ int cleanpool(poolname)
     pool_p->ovl_pid = 0;
     return (SYERR);
   } else if (pid == 0) {  /* we are in the child */
-    gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
+    rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+    rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
+	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
     sprintf (progfullpath, "%s/cleaner", BIN);
     stglogit (func, "execing cleaner, pid=%d\n", getpid());
     execl (progfullpath, "cleaner", pool_p->gc, poolname, hostname, 0);
@@ -2756,6 +2758,8 @@ int migrate_files(pool_p)
     /* @@@@ EXCEPTIONNAL @@@@ */
     /* exit(2); */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
+    rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+    rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
     exit(migpoolfiles(pool_p));
   } else {  /* we are in the parent */
     struct pool *pool_n;
@@ -3483,7 +3487,9 @@ int migpoolfiles(pool_p)
       /* We are in the child */
       int rc;
       char *myenv = "STAGE_STGMAGIC=0x13140703"; /* STGMAGIC3 explicit value */
-      
+
+      rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+      rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
       if (putenv(myenv) != 0) {
 		stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
       } else {
