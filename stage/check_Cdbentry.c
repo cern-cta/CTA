@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.10 2001/01/31 18:59:48 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.11 2001/06/20 14:03:49 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -45,23 +45,28 @@
 #endif
 
 #define DUMP_VAL(st,member) {					\
-	printf("%10s : %10d\n", NAMEOFVAR(member) ,	\
+	printf("%-23s : %10d\n", NAMEOFVAR(member) ,	\
 				 (int) st->member);				\
+}
+
+#define DUMP_VALHEX(st,member) {					\
+	printf("%-23s : %10lx (hex)\n", NAMEOFVAR(member) ,	\
+				 (unsigned long) st->member);				\
 }
 
 #define DUMP_U64(st,member) {					\
     char tmpbuf[21];                            \
-	printf("%10s : %10s\n", NAMEOFVAR(member) ,	\
+	printf("%-23s : %10s\n", NAMEOFVAR(member) ,	\
 				 u64tostr((u_signed64) st->member, tmpbuf,0));	\
 }
 
 #define DUMP_CHAR(st,member) {										\
-	printf("%10s : %10c\n", NAMEOFVAR(member) ,						\
+	printf("%-23s : %10c\n", NAMEOFVAR(member) ,						\
 				 st->member != '\0' ? st->member : ' ');			\
 }
 
 #define DUMP_STRING(st,member) {				\
-	printf("%10s : %10s\n", NAMEOFVAR(member) ,	\
+	printf("%-23s : %10s\n", NAMEOFVAR(member) ,	\
 				 st->member);					\
 }
 
@@ -396,9 +401,9 @@ void stppprint(stpp)
 		return;
 	}
 
-	printf("-----------------------\n");
-	printf("%10s : %10s\n","What","Value");
-	printf("-----------------------\n");
+	printf("------------------------------------\n");
+	printf("%-23s : %10s\n","What","Value");
+	printf("------------------------------------\n");
 	DUMP_VAL(stpp,reqid);
 	DUMP_STRING(stpp,upath);
 }
@@ -412,9 +417,9 @@ void stcpprint(stcp)
 		return;
 	}
 
-	printf("-----------------------\n");
-	printf("%10s : %10s\n","What","Value");
-	printf("-----------------------\n");
+	printf("------------------------------------\n");
+	printf("%-23s : %10s\n","What","Value");
+	printf("------------------------------------\n");
 	DUMP_VAL(stcp,blksize);
 	DUMP_STRING(stcp,filler);
 	DUMP_CHAR(stcp,charconv);
@@ -432,7 +437,7 @@ void stcpprint(stcp)
 	DUMP_VAL(stcp,gid);
 	DUMP_VAL(stcp,mask);
 	DUMP_VAL(stcp,reqid);
-	DUMP_VAL(stcp,status);
+	DUMP_VALHEX(stcp,status);
 	DUMP_U64(stcp,actual_size);
 	DUMP_U64(stcp,c_time);
 	DUMP_U64(stcp,a_time);
