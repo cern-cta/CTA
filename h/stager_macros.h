@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.11 2004/11/30 09:38:11 jdurand Exp $
+ * $Id: stager_macros.h,v 1.12 2004/11/30 15:44:32 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -16,6 +16,7 @@
 #include "osdep.h"
 #include "Cuuid.h"
 #include "u64subr.h"
+#include "stager_extern_globals.h"
 #include "stager_uuid.h"
 #include "log.h"
 
@@ -42,9 +43,6 @@
 #define STAGER_LOG(what,fileid,message,value,message2,value2) { \
   char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
-  extern int stagerNoDlf; \
-  extern char stagerLog[CA_MAXLINELEN+1]; \
-  extern Cuuid_t stagerUuid; \
   if (message != NULL) { \
     if (message2 != NULL) { \
       if (! stagerNoDlf) dlf_write( \
@@ -58,7 +56,7 @@
 	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
 	        STAGER_LOG_WHERE \
 	        ); \
-      if (stagerLog[0] != '\0') { \
+      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
 	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
 	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
@@ -84,7 +82,7 @@
 	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
 	        STAGER_LOG_WHERE \
 	        ); \
-      if (stagerLog[0] != '\0') { \
+      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
 	if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
 	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	} else { \
@@ -104,7 +102,7 @@
 	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
 		STAGER_LOG_WHERE \
 		); \
-      if (stagerLog[0] != '\0') { \
+      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
 	if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
 	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
 	} else { \
@@ -121,7 +119,7 @@
 		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
 		STAGER_LOG_WHERE \
 		); \
-      if (stagerLog != '\0') { \
+      if ((stagerLog != NULL) && (stagerLog != '\0')) { \
 	log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt); \
       } \
     } \
@@ -141,16 +139,16 @@
 #define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value, NULL, NULL)
 #define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, NULL, NULL)
 #define STAGER_LOG_ENTER()                  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  , NULL, NULL);} \
+  if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  , NULL, NULL);} \
 }
 #define STAGER_LOG_LEAVE()                  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL);} return; \
+  if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL);} return; \
 }
 #define STAGER_LOG_RETURN(value)            { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL);} return(value); \
+  if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL);} return(value); \
 }
 #define STAGER_LOG_RETURN_NULL()  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL);} return(NULL); \
+  if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL);} return(NULL); \
 }
 #define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_STARTUP() { \
@@ -184,7 +182,7 @@
 }
 #define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_DEBUG(fileid,string)     { \
-  extern int stagerDebug; if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, NULL, NULL);} \
+  if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, NULL, NULL);} \
 }
 
 #define CALLIT(args) { \
@@ -200,7 +198,6 @@
   extern int stagerSignaled; \
   int stagerSignaledBackup; \
   extern void *stagerSignalCthreadStructure; \
-  extern Cuuid_t stagerUuid; \
   if (Cthread_mutex_timedlock_ext(stagerSignalCthreadStructure,STAGER_MUTEX_TIMEOUT) != 0) { \
     STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_timedlock_ext"); \
     goto label; \
