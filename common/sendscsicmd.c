@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.11 $ $Date: 2001/07/30 10:17:54 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.12 $ $Date: 2002/10/30 13:28:38 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -51,7 +51,7 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.11 $ $Date:
 #endif
 #if defined(linux)
 #include <stdlib.h>
-#include "/usr/src/linux/include/scsi/sg.h"
+#include SCSIINC
 #include <sys/stat.h>
 #endif
 #include "scsictl.h"
