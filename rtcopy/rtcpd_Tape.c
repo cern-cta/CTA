@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.84 $ $Date: 2002/06/26 13:49:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.85 $ $Date: 2003/11/10 10:10:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -461,20 +461,16 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             }
 
 #ifdef MONITOR  /* Monitoring Code */
-	    
-	    rtcp_log(LOG_DEBUG, "MONITOR - Before WTT transfer info sent\n");
-	    {
-	      int forceSend;
+            {
+                int forceSend;
 	      
-	      if (file == NULL || filereq == NULL) {
-		rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
-	      } else {
-		forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
-		rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
-	      }
-	    }
-	    rtcp_log(LOG_DEBUG, "MONITOR - After WTT transfer info sent\n");
-
+                if (file == NULL || filereq == NULL) {
+                    rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+                } else {
+                    forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
+                    rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+                }
+            }
 #endif /* End Monitoring Code */
       
 
@@ -893,20 +889,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 }
 
 #ifdef MONITOR	/* Monitoring Code */
-		rtcp_log(LOG_DEBUG, "MONITOR - Before RFT transfer info sent\n");
-		{
-		  int forceSend;
-		  
-		  if (file == NULL || filereq == NULL) {
-		    rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
-		  } else {
-		    forceSend = (file->tapebytes_sofar == 0) || 
-		      (file->tapebytes_sofar ==  filereq->bytes_in);
-		    rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
-		  }
-		}
-		rtcp_log(LOG_DEBUG, "MONITOR - After RFT transfer info sent\n");
-
+                {
+                    int forceSend;
+  
+                    if (file == NULL || filereq == NULL) {
+                        rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+                    } else {
+                        forceSend = (file->tapebytes_sofar == 0) || 
+                                    (file->tapebytes_sofar ==  filereq->bytes_in);
+                        rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+                    }
+               }
 #endif		/* End of Monitoring Code */
 
                 TP_SIZE(rc);
@@ -1308,28 +1301,23 @@ void *tapeIOthread(void *arg) {
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
-	
+
 #ifdef MONITOR /* Monitoring - Loop to count the number of files in the request */
-	rtcp_log(LOG_DEBUG, "MONITOR - Before Loop to count files in REQ\n");
-	
-	nb_files = 0;
-	last_qty_sent = 0;
-	CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
-	  nb_files++;
-	} CLIST_ITERATE_END(nexttape->file,nextfile);
-	current_file = 0;
-	
-	rtcp_log(LOG_DEBUG, "MONITOR - After Loop to count files in REQ\n");
-	
+        nb_files = 0;
+        last_qty_sent = 0;
+        CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
+            nb_files++;
+        } CLIST_ITERATE_END(nexttape->file,nextfile);
+        current_file = 0;
 #endif /* End Monitoring */
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
  
 #ifdef MONITOR
-	    current_file++;
+            current_file++;
 #endif	    /* End Monitoring */
 
-	    mode = nexttape->tapereq.mode;
+            mode = nexttape->tapereq.mode;
             if ( mode == WRITE_DISABLE ) nextfile->filereq.err.severity =
                 nextfile->filereq.err.severity & ~RTCP_LOCAL_RETRY;
             /*
@@ -1525,11 +1513,11 @@ void *tapeIOthread(void *arg) {
                 CHECK_PROC_ERR(NULL,nextfile,"topen() error");
 
 #ifdef MONITOR
-		/* Reinit time counter for monitor */
-		{
-		  struct tms tmp_tms;
-		  lasttime_monitor_msg_sent = times(&tmp_tms);
-		}
+                /* Reinit time counter for monitor */
+                {
+                    struct tms tmp_tms;
+                    lasttime_monitor_msg_sent = times(&tmp_tms);
+                }
 #endif
 
                 if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
