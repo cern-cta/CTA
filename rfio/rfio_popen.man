@@ -1,0 +1,67 @@
+.\"
+.\" $Id: rfio_popen.man,v 1.1 2001/06/01 06:08:27 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.1 $ $Date: 2001/06/01 06:08:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_POPEN 3 "$Date: 2001/06/01 06:08:27 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_popen, rfio_pclose \- start a process and open a pipe to it
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "RFILE *rfio_popen (const char *" command ", const char *" type ");"
+.sp
+.BI "int rfio_pclose (RFILE *" fs ");"
+.SH DESCRIPTION
+.B rfio_popen
+starts a process and opens a pipe to it.
+.LP
+.I command
+is a pointer to a string specifying the shell command to be executed.
+.P
+.I type
+is a mode indicator for the pipe. One of the characters "r" or "w".
+.LP
+.B rfio_pclose
+waits for the forked process to terminate and returns the exit status of the
+command.
+.SH RETURN VALUE
+This routine returns NULL if the operation failed or a non-NULL pointer to a RFILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+Not enough memory.
+.TP
+.B EINVAL
+The mode provided is invalid.
+.TP
+.B ECONNRESET
+Connection reset by peer
+.TP
+.B ETIMEDOUT
+Connection timed out
+.TP
+.B ECONNREFUSED
+Connection refused
+.TP
+.B EHOSTUNREACH
+No route to host
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SEUMSG2LONG
+Command string too long.
+.TP
+.B SECOMERR
+Communication error.
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)
