@@ -163,14 +163,14 @@ void castor::db::ora::OraCuuidCnv::updateRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     // Now Update the current object
     Cuuid_t content = obj->content();
-    m_updateStatement->setInt(1, obj->id());
-    m_updateStatement->setInt(2, content.time_low);
-    m_updateStatement->setInt(3, content.time_mid);
-    m_updateStatement->setInt(4, content.time_hi_and_version);
-    m_updateStatement->setInt(5, content.clock_seq_hi_and_reserved);
-    m_updateStatement->setInt(6, content.clock_seq_low);
+    m_updateStatement->setInt(1, content.time_low);
+    m_updateStatement->setInt(2, content.time_mid);
+    m_updateStatement->setInt(3, content.time_hi_and_version);
+    m_updateStatement->setInt(4, content.clock_seq_hi_and_reserved);
+    m_updateStatement->setInt(5, content.clock_seq_low);
     std::string nodeS((char*)content.node, 6);
-    m_updateStatement->setString(7, nodeS);
+    m_updateStatement->setString(6, nodeS);
+    m_updateStatement->setInt(7, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       connection()->commit();
