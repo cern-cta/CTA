@@ -1,5 +1,6 @@
 // Include files
 #include <qmap.h>
+#include <qregexp.h>
 
 // local
 #include "cppcppstreamcnvwriter.h"
@@ -57,6 +58,10 @@ void CppCppStreamCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeCreateObj();
   // updateObj method
   writeUpdateObj();
+  // marshal methods
+  writeMarshal();
+  // unmarshal methods
+  writeUnmarshal();
 }
 
 //=============================================================================
@@ -100,8 +105,6 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
             << "ad->stream() << obj->type();" << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
@@ -113,7 +116,7 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
       sl = sl.right(sl.length() - sl.find('[') - 1);
       int l = atoi(sl.ascii());
       for (int i = 0; i < l; i++) {
-	*m_stream << " << obj->" << mem->first << "()[" << i << "]";
+        *m_stream << " << obj->" << mem->first << "()[" << i << "]";
       }
     } else {
       *m_stream << " << obj->" << mem->first << "()";
@@ -128,55 +131,7 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
        as = assocs.next()) {
     if (as->first.first == MULT_ONE && isEnum(as->second.second)) {
       *m_stream << getIndent() << "ad->stream() << obj->"
-                << as->second.first << "();" << endl;      
-    }
-  }
-  // Mark object as done
-  *m_stream << getIndent() << "// Mark object as done"
-            << endl << getIndent()
-            << "alreadyDone.insert(obj);"
-            << endl;
-  // Go through the associations
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
-    addInclude("\"castor/Constants.hpp\"");
-    if (as->first.first == MULT_ONE) {
-      // don't consider enums
-      if (isEnum(as->second.second)) continue;
-      // One to one association
-      fixTypeName(as->second.second,
-                  getNamespace(as->second.second),
-                  m_classInfo->packageName);
-      *m_stream << getIndent()
-                << "marshalObject(obj->"
-                << as->second.first
-                << "(), ad, alreadyDone);"
-                << endl;
-    } else if (as->first.first == MULT_N) {
-      // One to n association
-      *m_stream << getIndent() << "ad->stream() << obj->"
-                << as->second.first << "().size();"
-                << endl << getIndent() << "for ("
-                << fixTypeName("vector", "", "")
-                << "<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>::iterator it = obj->"
-                << as->second.first
-                << "().begin();" << endl << getIndent()
-                << "     it != obj->"
-                << as->second.first
-                << "().end();" << endl << getIndent()
-                << "     it++) {"  << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << "marshalObject(*it, ad, alreadyDone);"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
+                << as->second.first << "();" << endl;
     }
   }
 }
@@ -240,17 +195,15 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
             << "// Now retrieve and set members" << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
     *m_stream << getIndent()
-	      << fixTypeName(mem->second,
-			     getNamespace(mem->second),
-			     m_classInfo->packageName)
-	      << " " << mem->first;
+              << fixTypeName(mem->second,
+                             getNamespace(mem->second),
+                             m_classInfo->packageName)
+              << " " << mem->first;
     if (isLastTypeArray()) *m_stream << arrayPart();
     *m_stream << ";" << endl
               << getIndent() << "ad->stream()";
@@ -260,7 +213,7 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
       sl = sl.right(sl.length() - sl.find('[') - 1);
       int l = atoi(sl.ascii());
       for (int i = 0; i < l; i++) {
-	*m_stream << " >> " << mem->first << "[" << i << "]";
+        *m_stream << " >> " << mem->first << "[" << i << "]";
       }
     } else {
       *m_stream << " >> " << mem->first;
@@ -271,10 +224,10 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
               << "(";
     if (isLastTypeArray()) {
       *m_stream << "("
-		<< fixTypeName(mem->second,
-			       getNamespace(mem->second),
-			       m_classInfo->packageName)
-		<< "*)";
+                << fixTypeName(mem->second,
+                               getNamespace(mem->second),
+                               m_classInfo->packageName)
+                << "*)";
     }
     *m_stream << mem->first << ");" << endl;
   }
@@ -284,66 +237,17 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE && isEnum(as->second.second)) {    
+    if (as->first.first == MULT_ONE && isEnum(as->second.second)) {
       *m_stream << getIndent() << "int "
-		<< as->second.first << ";" << endl
-		<< getIndent() << "ad->stream() >> "
-		<< as->second.first << ";" << endl
-		<< getIndent() << "object->set"
-		<< capitalizeFirstLetter(as->second.first)
-		<< "(("	<< fixTypeName(as->second.second,
-				       getNamespace(as->second.second),
-				       m_classInfo->packageName)
-		<< ")" << as->second.first << ");" << endl;
-    }
-  }
-  // Add new object to the list of newly created objects
-  *m_stream << getIndent()
-            << "newlyCreated.insert(object);"
-            << endl;
-  // Go through the associations
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
-      if (!isEnum(as->second.second)) {    
-	*m_stream << getIndent()
-		  << "IObject* obj"
-		  << capitalizeFirstLetter(as->second.first)
-		  << " = unmarshalObject(ad->stream(), newlyCreated);"
-		  << endl << getIndent()
-		  << "object->set"
-		  << capitalizeFirstLetter(as->second.first)
-		  << "(dynamic_cast<"
-		  << fixTypeName(as->second.second,
-				 getNamespace(as->second.second),
-				 m_classInfo->packageName)
-		  << "*>(obj"
-		  << capitalizeFirstLetter(as->second.first)
-		  << "));" << endl;
-      }
-    } else if (as->first.first == MULT_N) {
-      *m_stream << getIndent() << "unsigned int "
-                << as->second.first << "Nb;" << endl
+                << as->second.first << ";" << endl
                 << getIndent() << "ad->stream() >> "
-                << as->second.first << "Nb;" << endl
-                << getIndent()
-                << "for (unsigned int i = 0; i < "
-                << as->second.first << "Nb; i++) {" << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << "IObject* obj"
-                << " = unmarshalObject(ad->stream(), newlyCreated);"
-                << endl << getIndent()
-                << "object->add"
+                << as->second.first << ";" << endl
+                << getIndent() << "object->set"
                 << capitalizeFirstLetter(as->second.first)
-                << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>(obj));" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
+                << "((" << fixTypeName(as->second.second,
+                                       getNamespace(as->second.second),
+                                       m_classInfo->packageName)
+                << ")" << as->second.first << ");" << endl;
     }
   }
   // Return result
@@ -367,3 +271,223 @@ void CppCppStreamCnvWriter::writeUpdateObjContent() {
             << "throw ex;" << endl;
 }
 
+//=============================================================================
+// marshal
+//=============================================================================
+void CppCppStreamCnvWriter::writeMarshal() {
+  writeWideHeaderComment("marshalObject", getIndent(), *m_stream);
+  QString str = QString("void ") +
+    m_classInfo->packageName + "::Stream" +
+    m_classInfo->className + "Cnv::marshalObject(";
+  *m_stream << getIndent()
+            << str
+            << fixTypeName("IObject*", "castor", "")
+            << " object," << endl;
+  str.replace(QRegExp("."), " ");
+  *m_stream << getIndent() << str
+            << fixTypeName("StreamAddress*", "castor::io", "")
+            << " address," << endl << getIndent() << str
+            << fixTypeName("ObjectSet&", "castor", m_classInfo->packageName)
+            << " alreadyDone)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception", "castor.exception", "")
+            << ") {" << endl;
+  m_indent++;
+  // Get the precise object
+  *m_stream << getIndent() << m_originalPackage
+            << m_classInfo->className << "* obj = " << endl
+            << getIndent() << "  dynamic_cast<"
+            << m_originalPackage
+            << m_classInfo->className << "*>(object);"
+            << endl;
+  *m_stream << getIndent()
+            << "if (0 == obj) {" << endl;
+  m_indent++;
+    addInclude("\"castor/Constants.hpp\"");
+  *m_stream << getIndent()
+            << "// Case of a null pointer"
+            << endl << getIndent()
+            << "address->stream() << castor::OBJ_Ptr << 0;"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent()
+            << "} else if (alreadyDone.find(obj) == alreadyDone.end()) {"
+            << endl;
+  m_indent++;
+  fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+  *m_stream << getIndent()
+            << "// Case of a pointer to a non streamed object"
+            << endl << getIndent()
+            << "cnvSvc()->createRep(address, obj, true);"
+            << endl;
+  // Mark object as done
+  *m_stream << getIndent() << "// Mark object as done"
+            << endl << getIndent()
+            << "alreadyDone.insert(obj);"
+            << endl;
+  // create a list of associations
+  AssocList assocs = createAssocsList();
+  // Go through the associations
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (as->first.first == MULT_ONE) {
+      // don't consider enums
+      if (isEnum(as->second.second)) continue;
+      // One to one association
+      fixTypeName(as->second.second,
+                  getNamespace(as->second.second),
+                  m_classInfo->packageName);
+      fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+      *m_stream << getIndent()
+                << "cnvSvc()->marshalObject(obj->"
+                << as->second.first
+                << "(), address, alreadyDone);"
+                << endl;
+    } else if (as->first.first == MULT_N) {
+      // One to n association
+      *m_stream << getIndent() << "address->stream() << obj->"
+                << as->second.first << "().size();"
+                << endl << getIndent() << "for ("
+                << fixTypeName("vector", "", "")
+                << "<"
+                << fixTypeName(as->second.second,
+                               getNamespace(as->second.second),
+                               m_classInfo->packageName)
+                << "*>::iterator it = obj->"
+                << as->second.first
+                << "().begin();" << endl << getIndent()
+                << "     it != obj->"
+                << as->second.first
+                << "().end();" << endl << getIndent()
+                << "     it++) {"  << endl;
+      m_indent++;
+      fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+      *m_stream << getIndent()
+                << "cnvSvc()->marshalObject(*it, address, alreadyDone);"
+                << endl;
+      m_indent--;
+      *m_stream << getIndent() << "}" << endl;
+    }
+  }
+  m_indent--;
+  *m_stream << getIndent()
+            << "} else {" << endl;
+  m_indent++;
+  addInclude("\"castor/Constants.hpp\"");
+  *m_stream << getIndent()
+            << "// case of a pointer to an already streamed object"
+            << endl << getIndent()
+            << "address->stream() << castor::OBJ_Ptr << alreadyDone[obj];"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
+// unmarshal
+//=============================================================================
+void CppCppStreamCnvWriter::writeUnmarshal() {
+  writeWideHeaderComment("unmarshalObject", getIndent(), *m_stream);
+  QString str = fixTypeName("IObject*",
+                            "castor",
+                            m_classInfo->packageName) +
+    " " + m_classInfo->packageName + "::Stream" +
+    m_classInfo->className + "Cnv::unmarshalObject(";
+  *m_stream << getIndent()
+            << str
+            << "castor::io::biniostream& stream," << endl;
+  str.replace(QRegExp("."), " ");
+  *m_stream << getIndent() << str
+            << fixTypeName("ObjectCatalog&", "castor", "")
+            << " newlyCreated)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception", "castor.exception", "")
+            << ") {" << endl;
+  m_indent++;
+  fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+  *m_stream << getIndent()
+            << fixTypeName("StreamAddress", "castor::io", "")
+            << " ad(stream, \"StreamCnvSvc\", SVC_STREAMCNV);"
+            << endl << getIndent()
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object = cnvSvc()->createObj(&ad);"
+            << endl;
+  // Add new object to the list of newly created objects
+  *m_stream << getIndent() << "// Mark object as created"
+            << endl << getIndent()
+            << "newlyCreated.insert(object);"
+            << endl;
+  // create a list of associations
+  AssocList assocs = createAssocsList();
+  bool first = true;
+  // Go through the associations
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (first &&
+        ((as->first.first == MULT_ONE &&
+          !isEnum(as->second.second)) ||
+         as->first.first == MULT_N)) {
+      // Get the precise object
+      *m_stream << getIndent() << "// Fill object with associations"
+                << endl << getIndent() << m_originalPackage
+                << m_classInfo->className << "* obj = " << endl
+                << getIndent() << "  dynamic_cast<"
+                << m_originalPackage
+                << m_classInfo->className << "*>(object);"
+                << endl;
+      first = false;
+    }
+    if (as->first.first == MULT_ONE &&
+        !isEnum(as->second.second)) {
+      fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+      *m_stream << getIndent()
+                << "IObject* obj"
+                << capitalizeFirstLetter(as->second.first)
+                << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
+                << endl << getIndent()
+                << "obj->set"
+                << capitalizeFirstLetter(as->second.first)
+                << "(dynamic_cast<"
+                << fixTypeName(as->second.second,
+                               getNamespace(as->second.second),
+                               m_classInfo->packageName)
+                << "*>(obj"
+                << capitalizeFirstLetter(as->second.first)
+                << "));" << endl;
+    } else if (as->first.first == MULT_N) {
+      *m_stream << getIndent() << "unsigned int "
+                << as->second.first << "Nb;" << endl
+                << getIndent() << "ad.stream() >> "
+                << as->second.first << "Nb;" << endl
+                << getIndent()
+                << "for (unsigned int i = 0; i < "
+                << as->second.first << "Nb; i++) {" << endl;
+      m_indent++;
+      fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+      *m_stream << getIndent()
+                << "IObject* obj"
+                << capitalizeFirstLetter(as->second.first)
+                << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
+                << endl << getIndent()
+                << "obj->add"
+                << capitalizeFirstLetter(as->second.first)
+                << "(dynamic_cast<"
+                << fixTypeName(as->second.second,
+                               getNamespace(as->second.second),
+                               m_classInfo->packageName)
+                << "*>(obj"
+                << capitalizeFirstLetter(as->second.first)
+                << "));" << endl;
+      m_indent--;
+      *m_stream << getIndent() << "}" << endl;
+    }
+  }
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}

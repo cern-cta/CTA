@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:53 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -28,7 +28,9 @@
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/io/IStreamConverter.hpp"
 #include "castor/SvcFactory.hpp"
+#include "castor/ObjectCatalog.hpp"
 
 // Local Files
 #include "StreamCnvSvc.hpp"
@@ -50,14 +52,14 @@ castor::io::StreamCnvSvc::StreamCnvSvc(const std::string name) :
 // ~StreamCnvSvc
 // -----------------------------------------------------------------------
 castor::io::StreamCnvSvc::~StreamCnvSvc() throw() {}
-  
+
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
 const unsigned int castor::io::StreamCnvSvc::id() const {
   return ID();
 }
-  
+
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
@@ -80,20 +82,65 @@ const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
 }
 
 // -----------------------------------------------------------------------
+// createRep
+// -----------------------------------------------------------------------
+void castor::io::StreamCnvSvc::createRep(castor::IAddress* address,
+                                         castor::IObject* object,
+                                         bool autocommit)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress* ad =
+    dynamic_cast <castor::io::StreamAddress*>(address);
+  ObjectSet alreadyDone;
+  marshalObject(object, ad, alreadyDone);
+}
+
+// -----------------------------------------------------------------------
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::io::StreamCnvSvc::createObj
-(castor::IAddress* address,
- ObjectCatalog& newlyCreated,
- bool recursive)
+(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress* ad =
+    dynamic_cast<castor::io::StreamAddress*>(address);
+  ObjectCatalog newlyCreated;
+  return unmarshalObject(*ad, newlyCreated);
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamCnvSvc::marshalObject(castor::IObject* object,
+                                             castor::io::StreamAddress* address,
+                                             castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  // If no object, nothing to create
+  if (0 != object) {
+    // Look for an adapted converter
+    // The converter is always valid if no exception is thrown
+    IConverter* conv = converter(object->type());
+    IStreamConverter* sconv =
+      dynamic_cast<IStreamConverter*>(conv);
+    // convert
+    sconv->marshalObject(object, address, alreadyDone);
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamCnvSvc::unmarshalObject(castor::io::StreamAddress& address,
+                                                           castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
-  if (OBJ_INVALID == address->objType()) {
-    StreamAddress* ad = dynamic_cast<StreamAddress*>(address);
+  if (OBJ_INVALID == address.objType()) {
     unsigned int objType;
-    ad->stream() >> objType;
-    ad->setObjType(objType);
+    address.stream() >> objType;
+    address.setObjType(objType);
   }
-  // call method of parent object
-  return this->BaseCnvSvc::createObj(address, newlyCreated, recursive);
+  // Look for an adapted converter
+  // The converter is always valid if no exception is thrown
+  castor::IConverter* conv = converter(address.objType());
+  IStreamConverter* sconv =
+    dynamic_cast<IStreamConverter*>(conv);
+  return sconv->unmarshalObject(address.stream(), newlyCreated);
 }

@@ -83,9 +83,7 @@ const unsigned int castor::io::StreamTapeCopyCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
-                                              bool autocommit,
-                                              bool recursive)
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
@@ -94,15 +92,6 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
-  // Mark object as done
-  alreadyDone.insert(obj);
-  ad->stream() << obj->segments().size();
-  for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
-       it != obj->segments().end();
-       it++) {
-    marshalObject(*it, ad, alreadyDone);
-  }
-  marshalObject(obj->castorFile(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -110,9 +99,7 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCopyCnv::updateRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
-                                              bool autocommit,
-                                              bool recursive)
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -125,7 +112,6 @@ void castor::io::StreamTapeCopyCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCopyCnv::deleteRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
                                               bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -137,9 +123,7 @@ void castor::io::StreamTapeCopyCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* address,
-                                                          castor::ObjectCatalog& newlyCreated,
-                                                          bool recursive)
+castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -152,27 +136,70 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::TapeCopyStatusCodes)status);
-  newlyCreated.insert(object);
-  unsigned int segmentsNb;
-  ad->stream() >> segmentsNb;
-  for (unsigned int i = 0; i < segmentsNb; i++) {
-    IObject* obj = unmarshalObject(ad->stream(), newlyCreated);
-    object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
-  }
-  IObject* objCastorFile = unmarshalObject(ad->stream(), newlyCreated);
-  object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamTapeCopyCnv::updateObj(castor::IObject* obj,
-                                              castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamTapeCopyCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamTapeCopyCnv::marshalObject(castor::IObject* object,
+                                                  castor::io::StreamAddress* address,
+                                                  castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::stager::TapeCopy* obj = 
+    dynamic_cast<castor::stager::TapeCopy*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+    address->stream() << obj->segments().size();
+    for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
+         it != obj->segments().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
+    cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamTapeCopyCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::TapeCopy* obj = 
+    dynamic_cast<castor::stager::TapeCopy*>(object);
+  unsigned int segmentsNb;
+  ad.stream() >> segmentsNb;
+  for (unsigned int i = 0; i < segmentsNb; i++) {
+    IObject* objSegments = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSegments(dynamic_cast<castor::stager::Segment*>(objSegments));
+  }
+  IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/07 14:33:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 13:43:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -100,9 +100,7 @@ castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::createRep(castor::IAddress* address,
                                    castor::IObject* object,
-                                   ObjectSet& alreadyDone,
-                                   bool autocommit,
-                                   bool recursive)
+                                   bool autocommit)
   throw (castor::exception::Exception) {
   // If no object, nothing to create
   if (0 != object) {
@@ -110,8 +108,7 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
     // The converter is always valid if no exception is thrown
     IConverter* conv = converter(object->type());
     // convert
-    conv->createRep(address, object,
-                    alreadyDone, autocommit, recursive);
+    conv->createRep(address, object, autocommit);
   }
 }
 
@@ -120,9 +117,7 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
                                    castor::IObject* object,
-                                   ObjectSet& alreadyDone,
-                                   bool autocommit,
-                                   bool recursive)
+                                   bool autocommit)
   throw (castor::exception::Exception) {
   // If no object, nothing to update
   if (0 != object) {
@@ -130,8 +125,7 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
     // The converter is always valid if no exception is thrown
     IConverter* conv = converter(object->type());
     // convert
-    conv->updateRep(address, object,
-                    alreadyDone, autocommit, recursive);
+    conv->updateRep(address, object, autocommit);
   }
 }
 
@@ -140,41 +134,36 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
                                    castor::IObject* object,
-                                   ObjectSet& alreadyDone,
                                    bool autocommit)
   throw (castor::exception::Exception) {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   IConverter* conv = converter(object->type());
   // convert
-  return conv->deleteRep(address, object,
-                         alreadyDone, autocommit);
+  return conv->deleteRep(address, object, autocommit);
 }
 
 // -----------------------------------------------------------------------
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::BaseCnvSvc::createObj
-(castor::IAddress* address,
- castor::ObjectCatalog& newlyCreated,
- bool recursive)
+(castor::IAddress* address)
   throw (castor::exception::Exception) {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(address->objType());
-  return conv->createObj(address, newlyCreated, recursive);
+  return conv->createObj(address);
 }
 
 // -----------------------------------------------------------------------
 // updateObj
 // -----------------------------------------------------------------------
-void castor::BaseCnvSvc::updateObj(castor::IObject* object,
-                                   ObjectCatalog& alreadyDone)
+void castor::BaseCnvSvc::updateObj(castor::IObject* object)
   throw (castor::exception::Exception) {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
-  return conv->updateObj(object, alreadyDone);
+  return conv->updateObj(object);
 }
 
 // -----------------------------------------------------------------------
@@ -183,11 +172,9 @@ void castor::BaseCnvSvc::updateObj(castor::IObject* object,
 void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
                                              bool autocommit)
   throw (castor::exception::Exception) {
-  castor::ObjectCatalog alreadyCreated;
-  castor::IObject* obj = createObj(address, alreadyCreated, true);
+  castor::IObject* obj = createObj(address);
   address->setObjType(obj->type());
-  castor::ObjectSet alreadyDeleted;
-  deleteRep(address, obj, alreadyDeleted, autocommit);
+  deleteRep(address, obj, autocommit);
 }
 
 //------------------------------------------------------------------------------

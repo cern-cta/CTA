@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/11 13:43:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -81,9 +81,7 @@ const unsigned int castor::io::StreamReqIdCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamReqIdCnv::createRep(castor::IAddress* address,
                                            castor::IObject* object,
-                                           castor::ObjectSet& alreadyDone,
-                                           bool autocommit,
-                                           bool recursive)
+                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);
@@ -92,9 +90,6 @@ void castor::io::StreamReqIdCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->value();
   ad->stream() << obj->id();
-  // Mark object as done
-  alreadyDone.insert(obj);
-  marshalObject(obj->request(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -102,9 +97,7 @@ void castor::io::StreamReqIdCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamReqIdCnv::updateRep(castor::IAddress* address,
                                            castor::IObject* object,
-                                           castor::ObjectSet& alreadyDone,
-                                           bool autocommit,
-                                           bool recursive)
+                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -117,7 +110,6 @@ void castor::io::StreamReqIdCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamReqIdCnv::deleteRep(castor::IAddress* address,
                                            castor::IObject* object,
-                                           castor::ObjectSet& alreadyDone,
                                            bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -129,9 +121,7 @@ void castor::io::StreamReqIdCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamReqIdCnv::createObj(castor::IAddress* address,
-                                                       castor::ObjectCatalog& newlyCreated,
-                                                       bool recursive)
+castor::IObject* castor::io::StreamReqIdCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -144,21 +134,58 @@ castor::IObject* castor::io::StreamReqIdCnv::createObj(castor::IAddress* address
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  newlyCreated.insert(object);
-  IObject* objRequest = unmarshalObject(ad->stream(), newlyCreated);
-  object->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamReqIdCnv::updateObj(castor::IObject* obj,
-                                           castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamReqIdCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamReqIdCnv::marshalObject(castor::IObject* object,
+                                               castor::io::StreamAddress* address,
+                                               castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::stager::ReqId* obj = 
+    dynamic_cast<castor::stager::ReqId*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamReqIdCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                             castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::ReqId* obj = 
+    dynamic_cast<castor::stager::ReqId*>(object);
+  IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/11 13:43:53 $ $Author: sponcec3 $
  *
  * 
  *
@@ -76,9 +76,7 @@ const unsigned int castor::io::StreamPtrCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         castor::ObjectSet& alreadyDone,
-                                         bool autocommit,
-                                         bool /*recursive*/)
+                                         bool autocommit)
   throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
   castor::exception::Internal ex;
@@ -92,9 +90,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamPtrCnv::updateRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         castor::ObjectSet& alreadyDone,
-                                         bool autocommit,
-                                         bool recursive)
+                                         bool autocommit)
   throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
   castor::exception::Internal ex;
@@ -108,7 +104,6 @@ void castor::io::StreamPtrCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamPtrCnv::deleteRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         castor::ObjectSet& alreadyDone,
                                          bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -120,16 +115,50 @@ void castor::io::StreamPtrCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::createObj
-(castor::IAddress* address,
- castor::ObjectCatalog& newlyCreated,
- bool recursive)
+(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  StreamAddress* ad = 
-    dynamic_cast<StreamAddress*>(address);
+  castor::exception::Internal ex;
+  ex.getMessage() << "castor::io::StreamPtrCnv::createObj "
+                  << "should never be called";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::io::StreamPtrCnv::updateObj(castor::IObject* object)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot update object in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
+                                             castor::io::StreamAddress* address,
+                                             castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  // This is normally never called, so just raise an exception
+  castor::exception::Internal ex;
+  ex.getMessage() << "castor::io::StreamPtrCnv::marshalObject "
+                  << "should never be called";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamPtrCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                           castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   // Just retrieve the object from the newlyCreated catalog
   // using the id stored in the stream
   u_signed64 id;
-  ad->stream() >> id;
+  ad.stream() >> id;
   // Case of a null pointer
   if (id == 0) return 0;
   // Case of a regular pointer
@@ -139,17 +168,5 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
   castor::exception::Internal ex;
   ex.getMessage() << "Deserialization error : wrong id found in stream : "
                   << id;
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::io::StreamPtrCnv::updateObj(castor::IObject* object,
-                                             castor::ObjectCatalog& alreadyDone)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "Cannot update object in case of streaming."
-                  << std::endl;
   throw ex;
 }

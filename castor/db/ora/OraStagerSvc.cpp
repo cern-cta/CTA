@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/07 14:34:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/11 13:43:51 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,7 +27,6 @@
 // Include Files
 #include "castor/IService.hpp"
 #include "castor/IFactory.hpp"
-#include "castor/ObjectCatalog.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/stager/Tape.hpp"
@@ -121,8 +120,7 @@ std::vector<castor::stager::Segment*>
 castor::db::ora::OraStagerSvc::segmentsForTape
 (castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
-  castor::ObjectCatalog alreadyDone;
-  cnvSvc()->updateObj(searchItem, alreadyDone);
+  cnvSvc()->updateObj(searchItem);
   std::vector<castor::stager::Segment*> result;
   std::vector<castor::stager::Segment*>::iterator it;
   for (it = searchItem->segments().begin();
@@ -130,9 +128,6 @@ castor::db::ora::OraStagerSvc::segmentsForTape
        it++) {
     switch ((*it)->status()) {
     case castor::stager::SEGMENT_UNPROCESSED :
-    case castor::stager::SEGMENT_WAITFSEQ :
-    case castor::stager::SEGMENT_WAITPATH :
-    case castor::stager::SEGMENT_WAITCOPY :
       result.push_back(*it);
       searchItem->setStatus(castor::stager::TAPE_MOUNTED);
       break;
@@ -142,8 +137,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
     }
   }
   if (result.size() > 0) {
-    castor::ObjectSet alreadyDone;
-    cnvSvc()->updateRep(0, searchItem, alreadyDone, true, false);
+    cnvSvc()->updateRep(0, searchItem, true);
   }
   return result;
 }
@@ -160,8 +154,7 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
     segmentsForTape(searchItem);
   if (result.size() > 0){
     searchItem->setStatus(castor::stager::TAPE_WAITMOUNT);
-    castor::ObjectSet alreadyDone;
-    cnvSvc()->updateRep(0, searchItem, alreadyDone, true, false);
+    cnvSvc()->updateRep(0, searchItem, true);
   }
   return result.size();
 }
@@ -199,11 +192,10 @@ castor::db::ora::OraStagerSvc::tapesToDo()
     }
   }
   std::vector<castor::stager::Tape*> result;
-  castor::ObjectCatalog done;
   try {
     oracle::occi::ResultSet *rset = m_tapesToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done, false);
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {
@@ -214,9 +206,8 @@ castor::db::ora::OraStagerSvc::tapesToDo()
         throw ex;
       }
       // Change tape status
-      tape->setStatus(castor::stager::TAPE_WAITVDQM);
-      castor::ObjectSet alreadyDone;
-      cnvSvc()->updateRep(0, tape, alreadyDone, false, false);
+      tape->setStatus(castor::stager::TAPE_WAITDRIVE);
+      cnvSvc()->updateRep(0, tape, false);
       result.push_back(tape);
     }
   } catch (oracle::occi::SQLException e) {
@@ -276,11 +267,10 @@ castor::db::ora::OraStagerSvc::streamsToDo()
     }
   }
   std::vector<castor::stager::Stream*> result;
-  castor::ObjectCatalog done;
   try {
     oracle::occi::ResultSet *rset = m_streamsToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done, false);
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
       castor::stager::Stream* stream =
         dynamic_cast<castor::stager::Stream*>(obj);
       if (0 == stream) {
@@ -292,8 +282,7 @@ castor::db::ora::OraStagerSvc::streamsToDo()
       }
       // Change stream status
       stream->setStatus(castor::stager::STREAM_WAITDRIVE);
-      castor::ObjectSet alreadyDone;
-      cnvSvc()->updateRep(0, stream, alreadyDone, false, false);
+      cnvSvc()->updateRep(0, stream, false);
       result.push_back(stream);
     }
   } catch (oracle::occi::SQLException e) {
@@ -367,9 +356,8 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
       tape->setTpmode(tpmode);
       tape->setStatus(castor::stager::TAPE_UNUSED);
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      castor::ObjectSet objset;
       try {
-        cnvSvc()->createRep(&ad, tape, objset, false, true);
+        cnvSvc()->createRep(&ad, tape, false);
         return tape;
       } catch (oracle::occi::SQLException e) {
         delete tape;
@@ -408,8 +396,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   // Now get the tape from its id
   try {
     castor::db::DbAddress ad(id, "OraCnvSvc", castor::SVC_ORACNV);
-    castor::ObjectCatalog newlyCreated;
-    castor::IObject* obj = cnvSvc()->createObj(&ad, newlyCreated, false);
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::stager::Tape* tape =
       dynamic_cast<castor::stager::Tape*> (obj);
     if (0 == tape) {

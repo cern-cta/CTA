@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/07 14:33:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/11 13:43:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -34,8 +34,6 @@
 #include "ICnvSvc.hpp"
 #include "BaseSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "ObjectSet.hpp"
-#include "ObjectCatalog.hpp"
 
 namespace castor {
 
@@ -99,22 +97,13 @@ namespace castor {
      * @param address where to store the representation of
      * the object
      * @param object the object to deal with
-     * @param alreadyDone the set of objects which representation
-     * was already created. This is needed to avoid looping in case
-     * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @param recursive if set to true, the objects refered
-     * by object will be created/updated too and recursively
-     * If it's set to false, the objects refered will not be touched
-     * But an exception will be thrown if one is missing that is needed
      * @exception Exception throws an Exception in case of error
      */
     virtual void createRep(IAddress* address,
                            IObject* object,
-                           ObjectSet& alreadyDone,
-                           bool autocommit,
-                           bool recursive)
+                           bool autocommit)
       throw (castor::exception::Exception);
 
     /**
@@ -122,20 +111,13 @@ namespace castor {
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with
-     * @param alreadyDone the set of objects which representation
-     * was already updated. This is needed to avoid looping in case
-     * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @param recursive if set to true, the objects refered
-     * by object will be updated to and recursively
      * @exception Exception throws an Exception in cas of error
      */
     virtual void updateRep(IAddress* address,
                            IObject* object,
-                           ObjectSet& alreadyDone,
-                           bool autocommit,
-                           bool recursive)
+                           bool autocommit)
       throw (castor::exception::Exception);
     
     /**
@@ -143,16 +125,12 @@ namespace castor {
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with
-     * @param alreadyDone the set of objects which representation
-     * was already deleted. This is needed to avoid looping in case
-     * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
      * @exception Exception throws an Exception in cas of error
      */
     virtual void deleteRep(castor::IAddress* address,
                            castor::IObject* object,
-                           castor::ObjectSet& alreadyDone,
                            bool autocommit)
       throw (castor::exception::Exception);
     
@@ -160,33 +138,20 @@ namespace castor {
      * Creates C++ object from foreign representation
      * @param address the place where to find the foreign
      * representation
-     * @param newlyCreated a map of object that were created as part of the
-     * last user call to createObj, indexed by id. If a reference to one if
-     * these id is found, the existing associated object should be used.
-     * This trick basically allows circular dependencies.
      * @return the C++ object created from its reprensentation
      * or 0 if unsuccessful. Note that the caller is responsible
      * for the deallocation of the newly created object
-     * @param recursive if set to true, the objects refered
-     * by the returned object will be created too and recursively.
-     * In case the object was in the newlyCreated catalog, it will
-     * not be touched and may thus contain references.
      * @exception Exception throws an Exception in cas of error
      */
-    virtual IObject* createObj (IAddress* address,
-                                ObjectCatalog& newlyCreated,
-                                bool recursive)
+    virtual IObject* createObj (IAddress* address)
       throw (castor::exception::Exception);
 
     /**
      * Updates C++ object from its foreign representation.
      * @param object the object to deal with
-     * @param alreadyDone the set of objects already updated.
-     * This is needed to avoid looping in case of circular dependencies
      * @exception Exception throws an Exception in case of error
      */
-    virtual void updateObj(IObject* object,
-                           ObjectCatalog& alreadyDone)
+    virtual void updateObj(IObject* object)
       throw (castor::exception::Exception);
 
     /**

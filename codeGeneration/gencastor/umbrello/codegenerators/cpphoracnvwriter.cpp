@@ -32,6 +32,152 @@ bool CppHOraCnvWriter::init(UMLClassifier* c, QString fileName) {
 }
 
 //=============================================================================
+// writeFillRep
+//=============================================================================
+void CppHOraCnvWriter::writeFillRep() {
+  // First write the main function, dispatching the requests
+  writeDocumentation
+    ("Fill the database with some of the objects refered by a given object.",
+     "",
+     QString("@param object the original object\n") +
+     "@param type the type of the refered objects to store\n" +
+     "@exception Exception throws an Exception in case of error",
+     *m_stream);
+  *m_stream << getIndent()
+            << "virtual void fillRep("
+            << fixTypeName("IAddress*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " address," << endl << getIndent()
+            << "                     "
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object," << endl << getIndent()
+            << "                     unsigned int type)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+
+  // Now write the dedicated fillRep Methods
+  AssocList assocs = createAssocsList();
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE ||
+          as->first.first == MULT_N) {
+        writeBasicFillRep(as);
+      }
+    }
+  }
+}
+
+//=============================================================================
+// writeFillObj
+//=============================================================================
+void CppHOraCnvWriter::writeFillObj() {
+  // First write the main function, dispatching the requests
+  writeDocumentation
+    ("Retrieve from the database some of the objects refered by a given object.",
+     "",
+     QString("@param object the original object\n") +
+     "@param type the type of the refered objects to retrieve\n" +
+     "@exception Exception throws an Exception in case of error",
+     *m_stream);
+  *m_stream << getIndent()
+            << "virtual void fillObj("
+            << fixTypeName("IAddress*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " address," << endl << getIndent()
+            << "                     "
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " object," << endl << getIndent()
+            << "                     unsigned int type)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+
+  // Now write the dedicated fillRep Methods
+  AssocList assocs = createAssocsList();
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE ||
+          as->first.first == MULT_N) {
+        writeBasicFillObj(as);
+      }
+    }
+  }
+
+}
+
+//=============================================================================
+// writeBasicFillRep
+//=============================================================================
+void CppHOraCnvWriter::writeBasicFillRep(Assoc* as) {
+  writeDocumentation
+    (QString("Fill the database with objects of type ") +
+     capitalizeFirstLetter(as->second.second)
+     + " refered by a given object.",
+     "",
+     QString("@param obj the original object\n") +
+     "@exception Exception throws an Exception in case of error",
+     *m_stream);
+  *m_stream << getIndent() << "virtual void fillRep"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           m_classInfo->packageName)
+            << " obj)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+}
+
+//=============================================================================
+// writeBasicFillObj
+//=============================================================================
+void CppHOraCnvWriter::writeBasicFillObj(Assoc* as) {
+  writeDocumentation
+    (QString("Retrieve from the database objects of type ") +
+     capitalizeFirstLetter(as->second.second)
+     + " refered by a given object.",
+     "",
+     QString("@param obj the original object\n") +
+     "@exception Exception throws an Exception in case of error",
+     *m_stream);
+  *m_stream << getIndent()
+            << "virtual void fillObj"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           m_classInfo->packageName)
+            << " obj)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ");"
+            << endl << endl;
+}
+
+//=============================================================================
 // writeClass
 //=============================================================================
 void CppHOraCnvWriter::writeClass(UMLClassifier *c) {
@@ -45,6 +191,10 @@ void CppHOraCnvWriter::writeClass(UMLClassifier *c) {
   writeMethods();
   // Add reset method
   writeReset(c);
+  // FillRep methods
+  writeFillRep();
+  // FillObj methods
+  writeFillObj();
   // Members
   *m_stream << getIndent(INDENT*ClassIndentLevel)
             << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
@@ -61,7 +211,6 @@ void CppHOraCnvWriter::writeClass(UMLClassifier *c) {
 void CppHOraCnvWriter::writeReset(UMLClassifier */*c*/) {
   writeDocumentation ("Reset the converter statements.",
                       "", QString(""), *m_stream);
-  // Force inclusion of ObjectSet
   *m_stream << getIndent()
             << "void reset() throw ();"
             << endl << endl;
@@ -71,7 +220,7 @@ void CppHOraCnvWriter::writeReset(UMLClassifier */*c*/) {
 // writeMembers
 //=============================================================================
 void CppHOraCnvWriter::writeMembers() {
-    // Dealing with object itself (insertion, deletion, selection, update)
+  // Dealing with object itself (insertion, deletion, selection, update)
   *m_stream << getIndent()
             << "/// SQL statement for request insertion"
             << endl << getIndent()
@@ -104,7 +253,7 @@ void CppHOraCnvWriter::writeMembers() {
             << "/// SQL statement object for request update"
             << endl << getIndent()
             << "oracle::occi::Statement *m_updateStatement;"
-            << endl << endl;    
+            << endl << endl;
   // Dealing with object status if we have a request
   UMLObject* obj = m_doc->findUMLObject(QString("Request"),
                                         Uml::ot_Class);
@@ -152,7 +301,7 @@ void CppHOraCnvWriter::writeMembers() {
        0 != as;
        as = assocs.next()) {
     if (as->first.first == MULT_N) {
-      *m_stream << getIndent() 
+      *m_stream << getIndent()
                 << "/// SQL select statement for member "
                 << as->second.first
                 << endl << getIndent()
@@ -173,7 +322,7 @@ void CppHOraCnvWriter::writeMembers() {
                 << endl << endl;
     } else if (as->first.second == COMPOS_CHILD ||
                as->first.second == AGGREG_CHILD) {
-      *m_stream << getIndent() 
+      *m_stream << getIndent()
                 << "/// SQL insert statement for member "
                 << as->second.first
                 << endl << getIndent()
@@ -189,7 +338,7 @@ void CppHOraCnvWriter::writeMembers() {
                 << capitalizeFirstLetter(as->second.second)
                 << "2" << capitalizeFirstLetter(as->second.third)
                 << "Statement;"
-                << endl << endl << getIndent() 
+                << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
                 << as->second.first
                 << endl << getIndent()
@@ -205,7 +354,7 @@ void CppHOraCnvWriter::writeMembers() {
                 << capitalizeFirstLetter(as->second.second)
                 << "2" << capitalizeFirstLetter(as->second.third)
                 << "Statement;"
-                << endl << endl;      
+                << endl << endl;
     }
   }
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:52 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,8 +29,8 @@
 
 // Include files
 #include "castor/io/biniostream.h"
+#include "castor/io/IStreamConverter.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/IConverter.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/ObjectCatalog.hpp"
 
@@ -49,7 +49,7 @@ namespace castor {
      * A base converter for marshal/unmarshaling objects
      * into/from streams
      */
-    class StreamBaseCnv : public BaseObject, public IConverter {
+    class StreamBaseCnv : public BaseObject, public IStreamConverter {
       
     public:
       
@@ -89,30 +89,6 @@ namespace castor {
 
     protected:
       
-      /**
-       * Marshals an object using a StreamAddress.
-       * If the object is in alreadyDone, just marshal its id.
-       * Otherwise, call createRep.
-       * @param obj the object to marshal
-       * @param address the address where to marshal
-       * @param alreadyDone the list of objects already marshalled
-       */
-      void marshalObject(castor::IObject* obj,
-                         castor::io::StreamAddress* address,
-                         castor::ObjectSet& alreadyDone);
-
-      /**
-       * Unmarshals an object from a StreamAddress
-       * @param stream the stream from which to unmarshal
-       * @param newlyCreated a set of already created objects
-       * that is used in case of circular dependencies
-       * @return a pointer to the new object. If their was some
-       * memory allocation (creation of a new object), the caller
-       * is responsible for its deallocation
-       */
-      castor::IObject* unmarshalObject(castor::io::biniostream& stream,
-                                       castor::ObjectCatalog& newlyCreated);
-
       /**
        * access to the stream conversion service for child classes
        */

@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ *
  *
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
@@ -76,22 +76,13 @@ namespace castor {
        * @param address where to store the representation of
        * the object
        * @param object the object to deal with
-       * @param alreadyDone the set of objects which representation
-       * was already created. This is needed to avoid looping in case
-       * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
-       * @param recursive if set to true, the objects refered
-       * by object will be created/updated too and recursively
-       * If it's set to false, the objects refered will not be touched
-       * But an exception will be thrown if one is missing that is needed
        * @exception Exception throws an Exception in cas of error
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
-                             castor::ObjectSet& alreadyDone,
-                             bool autocommit,
-                             bool recursive)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**
@@ -99,19 +90,13 @@ namespace castor {
        * @param address where the representation of
        * the object is stored
        * @param object the object to deal with
-       * @param alreadyDone the set of objects which representation
-       * was already updated. This is needed to avoid looping in case
-       * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
-       * @param recursive Not used here
        * @exception Exception throws an Exception in cas of error
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
-                             castor::ObjectSet& alreadyDone,
-                             bool autocommit,
-                             bool recursive)
+                             bool autocommit)
         throw (castor::exception::Exception);
 
       /**
@@ -119,16 +104,12 @@ namespace castor {
        * @param address where the representation of
        * the object is stored
        * @param object the object to deal with
-       * @param alreadyDone the set of objects which representation
-       * was already deleted. This is needed to avoid looping in case
-       * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
        * @exception Exception throws an Exception in cas of error
        */
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
-                             castor::ObjectSet& alreadyDone,
                              bool autocommit)
         throw (castor::exception::Exception);
 
@@ -136,33 +117,48 @@ namespace castor {
        * Creates C++ object from foreign representation
        * @param address the place where to find the foreign
        * representation
-       * @param newlyCreated a map of object that were created as part of the
-       * last user call to createObj, indexed by id. If a reference to one if
-       * these id is found, the existing associated object should be used.
-       * This trick basically allows circular dependencies.
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
-       * @param recursive if set to true, the objects refered
-       * by the returned object will be created too and recursively.
-       * In case the object was in the newlyCreated catalog, it will
-       * not be touched and may thus contain references.
        * @exception Exception throws an Exception in cas of error
        */
-      virtual castor::IObject* createObj(castor::IAddress* address,
-                                         castor::ObjectCatalog& newlyCreated,
-                                         bool recursive)
+      virtual castor::IObject* createObj(castor::IAddress* address)
         throw (castor::exception::Exception);
 
       /**
        * Updates C++ object from its foreign representation.
        * @param obj the object to deal with
-       * @param alreadyDone the set of objects already updated.
-       * This is needed to avoid looping in case of circular dependencies
        * @exception Exception throws an Exception in cas of error
        */
-      virtual void updateObj(castor::IObject* obj,
-                             castor::ObjectCatalog& alreadyDone)
+      virtual void updateObj(castor::IObject* obj)
+        throw (castor::exception::Exception);
+
+      /**
+       * Marshals an object using a StreamAddress.
+       * If the object is in alreadyDone, just marshal its id. Otherwise, call createRep
+       * and recursively marshal the refered objects.
+       * @param object the object to marshal
+       * @param address the address where to marshal
+       * @param alreadyDone the list of objects already marshalled
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void marshalObject(castor::IObject* object,
+                                 StreamAddress* address,
+                                 castor::ObjectSet& alreadyDone)
+        throw (castor::exception::Exception);
+
+      /**
+       * Unmarshals an object from a StreamAddress.
+       * @param stream the stream from which to unmarshal
+       * @param newlyCreated a set of already created objects
+       * that is used in case of circular dependencies
+       * @return a pointer to the new object. If their was some
+       * memory allocation (creation of a new object), the caller
+       * is responsible for its deallocation
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual castor::IObject* unmarshalObject(castor::io::biniostream& stream,
+                                               castor::ObjectCatalog& newlyCreated)
         throw (castor::exception::Exception);
 
     }; // end of class StreamClientCnv

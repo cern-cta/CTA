@@ -27,6 +27,7 @@
 // Include Files
 #include "StreamEndResponseCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -36,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/EndResponse.hpp"
 #include "osdep.h"
 
@@ -77,9 +79,7 @@ const unsigned int castor::io::StreamEndResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamEndResponseCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 castor::ObjectSet& alreadyDone,
-                                                 bool autocommit,
-                                                 bool recursive)
+                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::rh::EndResponse* obj = 
     dynamic_cast<castor::rh::EndResponse*>(object);
@@ -87,8 +87,6 @@ void castor::io::StreamEndResponseCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->id();
-  // Mark object as done
-  alreadyDone.insert(obj);
 }
 
 //------------------------------------------------------------------------------
@@ -96,9 +94,7 @@ void castor::io::StreamEndResponseCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamEndResponseCnv::updateRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 castor::ObjectSet& alreadyDone,
-                                                 bool autocommit,
-                                                 bool recursive)
+                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -111,7 +107,6 @@ void castor::io::StreamEndResponseCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamEndResponseCnv::deleteRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 castor::ObjectSet& alreadyDone,
                                                  bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -123,9 +118,7 @@ void castor::io::StreamEndResponseCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamEndResponseCnv::createObj(castor::IAddress* address,
-                                                             castor::ObjectCatalog& newlyCreated,
-                                                             bool recursive)
+castor::IObject* castor::io::StreamEndResponseCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -135,19 +128,52 @@ castor::IObject* castor::io::StreamEndResponseCnv::createObj(castor::IAddress* a
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  newlyCreated.insert(object);
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamEndResponseCnv::updateObj(castor::IObject* obj,
-                                                 castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamEndResponseCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamEndResponseCnv::marshalObject(castor::IObject* object,
+                                                     castor::io::StreamAddress* address,
+                                                     castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::rh::EndResponse* obj = 
+    dynamic_cast<castor::rh::EndResponse*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamEndResponseCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                   castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
 }
 

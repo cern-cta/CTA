@@ -37,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamCnvSvc.hpp"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -77,9 +78,7 @@ const unsigned int castor::io::StreamMessageAckCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool /*recursive*/)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::MessageAck* obj = 
     dynamic_cast<castor::MessageAck*>(object);
@@ -90,8 +89,6 @@ void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
-  // Mark object as done
-  alreadyDone.insert(obj);
 }
 
 //------------------------------------------------------------------------------
@@ -99,9 +96,7 @@ void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamMessageAckCnv::updateRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool recursive)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -114,7 +109,6 @@ void castor::io::StreamMessageAckCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamMessageAckCnv::deleteRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -126,9 +120,7 @@ void castor::io::StreamMessageAckCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated,
-                                                            bool recursive)
+castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -147,15 +139,13 @@ castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* ad
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  newlyCreated.insert(object);
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamMessageAckCnv::updateObj(castor::IObject* obj,
-                                                castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamMessageAckCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
@@ -163,3 +153,37 @@ void castor::io::StreamMessageAckCnv::updateObj(castor::IObject* obj,
   throw ex;
 }
 
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamMessageAckCnv::marshalObject(castor::IObject* object,
+                                                    castor::io::StreamAddress* address,
+                                                    castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::MessageAck* obj = 
+    dynamic_cast<castor::MessageAck*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamMessageAckCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                  castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
+}

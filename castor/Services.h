@@ -61,27 +61,6 @@ int C_Services_service(struct C_Services_t* svcs,
 
 /**
  * create foreign representation from a C++ Object
- * Does not touch the objects it refers to. An error
- * will be produced if an object that is needed (because
- * refered) is not present in the database
- * @param svcs the services object to use
- * @param address where to store the representation of
- * the object
- * @param object the object to deal with
- * @param autocommit whether the changes to the database
- * should be commited or not.
- * @return -1 in case of error, 0 if successful
- * A detailed error message can be retrieved by calling
- * C_Services_errorMsg
- */
-int C_Services_createRepNoRec(struct C_Services_t* svcs,
-                              struct C_IAddress_t* address,
-                              struct C_IObject_t* object,
-                              char autocommit);
-
-/**
- * create foreign representation from a C++ Object
- * as well as all the objects it refers to and recursively.
  * @param svcs the services object to use
  * @param address where to store the representation of
  * the object
@@ -98,26 +77,7 @@ int C_Services_createRep(struct C_Services_t* svcs,
                          char autocommit);
 
 /**
- * Updates foreign representation from a C++ Object.
- * Does not touch the objects it refers to.
- * @param svcs the services object to use
- * @param address where the representation of
- * the object is stored
- * @param object the object to deal with
- * @param autocommit whether the changes to the database
- * should be commited or not
- * @return -1 in case of error, 0 if successful
- * A detailed error message can be retrieved by calling
- * C_Services_errorMsg
- */
-int C_Services_updateRepNoRec(struct C_Services_t* svcs,
-                              struct C_IAddress_t* address,
-                              struct C_IObject_t* object,
-                              char autocommit);
-
-/**
  * Updates foreign representation from a C++ Object
- * as well as all the objects it refers to and recursively.
  * @param svcs the services object to use
  * @param address where the representation of
  * the object is stored

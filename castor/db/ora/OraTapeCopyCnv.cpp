@@ -27,23 +27,20 @@
 // Include Files
 #include "OraTapeCopyCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/IObject.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
-#include <list>
 #include <set>
 #include <vector>
 
@@ -159,13 +156,235 @@ const unsigned int castor::db::ora::OraTapeCopyCnv::objType() const {
 }
 
 //------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillRep(castor::IAddress* address,
+                                              castor::IObject* object,
+                                              unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::TapeCopy* obj = 
+    dynamic_cast<castor::stager::TapeCopy*>(object);
+  switch (type) {
+  case castor::OBJ_Segment :
+    fillRepSegment(obj);
+    break;
+  case castor::OBJ_CastorFile :
+    fillRepCastorFile(obj);
+    break;
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillRep called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepSegment
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* obj)
+  throw (castor::exception::Exception) {
+  // check select statement
+  if (0 == m_TapeCopy2SegmentStatement) {
+    m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+  }
+  // Get current database data
+  std::set<int> segmentsList;
+  m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_TapeCopy2SegmentStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    segmentsList.insert(rset->getInt(1));
+  }
+  m_TapeCopy2SegmentStatement->closeResultSet(rset);
+  // update segments and create new ones
+  for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
+       it != obj->segments().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
+      cnvSvc()->createRep(0, *it, false);
+    } else {
+      segmentsList.erase(item);
+      cnvSvc()->updateRep(0, *it, false);
+    }
+  }
+  // Delete old data
+  for (std::set<int>::iterator it = segmentsList.begin();
+       it != segmentsList.end();
+       it++) {
+    castor::db::DbAddress ad(*it, " ", 0);
+    cnvSvc()->deleteRepByAddress(&ad, false);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepCastorFile
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 castorFileId = (unsigned long long)rset->getDouble(0);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(castorFileId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != castorFileId &&
+      0 != obj->castorFile() &&
+      obj->castorFile()->id() != castorFileId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    castorFileId = 0;
+    if (0 == m_deleteCastorFile2TapeCopyStatement) {
+      m_deleteCastorFile2TapeCopyStatement = createStatement(s_deleteCastorFile2TapeCopyStatementString);
+    }
+    m_deleteCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
+    m_deleteCastorFile2TapeCopyStatement->setDouble(2, obj->id());
+    m_deleteCastorFile2TapeCopyStatement->executeUpdate();
+  }
+  // Update object or create new one
+  if (castorFileId == 0) {
+    if (0 != obj->castorFile()) {
+      cnvSvc()->createRep(&ad, obj->castorFile(), false);
+      if (0 == m_insertCastorFile2TapeCopyStatement) {
+        m_insertCastorFile2TapeCopyStatement = createStatement(s_insertCastorFile2TapeCopyStatementString);
+      }
+      m_insertCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
+      m_insertCastorFile2TapeCopyStatement->setDouble(2, obj->id());
+      m_insertCastorFile2TapeCopyStatement->executeUpdate();
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->castorFile(), false);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillObj(castor::IAddress* address,
+                                              castor::IObject* object,
+                                              unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::TapeCopy* obj = 
+    dynamic_cast<castor::stager::TapeCopy*>(object);
+  switch (type) {
+  case castor::OBJ_Segment :
+    fillObjSegment(obj);
+    break;
+  case castor::OBJ_CastorFile :
+    fillObjCastorFile(obj);
+    break;
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillObj called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjSegment
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_TapeCopy2SegmentStatement) {
+    m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> segmentsList;
+  m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_TapeCopy2SegmentStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    segmentsList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_TapeCopy2SegmentStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::Segment*> toBeDeleted;
+  for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
+       it != obj->segments().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      segmentsList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::stager::Segment*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeSegments(*it);
+    delete (*it);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = segmentsList.begin();
+       it != segmentsList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    obj->addSegments(dynamic_cast<castor::stager::Segment*>(item));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjCastorFile
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 castorFileId = (unsigned long long)rset->getDouble(0);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something shoudl be deleted
+  if (0 != obj->castorFile() &&
+      (0 == castorFileId ||
+       obj->castorFile()->id() != castorFileId)) {
+    delete obj->castorFile();
+    obj->setCastorFile(0);
+  }
+  // Update object or create new one
+  if (0 != castorFileId) {
+    if (0 == obj->castorFile()) {
+      obj->setCastorFile
+        (dynamic_cast<castor::stager::CastorFile*>
+         (cnvSvc()->getObjFromId(castorFileId)));
+    } else if (obj->castorFile()->id() == castorFileId) {
+      cnvSvc()->updateObj(obj->castorFile());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool recursive)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
@@ -179,50 +398,8 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    // Set ids of all objects
-    int nids = obj->id() == 0 ? 1 : 0;
-    // check which objects need to be saved/updated and keeps a list of them
-    std::list<castor::IObject*> toBeSaved;
-    std::list<castor::IObject*> toBeUpdated;
-    if (recursive) {
-      for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
-           it != obj->segments().end();
-           it++) {
-        if (alreadyDone.find(*it) == alreadyDone.end()) {
-          if (0 == (*it)->id()) {
-            toBeSaved.push_back(*it);
-            nids++;
-          } else {
-            toBeUpdated.push_back(*it);
-          }
-        }
-      }
-    }
-    if (alreadyDone.find(obj->castorFile()) == alreadyDone.end() &&
-        obj->castorFile() != 0) {
-      if (0 == obj->castorFile()->id()) {
-        if (!recursive) {
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "CreateNoRep called on type TapeCopy while its castorFile does not exist in the database.";
-          throw ex;
-        }
-        toBeSaved.push_back(obj->castorFile());
-        nids++;
-      } else {
-        if (recursive) {
-          toBeUpdated.push_back(obj->castorFile());
-        }
-      }
-    }
-    u_signed64 id = cnvSvc()->getIds(nids);
-    if (0 == obj->id()) obj->setId(id++);
-    for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
-         it != toBeSaved.end();
-         it++) {
-      (*it)->setId(id++);
-    }
+    // Get an id for the new object
+    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
@@ -231,29 +408,6 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(2, obj->castorFile() ? obj->castorFile()->id() : 0);
     m_insertStatement->setDouble(3, (int)obj->status());
     m_insertStatement->executeUpdate();
-    if (recursive) {
-      // Save dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeSaved.begin();
-           it != toBeSaved.end();
-           it++) {
-        cnvSvc()->createRep(0, *it, alreadyDone, false, true);
-      }
-      // Update dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeUpdated.begin();
-           it != toBeUpdated.end();
-           it++) {
-        cnvSvc()->updateRep(0, *it, alreadyDone, false, true);
-      }
-    }
-    // Deal with castorFile
-    if (0 != obj->castorFile()) {
-      if (0 == m_insertCastorFile2TapeCopyStatement) {
-        m_insertCastorFile2TapeCopyStatement = createStatement(s_insertCastorFile2TapeCopyStatementString);
-      }
-      m_insertCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-      m_insertCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-      m_insertCastorFile2TapeCopyStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -287,9 +441,7 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::updateRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool recursive)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
@@ -300,111 +452,11 @@ void castor::db::ora::OraTapeCopyCnv::updateRep(castor::IAddress* address,
     if (0 == m_updateStatement) {
       m_updateStatement = createStatement(s_updateStatementString);
     }
-    if (0 == m_updateStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_updateStatementString;
-      throw ex;
-    }
-    if (recursive) {
-      if (0 == m_selectStatement) {
-        m_selectStatement = createStatement(s_selectStatementString);
-      }
-      if (0 == m_selectStatement) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Unable to create statement :" << std::endl
-                        << s_selectStatementString;
-        throw ex;
-      }
-    }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    if (recursive) {
-      // retrieve the object from the database
-      m_selectStatement->setDouble(1, obj->id());
-      oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-      if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-        castor::exception::NoEntry ex;
-        ex.getMessage() << "No object found for id :" << obj->id();
-        throw ex;
-      }
-      // Dealing with castorFile
-      {
-        u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
-        castor::db::DbAddress ad(castorFileId, " ", 0);
-        if (0 != castorFileId &&
-            0 != obj->castorFile() &&
-            obj->castorFile()->id() != castorFileId) {
-          cnvSvc()->deleteRepByAddress(&ad, false);
-          castorFileId = 0;
-          if (0 == m_deleteCastorFile2TapeCopyStatement) {
-            m_deleteCastorFile2TapeCopyStatement = createStatement(s_deleteCastorFile2TapeCopyStatementString);
-          }
-          m_deleteCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-          m_deleteCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-          m_deleteCastorFile2TapeCopyStatement->executeUpdate();
-        }
-        if (castorFileId == 0) {
-          if (0 != obj->castorFile()) {
-            if (alreadyDone.find(obj->castorFile()) == alreadyDone.end()) {
-              cnvSvc()->createRep(&ad, obj->castorFile(), alreadyDone, false, true);
-              if (0 == m_insertCastorFile2TapeCopyStatement) {
-                m_insertCastorFile2TapeCopyStatement = createStatement(s_insertCastorFile2TapeCopyStatementString);
-              }
-              m_insertCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-              m_insertCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-              m_insertCastorFile2TapeCopyStatement->executeUpdate();
-            }
-          }
-        } else {
-          if (alreadyDone.find(obj->castorFile()) == alreadyDone.end()) {
-            cnvSvc()->updateRep(&ad, obj->castorFile(), alreadyDone, false, recursive);
-          }
-        }
-      }
-      m_selectStatement->closeResultSet(rset);
-    }
-    // Now Update the current object
+    // Update the current object
     m_updateStatement->setDouble(1, obj->castorFile() ? obj->castorFile()->id() : 0);
     m_updateStatement->setDouble(2, (int)obj->status());
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
-    if (recursive) {
-      // Dealing with segments
-      {
-        if (0 == m_TapeCopy2SegmentStatement) {
-          m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
-        }
-        std::set<int> segmentsList;
-        m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
-        oracle::occi::ResultSet *rset = m_TapeCopy2SegmentStatement->executeQuery();
-        while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-          segmentsList.insert(rset->getInt(1));
-        }
-        m_TapeCopy2SegmentStatement->closeResultSet(rset);
-        for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
-             it != obj->segments().end();
-             it++) {
-          std::set<int>::iterator item;
-          if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
-            if (alreadyDone.find(*it) == alreadyDone.end()) {
-              cnvSvc()->createRep(0, *it, alreadyDone, false, true);
-            }
-          } else {
-            segmentsList.erase(item);
-            if (alreadyDone.find(*it) == alreadyDone.end()) {
-              cnvSvc()->updateRep(0, *it, alreadyDone, false, recursive);
-            }
-          }
-        }
-        for (std::set<int>::iterator it = segmentsList.begin();
-             it != segmentsList.end();
-             it++) {
-          castor::db::DbAddress ad(*it, " ", 0);
-          cnvSvc()->deleteRepByAddress(&ad, false);
-        }
-      }
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -435,7 +487,6 @@ void castor::db::ora::OraTapeCopyCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
@@ -450,8 +501,6 @@ void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
     if (0 == m_deleteTypeStatement) {
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
     // Now Delete the object
     m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
@@ -460,9 +509,7 @@ void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
          it++) {
-      if (alreadyDone.find(*it) == alreadyDone.end()) {
-        cnvSvc()->deleteRep(0, *it, alreadyDone, false);
-      }
+      cnvSvc()->deleteRep(0, *it, false);
     }
     // Delete link to castorFile object
     if (0 != obj->castorFile()) {
@@ -503,9 +550,7 @@ void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated,
-                                                            bool recursive)
+castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -513,12 +558,6 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, ad->id());
@@ -532,27 +571,8 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
     castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
     // Now retrieve and set members
     object->setId((unsigned long long)rset->getDouble(1));
-    newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(2));
-    if (recursive) {
-      u_signed64 castorFileId = (unsigned long long)rset->getDouble(3);
-      IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
-      object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
-    }
     m_selectStatement->closeResultSet(rset);
-    if (recursive) {
-      // Get ids of objs to retrieve
-      if (0 == m_TapeCopy2SegmentStatement) {
-        m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
-      }
-      m_TapeCopy2SegmentStatement->setDouble(1, ad->id());
-      rset = m_TapeCopy2SegmentStatement->executeQuery();
-      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-        object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
-      }
-      m_TapeCopy2SegmentStatement->closeResultSet(rset);
-    }
     return object;
   } catch (oracle::occi::SQLException e) {
     try {
@@ -579,19 +599,12 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapeCopyCnv::updateObj(castor::IObject* obj,
-                                                castor::ObjectCatalog& alreadyDone)
+void castor::db::ora::OraTapeCopyCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, obj->id());
@@ -605,65 +618,8 @@ void castor::db::ora::OraTapeCopyCnv::updateObj(castor::IObject* obj,
     castor::stager::TapeCopy* object = 
       dynamic_cast<castor::stager::TapeCopy*>(obj);
     object->setId((unsigned long long)rset->getDouble(1));
-    alreadyDone[obj->id()] = obj;
-    // Dealing with castorFile
-    u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
-    if (0 != object->castorFile() &&
-        (0 == castorFileId ||
-         object->castorFile()->id() != castorFileId)) {
-      delete object->castorFile();
-      object->setCastorFile(0);
-    }
-    if (0 != castorFileId) {
-      if (0 == object->castorFile()) {
-        object->setCastorFile
-          (dynamic_cast<castor::stager::CastorFile*>
-           (cnvSvc()->getObjFromId(castorFileId, alreadyDone)));
-      } else if (object->castorFile()->id() == castorFileId) {
-        if (alreadyDone.find(object->castorFile()->id()) == alreadyDone.end()) {
-          cnvSvc()->updateObj(object->castorFile(), alreadyDone);
-        }
-      }
-    }
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
-    // Deal with segments
-    if (0 == m_TapeCopy2SegmentStatement) {
-      m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
-    }
-    std::set<int> segmentsList;
-    m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
-    rset = m_TapeCopy2SegmentStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      segmentsList.insert(rset->getInt(1));
-    }
-    m_TapeCopy2SegmentStatement->closeResultSet(rset);
-    {
-      std::vector<castor::stager::Segment*> toBeDeleted;
-      for (std::vector<castor::stager::Segment*>::iterator it = object->segments().begin();
-           it != object->segments().end();
-           it++) {
-        std::set<int>::iterator item;
-        if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
-          toBeDeleted.push_back(*it);
-        } else {
-          segmentsList.erase(item);
-          cnvSvc()->updateObj((*it), alreadyDone);
-        }
-      }
-      for (std::vector<castor::stager::Segment*>::iterator it = toBeDeleted.begin();
-           it != toBeDeleted.end();
-           it++) {
-        object->removeSegments(*it);
-        delete (*it);
-      }
-    }
-    for (std::set<int>::iterator it = segmentsList.begin();
-         it != segmentsList.end();
-         it++) {
-      IObject* item = cnvSvc()->getObjFromId(*it, alreadyDone);
-      object->addSegments(dynamic_cast<castor::stager::Segment*>(item));
-    }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback

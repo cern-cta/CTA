@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/11 13:43:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -84,9 +84,7 @@ const unsigned int castor::io::StreamStageOutRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageOutRequestCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     castor::ObjectSet& alreadyDone,
-                                                     bool autocommit,
-                                                     bool recursive)
+                                                     bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageOutRequest* obj = 
     dynamic_cast<castor::stager::StageOutRequest*>(object);
@@ -104,15 +102,6 @@ void castor::io::StreamStageOutRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->openmode();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
-  // Mark object as done
-  alreadyDone.insert(obj);
-  ad->stream() << obj->subRequests().size();
-  for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-       it != obj->subRequests().end();
-       it++) {
-    marshalObject(*it, ad, alreadyDone);
-  }
-  marshalObject(obj->client(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -120,9 +109,7 @@ void castor::io::StreamStageOutRequestCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamStageOutRequestCnv::updateRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     castor::ObjectSet& alreadyDone,
-                                                     bool autocommit,
-                                                     bool recursive)
+                                                     bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -135,7 +122,6 @@ void castor::io::StreamStageOutRequestCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamStageOutRequestCnv::deleteRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     castor::ObjectSet& alreadyDone,
                                                      bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -147,9 +133,7 @@ void castor::io::StreamStageOutRequestCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddress* address,
-                                                                 castor::ObjectCatalog& newlyCreated,
-                                                                 bool recursive)
+castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -189,27 +173,70 @@ castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddres
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::RequestStatusCodes)status);
-  newlyCreated.insert(object);
-  unsigned int subRequestsNb;
-  ad->stream() >> subRequestsNb;
-  for (unsigned int i = 0; i < subRequestsNb; i++) {
-    IObject* obj = unmarshalObject(ad->stream(), newlyCreated);
-    object->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(obj));
-  }
-  IObject* objClient = unmarshalObject(ad->stream(), newlyCreated);
-  object->setClient(dynamic_cast<castor::IClient*>(objClient));
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamStageOutRequestCnv::updateObj(castor::IObject* obj,
-                                                     castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamStageOutRequestCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamStageOutRequestCnv::marshalObject(castor::IObject* object,
+                                                         castor::io::StreamAddress* address,
+                                                         castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::stager::StageOutRequest* obj = 
+    dynamic_cast<castor::stager::StageOutRequest*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+    address->stream() << obj->subRequests().size();
+    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
+         it != obj->subRequests().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
+    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamStageOutRequestCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                       castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::StageOutRequest* obj = 
+    dynamic_cast<castor::stager::StageOutRequest*>(object);
+  unsigned int subRequestsNb;
+  ad.stream() >> subRequestsNb;
+  for (unsigned int i = 0; i < subRequestsNb; i++) {
+    IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
+  }
+  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setClient(dynamic_cast<castor::IClient*>(objClient));
 }
 

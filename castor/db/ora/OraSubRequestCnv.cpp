@@ -27,22 +27,19 @@
 // Include Files
 #include "OraSubRequestCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/IObject.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
-#include <list>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -149,13 +146,144 @@ const unsigned int castor::db::ora::OraSubRequestCnv::objType() const {
 }
 
 //------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
+                                                castor::IObject* object,
+                                                unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::SubRequest* obj = 
+    dynamic_cast<castor::stager::SubRequest*>(object);
+  switch (type) {
+  case castor::OBJ_Request :
+    fillRepRequest(obj);
+    break;
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillRep called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 requestId = (unsigned long long)rset->getDouble(5);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(requestId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != requestId &&
+      0 != obj->request() &&
+      obj->request()->id() != requestId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    requestId = 0;
+    if (0 == m_deleteRequest2SubRequestStatement) {
+      m_deleteRequest2SubRequestStatement = createStatement(s_deleteRequest2SubRequestStatementString);
+    }
+    m_deleteRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+    m_deleteRequest2SubRequestStatement->setDouble(2, obj->id());
+    m_deleteRequest2SubRequestStatement->executeUpdate();
+  }
+  // Update object or create new one
+  if (requestId == 0) {
+    if (0 != obj->request()) {
+      cnvSvc()->createRep(&ad, obj->request(), false);
+      if (0 == m_insertRequest2SubRequestStatement) {
+        m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
+      }
+      m_insertRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+      m_insertRequest2SubRequestStatement->setDouble(2, obj->id());
+      m_insertRequest2SubRequestStatement->executeUpdate();
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->request(), false);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::db::ora::OraSubRequestCnv::fillObj(castor::IAddress* address,
+                                                castor::IObject* object,
+                                                unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::SubRequest* obj = 
+    dynamic_cast<castor::stager::SubRequest*>(object);
+  switch (type) {
+  case castor::OBJ_Request :
+    fillObjRequest(obj);
+    break;
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillObj called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraSubRequestCnv::fillObjRequest(castor::stager::SubRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 requestId = (unsigned long long)rset->getDouble(5);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something shoudl be deleted
+  if (0 != obj->request() &&
+      (0 == requestId ||
+       obj->request()->id() != requestId)) {
+    delete obj->request();
+    obj->setRequest(0);
+  }
+  // Update object or create new one
+  if (0 != requestId) {
+    if (0 == obj->request()) {
+      obj->setRequest
+        (dynamic_cast<castor::stager::Request*>
+         (cnvSvc()->getObjFromId(requestId)));
+    } else if (obj->request()->id() == requestId) {
+      cnvSvc()->updateObj(obj->request());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  castor::ObjectSet& alreadyDone,
-                                                  bool autocommit,
-                                                  bool recursive)
+                                                  bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
@@ -169,36 +297,8 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    // Set ids of all objects
-    int nids = obj->id() == 0 ? 1 : 0;
-    // check which objects need to be saved/updated and keeps a list of them
-    std::list<castor::IObject*> toBeSaved;
-    std::list<castor::IObject*> toBeUpdated;
-    if (alreadyDone.find(obj->request()) == alreadyDone.end() &&
-        obj->request() != 0) {
-      if (0 == obj->request()->id()) {
-        if (!recursive) {
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "CreateNoRep called on type SubRequest while its request does not exist in the database.";
-          throw ex;
-        }
-        toBeSaved.push_back(obj->request());
-        nids++;
-      } else {
-        if (recursive) {
-          toBeUpdated.push_back(obj->request());
-        }
-      }
-    }
-    u_signed64 id = cnvSvc()->getIds(nids);
-    if (0 == obj->id()) obj->setId(id++);
-    for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
-         it != toBeSaved.end();
-         it++) {
-      (*it)->setId(id++);
-    }
+    // Get an id for the new object
+    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
@@ -212,29 +312,6 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(7, obj->request() ? obj->request()->id() : 0);
     m_insertStatement->setDouble(8, (int)obj->status());
     m_insertStatement->executeUpdate();
-    if (recursive) {
-      // Save dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeSaved.begin();
-           it != toBeSaved.end();
-           it++) {
-        cnvSvc()->createRep(0, *it, alreadyDone, false, true);
-      }
-      // Update dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeUpdated.begin();
-           it != toBeUpdated.end();
-           it++) {
-        cnvSvc()->updateRep(0, *it, alreadyDone, false, true);
-      }
-    }
-    // Deal with request
-    if (0 != obj->request()) {
-      if (0 == m_insertRequest2SubRequestStatement) {
-        m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
-      }
-      m_insertRequest2SubRequestStatement->setDouble(1, obj->request()->id());
-      m_insertRequest2SubRequestStatement->setDouble(2, obj->id());
-      m_insertRequest2SubRequestStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -273,9 +350,7 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  castor::ObjectSet& alreadyDone,
-                                                  bool autocommit,
-                                                  bool recursive)
+                                                  bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
@@ -286,71 +361,7 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     if (0 == m_updateStatement) {
       m_updateStatement = createStatement(s_updateStatementString);
     }
-    if (0 == m_updateStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_updateStatementString;
-      throw ex;
-    }
-    if (recursive) {
-      if (0 == m_selectStatement) {
-        m_selectStatement = createStatement(s_selectStatementString);
-      }
-      if (0 == m_selectStatement) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Unable to create statement :" << std::endl
-                        << s_selectStatementString;
-        throw ex;
-      }
-    }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    if (recursive) {
-      // retrieve the object from the database
-      m_selectStatement->setDouble(1, obj->id());
-      oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-      if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-        castor::exception::NoEntry ex;
-        ex.getMessage() << "No object found for id :" << obj->id();
-        throw ex;
-      }
-      // Dealing with request
-      {
-        u_signed64 requestId = (unsigned long long)rset->getDouble(7);
-        castor::db::DbAddress ad(requestId, " ", 0);
-        if (0 != requestId &&
-            0 != obj->request() &&
-            obj->request()->id() != requestId) {
-          cnvSvc()->deleteRepByAddress(&ad, false);
-          requestId = 0;
-          if (0 == m_deleteRequest2SubRequestStatement) {
-            m_deleteRequest2SubRequestStatement = createStatement(s_deleteRequest2SubRequestStatementString);
-          }
-          m_deleteRequest2SubRequestStatement->setDouble(1, obj->request()->id());
-          m_deleteRequest2SubRequestStatement->setDouble(2, obj->id());
-          m_deleteRequest2SubRequestStatement->executeUpdate();
-        }
-        if (requestId == 0) {
-          if (0 != obj->request()) {
-            if (alreadyDone.find(obj->request()) == alreadyDone.end()) {
-              cnvSvc()->createRep(&ad, obj->request(), alreadyDone, false, true);
-              if (0 == m_insertRequest2SubRequestStatement) {
-                m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
-              }
-              m_insertRequest2SubRequestStatement->setDouble(1, obj->request()->id());
-              m_insertRequest2SubRequestStatement->setDouble(2, obj->id());
-              m_insertRequest2SubRequestStatement->executeUpdate();
-            }
-          }
-        } else {
-          if (alreadyDone.find(obj->request()) == alreadyDone.end()) {
-            cnvSvc()->updateRep(&ad, obj->request(), alreadyDone, false, recursive);
-          }
-        }
-      }
-      m_selectStatement->closeResultSet(rset);
-    }
-    // Now Update the current object
+    // Update the current object
     m_updateStatement->setInt(1, obj->retryCounter());
     m_updateStatement->setString(2, obj->fileName());
     m_updateStatement->setString(3, obj->protocol());
@@ -360,8 +371,6 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setDouble(7, (int)obj->status());
     m_updateStatement->setDouble(8, obj->id());
     m_updateStatement->executeUpdate();
-    if (recursive) {
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -392,7 +401,6 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  castor::ObjectSet& alreadyDone,
                                                   bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 
@@ -407,8 +415,6 @@ void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
     if (0 == m_deleteTypeStatement) {
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
     // Now Delete the object
     m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
@@ -453,9 +459,7 @@ void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* address,
-                                                              castor::ObjectCatalog& newlyCreated,
-                                                              bool recursive)
+castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -463,12 +467,6 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, ad->id());
@@ -487,13 +485,7 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setPoolName(rset->getString(4));
     object->setXsize((unsigned long long)rset->getDouble(5));
     object->setId((unsigned long long)rset->getDouble(6));
-    newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(7));
-    if (recursive) {
-      u_signed64 requestId = (unsigned long long)rset->getDouble(7);
-      IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
-      object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
-    }
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -521,19 +513,12 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj,
-                                                  castor::ObjectCatalog& alreadyDone)
+void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, obj->id());
@@ -552,26 +537,6 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj,
     object->setPoolName(rset->getString(4));
     object->setXsize((unsigned long long)rset->getDouble(5));
     object->setId((unsigned long long)rset->getDouble(6));
-    alreadyDone[obj->id()] = obj;
-    // Dealing with request
-    u_signed64 requestId = (unsigned long long)rset->getDouble(7);
-    if (0 != object->request() &&
-        (0 == requestId ||
-         object->request()->id() != requestId)) {
-      delete object->request();
-      object->setRequest(0);
-    }
-    if (0 != requestId) {
-      if (0 == object->request()) {
-        object->setRequest
-          (dynamic_cast<castor::stager::Request*>
-           (cnvSvc()->getObjFromId(requestId, alreadyDone)));
-      } else if (object->request()->id() == requestId) {
-        if (alreadyDone.find(object->request()->id()) == alreadyDone.end()) {
-          cnvSvc()->updateObj(object->request(), alreadyDone);
-        }
-      }
-    }
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(8));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/07 14:34:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/11 13:43:52 $ $Author: sponcec3 $
  *
  * 
  *
@@ -82,33 +82,6 @@ void castor::io::StreamBaseCnv::unlinkChild
   e.getMessage() << "unlinkChild should never be called while streaming.";
   throw e;
 }
-
-//------------------------------------------------------------------------------
-// marshalObject
-//------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::marshalObject
-(castor::IObject* obj, castor::io::StreamAddress* address,
- castor::ObjectSet& alreadyDone) {
-  if (0 == obj) {
-    // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
-  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
-    // Case of a pointer to a non streamed object
-    cnvSvc()->createRep(address, obj, alreadyDone, true, true);
-  } else {
-    // case of a pointer to an already streamed object
-    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
-  }
-};
-
-//------------------------------------------------------------------------------
-// unmarshalObject
-//------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamBaseCnv::unmarshalObject
-(castor::io::biniostream& stream, castor::ObjectCatalog& newlyCreated) {
-  StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  return cnvSvc()->createObj(&ad, newlyCreated, true);
-};
 
 // -----------------------------------------------------------------------
 // cnvSvc

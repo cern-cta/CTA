@@ -52,10 +52,6 @@ void CppCppOraCnvWriter::startSQLFile() {
          << "CREATE TABLE RH_REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);" << endl
          << "CREATE INDEX I_RH_REQUESTSSTATUS_FULL on RH_REQUESTSSTATUS (id, status);" << endl
          << endl
-         << "/* SQL statements for type Cuuid */" << endl
-         << "DROP TABLE rh_Cuuid;" << endl
-         << "CREATE TABLE rh_Cuuid (id INTEGER PRIMARY KEY, time_low NUMBER, time_mid NUMBER, time_hv NUMBER, clock_hi NUMBER, clock_low NUMBER, node CHAR(6));" << endl
-         << endl
          << "/* PL/SQL procedure for getting the next request to handle */" << endl
          << "CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS" << endl
          << "BEGIN" << endl
@@ -104,6 +100,10 @@ void CppCppOraCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeReset();
   // objtype methods
   writeObjType();
+  // FillRep methods
+  writeFillRep();
+  // FillObj methods
+  writeFillObj();
   // createRep method
   writeCreateRep();
   // updateRep method
@@ -450,7 +450,7 @@ void CppCppOraCnvWriter::writeConstructors() {
                 << capitalizeFirstLetter(as->second.second)
                 << "2"
                 << capitalizeFirstLetter(as->second.third)
-                << "Statement(0)";      
+                << "Statement(0)";
     }
   }
   *m_stream << " {}" << endl << endl;
@@ -583,6 +583,825 @@ void CppCppOraCnvWriter::writeReset() {
 }
 
 //=============================================================================
+// writeFillRep
+//=============================================================================
+void CppCppOraCnvWriter::writeFillRep() {
+  // First write the main function, dispatching the requests
+  writeWideHeaderComment("fillRep", getIndent(), *m_stream);
+  QString func = QString("void ") +
+    m_classInfo->packageName + "::Ora" +
+    m_classInfo->className + "Cnv::fillRep(";
+  *m_stream << getIndent() << func
+            << fixTypeName("IAddress*",
+                           "castor",
+                           "")
+            << " address," << endl << getIndent();
+  func.replace(QRegExp("."), " ");
+  *m_stream << func  << fixTypeName("IObject*",
+                                    "castor",
+                                    "")
+            << " object," << endl << getIndent()
+            << func << "unsigned int type)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           "")
+            << ") {"
+            << endl;
+  m_indent++;
+  // Get the precise object
+  *m_stream << getIndent() << m_originalPackage
+            << m_classInfo->className << "* obj = " << endl
+            << getIndent() << "  dynamic_cast<"
+            << m_originalPackage
+            << m_classInfo->className << "*>(object);"
+            << endl;
+  // Call the dedicated method
+  *m_stream << getIndent() << "switch (type) {" << endl;
+  AssocList assocs = createAssocsList();
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE ||
+          as->first.first == MULT_N) {
+        addInclude("\"castor/Constants.hpp\"");
+        *m_stream << getIndent() << "case castor::OBJ_"
+                  << capitalizeFirstLetter(as->second.second)
+                  << " :" << endl;
+        m_indent++;
+        *m_stream << getIndent() << "fillRep"
+                  << capitalizeFirstLetter(as->second.second)
+                  << "(obj);" << endl << getIndent()
+                  << "break;" << endl;
+        m_indent--;
+      }
+    }
+  }
+  *m_stream << getIndent() << "default :" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "castor::exception::InvalidArgument ex;"
+            << endl << getIndent()
+            << "ex.getMessage() << \"fillRep called on type \" << type "
+            << endl << getIndent()
+            << "                << \" on object of type \" << obj->type() "
+            << endl << getIndent()
+            << "                << \". This is meaningless.\";"
+            << endl << getIndent()
+            << "throw ex;" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+
+  // Now write the dedicated fillRep Methods
+  MemberList members = createMembersList();
+  unsigned int n = members.count() - 1; // All but Id
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE) {
+        writeBasicMult1FillRep(as, n);
+        n++;
+      } else if  (as->first.first == MULT_N) {
+        writeBasicMultNFillRep(as);
+      }
+    }
+  }
+}
+
+//=============================================================================
+// writeFillObj
+//=============================================================================
+void CppCppOraCnvWriter::writeFillObj() {
+  // First write the main function, dispatching the requests
+  writeWideHeaderComment("fillObj", getIndent(), *m_stream);
+  QString func = QString("void ") +
+    m_classInfo->packageName + "::Ora" +
+    m_classInfo->className + "Cnv::fillObj(";
+  *m_stream << getIndent() << func
+            << fixTypeName("IAddress*",
+                           "castor",
+                           "")
+            << " address," << endl << getIndent();
+  func.replace(QRegExp("."), " ");
+  *m_stream << func << fixTypeName("IObject*",
+                                   "castor",
+                                   "")
+            << " object," << endl << getIndent()
+            << func << "unsigned int type)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           "")
+            << ") {"
+            << endl;
+  m_indent++;
+  // Get the precise object
+  *m_stream << getIndent() << m_originalPackage
+            << m_classInfo->className << "* obj = " << endl
+            << getIndent() << "  dynamic_cast<"
+            << m_originalPackage
+            << m_classInfo->className << "*>(object);"
+            << endl;
+  // Call the dedicated method
+  *m_stream << getIndent() << "switch (type) {" << endl;
+  AssocList assocs = createAssocsList();
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE ||
+          as->first.first == MULT_N) {
+        addInclude("\"castor/Constants.hpp\"");
+        *m_stream << getIndent() << "case castor::OBJ_"
+                  << capitalizeFirstLetter(as->second.second)
+                  << " :" << endl;
+        m_indent++;
+        *m_stream << getIndent() << "fillObj"
+                  << capitalizeFirstLetter(as->second.second)
+                  << "(obj);" << endl << getIndent()
+                  << "break;" << endl;
+        m_indent--;
+      }
+    }
+  }
+  *m_stream << getIndent() << "default :" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "castor::exception::InvalidArgument ex;"
+            << endl << getIndent()
+            << "ex.getMessage() << \"fillObj called on type \" << type "
+            << endl << getIndent()
+            << "                << \" on object of type \" << obj->type() "
+            << endl << getIndent()
+            << "                << \". This is meaningless.\";"
+            << endl << getIndent()
+            << "throw ex;" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+
+  // Now write the dedicated fillRep Methods
+  MemberList members = createMembersList();
+  unsigned int n = members.count() - 1; // All but Id
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->second.second)) {
+      if (as->first.first == MULT_ONE) {
+        writeBasicMult1FillObj(as, n);
+        n++;
+      } else if  (as->first.first == MULT_N) {
+        writeBasicMultNFillObj(as);
+      }
+    }
+  }
+}
+
+//=============================================================================
+// writeBasicMult1FillRep
+//=============================================================================
+void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
+                                                unsigned int n) {
+  writeWideHeaderComment("fillRep" +
+                         capitalizeFirstLetter(as->second.second),
+                         getIndent(), *m_stream);
+  *m_stream << getIndent() << "void "
+            << m_classInfo->packageName << "::Ora"
+            << m_classInfo->className << "Cnv::fillRep"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           "")
+            << " obj)" << endl << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           "")
+            << ") {"
+            << endl;
+  m_indent++;
+
+  *m_stream << getIndent() << "// Check select statement"
+            << endl << getIndent()
+            << "if (0 == m_selectStatement) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "m_selectStatement = createStatement(s_selectStatementString);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << getIndent()
+            << "// retrieve the object from the database"
+            << endl << getIndent()
+            << "m_selectStatement->setDouble(1, obj->id());"
+            << endl << getIndent()
+            << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
+            << endl << getIndent()
+            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("NoEntry",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << " ex;" << endl << getIndent()
+            << "ex.getMessage() << \"No object found for id :\""
+            << " << obj->id();" << endl
+            << getIndent() << "throw ex;" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  writeSingleGetFromSelect(as->second, n, true);
+  // Close request
+  *m_stream << getIndent() << "// Close resultset" << endl
+            << getIndent()
+            << "m_selectStatement->closeResultSet(rset);"
+            << endl;
+  *m_stream << getIndent()
+            << fixTypeName("DbAddress",
+                           "castor::db",
+                           m_classInfo->packageName)
+            << " ad(" << as->second.first
+            << "Id, \" \", 0);" << endl << getIndent()
+            << "// Check whether old object should be deleted"
+            << endl << getIndent()
+            << "if (0 != " << as->second.first
+            << "Id &&" << endl
+            << getIndent() << "    0 != obj->"
+            << as->second.first << "() &&" << endl
+            << getIndent() << "    obj->"
+            << as->second.first << "()->id() != "
+            << as->second.first << "Id) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "cnvSvc()->deleteRepByAddress(&ad, false);"
+            << endl << getIndent()
+            << as->second.first << "Id = 0;" << endl;
+  if (as->first.second == COMPOS_CHILD ||
+      as->first.second == AGGREG_CHILD) {
+    *m_stream << getIndent()
+              << "if (0 == m_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement = createStatement(s_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->setDouble(1, obj->"
+              << as->second.first << "()->id());"
+              << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->setDouble(2, obj->id());"
+              << endl << getIndent()
+              << "m_delete"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->executeUpdate();"
+              << endl;
+  }
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  *m_stream << getIndent() << "// Update object or create new one"
+            << endl << getIndent()
+            << "if (" << as->second.first
+            << "Id == 0) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "if (0 != obj->"
+            << as->second.first
+            << "()) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "cnvSvc()->createRep(&ad, obj->"
+            << as->second.first
+            << "(), false);" << endl;
+  if (as->first.second == COMPOS_CHILD ||
+      as->first.second == AGGREG_CHILD) {
+    *m_stream << getIndent()
+              << "if (0 == m_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement = createStatement(s_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl
+              << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->setDouble(1, obj->"
+              << as->second.first << "()->id());"
+              << endl << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->setDouble(2, obj->id());"
+              << endl << getIndent()
+              << "m_insert"
+              << capitalizeFirstLetter(as->second.second)
+              << "2"
+              << capitalizeFirstLetter(as->second.third)
+              << "Statement->executeUpdate();"
+              << endl;
+  }
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "} else {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "cnvSvc()->updateRep(&ad, obj->"
+            << as->second.first
+            << "(), false);" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
+// writeBasicMult1FillObj
+//=============================================================================
+void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
+                                                unsigned int n) {
+  writeWideHeaderComment("fillObj" +
+                         capitalizeFirstLetter(as->second.second),
+                         getIndent(), *m_stream);
+  *m_stream << getIndent() << "void "
+            << m_classInfo->packageName << "::Ora"
+            << m_classInfo->className << "Cnv::fillObj"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           "")
+            << " obj)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ") {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "// Check whether the statement is ok"
+            << endl << getIndent()
+            << "if (0 == m_selectStatement) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "m_selectStatement = createStatement(s_selectStatementString);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent()
+            << "// retrieve the object from the database"
+            << endl << getIndent()
+            << "m_selectStatement->setDouble(1, obj->id());"
+            << endl << getIndent()
+            << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
+            << endl << getIndent()
+            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("NoEntry",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << " ex;" << endl << getIndent()
+            << "ex.getMessage() << \"No object found for id :\""
+            << " << obj->id();" << endl
+            << getIndent() << "throw ex;" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  writeSingleGetFromSelect(as->second, n, true);
+  *m_stream << getIndent() << "// Close ResultSet"
+            << endl << getIndent()
+            << "m_selectStatement->closeResultSet(rset);"
+            << endl;
+  *m_stream << getIndent()
+            << "// Check whether something shoudl be deleted"
+            << endl << getIndent() <<"if (0 != obj->"
+            << as->second.first << "() &&" << endl
+            << getIndent()
+            << "    (0 == " << as->second.first
+            << "Id ||" << endl
+            << getIndent() << "     obj->"
+            << as->second.first
+            << "()->id() != " << as->second.first
+            << "Id)) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "delete obj->"
+            << as->second.first << "();" << endl
+            << getIndent()
+            << "obj->set"
+            << capitalizeFirstLetter(as->second.first)
+            << "(0);" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  *m_stream << getIndent()
+            << "// Update object or create new one"
+            << endl << getIndent()
+            << "if (0 != " << as->second.first
+            << "Id) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "if (0 == obj->"
+            << as->second.first << "()) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "obj->set"
+            << capitalizeFirstLetter(as->second.first)
+            << endl << getIndent()
+            << "  (dynamic_cast<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*>" << endl << getIndent()
+            << "   (cnvSvc()->getObjFromId(" << as->second.first
+            << "Id)));"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent()
+            << "} else if (obj->"
+            << as->second.first
+            << "()->id() == " << as->second.first
+            << "Id) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "cnvSvc()->updateObj(obj->"
+            << as->second.first
+            << "());"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
+// writeBasicMultNFillRep
+//=============================================================================
+void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
+  writeWideHeaderComment("fillRep" +
+                         capitalizeFirstLetter(as->second.second),
+                         getIndent(), *m_stream);
+  *m_stream << getIndent()
+            << "void " << m_classInfo->packageName
+            << "::Ora" << m_classInfo->className
+            << "Cnv::fillRep"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           "")
+            << " obj)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           "")
+            << ") {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent() << "// check select statement"
+            << endl << getIndent()
+            << "if (0 == m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement = createStatement(s_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "StatementString);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent() << "// Get current database data"
+            << endl << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int> " << as->second.first
+            << "List;" << endl << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->setDouble(1, obj->id());"
+            << endl << getIndent()
+            << "oracle::occi::ResultSet *rset = "
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->executeQuery();"
+            << endl << getIndent()
+            << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << as->second.first
+            << "List.insert(rset->getInt(1));"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->closeResultSet(rset);"
+            << endl << getIndent()
+            << "// update segments and create new ones"
+            << endl << getIndent() << "for ("
+            << fixTypeName("vector", "", "")
+            << "<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*>::iterator it = obj->"
+            << as->second.first
+            << "().begin();" << endl << getIndent()
+            << "     it != obj->"
+            << as->second.first
+            << "().end();" << endl << getIndent()
+            << "     it++) {"  << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int>::iterator item;" << endl
+            << getIndent() << "if ((item = "
+            << as->second.first
+            << "List.find((*it)->id())) == "
+            << as->second.first
+            << "List.end()) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "cnvSvc()->createRep(0, *it, false);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "} else {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << as->second.first
+            << "List.erase(item);"
+            << endl;
+  *m_stream << getIndent()
+            << "cnvSvc()->updateRep(0, *it, false);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent() << "// Delete old data"
+            << endl << getIndent() << "for ("
+            << fixTypeName("set", "", "")
+            << "<int>::iterator it = "
+            << as->second.first << "List.begin();"
+            << endl << getIndent()
+            << "     it != "
+            << as->second.first << "List.end();"
+            << endl << getIndent()
+            << "     it++) {"  << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("DbAddress",
+                           "castor::db",
+                           m_classInfo->packageName)
+            << " ad(" << "*it, \" \", 0);" << endl
+            << getIndent()
+            << "cnvSvc()->deleteRepByAddress(&ad, false);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
+// writeBasicMultNFillObj
+//=============================================================================
+void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
+  writeWideHeaderComment("fillObj" +
+                         capitalizeFirstLetter(as->second.second),
+                         getIndent(), *m_stream);
+  *m_stream << getIndent()
+            << "void " << m_classInfo->packageName
+            << "::Ora" << m_classInfo->className
+            << "Cnv::fillObj"
+            << capitalizeFirstLetter(as->second.second)
+            << "("
+            << fixTypeName(m_classInfo->className + "*",
+                           getNamespace(m_classInfo->className),
+                           "")
+            << " obj)"
+            << endl << getIndent() << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           "")
+            << ") {"
+            << endl;
+  m_indent++;
+
+  *m_stream << getIndent() << "// Check select statement"
+            << endl << getIndent()
+            << "if (0 == m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement = createStatement(s_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "StatementString);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent()
+            << "// retrieve the object from the database"
+            << endl << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int> " << as->second.first
+            << "List;" << endl << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->setDouble(1, obj->id());"
+            << endl << getIndent()
+            << "oracle::occi::ResultSet *rset = "
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->executeQuery();"
+            << endl << getIndent()
+            << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << as->second.first
+            << "List.insert(rset->getInt(1));"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent() << "// Close ResultSet"
+            << endl << getIndent()
+            << "m_"
+            << capitalizeFirstLetter(as->second.third)
+            << "2"
+            << capitalizeFirstLetter(as->second.second)
+            << "Statement->closeResultSet(rset);"
+            << endl << getIndent()
+            << "// Update objects and mark old ones for deletion"
+            << endl << getIndent()
+            << fixTypeName("vector", "", "") << "<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*> toBeDeleted;"
+            << endl << getIndent()
+            << "for ("
+            << fixTypeName("vector", "", "")
+            << "<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*>::iterator it = obj->"
+            << as->second.first
+            << "().begin();" << endl << getIndent()
+            << "     it != obj->"
+            << as->second.first
+            << "().end();" << endl << getIndent()
+            << "     it++) {"  << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int>::iterator item;" << endl
+            << getIndent() << "if ((item = "
+            << as->second.first
+            << "List.find((*it)->id())) == "
+            << as->second.first
+            << "List.end()) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "toBeDeleted.push_back(*it);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "} else {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << as->second.first
+            << "List.erase(item);"
+            << endl << getIndent()
+            << "cnvSvc()->updateObj((*it));"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  *m_stream << getIndent()
+            << "// Delete old objects"
+            << endl << getIndent()
+            << "for ("
+            << fixTypeName("vector", "", "")
+            << "<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*>::iterator it = toBeDeleted.begin();"
+            << endl << getIndent()
+            << "     it != toBeDeleted.end();"
+            << endl << getIndent()
+            << "     it++) {"  << endl;
+  m_indent++;
+  *m_stream << getIndent() << "obj->remove"
+            << capitalizeFirstLetter(as->second.first)
+            << "(*it);" << endl << getIndent()
+            << "delete (*it);" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent()
+            << "// Create new objects"
+            << endl << getIndent() << "for ("
+            << fixTypeName("set", "", "")
+            << "<int>::iterator it = "
+            << as->second.first << "List.begin();"
+            << endl << getIndent()
+            << "     it != "
+            << as->second.first << "List.end();"
+            << endl << getIndent()
+            << "     it++) {"  << endl;
+  m_indent++;
+  *m_stream << getIndent() << "IObject* item"
+            << " = cnvSvc()->getObjFromId(*it);"
+            << endl << getIndent()
+            << "obj->add"
+            << capitalizeFirstLetter(as->second.first)
+            << "(dynamic_cast<"
+            << fixTypeName(as->second.second,
+                           getNamespace(as->second.second),
+                           m_classInfo->packageName)
+            << "*>(item));" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+
+
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
 // writeCreateRepContent
 //=============================================================================
 void CppCppOraCnvWriter::writeCreateRepContent() {
@@ -623,169 +1442,9 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl << getIndent()
-            << "// Mark the current object as done"
+            << "// Get an id for the new object"
             << endl << getIndent()
-            << "alreadyDone.insert(obj);" << endl;
-  // Prepare id count
-  *m_stream << getIndent()
-            << "// Set ids of all objects"
-            << endl << getIndent()
-            << "int nids = obj->id() == 0 ? 1 : 0;"
-            << endl;
-  // create a list of associations
-  AssocList assocs = createAssocsList();
-  // list dependant objects
-  if (! assocs.isEmpty()) {
-    *m_stream << getIndent()
-              << "// check which objects need to be saved/updated and keeps a list of them"
-              << endl << getIndent()
-              << fixTypeName("list", "", "")
-              << "<" << fixTypeName("IObject*",
-                                    "castor",
-                                    m_classInfo->packageName)
-              << "> toBeSaved;"
-              << endl << getIndent()
-              << fixTypeName("list", "", "")
-              << "<" << fixTypeName("IObject*",
-                                    "castor",
-                                    m_classInfo->packageName)
-              << "> toBeUpdated;"
-              << endl;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (!isEnum(p->second.second)) {
-        fixTypeName(p->second.second,
-                    getNamespace(p->second.second),
-                    m_classInfo->packageName);
-        if (p->first.first == MULT_ONE) {
-          if (p->first.second != COMPOS_CHILD) {
-            *m_stream << getIndent() << "if (recursive) {"
-                      << endl;
-            m_indent++;
-          }
-          // One to one association
-          *m_stream << getIndent() << "if (alreadyDone.find(obj->"
-                    << p->second.first
-                    << "()) == alreadyDone.end() &&" << endl
-                    << getIndent() << "    obj->"
-                    << p->second.first
-                    << "() != 0) {" << endl;
-          m_indent++;
-          *m_stream << getIndent() << "if (0 == obj->"
-                    << p->second.first
-                    << "()->id()) {" << endl;
-          m_indent++;
-          if (p->first.second == COMPOS_CHILD) {
-            *m_stream << getIndent() << "if (!recursive) {"
-                      << endl;
-            m_indent++;
-            *m_stream << getIndent()
-                      << "castor::exception::InvalidArgument ex;"
-                      << endl << getIndent()
-                      << "ex.getMessage() << \"CreateNoRep called on type "
-                      << m_classInfo->className
-                      << " while its " << p->second.first
-                      << " does not exist in the database.\";"
-                      << endl << getIndent()
-                      << "throw ex;" << endl;
-            m_indent--;
-            *m_stream << getIndent() << "}" << endl;
-          }
-          *m_stream << getIndent()
-                    << "toBeSaved.push_back(obj->"
-                    << p->second.first << "());" << endl
-                    << getIndent() << "nids++;" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "} else {" << endl;
-          m_indent++;
-          if (p->first.second == COMPOS_CHILD) {
-            *m_stream << getIndent() << "if (recursive) {"
-                      << endl;
-            m_indent++;
-          }
-          *m_stream << getIndent()
-                    << "toBeUpdated.push_back(obj->"
-                    << p->second.first << "());" << endl;
-          if (p->first.second == COMPOS_CHILD) {
-            m_indent--;
-            *m_stream << getIndent() << "}" << endl;
-          }
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          if (p->first.second != COMPOS_CHILD) {
-            m_indent--;
-            *m_stream << getIndent() << "}" << endl;
-          }
-        } else if (p->first.first == MULT_N) {
-          // One to n association, loop over the vector
-          *m_stream << getIndent() << "if (recursive) {"
-                    << endl;
-          m_indent++;
-          *m_stream << getIndent() << "for ("
-                    << fixTypeName("vector", "", "")
-                    << "<"
-                    << fixTypeName(p->second.second,
-                                   getNamespace(p->second.second),
-                                   m_classInfo->packageName)
-                    << "*>::iterator it = obj->"
-                    << p->second.first
-                    << "().begin();" << endl << getIndent()
-                    << "     it != obj->"
-                    << p->second.first
-                    << "().end();" << endl << getIndent()
-                    << "     it++) {"  << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "if (alreadyDone.find(*it) == alreadyDone.end()) {"
-                    << endl;
-          m_indent++;
-          *m_stream << getIndent() << "if (0 == (*it)->id()) {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "toBeSaved.push_back(*it);" << endl
-                    << getIndent() << "nids++;" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "} else {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "toBeUpdated.push_back(*it);" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}"
-                    << endl;
-        }
-      }
-    }
-  }
-  fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
-  *m_stream << getIndent()
-            << "u_signed64 id = cnvSvc()->getIds(nids);"
-            << endl << getIndent()
-            << "if (0 == obj->id()) obj->setId(id++);" << endl;
-  if (! assocs.isEmpty()) {
-    *m_stream << getIndent()
-              << "for (" << fixTypeName("list" ,"","")
-              << "<" << fixTypeName("IObject*",
-                                    "castor",
-                                    m_classInfo->packageName)
-              << ">::const_iterator it = toBeSaved.begin();"
-              << endl << getIndent() << "     it != toBeSaved.end();"
-              << endl << getIndent() << "     it++) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "(*it)->setId(id++);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
+            << "obj->setId(cnvSvc()->getIds(1));" << endl;
   // Insert the object into the database
   *m_stream << getIndent()
             << "// Now Save the current object"
@@ -805,8 +1464,6 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   }
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   unsigned int n = 1;
   // Go through the members
   for (Member* mem = members.first();
@@ -815,6 +1472,8 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
     writeSingleSetIntoStatement("insert", *mem, n);
     n++;
   }
+  // create a list of associations
+  AssocList assocs = createAssocsList();
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
@@ -828,104 +1487,6 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "m_insertStatement->executeUpdate();"
             << endl;
-  // Save dependant objects
-  if (! assocs.isEmpty()) {
-    *m_stream << getIndent() << "if (recursive) {"
-              << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "// Save dependant objects that need it"
-              << endl << getIndent()
-              << "for (" << fixTypeName("list" ,"","")
-              << "<" << fixTypeName("IObject*",
-                                    "castor",
-                                    m_classInfo->packageName)
-              << ">::iterator it = toBeSaved.begin();"
-              << endl << getIndent() << "     it != toBeSaved.end();"
-              << endl << getIndent() << "     it++) {" << endl;
-    m_indent++;
-    fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
-    *m_stream << getIndent()
-              << "cnvSvc()->createRep(0, *it, alreadyDone, false, true);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    *m_stream << getIndent()
-              << "// Update dependant objects that need it"
-              << endl << getIndent()
-              << "for (" << fixTypeName("list" ,"","")
-              << "<" << fixTypeName("IObject*",
-                                    "castor",
-                                    m_classInfo->packageName)
-              << ">::iterator it = toBeUpdated.begin();"
-              << endl << getIndent() << "     it != toBeUpdated.end();"
-              << endl << getIndent() << "     it++) {" << endl;
-    m_indent++;
-    fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
-    *m_stream << getIndent()
-              << "cnvSvc()->updateRep(0, *it, alreadyDone, false, true);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    // Save links to objects for one to n associations
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (p->first.second == COMPOS_CHILD ||
-          p->first.second == AGGREG_CHILD) {
-        *m_stream << getIndent()
-                  << "// Deal with " << p->second.first
-                  << endl << getIndent()
-                  << "if (0 != obj->"
-                  << p->second.first << "()) {"
-                  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "if (0 == m_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "Statement) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "m_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "Statement = createStatement(s_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "StatementString);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl
-                  << getIndent() << "m_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setDouble(1, obj->"
-                  << p->second.first << "()->id());"
-                  << endl << getIndent()
-                  << "m_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setDouble(2, obj->id());"
-                  << endl << getIndent()
-                  << "m_insert"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "Statement->executeUpdate();"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-      }
-    }
-  }
   // Commit if needed
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
@@ -975,275 +1536,15 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
             << "m_updateStatement = createStatement(s_updateStatementString);"
             << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl
-            << getIndent() << "if (0 == m_updateStatement) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << fixTypeName("Internal",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << \"Unable to create statement :\""
-            << " << std::endl" << endl << getIndent()
-            << "                << s_updateStatementString;"
-            << endl << getIndent() << "throw ex;" << endl;
-  m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  // create a list of associations and check if there are
-  // 1 to 1 associations
-  AssocList assocs = createAssocsList();
-  bool one2oneAssocs = false;
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->first.first == MULT_ONE && !isEnum(as->second.second)) {
-      one2oneAssocs = true;
-      break;
-    }
-  }
-  if (one2oneAssocs) {
-    *m_stream << getIndent() << "if (recursive) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "if (0 == m_selectStatement) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "m_selectStatement = createStatement(s_selectStatementString);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl
-              << getIndent() << "if (0 == m_selectStatement) {"
-              << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << fixTypeName("Internal",
-                             "castor.exception",
-                             m_classInfo->packageName)
-              << " ex;" << endl << getIndent()
-              << "ex.getMessage() << \"Unable to create statement :\""
-              << " << std::endl" << endl << getIndent()
-              << "                << s_selectStatementString;"
-              << endl << getIndent() << "throw ex;" << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
-  *m_stream << getIndent()
-            << "// Mark the current object as done"
-            << endl << getIndent()
-            << "alreadyDone.insert(obj);" << endl;
-  // First deal with 1 to 1 associations
-  // create a list of members
-  MemberList members = createMembersList();
-  unsigned int n = 1;
-  if (one2oneAssocs) {
-    for (Member* mem = members.first(); 0 != mem; mem = members.next()) n++;
-    // extract the blobs and their lengths
-    QMap<QString,QString> blobs = extractBlobsFromMembers(members);
-    *m_stream << getIndent() << "if (recursive) {" << endl;
-    m_indent++;
-    // get current object in the database, in order to
-    // compare with new one
-    *m_stream << getIndent()
-              << "// retrieve the object from the database"
-              << endl << getIndent()
-              << "m_selectStatement->setDouble(1, obj->id());"
-              << endl << getIndent()
-              << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
-              << endl << getIndent()
-              << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
-              << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << fixTypeName("NoEntry",
-                             "castor.exception",
-                             m_classInfo->packageName)
-              << " ex;" << endl << getIndent()
-              << "ex.getMessage() << \"No object found for id :\""
-              << " << obj->id();" << endl
-              << getIndent() << "throw ex;" << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-    // Go through the one to one associations
-    for (Assoc* as = assocs.first();
-         0 != as;
-         as = assocs.next()) {
-      if (as->first.first == MULT_ONE) {
-        if (!isEnum(as->second.second)) {
-          // One to One association
-          *m_stream << getIndent()
-                    << "// Dealing with " << as->second.first
-                    << endl << getIndent() << "{" << endl;
-          m_indent++;
-          writeSingleGetFromSelect(as->second, n, true);
-          *m_stream << getIndent()
-                    << fixTypeName("DbAddress",
-                                   "castor::db",
-                                   m_classInfo->packageName)
-                    << " ad(" << as->second.first
-                    << "Id, \" \", 0);" << endl
-                    << getIndent()
-                    << "if (0 != " << as->second.first
-                    << "Id &&" << endl
-                    << getIndent() << "    0 != obj->"
-                    << as->second.first << "() &&" << endl
-                    << getIndent() << "    obj->"
-                    << as->second.first << "()->id() != "
-                    << as->second.first << "Id) {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "cnvSvc()->deleteRepByAddress(&ad, false);"
-                    << endl << getIndent()
-                    << as->second.first << "Id = 0;" << endl;
-          if (as->first.second == COMPOS_CHILD ||
-              as->first.second == AGGREG_CHILD) {
-            *m_stream << getIndent()
-                      << "if (0 == m_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement) {" << endl;
-            m_indent++;
-            *m_stream << getIndent()
-                      << "m_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement = createStatement(s_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "StatementString);"
-                      << endl;
-            m_indent--;
-            *m_stream << getIndent() << "}" << endl << getIndent()
-                      << "m_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setDouble(1, obj->"
-                      << as->second.first << "()->id());"
-                      << endl << getIndent()
-                      << "m_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setDouble(2, obj->id());"
-                      << endl << getIndent()
-                      << "m_delete"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->executeUpdate();"
-                      << endl;
-          }
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          *m_stream << getIndent()
-                    << "if (" << as->second.first
-                    << "Id == 0) {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "if (0 != obj->"
-                    << as->second.first
-                    << "()) {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "if (alreadyDone.find(obj->"
-                    << as->second.first
-                    << "()) == alreadyDone.end()) {"
-                    << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "cnvSvc()->createRep(&ad, obj->"
-                    << as->second.first
-                    << "(), alreadyDone, false, true);" << endl;
-          if (as->first.second == COMPOS_CHILD ||
-              as->first.second == AGGREG_CHILD) {
-            *m_stream << getIndent()
-                      << "if (0 == m_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement) {" << endl;
-            m_indent++;
-            *m_stream << getIndent()
-                      << "m_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement = createStatement(s_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "StatementString);"
-                      << endl;
-            m_indent--;
-            *m_stream << getIndent() << "}" << endl
-                      << getIndent()
-                      << "m_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setDouble(1, obj->"
-                      << as->second.first << "()->id());"
-                      << endl << getIndent()
-                      << "m_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setDouble(2, obj->id());"
-                      << endl << getIndent()
-                      << "m_insert"
-                      << capitalizeFirstLetter(as->second.second)
-                      << "2"
-                      << capitalizeFirstLetter(as->second.third)
-                      << "Statement->executeUpdate();"
-                      << endl;
-          }
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "} else {" << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "if (alreadyDone.find(obj->"
-                    << as->second.first
-                    << "()) == alreadyDone.end()) {"
-                    << endl;
-          m_indent++;
-          *m_stream << getIndent()
-                    << "cnvSvc()->updateRep(&ad, obj->"
-                    << as->second.first
-                    << "(), alreadyDone, false, recursive);" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-          m_indent--;
-          *m_stream << getIndent() << "}" << endl;
-        }
-        n++;
-      }
-    }
-    // Close request
-    *m_stream << getIndent()
-              << "m_selectStatement->closeResultSet(rset);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
   // Updates the objects in the database
   *m_stream << getIndent()
-            << "// Now Update the current object"
+            << "// Update the current object"
             << endl;
-  n = 1;
   // Go through the members
+  MemberList members = createMembersList();
   Member* idMem = 0;
+  unsigned int n = 1;
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
@@ -1255,6 +1556,7 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
     n++;
   }
   // Go through the associations
+  AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
@@ -1275,148 +1577,6 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
   *m_stream << getIndent()
             << "m_updateStatement->executeUpdate();"
             << endl;
-  // Go through 1 to N associations
-  if (!assocs.isEmpty()) {
-    *m_stream << getIndent() << "if (recursive) {" << endl;
-    m_indent++;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (p->first.first == MULT_N) {
-        *m_stream << getIndent()
-                  << "// Dealing with " << p->second.first
-                  << endl << getIndent() << "{" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "if (0 == m_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "Statement) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "m_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "Statement = createStatement(s_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "StatementString);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl
-                  << getIndent()
-                  << fixTypeName("set", "", "")
-                  << "<int> " << p->second.first
-                  << "List;" << endl << getIndent()
-                  << "m_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "Statement->setDouble(1, obj->id());"
-                  << endl << getIndent()
-                  << "oracle::occi::ResultSet *rset = "
-                  << "m_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "Statement->executeQuery();"
-                  << endl << getIndent()
-                  << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
-                  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << p->second.first
-                  << "List.insert(rset->getInt(1));"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl
-                  << getIndent()
-                  << "m_"
-                  << capitalizeFirstLetter(p->second.third)
-                  << "2"
-                  << capitalizeFirstLetter(p->second.second)
-                  << "Statement->closeResultSet(rset);"
-                  << endl << getIndent()
-                  << "for ("
-                  << fixTypeName("vector", "", "")
-                  << "<"
-                  << fixTypeName(p->second.second,
-                                 getNamespace(p->second.second),
-                                 m_classInfo->packageName)
-                  << "*>::iterator it = obj->"
-                  << p->second.first
-                  << "().begin();" << endl << getIndent()
-                  << "     it != obj->"
-                  << p->second.first
-                  << "().end();" << endl << getIndent()
-                  << "     it++) {"  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << fixTypeName("set", "", "")
-                  << "<int>::iterator item;" << endl
-                  << getIndent() << "if ((item = "
-                  << p->second.first
-                  << "List.find((*it)->id())) == "
-                  << p->second.first
-                  << "List.end()) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "if (alreadyDone.find(*it) == alreadyDone.end()) {"
-                  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "cnvSvc()->createRep(0, *it, alreadyDone, false, true);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "} else {" << endl;
-        m_indent++;
-        *m_stream << getIndent() << p->second.first
-                  << "List.erase(item);"
-                  << endl << getIndent()
-                  << "if (alreadyDone.find(*it) == alreadyDone.end()) {"
-                  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "cnvSvc()->updateRep(0, *it, alreadyDone, false, recursive);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl
-                  << getIndent() << "for ("
-                  << fixTypeName("set", "", "")
-                  << "<int>::iterator it = "
-                  << p->second.first << "List.begin();"
-                  << endl << getIndent()
-                  << "     it != "
-                  << p->second.first << "List.end();"
-                  << endl << getIndent()
-                  << "     it++) {"  << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << fixTypeName("DbAddress",
-                                 "castor::db",
-                                 m_classInfo->packageName)
-                  << " ad(" << "*it, \" \", 0);" << endl
-                  << getIndent()
-                  << "cnvSvc()->deleteRepByAddress(&ad, false);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-      }
-    }
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
   // Commit if needed
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
@@ -1483,10 +1643,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
             << "m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);"
             << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl << getIndent()
-            << "// Mark the current object as done"
-            << endl << getIndent()
-            << "alreadyDone.insert(obj);" << endl;
+  *m_stream << getIndent() << "}" << endl;
   // Delete the object from the database
   *m_stream << getIndent()
             << "// Now Delete the object"
@@ -1519,10 +1676,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   m_classInfo->packageName);
       if (p->first.first == MULT_ONE) {
         // One to one association
-        *m_stream << getIndent() << "if (alreadyDone.find(obj->"
-                  << p->second.first
-                  << "()) == alreadyDone.end() &&" << endl
-                  << getIndent() << "    obj->"
+        *m_stream << getIndent() << "if (obj->"
                   << p->second.first
                   << "() != 0) {" << endl;
         m_indent++;
@@ -1531,7 +1685,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, obj->"
-                  << p->second.first << "(), alreadyDone, false);"
+                  << p->second.first << "(), false);"
                   << endl;
         m_indent--;
         *m_stream << getIndent() << "}" << endl;
@@ -1551,18 +1705,12 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "().end();" << endl << getIndent()
                   << "     it++) {"  << endl;
         m_indent++;
-        *m_stream << getIndent()
-                  << "if (alreadyDone.find(*it) == alreadyDone.end()) {"
-                  << endl;
-        m_indent++;
         fixTypeName("OraCnvSvc",
                     "castor::db::ora",
                     m_classInfo->packageName);
         *m_stream << getIndent()
-                  << "cnvSvc()->deleteRep(0, *it, alreadyDone, false);"
+                  << "cnvSvc()->deleteRep(0, *it, false);"
                   << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
         m_indent--;
         *m_stream << getIndent() << "}" << endl;
       } else {
@@ -1658,29 +1806,6 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
 // writeCreateObjContent
 //=============================================================================
 void CppCppOraCnvWriter::writeCreateObjContent() {
-  //   *m_stream << getIndent()
-  //             << "// Get the precise address" << endl
-  //             << getIndent()
-  //             << fixTypeName("DbAddress",
-  //                            "castor::db",
-  //                            m_classInfo->packageName)
-  //             << "* ad = " << endl
-  //             << getIndent() << "  dynamic_cast<"
-  //             << fixTypeName("DbAddress",
-  //                            "castor::db",
-  //                            m_classInfo->packageName)
-  //             << "*>(address);"
-  //             << endl << getIndent()
-  //             << "// create the new Object" << endl
-  //             << getIndent() << m_originalPackage
-  //             << m_classInfo->className << "* object = new "
-  //             << m_originalPackage << m_classInfo->className
-  //             << "();" << endl
-  //             << getIndent() << "object->setId(ad->id());"
-  //             << endl << getIndent()
-  //             << "updateObj(object, newlyCreated);" << endl
-  //             << getIndent() << "return object;" << endl;
-  // Get the precise address
   *m_stream << getIndent() << fixTypeName("DbAddress",
                                           "castor::db",
                                           m_classInfo->packageName)
@@ -1705,21 +1830,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
-            << getIndent() << "if (0 == m_selectStatement) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << fixTypeName("Internal",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << \"Unable to create statement :\""
-            << " << std::endl" << endl << getIndent()
-            << "                << s_selectStatementString;"
-            << endl << getIndent() << "throw ex;" << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  *m_stream << getIndent() << "// retrieve the object from the database"
+            << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
             << "m_selectStatement->setDouble(1, ad->id());"
             << endl << getIndent()
@@ -1746,8 +1857,6 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
             << "// Now retrieve and set members" << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   // Go through the members
   unsigned int n = 1;
   for (Member* mem = members.first();
@@ -1756,117 +1865,20 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
-  // Add new object to the list of newly created objects
-  *m_stream << getIndent()
-            << "newlyCreated[object->id()] = object;"
-            << endl;
-  // create a list of associations
+  // Go through the one to one associations dealing with enums
   AssocList assocs = createAssocsList();
-  // Go through the one to one associations
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
-      // do not consider enums
-      if (isEnum(as->second.second)) {
-        writeSingleGetFromSelect(as->second, n, false, true);
-      } else {
-        // One to One association
-        writeSingleGetFromSelect(as->second, n, true);
-        *m_stream << getIndent()
-                  << "IObject* obj"
-                  << capitalizeFirstLetter(as->second.first)
-                  << " = cnvSvc()->getObjFromId("
-                  << as->second.first
-                  << "Id, newlyCreated);"
-                  << endl << getIndent()
-                  << "object->set"
-                  << capitalizeFirstLetter(as->second.first)
-                  << "(dynamic_cast<"
-                  << fixTypeName(as->second.second,
-                                 getNamespace(as->second.second),
-                                 m_classInfo->packageName)
-                  << "*>(obj"
-                  << capitalizeFirstLetter(as->second.first)
-                  << "));" << endl;
-      }
-      n++;
+    if (as->first.first == MULT_ONE &&
+        isEnum(as->second.second)) {
+      writeSingleGetFromSelect(as->second, n, false, true);
     }
   }
   // Close request
   *m_stream << getIndent()
             << "m_selectStatement->closeResultSet(rset);"
             << endl;
-  // Go through one to n associations
-  bool first = true;
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->first.first == MULT_N) {
-      if (first) {
-        first = false;
-        *m_stream << getIndent()
-                  << "// Get ids of objs to retrieve"
-                  << endl;
-      }
-      *m_stream << getIndent()
-                << "if (0 == m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement) {" << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement = createStatement(s_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "StatementString);"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}"
-                << endl << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->setDouble(1, ad->id());"
-                << endl << getIndent()
-                << "rset = "
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->executeQuery();"
-                << endl << getIndent()
-                << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
-                << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << "IObject* obj"
-                << " = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);"
-                << endl << getIndent()
-                << "object->add"
-                << capitalizeFirstLetter(as->second.first)
-                << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>(obj));" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
-      *m_stream << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->closeResultSet(rset);" << endl;
-    }
-  }
   // Return result
   *m_stream << getIndent() << "return object;" << endl;
   // Catch exceptions if any
@@ -1899,21 +1911,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
-            << getIndent() << "if (0 == m_selectStatement) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << fixTypeName("Internal",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << \"Unable to create statement :\""
-            << " << std::endl" << endl << getIndent()
-            << "                << s_selectStatementString;"
-            << endl << getIndent() << "throw ex;" << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  *m_stream << getIndent()
+            << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
             << "m_selectStatement->setDouble(1, obj->id());"
@@ -1941,11 +1939,8 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
             << m_originalPackage
             << m_classInfo->className << "*>(obj);"
             << endl;
-  // create a list of members to be saved
-  MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   // Go through the members
+  MemberList members = createMembersList();
   unsigned int n = 1;
   for (Member* mem = members.first();
        0 != mem;
@@ -1953,10 +1948,6 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
-  // Add object to the list of objects done
-  *m_stream << getIndent()
-            << "alreadyDone[obj->id()] = obj;"
-            << endl;
   // create a list of associations
   AssocList assocs = createAssocsList();
   // Go through the one to one associations
@@ -1968,73 +1959,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
       if (isEnum(as->second.second)) {
         writeSingleGetFromSelect(as->second, n, false, true);
       } else {
-        // One to One association
-        *m_stream << getIndent()
-                  << "// Dealing with " << as->second.first
-                  << endl;
-        writeSingleGetFromSelect(as->second, n, true);
-        *m_stream << getIndent()
-                  <<"if (0 != object->"
-                  << as->second.first << "() &&" << endl
-                  << getIndent()
-                  << "    (0 == " << as->second.first
-                  << "Id ||" << endl
-                  << getIndent() << "     object->"
-                  << as->second.first
-                  << "()->id() != " << as->second.first
-                  << "Id)) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "delete object->"
-                  << as->second.first << "();" << endl
-                  << getIndent()
-                  << "object->set"
-                  << capitalizeFirstLetter(as->second.first)
-                  << "(0);" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        *m_stream << getIndent()
-                  << "if (0 != " << as->second.first
-                  << "Id) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "if (0 == object->"
-                  << as->second.first << "()) {" << endl;
-        m_indent++;
-        *m_stream << getIndent() << "object->set"
-                  << capitalizeFirstLetter(as->second.first)
-                  << endl << getIndent()
-                  << "  (dynamic_cast<"
-                  << fixTypeName(as->second.second,
-                                 getNamespace(as->second.second),
-                                 m_classInfo->packageName)
-                  << "*>" << endl << getIndent()
-                  << "   (cnvSvc()->getObjFromId(" << as->second.first
-                  << "Id, alreadyDone)));"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent()
-                  << "} else if (object->"
-                  << as->second.first
-                  << "()->id() == " << as->second.first
-                  << "Id) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "if (alreadyDone.find(object->"
-                  << as->second.first
-                  << "()->id()) == alreadyDone.end()) {" << endl;
-        m_indent++;
-        *m_stream << getIndent()
-                  << "cnvSvc()->updateObj(object->"
-                  << as->second.first
-                  << "(), alreadyDone);"
-                  << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
-        m_indent--;
-        *m_stream << getIndent() << "}" << endl;
+        //writeBasicMult1FillObj
       }
       n++;
     }
@@ -2048,150 +1973,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
        0 != as;
        as = assocs.next()) {
     if (as->first.first == MULT_N) {
-      *m_stream << getIndent()
-                << "// Deal with " << as->second.first
-                << endl << getIndent()
-                << "if (0 == m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement) {" << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement = createStatement(s_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "StatementString);"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl
-                << getIndent()
-                << fixTypeName("set", "", "")
-                << "<int> " << as->second.first
-                << "List;" << endl << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->setDouble(1, obj->id());"
-                << endl << getIndent()
-                << "rset = "
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->executeQuery();"
-                << endl << getIndent()
-                << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
-                << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << as->second.first
-                << "List.insert(rset->getInt(1));"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl
-                << getIndent()
-                << "m_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2"
-                << capitalizeFirstLetter(as->second.second)
-                << "Statement->closeResultSet(rset);"
-                << endl << getIndent() << "{" << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << fixTypeName("vector", "", "")
-                << "<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*> toBeDeleted;"
-                << endl << getIndent()
-                << "for ("
-                << fixTypeName("vector", "", "")
-                << "<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>::iterator it = object->"
-                << as->second.first
-                << "().begin();" << endl << getIndent()
-                << "     it != object->"
-                << as->second.first
-                << "().end();" << endl << getIndent()
-                << "     it++) {"  << endl;
-      m_indent++;
-      *m_stream << getIndent()
-                << fixTypeName("set", "", "")
-                << "<int>::iterator item;" << endl
-                << getIndent() << "if ((item = "
-                << as->second.first
-                << "List.find((*it)->id())) == "
-                << as->second.first
-                << "List.end()) {" << endl;
-      m_indent++;
-      *m_stream << getIndent() << "toBeDeleted.push_back(*it);"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "} else {" << endl;
-      m_indent++;
-      *m_stream << getIndent() << as->second.first
-                << "List.erase(item);"
-                << endl << getIndent()
-                << "cnvSvc()->updateObj((*it), alreadyDone);"
-                << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
-      *m_stream << getIndent()
-                << "for ("
-                << fixTypeName("vector", "", "")
-                << "<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>::iterator it = toBeDeleted.begin();"
-                << endl << getIndent()
-                << "     it != toBeDeleted.end();"
-                << endl << getIndent()
-                << "     it++) {"  << endl;
-      m_indent++;
-      *m_stream << getIndent() << "object->remove"
-                << capitalizeFirstLetter(as->second.first)
-                << "(*it);" << endl << getIndent()
-                << "delete (*it);" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl
-                << getIndent() << "for ("
-                << fixTypeName("set", "", "")
-                << "<int>::iterator it = "
-                << as->second.first << "List.begin();"
-                << endl << getIndent()
-                << "     it != "
-                << as->second.first << "List.end();"
-                << endl << getIndent()
-                << "     it++) {"  << endl;
-      m_indent++;
-      *m_stream << getIndent() << "IObject* item"
-                << " = cnvSvc()->getObjFromId(*it, alreadyDone);"
-                << endl << getIndent()
-                << "object->add"
-                << capitalizeFirstLetter(as->second.first)
-                << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
-                               m_classInfo->packageName)
-                << "*>(item));" << endl;
-      m_indent--;
-      *m_stream << getIndent() << "}" << endl;
+      // writeBasicMultNFillObj
     }
   }
   // Catch exceptions if any
@@ -2256,7 +2038,7 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
                                                   int n,
                                                   bool isAssoc,
                                                   bool isEnum) {
-  *m_stream << getIndent() ;
+  *m_stream << getIndent();
   // deal with arrays of chars
   bool isArray = pair.second.find('[') > 0;
   if (isAssoc) {
@@ -2279,9 +2061,14 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
                              m_classInfo->packageName)
               << ")";
   }
+  if (isAssoc || pair.second == "u_signed64") {
+    *m_stream << "(unsigned long long)";
+  }
   *m_stream << "rset->get";
-  if (isAssoc | isEnum) {
+  if (isEnum) {
     *m_stream << "Int";
+  } else if (isAssoc) {
+    *m_stream << "Double";
   } else {
     *m_stream << getOraType(pair.second);
   }

@@ -53,6 +53,16 @@ class CppCppStreamCnvWriter : public CppCppBaseCnvWriter {
   /// writes updateObj method's content
   void writeUpdateObjContent();
     
+  /**
+   * write the marshal method declaration
+   */
+  void writeMarshal();
+
+  /**
+   * write the unmarshal method declaration
+   */
+  void writeUnmarshal();
+
 };
 
 #endif // CODEGENERATORS_CPPCPPSTREAMCNVWRITER_H

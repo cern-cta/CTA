@@ -43,6 +43,18 @@ class CppHOraCnvWriter : public CppHBaseCnvWriter {
    */
   void writeReset(UMLClassifier *c);
 
+  /// writes fillRep methods declaration
+  void writeFillRep();
+    
+  /// writes fillObj methods declaration
+  void writeFillObj();
+    
+  /// writes one basic fillRep method declaration
+  void writeBasicFillRep(Assoc* as);
+    
+  /// writes one basic fillObj method declaration
+  void writeBasicFillObj(Assoc* as);
+    
 };
 
 #endif // CODEGENERATORS_CPPHORACNVWRITER_H

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/08/19 13:28:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/11 13:43:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -77,25 +77,7 @@ namespace castor {
     void removeService(const std::string name) throw();
 
     /**
-     * create foreign representation from a C++ Object.
-     * Does not touch the objects it refers to. An exception
-     * will be send if an object that is needed (because
-     * refered) is not present in the database
-     * @param address where to store the representation of
-     * the object
-     * @param object the object to deal with
-     * @param autocommit whether the changes to the database
-     * should be commited or not. Default is yes.
-     * @exception Exception throws an Exception in case of error
-     */
-    void createRepNoRec(IAddress* address,
-                        IObject* object,
-                        bool autocommit = true)
-      throw (castor::exception::Exception);
-
-    /**
      * create foreign representation from a C++ Object
-     * as well as all the objects it refers to and recursively.
      * @param address where to store the representation of
      * the object
      * @param object the object to deal with
@@ -109,32 +91,11 @@ namespace castor {
       throw (castor::exception::Exception);
 
     /**
-     * Updates foreign representation from a C++ Object.
-     * Does not touch the objects it refers to.
-     * @param address where the representation of
-     * the object is stored
-     * @param object the object to deal with
-     * @param alreadyDone the set of objects which representation
-     * was already updated. This is needed to avoid looping in case
-     * of circular dependencies
-     * @param autocommit whether the changes to the database
-     * should be commited or not
-     * @exception Exception throws an Exception in case of error
-     */
-    void updateRepNoRec(IAddress* address,
-                        IObject* object,
-                        bool autocommit = true)
-      throw (castor::exception::Exception);
-
-    /**
      * Updates foreign representation from a C++ Object
      * as well as all the objects it refers to and recursively.
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with
-     * @param alreadyDone the set of objects which representation
-     * was already updated. This is needed to avoid looping in case
-     * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
      * @exception Exception throws an Exception in case of error

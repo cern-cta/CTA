@@ -83,9 +83,7 @@ const unsigned int castor::io::StreamFileSystemCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool recursive)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -98,15 +96,6 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->randomize();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->id();
-  // Mark object as done
-  alreadyDone.insert(obj);
-  ad->stream() << obj->copies().size();
-  for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
-       it != obj->copies().end();
-       it++) {
-    marshalObject(*it, ad, alreadyDone);
-  }
-  marshalObject(obj->diskserver(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -114,9 +103,7 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemCnv::updateRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
-                                                bool autocommit,
-                                                bool recursive)
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -129,7 +116,6 @@ void castor::io::StreamFileSystemCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemCnv::deleteRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
@@ -141,9 +127,7 @@ void castor::io::StreamFileSystemCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated,
-                                                            bool recursive)
+castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
@@ -168,27 +152,70 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  newlyCreated.insert(object);
-  unsigned int copiesNb;
-  ad->stream() >> copiesNb;
-  for (unsigned int i = 0; i < copiesNb; i++) {
-    IObject* obj = unmarshalObject(ad->stream(), newlyCreated);
-    object->addCopies(dynamic_cast<castor::stager::DiskCopy*>(obj));
-  }
-  IObject* objDiskserver = unmarshalObject(ad->stream(), newlyCreated);
-  object->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
   return object;
 }
 
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamFileSystemCnv::updateObj(castor::IObject* obj,
-                                                castor::ObjectCatalog& alreadyDone)
+void castor::io::StreamFileSystemCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// marshalObject
+//------------------------------------------------------------------------------
+void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
+                                                    castor::io::StreamAddress* address,
+                                                    castor::ObjectSet& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::stager::FileSystem* obj = 
+    dynamic_cast<castor::stager::FileSystem*>(object);
+  if (0 == obj) {
+    // Case of a null pointer
+    address->stream() << castor::OBJ_Ptr << 0;
+  } else if (alreadyDone.find(obj) == alreadyDone.end()) {
+    // Case of a pointer to a non streamed object
+    cnvSvc()->createRep(address, obj, true);
+    // Mark object as done
+    alreadyDone.insert(obj);
+    address->stream() << obj->copies().size();
+    for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
+         it != obj->copies().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
+    cnvSvc()->marshalObject(obj->diskserver(), address, alreadyDone);
+  } else {
+    // case of a pointer to an already streamed object
+    address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
+  }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalObject
+//------------------------------------------------------------------------------
+castor::IObject* castor::io::StreamFileSystemCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                  castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::IObject* object = cnvSvc()->createObj(&ad);
+  // Mark object as created
+  newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::FileSystem* obj = 
+    dynamic_cast<castor::stager::FileSystem*>(object);
+  unsigned int copiesNb;
+  ad.stream() >> copiesNb;
+  for (unsigned int i = 0; i < copiesNb; i++) {
+    IObject* objCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addCopies(dynamic_cast<castor::stager::DiskCopy*>(objCopies));
+  }
+  IObject* objDiskserver = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
 }
 

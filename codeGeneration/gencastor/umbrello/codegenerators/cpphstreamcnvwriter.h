@@ -20,8 +20,6 @@ class CppHStreamCnvWriter : public CppHBaseCnvWriter {
    */
   ~CppHStreamCnvWriter() {};
 
- public:
-
   /**
    * Initializes the writer. Only calls the method of
    * the parent, then fixes the namespace and calls postinit.
@@ -32,6 +30,18 @@ class CppHStreamCnvWriter : public CppHBaseCnvWriter {
    * write the content of the file
    */
   void writeClass(UMLClassifier *c);
+
+ private:
+
+  /**
+   * write the marshal method declaration
+   */
+  void writeMarshal();
+
+  /**
+   * write the unmarshal method declaration
+   */
+  void writeUnmarshal();
 
 };
 

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:53 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_STREAMCNVSVC_HPP 
+#ifndef IO_STREAMCNVSVC_HPP
 #define IO_STREAMCNVSVC_HPP 1
 
 #include "castor/BaseCnvSvc.hpp"
@@ -70,30 +70,62 @@ namespace castor {
       static const unsigned int REPTYPE();
 
       /**
+       * Creates foreign representation from a C++ Object
+       * @param address where to store the representation of
+       * the object
+       * @param object the object to deal with
+       * @param autocommit whether the changes to the database
+       * should be commited or not
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void createRep(IAddress* address,
+                             IObject* object,
+                             bool autocommit)
+        throw (castor::exception::Exception);
+
+      /**
        * create C++ object from foreign representation.
        * Reimplemented from BaseCnvSvc. This version is able to
        * make use of StreamAdresses and to deduce the object type
        * by unmarshaling it from the stream
        * @param address the place where to find the foreign
        * representation
-       * @param newlyCreated a map of object that were created as part of the
-       * last user call to createObj, indexed by id. If a reference to one if
-       * these id is found, the existing associated object should be used.
-       * This trick basically allows circular dependencies.
-       * @param recursive if set to true, the objects refered
-       * by the returned object will be created too and recursively.
-       * In case the object was in the newlyCreated catalog, it will
-       * not be touched and may thus contain references.
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
        * @exception Exception throws an Exception in cas of error
        */
-      IObject* createObj (IAddress* address,
-                          ObjectCatalog& newlyCreated,
-                          bool recursive)
+      IObject* createObj (IAddress* address)
         throw (castor::exception::Exception);
-      
+
+      /**
+       * Marshals an object using a StreamAddress.
+       * If the object is in alreadyDone, just marshal its id. Otherwise, call createRep
+       * and recursively marshal the refered objects.
+       * @param object the object to marshal
+       * @param address the address where to marshal
+       * @param alreadyDone the list of objects already marshalled
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void marshalObject(castor::IObject* object,
+                                 castor::io::StreamAddress* address,
+                                 castor::ObjectSet& alreadyDone)
+        throw (castor::exception::Exception);
+
+      /**
+       * Unmarshals an object from a StreamAddress.
+       * @param address the address where to unmarshall the data
+       * @param newlyCreated a set of already created objects
+       * that is used in case of circular dependencies
+       * @return a pointer to the new object. If their was some
+       * memory allocation (creation of a new object), the caller
+       * is responsible for its deallocation
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual castor::IObject* unmarshalObject(StreamAddress& address,
+                                               castor::ObjectCatalog& newlyCreated)
+        throw (castor::exception::Exception);
+
     };
 
   } // end of namespace db

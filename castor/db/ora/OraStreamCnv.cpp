@@ -31,17 +31,13 @@
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/IObject.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
-#include <list>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -134,13 +130,49 @@ const unsigned int castor::db::ora::OraStreamCnv::objType() const {
 }
 
 //------------------------------------------------------------------------------
+// fillRep
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::fillRep(castor::IAddress* address,
+                                            castor::IObject* object,
+                                            unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::Stream* obj = 
+    dynamic_cast<castor::stager::Stream*>(object);
+  switch (type) {
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillRep called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObj
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStreamCnv::fillObj(castor::IAddress* address,
+                                            castor::IObject* object,
+                                            unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::stager::Stream* obj = 
+    dynamic_cast<castor::stager::Stream*>(object);
+  switch (type) {
+  default :
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "fillObj called on type " << type 
+                    << " on object of type " << obj->type() 
+                    << ". This is meaningless.";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
-                                              bool autocommit,
-                                              bool recursive)
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Stream* obj = 
     dynamic_cast<castor::stager::Stream*>(object);
@@ -154,20 +186,8 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    // Set ids of all objects
-    int nids = obj->id() == 0 ? 1 : 0;
-    // check which objects need to be saved/updated and keeps a list of them
-    std::list<castor::IObject*> toBeSaved;
-    std::list<castor::IObject*> toBeUpdated;
-    u_signed64 id = cnvSvc()->getIds(nids);
-    if (0 == obj->id()) obj->setId(id++);
-    for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
-         it != toBeSaved.end();
-         it++) {
-      (*it)->setId(id++);
-    }
+    // Get an id for the new object
+    obj->setId(cnvSvc()->getIds(1));
     // Now Save the current object
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
@@ -176,20 +196,6 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(2, obj->id());
     m_insertStatement->setDouble(3, (int)obj->status());
     m_insertStatement->executeUpdate();
-    if (recursive) {
-      // Save dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeSaved.begin();
-           it != toBeSaved.end();
-           it++) {
-        cnvSvc()->createRep(0, *it, alreadyDone, false, true);
-      }
-      // Update dependant objects that need it
-      for (std::list<castor::IObject*>::iterator it = toBeUpdated.begin();
-           it != toBeUpdated.end();
-           it++) {
-        cnvSvc()->updateRep(0, *it, alreadyDone, false, true);
-      }
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -223,9 +229,7 @@ void castor::db::ora::OraStreamCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::updateRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
-                                              bool autocommit,
-                                              bool recursive)
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Stream* obj = 
     dynamic_cast<castor::stager::Stream*>(object);
@@ -236,21 +240,11 @@ void castor::db::ora::OraStreamCnv::updateRep(castor::IAddress* address,
     if (0 == m_updateStatement) {
       m_updateStatement = createStatement(s_updateStatementString);
     }
-    if (0 == m_updateStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_updateStatementString;
-      throw ex;
-    }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
-    // Now Update the current object
+    // Update the current object
     m_updateStatement->setDouble(1, obj->initialSizeToTransfer());
     m_updateStatement->setDouble(2, (int)obj->status());
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
-    if (recursive) {
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -281,7 +275,6 @@ void castor::db::ora::OraStreamCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::deleteRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              castor::ObjectSet& alreadyDone,
                                               bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Stream* obj = 
@@ -296,8 +289,6 @@ void castor::db::ora::OraStreamCnv::deleteRep(castor::IAddress* address,
     if (0 == m_deleteTypeStatement) {
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
-    // Mark the current object as done
-    alreadyDone.insert(obj);
     // Now Delete the object
     m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
@@ -331,9 +322,7 @@ void castor::db::ora::OraStreamCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* address,
-                                                          castor::ObjectCatalog& newlyCreated,
-                                                          bool recursive)
+castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -341,12 +330,6 @@ castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* addr
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, ad->id());
@@ -361,7 +344,6 @@ castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* addr
     // Now retrieve and set members
     object->setInitialSizeToTransfer((unsigned long long)rset->getDouble(1));
     object->setId((unsigned long long)rset->getDouble(2));
-    newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -390,19 +372,12 @@ castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj,
-                                              castor::ObjectCatalog& alreadyDone)
+void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
       m_selectStatement = createStatement(s_selectStatementString);
-    }
-    if (0 == m_selectStatement) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to create statement :" << std::endl
-                      << s_selectStatementString;
-      throw ex;
     }
     // retrieve the object from the database
     m_selectStatement->setDouble(1, obj->id());
@@ -417,7 +392,6 @@ void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::stager::Stream*>(obj);
     object->setInitialSizeToTransfer((unsigned long long)rset->getDouble(1));
     object->setId((unsigned long long)rset->getDouble(2));
-    alreadyDone[obj->id()] = obj;
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

@@ -206,9 +206,7 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
 // -----------------------------------------------------------------------
 // createObj
 // -----------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* address,
-                                                        ObjectCatalog& newlyCreated,
-                                                        bool recursive)
+castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* address)
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
@@ -219,7 +217,7 @@ castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* addres
     ad->setObjType(type);
   }
   // call method of parent object
-  return this->BaseCnvSvc::createObj(address, newlyCreated, recursive);
+  return this->BaseCnvSvc::createObj(address);
 }
 
 //------------------------------------------------------------------------------
@@ -451,16 +449,10 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
 // getObjFromId
 // -----------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
-(u_signed64 id,
- castor::ObjectCatalog& newlyCreated,
- bool recursive)
+(u_signed64 id)
   throw (castor::exception::Exception) {
-  if (newlyCreated.find(id) != newlyCreated.end()) {
-    return newlyCreated[id];
-  } else {
-    castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
-    return createObj(&clientAd, newlyCreated, recursive);
-  }
+  castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
+  return createObj(&clientAd);
 }
 
 // -----------------------------------------------------------------------

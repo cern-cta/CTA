@@ -18,38 +18,6 @@ CppCppBaseCnvWriter::CppCppBaseCnvWriter(UMLDoc *parent, const char *name) :
   CppCppWriter(parent, name) {}
 
 //=============================================================================
-// extractBlobsFromMembers
-//=============================================================================
-QMap<QString,QString>
-CppCppBaseCnvWriter::extractBlobsFromMembers (MemberList& members) {
-  QMap<QString,QString> blobs;
-  for (Member* mem = members.first();
-       0 != mem;) {
-    if (mem->second == "void*") {
-      blobs[mem->first] = "";
-      members.remove();
-      mem = members.current();
-    } else {
-      mem = members.next();
-    }
-  }
-  for (Member* mem = members.first();
-       0 != mem;) {
-    if (mem->first.right(6) == "Length") {
-      QString name = mem->first.left(mem->first.length()-6);
-      if (blobs.contains(name)) {
-        blobs[name] = mem->second;
-        members.remove();
-        mem = members.current();
-        continue;
-      }
-    }
-    mem = members.next();
-  }
-  return blobs;
-}
-
-//=============================================================================
 // writeFactory
 //=============================================================================
 void CppCppBaseCnvWriter::writeFactory() {
@@ -121,13 +89,9 @@ void CppCppBaseCnvWriter::writeCreateRep() {
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
-            << " object," << endl << getIndent() << str
-            << fixTypeName("ObjectSet", "castor", m_classInfo->packageName)
-            << "& alreadyDone,"
+            << " object,"
             << endl << getIndent() << str
-            << "bool autocommit,"
-            << endl << getIndent() << str
-            << "bool recursive)" << endl
+            << "bool autocommit)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
@@ -162,13 +126,9 @@ void CppCppBaseCnvWriter::writeUpdateRep() {
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
-            << " object," << endl << getIndent() << str
-            << fixTypeName("ObjectSet", "castor", m_classInfo->packageName)
-            << "& alreadyDone,"
+            << " object,"
             << endl << getIndent() << str
-            << "bool autocommit,"
-            << endl << getIndent() << str
-            << "bool recursive)" << endl
+            << "bool autocommit)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
@@ -196,9 +156,7 @@ void CppCppBaseCnvWriter::writeDeleteRep() {
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
-            << " object," << endl << getIndent() << str
-            << fixTypeName("ObjectSet", "castor", m_classInfo->packageName)
-            << "& alreadyDone,"
+            << " object,"
             << endl << getIndent() << str
             << "bool autocommit)" << endl
             << getIndent() << "  throw ("
@@ -220,17 +178,13 @@ void CppCppBaseCnvWriter::writeDeleteRep() {
 void CppCppBaseCnvWriter::writeCreateObj() {
   // Header
   writeWideHeaderComment("createObj", getIndent(), *m_stream);
-  QString str = fixTypeName("IObject*", "castor", m_classInfo->packageName) +
-    " " + m_classInfo->packageName + "::" + m_prefix +
-    m_classInfo->className + "Cnv::createObj(";
   *m_stream << getIndent()
-            << str
+            << fixTypeName("IObject*", "castor", m_classInfo->packageName)
+            << " " << m_classInfo->packageName
+            << "::" << m_prefix
+            << m_classInfo->className << "Cnv::createObj("
             << fixTypeName("IAddress*", "castor", m_classInfo->packageName)
-            << " address," << endl;
-  str.replace(QRegExp("."), " ");
-  *m_stream << getIndent() << str
-            << fixTypeName("ObjectCatalog", "castor", m_classInfo->packageName)
-            << "& newlyCreated)" << endl << getIndent()
+            << " address)" << endl << getIndent()
             << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -250,15 +204,13 @@ void CppCppBaseCnvWriter::writeCreateObj() {
 void CppCppBaseCnvWriter::writeUpdateObj() {
   // Header
   writeWideHeaderComment("updateObj", getIndent(), *m_stream);
-  QString str = QString("void ") + m_classInfo->packageName + "::" +
-    m_prefix + m_classInfo->className + "Cnv::updateObj(";
-  *m_stream << getIndent() << str
+  
+  *m_stream << getIndent() << QString("void ")
+            << m_classInfo->packageName << "::"
+            << m_prefix << m_classInfo->className
+            << "Cnv::updateObj("
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
-            << " obj," << endl;
-  str.replace(QRegExp("."), " ");
-  *m_stream << getIndent() << str
-            << fixTypeName("ObjectCatalog", "castor", m_classInfo->packageName)
-            << "& alreadyDone)" << endl
+            << " obj)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",

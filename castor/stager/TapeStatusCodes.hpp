@@ -40,7 +40,7 @@ namespace castor {
     enum TapeStatusCodes {
       TAPE_UNUSED = 0, //When a tape is not used by any stager
       TAPE_PENDING = 1, //TpInfo_getVIDsToDo() has not yet been called
-      TAPE_WAITVDQM = 2, //VID has been submitted to VDQM
+      TAPE_WAITDRIVE = 2, //VID has been submitted to VDQM
       TAPE_WAITMOUNT = 3, //RTCOPY request has started and TpFileInfo_anyReqsForVID() has returned >0
       TAPE_MOUNTED = 4, //Tape is mounted on drive
       TAPE_FINISHED = 5, //Processing of this tape is over

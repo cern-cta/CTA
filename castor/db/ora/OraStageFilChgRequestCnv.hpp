@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/07 14:33:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/11 13:43:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,8 +29,6 @@
 
 // Include Files
 #include "castor/IAddress.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/db/ora/OraBaseCnv.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -38,6 +36,14 @@ namespace castor {
 
   // Forward declarations
   class IObject;
+
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class StageFilChgRequest;
+
+  }; // end of namespace stager
 
   namespace db {
 
@@ -79,22 +85,13 @@ namespace castor {
          * @param address where to store the representation of
          * the object
          * @param object the object to deal with
-         * @param alreadyDone the set of objects which representation
-         * was already created. This is needed to avoid looping in case
-         * of circular dependencies
          * @param autocommit whether the changes to the database
          * should be commited or not
-         * @param recursive if set to true, the objects refered
-         * by object will be created/updated too and recursively
-         * If it's set to false, the objects refered will not be touched
-         * But an exception will be thrown if one is missing that is needed
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               castor::ObjectSet& alreadyDone,
-                               bool autocommit,
-                               bool recursive)
+                               bool autocommit)
           throw (castor::exception::Exception);
 
         /**
@@ -102,20 +99,13 @@ namespace castor {
          * @param address where the representation of
          * the object is stored
          * @param object the object to deal with
-         * @param alreadyDone the set of objects which representation
-         * was already updated. This is needed to avoid looping in case
-         * of circular dependencies
          * @param autocommit whether the changes to the database
          * should be commited or not
-         * @param recursive if set to true, the objects refered
-         * by object will be updated too and recursively
          * @exception Exception throws an Exception in cas of error
          */
         virtual void updateRep(castor::IAddress* address,
                                castor::IObject* object,
-                               castor::ObjectSet& alreadyDone,
-                               bool autocommit,
-                               bool recursive)
+                               bool autocommit)
           throw (castor::exception::Exception);
 
         /**
@@ -123,16 +113,12 @@ namespace castor {
          * @param address where the representation of
          * the object is stored
          * @param object the object to deal with
-         * @param alreadyDone the set of objects which representation
-         * was already deleted. This is needed to avoid looping in case
-         * of circular dependencies
          * @param autocommit whether the changes to the database
          * should be commited or not
          * @exception Exception throws an Exception in cas of error
          */
         virtual void deleteRep(castor::IAddress* address,
                                castor::IObject* object,
-                               castor::ObjectSet& alreadyDone,
                                bool autocommit)
           throw (castor::exception::Exception);
 
@@ -140,39 +126,80 @@ namespace castor {
          * Creates C++ object from foreign representation
          * @param address the place where to find the foreign
          * representation
-         * @param newlyCreated a map of object that were created as part of the
-         * last user call to createObj, indexed by id. If a reference to one if
-         * these id is found, the existing associated object should be used.
-         * This trick basically allows circular dependencies.
          * @return the C++ object created from its reprensentation
          * or 0 if unsuccessful. Note that the caller is responsible
          * for the deallocation of the newly created object
-         * @param recursive if set to true, the objects refered
-         * by the returned object will be created too and recursively.
-         * In case the object was in the newlyCreated catalog, it will
-         * not be touched and may thus contain references.
          * @exception Exception throws an Exception in cas of error
          */
-        virtual castor::IObject* createObj(castor::IAddress* address,
-                                           castor::ObjectCatalog& newlyCreated,
-                                           bool recursive)
+        virtual castor::IObject* createObj(castor::IAddress* address)
           throw (castor::exception::Exception);
 
         /**
          * Updates C++ object from its foreign representation.
          * @param obj the object to deal with
-         * @param alreadyDone the set of objects already updated.
-         * This is needed to avoid looping in case of circular dependencies
          * @exception Exception throws an Exception in cas of error
          */
-        virtual void updateObj(castor::IObject* obj,
-                               castor::ObjectCatalog& alreadyDone)
+        virtual void updateObj(castor::IObject* obj)
           throw (castor::exception::Exception);
 
         /**
          * Reset the converter statements.
          */
         void reset() throw ();
+
+        /**
+         * Fill the database with some of the objects refered by a given object.
+         * @param object the original object
+         * @param type the type of the refered objects to store
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRep(castor::IAddress* address,
+                             castor::IObject* object,
+                             unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSubRequest(castor::stager::StageFilChgRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type IClient refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepIClient(castor::stager::StageFilChgRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database some of the objects refered by a given object.
+         * @param object the original object
+         * @param type the type of the refered objects to retrieve
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObj(castor::IAddress* address,
+                             castor::IObject* object,
+                             unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSubRequest(castor::stager::StageFilChgRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type IClient refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjIClient(castor::stager::StageFilChgRequest* obj)
+          throw (castor::exception::Exception);
 
       private:
 

@@ -587,8 +587,6 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
   }
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   unsigned int n = 1;
   // Go through the members
   for (Member* mem = members.first();
@@ -806,8 +804,6 @@ void CppCppOdbcCnvWriter::writeUpdateRepContent() {
             << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   unsigned int n = 1;
   // Go through the members
   Member* idMem;
@@ -1124,8 +1120,6 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
   *m_stream << "// Now bind the columns" << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
-  // extract the blobs and their lengths
-  QMap<QString,QString> blobs = extractBlobsFromMembers(members);
   // Go through the members
   unsigned int n = 1;
   for (Member* mem = members.first();
