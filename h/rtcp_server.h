@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.2 $ $Date: 2004/09/06 14:35:56 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.3 $ $Date: 2004/09/30 07:40:41 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -48,6 +48,7 @@ typedef struct processing_cntl {
     int nb_reserved_bufs;           /* Number of buffers reserved for
                                      * currently active disk IO threads.
                                      */
+    int nbFullBufs;                 /* Number of full buffers */
     int diskIOstarted;              /* Flag saying that previous disk
                                      * IO thread has started to fill
                                      * its first buffer. Thus it is safe
@@ -267,6 +268,7 @@ int rtcpd_FreeBuffers _PROTO(());
 int rtcpd_WaitCompletion _PROTO((tape_list_t *, file_list_t *));
 int rtcpd_checkMoreWork _PROTO((SOCKET *, tape_list_t *, file_list_t *));
 int rtcpd_waitMoreWork _PROTO((file_list_t *fl));
+int rtcpd_nbFullBufs _PROTO((int));
 
 #if defined(CTAPE_DUMMIES)
 int  DLL_DECL  stage_setlog _PROTO((void (*) _PROTO((int, char *))));
