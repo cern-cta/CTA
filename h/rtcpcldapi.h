@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/25 15:33:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/28 10:04:07 $ $Author: obarring $
  *
  * 
  *
@@ -101,17 +101,16 @@ EXTERN_C int (*rtcpcld_ClientCallback) _PROTO((
                                                ));
 /** Client callback to fill incomplete file requests
  *
- * \param tapereq Tape request structure
- * \param filereq File request structure
+ * \param tape Tape request list
  *
  *<P>
  *Give control to caller when an incomplete (missing tape position or disk
  *path) file request has been encountered. The caller is supposed to complete
- *the request in this callback.
+ *the request in this callback. Other file requests may also be updated
+ *or added to the list of file requests.
  */
 EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
-                                                 rtcpTapeRequest_t *tapereq,
-                                                 rtcpFileRequest_t *filereq
+                                                 tape_list_t *tape
                                                  ));
 /** RTCOPY client daemon client
  *
