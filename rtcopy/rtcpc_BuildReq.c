@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.10 $ $Date: 2000/01/13 16:10:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.11 $ $Date: 2000/01/19 14:52:58 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1660,7 +1660,7 @@ static int rtcpc_Z_opt(int mode,
         /*
         * Set option if not already set
         */
-        if ( *filereq->stageID != '\0' )
+        if ( *filereq->stageID == '\0' )
             strcpy(filereq->stageID,value);
     } CLIST_ITERATE_END(tl->file,fl);
     return(rc);
