@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.16 $ $Date: 2003/06/12 13:16:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.17 $ $Date: 2003/08/18 11:13:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -35,6 +35,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.16 $ $Date: 
 #define BUF_SIZE     30
 #define BUF_ID_SIZE   100
 #define NO_DEDICATION "No_dedication"
+#define NONE_VOLUME "None"
 #define NO_DED "ND"
 #define DED    "DE"
 #define SEP ','
@@ -265,10 +266,11 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
 
     server[0] = '\0';
     CLIST_ITERATE_BEGIN(reqlist,tmp1) {
-        if ( tmp1->drvreq.VolReqID > 0 ) {
+        if ( tmp1->drvreq.VolReqID > 0) {
             char buf[BUF_SIZE];
             char buf_id[BUF_ID_SIZE];
             char buf_ded[BUF_ID_SIZE];
+            char buf_volid[BUF_SIZE];
             
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
@@ -279,8 +281,15 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                              buf_id,
                              BUF_ID_SIZE);
             shq_parse_dedication(tmp1->drvreq.dedicate, buf_ded, BUF_ID_SIZE);
+
+            memset(buf_volid, '\0', sizeof(buf_volid));
+            if (strlen(tmp1->drvreq.volid) > 0) {
+                strncpy(buf_volid, tmp1->drvreq.volid, BUF_SIZE-1);
+            } else {
+                strncpy(buf_volid, NONE_VOLUME, BUF_SIZE-1);
+            }
             
-            fprintf(stdout,"DA %s %s@%s %s %d (%s) %s %s %d (%s)@%s\n",
+            fprintf(stdout,"DA %s %s@%s %s %d (%s) %s %s %s %d (%s)@%s\n",
                     tmp1->drvreq.dgn,
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
@@ -288,6 +297,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     now - tmp1->drvreq.recvtime,
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
                     tmp1->volreq.volid,
+                    buf_volid,
                     (tmp1->volreq.mode == 0 ? "R" : "W"),
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
                     buf_id,
@@ -298,25 +308,41 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
 
             char buf[BUF_SIZE];
             char buf_ded[BUF_ID_SIZE];
+            char buf_volid[BUF_SIZE];
             
             tp = localtime((time_t *)&tmp1->drvreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
 
             shq_decode_status_DN(tmp1->drvreq.status, buf, BUF_SIZE);
             shq_parse_dedication(tmp1->drvreq.dedicate, buf_ded, BUF_ID_SIZE);
+
+            /* Standard case, show the drive as not active */
+
+            memset(buf_volid, '\0', sizeof(buf_volid));
+            if (strlen(tmp1->drvreq.volid) > 0) {
+                strncpy(buf_volid, tmp1->drvreq.volid, BUF_SIZE-1);
+            } else {
+                strncpy(buf_volid, NONE_VOLUME, BUF_SIZE-1);
+            }
             
-            
-            fprintf(stdout,"DN %s %s@%s %s %d (%s)\n",
+            fprintf(stdout,"DN %s %s@%s %s %s %d (%s)\n",
                     tmp1->drvreq.dgn,
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
                     buf,
+                    buf_volid,
                     now - tmp1->drvreq.recvtime,
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION);
-
+           
+            
         } else if ( *server == '\0' || 
                     strcmp(server,tmp1->volreq.server) == 0 ) {
             char buf_id[BUF_ID_SIZE];
+
+            /*
+              This is a request !
+
+            */
             
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
