@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.2 $ $Date: 2000/09/20 16:03:52 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.3 $ $Date: 2000/12/06 08:41:43 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -239,6 +239,8 @@ struct ifce_stats *ifce_prev = NULL;
 static int totMB = 0;
 static int totMBw = 0;
 static int totMBr = 0;
+
+static int first_rec = 1;
 
 struct unknown_errs {		/* structure to store unknown messages and details */
   char dgn[MAXLEN];		/* device group */
@@ -487,6 +489,7 @@ main (argc, argv)
     
 	if (vflag)
       fprintf (stderr, "\nopening file : %s\n", acctfile);
+      first_rec = 1;
 	if ((fd_acct = rfio_open (acctfile, O_RDONLY)) < 0) 
       {
         strcpy(serv_list->failure_msg, rfio_serror());
@@ -1563,6 +1566,53 @@ delete_storerecord (sd)
   free (sd);
 }
 
+int repair_rec(fd_acct, accthdr, prev_timestamp, swapped)
+    int fd_acct;
+    struct accthdr *accthdr;
+    int prev_timestamp;
+    int *swapped;
+{
+    char buf[1024];
+    char c;
+    int i, j, rc;
+    time_t now;
+
+    time(&now);
+    fprintf(stderr,"Trying to repair corrupted accounting data....\n");
+    i=0;
+    memcpy(&buf[i],accthdr,sizeof(struct accthdr));
+    j = 1;
+    while ( i == 0 || (rc = rfio_read(fd_acct,&c,1)) == 1 ) {
+        if ( i > 0 ) buf[j] = c;
+        memcpy(accthdr,&buf[i],sizeof(struct accthdr));
+        if ( *swapped ) {
+            swap_it(accthdr->package);
+            swap_it(accthdr->len);
+            swap_it(accthdr->timestamp);
+        }
+        if ( accthdr->package > 255 || accthdr->package <= 0 ||
+             accthdr->len > SACCT_BUFLEN || accthdr->len < 0 ||
+             accthdr->timestamp <= prev_timestamp || accthdr->timestamp > (int)now ) {
+            if ( j >= 1023 ) {
+                i=0;
+                j = sizeof(struct accthdr);
+                rc = rfio_read(fd_acct,&buf[i],sizeof(struct accthdr));
+                if ( rc != sizeof(struct accthdr) ) break;
+            } else {
+                i++;
+                j++;
+            }
+        } else {
+            rc = 0;
+            break;
+        }
+    }
+    if ( rc == 0 ) fprintf(stderr,"repair successful\n");
+    else  fprintf(stderr,"repair failed: rc=%d\n",rc);
+
+    return(rc);
+}
+
 /********************************************************/
 /* Function to read in records from the accounting file */
 /********************************************************/
@@ -1574,6 +1624,7 @@ getacctrec (fd_acct, accthdr, buf, swapped)
      int *swapped;
 {
   int c;
+  static int prev_timestamp;
 
   c = rfio_read (fd_acct, accthdr, sizeof (struct accthdr));
 
@@ -1584,19 +1635,26 @@ getacctrec (fd_acct, accthdr, buf, swapped)
     exit (2);
   }
 
-  /* if required swap byte order */
+  /* 
+   * if required swap byte order. Should only be changed if this is the
+   * first record. 
+   */
 
-  if (accthdr->package > 255 || accthdr->package < 0) {
+  if (first_rec == 1 && (accthdr->package > 255 || accthdr->package < 0)) {
 	swap_it (accthdr->package);
 	swap_it (accthdr->len);
 	swap_it (accthdr->timestamp);
 	*swapped = 1;
   }
-  if (accthdr->len > SACCT_BUFLEN) {
+  first_rec = 0;
+  if (accthdr->len <= 0 || accthdr->len > SACCT_BUFLEN) {
     fprintf (stderr, "corrupted accounting file: package=%d, len=%d, timestamp=%d, swapped=%d\n",
              accthdr->package,accthdr->len,accthdr->timestamp,*swapped);
-    return (0);
+    if ( repair_rec(fd_acct,accthdr,prev_timestamp,swapped) == -1 ) return(0);
+    fprintf (stderr, "accounting record after repair: package=%d, len=%d, timestamp=%d, swapped=%d\n",
+             accthdr->package,accthdr->len,accthdr->timestamp,*swapped);
   }
+  prev_timestamp = accthdr->timestamp;
   c = rfio_read (fd_acct, buf, accthdr->len);
 
   if ( c != accthdr->len) {
