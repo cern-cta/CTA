@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/stager/TapeCopyForMigration.hpp"
-#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -35,11 +34,7 @@
 castor::stager::TapeCopyForMigration::TapeCopyForMigration() throw() :
   TapeCopy(),
   m_diskServer(""),
-  m_mountPoint(""),
-  m_castorFileID(),
-  m_nsHost(""),
-  m_fileSize(),
-  m_diskCopy(0) {
+  m_mountPoint("") {
 };
 
 //------------------------------------------------------------------------------

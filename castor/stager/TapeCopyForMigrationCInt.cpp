@@ -25,10 +25,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
-#include "osdep.h"
 
 extern "C" {
 
@@ -92,71 +90,6 @@ extern "C" {
   int Cstager_TapeCopyForMigration_setMountPoint(castor::stager::TapeCopyForMigration* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setMountPoint(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_castorFileID
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_castorFileID(castor::stager::TapeCopyForMigration* instance, u_signed64* var) {
-    *var = instance->castorFileID();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setCastorFileID
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setCastorFileID(castor::stager::TapeCopyForMigration* instance, u_signed64 new_var) {
-    instance->setCastorFileID(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_nsHost
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_nsHost(castor::stager::TapeCopyForMigration* instance, const char** var) {
-    *var = instance->nsHost().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setNsHost
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setNsHost(castor::stager::TapeCopyForMigration* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setNsHost(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_fileSize
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_fileSize(castor::stager::TapeCopyForMigration* instance, u_signed64* var) {
-    *var = instance->fileSize();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setFileSize
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setFileSize(castor::stager::TapeCopyForMigration* instance, u_signed64 new_var) {
-    instance->setFileSize(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_diskCopy
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_diskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy** var) {
-    *var = instance->diskCopy();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setDiskCopy
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setDiskCopy(castor::stager::TapeCopyForMigration* instance, castor::stager::DiskCopy* new_var) {
-    instance->setDiskCopy(new_var);
     return 0;
   }
 

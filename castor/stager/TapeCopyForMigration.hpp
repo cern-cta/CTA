@@ -29,15 +29,11 @@
 
 // Include Files
 #include "castor/stager/TapeCopy.hpp"
-#include "osdep.h"
 #include <string>
 
 namespace castor {
 
   namespace stager {
-
-    // Forward declarations
-    class DiskCopy;
 
     /**
      * class TapeCopyForMigration
@@ -78,7 +74,6 @@ namespace castor {
 
       /**
        * Get the value of m_mountPoint
-       * The mountpoint of the filesystem where the file to be migrated resides
        * @return the value of m_mountPoint
        */
       std::string mountPoint() const {
@@ -87,81 +82,10 @@ namespace castor {
 
       /**
        * Set the value of m_mountPoint
-       * The mountpoint of the filesystem where the file to be migrated resides
        * @param new_var the new value of m_mountPoint
        */
       void setMountPoint(std::string new_var) {
         m_mountPoint = new_var;
-      }
-
-      /**
-       * Get the value of m_castorFileID
-       * The castorFile ID of the file to migrate
-       * @return the value of m_castorFileID
-       */
-      u_signed64 castorFileID() const {
-        return m_castorFileID;
-      }
-
-      /**
-       * Set the value of m_castorFileID
-       * The castorFile ID of the file to migrate
-       * @param new_var the new value of m_castorFileID
-       */
-      void setCastorFileID(u_signed64 new_var) {
-        m_castorFileID = new_var;
-      }
-
-      /**
-       * Get the value of m_nsHost
-       * The name server dealing with the file to migrate
-       * @return the value of m_nsHost
-       */
-      std::string nsHost() const {
-        return m_nsHost;
-      }
-
-      /**
-       * Set the value of m_nsHost
-       * The name server dealing with the file to migrate
-       * @param new_var the new value of m_nsHost
-       */
-      void setNsHost(std::string new_var) {
-        m_nsHost = new_var;
-      }
-
-      /**
-       * Get the value of m_fileSize
-       * The size of the file to migrate
-       * @return the value of m_fileSize
-       */
-      u_signed64 fileSize() const {
-        return m_fileSize;
-      }
-
-      /**
-       * Set the value of m_fileSize
-       * The size of the file to migrate
-       * @param new_var the new value of m_fileSize
-       */
-      void setFileSize(u_signed64 new_var) {
-        m_fileSize = new_var;
-      }
-
-      /**
-       * Get the value of m_diskCopy
-       * @return the value of m_diskCopy
-       */
-      DiskCopy* diskCopy() const {
-        return m_diskCopy;
-      }
-
-      /**
-       * Set the value of m_diskCopy
-       * @param new_var the new value of m_diskCopy
-       */
-      void setDiskCopy(DiskCopy* new_var) {
-        m_diskCopy = new_var;
       }
 
     private:
@@ -169,19 +93,7 @@ namespace castor {
       /// The disk server on which the file to be migrated resides
       std::string m_diskServer;
 
-      /// The mountpoint of the filesystem where the file to be migrated resides
       std::string m_mountPoint;
-
-      /// The castorFile ID of the file to migrate
-      u_signed64 m_castorFileID;
-
-      /// The name server dealing with the file to migrate
-      std::string m_nsHost;
-
-      /// The size of the file to migrate
-      u_signed64 m_fileSize;
-
-      DiskCopy* m_diskCopy;
 
     }; // end of class TapeCopyForMigration
 

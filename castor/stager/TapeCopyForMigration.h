@@ -28,8 +28,6 @@
 #define CASTOR_STAGER_TAPECOPYFORMIGRATION_H
 
 // Include Files and Forward declarations for the C world
-#include "osdep.h"
-struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_TapeCopy_t;
 
@@ -74,60 +72,12 @@ int Cstager_TapeCopyForMigration_setDiskServer(struct Cstager_TapeCopyForMigrati
 
 /**
  * Get the value of mountPoint
- * The mountpoint of the filesystem where the file to be migrated resides
  */
 int Cstager_TapeCopyForMigration_mountPoint(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
 
 /**
  * Set the value of mountPoint
- * The mountpoint of the filesystem where the file to be migrated resides
  */
 int Cstager_TapeCopyForMigration_setMountPoint(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
-
-/**
- * Get the value of castorFileID
- * The castorFile ID of the file to migrate
- */
-int Cstager_TapeCopyForMigration_castorFileID(struct Cstager_TapeCopyForMigration_t* instance, u_signed64* var);
-
-/**
- * Set the value of castorFileID
- * The castorFile ID of the file to migrate
- */
-int Cstager_TapeCopyForMigration_setCastorFileID(struct Cstager_TapeCopyForMigration_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of nsHost
- * The name server dealing with the file to migrate
- */
-int Cstager_TapeCopyForMigration_nsHost(struct Cstager_TapeCopyForMigration_t* instance, const char** var);
-
-/**
- * Set the value of nsHost
- * The name server dealing with the file to migrate
- */
-int Cstager_TapeCopyForMigration_setNsHost(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
-
-/**
- * Get the value of fileSize
- * The size of the file to migrate
- */
-int Cstager_TapeCopyForMigration_fileSize(struct Cstager_TapeCopyForMigration_t* instance, u_signed64* var);
-
-/**
- * Set the value of fileSize
- * The size of the file to migrate
- */
-int Cstager_TapeCopyForMigration_setFileSize(struct Cstager_TapeCopyForMigration_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of diskCopy
- */
-int Cstager_TapeCopyForMigration_diskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t** var);
-
-/**
- * Set the value of diskCopy
- */
-int Cstager_TapeCopyForMigration_setDiskCopy(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 #endif // CASTOR_STAGER_TAPECOPYFORMIGRATION_H
