@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.16 $ $Date: 2001/08/31 14:29:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.17 $ $Date: 2001/09/26 13:30:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -983,7 +983,7 @@ int vdqm_StartReplicaThread() {
      * Remove domain
      */
     q = strchr(l_hostname,'.');
-    if ( q != NULL ) q = '\0';
+    if ( q != NULL ) *q = '\0';
 
     if ( (p = getconfent("VDQM","HOST",1)) == NULL ) {
         log(LOG_ERR,"vdqm_StartReplicaThread() No primary host configured\n");
