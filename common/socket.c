@@ -23,11 +23,6 @@ static char sccsid[] =  "@(#)socket.c,v 1.7 2000/05/31 10:33:54 CERN/IT/PDP/DM O
 #define IOCTL(x,y,z)    ioctl(x,y,z)    /* Actual ioctl system call     */
 #endif /* _WIN32 */
 
-extern int      sys_nerr;       /* number of system error messages      */
-#if !defined(linux)
-extern char *sys_errlist[];     /* system error list                    */
-#endif
-
 #ifndef READTIMEOUTVALUE
 #define READTIMEOUTVALUE     60         /* Default read time out        */
 #endif /* READTIMEOUTVALUE */
