@@ -53,16 +53,3 @@ const unsigned int castor::db::ora::OraBaseCnv::RepType() {
 inline const unsigned int castor::db::ora::OraBaseCnv::repType() const {
   return RepType();
 }
-
-// -----------------------------------------------------------------------
-// unlinkChild
-// -----------------------------------------------------------------------
-void castor::db::ora::OraBaseCnv::unlinkChild
-(const castor::IObject* parent,
- const castor::IObject* child)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal e;
-  e.getMessage() << "unlinkChild should never be called on "
-                 << "an object of type " << parent->type();
-  throw e;
-}

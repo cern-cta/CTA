@@ -71,21 +71,6 @@ namespace castor {
          */
         virtual const unsigned int repType() const;
 
-        /**
-         * Removes a link from a parent to a child in the
-         * corresponding ORACLE table. This implementation
-         * always raises an exception. This is the default
-         * implementation for converters of object having
-         * no children. It should be overwritten in the
-         * converters of objects having children.
-         * @param parent the parent
-         * @param child the child
-         * @exception Exception Always thrown, see above.
-         */
-        virtual void unlinkChild(const castor::IObject* parent,
-                                 const castor::IObject* child)
-          throw (castor::exception::Exception);
-
       };
 
     } // end of namespace ora
