@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.120 2001/03/28 18:35:32 jdurand Exp $
+ * $Id: procio.c,v 1.121 2001/03/29 15:35:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.120 $ $Date: 2001/03/28 18:35:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.121 $ $Date: 2001/03/29 15:35:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1458,7 +1458,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case STAGED:		/* staged */
 				if (rfio_stat (stcp->ipath, &st) < 0) {
 					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
-					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 0) < 0) {
+					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
 						c = SYERR;
@@ -1470,7 +1470,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					 * HSM File exists but has a modified time higher than what
 					 * is known to the stager.
 					 */
-					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0, 0) < 0) {
+					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0, 1) < 0) {
 						sendrep (rpfd, MSG_ERR,
 										 STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
@@ -1486,7 +1486,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					 */
 					if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
 							(stgreq.size > stcp->size)) {
-						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 0) < 0) {
+						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1) < 0) {
 							sendrep (rpfd, MSG_ERR,
 											 STG02, stcp->ipath,
 											 "rfio_unlink", rfio_serror());
@@ -1655,7 +1655,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case NOTSTAGED:
 				break;
 			case STAGED:
-				if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
+				if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
 					c = SYERR;
@@ -1672,7 +1672,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					c = USERR;
 					goto reply;
 				}
-				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
+				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
 					c = SYERR;
@@ -1804,7 +1804,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case STAGED:
 				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
-					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 0) < 0) {
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
 						global_c_stagewrt++;
@@ -3306,7 +3306,7 @@ isstaged(cur, p, poolflag, poolname)
 				if (delfile (stcp_castor_name, ((stcp_castor_name->status & 0xF0) == STAGED ||
 												(stcp_castor_name->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) ?
 												0 : 1,
-												 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 0) < 0) {
+												 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 1) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp_castor_name->ipath, "rfio_unlink", rfio_serror());
 						return(ISSTAGEDSYERR);
 				}
@@ -3661,7 +3661,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 		seteuid(start_passwd.pw_uid);
 		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
 		if (immediate_delete != 0) {
-		  if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 0) < 0) {
+		  if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1) < 0) {
 		    sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
 		  }
 		}
