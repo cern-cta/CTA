@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.5 $ $Date: 2002/04/08 14:55:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH DUMPTAPE 1 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape User Commands"
+.TH DUMPTAPE 1 "$Date: 2002/04/08 14:55:14 $" CASTOR "Ctape User Commands"
 .SH NAME
 dumptape \- dump a tape and analyze its contents
 .SH SYNOPSIS
@@ -62,6 +62,7 @@ for double density IBM 3490 cartridges,
 .B 38KDC
 for 3490 cartridges with compaction (IDRC),
 .BR 8200 ,
+.BR 8200C ,
 .B 8500
 or
 .B 8500C
@@ -76,14 +77,20 @@ for DAT cartridges,
 .BR 10GC ,
 .BR 20G ,
 .BR 20GC ,
-.B 35G
+.BR 35G ,
+.BR 35GC ,
+.B 40G
 or
-.B 35GC
+.B 40GC
 for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590K cartridges,
 .BR 10G ,
 .BR 10GC ,
 .BR 25G ,
@@ -95,8 +102,16 @@ for Redwood cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
-If this parameter is missing, the value is taken from TMS (if installed) or
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
+If this parameter is missing, the value is taken from VMGR (if installed) or
 defaults to 6250 for device group TAPE (IBM 3420).
 .TP
 .B \-E ignoreeoi
@@ -112,8 +127,10 @@ The default value for long media (Exabytes, DLTs, IBM3590) is one data file.
 .TP
 .BI \-g " dgn"
 Requests a device from an installation defined set of "device groups".
-It must match the device group specified in TMS (if installed).
-If this parameter is missing, the value is taken from TMS or
+The list can be obtained with
+.BR vmgrlistdgnmap .
+It must match the device group specified in VMGR (if installed).
+If this parameter is missing, the value is taken from VMGR or
 defaults to CART.
 .TP
 .BI \-N " blknos"
