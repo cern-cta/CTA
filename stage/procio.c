@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.164 2002/02/14 18:36:49 jdurand Exp $
+ * $Id: procio.c,v 1.165 2002/02/20 15:41:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.164 $ $Date: 2002/02/14 18:36:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.165 $ $Date: 2002/02/20 15:41:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -168,6 +168,7 @@ static char one[2] = "1";
 static int silent_flag = 0;
 static int nowait_flag = 0;
 static int tppool_flag = 0;
+static int noretry_flag = 0;
 static int nohsmcreat_flag = 0;
 static int rdonly_flag = 0;
 #ifdef STAGER_SIDE_SERVER_SUPPORT
@@ -400,6 +401,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"silent",             NO_ARGUMENT,  &silent_flag,      1},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
 		{"nocopy",             NO_ARGUMENT,  &nocopy_flag,      1},
+		{"noretry",            NO_ARGUMENT,  &noretry_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{"rdonly",             NO_ARGUMENT,  &rdonly_flag,      1},
@@ -416,6 +418,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	silent_flag = 0;
 	nowait_flag = 0;
 	nocopy_flag = 0;
+	noretry_flag = 0;
 	tppool_flag = 0;
 	nohsmcreat_flag = 0;
 	rdonly_flag = 0;
@@ -640,6 +643,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_UFUN)  == STAGE_UFUN) Uflag = 1;
 		if ((flags & STAGE_INFO)  == STAGE_INFO) copytape = 1;
 		if ((flags & STAGE_SILENT)  == STAGE_SILENT) silent_flag = 1;
+		if ((flags & STAGE_NORETRY)  == STAGE_NORETRY) noretry_flag = 1;
 		if ((flags & STAGE_NOWAIT)  == STAGE_NOWAIT) nowait_flag = 1;
 		if ((flags & STAGE_NOHSMCREAT)  == STAGE_NOHSMCREAT) nohsmcreat_flag = 1;
 		if ((concat_off != 0) && (req_type != STAGE_IN)) {
@@ -1704,6 +1708,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  wqp->magic = magic;
 				  wqp->uniqueid = stage_uniqueid;
 				  wqp->silent = silent_flag;
+				  wqp->noretry = noretry_flag;
 				  wqp->flags = flags;
 				  if (nowait_flag != 0) {
 					  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -1801,6 +1806,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -2015,6 +2021,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  wqp->magic = magic;
 					  wqp->uniqueid = stage_uniqueid;
 					  wqp->silent = silent_flag;
+					  wqp->noretry = noretry_flag;
 					  wqp->flags = flags;
 					  if (nowait_flag != 0) {
 						  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -2183,6 +2190,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->openmode = openmode;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -2817,6 +2825,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->noretry = noretry_flag;
 					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -3053,6 +3062,7 @@ void procputreq(req_type, req_data, clienthost)
 		{"fortran_unit",       REQUIRED_ARGUMENT,  NULL,      'U'},
 		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
+		{"noretry",            NO_ARGUMENT,  &noretry_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{NULL,                 0,                  NULL,        0}
 	};
@@ -3095,6 +3105,7 @@ void procputreq(req_type, req_data, clienthost)
 	Coptind = 1;
 	Copterr = 0;
 	nowait_flag = 0;
+	noretry_flag = 0;
 	tppool_flag = 0;
 	while ((c = Cgetopt_long (nargs, argv, "Gh:I:M:q:U:V:", longopts, NULL)) != -1) {
 		switch (c) {
@@ -3267,6 +3278,7 @@ void procputreq(req_type, req_data, clienthost)
 					wqp->silent = 1;
 					wqp->rpfd = -1;
 				}
+				wqp->noretry = noretry_flag;
             }
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
@@ -3401,6 +3413,7 @@ void procputreq(req_type, req_data, clienthost)
 					wqp->silent = 1;
 					wqp->rpfd = -1;
 				}
+				wqp->noretry = noretry_flag;
 			}
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
@@ -3484,6 +3497,7 @@ void procputreq(req_type, req_data, clienthost)
 						wqp->silent = 1;
 						wqp->rpfd = -1;
 					}
+					wqp->noretry = noretry_flag;
 				}
 				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
 				wqp->nbdskf++;
@@ -3721,6 +3735,7 @@ void procputreq(req_type, req_data, clienthost)
 					wqp->silent = 1;
 					wqp->rpfd = -1;
 				}
+				wqp->noretry = noretry_flag;
             }
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
