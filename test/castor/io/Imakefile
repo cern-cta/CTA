@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/28 14:40:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/19 15:12:43 $ $Author: bcouturi $
 #
 # Make Castor DB example
 #
@@ -38,7 +38,9 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../../..,)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift
-
+#if BuildSecurity
+LIBS+= -ldl
+#endif
 TEST_OBJ = testio.Osuf
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
@@ -46,9 +48,11 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
 LDFLAGS = -L ../../../shlib $(MTCCFLAGS)
 LD = g++
 
-all: ProgramTargetName(testio)
+all: ProgramTargetName(testio) ProgramTargetName(testSocket) ProgramTargetName(testAuthSocket)
 
 NormalProgramTarget(testio,$(TEST_OBJ),$(DEPLIB),$(LIBS))
+NormalProgramTarget(testSocket,testSocket.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(testAuthSocket,testAuthSocket.Osuf,$(DEPLIB),$(LIBS))
 
 Makefiles:
 
