@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.25 2002/10/27 23:29:13 jdurand Exp $
+.\" $Id: stageqry.man,v 1.26 2002/10/28 15:36:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.25 $ $Date: 2002/10/27 23:29:13 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.26 $ $Date: 2002/10/28 15:36:12 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/10/27 23:29:13 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/10/28 15:36:12 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -338,11 +338,13 @@ option.
 .cs R 18
 stageqry -M $CASTOR_HOME -flx
 File name                            State      Nbacc.     Size    Pool
-file03                               STAGED          1    0.0/0    castordev         305 castordev:/tmp/stage_castordev/c3/stage/file03.305
+file03                               STAGED          1    0.0/0    castordev \\
+         305 castordev:/tmp/stage_castordev/c3/stage/file03.305
  /castor/cern.ch/user/j/jdurand/2002/09/30/file03
                         created by  jdurand   c3  2002/09/30 18:47:37
                         last access               2002/09/30 18:48:10
-testforstagecat                      STAGED          1    0.0/0    castordev         352 castordev:/tmp/stage_castordev/c3/stage/testfile02
+testforstagecat                      STAGED          1    0.0/0    castordev \\
+         352 castordev:/tmp/stage_castordev/c3/stage/testfile02
  /castor/cern.ch/user/j/jdurand/testforstagecat
                         created by  jdurand   c3  2002/10/01 15:13:38
                         last access               2002/10/01 15:13:38
