@@ -1,23 +1,10 @@
 /*
- * $Id: Ctape_config.c,v 1.3 1999/07/21 13:38:59 jdurand Exp $
- *
- * $Log: Ctape_config.c,v $
- * Revision 1.3  1999/07/21 13:38:59  jdurand
- * Put back "marshall.h" and "Ctape_api.h" in Ctape_config.c
- * Added getdvrnam for aix compilation
- *
- * Revision 1.2  1999/07/20 19:53:17  jdurand
- * Changed "Ctape.h" to <Ctape.h> and "marshall.h" to <marshall.h>
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#) $Id: Ctape_config.c,v 1.4 1999/09/03 15:53:36 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -31,11 +18,12 @@ static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
 #endif
 #include "Ctape.h"
 #include "marshall.h"
+#include "serrno.h"
 
 Ctape_config(unm, status, reason)
 char *unm;
 int status;
-char *reason;
+int reason;
 {
 	int c, n;
 	char drive[CA_MAXUNMLEN+1];
@@ -84,11 +72,7 @@ char *reason;
 	marshall_WORD (sbp, gid);
 	marshall_STRING (sbp, drive);
 	marshall_WORD (sbp, status);
-	if (reason) {
-		marshall_STRING (sbp, reason);
-	} else {
-		marshall_STRING (sbp, "");
-	}
+	marshall_WORD (sbp, reason);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
