@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 13:07:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 09:53:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -60,6 +60,8 @@ int gettperror();
 static int read_sony();
 static int write_sony();
 #endif /* __STDC__ */
+
+char *devtype;            /* Extern needed by Ctape */
 
 #if defined(_AIX) && defined(_IBMR2)
 static char driver_name[7];
@@ -363,6 +365,10 @@ int topen(tape_list_t *tape, file_list_t *file) {
 #endif /* SONYRAW */
     file->negotiate = 0;
     file->eovflag = 0 ;
+    /*
+     * Needed by tperror() in Ctape
+     */
+    devtype = tapereq->devtype;
 
     if ( tapereq->mode == WRITE_ENABLE ) tmode = O_RDWR | binmode;
     else {
