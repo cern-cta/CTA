@@ -2600,7 +2600,13 @@ QString CppCppOraCnvWriter::getOraType(QString& type) {
   } else if (oraType == "u_signed64") {
     oraType = "double";
   }
-  if (oraType.startsWith("char")) oraType = "string";
+  if (oraType.startsWith("char")) {
+    if (type.startsWith("unsigned")) {
+      oraType = "int";
+    } else {
+      oraType = "string";
+    }
+  }
   oraType = capitalizeFirstLetter(oraType);
   return oraType;
 }
@@ -2610,7 +2616,6 @@ QString CppCppOraCnvWriter::getOraType(QString& type) {
 //=============================================================================
 QString CppCppOraCnvWriter::getSQLType(QString& type) {
   QString SQLType = getSimpleType(type);
-  SQLType = SQLType;
   if (SQLType == "short" ||
       SQLType == "long" ||
       SQLType == "bool" ||
@@ -2627,6 +2632,8 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
     SQLType = res;
   } else if (m_castorTypes.find(SQLType) != m_castorTypes.end()) {
     SQLType = "NUMBER";
+  } else if (type == "unsigned char") {
+    SQLType = "INTEGER";    
   }
   return SQLType;
 }

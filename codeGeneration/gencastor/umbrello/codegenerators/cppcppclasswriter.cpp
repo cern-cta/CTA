@@ -198,8 +198,9 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
   QString content;
   type = type.replace("unsigned", "");
   type = type.stripWhiteSpace();
-  if (type.contains("*") || (type == "int") ||
-      (type == "long") || (type == "short")) {
+  if (type.contains("*") || (type == "char") ||
+      (type == "int") || (type == "long") ||
+      (type == "short")) {
     content = "0";
   } else if ((type == "float") || (type == "double")) {
     content = "0.0";
