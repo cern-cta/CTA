@@ -28,7 +28,8 @@
 #define ORA_ORASTAGERSVC_HPP 1
 
 // Include Files
-#include "castor/db/ora/OraCnvSvc.hpp"
+#include "castor/BaseSvc.hpp"
+#include "castor/db/ora/OraBaseObj.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
@@ -43,7 +44,8 @@ namespace castor {
       /**
        * Implementation of the IStagerSvc for Oracle
        */
-      class OraStagerSvc : public OraCnvSvc,
+      class OraStagerSvc : public BaseSvc,
+                           public OraBaseObj,
                            public virtual castor::stager::IStagerSvc {
 
       public:
@@ -67,6 +69,11 @@ namespace castor {
          * Get the service id
          */
         static const unsigned int ID();
+
+        /**
+         * Reset the converter statements.
+         */
+        void reset() throw ();
 
       public:
         /*

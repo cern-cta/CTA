@@ -30,7 +30,7 @@
 #include "castor/MsgSvc.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbAddress.hpp"
-#include "castor/db/ora/OraBaseCnv.hpp"
+#include "castor/db/ora/OraBaseObj.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -192,7 +192,7 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
   m_getNRStatement = 0;
   m_getNBRStatement = 0;
   // And make all registered converters aware
-  for (std::set<castor::db::ora::OraBaseCnv*>::const_iterator it =
+  for (std::set<castor::db::ora::OraBaseObj*>::const_iterator it =
          m_registeredCnvs.begin();
        it != m_registeredCnvs.end();
        it++) {

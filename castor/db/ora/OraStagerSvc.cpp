@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/24 15:47:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/25 13:31:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
@@ -55,16 +56,17 @@ const std::string castor::db::ora::OraStagerSvc::s_tapesToDoStatementString =
   "SELECT id FROM rh_Tape WHERE status = :1";
 
 // -----------------------------------------------------------------------
-// OraCnvSvc
+// OraStagerSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
-  OraCnvSvc(name), m_tapesToDoStatement(0) {
+  BaseSvc(name), OraBaseObj(), m_tapesToDoStatement(0) {
 }
 
 // -----------------------------------------------------------------------
-// ~OraCnvSvc
+// ~OraStagerSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::~OraStagerSvc() {
+  reset();
 }
 
 // -----------------------------------------------------------------------
@@ -81,6 +83,19 @@ const unsigned int castor::db::ora::OraStagerSvc::ID() {
   return castor::SVC_ORASTAGERSVC;
 }
 
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::reset() throw() {
+  //Here we attempt to delete the statements correctly
+  // If something goes wrong, we just ignore it
+  try {
+    deleteStatement(m_tapesToDoStatement);
+  } catch (oracle::occi::SQLException e) {};
+  // Now reset all pointers to 0
+  m_tapesToDoStatement = 0;
+}
+
 // -----------------------------------------------------------------------
 // segmentsForTape
 // -----------------------------------------------------------------------
@@ -89,7 +104,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
 (castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
   castor::ObjectCatalog alreadyDone;
-  updateObj(searchItem, alreadyDone);
+  cnvSvc()->updateObj(searchItem, alreadyDone);
   std::vector<castor::stager::Segment*> result;
   std::vector<castor::stager::Segment*>::iterator it;
   for (it = searchItem->segments().begin();
@@ -110,7 +125,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
   }
   if (result.size() > 0) {
     castor::ObjectSet alreadyDone;
-    updateRep(0, searchItem, alreadyDone, true);
+    cnvSvc()->updateRep(0, searchItem, alreadyDone, true);
   }
   return result;
 }
@@ -128,7 +143,7 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
   if (result.size() > 0){
     searchItem->setStatus(castor::stager::TAPE_WAITMOUNT);
     castor::ObjectSet alreadyDone;
-    updateRep(0, searchItem, alreadyDone, true);
+    cnvSvc()->updateRep(0, searchItem, alreadyDone, true);
   }
   return result.size();
 }
@@ -142,20 +157,20 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   // Check whether the statements are ok
   if (0 == m_tapesToDoStatement) {
     try {
-      m_tapesToDoStatement = getConnection()->createStatement();
+      m_tapesToDoStatement = cnvSvc()->getConnection()->createStatement();
       m_tapesToDoStatement->setSQL(s_tapesToDoStatementString);
       m_tapesToDoStatement->setInt(1, castor::stager::TAPE_PENDING);
     } catch (oracle::occi::SQLException e) {
       try {
         // Always try to rollback
-        getConnection()->rollback();
+        cnvSvc()->getConnection()->rollback();
         if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
           // We've obviously lost the ORACLE connection here
-          dropConnection();
+          cnvSvc()->dropConnection();
         }
       } catch (oracle::occi::SQLException e) {
         // rollback failed, let's drop the connection for security
-        dropConnection();
+        cnvSvc()->dropConnection();
       }
       m_tapesToDoStatement = 0;
       castor::exception::Internal ex;
@@ -170,7 +185,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   try {
     oracle::occi::ResultSet *rset = m_tapesToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = getObjFromId(rset->getInt(1), done);
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done);
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {
@@ -183,20 +198,20 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       // Change tape status
       tape->setStatus(castor::stager::TAPE_WAITVDQM);
       castor::ObjectSet alreadyDone;
-      updateRep(0, tape, alreadyDone, false);
+      cnvSvc()->updateRep(0, tape, alreadyDone, false);
       result.push_back(tape);
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      getConnection()->rollback();
+      cnvSvc()->getConnection()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
-        dropConnection();
+        cnvSvc()->dropConnection();
       }
     } catch (oracle::occi::SQLException e) {
       // rollback failed, let's drop the connection for security
-      dropConnection();
+      cnvSvc()->dropConnection();
     }
     castor::exception::Internal ex;
     ex.getMessage()
@@ -205,6 +220,6 @@ castor::db::ora::OraStagerSvc::tapesToDo()
     throw ex;
   }
   // Commit all status changes
-  getConnection()->commit();
+  cnvSvc()->getConnection()->commit();
   return result;
 }

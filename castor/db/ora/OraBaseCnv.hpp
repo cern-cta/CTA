@@ -30,8 +30,7 @@
 // Include files
 #include "occi.h"
 #include "castor/IConverter.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/ObjectCatalog.hpp"
+#include "castor/db/ora/OraBaseObj.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -43,13 +42,10 @@ namespace castor {
 
     namespace ora {
 
-      // Forward Declarations
-      class OraCnvSvc;
-      
       /**
        * A base converter for Oracle database
        */
-      class OraBaseCnv : public BaseObject, public IConverter {
+      class OraBaseCnv : public OraBaseObj, public IConverter {
         
       public:
         
@@ -64,12 +60,6 @@ namespace castor {
         virtual ~OraBaseCnv();
 
         /**
-         * Resets the converter. In particular any prepared
-         * statements are destroyed
-         */
-        virtual void reset() throw() = 0;
-        
-        /**
          * gets the representation type, that is the type of
          * the representation this converter can deal with
          */
@@ -80,43 +70,6 @@ namespace castor {
          * the representation this converter can deal with
          */
         virtual const unsigned int repType() const;
-        
-        
-      protected:
-        
-        /**
-         * creates a statement from a string. Note that the
-         * deallocation of the statement is the responsability
-         * of the caller. delete Statement should be used
-         * @param stmtString the statement as a string
-         * @exception Exception if the creation fails
-         * @return the newly created statement
-         * @see deleteStatement()
-         */
-        oracle::occi::Statement* createStatement(const std::string &stmtString)
-          throw (castor::exception::Exception);
-        
-        /**
-         * deletes a statement and frees the associated memory
-         * @exception SQLException if the deletion fails
-         * @param stmt the statement to be deleted
-         */
-        void deleteStatement(oracle::occi::Statement* stmt)
-          throw (oracle::occi::SQLException);
-        
-        /**
-         * access to the Oracle conversion service for child classes
-         */
-        castor::db::ora::OraCnvSvc* cnvSvc() const;
-        
-      protected:
-        
-        /***********/
-        /* Members */
-        /***********/
-        
-        /// The corresponding conversion service
-        castor::db::ora::OraCnvSvc* m_cnvSvc;
         
       };
 

@@ -45,7 +45,7 @@ namespace castor {
     namespace ora {
 
       // Forward Declarations
-      class OraBaseCnv;
+      class OraBaseObj;
 
       /**
        * Conversion service for Oracle Database
@@ -162,13 +162,13 @@ namespace castor {
          * This allows converters to be aware of a reset
          * of the Oracle connection
          */
-        void registerCnv(castor::db::ora::OraBaseCnv* cnv)
+        void registerCnv(castor::db::ora::OraBaseObj* cnv)
           throw() { m_registeredCnvs.insert(cnv); }
         
         /**
          * unregistration of Oracle converters.
          */
-        void unregisterCnv(castor::db::ora::OraBaseCnv* cnv)
+        void unregisterCnv(castor::db::ora::OraBaseObj* cnv)
           throw() { m_registeredCnvs.erase(cnv); }
 
       protected:
@@ -191,7 +191,7 @@ namespace castor {
         std::string m_dbName;
 
         /// List of registered converters
-        std::set<castor::db::ora::OraBaseCnv*> m_registeredCnvs;
+        std::set<castor::db::ora::OraBaseObj*> m_registeredCnvs;
 
         /**
          * The ORACLE environment for this service

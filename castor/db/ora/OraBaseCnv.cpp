@@ -25,41 +25,18 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/db/DbAddress.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-
-// Local Files
 #include "OraBaseCnv.hpp"
-#include "OraCnvSvc.hpp"
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseCnv::OraBaseCnv() :
-  BaseObject(),
-  m_cnvSvc(0) {
-  m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
-    (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
-  if (!m_cnvSvc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "No OraCnvSvc available";
-    throw ex;
-  }
-  m_cnvSvc->registerCnv(this);
-}
+castor::db::ora::OraBaseCnv::OraBaseCnv() : OraBaseObj() {}
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseCnv::~OraBaseCnv() {
-  m_cnvSvc->unregisterCnv(this);
-  m_cnvSvc->release();
-}
+castor::db::ora::OraBaseCnv::~OraBaseCnv() {}
 
 // -----------------------------------------------------------------------
 // RepType
@@ -73,43 +50,4 @@ const unsigned int castor::db::ora::OraBaseCnv::RepType() {
 // -----------------------------------------------------------------------
 inline const unsigned int castor::db::ora::OraBaseCnv::repType() const {
   return RepType();
-}
-
-// -----------------------------------------------------------------------
-// createStatement
-// -----------------------------------------------------------------------
-oracle::occi::Statement*
-castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
-  throw (castor::exception::Exception) {
-  try {
-    oracle::occi::Statement* stmt =
-      cnvSvc()->getConnection()->createStatement();
-    stmt->setSQL(stmtString);
-    return stmt;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Unable to create statement :" << std::endl
-                    << stmtString << std::endl
-                    << e.what();
-    throw ex;
-  }
-  // This is never called
-  return 0;
-}
-
-// -----------------------------------------------------------------------
-// deleteStatement
-// -----------------------------------------------------------------------
-void castor::db::ora::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
-  throw (oracle::occi::SQLException) {
-  if (0 != stmt) {
-    cnvSvc()->getConnection()->terminateStatement(stmt);
-  }
-}
-
-// -----------------------------------------------------------------------
-// cnvSvc
-// -----------------------------------------------------------------------
-castor::db::ora::OraCnvSvc* castor::db::ora::OraBaseCnv::cnvSvc() const {
-  return m_cnvSvc;
 }

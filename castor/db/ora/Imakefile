@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/22 15:40:48 $ $Author: jdurand $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/25 13:31:34 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -41,7 +41,8 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -L FileName(../../..,shlib) -lshift
 
-ORALIB_SRCS = OraBaseCnv.cpp \
+ORALIB_SRCS = OraBaseObj.cpp \
+              OraBaseCnv.cpp \
               OraCastorFileCnv.cpp \
               OraClientCnv.cpp \
               OraCnvSvc.cpp \
