@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.50 $ $Date: 2000/12/29 14:31:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.51 $ $Date: 2001/05/15 11:38:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+#include <stage_api.h>
 
 extern processing_cntl_t proc_cntl;
 
