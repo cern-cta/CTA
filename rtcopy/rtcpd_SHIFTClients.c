@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.26 $ $Date: 2000/05/24 06:25:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.27 $ $Date: 2000/06/13 16:42:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -456,9 +456,30 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         gethostname(req->tape->tapereq.server,namelen);
  
         rc = rtcpc(req->tape);
-        if ( rc == -1 && serrno == ERTUSINTR ) (void)rtcp_CloseConnection(s);
-        if ( rc == -1 && serrno == ETVBSY ) sleep(60);
-        else break;
+
+        if ( rc == -1 && serrno == ERTUSINTR ) {
+            (void)rtcp_CloseConnection(s);
+            break;
+        } else if ( rc == -1 && serrno == ETVBSY ) {
+            /*
+             * Infinite retry loop while volume is busy.
+             */
+            sleep(60);
+        } else if ( rc == -1 && req->tape->file != NULL && 
+                    *req->tape->file->filereq.stageID != '\0' &&
+                    req->tape->file->filereq.stageSubreqID == -1 ) {
+            /*
+             * If the request comes from a SHIFT stager we cannot allow
+             * for retries on another server because the SHIFT tpread doesn't
+             * know where to restart a partially successful request.
+             */
+            (void)rtcp_RetvalSHIFT(req->tape,NULL,&retval);
+            if ( retval == RSLCT ) {
+                sleep(60);
+                *req->tape->tapereq.unit = '\0';
+                retval = 0;
+            }
+        } else break;
     }
     (void) rtcp_SendRC(s,hdr,&retval,req);
 
