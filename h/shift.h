@@ -1,13 +1,13 @@
 /*
- * $Id: shift.h,v 1.2 1999/12/09 13:46:24 jdurand Exp $
+ * $Id: shift.h,v 1.3 2000/09/03 07:43:49 baud Exp $
  */
 
 /*
- * @(#)shift.h	1.2 09/15/95 CERN CN-SW/DC Frederic Hemmer
+ * @(#)$RCSfile: shift.h,v $ $Revision: 1.3 $ $Date: 2000/09/03 07:43:49 $ CERN IT-PDP/DC Frederic Hemmer
  */
 
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
@@ -21,6 +21,9 @@
 #include <shift/serrno.h>       /* SHIFT error numbers and codes        */
 #include <shift/log.h>          /* Logging facilities                   */
 #include <shift/trace.h>        /* Tracing facilities                   */
+#include <shift/rfio_constants.h>
+#include <shift/rfio_errno.h>
+#include <shift/rfio_api.h>
 #include <shift/rfio.h>         /* Remote file I/O defines and Macros   */
 #include <shift/rfcntl.h>       /* Remote file I/O heter. file control  */
 
