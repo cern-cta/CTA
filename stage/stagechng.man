@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.4 2001/06/20 11:07:25 jdurand Exp $
+.\" $Id: stagechng.man,v 1.5 2001/07/24 07:42:32 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.4 $ $Date: 2001/06/20 11:07:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.5 $ $Date: 2001/07/24 07:42:32 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2001/06/20 11:07:25 $"
+.TH STAGECHNG l "$Date: 2001/07/24 07:42:32 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
@@ -27,11 +27,11 @@ stagechng \- change status in the stager catalog
 ]  [
 .BI -p " poolname"
 ]  [
-.BI -reqid " reqid"
+.BI --reqid " reqid"
 ] [
 .BI --retenp " retenp"
 ] [
-.BI -status " status"
+.BI --status " status"
 ]
 .SH DESCRIPTION
 In the first form, 
