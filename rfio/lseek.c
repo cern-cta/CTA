@@ -1,14 +1,14 @@
 /*
- * $Id: lseek.c,v 1.11 2002/01/18 16:23:29 obarring Exp $
+ * $Id: lseek.c,v 1.12 2002/05/02 07:26:01 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.11 $ $Date: 2002/01/18 16:23:29 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.12 $ $Date: 2002/05/02 07:26:01 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -78,8 +78,11 @@ int    how ;
    }
 
    /* If RFIO version 3 enabled, then call the corresponding procedure */
-   if (rfilefdt[s_index]->version3 == 1)
-     return(rfio_lseek_v3(s,offset,how));
+   if (rfilefdt[s_index]->version3 == 1) {
+      status= rfio_lseek_v3(s,offset,how);
+      END_TRACE();
+      return status ;
+   }
 
    /*
     * Changing SEEK_CUR in SEEK_SET.
