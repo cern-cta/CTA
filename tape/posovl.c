@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.9 $ $Date: 1999/11/17 11:03:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.10 $ $Date: 1999/11/25 14:43:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -123,6 +123,10 @@ char	**argv;
 	den = atoi (argv[28]);
 	flags = atoi (argv[29]);
  
+	if (method == TPPOSIT_EOI)
+		fseq = -1;
+	else if (method == TPPOSIT_FID)
+		fseq = -2;
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
 #else
