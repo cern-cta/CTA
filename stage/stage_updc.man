@@ -1,22 +1,44 @@
-.\" $Id: stage_updc.man,v 1.8 2002/10/03 13:56:51 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.9 2002/10/08 08:57:17 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.8 $ $Date: 2002/10/03 13:56:51 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.9 $ $Date: 2002/10/08 08:57:17 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2002/10/03 13:56:51 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2002/10/08 08:57:17 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-.BI "int stage_updc_tppos(char *" stageid ", int " status ", int " blksize ", char *" drive ", char *" fid ", int " fseq ", int " lrecl ", char *" recfm ", char *" path ");"
+.BI "int stage_updc_tppos(char *" stageid ,
+.BI "int " status ,
+.BI "int " blksize ,
+.BI "char *" drive ,
+.BI "char *" fid ,
+.BI "int " fseq ,
+.BI "int " lrecl ,
+.BI "char *" recfm ,
+.BI "char *" path ");"
 .sp
-.BI "int stage_updc_filcp(char *" stageid ", int " status ", char *" ifce ", u_signed64 " size ", int " waiting_time ", int " transfer_time ", int " blksize ", char *" drive ", char *" fid ", int " fseq ", int " lrecl ", char *" recfm ", char *" path ");"
+.BI "int stage_updc_filcp(char *" stageid ,
+.BI "int " status ,
+.BI "char *" ifce ,
+.BI "u_signed64 " size ,
+.BI "int " waiting_time ,
+.BI "int " transfer_time ,
+.BI "int " blksize ,
+.BI "char *" drive ,
+.BI "char *" fid ,
+.BI "int " fseq ,
+.BI "int " lrecl ,
+.BI "char *" recfm ,
+.BI "char *" path ");"
 .sp
-.BI "int stage_updc_filchg(char *" host ", stage_hsm_t " *hsmstruct ");"
+.BI "int stage_updc_filchg(char *" host ,
+.BI "stage_hsm_t " *hsmstruct ");"
 .sp
-.BI "int stage_updc_user(char *" host ", stage_hsm_t " *hsmstruct ");"
+.BI "int stage_updc_user(char *" host ,
+.BI "stage_hsm_t " *hsmstruct ");"
 
 .SH DESCRIPTION
 The \fBstage_updc_filcp\fP, \fBstage_updc_tppos\fP and \fBstage_updc_filchg\fP API methods calls for an update of a entry in the
