@@ -60,7 +60,8 @@ namespace castor {
     OBJ_TapePool,
     OBJ_TapeRequest,
     OBJ_TpFileCopy,
-    OBJ_StringResponse
+    OBJ_StringResponse,
+    OBJ_EndResponse
   };
     
   /**
