@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.68 2001/10/04 18:01:16 jdurand Exp $
+ * $Id: stage.h,v 1.69 2001/10/29 16:16:56 jdurand Exp $
  */
 
 /*
@@ -285,7 +285,7 @@
 #define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
-#define STG143  "STG143 - %s : %s lifetime on disk exceeds %d second%s - %s\n"
+#define STG143  "STG143 - %s : %s lifetime on disk exceeds %d day%s - %s\n"
 #define STG144  "STG144 - %s : retention period on disk is %d second%s (%s value)\n"
 #define STG145  "STG145 - %s : retention period on disk changed from %d second%s (%s value) to %d second%s (%s value)\n"
 #define STG146  "STG146 - %s : retention period on disk unchanged to %d second%s (%s value)\n"
