@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.208 2003/04/17 08:57:57 jdurand Exp $
+ * $Id: procio.c,v 1.209 2003/05/12 12:40:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.208 $ $Date: 2003/04/17 08:57:57 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.209 $ $Date: 2003/05/12 12:40:26 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -156,10 +156,10 @@ typedef struct _stage_times _stage_times_t;
 /* This macro will check sensible part of the CASTOR HSM union */
 #define HAVE_SENSIBLE_STCP(stcp) (((stcp)->u1.h.xfile[0] != '\0') && ((stcp)->u1.h.server[0] != '\0') && ((stcp)->u1.h.fileid != 0) && ((stcp)->u1.h.fileclass != 0))
 
-extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
-extern char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
-extern char defpoolname_out[CA_MAXPOOLNAMELEN + 1];
-extern char func[16];
+extern char defpoolname[];
+extern char defpoolname_in[];
+extern char defpoolname_out[];
+extern char func[];
 extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
@@ -219,6 +219,7 @@ extern int sendrep _PROTO((int *, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int isvalidpool _PROTO((char *));
+extern int ismetapool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
@@ -236,10 +237,12 @@ extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern char *next_tppool _PROTO((struct fileclass *));
 extern void bestnextpool_out _PROTO((char *, int));
+extern void bestnextpool_from_metapool _PROTO((char *, char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int, int *, struct Cns_filestat *, int));
 extern int export_hsm_option _PROTO((char *));
 extern int have_another_pool_with_export_hsm_option _PROTO((char *));
+extern void update_last_allocation _PROTO((char *));
 
 #ifdef MIN
 #undef MIN
@@ -260,6 +263,8 @@ extern int have_another_pool_with_export_hsm_option _PROTO((char *));
 	(out)->u1.h.fileid = (in)->u1.h.fileid;        \
 	(out)->u1.h.fileclass = (in)->u1.h.fileclass;  \
 	strcpy((out)->u1.h.tppool, (in)->u1.h.tppool); \
+	(out)->uid = (in)->uid;                        \
+	(out)->gid = (in)->gid;                        \
 }
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -580,23 +585,70 @@ void procioreq(req_type, magic, req_data, clienthost)
 				switch (req_type) {
 				case STAGE_IN:
 					if (((openflags & O_RDWR) == O_RDWR) || ((openflags & O_WRONLY) == O_WRONLY)) {
-						bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
-						strcpy(stgreq.poolname,stcp_input[i].poolname);
+						/* Either defpoolname_out is a metapool, either it is not */
+						if (ismetapool(defpoolname_out)) {
+							strcpy(stcp_input[i].poolname,defpoolname_out);
+							strcpy(stgreq.poolname,stcp_input[i].poolname);
+							/* We chose what is the best pool within the ones that have that metapool */
+							bestnextpool_from_metapool(stcp_input[i].poolname,stgreq.poolname,WRITE_MODE);
+							if (strcmp(stcp_input[i].poolname,stgreq.poolname) != 0) {
+								stglogit(func,STG180,stcp_input[i].poolname,stgreq.poolname);
+							}
+							strcpy(stcp_input[i].poolname,stgreq.poolname);
+							/* We do as if user's said explicitely -p metapool */
+							hsmpoolflags[i] = 1;
+						} else {
+							bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
+							strcpy(stgreq.poolname,stcp_input[i].poolname);
+							hsmpoolflags[i] = 0;
+						}
 					} else {
-						strcpy(stcp_input[i].poolname,defpoolname_in);
-						strcpy(stgreq.poolname,stcp_input[i].poolname);
+						if (ismetapool(defpoolname_in)) {
+							strcpy(stcp_input[i].poolname,defpoolname_in);
+							strcpy(stgreq.poolname,stcp_input[i].poolname);
+							/* We chose what is the best pool within the ones that have that metapool */
+							bestnextpool_from_metapool(stcp_input[i].poolname,stgreq.poolname,READ_MODE);
+							if (strcmp(stcp_input[i].poolname,stgreq.poolname) != 0) {
+								stglogit(func,STG180,stcp_input[i].poolname,stgreq.poolname);
+							}
+							strcpy(stcp_input[i].poolname,stgreq.poolname);
+							/* We do as if user's said explicitely -p metapool */
+							hsmpoolflags[i] = 1;
+						} else {
+							strcpy(stcp_input[i].poolname,defpoolname_in);
+							strcpy(stgreq.poolname,stcp_input[i].poolname);
+							hsmpoolflags[i] = 0;
+						}
 					}
 					break;
 				case STAGE_OUT:
-					bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
-					strcpy(stgreq.poolname,stcp_input[i].poolname);
+					/* Either defpoolname_out is a metapool, either it is not */
+					if (ismetapool(defpoolname_out)) {
+						strcpy(stcp_input[i].poolname,defpoolname_out);
+						strcpy(stgreq.poolname,stcp_input[i].poolname);
+						/* We chose what is the best pool within the ones that have that metapool */
+						bestnextpool_from_metapool(stcp_input[i].poolname,stgreq.poolname,WRITE_MODE);
+						if (strcmp(stcp_input[i].poolname,stgreq.poolname) != 0) {
+							stglogit(func,STG180,stcp_input[i].poolname,stgreq.poolname);
+						}
+						strcpy(stcp_input[i].poolname,stgreq.poolname);
+						/* We do as if user's said explicitely -p metapool */
+						hsmpoolflags[i] = 1;
+					} else {
+						bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
+						strcpy(stgreq.poolname,stcp_input[i].poolname);
+						hsmpoolflags[i] = 0;
+					}
 					break;
 				default:
+					hsmpoolflags[i] = 0;
 					break;
 				}
-				hsmpoolflags[i] = 0;
 			} else {
-				if (! (isvalidpool (stcp_input[i].poolname) || strcmp (stcp_input[i].poolname, "NOPOOL") == 0)) {
+				if (! (isvalidpool (stcp_input[i].poolname) ||
+					   ismetapool  (stcp_input[i].poolname) ||
+					   strcmp (stcp_input[i].poolname, "NOPOOL") == 0)
+					) {
 					sendrep (&rpfd, MSG_ERR, STG32, stcp_input[i].poolname);
 					c = EINVAL;
 					goto reply;
@@ -605,6 +657,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 					hsmpoolflags[i] = -1;
 					stcp_input[i].poolname[0] = '\0';
 				} else {
+					if (ismetapool(stcp_input[i].poolname)) {
+						/* We chose what is the best pool within the ones that have that metapool */
+						bestnextpool_from_metapool(stcp_input[i].poolname,stgreq.poolname,(req_type == STAGE_IN) ? READ_MODE : WRITE_MODE);
+						if (strcmp(stcp_input[i].poolname,stgreq.poolname) != 0) {
+							stglogit(func,STG180,stcp_input[i].poolname,stgreq.poolname);
+						}
+						strcpy(stcp_input[i].poolname,stgreq.poolname);
+					}
 					hsmpoolflags[i] = 1;
 				}
 			}
@@ -1025,7 +1085,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-					isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg) || ismetapool (Coptarg)) {
 					strcpy (stgreq.poolname, Coptarg);
 				} else {
 					sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
@@ -1424,6 +1484,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 			poolflag = -1;
 			stgreq.poolname[0] = '\0';
 		} else {
+			if (ismetapool(stgreq.poolname)) {
+				char temppoolname[CA_MAXPOOLNAMELEN + 1];
+				/* We chose what is the best pool within the ones that have that metapool */
+				bestnextpool_from_metapool(stgreq.poolname,temppoolname,(req_type == STAGEIN) ? READ_MODE : WRITE_MODE);
+				if (strcmp(stgreq.poolname,temppoolname) != 0) {
+					stglogit(func,STG180,stgreq.poolname,temppoolname);
+				}
+				strcpy(stgreq.poolname,temppoolname);
+			}
 			poolflag = 1;
 		}
 	}
@@ -2057,6 +2126,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 						 u64tostr(stcp->actual_size,tmpbuf,0),
 						 (float)(stcp->actual_size)/(1024.*1024.),
 						 stcp->nbaccesses);
+				/* When a file is already staged the last allocation timestamp is not automatically */
+				/* changed - so we call explicitely a routine that will do that */
+				update_last_allocation(stcp->ipath);
 			}
 			if (api_out != 0) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 			if (copytape)
@@ -3077,10 +3149,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We check if (euid,egid) will be able to open that file */
 						if (stage_access(euid,egid,R_OK,&hsmstat[ihsmfiles]) != 0) {
 							sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "migrator access", sstrerror(serrno));
-							global_c_stagewrt++;
-							c = (api_out != 0) ? serrno : EINVAL;
-							delreq(stcp,1);
-							goto stagewrt_continue_loop;
+							/* Try to change mode bits to world-readable */
+							hsmstat[ihsmfiles].st_mode |= S_IRUSR|S_IRGRP|S_IROTH;
+							if (rfio_chmod(stcp->ipath,hsmstat[ihsmfiles].st_mode) != 0) {
+								global_c_stagewrt++;
+								c = (api_out != 0) ? serrno : EINVAL;
+								delreq(stcp,1);
+								goto stagewrt_continue_loop;
+							} else {
+								sendrep (&rpfd, MSG_ERR, STG33, stcp->ipath, "Forced world readable-access");
+							}
 						}
 					}
 #endif
@@ -3115,10 +3193,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We check if (euid,egid) will be able to open that file */
 						if (stage_access(euid,egid,R_OK,&hsmstat[ihsmfiles]) != 0) {
 							sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "migrator access", sstrerror(serrno));
-							global_c_stagewrt++;
-							c = (api_out != 0) ? serrno : EINVAL;
-							delreq(stcp,1);
-							goto stagewrt_continue_loop;
+							/* Try to change mode bits to world-readable */
+							hsmstat[ihsmfiles].st_mode |= S_IRUSR|S_IRGRP|S_IROTH;
+							if (rfio_chmod(stcp->ipath,hsmstat[ihsmfiles].st_mode) != 0) {
+								global_c_stagewrt++;
+								c = (api_out != 0) ? serrno : EINVAL;
+								delreq(stcp,1);
+								goto stagewrt_continue_loop;
+							} else {
+								sendrep (&rpfd, MSG_ERR, STG33, stcp->ipath, "Forced world readable-access");
+							}
 						}
 					}
 				}
