@@ -278,7 +278,7 @@ BEGIN
 SELECT SubRequest.id, DiskCopy.id
  INTO SubRequestId, DiskCopyId
  FROM TapeCopy, SubRequest, DiskCopy
- WHERE TapeCopy.id = 6002
+ WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
 UPDATE DiskCopy SET status = diskCopyStatus WHERE id = DiskCopyId;

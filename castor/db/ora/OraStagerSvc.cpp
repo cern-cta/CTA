@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2004/11/26 15:44:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2004/11/29 08:47:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -481,7 +481,7 @@ void castor::db::ora::OraStagerSvc::fileRecalled
     rollback();
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in bestTapeCopyForStream."
+      << "Error caught in fileRecalled."
       << std::endl << e.what();
     throw ex;
   }
