@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.61 $ $Date: 2000/04/13 16:36:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.62 $ $Date: 2000/04/17 16:01:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1071,7 +1071,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 }
 
 int rtcpd_AbortHandler(int sig) {
-    if ( sig == SIGTERM || sig == SIGINT ) {
+    if ( sig == SIGTERM ) {
         AbortFlag = 2;
         proc_cntl.ProcError = RTCP_FAILED;
     } else AbortFlag = 1;
@@ -1411,11 +1411,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     sigact.sa_handler = (void (*)(int))rtcpd_AbortHandler;
     sigaction(SIGTERM,&sigact,NULL);
-    sigaction(SIGINT,&sigact,NULL);
 #else /* _WIN32 */
     signal(SIGPIPE,SIG_IGN);
     signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
-    signal(SIGINT,(void (*)(int))rtcpd_AbortHandler);
 #endif /* _WIN32 */
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
