@@ -4,7 +4,7 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.6');
+INSERT INTO CastorVersion VALUES ('2.0.0.7');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -226,6 +226,7 @@ END;
 CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR2(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR2(2048), diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
+  TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -623,4 +624,36 @@ BEGIN
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;
  updateFsFileOpened(ds, fs, dev, minFree);
+END;
+
+/* PL/SQL method implementing anySegmentsForTape */
+CREATE OR REPLACE PROCEDURE anySegmentsForTape
+(tapeId IN INTEGER, nb OUT INTEGER) AS
+BEGIN
+  SELECT count(*) INTO nb FROM Segment
+  WHERE Segment.tape = tapeId
+    AND Segment.status = 0;
+  IF nb > 0 THEN
+    UPDATE Tape SET status = 3 -- WAITMOUNT
+    WHERE id = tapeId;
+  END IF;
+END;
+
+/* PL/SQL method implementing segmentsForTape */
+CREATE OR REPLACE PROCEDURE segmentsForTape
+(tapeId IN INTEGER, segments OUT castor.Segment_Cur) AS
+  found NUMBER = FALSE;
+BEGIN
+  OPEN segments FOR SELECT Segment.* FROM Segment
+  WHERE Segment.tape = tapeId
+    AND Segment.status = 0; -- UNPROCESSED
+  FOR item in segments LOOP
+    UPDATE Segment SET status = 7 -- SELECTED
+    WHERE id = item.id;
+    found := TRUE;
+  END LOOP;
+  IF found THEN
+    UPDATE Tape SET status = 4 -- MOUNTED
+    WHERE id = tapeId;
+  END IF;
 END;

@@ -775,6 +775,18 @@ namespace castor {
         /// SQL statement object for function bestFileSystemForJob
         oracle::occi::Statement *m_bestFileSystemForJobStatement;
 
+        /// SQL statement for function segmentsForTape
+        static const std::string s_segmentsForTapeStatementString;
+
+        /// SQL statement object for function segmentsForTape
+        oracle::occi::Statement *m_segmentsForTapeStatement;
+
+        /// SQL statement for function anySegmentsForTape
+        static const std::string s_anySegmentsForTapeStatementString;
+
+        /// SQL statement object for function anySegmentsForTape
+        oracle::occi::Statement *m_anySegmentsForTapeStatement;
+
       }; // end of class OraStagerSvc
 
     } // end of namespace ora
