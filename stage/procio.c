@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.190 2002/09/12 07:23:34 jdurand Exp $
+ * $Id: procio.c,v 1.191 2002/09/12 14:29:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.190 $ $Date: 2002/09/12 07:23:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.191 $ $Date: 2002/09/12 14:29:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3059,7 +3059,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				strncpy (stcp->user, pw->pw_name, CA_MAXUSRNAMELEN);
 				stcp->user[CA_MAXUSRNAMELEN] = '\0';
 			}
-			stcp->size = st.st_size;
+			if (stcp->size <= 0) stcp->size = st.st_size;
 			stcp->actual_size = st.st_size;
 			stcp->c_time = st.st_mtime;
 			stcp->a_time = st.st_atime;
