@@ -1,14 +1,14 @@
 /*
- * $Id: rfcat.c,v 1.1 2001/10/04 13:04:03 baud Exp $
+ * $Id: rfcat.c,v 1.2 2002/02/11 13:06:01 baud Exp $
  */
 
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.1 $ $Date: 2001/10/04 13:04:03 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.2 $ $Date: 2002/02/11 13:06:01 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -51,7 +51,13 @@ char *inpfile;
 	int c;
 	int rc;
 	FILE *s;
+	int v;
 
+
+	/* Streaming opening is always better */
+	v = RFIO_STREAM;
+	rfiosetopt (RFIO_READOPT, &v, 4); 
+	
 	if (strcmp (inpfile, "-") == 0)
 		s  = stdin;
 	else if ((s = rfio_fopen (inpfile, "r")) == NULL) {
