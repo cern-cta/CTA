@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.37 2003/01/09 09:09:30 jdurand Exp $
+ * $Id: stager_castor.c,v 1.38 2003/04/17 07:56:08 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.37 $ $Date: 2003/01/09 09:09:30 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.38 $ $Date: 2003/04/17 07:56:08 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -128,7 +128,7 @@ char vsn[CA_MAXVIDLEN+1];           /* Vsn returned by vmgr_gettape or vmgr_quer
 char dgn[CA_MAXDENLEN+1];           /* Dgn returned by vmgr_gettape or vmgr_querytape */
 char aden[CA_MAXDENLEN+1];          /* Aden returned by vmgr_gettape or vmgr_querytape */
 char model[CA_MAXMODELLEN+1];       /* Model returned by vmgr_gettape or vmgr_querytape */
-char lbltype[3];                    /* Lbltype returned by vmgr_gettape or vmgr_querytape */
+char lbltype[CA_MAXLBLTYPLEN+1];    /* Lbltype returned by vmgr_gettape or vmgr_querytape */
 int fseq = -1;                      /* Fseq returned by vmgr_gettape or vmgr_querytape */
 char tmpbuf[21];                    /* Printout of u_signed64 quantity temp. buffer */
 int nrtcpcreqs = 0;                 /* Number of rtcpcreq structures in circular list */
