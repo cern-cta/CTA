@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.14 $ $Date: 2003/09/24 08:07:38 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.15 $ $Date: 2003/10/31 12:39:56 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -16,12 +16,14 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.14 $ $Date: 2003/
 #include <ws2tcpip.h>
 #include <ws_errmsg.h>
 #else
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/param.h>
 #endif  /* WIN32 */
+#include <ctype.h>
 #include <string.h>
 #if defined(SOLARIS)
 #include <sys/sockio.h>
@@ -88,7 +90,6 @@ char *host_name ;
     int n ;          
     char    *endp;
     struct  sockaddr_in     *sp;
-    long binaddr ;
 #endif  /* WIN32 */
     unsigned int netw ;
     union adr {
