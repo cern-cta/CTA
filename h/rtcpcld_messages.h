@@ -19,6 +19,8 @@
 
 #define RTCPCLD_LEVEL(X) (rtcpcldMessages[(X)].severity)
 
+#define RTCPCLD_LOG_MSG(X)   RTCPCLD_LEVEL(X),(X)
+
 enum RtcpcldMessageNo {
     RTCPCLD_MSG_STARTUP,
     RTCPCLD_MSG_INITNW, 
