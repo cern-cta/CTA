@@ -1,3 +1,4 @@
+etc/sysconfig/stagerJob
 usr/bin/rmcreatdirs.sh
 usr/bin/stagerJob
 usr/bin/stagerJob.sh
