@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.20 $ $Date: 2000/03/13 11:38:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.21 $ $Date: 2000/03/13 14:11:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -72,9 +72,11 @@ int rtcpd_init_stgupdc() {
     char *errbuf;
     int errbufsiz = CA_MAXLINELEN + 1;
 
+#if !defined(USE_STAGECMD)
     Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
     if ( errbuf == NULL ) return(-1);
     stage_seterrbuf(errbuf,errbufsiz);
+#endif /* !USE_STAGECMD */
     return(0); 
 }
 
@@ -82,17 +84,23 @@ char *rtcpd_stgupdcErrMsg() {
     char *errbuf;
     int errbufsiz = CA_MAXLINELEN + 1;
 
+#if !defined(USE_STAGECMD)
     Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
     if ( errbuf == NULL ) return(Unkn_errorstr);
     return(errbuf);
+#else /* !USE_STAGECMD */
+    return(Unkn_errorstr);
+#endif /* !USE_STAGECMD */
 }
 
 void rtcpd_ResetstgupdcError() {
     char *errbuf;
     int errbufsiz = CA_MAXLINELEN+1;
 
+#if !defined(USE_STAGECMD)
     Cglobals_get(&stgupdc_key,(void **)&errbuf,errbufsiz);
     if ( errbuf != NULL ) *errbuf = '\0';
+#endif /* !USE_STAGECMD */
     return;
 }
 
@@ -151,6 +159,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
                          STG_ERRTXT);
+                serrno = save_serrno;
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
                     return(-1);
             }
@@ -183,6 +192,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
                          STG_ERRTXT);
+                serrno = save_serrno;
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
                     return(-1);
             }
