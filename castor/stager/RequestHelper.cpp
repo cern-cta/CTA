@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/19 10:48:41 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/19 13:38:15 $ $Author: bcouturi $
  *
  * 
  *
@@ -52,7 +52,9 @@ void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
     m_request->setSvcClassName(std::string(opts->service_class));
   } else {
     char *svc = (char *)getenv(castor::stager::SVCCLASS_ENV);
-    m_request->setSvcClassName(std::string(svc));
+    if (0 != svc) {
+      m_request->setSvcClassName(std::string(svc));
+    }
   }
 }
 
