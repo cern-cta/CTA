@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.12 2002/06/10 11:59:00 bcouturi Exp $
+.\" $Id: Castor_limits.man,v 1.13 2002/12/01 07:21:52 baud Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2002/06/10 11:59:00 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2002/12/01 07:21:52 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -123,7 +123,7 @@ Default value: 15
 .B CA_MAXRBTNAMELEN 
 maximum length for a robot name
 .br
-Default value: 13
+Default value: 17
 .TP
 .B CA_MAXRECFMLEN
 maximum length for a record format
