@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.11 $ $Date: 2000/03/31 07:45:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.12 $ $Date: 2000/03/31 08:47:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -123,7 +123,7 @@ int flags;
 	marshall_LONG (sbp, Qfirst);
 	marshall_LONG (sbp, Qlast);
 	marshall_WORD (sbp, filstat);
-	if (fid) {
+	if (fid && *fid) {
 		q = fid;
 		if ((n = strlen (fid) - 17) > 0) q += n;
 		strcpy (actual_fid, q);
