@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Client.hpp"
 #include "osdep.h"
@@ -118,5 +119,12 @@ u_signed64 castor::rh::Client::id() const {
 //------------------------------------------------------------------------------
 int castor::rh::Client::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::Client::clone() {
+  return this;
 }
 

@@ -119,6 +119,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_clone(castor::rh::FileQueryResponse* instance,
+                                  castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileQueryResponse_fileName
   //----------------------------------------------------------------------------
   int Crh_FileQueryResponse_fileName(castor::rh::FileQueryResponse* instance, const char** var) {

@@ -107,6 +107,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapePool_clone
+  //----------------------------------------------------------------------------
+  int Cstager_TapePool_clone(castor::stager::TapePool* instance,
+                             castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapePool_name
   //----------------------------------------------------------------------------
   int Cstager_TapePool_name(castor::stager::TapePool* instance, const char** var) {

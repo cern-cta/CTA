@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -135,5 +136,12 @@ u_signed64 castor::stager::SvcClass::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::SvcClass::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::SvcClass::clone() {
+  return this;
 }
 

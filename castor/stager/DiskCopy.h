@@ -94,6 +94,12 @@ int Cstager_DiskCopy_type(struct Cstager_DiskCopy_t* instance,
                           int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_DiskCopy_clone(struct Cstager_DiskCopy_t* instance,
+                           struct C_IObject_t* ret);
+
+/**
  * Get the value of path
  * path of this copy in the filesystem
  */

@@ -276,4 +276,10 @@ int Cstager_StagePutDoneRequest_id(struct Cstager_StagePutDoneRequest_t* instanc
 int Cstager_StagePutDoneRequest_type(struct Cstager_StagePutDoneRequest_t* instance,
                                      int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StagePutDoneRequest_clone(struct Cstager_StagePutDoneRequest_t* instance,
+                                      struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEPUTDONEREQUEST_H

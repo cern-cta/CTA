@@ -256,4 +256,10 @@ int Cstager_StageFindRequestRequest_id(struct Cstager_StageFindRequestRequest_t*
 int Cstager_StageFindRequestRequest_type(struct Cstager_StageFindRequestRequest_t* instance,
                                          int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageFindRequestRequest_clone(struct Cstager_StageFindRequestRequest_t* instance,
+                                          struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEFINDREQUESTREQUEST_H

@@ -349,4 +349,13 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_clone
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_clone(castor::stager::StagePutNextRequest* instance,
+                                        castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
 } // End of extern "C"

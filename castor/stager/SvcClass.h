@@ -94,6 +94,12 @@ int Cstager_SvcClass_type(struct Cstager_SvcClass_t* instance,
                           int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_SvcClass_clone(struct Cstager_SvcClass_t* instance,
+                           struct C_IObject_t* ret);
+
+/**
  * Get the value of policy
  */
 int Cstager_SvcClass_policy(struct Cstager_SvcClass_t* instance, const char** var);

@@ -118,4 +118,13 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_EndResponse_clone(castor::rh::EndResponse* instance,
+                            castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
 } // End of extern "C"

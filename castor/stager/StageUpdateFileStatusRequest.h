@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -275,5 +275,11 @@ int Cstager_StageUpdateFileStatusRequest_id(struct Cstager_StageUpdateFileStatus
  */
 int Cstager_StageUpdateFileStatusRequest_type(struct Cstager_StageUpdateFileStatusRequest_t* instance,
                                               int* ret);
+
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageUpdateFileStatusRequest_clone(struct Cstager_StageUpdateFileStatusRequest_t* instance,
+                                               struct C_IObject_t* ret);
 
 #endif // CASTOR_STAGER_STAGEUPDATEFILESTATUSREQUEST_H

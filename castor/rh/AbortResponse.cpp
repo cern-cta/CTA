@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/AbortResponse.hpp"
 #include "castor/rh/Response.hpp"
@@ -102,5 +103,12 @@ u_signed64 castor::rh::AbortResponse::id() const {
 //------------------------------------------------------------------------------
 int castor::rh::AbortResponse::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::AbortResponse::clone() {
+  return this;
 }
 

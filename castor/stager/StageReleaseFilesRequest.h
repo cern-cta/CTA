@@ -276,4 +276,10 @@ int Cstager_StageReleaseFilesRequest_id(struct Cstager_StageReleaseFilesRequest_
 int Cstager_StageReleaseFilesRequest_type(struct Cstager_StageReleaseFilesRequest_t* instance,
                                           int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageReleaseFilesRequest_clone(struct Cstager_StageReleaseFilesRequest_t* instance,
+                                           struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGERELEASEFILESREQUEST_H

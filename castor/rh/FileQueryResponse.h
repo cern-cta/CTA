@@ -102,6 +102,12 @@ int Crh_FileQueryResponse_type(struct Crh_FileQueryResponse_t* instance,
                                int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_FileQueryResponse_clone(struct Crh_FileQueryResponse_t* instance,
+                                struct C_IObject_t* ret);
+
+/**
  * Get the value of fileName
  * Name of the file
  */

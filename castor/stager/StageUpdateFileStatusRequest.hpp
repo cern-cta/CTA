@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
+  class IObject;
 
   namespace stager {
 
@@ -97,6 +98,11 @@ namespace castor {
        * Gets the type of the object
        */
       virtual int type() const;
+
+      /**
+       * virtual method to clone any object
+       */
+      virtual castor::IObject* clone();
 
       /*********************************/
       /* End of IObject abstract class */

@@ -105,6 +105,11 @@ namespace castor {
        */
       virtual int type() const;
 
+      /**
+       * virtual method to clone any object
+       */
+      virtual castor::IObject* clone();
+
       /*********************************/
       /* End of IObject abstract class */
       /*********************************/

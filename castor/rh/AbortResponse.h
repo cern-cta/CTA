@@ -102,6 +102,12 @@ int Crh_AbortResponse_type(struct Crh_AbortResponse_t* instance,
                            int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_AbortResponse_clone(struct Crh_AbortResponse_t* instance,
+                            struct C_IObject_t* ret);
+
+/**
  * Get the value of aborted
  * Whether the abort took place or not
  */

@@ -102,4 +102,10 @@ int Crh_EndResponse_id(struct Crh_EndResponse_t* instance,
 int Crh_EndResponse_type(struct Crh_EndResponse_t* instance,
                          int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Crh_EndResponse_clone(struct Crh_EndResponse_t* instance,
+                          struct C_IObject_t* ret);
+
 #endif // CASTOR_RH_ENDRESPONSE_H

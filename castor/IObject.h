@@ -61,6 +61,12 @@ int C_IObject_type(struct C_IObject_t* instance,
                    int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int C_IObject_clone(struct C_IObject_t* instance,
+                    struct C_IObject_t* ret);
+
+/**
  * Outputs this object in a human readable format
  */
 int C_IObject_print(struct C_IObject_t* instance);

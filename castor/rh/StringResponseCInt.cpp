@@ -119,6 +119,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_StringResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_StringResponse_clone(castor::rh::StringResponse* instance,
+                               castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_StringResponse_content
   //----------------------------------------------------------------------------
   int Crh_StringResponse_content(castor::rh::StringResponse* instance, const char** var) {

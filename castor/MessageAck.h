@@ -91,6 +91,12 @@ int C_MessageAck_type(struct C_MessageAck_t* instance,
                       int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int C_MessageAck_clone(struct C_MessageAck_t* instance,
+                       struct C_IObject_t* ret);
+
+/**
  * Get the value of status
  */
 int C_MessageAck_status(struct C_MessageAck_t* instance, int* var);

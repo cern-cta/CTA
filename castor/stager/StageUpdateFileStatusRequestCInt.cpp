@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/22 14:47:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -360,6 +360,15 @@ extern "C" {
   int Cstager_StageUpdateFileStatusRequest_type(castor::stager::StageUpdateFileStatusRequest* instance,
                                                 int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_clone
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_clone(castor::stager::StageUpdateFileStatusRequest* instance,
+                                                 castor::IObject** ret) {
+    *ret = instance->clone();
     return 0;
   }
 

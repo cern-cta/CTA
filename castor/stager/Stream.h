@@ -95,6 +95,12 @@ int Cstager_Stream_type(struct Cstager_Stream_t* instance,
                         int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_Stream_clone(struct Cstager_Stream_t* instance,
+                         struct C_IObject_t* ret);
+
+/**
  * Get the value of initialSizeToTransfer
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */

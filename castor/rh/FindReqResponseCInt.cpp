@@ -119,6 +119,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_FindReqResponse_clone(castor::rh::FindReqResponse* instance,
+                                castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FindReqResponse_reqId
   //----------------------------------------------------------------------------
   int Crh_FindReqResponse_reqId(castor::rh::FindReqResponse* instance, const char** var) {

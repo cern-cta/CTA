@@ -108,6 +108,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Tape_clone
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_clone(castor::stager::Tape* instance,
+                         castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Tape_vid
   //----------------------------------------------------------------------------
   int Cstager_Tape_vid(castor::stager::Tape* instance, const char** var) {

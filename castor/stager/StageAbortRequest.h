@@ -276,4 +276,10 @@ int Cstager_StageAbortRequest_id(struct Cstager_StageAbortRequest_t* instance,
 int Cstager_StageAbortRequest_type(struct Cstager_StageAbortRequest_t* instance,
                                    int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageAbortRequest_clone(struct Cstager_StageAbortRequest_t* instance,
+                                    struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEABORTREQUEST_H

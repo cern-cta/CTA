@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
@@ -100,5 +101,12 @@ u_signed64 castor::stager::StageRmRequest::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::StageRmRequest::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::StageRmRequest::clone() {
+  return this;
 }
 

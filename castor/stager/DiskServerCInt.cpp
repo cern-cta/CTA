@@ -107,6 +107,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskServer_clone
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_clone(castor::stager::DiskServer* instance,
+                               castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskServer_name
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_name(castor::stager::DiskServer* instance, const char** var) {

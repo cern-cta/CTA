@@ -107,6 +107,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_clone
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_clone(castor::stager::SvcClass* instance,
+                             castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_policy
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_policy(castor::stager::SvcClass* instance, const char** var) {

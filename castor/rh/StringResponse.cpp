@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/StringResponse.hpp"
 #include "osdep.h"
@@ -90,5 +91,12 @@ u_signed64 castor::rh::StringResponse::id() const {
 //------------------------------------------------------------------------------
 int castor::rh::StringResponse::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::StringResponse::clone() {
+  return this;
 }
 

@@ -104,6 +104,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // C_MessageAck_clone
+  //----------------------------------------------------------------------------
+  int C_MessageAck_clone(castor::MessageAck* instance,
+                         castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // C_MessageAck_status
   //----------------------------------------------------------------------------
   int C_MessageAck_status(castor::MessageAck* instance, bool* var) {

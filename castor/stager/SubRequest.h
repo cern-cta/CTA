@@ -95,6 +95,12 @@ int Cstager_SubRequest_type(struct Cstager_SubRequest_t* instance,
                             int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_SubRequest_clone(struct Cstager_SubRequest_t* instance,
+                             struct C_IObject_t* ret);
+
+/**
  * Get the value of retryCounter
  */
 int Cstager_SubRequest_retryCounter(struct Cstager_SubRequest_t* instance, unsigned int* var);

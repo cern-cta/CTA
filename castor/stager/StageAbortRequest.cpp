@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
@@ -100,5 +101,12 @@ u_signed64 castor::stager::StageAbortRequest::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::StageAbortRequest::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::StageAbortRequest::clone() {
+  return this;
 }
 

@@ -107,6 +107,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopy_clone
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopy_clone(castor::stager::DiskCopy* instance,
+                             castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopy_path
   //----------------------------------------------------------------------------
   int Cstager_DiskCopy_path(castor::stager::DiskCopy* instance, const char** var) {

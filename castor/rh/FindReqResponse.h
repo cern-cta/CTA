@@ -102,6 +102,12 @@ int Crh_FindReqResponse_type(struct Crh_FindReqResponse_t* instance,
                              int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_FindReqResponse_clone(struct Crh_FindReqResponse_t* instance,
+                              struct C_IObject_t* ret);
+
+/**
  * Get the value of reqId
  * The Cuuid identifying the request, given as a human readable string
  */

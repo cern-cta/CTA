@@ -109,6 +109,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Stream_clone
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_clone(castor::stager::Stream* instance,
+                           castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Stream_initialSizeToTransfer
   //----------------------------------------------------------------------------
   int Cstager_Stream_initialSizeToTransfer(castor::stager::Stream* instance, u_signed64* var) {

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/ObjectSet.hpp"
 #include "osdep.h"
@@ -102,5 +103,12 @@ u_signed64 castor::MessageAck::id() const {
 //------------------------------------------------------------------------------
 int castor::MessageAck::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::MessageAck::clone() {
+  return this;
 }
 

@@ -276,4 +276,10 @@ int Cstager_StagePrepareToGetRequest_id(struct Cstager_StagePrepareToGetRequest_
 int Cstager_StagePrepareToGetRequest_type(struct Cstager_StagePrepareToGetRequest_t* instance,
                                           int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StagePrepareToGetRequest_clone(struct Cstager_StagePrepareToGetRequest_t* instance,
+                                           struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEPREPARETOGETREQUEST_H

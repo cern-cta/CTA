@@ -94,6 +94,12 @@ int Cstager_FileSystem_type(struct Cstager_FileSystem_t* instance,
                             int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_FileSystem_clone(struct Cstager_FileSystem_t* instance,
+                             struct C_IObject_t* ret);
+
+/**
  * Get the value of free
  * Free space on the filesystem
  */

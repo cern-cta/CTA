@@ -363,4 +363,13 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Cstager_StageRmRequest_clone
+  //----------------------------------------------------------------------------
+  int Cstager_StageRmRequest_clone(castor::stager::StageRmRequest* instance,
+                                   castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
 } // End of extern "C"

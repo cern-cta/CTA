@@ -109,6 +109,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_CastorFile_clone
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_clone(castor::stager::CastorFile* instance,
+                               castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_CastorFile_fileId
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_fileId(castor::stager::CastorFile* instance, u_signed64* var) {

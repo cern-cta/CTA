@@ -92,6 +92,12 @@ int Cstager_FileClass_type(struct Cstager_FileClass_t* instance,
                            int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_FileClass_clone(struct Cstager_FileClass_t* instance,
+                            struct C_IObject_t* ret);
+
+/**
  * Get the value of name
  * The name of the FileClass
  */

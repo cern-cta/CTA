@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -131,5 +132,12 @@ u_signed64 castor::stager::TapePool::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::TapePool::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::TapePool::clone() {
+  return this;
 }
 

@@ -271,4 +271,10 @@ int Cstager_StageGetNextRequest_id(struct Cstager_StageGetNextRequest_t* instanc
 int Cstager_StageGetNextRequest_type(struct Cstager_StageGetNextRequest_t* instance,
                                      int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageGetNextRequest_clone(struct Cstager_StageGetNextRequest_t* instance,
+                                      struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEGETNEXTREQUEST_H

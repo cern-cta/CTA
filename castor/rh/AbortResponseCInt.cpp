@@ -119,6 +119,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_AbortResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_AbortResponse_clone(castor::rh::AbortResponse* instance,
+                              castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_AbortResponse_aborted
   //----------------------------------------------------------------------------
   int Crh_AbortResponse_aborted(castor::rh::AbortResponse* instance, bool* var) {

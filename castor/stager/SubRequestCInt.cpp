@@ -109,6 +109,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_clone
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_clone(castor::stager::SubRequest* instance,
+                               castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_retryCounter
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_retryCounter(castor::stager::SubRequest* instance, unsigned int* var) {

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/FindReqResponse.hpp"
 #include "castor/rh/Response.hpp"
@@ -102,5 +103,12 @@ u_signed64 castor::rh::FindReqResponse::id() const {
 //------------------------------------------------------------------------------
 int castor::rh::FindReqResponse::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::FindReqResponse::clone() {
+  return this;
 }
 

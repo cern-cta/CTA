@@ -102,6 +102,12 @@ int Crh_FileResponse_type(struct Crh_FileResponse_t* instance,
                           int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_FileResponse_clone(struct Crh_FileResponse_t* instance,
+                           struct C_IObject_t* ret);
+
+/**
  * Get the value of status
  * The status a the file we are considering
  */

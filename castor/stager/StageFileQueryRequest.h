@@ -256,4 +256,10 @@ int Cstager_StageFileQueryRequest_id(struct Cstager_StageFileQueryRequest_t* ins
 int Cstager_StageFileQueryRequest_type(struct Cstager_StageFileQueryRequest_t* instance,
                                        int* ret);
 
+/**
+ * virtual method to clone any object
+ */
+int Cstager_StageFileQueryRequest_clone(struct Cstager_StageFileQueryRequest_t* instance,
+                                        struct C_IObject_t* ret);
+
 #endif // CASTOR_STAGER_STAGEFILEQUERYREQUEST_H

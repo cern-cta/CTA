@@ -97,6 +97,12 @@ int Cstager_Segment_type(struct Cstager_Segment_t* instance,
                          int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_Segment_clone(struct Cstager_Segment_t* instance,
+                          struct C_IObject_t* ret);
+
+/**
  * Get the value of blockid
  */
 int Cstager_Segment_blockid(struct Cstager_Segment_t* instance, const unsigned char** var);

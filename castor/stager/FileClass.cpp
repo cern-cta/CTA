@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "osdep.h"
@@ -104,5 +105,12 @@ u_signed64 castor::stager::FileClass::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::FileClass::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::FileClass::clone() {
+  return this;
 }
 

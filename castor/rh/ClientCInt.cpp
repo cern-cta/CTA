@@ -160,6 +160,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_Client_clone
+  //----------------------------------------------------------------------------
+  int Crh_Client_clone(castor::rh::Client* instance,
+                       castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_Client_ipAddress
   //----------------------------------------------------------------------------
   int Crh_Client_ipAddress(castor::rh::Client* instance, unsigned long* var) {

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
@@ -141,5 +142,12 @@ u_signed64 castor::stager::Tape::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::Tape::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::Tape::clone() {
+  return this;
 }
 

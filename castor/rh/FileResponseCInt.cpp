@@ -119,6 +119,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_clone(castor::rh::FileResponse* instance,
+                             castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileResponse_status
   //----------------------------------------------------------------------------
   int Crh_FileResponse_status(castor::rh::FileResponse* instance, unsigned int* var) {

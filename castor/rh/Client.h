@@ -132,6 +132,12 @@ int Crh_Client_type(struct Crh_Client_t* instance,
                     int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_Client_clone(struct Crh_Client_t* instance,
+                     struct C_IObject_t* ret);
+
+/**
  * Get the value of ipAddress
  * The address of the machine where the client is running
  */

@@ -95,6 +95,12 @@ int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
                             int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_CastorFile_clone(struct Cstager_CastorFile_t* instance,
+                             struct C_IObject_t* ret);
+
+/**
  * Get the value of fileId
  * The id of this castor file. This identifies it uniquely
  */

@@ -108,6 +108,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_clone
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_clone(castor::stager::FileSystem* instance,
+                               castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_free
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_free(castor::stager::FileSystem* instance, u_signed64* var) {

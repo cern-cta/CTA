@@ -95,6 +95,12 @@ int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
                           int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_TapeCopy_clone(struct Cstager_TapeCopy_t* instance,
+                           struct C_IObject_t* ret);
+
+/**
  * Get the value of copyNb
  * The copy number allows to identify the different copies on tape of a single file
  */

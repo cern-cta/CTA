@@ -107,6 +107,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Segment_clone
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_clone(castor::stager::Segment* instance,
+                            castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Segment_blockid
   //----------------------------------------------------------------------------
   int Cstager_Segment_blockid(castor::stager::Segment* instance, const unsigned char** var) {

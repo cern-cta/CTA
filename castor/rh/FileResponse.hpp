@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
+  class IObject;
 
   namespace rh {
 
@@ -97,6 +98,11 @@ namespace castor {
        * Gets the type of the object
        */
       virtual int type() const;
+
+      /**
+       * virtual method to clone any object
+       */
+      virtual castor::IObject* clone();
 
       /*********************************/
       /* End of IObject abstract class */

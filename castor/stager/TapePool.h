@@ -93,6 +93,12 @@ int Cstager_TapePool_type(struct Cstager_TapePool_t* instance,
                           int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_TapePool_clone(struct Cstager_TapePool_t* instance,
+                           struct C_IObject_t* ret);
+
+/**
  * Get the value of name
  * Name of this pool
  */

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageUpdateNextRequest.hpp"
@@ -100,5 +101,12 @@ u_signed64 castor::stager::StageUpdateNextRequest::id() const {
 //------------------------------------------------------------------------------
 int castor::stager::StageUpdateNextRequest::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::StageUpdateNextRequest::clone() {
+  return this;
 }
 

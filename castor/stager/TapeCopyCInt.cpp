@@ -109,6 +109,15 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_clone
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_clone(castor::stager::TapeCopy* instance,
+                             castor::IObject** ret) {
+    *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopy_copyNb
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_copyNb(castor::stager::TapeCopy* instance, unsigned int* var) {

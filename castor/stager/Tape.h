@@ -96,6 +96,12 @@ int Cstager_Tape_type(struct Cstager_Tape_t* instance,
                       int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Cstager_Tape_clone(struct Cstager_Tape_t* instance,
+                       struct C_IObject_t* ret);
+
+/**
  * Get the value of vid
  * Tape visual identifier
  */

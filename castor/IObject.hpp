@@ -67,6 +67,11 @@ namespace castor {
     virtual int type() const = 0;
 
     /**
+     * virtual method to clone any object
+     */
+    virtual IObject* clone() = 0;
+
+    /**
      * Outputs this object in a human readable format
      * @param stream The stream where to print this object
      * @param indent The indentation to use

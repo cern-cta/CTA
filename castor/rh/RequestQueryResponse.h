@@ -102,6 +102,12 @@ int Crh_RequestQueryResponse_type(struct Crh_RequestQueryResponse_t* instance,
                                   int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_RequestQueryResponse_clone(struct Crh_RequestQueryResponse_t* instance,
+                                   struct C_IObject_t* ret);
+
+/**
  * Get the value of reqId
  * The Cuuid identifying the request given as a human readable string
  */

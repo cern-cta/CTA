@@ -102,6 +102,12 @@ int Crh_StringResponse_type(struct Crh_StringResponse_t* instance,
                             int* ret);
 
 /**
+ * virtual method to clone any object
+ */
+int Crh_StringResponse_clone(struct Crh_StringResponse_t* instance,
+                             struct C_IObject_t* ret);
+
+/**
  * Get the value of content
  * Content of the response
  */
