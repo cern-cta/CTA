@@ -1,8 +1,11 @@
 /*
- * $Id: socket_timeout.c,v 1.3 1999/07/21 13:59:23 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.4 1999/10/12 16:48:07 jdurand Exp $
  *
  * $Log: socket_timeout.c,v $
- * Revision 1.3  1999/07/21 13:59:23  jdurand
+ * Revision 1.4  1999/10/12 16:48:07  jdurand
+ * *** empty log message ***
+ *
+ * Revision 1.3  1999-07-21 15:59:23+02  jdurand
  * For old AIX systems, fd_set is now known by including <sys/time.h>. So I put
  * it as an additional flag in Imakefile, used in Cpool.c and socket_timeout.c
  *
@@ -100,9 +103,10 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
       nleft = n;
       /* EOF */
       break;
+    } else {
+      nleft -= nread;
+      ptr   += nread;
     }
-    nleft -= nread;
-    ptr   += nread;
   }
   /* Restore previous handlers */
   _netsignal(SIGPIPE, sigpipe);
@@ -158,9 +162,10 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
       }
       /* We continue the loop (send was just interrupted) */
       nwritten = 0;
+    } else {
+      nleft -= nwritten;
+      ptr   += nwritten;
     }
-    nleft -= nwritten;
-    ptr   += nwritten;
   }
   /* Restore previous handlers */
   _netsignal(SIGPIPE, sigpipe);

@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.7 1999/10/08 16:58:23 jdurand Exp $
+ * $Id: Cpool.c,v 1.8 1999/10/12 16:48:04 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -33,7 +33,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.7 $ $Date: 1999/10/08 16:58:23 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.8 $ $Date: 1999/10/12 16:48:04 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -139,8 +139,13 @@ void     *_Cpool_starter(void *);
 #ifndef _WIN32
 size_t   _Cpool_writen(int, void *, size_t);
 size_t   _Cpool_readn(int, void *, size_t);
+#ifdef CPOOL_DEBUG
+size_t   _Cpool_writen_timeout(char *, int, int, void *, size_t, int);
+size_t   _Cpool_readn_timeout(char *, int, int, void *, size_t, int);
+#else
 size_t   _Cpool_writen_timeout(int, void *, size_t, int);
 size_t   _Cpool_readn_timeout(int, void *, size_t, int);
+#endif
 void     _Cpool_alarm(int);
 Sigfunc *_Cpool_signal(int, Sigfunc *);
 #endif /* _WIN32 */
@@ -242,6 +247,14 @@ CTHREAD_DECL Cpool_create(nbreq,nbget)
     /* (on unix only, this is to prevent zombies)        */
     pid = getpid();
     
+    /* We further more don't want to die in case of SIGCHLD */
+    /* or SIGALRM (which is our private signal for timeout) */
+    /* 
+       _Cpool_signal(SIGCHLD, SIG_IGN);
+       _Cpool_signal(SIGPIPE, SIG_IGN);
+       _Cpool_signal(SIGALRM, SIG_IGN);
+    */
+
     /* We prepare the list of fd's to close */
     if ((to_close = malloc(2 * nbreq * sizeof(int))) == NULL) {
       Cthread_mutex_unlock(&Cpool);
@@ -507,13 +520,20 @@ void *_Cpool_starter(arg)
     _cpool_multi_process_again:
       sleep_flag = 0;
       while (1) {
-        if (_Cpool_writen_timeout(c_to_p[1],&ready,sizeof(int),_CPOOL_STARTER_TIMEOUT) != 
+        if (_Cpool_writen_timeout(
+#ifdef CPOOL_DEBUG
+                                  __FILE__,__LINE__,
+#endif
+                                  c_to_p[1],&ready,sizeof(int),_CPOOL_STARTER_TIMEOUT) != 
             sizeof(int)) {
 #ifdef CPOOL_DEBUG
           /* Cthread_mutex_lock(&lock_cpool_debug); */
-          if (Cpool_debug != 0)
-            log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : error No %d\n",
-                _Cpool_self(),_Cthread_self(),errno);
+          if (Cpool_debug != 0) {
+            log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : serrno No %d (%s)\n",
+                _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
+            log(LOG_INFO,"[Cpool  [%2d][%2d]] . bis repetita .  : serrno No %d (%s)\n",
+                _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
+          }
           /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
           if (serrno == SETIMEDOUT) {
@@ -522,14 +542,21 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
             /* Cthread_mutex_lock(&lock_cpool_debug); */
             if (Cpool_debug != 0)
-              log(LOG_INFO,"[Cpool  [%2d][%2d]] timeout : kill(%d,0)\n",_Cpool_self(),_Cthread_self(),ppid);
+              log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : kill(%d,0)\n",
+                  _Cpool_self(),_Cthread_self(),ppid);
             /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-            if (kill(ppid,0))
+            if (kill(ppid,0) != 0) {
               /* Nope... */
               return(NULL);
+            }
             continue;
           } else {
+#ifdef CPOOL_DEBUG
+            if (Cpool_debug != 0)
+              log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : serrno (%d) != SETIMEDOUT (%d). End of this process.\n",
+                  _Cpool_self(),_Cthread_self(),serrno,SETIMEDOUT);
+#endif
             /* Error */
             return(NULL);
           }
@@ -547,12 +574,19 @@ void *_Cpool_starter(arg)
       /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
       while (1) {
-        if (_Cpool_readn_timeout(p_to_c[0],&routine,sizeof(void *),_CPOOL_STARTER_TIMEOUT) !=
+        if (_Cpool_readn_timeout(
+#ifdef CPOOL_DEBUG
+                                 __FILE__,__LINE__,
+#endif
+                                 p_to_c[0],&routine,sizeof(void *),_CPOOL_STARTER_TIMEOUT) !=
             sizeof(void *)) {
 #ifdef CPOOL_DEBUG
           /* Cthread_mutex_lock(&lock_cpool_debug); */
           if (Cpool_debug != 0)
-            log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : error No %d\n",_Cpool_self(),_Cthread_self(),errno);
+            log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : serrno No %d (%s)\n",
+                _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
+            log(LOG_INFO,"[Cpool  [%2d][%2d]] . bis repetita .  : serrno No %d (%s)\n",
+                _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
           /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
           if (serrno == SETIMEDOUT) {
@@ -561,14 +595,20 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
             /* Cthread_mutex_lock(&lock_cpool_debug); */
             if (Cpool_debug != 0)
-              log(LOG_INFO,"[Cpool  [%2d][%2d]] timeout : kill(%d,0)\n",_Cpool_self(),_Cthread_self(),ppid);
+              log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : kill(%d,0)\n",_Cpool_self(),_Cthread_self(),ppid);
             /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-            if (kill(ppid,0))
+            if (kill(ppid,0) != 0) {
               /* Nope... */
               return(NULL);
+            }
             continue;
           } else {
+#ifdef CPOOL_DEBUG
+            if (Cpool_debug != 0)
+              log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : serrno (%d) != SETIMEDOUT (%d). End of this process.\n",
+                  _Cpool_self(),_Cthread_self(),serrno,SETIMEDOUT);
+#endif
             /* Error */
             return(NULL);
           }
@@ -605,13 +645,21 @@ void *_Cpool_starter(arg)
       /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
       /* In a non-thread environment we read the argument length and content */
-      if (_Cpool_readn_timeout(p_to_c[0],&thislength,sizeof(size_t),_CPOOL_STARTER_TIMEOUT) != 
+      if (_Cpool_readn_timeout(
+#ifdef CPOOL_DEBUG
+                               __FILE__,__LINE__,
+#endif
+                               p_to_c[0],&thislength,sizeof(size_t),_CPOOL_STARTER_TIMEOUT) != 
           sizeof(size_t)) 
         return(NULL);
       if (thislength > 0) {
         if ((thisarg = malloc(thislength)) == NULL)
           exit(EXIT_FAILURE);
-        if (_Cpool_readn_timeout(p_to_c[0],thisarg,thislength,_CPOOL_STARTER_TIMEOUT) != 
+        if (_Cpool_readn_timeout(
+#ifdef CPOOL_DEBUG
+                                 __FILE__,__LINE__,
+#endif
+                                 p_to_c[0],thisarg,thislength,_CPOOL_STARTER_TIMEOUT) != 
             thislength)
           return(NULL);
       } else {
@@ -855,24 +903,34 @@ void *_Cpool_starter(arg)
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-size_t _Cpool_writen_timeout(fd,vptr,n,timeout)
+size_t _Cpool_writen_timeout(
+#ifdef CPOOL_DEBUG
+                             file,line,
+#endif
+                             fd,vptr,n,timeout)
+#ifdef CPOOL_DEBUG
+     char *file;
+     int line;
+#endif
      int fd;
      void *vptr;
      size_t n;
      int timeout;
 {
   size_t		nleft;
-  size_t		nwritten;
+  ssize_t       nwriten;
   char         *ptr;
-  
+  int           save_serrno;
+
   /* We use the signal alarm */
   Sigfunc  *sigfunc;
   
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
-    log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_writen_timeout(%d,0x%lx,0x%x,%d)\n",
-        _Cpool_self(),_Cthread_self(),fd,(unsigned long) vptr, (unsigned int) n, timeout);
+    log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_writen_timeout(%d,0x%lx,0x%x,%d) called at %s:%d\n",
+        _Cpool_self(),_Cthread_self(),fd,(unsigned long) vptr, (unsigned int) n, timeout,
+        file,line);
   /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 
@@ -889,28 +947,23 @@ size_t _Cpool_writen_timeout(fd,vptr,n,timeout)
   nleft = n;
   while (nleft > 0) {
     alarm(timeout);
-    if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
+    if ( (nwriten = write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR) {
         errno = ETIMEDOUT;
         serrno = SETIMEDOUT;
-        goto doreturn;
-      } else {
-        goto doreturn;
       }
-    }
-    
-    nleft -= nwritten;
-    ptr   += nwritten;
+      goto doreturn;
+    }    
+    nleft -= nwriten;
+    ptr   += nwriten;
   }
  doreturn:
+  save_serrno = serrno;
   /* Disable alarm            */
   alarm(0);
   /* Restore previous handler */
   _Cpool_signal(SIGALRM, sigfunc);
-  if (nleft == -1) {
-    /* Nothing done... */
-    nleft = n;
-  }
+  serrno = save_serrno;
   return(n - nleft);
 }
 
@@ -930,7 +983,7 @@ size_t _Cpool_writen(fd,vptr,n)
      size_t n;
 {
   size_t		nleft;
-  size_t		nwritten;
+  ssize_t       nwriten;
   char         *ptr;
   Sigfunc          *handler;
 
@@ -948,16 +1001,16 @@ size_t _Cpool_writen(fd,vptr,n)
   ptr = vptr;
   nleft = n;
   while (nleft > 0) {
-    if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
+    if ( (nwriten = write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR) {
-        nwritten = 0;		/* and call write() again */
+        nwriten = 0;		/* and call write() again */
       } else {
         _Cpool_signal(SIGPIPE, handler);
         return(n - nleft);
       }
     }
-    nleft -= nwritten;
-    ptr   += nwritten;
+    nleft -= nwriten;
+    ptr   += nwriten;
   }
   _Cpool_signal(SIGPIPE, handler);
   return(n - nleft);
@@ -979,7 +1032,7 @@ size_t _Cpool_readn(fd,vptr,n)
      size_t n;
 {
   size_t	nleft;
-  size_t	nread;
+  ssize_t   nread;
   char	*ptr;
   Sigfunc          *handler;
   
@@ -1008,10 +1061,12 @@ size_t _Cpool_readn(fd,vptr,n)
         _Cpool_signal(SIGPIPE, handler);
         return(n - nleft);
       }
-    } else if (nread == 0)
+    } else if (nread == 0) {
       break;				/* EOF */
-    nleft -= nread;
-    ptr   += nread;
+    } else {
+      nleft -= nread;
+      ptr   += nread;
+    }
   }
   _Cpool_signal(SIGPIPE, handler);
   return(n - nleft);		/* return >= 0 */
@@ -1027,24 +1082,34 @@ size_t _Cpool_readn(fd,vptr,n)
 /* 14-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-size_t _Cpool_readn_timeout(fd,vptr,n,timeout)
+size_t _Cpool_readn_timeout(
+#ifdef CPOOL_DEBUG
+                            file,line,
+#endif
+                            fd,vptr,n,timeout)
+#ifdef CPOOL_DEBUG
+     char *file;
+     int line;
+#endif
      int fd;
      void *vptr;
      size_t n;
      int timeout;
 {
   size_t	nleft;
-  size_t	nread;
+  ssize_t   nread;
   char	*ptr;
-  
+  int       save_serrno;
+
   /* We use the signal alarm */
   Sigfunc  *sigfunc;
   
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
-    log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout(%d,0x%lx,0x%x,%d)\n",
-        _Cpool_self(),_Cthread_self(),fd,(unsigned long) vptr, (unsigned int) n, timeout);
+    log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout(%d,0x%lx,0x%x,%d) called at %s:%d\n",
+        _Cpool_self(),_Cthread_self(),fd,(unsigned long) vptr, (unsigned int) n, timeout,
+        file,line);
   /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 
@@ -1054,7 +1119,7 @@ size_t _Cpool_readn_timeout(fd,vptr,n,timeout)
     return(0);
   }
 
-  /* In any case we catch trap SIGPIPE */
+  /* In any case we trap SIGPIPE */
   _Cpool_signal(SIGPIPE, SIG_IGN);
   
   ptr = vptr;
@@ -1062,35 +1127,47 @@ size_t _Cpool_readn_timeout(fd,vptr,n,timeout)
   nread = 0;
   while (nleft > 0) {
     alarm(timeout);
+#ifdef CPOOL_DEBUG
+      /* Cthread_mutex_lock(&lock_cpool_debug); */
+      if (Cpool_debug != 0)
+        log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout : read(%d,0x%lx,%d)\n",
+            _Cpool_self(),_Cthread_self(),fd,(unsigned long) ptr, (int) nleft);
+#endif
     if ( (nread = read(fd, ptr, nleft)) < 0) {
 #ifdef CPOOL_DEBUG
       /* Cthread_mutex_lock(&lock_cpool_debug); */
       if (Cpool_debug != 0)
-        log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout : errno = %d [EINTR=%d]\n",
-            _Cpool_self(),_Cthread_self(),errno,EINTR);
+        log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout : errno = %d (%s) [EINTR=%d]\n",
+            _Cpool_self(),_Cthread_self(),errno,strerror(errno),EINTR);
       /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
       if (errno == EINTR) {
         errno = ETIMEDOUT;
         serrno = SETIMEDOUT;
-        goto doreturn;
-      } else {
-        goto doreturn;
       }
-    } else if (nread == 0)
+      goto doreturn;
+    } else if (nread == 0) {
       break;				/* EOF */
-    nleft -= nread;
-    ptr   += nread;
+    } else {
+#ifdef CPOOL_DEBUG
+      if (Cpool_debug != 0) {
+        log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout : nleft (%d) -= nread (%d)\n",
+            _Cpool_self(),_Cthread_self(),(int) nleft,(int) nread);
+        log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_readn_timeout : ptr (0x%lx) += nread (%d)\n",
+            _Cpool_self(),_Cthread_self(),(unsigned long) ptr,(int) nread);
+      }
+#endif
+      nleft -= nread;
+      ptr   += nread;
+    }
   }
  doreturn:
+  save_serrno = serrno;
   /* Disable alarm            */
   alarm(0);
   /* Restore previous handler */
   _Cpool_signal(SIGALRM, sigfunc);
-  if (nleft == -1) {
-    /* Nothing done... */
-    nleft = n;
-  }
+  serrno = save_serrno;
   return(n - nleft);		/* return >= 0 */
 }
 
@@ -1132,7 +1209,8 @@ Sigfunc *_Cpool_signal(signo,func)
      Sigfunc *func;
 {
   struct sigaction	act, oact;
-  
+  int n = 0;
+
   act.sa_handler = func;
   sigemptyset(&act.sa_mask);
   act.sa_flags = 0;
@@ -1145,8 +1223,19 @@ Sigfunc *_Cpool_signal(signo,func)
     act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
   }
-  if (sigaction(signo, &act, &oact) < 0)
+#ifdef __INSURE__
+  /* Insure don't like the value I give to sigaction... */
+  _Insure_set_option("runtime","off");
+#endif
+  n = sigaction(signo, &act, &oact);
+#ifdef __INSURE__
+  /* Restore runtime checking */
+  _Insure_set_option("runtime","on");
+#endif
+  if (n < 0) {
     return(SIG_ERR);
+  }
+
   return(oact.sa_handler);
 }
 
@@ -1180,11 +1269,14 @@ void *Cpool_calloc(file,line,nmemb,size)
      size_t size;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = &Cmalloc;
+  struct Cmalloc_t *previous = NULL;
   void             *result;
   char             *dummy;
 
   if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+    /* We are in multi-threaded mode : memory is shared    */
+    /* and there is no need to try to know every allocated */
+    /* memory in the Cmalloc linked list.                  */
     return(calloc(nmemb,size));
   }
 
@@ -1216,12 +1308,14 @@ void *Cpool_calloc(file,line,nmemb,size)
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
   /* will be rejected by a lot of compilers (exception I know is gcc) */
   dummy  = (char *) result;
-  dummy += (nmemb * size);
+  dummy += ((nmemb * size) - 1);
   current->end   = dummy;
   current->next  = NULL;
 
   /* We update internal pointer */
-  previous->next = current;
+  if (previous != NULL) {
+    previous->next = current;
+  }
 
   /* We return the result of _calloc */
   return(result);
@@ -1246,11 +1340,14 @@ void *Cpool_malloc(file,line,size)
      size_t size;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = &Cmalloc;
+  struct Cmalloc_t *previous = NULL;
   void             *result;
   char             *dummy;
 
   if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
+    /* We are in multi-threaded mode : memory is shared    */
+    /* and there is no need to try to know every allocated */
+    /* memory in the Cmalloc linked list.                  */
     return(malloc(size));
   }
 
@@ -1286,7 +1383,9 @@ void *Cpool_malloc(file,line,size)
   current->next    = NULL;
 
   /* We update internal pointer */
-  previous->next = current;
+  if (previous != NULL) {
+    previous->next = current;
+  }
 
   /* We return the result of _calloc */
   return(result);
@@ -1311,7 +1410,7 @@ void Cpool_free(file,line,ptr)
      void *ptr;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = &Cmalloc;
+  struct Cmalloc_t *previous = NULL;
   int               n = 1;
   /* We test to see if the user wants to */
   /* to free something really allocated  */
@@ -1348,7 +1447,12 @@ void Cpool_free(file,line,ptr)
   free(ptr);
 
   /* We update pointers */
-  previous->next = current->next;
+  if (previous != NULL) {
+    previous->next = current->next;
+  } else {
+    /* No more entry... */
+    Cmalloc.next = NULL;
+  }
   free(current);
   return;
 }
@@ -1373,7 +1477,6 @@ void *Cpool_realloc(file,line,ptr,size)
      size_t size;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = &Cmalloc;
   void             *result;
   int               n = 1;
   char             *dummy;
@@ -1392,7 +1495,6 @@ void *Cpool_realloc(file,line,ptr,size)
 
   /* We search the correct element */
   while (current->next != NULL) {
-    previous = current;
     current = current->next;
     if (current->start == ptr) {
       n = 0;
@@ -1415,7 +1517,7 @@ void *Cpool_realloc(file,line,ptr,size)
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
   /* will be rejected by a lot of compilers (exception I know is gcc) */
   dummy          = result;
-  dummy         += size;
+  dummy         += (size - 1);
   current->end   = dummy;
 
   /* We return the result */
@@ -2528,7 +2630,8 @@ CTHREAD_DECL _Cpool_self() {
     }
   }
   
-  serrno = EINVAL;
+  /* We do not set serrno for _Cpool_self() */
+  /* serrno = EINVAL; */
   return(-1);
 }
 

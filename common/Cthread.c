@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.15 1999/10/08 17:21:54 jdurand Exp $
+ * $Id: Cthread.c,v 1.16 1999/10/12 16:48:05 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -104,7 +104,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.15 $ $Date: 1999/10/08 17:21:54 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.16 $ $Date: 1999/10/12 16:48:05 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -256,7 +256,11 @@ typedef pthread_once_t Cth_once_t;
 /* For the Cthread_self() command       */
 /* (Thread-Specific Variable)           */
 /* ------------------------------------ */
+#ifdef _CTHREAD
 Cth_spec_t cid_key;
+#else
+int cid_key = 0;
+#endif
 Cth_once_t cid_once = CTHREAD_ONCE_INIT;
 
 /* ============================================ */
@@ -534,18 +538,18 @@ void _Cthread_cid_once()
 #else
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   /* Create the specific variable a-la POSIX */
-  if ((n = pthread_key_create(&cid_key, _Cthread_cid_destructor))) {
+  if ((n = pthread_key_create(&cid_key,&_Cthread_cid_destructor))) {
     errno = n;
     serrno = SECTHREADERR;
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   /* Create the specific variable a-la DCE */
-  if (pthread_keycreate(&cid_key, _Cthread_cid_destructor)) {
+  if (pthread_keycreate(&cid_key,&_Cthread_cid_destructor)) {
     serrno = SECTHREADERR;
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* Create the specific variable a-la LinuxThreads */
-  if ((n = pthread_key_create(&cid_key, _Cthread_cid_destructor))) {
+  if ((n = pthread_key_create(&cid_key,&_Cthread_cid_destructor))) {
     errno = n;
     serrno = SECTHREADERR;
   }
@@ -621,16 +625,16 @@ int _Cthread_init() {
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   int n;
 
-  if ((n = pthread_once(&once,_Cthread_once)) != 0) {
+  if ((n = pthread_once(&once,&_Cthread_once)) != 0) {
     errno = n;
     _Cthread_once_status = -1;
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if (pthread_once(&once,_Cthread_once) != 0)
+  if (pthread_once(&once,&_Cthread_once) != 0)
     _Cthread_once_status = -1;
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* On linux, pthread_once always returns 0... */
-  pthread_once(&once,_Cthread_once);
+  pthread_once(&once,&_Cthread_once);
 #  else
   _Cthread_once_status = -1;
   serrno = SEOPNOTSUP;
@@ -1656,8 +1660,9 @@ CTHREAD_DECL Cthread_Self(file, line)
     }
   }
 
-  if (n < 0)
-    serrno = EINVAL;
+  /* We do not set serrno from Cthread_Self() */
+  /* if (n < 0)                               */
+  /*   serrno = EINVAL;                       */
   return(n);
 
 #else /* _NOCTHREAD */
@@ -1680,21 +1685,21 @@ CTHREAD_DECL Cthread_Self(file, line)
   /* pthread_once(). Instead we rely on that Cthread_..*/
   /* is the unique thread interface.                   */
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+  if ((n = pthread_once(&cid_once,&_Cthread_cid_once)) != 0) {
     errno = n;
-    serrno = SECTHREADERR;
+    /* serrno = SECTHREADERR; */
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
-    serrno = SECTHREADERR;
+  if (pthread_once(&cid_once,&_Cthread_cid_once) != 0) {
+    /* serrno = SECTHREADERR; */
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* On linux, pthread_once always returns 0... */
-  pthread_once(&cid_once,_Cthread_cid_once);
+  pthread_once(&cid_once,&_Cthread_cid_once);
 #  else
-  serrno = SEOPNOTSUP;
+  /* serrno = SEOPNOTSUP; */
   return(-1);
 #  endif
 
@@ -1711,7 +1716,7 @@ CTHREAD_DECL Cthread_Self(file, line)
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
   tsd = TlsGetValue(cid_key);
 #  else
-  serrno = SEOPNOTSUP;
+  /* serrno = SEOPNOTSUP; */
   return(-1);
 #  endif
 
@@ -1719,7 +1724,7 @@ CTHREAD_DECL Cthread_Self(file, line)
 
     /* We try to create the key-value */
     if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
-      serrno = SEINTERNAL;
+      /* serrno = SEINTERNAL; */
       return(-1);
     }
 
@@ -1727,27 +1732,27 @@ CTHREAD_DECL Cthread_Self(file, line)
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_setspecific(cid_key, tsd))) {
       errno = n;
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_setspecific(cid_key, tsd)) {
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_setspecific(cid_key, tsd))) {
       errno = n;
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( !(n = TlsSetValue(cid_key, tsd)) ) {
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  else
-    serrno = SEOPNOTSUP;
+    /* serrno = SEOPNOTSUP; */
     return(-1);
 #  endif
     
@@ -1821,8 +1826,12 @@ int _Cthread_destroy(file, line, cid)
   /* For threads created with _beginthreadex() we must do cleanup */
   if ( !current->detached ) CloseHandle((HANDLE)current->pid);
 #endif /* _CTHREAD_PROTO_WIN32 */
-  if (previous != NULL) 
+  if (previous != NULL) {
     previous->next = current->next;
+  } else {
+    /* No more entry... */
+    Cid.next = NULL;
+  }
   free(current);
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
 
@@ -3219,9 +3228,9 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 {
   struct Cid_element_t *current = &Cid;    /* Curr Cid_element */
   int                 current_cid = -1;    /* Curr Cthread ID    */
+  void               *tsd = NULL;         /* Thread-Specific Variable */
 #ifdef _CTHREAD
   int n;
-  void               *tsd = NULL;         /* Thread-Specific Variable */
 #endif
 
 #ifdef CTHREAD_DEBUG
@@ -3268,19 +3277,19 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
   /* pthread_once(). Instead we rely on that Cthread_..*/
   /* is the unique thread interface.                   */
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+  if ((n = pthread_once(&cid_once,&_Cthread_cid_once)) != 0) {
     errno = n;
     serrno = SECTHREADERR;
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
+  if (pthread_once(&cid_once,&_Cthread_cid_once) != 0) {
     serrno = SECTHREADERR;
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* On linux, pthread_once always returns 0... */
-  pthread_once(&cid_once,_Cthread_cid_once);
+  pthread_once(&cid_once,&_Cthread_cid_once);
 #  else
   serrno = SEOPNOTSUP;
   return(-1);
@@ -3340,6 +3349,19 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 
     /* And we initialize it */
     * (int *) tsd = -2;
+  }
+#else
+  /* We use standard Cthread functions that simulates TSD in a fork model... */
+  if (Cthread_getspecific(&cid_key,(void **) &tsd) != 0) {
+    return(-1);
+  }
+  if (tsd == NULL) {
+    if ((tsd = (void *) malloc(sizeof(Cth_pid_t))) == NULL) {
+      return(-1);
+    }
+    if (Cthread_setspecific(&cid_key,tsd) != 0) {
+      return(-1);
+    }
   }
 #endif /* CTHREAD */
 
@@ -3910,7 +3932,7 @@ CTHREAD_DECL Cthread_Getspecific(file, line, global_key, addr)
 
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     /* Create the specific variable a-la POSIX */
-    if ((n = pthread_key_create(&(Cspec_new->key), _Cthread_keydestructor))) {
+    if ((n = pthread_key_create(&(Cspec_new->key),&_Cthread_keydestructor))) {
       errno = n;
       serrno = SECTHREADERR;
       free(Cspec_new);
@@ -3918,14 +3940,14 @@ CTHREAD_DECL Cthread_Getspecific(file, line, global_key, addr)
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     /* Create the specific variable a-la DCE */
-    if (pthread_keycreate(&(Cspec_new->key), _Cthread_keydestructor)) {
+    if (pthread_keycreate(&(Cspec_new->key),&_Cthread_keydestructor)) {
       serrno = SECTHREADERR;
       free(Cspec_new);
       return(-1);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     /* Create the specific variable a-la LinuxThreads */
-    if ((n = pthread_key_create(&(Cspec_new->key), _Cthread_keydestructor))) {
+    if ((n = pthread_key_create(&(Cspec_new->key),&_Cthread_keydestructor))) {
       errno = n;
       serrno = SECTHREADERR;
       free(Cspec_new);
@@ -4440,8 +4462,8 @@ CTHREAD_DECL _Cthread_self() {
     }
   }
 
-  if (n < 0)
-    serrno = EINVAL;
+  /* if (n < 0)         */
+  /*   serrno = EINVAL; */
   return(n);
 
 #else /* _NOCTHREAD */
@@ -4464,21 +4486,21 @@ CTHREAD_DECL _Cthread_self() {
   /* pthread_once(). Instead we rely on that Cthread_..*/
   /* is the unique thread interface.                   */
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+  if ((n = pthread_once(&cid_once,&_Cthread_cid_once)) != 0) {
     errno = n;
-    serrno = SECTHREADERR;
+    /* serrno = SECTHREADERR; */
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
-    serrno = SECTHREADERR;
+  if (pthread_once(&cid_once,&_Cthread_cid_once) != 0) {
+    /* serrno = SECTHREADERR; */
     return(-1);
   }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* On linux, pthread_once always returns 0... */
-  pthread_once(&cid_once,_Cthread_cid_once);
+  pthread_once(&cid_once,&_Cthread_cid_once);
 #  else
-  serrno = SEOPNOTSUP;
+  /* serrno = SEOPNOTSUP; */
   return(-1);
 #  endif
 
@@ -4495,7 +4517,7 @@ CTHREAD_DECL _Cthread_self() {
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
   tsd = TlsGetValue(cid_key);
 #  else
-  serrno = SEOPNOTSUP;
+  /* serrno = SEOPNOTSUP; */
   return(-1);
 #  endif
 
@@ -4503,7 +4525,7 @@ CTHREAD_DECL _Cthread_self() {
 
     /* We try to create the key-value */
     if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
-      serrno = SEINTERNAL;
+      /* serrno = SEINTERNAL; */
       return(-1);
     }
 
@@ -4511,27 +4533,27 @@ CTHREAD_DECL _Cthread_self() {
 #  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_setspecific(cid_key, tsd))) {
       errno = n;
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_setspecific(cid_key, tsd)) {
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_setspecific(cid_key, tsd))) {
       errno = n;
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( !(n = TlsSetValue(cid_key, tsd)) ) {
-      serrno = SECTHREADERR;
+      /* serrno = SECTHREADERR; */
       return(-1);
     }
 #  else
-    serrno = SEOPNOTSUP;
+    /* serrno = SEOPNOTSUP; */
     return(-1);
 #  endif
     
