@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.12 2004/12/10 08:47:01 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.13 2004/12/15 21:39:02 bcouturi Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.12 $ $Date: 2004/12/10 08:47:01 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.13 $ $Date: 2004/12/15 21:39:02 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
 /* System headers */
 /* ============== */
 #include <sys/types.h>
+#include <sys/stat.h>
 
 /* ============= */
 /* Local headers */
@@ -76,9 +77,13 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     castor::client::BaseClient client;
     castor::stager::StagePrepareToPutRequest req;
 
-    std::string suserTag(userTag);
-    req.setUserTag(suserTag);
-    
+    if (0 != userTag) {
+      req.setUserTag(std::string(userTag));
+    }
+    mode_t mask;
+    umask (mask = umask(0));
+    req.setMask(mask);
+
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
       castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
@@ -192,6 +197,9 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
     }
+    mode_t mask;
+    umask (mask = umask(0));
+    req.setMask(mask);
 
     if (0 != protocol) {
       subreq->setProtocol(protocol);
@@ -301,6 +309,11 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client;
     castor::stager::StagePutDoneRequest req;
+
+    // Setting the mask on the request
+    mode_t mask;
+    umask (mask = umask(0));
+    req.setMask(mask);
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
