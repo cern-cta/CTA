@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.6 $ $Date: 2000/08/22 13:13:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.7 $ $Date: 2001/01/09 17:17:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -103,7 +103,7 @@ u_signed64 tot_free_space;
 	static char sav_gidstr[7];
 	static uid_t sav_uid = -1;
 	static char sav_uidstr[CA_MAXUSRNAMELEN+1];
-	char tmpbuf[8];
+	char tmpbuf[9];
 
 	if (pool_uid != sav_uid) {
 		sav_uid = pool_uid;
@@ -124,5 +124,5 @@ u_signed64 tot_free_space;
 			sprintf (sav_gidstr, "%-6u", sav_gid);
 	}
 	printf ("%-15s %-8.8s %-6.6s %sB\n", pool_name, sav_uidstr, sav_gidstr,
-	    u64tostru (tot_free_space, tmpbuf, 7));
+	    u64tostru (tot_free_space, tmpbuf, 8));
 }
