@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.53 2002/08/27 08:02:40 jdurand Exp $
+ * $Id: stage_api.c,v 1.54 2002/09/17 11:48:29 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.53 $ $Date: 2002/08/27 08:02:40 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.54 $ $Date: 2002/09/17 11:48:29 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -3177,4 +3177,327 @@ static int DLL_DECL stageshutdown(flags,hostname)
 #endif
 
   return (c);
+}
+
+int DLL_DECL stage_alloc_or_get(req_type,flags,openmode,hostname,pooluser,filename,filesize,nstcp_output,stcp_output)
+	int req_type;
+	u_signed64 flags;
+	mode_t openmode;
+	char *hostname;
+	char *pooluser;
+	char *filename;
+	u_signed64 filesize;
+	int *nstcp_output;
+	struct stgcat_entry **stcp_output;
+{
+  int msglen;                   /* Buffer length (incremental) */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
+  struct passwd *pw;            /* Password entry */
+  struct group *gr;             /* Group entry */
+
+  char *sbp, *p, *q;            /* Internal pointers */
+  char *sendbuf;                /* Socket send buffer pointer */
+  size_t sendbuf_size;          /* Total socket send buffer length */
+  uid_t euid;                   /* Current effective uid */
+  uid_t Geuid;                  /* Forced effective uid (-G option) */
+  char Gname[CA_MAXUSRNAMELEN+1]; /* Forced effective name (-G option) */
+  char User[CA_MAXUSRNAMELEN+1];  /* Forced internal path with user (-u options) */
+  char user_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
+  gid_t egid;                   /* Current effective gid */
+#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
+  int mask;                     /* User mask */
+#else
+  mode_t mask;                  /* User mask */
+#endif
+  int pid;                      /* Current pid */
+  int status;                   /* Variable overwritten by macros in header */
+  int c;                        /* Output of build_linkname() */
+  char *func = "stage_alloc";
+
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
+  char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
+  int Tid;
+  u_signed64 uniqueid;
+  int maxretry = MAXRETRY;
+  int magic_client;
+  int magic_server;
+  struct stgcat_entry stcp_input;
+  struct stgcat_entry *thiscat;
+  int build_linkname_status;    /* Status of build_linkname() call */
+  char t_or_d;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  ntries = nstg161 = Tid = 0;
+  uniqueid = 0;
+
+  /* Only valid to STAGE_ALLOC or STAGE_GET */
+  if ((req_type != STAGE_ALLOC) && (req_type != STAGE_GET)) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  /* It is not allowed to have no input */
+  if (filename == NULL) {
+    serrno = EFAULT;
+    return(-1);
+  }
+  if (*filename == '\0') {
+    serrno = EINVAL;
+    return(-1);
+  }
+  /* Or a too big input */
+  if (strlen(filename) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+	  serrno = SENAMETOOLONG;
+	  return(-1);
+  }
+
+  /* We check existence of an STG POOL from environment variable or configuration */
+  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else {
+    stgpool_forced[0] = '\0';
+  }
+
+  euid = Geuid = geteuid();             /* Get current effective uid */
+  egid = getegid();             /* Get current effective gid */
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+
+  /* It is not allowed to have stcp_output != NULL and nstcp_output == NULL */
+  if ((stcp_output != NULL) && (nstcp_output == NULL)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flags & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
+	  flags |= STAGE_NORETRY;
+	  maxretry = 0;
+  }
+
+  if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
+    if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
+      stage_errmsg(func, STG36, egid);
+      serrno = ESTGROUP;
+      return(-1);
+    }
+    if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) { /* And if GRPUSER is configured */
+      stage_errmsg(func, STG10, gr->gr_name);
+      serrno = ESTGRPUSER;
+      return(-1);
+    } else {
+      strcpy (Gname, p);
+      if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
+        if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+        stage_errmsg(func, STG11, p);
+        serrno = SEUSERUNKN;
+        return(-1);
+      } else
+        Geuid = pw->pw_uid;              /* In such a case we grab its uid */
+    }
+  }
+
+  /* If no user specified we check environment variable STAGE_USER */
+  if (((pooluser == NULL) || (pooluser[0] == '\0')) && (p = getenv ("STAGE_USER")) != NULL) {
+    strncpy(User,p,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
+    /* We verify this user login is defined */
+    if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+      stage_errmsg(func, STG11, User);
+      serrno = SEUSERUNKN;
+      return(-1);
+    }
+  } else if ((pooluser != NULL) && (pooluser[0] != '\0')) {
+    strncpy(User,pooluser,CA_MAXUSRNAMELEN);
+    User[CA_MAXUSRNAMELEN] = '\0';
+  } else {
+    User[0] = '\0';
+  }
+
+  t_or_d = 'a';
+
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+#endif
+  c = RFIO_NONET;
+  rfiosetopt (RFIO_NETOPT, &c, 4);
+
+  if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    serrno = SEUSERUNKN;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
+  /* Our uniqueid is a combinaison of our pid and our threadid */
+  pid = getpid();
+  Cglobals_getTid(&Tid); /* Get CthreadId  - can be -1 */
+  Tid++;
+  uniqueid = (((u_signed64) pid) * ((u_signed64) 0xFFFFFFFF)) + Tid;
+
+  if (stage_setuniqueid((u_signed64) uniqueid) != 0) {
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
+  /* How many bytes do we need ? */
+  sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
+  if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {
+    sendbuf_size += strlen(Gname) + 1;     /* Name under which request is to be done */
+  } else {
+    sendbuf_size += strlen(pw->pw_name) + 1;
+  }
+  sendbuf_size += LONGSIZE;                /* Uid */
+  sendbuf_size += LONGSIZE;                /* Gid */
+  sendbuf_size += LONGSIZE;                /* Mask */
+  sendbuf_size += LONGSIZE;                /* Pid */
+  sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
+  sendbuf_size += strlen(User) + 1;        /* User for internal path (default to STAGERSUPERUSER in stgdaemon) */
+  sendbuf_size += HYPERSIZE;               /* Flags */
+  if (req_type == STAGE_ALLOC) {
+	  sendbuf_size += LONGSIZE;            /* openmode */
+  }
+  sendbuf_size += BYTESIZE;                /* t_or_d */
+  sendbuf_size += LONGSIZE;                /* Number of catalog structures */
+
+  memset ((char *)&stcp_input, 0, sizeof(stcp_input));
+  thiscat = &stcp_input;                   /* Current catalog structure */
+  /* If this entry has no poolname we copy it the forced one */
+  if ((thiscat->poolname[0] == '\0') && (stgpool_forced[0] != '\0')) {
+      strcpy(thiscat->poolname, stgpool_forced);
+  }
+  thiscat->t_or_d = t_or_d;
+  if (req_type == STAGE_ALLOC) {
+	  thiscat->size = filesize;            /* Can be zero */
+  }
+  strcpy(thiscat->u1.d.xfile,filename);
+  if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
+	  user_path[0] = '\0';
+	  if ((build_linkname_status = build_linkname(thiscat->u1.d.xfile, user_path, sizeof(user_path), req_type)) == SESYSERR) {
+		  serrno = ESTLINKNAME;
+#if defined(_WIN32)
+		  WSACleanup();
+#endif
+		  return(-1);
+	  }
+	  if (build_linkname_status) {
+		  serrno = ESTLINKNAME;
+#if defined(_WIN32)
+		  WSACleanup();
+#endif
+		  return(-1);
+	  }
+	  strcpy(thiscat->u1.d.xfile,user_path);
+  }
+
+  sendbuf_size += sizeof(struct stgcat_entry); /* We overestimate by few bytes (gaps and strings zeroes) */
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
+
+  /* Build request header */
+  sbp = sendbuf;
+  marshall_LONG (sbp, magic_server);
+  marshall_LONG (sbp, req_type);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+  if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {
+    marshall_STRING (sbp, Gname);            /* Name under which is is to be done */
+    marshall_LONG (sbp, Geuid);              /* Uid under which it is to be done */
+  } else {
+    marshall_STRING (sbp, pw->pw_name);
+    marshall_LONG (sbp, euid);
+  }
+  marshall_LONG (sbp, egid);                 /* gid */
+  umask (mask = umask(0));
+  marshall_LONG (sbp, mask);                 /* umask */
+  marshall_LONG (sbp, pid);                  /* pid */
+  marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
+  marshall_STRING (sbp, User);               /* User internal path (default to STAGERSUPERUSER in stgdaemon) */
+  marshall_HYPER (sbp, flags);               /* Flags */
+  if (req_type == STAGE_ALLOC) {
+	  marshall_LONG (sbp, openmode);         /* openmode */
+  }
+  marshall_BYTE (sbp, t_or_d);               /* Type of request (you cannot merge Tape/Disk/Allocation/Hsm) */
+  marshall_LONG (sbp, 1);                    /* Number of input stgcat_entry structures */
+  thiscat = &stcp_input;                     /* Current catalog structure */
+  status = 0;
+  marshall_STAGE_CAT(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+  if (status != 0) {
+      serrno = EINVAL;
+#if defined(_WIN32)
+      WSACleanup();
+#endif
+      return(-1);
+  }
+
+  /* Update request header */
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  /* Dial with the daemon */
+  while (1) {
+	  c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 1, &stcp_input, nstcp_output, stcp_output, NULL, NULL);
+	  if ((c != 0) &&
+#if !defined(_WIN32)
+		  (serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		  (serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		  ) {
+		  /* Server do not support this protocol */
+		  /* We keep client magic number as it is now but we downgrade magic server */
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
+			serrno = SEOPNOTSUP;
+			break;
+	  }
+	  if ((c == 0) ||
+		  (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) ||
+		  (serrno == ENOENT) || (serrno == SENAMETOOLONG) ||
+		  (serrno == EISDIR) ||
+		  (serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
+		  (serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY) || (serrno == ESTLNKNSUP)) break;
+	  if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
+	  if (serrno != ESTNACT && ntries++ > maxretry) break;
+	  if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
+	  stage_sleep (RETRYI);
+  }
+  free(sendbuf);
+  
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  return (c == 0 ? 0 : -1);
 }
