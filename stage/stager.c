@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.90 2000/09/27 08:13:13 jdurand Exp $
+ * $Id: stager.c,v 1.91 2000/10/03 08:06:21 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.90 $ $Date: 2000/09/27 08:13:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.91 $ $Date: 2000/10/03 08:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -527,6 +527,20 @@ int main(argc, argv)
 	signal (SIGTERM, stagekilled);       /* If killed from administrator */
 	if (nretry) sleep (RETRYI);
 
+	/* We always set stager logger callback */
+#ifdef STAGER_DEBUG
+		SAVE_EID;
+		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting stage_setlog()\n");
+		RESTORE_EID;
+#endif
+	if (stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
+		SAVE_EID;
+		sendrep(rpfd, MSG_ERR, "### Cannot set stager API callback function (%s)\n",sstrerror(serrno));
+		RESTORE_EID;
+		free(stcs);
+		exit(SYERR);
+	}
+
     /* -------- DISK TO DISK OR HPSS MIGRATION ----------- */
 
 	if (stcs->t_or_d == 'd' || stcs->t_or_d == 'm') {
@@ -562,14 +576,13 @@ int main(argc, argv)
 
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting Cns_errbuf(), vmgr_errbuf() and stage_setlog()\n");
+		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting Cns_errbuf(), vmgr_errbuf()\n");
 		RESTORE_EID;
 #endif
 		if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
-			vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0 ||
-			stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
+			vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
 			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
+			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) callback function (%s)\n",sstrerror(serrno));
 			RESTORE_EID;
 			free(stcs);
 			exit(SYERR);
@@ -1692,6 +1705,11 @@ int filecopy(stcp, key, hostname)
 	if (! stcp->ipath[0]) {
 		/* Deferred allocation (Aflag) */
 		sprintf (stageid, "%d.%d@%s", reqid, key, hostname);
+#ifdef STAGER_DEBUG
+		SAVE_EID;
+		sendrep (rpfd, MSG_ERR, "Calling stage_updc_filcp(stageid=%s,...)\n",stageid);
+		RESTORE_EID;
+#endif
 		if (stage_updc_filcp (
 								stageid,                 /* Stage ID      */
 								0,                       /* subreqid      */
@@ -1709,8 +1727,8 @@ int filecopy(stcp, key, hostname)
 								stcp->ipath              /* path          */
 								) != 0) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, stageid, "stage_updc_filcp",
-							 sstrerror (serrno));
+			sendrep (rpfd, MSG_ERR, STG02, stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile,
+					"stage_updc_filcp", sstrerror (serrno));
 			RESTORE_EID;
 			RETURN (USERR);
 		}
