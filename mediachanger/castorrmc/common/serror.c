@@ -234,6 +234,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
          "Bad request structure", 
          "Request partially processed",
          "Catalogue DB error",
+         "Zero sized file",
          "BAD ERROR NUMBER"
         };
 

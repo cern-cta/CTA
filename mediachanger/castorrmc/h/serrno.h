@@ -244,7 +244,8 @@
 #define ERTBADREQ       ERTBASEOFF+9    /* Bad request structure */
 #define ERTMORETODO	ERTBASEOFF+10	/* Request partially processed */
 #define ERTDBERR        ERTBASEOFF+11   /* Catalogue DB error */
-#define ERTMAXERR       ERTBASEOFF+11
+#define ERTZEROSIZE     ERTBASEOFF+12   /* Zero sized file */
+#define ERTMAXERR       ERTBASEOFF+12
 
 /*
  *------------------------------------------------------------------------
