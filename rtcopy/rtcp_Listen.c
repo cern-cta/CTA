@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.5 2005/03/15 22:58:55 bcouturi Exp $
+ * $Id: rtcp_Listen.c,v 1.6 2005/03/15 23:01:00 bcouturi Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.5 $ $Date: 2005/03/15 22:58:55 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.6 $ $Date: 2005/03/15 23:01:00 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 
@@ -143,7 +143,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
             }
             else {
 	      char *username;
-              if (Csec_server_mapClientToLocalUser(&sec_ctx, &username, &Csec_uid, &Csec_gid) != NULL) {
+              if (Csec_server_mapClientToLocalUser(&sec_ctx, &username, &Csec_uid, &Csec_gid) == 0) {
                 rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Client is %s (%d/%d)\n",
 			 username,
                          Csec_uid,
