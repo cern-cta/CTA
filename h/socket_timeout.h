@@ -1,8 +1,11 @@
 /*
- * $Id: socket_timeout.h,v 1.2 1999/07/20 08:51:14 jdurand Exp $
+ * $Id: socket_timeout.h,v 1.3 1999/10/14 12:06:11 jdurand Exp $
  *
  * $Log: socket_timeout.h,v $
- * Revision 1.2  1999/07/20 08:51:14  jdurand
+ * Revision 1.3  1999/10/14 12:06:11  jdurand
+ * *** empty log message ***
+ *
+ * Revision 1.2  1999-07-20 10:51:14+02  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Added missing Id and Log CVS's directives
  *
@@ -12,7 +15,7 @@
 #define __stgtimeout_h
 
 #if _WIN32
-#include <types.h>
+#include <windows.h>
 #else
 #include <sys/types.h>
 #endif
