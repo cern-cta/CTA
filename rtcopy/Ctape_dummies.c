@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.9 $ $Date: 2000/08/04 14:38:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.10 $ $Date: 2000/08/07 14:46:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -189,7 +189,10 @@ int Ctape_mount(char *a, char *b, int c, char *d, char *e, char *f, int g,
     if ( fd != -1 ) close(fd);
     VolReqID = j;
     CTAPE_BODY((stdout,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
-        a,b,c,d,e,f,g,h,i,j));
+        (a==NULL ? "(nil)" : a),(b==NULL ? "(nil)" : b),c,
+        (d==NULL ? "(nil)" : d),(e==NULL ? "(nil)" : e),
+        (f==NULL ? "(nil)" : f),g,(h==NULL ? "(nil)" : h),
+        (i==NULL ? "(nil)" : i),j));
 }
 int Ctape_position(char *a, int b, int c, int d, unsigned char *e, int f, int g,
                    int h, char *i, char *j, int k, int l, int m, int n) {

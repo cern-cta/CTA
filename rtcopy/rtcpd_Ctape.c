@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.37 $ $Date: 2000/08/04 14:38:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.38 $ $Date: 2000/08/07 14:46:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -181,6 +181,9 @@ int rtcpd_Deassign(int VolReqID,
         nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
         CLIST_INSERT(tape->file,nextfile);
         nexttape->tapereq = *tapereq;
+        *(nexttape->tapereq.density) = '\0';
+        *(nexttape->tapereq.vsn) = '\0';
+        *(nexttape->tapereq.label) = '\0';
 
 #if defined(CTAPE_DUMMIES)
         /*
@@ -190,6 +193,7 @@ int rtcpd_Deassign(int VolReqID,
         (void) rtcpd_Assign(tape);
 #endif /* CTAPE_DUMMIES */
         (void)rtcpd_Reserve(tape);
+        *(nexttape->tapereq.dgn) = '\0';
         rc = rtcpd_Mount(tape);
         (void)rtcpd_Release(tape,NULL);
 
@@ -330,14 +334,14 @@ int rtcpd_Mount(tape_list_t *tape) {
         rtcpd_ResetCtapeError();
         tapereq->TStartMount = (int)time(NULL);
         rc = Ctape_mount(filereq->tape_path,
-                         tapereq->vid,
+                         (*tapereq->vid != '\0' ? tapereq->vid : NULL),
                          tapereq->partition,
-                         tapereq->dgn,
-                         tapereq->density,
-                         tapereq->unit,
+                         (*tapereq->dgn != '\0' ? tapereq->dgn : NULL),
+                         (*tapereq->density != '\0' ? tapereq->density : NULL),
+                         (*tapereq->unit != '\0' ? tapereq->unit : NULL),
                          tapereq->mode,
-                         tapereq->vsn,
-                         tapereq->label,
+                         (*tapereq->vsn != '\0' ? tapereq->vsn : NULL),
+                         (*tapereq->label != '\0' ? tapereq->label : NULL),
                          tapereq->VolReqID);
     
         tapereq->tprc = rc;
