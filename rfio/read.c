@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.11 2000/10/02 08:02:32 jdurand Exp $
+ * read.c,v 1.11 2000/10/02 08:02:32 jdurand Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.11 $ $Date: 2000/10/02 08:02:32 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)read.c,v 1.11 2000/10/02 08:02:32 CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -189,7 +189,7 @@ int     s, size;
        * If the end of file has been reached, there is no
        * no need for sending a request across.
        */
-      if ( rfilefdt[s_index]->eof ) {
+      if ( rfilefdt[s_index]->eof == 1 ) {
 	 END_TRACE() ; 
 	 return 0 ; 
       }
@@ -209,15 +209,20 @@ int     s, size;
        * Sending a request to fill the
        * user buffer.
        */
+      TRACE(2,"rfio","rfio_read: call rfio_filbuf(%d,%d,%d) at line %d",
+		s,ptr,size,__LINE__);
       if ( (status= rfio_filbuf(s,ptr,size)) < 0 ) { 
+	 TRACE(2,"rfio","rfio_read: rfio_filbuf returned %d",status);
 	 rfilefdt[s_index]->readissued= 0 ; 
          if ( HsmType == RFIO_HSM_CNS ) 
               rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
 	 END_TRACE() ; 
 	 return status ;
-      }	
+      }
+      TRACE(2,"rfio","rfio_read: rfio_filbuf returned %d",status);
       rfilefdt[s_index]->offset += status ; 
       if ( status != size ) {
+	 TRACE(2,"rfio","rfio_read: status=%d != size=%d, set eof",status,size);
 	 rfilefdt[s_index]->eof= 1 ; 
 	 rfilefdt[s_index]->readissued= 0 ; 
       }
@@ -228,11 +233,11 @@ int     s, size;
     * I/O are buffered.
     */
    for(;;)	{
+      int count;
       /*
        * There is still some valid data in cache.
        */
       if ( rfilefdt[s_index]->_iobuf.count ) {
-	 int count ; 
 
 	 count= (nbytes>rfilefdt[s_index]->_iobuf.count) ? rfilefdt[s_index]->_iobuf.count : nbytes ;	
 	 TRACE(2, "rfio", "rfio_read: copy %d cached bytes from 0X%X to 0X%X",count,
@@ -248,6 +253,7 @@ int     s, size;
        */
       if ( nbytes == 0 ) {
 	 rfilefdt[s_index]->offset += size ;
+	 TRACE(2,"rfio", "rfio_read: User request has been satisfied, size=%d, offset=%d, count=%d, s=%d, eof=%d",size,rfilefdt[s_index]->offset,rfilefdt[s_index]->_iobuf.count,s,rfilefdt[s_index]->eof);
 	 END_TRACE() ;
 	 return size ;
       }
@@ -255,7 +261,8 @@ int     s, size;
        * End of file has been reached. 
        * The user is returned what's left.
        */
-      if (rfilefdt[s_index]->eof) {
+      if (rfilefdt[s_index]->eof == 1) {
+	 TRACE(2,"rfio", "rfio_read: End of file (s=%d, eof=%d) has been reached. size=%d, nbytes=%d, offset=%d",s,rfilefdt[s_index]->eof,size,nbytes,rfilefdt[s_index]->offset);
 	 rfilefdt[s_index]->offset += size - nbytes ;
 	 END_TRACE() ; 
 	 return ( size - nbytes ) ; 
@@ -265,7 +272,21 @@ int     s, size;
        */
       rfilefdt[s_index]->_iobuf.count = 0;
       rfilefdt[s_index]->_iobuf.ptr = iodata(rfilefdt[s_index]);
+      /*
+       * If file offset is going to be moved we have to remember what the 
+       * offset should be within the new file buffer.
+       * Note: file offset and buffer offset may be different in case 
+       * several consecutive lseek() calls has been issued between two reads.
+       */
+      if ( rfilefdt[s_index]->lseekhow != -1 ) {
+	 count =  rfilefdt[s_index]->offset - rfilefdt[s_index]->lseekoff;
+      } else {
+	 count = 0;
+      }
+
+      TRACE(2,"rfio","rfio_read: call rfio_filbuf(%d,%d,%d) at line %d",s,rfilefdt[s_index]->_iobuf.base,rfilefdt[s_index]->_iobuf.dsize,__LINE__);
       status= rfio_filbuf(s,rfilefdt[s_index]->_iobuf.base,rfilefdt[s_index]->_iobuf.dsize) ; 
+      TRACE(2,"rfio","rfio_read: rfio_filbuf returned %d",status);
       if ( status < 0 ) {
 	 rfilefdt[s_index]->readissued= 0 ; 
          if ( HsmType == RFIO_HSM_CNS ) 
@@ -274,10 +295,18 @@ int     s, size;
 	 return -1 ;
       }
       if ( status != rfilefdt[s_index]->_iobuf.dsize ) {
+	 TRACE(2,"rfio","rfio_read: dsize=%d, set eof",rfilefdt[s_index]->_iobuf.dsize);
 	 rfilefdt[s_index]->eof= 1 ; 
 	 rfilefdt[s_index]->readissued= 0 ; 
       }
       rfilefdt[s_index]->_iobuf.count= status ;
+      /*
+       * Make sure that file offset is correctly set within the buffer.
+       * Note: file offset and buffer offset may be different in case
+       * several consecutive lseek() calls has been issued between two reads.
+       */
+      rfilefdt[s_index]->_iobuf.count -= count; 
+      rfilefdt[s_index]->_iobuf.ptr += count;
    }
 }
 
@@ -342,6 +371,7 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
 	  * The current record is reaching the end of file.
 	  */
 	 if ( len != status ) {
+	    TRACE(2, "rfio", "rfio_preread: len=%d != status=%d, set eof",len,status);
 	    rfilefdt[s_index]->eof= 1 ;
 	    END_TRACE() ;
 	    return ngot ;
@@ -434,6 +464,7 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
 	 END_TRACE() ;
 	 return -1 ; 
    }
+   nbytes = size;
    hsize= rfilefdt[s_index]->_iobuf.hsize ;
    /*
     * If necessary a read request is sent.
@@ -447,7 +478,8 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
       marshall_LONG(p,rfilefdt[s_index]->lseekhow) ;
       marshall_LONG(p,rfilefdt[s_index]->lseekoff) ; 
       rfilefdt[s_index]->lseekhow= -1 ;
-      TRACE(2,"rfio","rfio_filbuf: writing %d bytes",RQSTSIZE) ;
+      TRACE(2,"rfio","rfio_filbuf: s=%d, s_index=%d, writing %d bytes, lseekoff=%d",s,s_index,RQSTSIZE,
+            rfilefdt[s_index]->lseekoff) ;
       if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
 	 TRACE(2,"rfio","rfio_filbuf: write(): ERROR occured (errno=%d)", errno) ;
 	 END_TRACE() ;
