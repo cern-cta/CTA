@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfshutdown.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:08:20 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfshutdown.c,v $ $Revision: 1.2 $ $Date: 2003/11/10 14:42:44 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -39,12 +39,15 @@ char **argv;
 	uid_t uid;
 	int socket;
 	dlf_log_dst_t* dst;
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
 
 	uid = geteuid();
 	gid = getegid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
-		fprintf (stderr, VMG53);
+		fprintf (stderr, DLF53);
 		exit (USERR);
 	}
 #endif
@@ -67,7 +70,12 @@ char **argv;
                 fprintf (stderr, "usage: %s [-f]\n", argv[0]);
                 exit (USERR);
         }
- 
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, DLF52);
+		exit (SYERR);
+	}
+#endif
 	if (dlf_init("DLF-CONTROL") < 0 )
 	  {
 	    fprintf (stderr, "Error in initializing global structure.\n");
