@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.62 $ $Date: 2000/03/29 11:30:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.63 $ $Date: 2000/03/29 11:43:58 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -826,7 +826,9 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         } else {
             rc = 0;
         }
-        databufs[i]->data_length -= rc;
+        if ((convert & FIXVAR) == 0 ) databufs[i]->data_length -= rc;
+        else databufs[i]->data_length = 0;
+
         file->diskbytes_sofar += (u_signed64)rc;
         DK_SIZE(file->diskbytes_sofar);
         /*
