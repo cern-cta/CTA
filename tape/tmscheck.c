@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.8 $ $Date: 2001/01/30 13:31:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.9 $ $Date: 2002/08/21 07:36:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -32,7 +32,7 @@ char *acctname;
 	char tmrepbuf[132];
 	char tmsden[6];
 	char tmsdgn[7];
-	char tmslbl[3];
+	char tmslbl[4];
 	char tmsreq[80];
 	char tmsvsn[7];
 	char userid[4];
@@ -124,7 +124,8 @@ char *acctname;
 
 	tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
 	tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
-	tmslbl[2] = '\0';
+	tmslbl[2] = (tmrepbuf[76] == ' ') ? '\0' : tmrepbuf[76] - 'A' + 'a';
+	tmslbl[3] = '\0';
 	if (*lbl) {
 		if (strcmp (lbl, "blp") && strcmp (lbl, tmslbl)) {
 			Ctape_errmsg (func, TP055, vid, lbl, tmslbl);
