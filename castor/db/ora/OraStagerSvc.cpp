@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.144 $ $Release$ $Date: 2005/03/30 10:27:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.145 $ $Release$ $Date: 2005/03/31 13:41:07 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1820,8 +1820,8 @@ int validNsSegment(struct Cns_segattrs *nsSegment) {
   int rc = vmgr_querytape(nsSegment->vid,nsSegment->side,&vmgrTapeInfo,0);
   if (-1 == rc) return 0;
   if (((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-      ((vmgrTapeInfo.status & DISABLED) == ARCHIVED) ||
-      ((vmgrTapeInfo.status & DISABLED) == EXPORTED)) {
+      ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
+      ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
     return 0;
   }
   return 1;
