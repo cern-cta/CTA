@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.8 1999/07/26 07:20:27 obarring Exp $
+ * $Id: Cthread.c,v 1.9 1999/08/24 15:50:03 jdurand Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.9  1999/08/24 15:50:03  jdurand
+ * Changed debug printout for exported functions to have source:line information
+ *
  * Revision 1.8  1999/07/26 07:20:27  obarring
  * Add Cthread_self in argument list of the new Cglobals_init()
  *
@@ -116,6 +119,7 @@
 /* Let's analyse the compile flags              */
 /* -------------------------------------------- */
 #include <Cthread_flags.h>
+#include <Cglobals.h>
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -797,8 +801,10 @@ void *_Cthread_start_nothread(void *(*startroutine)(void *), void *arg, Sigfunc 
 #endif /* _CTHREAD */
 
 /* ============================================ */
-/* Routine  : Cthread_create                    */
-/* Arguments: start routine address             */
+/* Routine  : Cthread_Create                    */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            start routine address             */
 /*            start routine arguments address   */
 /* -------------------------------------------- */
 /* Output   : integer >= 0 - Cthread ID         */
@@ -815,8 +821,9 @@ void *_Cthread_start_nothread(void *(*startroutine)(void *), void *arg, Sigfunc 
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
-                 void *arg)
+CTHREAD_DECL Cthread_Create(char *file, int line, 
+                            void *(*startroutine)(void *),
+                            void *arg)
 {
   Cth_pid_t pid;                        /* Thread/Process ID */
   unsigned thID = 0;                    /* Thread ID (WIN32) */
@@ -831,8 +838,11 @@ CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
 #endif /* _CTHREAD */
   
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_create(0x%x,0x%x)\n",_Cthread_self(),
-          (unsigned long) startroutine, (unsigned long) arg);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) startroutine, (unsigned long) arg,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -854,7 +864,9 @@ CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
   if ((pid = fork()) < 0) {
     /* Error at process creation */
 #ifdef CTHREAD_DEBUG
-    fprintf(stderr,"[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) : Error at fork\n",_Cthread_self(),
+    fprintf(stderr,
+            "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) : Error at fork\n",
+            _Cthread_self(),
             (unsigned long) startroutine,(unsigned long) arg);
 #endif
     return(-1);
@@ -873,7 +885,9 @@ CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
   /* We are in the parent                     */
   /* We will cleanup in the SIGCLHD handler   */
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) : Created PID=%d\n",_Cthread_self(),
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) : Created PID=%d\n",
+          _Cthread_self(),
           (unsigned long) startroutine,(unsigned long) arg,pid);
 #endif  
   return(_Cthread_addcid(&pid,thID,startroutine,0));
@@ -954,8 +968,10 @@ CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
 }
 
 /* ============================================ */
-/* Routine  : Cthread_create_detached           */
-/* Arguments: start routine address             */
+/* Routine  : Cthread_Create_Detached           */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            start routine address             */
 /*            start routine arguments address   */
 /* -------------------------------------------- */
 /* Output   : integer >= 0 - Cthread ID         */
@@ -972,8 +988,9 @@ CTHREAD_DECL Cthread_create(void *(*startroutine)(void *),
 /*   1) disallow recursive creation             */
 /*   2) Insure synchronization                  */
 /* ============================================ */
-CTHREAD_DECL Cthread_create_detached(void *(*startroutine)(void *),
-                 void *arg) 
+CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
+                                     void *(*startroutine)(void *),
+                                     void *arg) 
 {
 #ifdef _CTHREAD
   Cth_pid_t pid;                        /* Thread/Process ID */
@@ -986,8 +1003,11 @@ CTHREAD_DECL Cthread_create_detached(void *(*startroutine)(void *),
 #endif
   
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_create_detached(0x%x,0x%x)\n",_Cthread_self(),
-          (unsigned long) startroutine, (unsigned long) arg);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_create_detached(0x%x,0x%x) called at %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) startroutine, (unsigned long) arg,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1077,8 +1097,10 @@ CTHREAD_DECL Cthread_create_detached(void *(*startroutine)(void *),
 }
 
 /* ============================================ */
-/* Routine  : Cthread_join                      */
-/* Arguments: Cthread ID                        */
+/* Routine  : Cthread_Join                      */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            Cthread ID                        */
 /*            status pointer to pointer         */
 /* -------------------------------------------- */
 /* Output   : integer  0 - OK                   */
@@ -1088,13 +1110,16 @@ CTHREAD_DECL Cthread_create_detached(void *(*startroutine)(void *),
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_join(int cid, int **status) {
+CTHREAD_DECL Cthread_Join(char *file, int line, int cid, int **status) {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                 n;                /* Status           */
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_join(%d,0x%x)\n",_Cthread_self(),
-          (int) cid, (unsigned long) status);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_join(%d,0x%x) called at %s:%d\n",
+          _Cthread_self(),
+          (int) cid, (unsigned long) status,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1158,8 +1183,10 @@ CTHREAD_DECL Cthread_join(int cid, int **status) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_detach                    */
-/* Arguments: Cthread ID                        */
+/* Routine  : Cthread_Detach                    */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            Cthread ID                        */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
 /* -------------------------------------------- */
@@ -1167,12 +1194,14 @@ CTHREAD_DECL Cthread_join(int cid, int **status) {
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_detach(int cid) {
+CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
   int                 n;                /* Status           */
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_detach(%d)\n",_Cthread_self(),cid);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_detach(%d) called at %s:%d\n",
+          _Cthread_self(),cid,file,line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1242,8 +1271,9 @@ CTHREAD_DECL Cthread_detach(int cid) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_self                      */
-/* Arguments:                                   */
+/* Routine  : Cthread_Self                      */
+/* Arguments: caller source file                */
+/*            caller source line                */
 /* -------------------------------------------- */
 /* Output   : >= 0    - Cthread-ID              */
 /*            <  0    - ERROR                   */
@@ -1252,7 +1282,10 @@ CTHREAD_DECL Cthread_detach(int cid) {
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_self(void) {
+CTHREAD_DECL Cthread_Self0(void) {
+  return(Cthread_Self(__FILE__,__LINE__));
+}
+CTHREAD_DECL Cthread_Self(char *file, int line) {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
 #if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   unsigned            thID;             /* WIN32 thread ID */
@@ -1262,7 +1295,8 @@ CTHREAD_DECL Cthread_self(void) {
   int                 n;                /* Return value     */
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_self()\n",_Cthread_self());
+  fprintf(stderr,"[Cthread    [%2d]] In Cthread_self() called at %s:%d\n",
+          _Cthread_self(),file,line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1379,8 +1413,10 @@ int _Cthread_destroy(int cid) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_cond_broadcast            */
-/* Arguments: address to get a condition signal */
+/* Routine  : Cthread_Cond_Broadcast            */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            address to get a condition signal */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (NOT OK)                */
 /* -------------------------------------------- */
@@ -1388,7 +1424,7 @@ int _Cthread_destroy(int cid) {
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_cond_broadcast(void *addr)
+CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -1396,7 +1432,10 @@ CTHREAD_DECL Cthread_cond_broadcast(void *addr)
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_cond_broadcast(0x%x)\n",_Cthread_self(),(unsigned long) addr);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_cond_broadcast(0x%x) called at %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1458,8 +1497,10 @@ CTHREAD_DECL Cthread_cond_broadcast(void *addr)
 }
 
 /* ============================================ */
-/* Routine  : Cthread_wait_condition            */
-/* Arguments: address to get a condition on     */
+/* Routine  : Cthread_Wait_Condition            */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            address to get a condition on     */
 /*            integer eventual timeout          */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (NOT OK)                */
@@ -1468,7 +1509,7 @@ CTHREAD_DECL Cthread_cond_broadcast(void *addr)
 /* 07-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_wait_condition(void *addr, int timeout)
+CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeout)
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
@@ -1476,8 +1517,11 @@ CTHREAD_DECL Cthread_wait_condition(void *addr, int timeout)
 #endif
   
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_wait_condition(0x%x,%d)\n",_Cthread_self(),
-          (unsigned long) addr,(int) timeout);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_wait_condition(0x%x,%d)\n",
+          _Cthread_self(),
+          (unsigned long) addr,(int) timeout,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1604,8 +1648,10 @@ CTHREAD_DECL Cthread_wait_condition(void *addr, int timeout)
 }
 
 /* ============================================ */
-/* Routine  : Cthread_lock_mtx                  */
-/* Arguments: address to get a lock on          */
+/* Routine  : Cthread_Lock_Mtx                  */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            address to get a lock on          */
 /*            integer eventual timeout          */
 /* (see _Cthread_obtain_mtx)                    */
 /* -------------------------------------------- */
@@ -1616,15 +1662,18 @@ CTHREAD_DECL Cthread_wait_condition(void *addr, int timeout)
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_lock_mtx(void *addr, int timeout) {
+CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_lock_mtx(0x%x,%d)\n",_Cthread_self(),
-          (unsigned long) addr,(int) timeout);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_lock_mtx(0x%x,%d) called at %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) addr,(int) timeout,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1849,8 +1898,10 @@ CTHREAD_DECL Cthread_lock_mtx(void *addr, int timeout) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_mutex_unlock              */
-/* Arguments: address to get a lock off         */
+/* Routine  : Cthread_Mutex_Unlock              */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            address to get a lock off         */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
 /* -------------------------------------------- */
@@ -1858,14 +1909,17 @@ CTHREAD_DECL Cthread_lock_mtx(void *addr, int timeout) {
 /* 06-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_mutex_unlock(void *addr) {
+CTHREAD_DECL Cthread_Mutex_Unlock(char *file, int line, void *addr) {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_unlock_mtx(0x%x)\n",_Cthread_self(),(unsigned long) addr);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_unlock_mtx(0x%x) called at %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -1907,8 +1961,10 @@ CTHREAD_DECL Cthread_mutex_unlock(void *addr) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_mutex_destroy             */
-/* Arguments: address to get a lock deleted     */
+/* Routine  : Cthread_Mutex_Destroy             */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            address to get a lock deleted     */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
 /* -------------------------------------------- */
@@ -1916,7 +1972,7 @@ CTHREAD_DECL Cthread_mutex_unlock(void *addr) {
 /* 08-APR-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cthread_mutex_destroy(void *addr) {
+CTHREAD_DECL Cthread_Mutex_Destroy(char *file, int line, void *addr) {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   struct Cmtx_element_t *previous = NULL;   /* Prev Cmtx_element */
@@ -1924,7 +1980,9 @@ CTHREAD_DECL Cthread_mutex_destroy(void *addr) {
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_mutex_destroy(0x%x)\n",_Cthread_self(),(unsigned long) addr);
+  fprintf(stderr,
+          "[Cthread    [%2d]] In Cthread_mutex_destroy(0x%x) called at %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,file,line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -2469,7 +2527,7 @@ void _Cthread_once(void) {
   Cspec.next = NULL;
   _Cthread_once_status = 0;
   /* Initialize thread specific globals environment*/
-  Cglobals_init(Cthread_getspecific,Cthread_setspecific,Cthread_self); 
+  Cglobals_init(Cthread_Getspecific0,Cthread_Setspecific0,Cthread_Self0); 
   return;
 #endif /* ifndef _CTHREAD */
 }
@@ -2530,8 +2588,10 @@ struct Cspec_element_t *_Cthread_findglobalkey(int *global_key) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_setspecific               */
-/* Arguments: int *global_key                   */
+/* Routine  : Cthread_Setspecific               */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            int *global_key                   */
 /* Arguments: void *addr                        */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
@@ -2542,15 +2602,20 @@ struct Cspec_element_t *_Cthread_findglobalkey(int *global_key) {
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-CTHREAD_DECL Cthread_setspecific(int *global_key, void *addr) {
+CTHREAD_DECL Cthread_Setspecific0(int *global_key, void *addr) {
+  return(Cthread_Setspecific(__FILE__,__LINE__,global_key,addr));
+}
+CTHREAD_DECL Cthread_Setspecific(char *file, int line, int *global_key, void *addr) {
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
 #ifdef _CTHREAD
   int                  n;                 /* Status            */
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_setspecific(0x%x,0x%x)\n",_Cthread_self(),
-          (unsigned long) global_key, (unsigned long) addr);
+  fprintf(stderr,"[Cthread    [%2d]] In Cthread_setspecific(0x%x,0x%x) called at %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) global_key, (unsigned long) addr,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
@@ -2621,8 +2686,10 @@ CTHREAD_DECL Cthread_setspecific(int *global_key, void *addr) {
 }
 
 /* ============================================ */
-/* Routine  : Cthread_getspecific               */
-/* Arguments: int *global_key                   */
+/* Routine  : Cthread_Getspecific               */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            int *global_key                   */
 /*            void **addr                       */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
@@ -2633,7 +2700,11 @@ CTHREAD_DECL Cthread_setspecific(int *global_key, void *addr) {
 /* 30-APR-1999       Windows support            */
 /*                   Olof.Barring@cern.ch       */
 /* ============================================ */
-CTHREAD_DECL Cthread_getspecific(int *global_key, void **addr) {
+CTHREAD_DECL Cthread_Getspecific0(int *global_key, void **addr) {
+  return(Cthread_Getspecific(__FILE__,__LINE__,global_key,addr));
+}
+
+CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **addr) {
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
 #ifdef _CTHREAD
   int                     n;                  /* Status             */
@@ -2641,8 +2712,10 @@ CTHREAD_DECL Cthread_getspecific(int *global_key, void **addr) {
 #endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In Cthread_getspecific(0x%x)\n",_Cthread_self(),
-          (unsigned long) global_key);
+  fprintf(stderr,"[Cthread    [%2d]] In Cthread_getspecific(0x%x) called at %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) global_key,
+          file, line);
 #endif
 
   /* Make sure initialization is/was done */
