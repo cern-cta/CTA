@@ -1,3 +1,7 @@
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.4 $ $Date: 2002/11/19 08:55:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -139,15 +143,15 @@ int main(argc,argv)
 	/* Open output files */
 	if (stcp_output != NULL) {
 		PRE_RFIO;
-		if ((fd_stcp = rfio_open(stcp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
-			stage_errmsg(func,"%s rfio_open error : %s\n", stcp_output, rfio_serror());
+		if ((fd_stcp = rfio_open64(stcp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
+			stage_errmsg(func,"%s rfio_open64 error : %s\n", stcp_output, rfio_serror());
 			exit(EXIT_FAILURE);
 		}
 	}
 	if (stpp_output != NULL) {
 		PRE_RFIO;
-		if ((fd_stpp = rfio_open(stpp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
-			stage_errmsg(func,"%s open error : %s\n", stpp_output, rfio_serror());
+		if ((fd_stpp = rfio_open64(stpp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
+			stage_errmsg(func,"%s rfio_open64 error : %s\n", stpp_output, rfio_serror());
 			rfio_close(fd_stcp);
 			exit(EXIT_FAILURE);
 		}
