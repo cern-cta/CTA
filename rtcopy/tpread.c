@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.3 $ $Date: 2000/01/09 09:41:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.4 $ $Date: 2000/01/10 14:49:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -74,9 +74,13 @@ int main(int argc, char *argv[]) {
     for (;;) {
         rc = rtcpc(tape);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"%s rtcpc(): %s\n",argv[0],sstrerror(serrno));
-            if ( CheckRetry(tape) == TRUE ) continue;
-            else return(1); 
+            if ( CheckRetry(tape) == TRUE ) {
+                rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
+                continue;
+            } else {
+                rtcp_log(LOG_DEBUG,"%s rtcpc(): %s\n",argv[0],sstrerror(serrno));
+                break;
+            }
         } else break;
     }
 
@@ -91,5 +95,26 @@ int main(int argc, char *argv[]) {
 
     rc = rtcp_RetvalSHIFT(tape,&retval);
     if ( rc == -1 ) retval = UNERR;
+    switch (retval) {
+    case 0:
+        rtcp_log(LOG_INFO,"command successful\n");
+        break;
+    case BLKSKPD:
+        rtcp_log(LOG_INFO,"command partially successful since blocks were skipped\n");
+        break;
+    case TPE_LSZ:
+        rtcp_log(LOG_INFO,"command partially successful: blocks skipped and size limited by -s option\n");
+        break;
+    case MNYPARY:
+        rtcp_log(LOG_INFO,"command partially successful: blocks skipped or too many errors on tape\n");
+        break;
+    case LIMBYSZ:
+        rtcp_log(LOG_INFO,"command successful\n");
+        break;
+    default:
+        rtcp_log(LOG_INFO,"command failed\n\n") ;
+        break;
+    }
+
     return(retval);
 }
