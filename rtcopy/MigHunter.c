@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/09 17:49:44 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/09 19:34:45 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/09 17:49:44 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/09 19:34:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -352,7 +352,7 @@ int tapePoolCreator(
                     )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t **tapeCopyArray;
-     struct Cns_fileclass *fileClass;
+     struct Cns_fileclass **fileClass;
      int nbTapeCopies;
 {
   struct Cstager_TapePool_t *newTapePool;
@@ -368,7 +368,7 @@ int tapePoolCreator(
   rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"addMigrationCandidatesToStreams(): prepareForDBAccess(): %s\n",
+      fprintf(stderr,"tapePoolCreator(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
     } else {
       LOG_SYSCALL_ERR("prepareForDBAccess()");
@@ -378,8 +378,8 @@ int tapePoolCreator(
 
   for ( i=0; i<nbTapeCopies; i++ ) {
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
-    for ( j=0; j<fileClass->nbtppools; j++ ) {
-      tapePoolName = fileClass->tppools+j*(CA_MAXCLASNAMELEN+1);
+    for ( j=0; j<fileClass[i]->nbtppools; j++ ) {
+      tapePoolName = fileClass[i]->tppools+j*(CA_MAXCLASNAMELEN+1);
       rc = findTapePoolInSvcClass(svcClass,tapePoolName);
       if ( rc == 0 ) {
         newTapePool = NULL;
@@ -614,7 +614,7 @@ int startStreams(
   rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"addMigrationCandidatesToStreams(): prepareForDBAccess(): %s\n",
+      fprintf(stderr,"startStreams(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
     } else {
       LOG_SYSCALL_ERR("prepareForDBAccess()");
@@ -862,10 +862,12 @@ void freeFileClassArray(
 int addMigrationCandidatesToStreams(
                                     svcClass,
                                     tapeCopyArray,
+                                    nsFileClassArray,
                                     nbTapeCopies
                                     )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t **tapeCopyArray;
+     struct Cns_fileclass **nsFileClassArray;
      int nbTapeCopies;
 {
   struct Cstager_CastorFile_t *castorFile;
@@ -898,7 +900,8 @@ int addMigrationCandidatesToStreams(
   for ( i=0; i<nbTapeCopies; i++ ) {
     rc = addTapeCopyToStreams(
                               svcClass,
-                              tapeCopyArray[i]
+                              tapeCopyArray[i],
+                              nsFileClassArray[i]
                               );
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
