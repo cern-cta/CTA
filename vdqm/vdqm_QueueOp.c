@@ -554,7 +554,7 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
             if  ( (vol->vol.DrvReqID == 0) &&
                   (top == NULL || CmpVolRec(vol,top) == 1) &&
                   (!strcmp(drv->drv.volid,vol->vol.volid) ||
-                   !VolMounted(dgn_context,vol->vol.volid)) &&
+                   !VolInUse(dgn_context,vol->vol.volid)) &&
                   vdqm_DrvMatch(vol,drv) == 1 ) top = vol;
         }
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
