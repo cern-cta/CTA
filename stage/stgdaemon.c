@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.67 2000/10/03 19:21:03 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.68 2000/10/06 14:23:26 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.67 $ $Date: 2000/10/03 19:21:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.68 $ $Date: 2000/10/06 14:23:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -154,6 +154,7 @@ void stgdaemon_wait4child _PROTO(());
 int req2argv _PROTO((char *, char ***));
 int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
+int check_coff_waiting_on_req _PROTO((int, int));
 int check_waiting_on_req _PROTO((int, int));
 int nextreqid _PROTO(());
 struct stgcat_entry *newreq _PROTO(());
@@ -1120,6 +1121,7 @@ void checkpoolstatus()
 	}
 }
 
+int
 check_waiting_on_req(subreqid, state)
 		 int subreqid;
 		 int state;
@@ -1249,6 +1251,77 @@ check_waiting_on_req(subreqid, state)
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
 					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					break;
+				}
+			}
+		}
+	}
+#endif
+	return (found);
+}
+
+int
+check_coff_waiting_on_req(subreqid, state)
+		 int subreqid;
+		 int state;
+{
+	int c;
+	int firstreqid;
+	int found;
+	int i;
+	int savereqid;
+	int saverpfd;
+	struct stgcat_entry *stcp, *stcp_check;
+	struct waitf *wfp;
+	struct waitq *wqp;
+
+	/* For the moment this routine is meaningful ONLY if state is LAST_TPFILE */
+	if (state != LAST_TPFILE) {
+		stglogit("check_coff_waiting_on_req","STG02 - Called with state=0x%lx != LAST_TPFILE=0x%lx\n", (unsigned long) state, (unsigned long) LAST_TPFILE);
+		return(-1);
+	}
+
+	found = 0;
+	firstreqid = 0;
+	savereqid = reqid;
+	saverpfd = rpfd;
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		/* It HAS to be a "-c off" request */
+		if (wqp->concat_off_fseq <= 0) continue;
+		if (! wqp->nb_waiting_on_req) continue;
+		reqid = wqp->reqid;
+		rpfd = wqp->rpfd;
+		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+			if (wfp->waiting_on_req != subreqid) continue;
+			found++;
+			if (state == LAST_TPFILE) {
+				/* Equivalent as a successful check - we mimic STAGED behaviour of check_waiting_on_req */
+				for (stcp = stcs; stcp < stce; stcp++) {
+					if (wfp->subreqid == stcp->reqid)
+						break;
+				}
+				delreq (stcp,0);
+				wqp->nb_waiting_on_req--;
+				wqp->nb_subreqs--;
+				wqp->nbdskf--;
+				for ( ; i < wqp->nb_subreqs; i++, wfp++) {
+					wfp->subreqid = (wfp+1)->subreqid;
+					wfp->waiting_on_req = (wfp+1)->waiting_on_req;
+					strcpy (wfp->upath, (wfp+1)->upath);
+				}
+			}
+			break;
+		}
+	}
+	reqid = savereqid;
+	rpfd = saverpfd;
+#ifdef STAGER_DEBUG
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : Waitq->wf : \n");
+		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wfp->subreqid == stcp->reqid) {
+					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 					break;
 				}
 			}

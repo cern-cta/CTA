@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.31 2000/10/03 15:26:34 jdurand Exp $
+ * $Id: procupd.c,v 1.32 2000/10/06 14:23:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.31 $ $Date: 2000/10/03 15:26:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.32 $ $Date: 2000/10/06 14:23:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,6 +55,7 @@ extern struct waitf *add2wf _PROTO((struct waitq *));
 extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
+extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 
@@ -452,6 +453,7 @@ procupdreq(req_data, clienthost)
 			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0) < 0)
 				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 								 "rfio_unlink", rfio_serror());
+			check_coff_waiting_on_req (wfp->subreqid, LAST_TPFILE);
 			check_waiting_on_req (wfp->subreqid, STG_FAILED);
 		}
 		wqp->nbdskf = wqp->nb_subreqs;
