@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.3 $ $Date: 2001/01/24 08:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,6 +14,7 @@ static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.2 $ $Date:
 #include <sys/devio.h>
 #include <sys/ioctl.h>
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 chkdriveready(tapefd)
 int tapefd;
@@ -24,7 +25,8 @@ int tapefd;
 	strcpy (func, "chkdriveready");
 	if (ioctl (tapefd, DEVIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (mt_info.stat & DEV_OFFLINE)
 		return (0);	/* drive not ready */
@@ -41,7 +43,8 @@ int tapefd;
 	strcpy (func, "chkwriteprot");
 	if (ioctl (tapefd, DEVIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (mt_info.stat & DEV_WRTLCK)
 		return (WRITE_DISABLE);
@@ -53,6 +56,7 @@ int tapefd;
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 chkdriveready(tapefd)
 int tapefd;
@@ -63,7 +67,8 @@ int tapefd;
 	strcpy (func, "chkdriveready");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (mt_info.mt_dposn & MT_ONL)
 		return (1);	/* drive ready */
@@ -80,7 +85,8 @@ int tapefd;
 	strcpy (func, "chkwriteprot");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (mt_info.mt_dposn & MT_WPROT)
 		return (WRITE_DISABLE);
@@ -93,6 +99,7 @@ int tapefd;
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 chkdriveready(tapefd)
 int tapefd;
@@ -103,7 +110,8 @@ int tapefd;
 	strcpy (func, "chkdriveready");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	return (1);	/* if open is successful, drive is ready */
 }
@@ -117,7 +125,8 @@ int tapefd;
 	strcpy (func, "chkwriteprot");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (mt_info.mt_erreg == 7)
 		return (WRITE_DISABLE);
@@ -129,6 +138,7 @@ int tapefd;
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 chkdriveready(tapefd)
 int tapefd;
@@ -139,7 +149,8 @@ int tapefd;
 	strcpy (func, "chkdriveready");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (GMT_ONLINE(mt_info.mt_gstat))
 		return (1);	/* drive ready */
@@ -156,7 +167,8 @@ int tapefd;
 	strcpy (func, "chkwriteprot");
 	if (ioctl (tapefd, MTIOCGET, &mt_info) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
 	}
 	if (GMT_WR_PROT(mt_info.mt_gstat))
 		return (WRITE_DISABLE);
@@ -175,6 +187,7 @@ int tapefd;
 #include <sys/Atape.h>
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 extern char *sys_errlist[];
 chkdriveready(tapefd)
 int tapefd;
@@ -202,7 +215,8 @@ int tapefd;
 				return (0);	/* drive not ready */
 			} else {
 				tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-				return (-errno);	/* error */
+				serrno = errno;
+				return (-1);	/* error */
 			}
 		}
 		return (1);	/* drive ready */
@@ -215,7 +229,8 @@ int tapefd;
 				return (0);	/* drive not ready */
 			} else {
 				tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-				return (-errno);	/* error */
+				serrno = errno;
+				return (-1);	/* error */
 			}
 		}
 		return (1);	/* drive ready */
@@ -236,14 +251,16 @@ int tapefd;
 	mtop.mt_count = 1;
 	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-		return (-errno);	/* error */
+		serrno = errno;
+		return (-1);	/* error */
         }
 	mtsrbl.resvd = 0;
 	mtsrbl.versn = 0;
 	mtsrbl.mtsrblop = MTSNSOP;
 	if (ioctl (tapefd, MTSRBLOP, &mtsrbl) < 0) {
 		tplogit (func, TP002, "ioctl", sys_errlist[errno]);
-                return (-errno);	/* error */
+		serrno = errno;
+                return (-1);	/* error */
         }
 	if (mtsrbl.mtsrblinfo[1] & 0x2)
 		return (WRITE_DISABLE);

@@ -4,10 +4,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.1 $ $Date: 2000/05/11 10:10:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.2 $ $Date: 2001/01/24 08:38:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
-/*      inquiry - load display on 3480 compatible drives */
+/*      inquiry - get information about the type of a drive */
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 #include <errno.h>
 #include <sys/types.h>
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.1 $ $Date: 2000
 #include "scsictl.h"
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 #if defined(_IBMR2)
 extern char *dvrname;
 #endif
@@ -30,7 +31,6 @@ char *path;
 unsigned char *inq_data;
 {
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-	int c;
 	char func[16];
 #if defined(ADSTAR)
 	struct inq_data_s inqd;
@@ -53,17 +53,19 @@ unsigned char *inq_data;
 		tapefd = fd;
 	} else {
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
+			serrno = errno;
 			usrmsg (func, TP042, path, "open", sys_errlist[errno]);
-			RETURN (-errno);
+			RETURN (-1);
 		}
 	}
 #endif
 #if defined(ADSTAR)
         if (strcmp (dvrname, "Atape") == 0) {
                 if (ioctl (tapefd, STIOCQRYINQUIRY, &inqd) < 0) {
+			serrno = errno;
                         rpttperror (func, tapefd, path, "ioctl");
                         if (fd < 0) close (tapefd);
-                        RETURN (-errno);
+			RETURN (-1);
                 }
         }
 	memcpy (inq_data, inqd.vendor_identification, 8);
@@ -72,18 +74,13 @@ unsigned char *inq_data;
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
 	cdb[4] = 36;
-	c = send_scsi_cmd (tapefd, path, 0, cdb, 6, buf, 36,
-		sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr);
-	if (c < 0) {
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, buf, 36,
+	    sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
-		if (c == -1 || c == -2)
-			c = -errno;
-		else
-			c = -EIO;
 #if defined(SOLARIS25) || defined(hpux)
                 if (fd < 0) close (tapefd);
 #endif
-                RETURN (c);
+		RETURN (-1);
 	}
 	memcpy (inq_data, buf+8, 24);
 	inq_data[24] = '\0';

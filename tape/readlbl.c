@@ -4,11 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.8 $ $Date: 2000/06/09 06:53:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.9 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
-/*	return	-errno	in case of error
+/*	return	-1 and serrno set in case of error
  *		0	if a 80 characters record was read
  *		1	if the record length was different
  *		2	for EOF
@@ -59,22 +59,22 @@ char *lblbuf;
 #endif
 			if (errno == ENOSPC) {
 				msgaddr = "";
-				rc = ETPARIT;
+				serrno = ETPARIT;
 			} else if (errno == EIO) {
 				errcat = gettperror (tapefd, path, &msgaddr);
 #if defined(sun) || defined(RS6000PCTA) || defined(ADSTAR) || defined(hpux) || defined(linux)
 				if (errcat == ETBLANK) RETURN (3);
 #endif
-				rc = (errcat > 0) ? errcat : EIO;
+				serrno = (errcat > 0) ? errcat : EIO;
 			} else {
 				msgaddr = sys_errlist[errno];
-				rc = errno;
+				serrno = errno;
 #if defined(_IBMR2)
-				if (errno == EMEDIA) rc = ETPARIT;
+				if (errno == EMEDIA) serrno = ETPARIT;
 #endif
 			}
 			usrmsg (func, TP042, path, "read", msgaddr);
-			RETURN (-rc);
+			RETURN (-1);
 		}
 	}
 	if (n == 0) {

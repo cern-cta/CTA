@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.20 $ $Date: 2000/11/07 15:33:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.21 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -326,7 +326,7 @@ char	**argv;
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	}
 reply:
-	if (c < 0) c = -c;
+	if (c < 0) c = serrno;
 	if (c) {
 		cleanup();
 	} else {

@@ -4,12 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.3 $ $Date: 2000/10/26 15:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
+#include <errno.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "serrno.h"
 static char adens[21][6] = {"0", "800", "1600", "6250", "38000",
 	"8200", "8500", "38KD", "2G", "6G", "10G", "FMT", "RAW", "DDS",
 	"20G", "25G", "35G", "50G", "40G", "60G", "100G"};
@@ -28,6 +30,7 @@ char	*aden;
 	if (!strcmp (aden, "38K")) return (D38000);
 	if (!strcmp (aden, "43200")) return (D8200);
 	if (!strcmp (aden, "86400")) return (D8500);
+	serrno = EINVAL;
 	return (-1);
 }
 

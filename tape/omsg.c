@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1997-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.2 $ $Date: 1999/11/16 07:10:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.3 $ $Date: 2001/01/24 08:38:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,7 +41,8 @@ int logmsg;
 		if ((orfd = opnmsgr (&orport)) < 0) {
 			tplogit (func, TP002, "opnmsgr",
 			    serrno ? sys_serrlist[SERRNO] : sys_errlist[errno]);
-			return (-ETSYS);
+			serrno = ETSYS;
+			return (-1);
 		}
 		FD_SET (orfd, &readmask);
 	}

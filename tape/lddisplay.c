@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.3 $ $Date: 2000/05/05 16:10:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	lddisplay - load display on 3480 compatible drives */
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.3 $ $Date: 20
 #endif
 #include "Ctape.h"
 #include "scsictl.h"
+#include "serrno.h"
 #define DISP_TIMEOUT 10000	/* timeout for load display in milliseconds */
 #if defined(_IBMR2)
 extern char *dvrname;
@@ -36,7 +37,7 @@ char *msg2;
 int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 {
 #if defined(RS6000PCTA) || defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-	int c;
+	int c = 0;
 	char func[16];
 #if defined(_AIX)
 #if defined(RS6000PCTA)
@@ -82,8 +83,9 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		tapefd = fd;
 	} else {
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
+			serrno = errno;
 			usrmsg (func, TP042, path, "open", sys_errlist[errno]);
-			RETURN (-errno);
+			RETURN (-1);
 		}
 	}
 #endif
@@ -98,9 +100,10 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		memcpy (ldcmd.ld_msg2, msg2, strlen (msg2));
 
 		if (ioctl (tapefd, MTIOCLD, &ldcmd) < 0) {
+			serrno = errno;
 			rpttperror (func, tapefd, path, "ioctl");
 			if (fd < 0) close (tapefd);
-			RETURN (-errno);
+			RETURN (-1);
 		}
 #if defined(RS6000PCTA)
 	}
@@ -114,9 +117,10 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		memcpy (stdm.dm_msg1, msg2, strlen (msg2));
 
 		if (ioctl (tapefd, STIOCDM, &stdm) < 0) {
+			serrno = errno;
 			rpttperror (func, tapefd, path, "ioctl");
 			if (fd < 0) close (tapefd);
-			RETURN (-errno);
+			RETURN (-1);
 		}
 	}
 #endif
@@ -131,15 +135,10 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		memcpy (ldcmd.msg1, msg1, strlen(msg1));
 		memset (ldcmd.msg2, ' ', 8);
 		memcpy (ldcmd.msg2, msg2, strlen(msg2));
-		c = send_scsi_cmd (tapefd, path, 0, cdb, 6, &ldcmd, 17,
-			sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr);
-		if (c < 0) {
+		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &ldcmd, 17,
+		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
-			if (c == -1 || c == -2) {
-				RETURN (-errno);
-			} else {
-				RETURN (-EIO);
-			}
+			c = -1;
 		}
 		break;
 	case 1:		/* 3590 */
@@ -154,15 +153,10 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		memcpy (ntp_ldcmd.msg1, msg1, strlen(msg1));
 		memset (ntp_ldcmd.msg2, ' ', 8);
 		memcpy (ntp_ldcmd.msg2, msg2, strlen(msg2));
-		c = send_scsi_cmd (tapefd, path, 0, cdb, 6, &ntp_ldcmd, 24,
-			sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr);
-		if (c < 0) {
+		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &ntp_ldcmd, 24,
+		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
-			if (c == -1 || c == -2) {
-				RETURN (-errno);
-			} else {
-				RETURN (-EIO);
-			}
+			c = -1;
 		}
 		break;
 	case 2:		/* Vision Box */
@@ -173,28 +167,17 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		memcpy (vb_ldcmd.msg1, msg1, strlen(msg1));
 		memset (vb_ldcmd.msg2, ' ', 16);
 		memcpy (vb_ldcmd.msg2, msg2, strlen(msg2));
-		c = send_scsi_cmd (tapefd, path, 0, cdb, 6, &vb_ldcmd, 33,
-			sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr);
-		if (c < 0) {
+		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &vb_ldcmd, 33,
+		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
-			if (c == -1 || c == -2) {
-				RETURN (-errno);
-			} else {
-				RETURN (-EIO);
-			}
+			c = -1;
 		}
-	}
-	if (c < 0) {
-#if defined(SOLARIS25) || defined(hpux)
-		if (fd < 0) close (tapefd);
-#endif
-		RETURN (c);
 	}
 #endif  
 #if defined(_AIX) || defined(SOLARIS25) || defined(hpux)
 	if (fd < 0) close (tapefd);
 #endif
-	RETURN (0);
+	RETURN (c);
 #else
 	return (0);
 #endif

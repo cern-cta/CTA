@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:09:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.3 $ $Date:
 #endif
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 static char func[16];
 extern char *sys_errlist[];
 checkjobdied(jobs)
@@ -77,23 +78,27 @@ int jobs[];
 	knlist (nl, 1, sizeof(struct nlist));
 	proctabaddr = nl[0].n_value;
 	if (sysconfig (SYS_GETPARMS, &var, sizeof(var)) < 0) {
+		serrno = errno;
 		tplogit (func, TP002, "sysconfig", sys_errlist[errno]);
 		RETURN (-1);
 	}
 	lastprocaddr = (long) var.ve_proc;
 	fdkmem = open ("/dev/kmem", 0);
 	if (fdkmem < 0) {
+		serrno = errno;
 		tplogit (func, "TP002 - /dev/kmem : open error : %s\n", sys_errlist[errno]);
 		RETURN (-1);
 	}
 	proctabsiz = lastprocaddr - proctabaddr;
 	proctab = (struct proc *) malloc (proctabsiz);
 	if (proctab == 0) {
+		serrno = errno;
 		tplogit (func, TP005);
 		close (fdkmem);
 		RETURN (-1);
 	}
 	if (seek_and_read (fdkmem, proctabaddr, proctab, proctabsiz) < 0) {
+		serrno = errno;
 		close (fdkmem);
 		free (proctab);
 		RETURN (-1);

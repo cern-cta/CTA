@@ -1,30 +1,31 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.3 $ $Date: 1999/10/13 14:37:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	chkdirw - extract directory name from full pathname
  *		and check if writable.
  *
- *	return	-errno	in case of error
+ *	return	-1 with serrno set in case of error
  *		0	if writable
  */
 #include <errno.h>
+#include <string.h>
 #if defined(_WIN32)
 #define W_OK 2
 #else
 #include <unistd.h>
 #endif
+#include "serrno.h"
 chkdirw(path)
 char *path;
 {
 	char *p;
 	int rc;
-	char *strrchr();
 
 	p = strrchr (path, '/');
 	if (p != path) {
@@ -34,8 +35,9 @@ char *path;
 	} else {
 		rc = access ("/", W_OK);
 	}
-	if (rc < 0)
-		return (-errno);
-	else
+	if (rc < 0) {
+		serrno = errno;
+		return (-1);
+	} else
 		return (0);
 }

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 10:27:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.6 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.5 $ $Date: 2000
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "scsictl.h"
+#include "serrno.h"
 setdens(tapefd, path, devtype, den)
 int tapefd;
 char *path;
@@ -30,7 +31,6 @@ int den;
 	unsigned char mscmd[28];
 	char *msgaddr;
 	int nb_sense_ret;
-	int rc;
 	char sense[MAXSENSE];
 
 	ENTRY (setdens);
@@ -54,15 +54,10 @@ int den;
 	cdb[2] = comppage;
 	cdb[4] = sizeof (mscmd);
 	memset (mscmd, 0, sizeof(mscmd));
-	rc = send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
-		sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr);
-	if (rc < 0) {
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
+	    sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
-		if (rc == -1 || rc == -2) {
-			RETURN (-errno);
-		} else {
-			RETURN (-EIO);  /* error */
-		}
+		RETURN (-1);
 	}
 
 	/* change cdb to issue a mode select */
@@ -91,15 +86,10 @@ int den;
 			mscmd[26] = 0;
 		}
 	}
-	rc = send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
-		sense, 38, 30000, SCSI_OUT, &nb_sense_ret, &msgaddr);
-	if (rc < 0) {
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
+	    sense, 38, 30000, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
-		if (rc == -1 || rc == -2) {
-			RETURN (-errno);
-		} else {
-			RETURN (-EIO);  /* error */
-		}
+		RETURN (-1);
 	}
 	RETURN (0);
 }

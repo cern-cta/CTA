@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 06:37:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.8 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -25,8 +25,8 @@ static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.7 $ $Date: 2000/
 #include "serrno.h"
 
 /*	checkeofeov - check for EOF or EOV */
-/*	return	-errno	in case of error
- *		-ETLBL	for bad label structure
+/*	return	-1 and serrno set in case of error
+ *		-1 and serrno set to ETLBL for bad label structure
  *		0	for EOF
  *		ETEOV	for EOV
  */
@@ -53,14 +53,14 @@ char	*path;
 	} else {	/* tape is labelled */
 		if (c) {
 			if (dlip->flags & NOTRLCHK) return (0);
-			errno = ETLBL;
-			return (-ETLBL);
+			serrno = ETLBL;
+			return (-1);
 		}
 		if (dlip->lblcode == SL) ebc2asc (hdr1, 80);
 		if (strncmp (hdr1, "EOV1", 4) == 0) return (ETEOV);
 		if (strncmp (hdr1, "EOF1", 4)) {
-			errno = ETLBL;
-			return (-ETLBL);
+			serrno = ETLBL;
+			return (-1);
 		}
 	}
 	if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);

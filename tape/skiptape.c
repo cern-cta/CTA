@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 06:46:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.7 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -61,8 +61,9 @@ int n;
 				RETURN (mt_rescnt);
 		} else
 			msgaddr = sys_errlist[errno];
+		serrno = errno;
 		usrmsg (func, TP042, path, "ioctl", msgaddr);
-		RETURN (-errno);
+		RETURN (-1);
 	}
 	RETURN (0);
 }
@@ -89,9 +90,8 @@ int n;
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_FILEMARKS, 0, n, 0, (BOOL)1)) {
 #endif
-		int rc;
-		rc = rpttperror (func, tapefd, path, "ioctl");
-		RETURN (-rc);
+		serrno = rpttperror (func, tapefd, path, "ioctl");
+		RETURN (-1);
 	}
 	RETURN (0);
 }
@@ -117,9 +117,8 @@ int n;
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_FILEMARKS, 0, -n, 0, (BOOL)1)) {
 #endif
-		int rc;
-		rc = rpttperror (func, tapefd, path, "ioctl");
-		RETURN (-rc);
+		serrno = rpttperror (func, tapefd, path, "ioctl");
+		RETURN (-1);
 	}
 	RETURN (0);
 }
@@ -145,9 +144,8 @@ int n;
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_RELATIVE_BLOCKS, 0, n, 0, (BOOL)1)) {
 #endif
-		int rc;
-		rc = rpttperror (func, tapefd, path, "ioctl");
-		RETURN (-rc);
+		serrno = rpttperror (func, tapefd, path, "ioctl");
+		RETURN (-1);
 	}
 	RETURN (0);
 }
@@ -173,9 +171,8 @@ int n;
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_RELATIVE_BLOCKS, 0, -n, 0, (BOOL)1)) {
 #endif
-		int rc;
-		rc = rpttperror (func, tapefd, path, "ioctl");
-		RETURN (-rc);
+		serrno = rpttperror (func, tapefd, path, "ioctl");
+		RETURN (-1);
 	}
 	RETURN (0);
 }

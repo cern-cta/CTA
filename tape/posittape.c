@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.8 $ $Date: 2000/11/07 15:33:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.9 $ $Date: 2001/01/24 08:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -151,7 +151,7 @@ char *vol1, *hdr1, *hdr2;
 #endif
 		while (fseq >= *cfseq || fseq == -1) {
 			if ((c = readlbl (tapefd, path, vol1)) < 0 &&
-				c != -ETPARIT) goto reply;
+				serrno != ETPARIT) goto reply;
 			if (c > 1) {	/* double tape mark or blank tape found */
 				if (fseq == -1) fseq = *cfseq;
 				if (fseq != *cfseq) {

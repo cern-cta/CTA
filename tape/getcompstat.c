@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.12 $ $Date: 2000/10/26 15:18:39 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.13 $ $Date: 2001/01/24 08:38:49 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -30,7 +30,6 @@ COMPRESSION_STATS *comp_stats;
 	unsigned long kbytes_to_tape;
 	unsigned long kbytes_from_tape;
 	unsigned long kbytes_to_host;
-	int c;
 	unsigned char *endpage;
 	unsigned char *p;
 	unsigned short pagelen;
@@ -48,8 +47,10 @@ COMPRESSION_STATS *comp_stats;
 	if (strcmp (devtype, "3590") == 0) {
 		memset (&log_sense_page, 0, sizeof(log_sense_page));
 		log_sense_page.page_code = 0x38;
-		if ((c = ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page)) < 0)
-			return (c);
+		if (ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page)) < 0) {
+			serrno = errno;
+			return (-1);
+		}
 		p = log_sense_page.data;
 	}
 #else
@@ -75,9 +76,9 @@ COMPRESSION_STATS *comp_stats;
 		return (-1);
 	}
  
-	if ((c = send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
-	    sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr)) < 0)
-		return (c);
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
+	    sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
+		return (-1);
 
 	p = buffer;
 #endif
@@ -234,7 +235,6 @@ char *path;
 char *devtype;
 {
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-	int c;
 	unsigned char *endpage;
 	unsigned char *p;
 #if defined(ADSTAR)
@@ -246,8 +246,10 @@ char *devtype;
 	sc_iocmd.timeout_value = 10;	/* seconds */
 	sc_iocmd.command_length = 10;
 
-	if ((c = ioctl (tapefd, STIOCMD, &sc_iocmd)) < 0)
-		return (c);
+	if (ioctl (tapefd, STIOCMD, &sc_iocmd) < 0) {
+		serrno = errno;
+		return (-1);
+	}
 #else
 	unsigned char cdb[10];
 	char *msgaddr;
@@ -259,9 +261,9 @@ char *devtype;
 	cdb[1] = 0x02; /* PCR set */
 	cdb[2] = 0xC0; /* PC = 3 */
 
-	if ((c = send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
-	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr)) < 0)
-		return (c);
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
+	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
+		return (-1);
 
 	return (0);
 #endif

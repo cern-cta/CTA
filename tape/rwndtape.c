@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.3 $ $Date: 2000/05/03 06:46:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.3 $ $Date: 200
 #endif
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 rwndtape(tapefd, path)
 #if defined(_WIN32)
 HANDLE tapefd;
@@ -47,9 +48,8 @@ char *path;
 #else
 	if (SetTapePosition (tapefd, TAPE_REWIND, 0, 0, 0, (BOOL)1)) {
 #endif
-		int rc;
-		rc = rpttperror (func, tapefd, path, "ioctl"); 
-		RETURN (-rc);
+		serrno = rpttperror (func, tapefd, path, "ioctl"); 
+		RETURN (-1);
 	}
 	RETURN (0);
 }

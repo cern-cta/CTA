@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.27 $ $Date: 2000/11/07 15:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.28 $ $Date: 2001/01/24 08:38:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -623,7 +623,7 @@ unload_loop1:
 	if (vmgr_tpmounted (vid, mode) && serrno != ENOENT) {
 		if (*errbuf)
 			usrmsg (func, "%s", errbuf);
-		c = serrno;
+		c = -1;
 		goto reply;
 	}
 #endif
@@ -698,7 +698,7 @@ mounted:
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	}
 reply:
-	if (c < 0) c = -c;
+	if (c < 0) c = serrno;
 	if (c) {
 		cleanup();
 	} else {
