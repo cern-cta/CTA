@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.102 2001/02/11 07:34:25 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.103 2001/02/12 08:12:33 jdurand Exp $
  */
 
 /*
@@ -13,10 +13,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.102 $ $Date: 2001/02/11 07:34:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.103 $ $Date: 2001/02/12 08:12:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
-#define MAX_NETDATA_SIZE 200000
+#define MAX_NETDATA_SIZE 1000000
 
 #include <unistd.h>
 #include <errno.h>
