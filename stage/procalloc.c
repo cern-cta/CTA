@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.35 2002/01/14 15:22:37 jdurand Exp $
+ * $Id: procalloc.c,v 1.36 2002/01/15 08:32:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.35 $ $Date: 2002/01/14 15:22:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.36 $ $Date: 2002/01/15 08:32:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -101,9 +101,15 @@ void procallocreq(req_data, clienthost)
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
-	unmarshall_STRING (rbp, user);	/* login name */
+	unmarshall_STRING (rbp, user);	/* login name - this is not yet a local copy */
+	if (strlen(user) > CA_MAXUSRNAMELEN) {
+		serrno = SENAMETOOLONG;
+		sendrep (rpfd, MSG_ERR, STG33, "user name", sstrerror(serrno));
+		c = USERR;
+		goto reply;
+	}
 	strcpy (stgreq.user, user);
-	unmarshall_STRING (rbp, name);
+	unmarshall_STRING (rbp, name); /* Not user after - this can overbound */
 	unmarshall_WORD (rbp, stgreq.uid);
 	unmarshall_WORD (rbp, stgreq.gid);
 	unmarshall_WORD (rbp, stgreq.mask);
@@ -281,7 +287,7 @@ void procgetreq(req_data, clienthost)
 
 	poolname[0] = '\0';
 	rbp = req_data;
-	unmarshall_STRING (rbp, user);  /* login name */
+	unmarshall_STRING (rbp, user);  /* login name - not user after - this can overbound */
 	unmarshall_WORD (rbp, uid);
 	unmarshall_WORD (rbp, gid);
 
