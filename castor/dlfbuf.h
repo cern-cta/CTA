@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/08/20 13:10:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 14:48:23 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -32,7 +32,6 @@
 #include <serrno.h>
 #include <dlf_api.h>
 #include <Cthread_api.h>
-#include "Cuuid.h"
 #include "castor/logbuf.h"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Internal.hpp"
@@ -150,7 +149,6 @@ namespace castor {
      */
     void dlf_write_internal(const char* name, const char* msg)
       throw(castor::exception::Exception) {
-      Cuuid_t cuuid;
       // Compute DLF level for the message
       int dlflevel;
       switch (level()) {
@@ -177,7 +175,7 @@ namespace castor {
       // XXX For the time being, we ignore completely
       // XXX errors of dlf_write. Shall we syslog them ?
       //int rc =
-      dlf_write (cuuid, dlflevel, 0, 0, 1,
+      dlf_write (m_uuid, dlflevel, 0, &m_fileId, 1,
                  name, DLF_MSG_PARAM_STR, msg);
       //if (0 != rc) {
       //  castor::exception::Internal e;

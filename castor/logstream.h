@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/29 15:46:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.13 $ $Release$ $Date: 2005/01/24 14:48:23 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -33,6 +33,7 @@
 #include <string>
 #include <ostream>
 #include <iomanip>
+#include "Cuuid.h"
 #include "osdep.h"
 #include "castor/ObjectSet.hpp"
 #include "castor/logbuf.h"
@@ -129,6 +130,14 @@ namespace castor {
       OPERATORINT(unsigned int);
       OPERATORINT(long);
       OPERATORINT(unsigned long);
+
+      /**
+       * This operator deals with UUIDs
+       */
+      logstream& operator<< (Cuuid_t var) {
+        m_logbuf->setUuid(var);
+        return *this;
+      }
 
       /**
        * This operator deals with manipulators specific to

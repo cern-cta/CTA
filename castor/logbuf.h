@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/20 08:12:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 14:48:23 $ $Author: sponcec3 $
  *
  * An abstract string buffer for the log that is able
  * to handle levels of output
@@ -30,6 +30,8 @@
 
 // Include Files
 #include <sstream>
+#include "Cuuid.h"
+#include "Cns_api.h"
 
 namespace castor {
 
@@ -70,6 +72,20 @@ namespace castor {
      */
     logbuf::Level level() throw() { return m_curLevel; }
 
+    /**
+     * setUuid
+     */
+    void setUuid(Cuuid_t val) {
+      m_uuid = val;
+    }
+
+    /**
+     * setFileId
+     */
+    void setFileId(Cns_fileid val) {
+      m_fileId = val;
+    }
+
   public:
     
     /**
@@ -77,13 +93,23 @@ namespace castor {
      */
     virtual int sync() throw() = 0;
     
-  private:
+  protected:
 
     /**
      * The current level of output for the stream.
      * Next calls to << will use this level
      */
     logbuf::Level m_curLevel;
+
+    /**
+     * Current uuid if any
+     */
+    Cuuid_t m_uuid;
+
+    /**
+     * Current fileId if any
+     */
+    Cns_fileid m_fileId;
 
   };
 
