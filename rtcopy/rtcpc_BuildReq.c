@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 17:05:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1817,8 +1817,16 @@ static int rtcpc_diskfiles(int mode,
 #define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_INFO,"%s%s: %s\n",Y,#X,X);}
 #define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: %d\n",Y,#X,X);}
 #define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_INFO,"%s%s: 0x%x\n",Y,#X,X);}
-#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %ld\n",Y,#X,(unsigned long)X);}
-#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%lx\n",Y,#X,(unsigned long)X);}
+#if defined(_WIN32)
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %I64u\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%I64x\n",Y,#X,(u_signed64)X);}
+#elif defined(__osf__) && defined(__alpha)
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %lu\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%lx\n",Y,#X,(u_signed64)X);}
+#else 
+#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
+#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_INFO,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
+#endif
 int dumpTapeReq(tape_list_t *tl) {
     rtcpTapeRequest_t *tapereq;
     char indent[] = " ";
@@ -1893,6 +1901,7 @@ int dumpFileReq(file_list_t *fl) {
 
     DUMPI64(indent,filereq->blockid);
     DUMPI64(indent,filereq->bytes_in);
+    DUMPX64(indent,filereq->bytes_in);
     DUMPI64(indent,filereq->bytes_out);
 
     DUMPI64(indent,filereq->maxnbrec);
