@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/30 12:50:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/30 14:00:34 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/30 12:50:55 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/30 14:00:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2154,161 +2154,3 @@ int rtcpcld_setFileStatus(
   return(0);
 }
 
-/**
- * This method is only called from methods used by the VidWorker childs.
- * Get the physical disk path for a given fseq/blockid. If no matching
- * segment exists with a valid path (not '\0' or '.'), the first waiting
- * segment with a valid path is returned. If there are waiting segments
- * but all without a valid path, -1 is returned and serrno = EAGAIN
- * indicating that the caller should retry in a little while (the
- * waiting segments will be marked with status SEGMENT_WAITPATH, which
- * the client should detect and act on). Otherwise, if there are no waiting
- * segments, -1 is returned and serrno = ENOENT. 
- */
-int rtcpcld_getPhysicalPath(
-                            tapereq, 
-                            filereq
-                            )
-     rtcpTapeRequest_t *tapereq;
-     rtcpFileRequest_t *filereq;
-{
-  struct Cstager_Segment_t *segmItem = NULL;
-  int rc = 0, found = 0, waiting = 0, save_serrno;
-  tape_list_t *tape = NULL;
-  file_list_t *file, *fl;
-  struct Cns_fileid fileid;
-
-  if ( tapereq == NULL || filereq == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  memset(&fileid,'\0',sizeof(fileid));
-  strncpy(
-          fileid.server,
-          filereq->castorSegAttr.nameServerHostName,
-          sizeof(fileid.server)-1
-          );
-  fileid.fileid = filereq->castorSegAttr.castorFileId;
-
-  /*
-   * Disk path already assigned ?
-   */
-  if ( *filereq->file_path != '\0' && *filereq->file_path != '.' ) return(0);
-
-  if ( currentTape == NULL ) {
-    rc = updateTapeFromDB(NULL);
-    if ( rc == -1 ) return(-1);
-  }
-
-  rc = rtcp_NewTapeList(&tape,NULL,tapereq->mode);
-  if ( (rc == -1) || (tape == NULL) ) {
-    save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)&fileid,
-                      RTCPCLD_NB_PARAMS+3,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcp_NewTapeList()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
-    serrno = save_serrno;
-    return(-1);
-  }
-
-  tape->tapereq = *tapereq;
-  
-  rc = procReqsForVID(tape);
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)&fileid,
-                      RTCPCLD_NB_PARAMS+3,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_checkReqsForVID()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
-    rtcpc_FreeReqLists(&tape);
-    serrno = save_serrno;
-    return(-1);
-  }
-
-  fl = file = NULL;
-  found = findSegment(filereq,&segmItem);
-  if ( found != 1 ) {
-    (void)updateTapeFromDB(NULL);
-    found = findSegment(filereq,&segmItem);
-  }
-  
-  if ( (found == 1) && (segmItem != NULL) ) {
-    found = findFileFromSegment(segmItem,tape,&fl);
-    if ( (found == 1) && 
-         (fl != NULL) && 
-         (fl->filereq.proc_status == RTCP_WAITING) ) {
-      waiting = 1;
-      if ( (*fl->filereq.file_path == '\0') ||
-           (*fl->filereq.file_path == '.') ) {
-        found = 0;
-      }
-    }
-  }
-  if ( found != 1 ) {
-    /*
-     * Nothing found yet. Search all segments to find one waiting with a path
-     */
-    file = tape->file;
-    CLIST_ITERATE_BEGIN(file,fl) 
-      {
-        if ( (fl->filereq.proc_status == RTCP_WAITING) ) {
-          waiting = 1;
-          if ( (*fl->filereq.file_path != '\0') &&
-                (*fl->filereq.file_path != '.') ) {
-            found = 1;
-            break;
-          }
-        }
-      }
-    CLIST_ITERATE_END(file,fl);
-  }
-
-  if ( (found == 0) && (waiting == 1) ) {
-    /*
-     * Nothing found yet. Return an error indicating it's worth doing a retry.
-     */
-    rtcpc_FreeReqLists(&tape);
-    serrno = EAGAIN;
-    return(-1);
-  }
-  if ( (fl == NULL) || ((found == 0) && (waiting == 0)) ) {
-    rtcpc_FreeReqLists(&tape);
-    serrno = ENOENT;
-    return(-1);
-  }
-  *filereq = fl->filereq;
-  rtcpc_FreeReqLists(&tape);
-
-  return(0);
-}
