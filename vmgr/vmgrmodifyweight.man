@@ -1,0 +1,45 @@
+.\" @(#)$RCSfile: vmgrmodifyweight.man,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRMODIFYWEIGHT 1 "$Date: 2005/03/17 10:23:36 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrmodifyweight \- modify the weight and/or delta assigned to a given DGN in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrmodifyweight
+.BI --dgn " dgn"
+[
+.BI --weight " weight"
+|
+.BI --delta " delta"
+]
+.SH DESCRIPTION
+.B vmgrmodifyweight
+modifies the weight and/or delta assigned to a given DGN in the CASTOR Volume Manager
+.TP
+.I dgn
+specifies the dgn we want to modify the weight of
+.TP
+.I weight
+is the numeric weight we want to assign to the dgn
+.TP
+.I delta
+is the numeric delta we want to assign to the dgn
+.LP
+The dgn parameter is mandatory, and either weight or delta should appear
+(or both of them). When a tape is being selected for writing in vmgr
+(via vmgr_gettape), the weight of a given DGN determines which 
+one is going to be chosen; higher values for the weight give priority
+to that dgn. For each selection, the weigth will be increased the amount
+specified per delta.
+.LP
+This command requires ADMIN privilege in the Cupv database.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
+.B vmgr_modifyweight(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

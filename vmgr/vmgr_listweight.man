@@ -1,0 +1,68 @@
+.\" @(#)$RCSfile: vmgr_listweight.man,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_LISTWEIGHT 3 "$Date: 2005/03/17 10:23:36 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_listweight \- list all the triplets DGN, weight, delta in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "struct vmgr_tape dgn * vmgr_listweight (int " flags ,
+.BI "vmgr_list *" listp )
+.SH DESCRIPTION
+.B vmgr_listweight
+lists all the triplets DGN, weight, delta in the CASTOR Volume Manager
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B VMGR_LIST_BEGIN
+the first call must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B VMGR_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B VMGR_LIST_END
+final call to terminate the list and free resources.
+.RE
+.TP
+.I listp
+is a pointer to a list where all the data will be returned
+.LP
+All parameters are mandatory.
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current pair
+if the operation was successful or NULL if all pairs have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I listp
+is a NULL pointer.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgrlistweight(2)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

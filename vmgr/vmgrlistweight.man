@@ -1,0 +1,50 @@
+.\" @(#)$RCSfile: vmgrlistweight.man,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTWEIGHT 1 "$Date: 2005/03/17 10:23:36 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistweight \- list dgn attributes in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrlistweight
+[
+.BI -d " dgn"
+]
+.SH DESCRIPTION
+.B vmgrlistweight
+lists all existing triplets dgn/weight/delta in the CASTOR Volume
+Manager in tabular form:
+.TP 1.2i
+dgn
+device group name.
+.TP
+weight
+weight assigned to the given dgn
+.TP
+delta
+deltaweight assigned to the given dgn, the amount the weight for that dgn will increase each time you select a tape on that dgn for writing.
+.LP
+The 
+.B "dgn"
+parameter is optional. If specified, only the specified dgn will be
+queried for his weight and delta, instead of all of them.
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+shell$ vmgrlistweight
+DGN        WEIGHT	DELTA
+994BR5     5		1
+994BR6     3		1
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR vmgr_queryweight(3) ,
+.BR vmgr_listweight(3) ,
+.B vmgrmodifyweight(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
