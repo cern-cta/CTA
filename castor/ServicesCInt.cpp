@@ -17,48 +17,67 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 17:35:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/14 09:34:38 $ $Author: sponcec3 $
  *
  *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-// Include Files
+// C++ Include Files
 #include "castor/Services.hpp"
+#include <string>
 #include <iostream>
 #include <errno.h>
 
 extern "C" {
 
+  // C include files
+  #include "castor/Services.h"
+
+  /// Definition of the Services C struct
+  struct C_Services_t {
+    /// The C++ object
+    castor::Services* svcs;
+    /// A placeholder for an error message
+    std::string errorMsg;
+  };
+
   //------------------------------------------------------------------------------
   // C_Services_create
   //------------------------------------------------------------------------------
-  int C_Services_create(castor::Services** svcs) {
-    *svcs = new castor::Services();
+  int C_Services_create(C_Services_t** svcs) {
+    *svcs = (C_Services_t*) malloc(sizeof(C_Services_t));
+    (*svcs)->svcs = new castor::Services();
     return 0;
   }
 
   //------------------------------------------------------------------------------
   // C_Services_delete
   //------------------------------------------------------------------------------
-  int C_Services_delete(castor::Services* svcs) {
-    delete svcs;
+  int C_Services_delete(C_Services_t* svcs) {
+    if (0 != svcs->svcs) delete svcs->svcs;
+    free(svcs);
     return 0;
   }
 
   //------------------------------------------------------------------------------
   // C_Services_createRep
   //------------------------------------------------------------------------------
-  int C_Services_createRep(castor::Services* svcs,
+  int C_Services_createRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 1) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
     try {
-      svcs->createRep(address, object, autocommit);
+      svcs->svcs->createRep(address, object, autocommit);
     } catch (castor::Exception e) {
       errno = EINVAL;
-      svcs->setLastErrorMsg(e.getMessage().str());
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
@@ -67,15 +86,20 @@ extern "C" {
   //------------------------------------------------------------------------------
   // C_Services_updateRep
   //------------------------------------------------------------------------------
-  int C_Services_updateRep(castor::Services* svcs,
+  int C_Services_updateRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 1) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
     try {
-      svcs->updateRep(address, object, autocommit);
+      svcs->svcs->updateRep(address, object, autocommit);
     } catch (castor::Exception e) {
       errno = EINVAL;      
-      svcs->setLastErrorMsg(e.getMessage().str());
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
@@ -84,15 +108,20 @@ extern "C" {
   //------------------------------------------------------------------------------
   // C_Services_deleteRep
   //------------------------------------------------------------------------------
-  int C_Services_deleteRep(castor::Services* svcs,
+  int C_Services_deleteRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
                            char autocommit = 0) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
     try {
-      svcs->deleteRep(address, object, autocommit);
+      svcs->svcs->deleteRep(address, object, autocommit);
     } catch (castor::Exception e) {
       errno = EINVAL;      
-      svcs->setLastErrorMsg(e.getMessage().str());
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
@@ -101,14 +130,19 @@ extern "C" {
   //------------------------------------------------------------------------------
   // C_Services_createObj
   //------------------------------------------------------------------------------
-  int C_Services_createObj(castor::Services* svcs,
+  int C_Services_createObj(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject** object) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
     try {
-      *object = svcs->createObj(address);
+      *object = svcs->svcs->createObj(address);
     } catch (castor::Exception e) {
       errno = EINVAL;
-      svcs->setLastErrorMsg(e.getMessage().str());
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
@@ -117,8 +151,8 @@ extern "C" {
   //------------------------------------------------------------------------------
   // C_Services_errorMsg
   //------------------------------------------------------------------------------
-  const char* C_Services_errorMsg(castor::Services* svcs) {
-    return svcs->lastErrorMsg().c_str();
+  const char* C_Services_errorMsg(C_Services_t* svcs) {
+    return svcs->errorMsg.c_str();
   }
   
 } // End of extern "C"

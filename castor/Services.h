@@ -38,7 +38,7 @@ struct C_IObject_t;
 struct C_IAddress_t;
 
 /**
- * Forward declaration of Services for the C world
+ * The Services struct in the C world
  */
 struct C_Services_t;
 
@@ -106,13 +106,5 @@ int C_Services_deleteRep(struct C_Services_t* svcs,
 int C_Services_createObj(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
                          struct C_IObject_t** object);
-
-/**
- * Returns the error message associated to the last error.
- * Note that the error message string should be deallocated
- * by the caller.
- * @return the error message
- */
-const char* C_Services_errorMsg(struct C_Services_t* svcs);
 
 #endif // CASTOR_SERVICES_H
