@@ -44,8 +44,8 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   //odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
   streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
-  m_noCnvs.insert(QString("DiskCopyForRecall"));
-  m_noCnvs.insert(QString("TapeCopyForMigration"));
+  m_noDBCnvs.insert(QString("DiskCopyForRecall"));
+  m_noDBCnvs.insert(QString("TapeCopyForMigration"));
 }
 
 CppWriter::~CppWriter() {
@@ -213,47 +213,48 @@ void CppWriter::writeClass(UMLClassifier *c) {
       // Determine whether persistency has to be implemented
       // It is implemented for concrete classes implementing
       // the IPersistent abstract interface
-      if (!c->getAbstract() &&
-          m_noCnvs.find(c->getName()) == m_noCnvs.end()) {
-        UMLObject* obj = m_doc->findUMLObject(QString("castor::IPersistent"),
+      if (!c->getAbstract()) {
+        ClassifierInfo* classInfo = new ClassifierInfo(c, m_doc);
+        if (m_noDBCnvs.find(c->getName()) == m_noDBCnvs.end()) {
+          UMLObject* obj = m_doc->findUMLObject(QString("castor::IPersistent"),
+                                                Uml::ot_Interface);
+          const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+          if (classInfo->allImplementedAbstracts.contains(concept)) {
+            // check existence of the directory
+            QDir packageDir(m_outputDirectory.absPath() + "/castor/db");
+            if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
+              std::cerr << "Cannot create the package folder "
+                        << packageDir.absPath().ascii()
+                        << "\nPlease check the access rights" << std::endl;
+              return;
+            }
+            QDir packageDirOra(m_outputDirectory.absPath() + "/castor/db/ora");
+            if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
+              std::cerr << "Cannot create the package folder "
+                        << packageDirOra.absPath().ascii()
+                        << "\nPlease check the access rights" << std::endl;
+              return;
+            }
+            //           QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
+            //           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
+            //             std::cerr << "Cannot create the package folder "
+            //                       << packageDirOdbc.absPath().ascii()
+            //                       << "\nPlease check the access rights" << std::endl;
+            //             return;
+            //           }
+            // run generation
+            int i = fileName.findRev('/') + 1;
+            QString file = fileName.right(fileName.length()-i);
+            runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
+            runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
+            //           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
+            //           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
+          }
+        }
+        UMLObject* obj = m_doc->findUMLObject(QString("castor::IStreamable"),
                                               Uml::ot_Interface);
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-        ClassifierInfo* classInfo = new ClassifierInfo(c, m_doc);
-        if (classInfo->implementedAbstracts.contains(concept)) {
-          // check existence of the directory
-          QDir packageDir(m_outputDirectory.absPath() + "/castor/db");
-          if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
-            std::cerr << "Cannot create the package folder "
-                      << packageDir.absPath().ascii()
-                      << "\nPlease check the access rights" << std::endl;
-            return;
-          }
-          QDir packageDirOra(m_outputDirectory.absPath() + "/castor/db/ora");
-          if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
-            std::cerr << "Cannot create the package folder "
-                      << packageDirOra.absPath().ascii()
-                      << "\nPlease check the access rights" << std::endl;
-            return;
-          }
-//           QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
-//           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
-//             std::cerr << "Cannot create the package folder "
-//                       << packageDirOdbc.absPath().ascii()
-//                       << "\nPlease check the access rights" << std::endl;
-//             return;
-//           }
-          // run generation
-          int i = fileName.findRev('/') + 1;
-          QString file = fileName.right(fileName.length()-i);
-          runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
-          runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
-//           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
-//           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
-        }
-        obj = m_doc->findUMLObject(QString("castor::IStreamable"),
-                                   Uml::ot_Interface);
-        concept = dynamic_cast<UMLClassifier*>(obj);
-        if (classInfo->implementedAbstracts.contains(concept)) {
+        if (classInfo->allImplementedAbstracts.contains(concept)) {
           // check existence of the directory
           QDir packageDir(m_outputDirectory.absPath() + "/castor/io");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {

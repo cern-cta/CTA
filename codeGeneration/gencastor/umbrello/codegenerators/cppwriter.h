@@ -83,9 +83,9 @@ class CppWriter : public CppCastorWriter {
 
   /**
    * A List of specific classes for which no converter should
-   * be generated
+   * be generated for access to the database
    */
-  std::set<QString> m_noCnvs;
+  std::set<QString> m_noDBCnvs;
 
 };
 
