@@ -1,0 +1,315 @@
+#!/bin/sh
+#
+#  Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+#  All rights reserved
+#
+#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.1 $ $Date: 2000/03/05 09:30:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+#
+#	rtcpcheck.fix - test rtcopy in fixed format mode
+#
+# calling seqence:
+#
+# rtcpcheck.fix -V vid [-d density] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]
+#
+#set -x
+#
+echo "TESTING RTCOPY IN FIXED FORMAT MODE"
+#
+# Set default values
+#
+###############################
+dir=/tmp
+file=RTCOPYTEST
+lbltypes="al nl sl"
+lrecl=32400
+nbrecords=50
+###############################
+#
+# Get arguments
+#
+set -- `getopt L:N:V:d:g:l:v: $*`
+if [ $? != 0 ]
+then
+	echo "usage: rtcpcheck.fix -V vid [-d density] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]"
+	exit 1
+fi
+#
+while [ $# -gt 0 ]
+do  case $1 in
+    -L)    lrecl=$2; shift;;
+    -N)    nbrecords=$2; shift;;
+    -V)    vid=$2; shift;;
+    -d)    denopt="-d $2"; shift;;
+    -g)    dgnopt="-g $2"; shift;;
+    -l)    lbltypes=$2; shift;;
+    -v)    vsnopt="-v $2"; shift;;
+    --)    break;;
+    *)     echo "Bad parameter: " $1; exit 1;;
+    esac
+    shift
+done
+#
+if [ -z "$vid" ]
+then
+echo "The vid must be specified"
+    exit 1
+fi
+#
+# Creating test file.
+#
+echo "CREATING TEST FILE ..."
+cc -o create_test_file create_test_file.c
+if [ $? != 0 ]
+then
+	echo "TEST FAILED !!!"
+	exit 1
+fi
+./create_test_file $dir/$file".IN" $nbrecords $lrecl
+if [ $? != 0 ]
+then
+	echo "TEST FAILED !!!"
+	exit 1
+fi
+echo "OK"
+#
+# Testing tape software for all kind of label.
+#
+for lab in $lbltypes
+do
+	#
+	# Updating TMS
+	#
+	echo sysreq tms update vid $vid SET LABEL $lab
+	sysreq tms update vid $vid SET LABEL $lab
+	if [ $? != 0 ]
+	then
+		echo "ERROR UPDATING TMS"
+		exit 1 
+	fi
+
+	#
+	# Prelabeling the tape
+	#
+	echo tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
+	tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
+	if [ $? != 0 ]
+	then
+		echo "ERROR PRELABELING TAPE"
+		exit 1 
+	fi
+
+	#
+	# Writing to tape.
+	#
+	echo "WRITING A FILE TO TAPE ..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+
+	#
+	# Reading from tape.
+	#
+	echo "READING IT BACK ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	diff $dir/$file".IN" $dir/$file".OUT" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	echo "OK"
+
+	#
+	# Overwriting first file on tape.
+	#
+	echo "OVER WRITING FIRST FILE ON TAPE ..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+
+	#
+	# Reading from tape.
+	#
+	echo "READING IT BACK ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	diff $dir/$file".IN" $dir/$file".OUT" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	echo "OK"
+
+	# 
+	# Concatenating on tape.
+	#
+	echo "WRITING TWO FILES INTO A SINGLE ONE ON TAPE ..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	cat $dir/$file".IN" $dir/$file".OUT" > $dir/$file".GLOB"
+	rm $dir/$file".OUT"
+	echo "READING IT BACK ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	diff $dir/$file".OUT" $dir/$file".GLOB" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	echo "OK"
+
+	#
+	# Over writing second file on tape.
+	#
+	echo "OVER WRITING SECOND FILE ON TAPE..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".GLOB"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".GLOB"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	echo "READING IT BACK ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	diff $dir/$file".OUT" $dir/$file".GLOB" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	echo "OK"
+
+	#
+	# Writing 2 files on tape
+	#
+	echo "WRITING TWO FILES ON TAPE..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	#
+	rm $dir/$file".GLOB"
+	cat $dir/$file".IN" $dir/$file".OUT" > $dir/$file".GLOB"
+	rm $dir/$file".OUT"
+
+	#
+	# Concatenating from tape to disk
+	#
+	echo "READING INTO A SINGLE FILE TWO FILES FROM TAPE ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1 
+	fi
+	diff $dir/$file".OUT" $dir/$file".GLOB" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	echo "OK"
+	rm $dir/$file".OUT" $dir/$file".GLOB"
+
+	#
+	# Writing a file at the end of the tape.
+	#
+	echo "WRITING A FILE AT THE END OF THE TAPE ..."
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q n -f LASTFILE `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q n -f LASTFILE `hostname`:$dir/$file".IN"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	echo "READING IT BACK WITH THE PREVIOUS ONE ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	diff $dir/$file".IN" $dir/$file".OUT" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	echo "OK"
+	rm $dir/$file".OUT"
+	echo "READING THE FIRST AND THE THIRD ONE ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,3 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,3 `hostname`:$dir/$file".OUT"
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	diff $dir/$file".GLOB" $dir/$file".OUT" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	echo "OK"
+#
+# test -q u
+#
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q u  -f LASTFILE /dev/null
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q u  -f LASTFILE /dev/null
+	if [ $? != 0 ]
+	then
+		echo "TEST FAILED !!!"
+		exit 1
+	fi
+	echo "OK"
+done
+
+#
+# Everything is fine ...
+#
+echo "ALL TESTS WERE SUCCESSFUL"
+rm $dir/$file".IN" $dir/$file".OUT" $dir/$file".GLOB" > /dev/null 2>&1
+exit 0
