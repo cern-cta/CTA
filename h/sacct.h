@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.5 2000/02/11 11:21:22 obarring Exp $
+ * $Id: sacct.h,v 1.6 2000/04/05 12:09:30 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.5 $ $Date: 2000/02/11 11:21:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.6 $ $Date: 2000/04/05 12:09:30 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -167,6 +167,7 @@ struct acctrtcp {	/* accounting record for rtcopy software */
 	int	exitcode;
 	char	clienthost[CA_MAXHOSTNAMELEN+1];
 	char	dsksrvr[CA_MAXHOSTNAMELEN+1];
+        int     fseq;           /* Tape file sequence number */
 	char    errmsgtxt[CA_MAXLINELEN+1];
 };
 
