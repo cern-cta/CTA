@@ -1,13 +1,15 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.10 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.11 $ $Date: 2001/11/13 13:53:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2001/09/26 09:13:55 $"
+.TH STAGEWRT l "$Date: 2001/11/13 13:53:49 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
 .SH SYNOPSIS
 .B stagewrt 
+[
+.BI -A " deferred"
 [
 .BI -b " max_block_size"
 ] [
@@ -76,6 +78,9 @@ may be a local path, the combination
 (NFS syntax), a full path starting with the NFS_ROOT, i.e. /shift,
 or absent if a Fortran unit number is specified.
 .SH OPTIONS
+.TP
+.BI \-A " deferred"
+is valid only when doing stagewrt of CASTOR HSM files. It puts your request in the migration queue, the HSM files will be automatically migrated later. If there is no error when parsing the input, the client then returns immediately. This option requires at least one \-M option and one user file as parameter.
 .TP
 .BI \-b " blocksize"
 Specifies the maximum block size.
