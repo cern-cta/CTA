@@ -19,7 +19,9 @@ debian/castor/usr/share/man/man1/vmgrlistlibrary.1castor
 debian/castor/usr/share/man/man1/vmgrlistmodel.1castor
 debian/castor/usr/share/man/man1/vmgrlistpool.1castor
 debian/castor/usr/share/man/man1/vmgrlisttape.1castor
+debian/castor/usr/share/man/man1/vmgrlistweight.1castor
 debian/castor/usr/share/man/man1/vmgrmodifylibrary.1castor
 debian/castor/usr/share/man/man1/vmgrmodifypool.1castor
 debian/castor/usr/share/man/man1/vmgrmodifytape.1castor
+debian/castor/usr/share/man/man1/vmgrmodifyweight.1castor
 debian/castor/usr/share/man/man1/vmgrsettag.1castor
