@@ -4,27 +4,31 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.2 $ $Date: 2004/05/17 11:31:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.3 $ $Date: 2004/06/03 15:24:42 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
 #if BuildStageClient != YES
+#undef BuildStageClient
 #define BuildStageClient	YES
 #endif
 #endif
 
 #if BuildNameServerDaemon && !UseOracle && !UseRaima
 #if BuildDbClient != YES
+#undef BuildDbClient
 #define BuildDbClient YES
 #endif
 #endif
 #if BuildStageDaemon && UseStageCdb
 #if BuildDbClient != YES
+#undef BuildDbClient
 #define BuildDbClient YES
 #endif
 #endif
 #if BuildVolumeMgrrDaemon && !UseOracle && !UseRaima
 #if BuildDbClient != YES
+#undef BuildDbClient
 #define BuildDbClient YES
 #endif
 #endif
@@ -35,31 +39,38 @@ DBLIB = DepLibraryTargetName(db,db)
 #if BuildStageClient
 #if UseTms
 #if BuildSysreq != YES
+#undef BuildSysreq
 #define BuildSysreq	YES
 #endif
 #endif
 #if BuildRfioClient != YES
+#undef BuildRfioClient
 #define BuildRfioClient       YES
 #endif
 #endif
 
 #if BuildStageDaemon
 #if BuildCupvClient != YES
+#undef BuildCupvClient
 #define BuildCupvClient	YES
 #endif
 #if BuildNameServerLibrary != YES
+#undef BuildNameServerLibrary
 #define BuildNameServerLibrary YES
 #endif
 #if BuildRtcopyClient != YES
+#undef BuildRtcopyClient
 #define BuildRtcopyClient       YES
 #endif
 #if BuildVolumeMgrClient != YES
+#undef BuildVolumeMgrClient
 #define BuildVolumeMgrClient YES
 #endif
 #endif
 
 #if BuildStageLibrary
 #if BuildRfioClient != YES
+#undef BuildRfioClient
 #define BuildRfioClient       YES
 #endif
 #endif
@@ -72,10 +83,12 @@ STGLIB = DepLibraryTargetName(stage,stage)
 RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
 #if UseTms
 #if BuildSysreq != YES
+#undef BuildSysreq
 #define BuildSysreq	YES
 #endif
 #endif
 #if BuildVdqmClient != YES
+#undef BuildVdqmClient
 #define BuildVdqmClient	YES
 #endif
 #endif
@@ -84,25 +97,30 @@ RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
 TAPELIB = DepLibraryTargetName(tape,tape)
 #if UseTms
 #if BuildSysreq != YES
+#undef BuildSysreq
 #define BuildSysreq	YES
 #endif
 #endif
 #if BuildMsgClient != YES
+#undef BuildMsgClient
 #define BuildMsgClient	YES
 #endif
 #if BuildRmcClient != YES
+#undef BuildRmcClient
 #define BuildRmcClient	YES
 #endif
 #endif
 
 #if BuildTapeDaemon && UseVmgr
 #if BuildVolumeMgrClient != YES
+#undef BuildVolumeMgrClient
 #define BuildVolumeMgrClient YES
 #endif
 #endif
 
 #if BuildTpusage
 #if BuildRfioClient != YES
+#undef BuildRfioClient
 #define BuildRfioClient	YES
 #endif
 #endif
@@ -110,12 +128,15 @@ TAPELIB = DepLibraryTargetName(tape,tape)
 #if BuildRfioClient
 RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#undef BuildNameServerLibrary
 #define BuildNameServerLibrary	YES
 #endif
 #if BuildStageClient != YES && BuildStageLibrary != YES
+#undef BuildStageLibrary
 #define BuildStageLibrary	YES
 #endif
 #endif
@@ -123,12 +144,14 @@ RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #if BuildMsgClient
 MSGLIB = DepLibraryTargetName(msg,msg)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
 
 #if BuildNameServerDaemon
 #if BuildCupvClient != YES
+#undef BuildCupvClient
 #define BuildCupvClient	YES
 #endif
 #endif
@@ -136,6 +159,7 @@ MSGLIB = DepLibraryTargetName(msg,msg)
 #if BuildNameServerClient || BuildNameServerLibrary
 NSLIB = DepLibraryTargetName(ns,ns)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
@@ -147,12 +171,14 @@ RMCLIB = DepLibraryTargetName(rmc,rmc)
 #if BuildVdqmClient
 VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
 
 #if BuildVolumeMgrDaemon
 #if BuildCupvClient != YES
+#undef BuildCupvClient
 #define BuildCupvClient	YES
 #endif
 #endif
@@ -161,6 +187,7 @@ VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
 #if BuildVolumeMgrClient
 VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
@@ -168,6 +195,7 @@ VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
 #if BuildCupvClient || BuildCupvDaemon
 UPVLIB = DepLibraryTargetName(upv,upv)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
@@ -175,6 +203,7 @@ UPVLIB = DepLibraryTargetName(upv,upv)
 #if BuildMonitorClient || BuildMonitorServer
 MONITORLIB = DepLibraryTargetName(monitor,monitor)
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 #endif
@@ -197,6 +226,7 @@ DLFLIB = DepLibraryTargetName(dlf,dlf)
 
 #if BuildSecurity
 #if BuildCommon != YES
+#undef BuildCommon
 #define BuildCommon	YES
 #endif
 SECURITYLIB = DepLibraryTargetName(security,security)
