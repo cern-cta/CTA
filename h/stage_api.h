@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.13 2000/06/16 13:22:48 jdurand Exp $
+ * $Id: stage_api.h,v 1.14 2000/09/01 13:15:07 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -36,7 +36,7 @@ EXTERN_C int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, int, char *, u_sig
 EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
 EXTERN_C int  DLL_DECL  stage_updc_filchg _PROTO((char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
-EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_out_hsm _PROTO((char *, int, char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_in_hsm _PROTO((char *, char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_wrt_hsm _PROTO((char *, int, char *, stage_hsm_t *));
