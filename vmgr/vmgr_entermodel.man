@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.1 $ $Date: 2000/01/10 10:17:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.2 $ $Date: 2000/01/10 10:39:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERMODEL l "$Date: 2000/01/10 10:17:41 $"
+.TH VMGR_ENTERMODEL l "$Date: 2000/01/10 10:39:38 $"
 .SH NAME
 vmgr_entermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -16,7 +16,7 @@ vmgr_entermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .BI "int " media_cost )
 .SH DESCRIPTION
 .B vmgr_entermodel
-enters a new cartridge model in the CASTOR Volume Manager.
+enters a new model of cartridge in the CASTOR Volume Manager.
 .TP
 .I model
 is the model of cartridge.
