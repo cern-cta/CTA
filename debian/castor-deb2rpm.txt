@@ -1,0 +1,69 @@
+$Id: castor-deb2rpm.txt,v 1.1 2005/01/20 11:58:24 jdurand Exp $
+
+General:
+
+- CASTOR Major Version should be in the form x.y
+- CASTOR Minor Version should be in the form r.q
+
+It is suggested that CASTOR Major Version matches the two
+first digits of the cvs tag
+It is suggested that CASTOR Minor Version matches the two
+last digits of the cvs tag
+Development version (untagged) should have a minor version
+like: 99.q where q is a number, increasing at each new packaging.
+
+To generate debian packages
+---------------------------
+
+Note: the debian packages are always generated using your WORKDIR,
+      that is, you can generate packages using your private patches
+      even if they are not yet commited.
+
+From scratch:
+
+mkdir CVS_FOR_PACKAGING
+cd CVS_FOR_PACKAGING
+cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2
+cvs -d/afs/cern.ch/project/castor/CASTOR_MASTER/cvsroot co CASTOR
+cd ..
+mkdir -p WORKDIR_FOR_PACKAGING/PROTO2
+cd WORKDIR_FOR_PACKAGING/PROTO2
+lndir ../../CVS/PROTO2 .
+lndir ../../CVS/CASTOR .
+
+export MAJOR_CASTOR_VERSION=2.0
+export MINOR_CASTOR_VERSION=99.1
+
+Either: make -f Makefile.ini Makefiles
+	make deb
+
+Or:
+	./makedeb.sh
+
+This will do a copy of your workdir in /tmp, modify site.def to compile
+everything, an generate the debian packages.
+
+To generate rpm packages for RedHat
+-----------------------------------
+
+Using alien does not work well for two reasons:
+- the scriptlets are not all included in the rpm, even if they would be
+  redhat compatible
+- the generated rpms sometimes contain directories like /etc/init.d and rpm
+  install will not like that (/etc/init.d is owned by chkconfig for example)
+
+The method is the following:
+
+On all *.deb packages, do:
+
+alien --to-rpm --generate --keep-version <package_majorversion>-*.deb
+Go to package_majorversion directory
+Remove all %dir directives
+Run rpmbuild -bb on the specfile: rpmbuild -bb *spec
+
+Globally you have to run
+	 make rpm
+Or:
+	 ./makerpm.sh
+
+Jean-Damien.Durand@cern.ch
