@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.24 $ $Date: 2004/03/16 15:59:33 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.25 $ $Date: 2004/03/16 16:02:11 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -2578,40 +2578,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 				errno = EINVAL;
 				return(-1);
 			}
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : lock on lock_parent_cthread_structure\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			/* We assume that we will not have to wait   */
-			if (Cthread_mutex_lock_ext(lock_parent_cthread_structure) != 0) {
-				return(-1);
-			}
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Setting current->flag to 0\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : un-lock on lock_parent_cthread_structure\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 		  
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
