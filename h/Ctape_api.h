@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.14 2000/05/29 12:53:28 baud Exp $
+ * $Id: Ctape_api.h,v 1.15 2000/08/28 05:42:21 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.14 $ $Date: 2000/05/29 12:53:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.15 $ $Date: 2000/08/28 05:42:21 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -70,35 +70,18 @@ struct rsv_status {		/* resource reservation status reply entry */
 
 			/* function prototypes */
 
-#if defined(__STDC__)
-extern int Ctape_config(char *, int, int);
-extern struct devinfo *Ctape_devinfo(char *);
-extern int Ctape_info(char *, int *, unsigned char *, char *, char *, char *,
-	char *, int *, int *, char *);
-extern int Ctape_kill(char *);
-extern int Ctape_label(char *, char *, int, char *, char *, char *, char *,
-	char *, int, int, int);
-extern int Ctape_mount(char *, char *, int, char *, char *, char *, int,
-	char *, char *, int);
-extern int Ctape_position(char *, int, int, int, unsigned char *, int, int,
-	int, char *, char *, int, int, int, int);
-extern int Ctape_reserve(int, struct dgn_rsv *);
-extern int Ctape_rls(char *, int);
-extern int Ctape_rstatus(char *, struct rsv_status *, int, int);
-extern void Ctape_seterrbuf(char *, int);
-extern int Ctape_status(char *, struct drv_status *, int);
-#else
-extern int Ctape_config();
-extern struct devinfo *Ctape_devinfo();
-extern int Ctape_info();
-extern int Ctape_kill();
-extern int Ctape_label();
-extern int Ctape_mount();
-extern int Ctape_position();
-extern int Ctape_reserve();
-extern int Ctape_rls();
-extern int Ctape_rstatus();
-extern void Ctape_seterrbuf();
-extern int Ctape_status();
-#endif
+EXTERN_C int DLL_DECL Ctape_config _PROTO((char *, int, int));
+EXTERN_C struct devinfo DLL_DECL *Ctape_devinfo _PROTO((char *));
+EXTERN_C int DLL_DECL Ctape_dmpinit _PROTO((char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int));
+EXTERN_C int DLL_DECL Ctape_dmpfil _PROTO((char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *));
+EXTERN_C int DLL_DECL Ctape_info _PROTO((char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *));
+EXTERN_C int DLL_DECL Ctape_kill _PROTO((char *));
+EXTERN_C int DLL_DECL Ctape_label _PROTO((char *, char *, int, char *, char *, char *, char *, char *, int, int, int));
+EXTERN_C int DLL_DECL Ctape_mount _PROTO((char *, char *, int, char *, char *, char *, int, char *, char *, int));
+EXTERN_C int DLL_DECL Ctape_position _PROTO((char *, int, int, int, unsigned char *, int, int, int, char *, char *, int, int, int, int));
+EXTERN_C int DLL_DECL Ctape_reserve _PROTO((int, struct dgn_rsv *));
+EXTERN_C int DLL_DECL Ctape_rls _PROTO((char *, int));
+EXTERN_C int DLL_DECL Ctape_rstatus _PROTO((char *, struct rsv_status *, int, int));
+EXTERN_C void DLL_DECL Ctape_seterrbuf _PROTO((char *, int));
+EXTERN_C int DLL_DECL Ctape_status _PROTO((char *, struct drv_status *, int));
 #endif
