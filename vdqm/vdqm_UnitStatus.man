@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.9 $ $Date: 1999/11/26 15:34:35 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.10 $ $Date: 2000/02/03 11:43:41 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 1999/11/26 15:34:35 $"
+.TH VDQM_UNITSTATUS l "$Date: 2000/02/03 11:43:41 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -137,6 +137,12 @@ parameter may contain the volume identifier of the unmounted volume. VDQM will t
 cross-check this value with its internal table and return an error if the volume
 identifiers do not correspond.
 .PP
+.B VDQM_FORCE_UNMOUNT
+\- the client forces an unmount. This status value overrides a potential
+deferred dismount in case there was another job for that volume. This status
+must be followed by a VDQM_VOL_UNMOUNT when the volume has been physically
+unmounted, so that VDQM can assign the volume to another job.
+.PP
 .B VDQM_UNIT_QUERY
 \- query the status of specified unit. For each of the input parameters that 
 are not NULL pointers the corresponding value is returned (if available). The
@@ -148,7 +154,8 @@ it is, the VDQM_UNIT_QUERY is ignored.
 .PP
 .B VDQM_UNIT_ERROR
 \- increment error counter for this unit in VDQM. This status should be
-set after a medium error. 
+set after a medium error or a drive error. This status should always be
+followed by a VDQM_VOL_UNMOUNT when the volume has been physically unmounted.
 .PP
 .B VDQM_UNIT_MBCOUNT
 \- increment the MBytes transferred counter for this unit in VDQM. The
@@ -167,6 +174,88 @@ not yet been received.
 .B VDQM_UNIT_UNKNOWN
 \- an attempt failed to send a volume request to the unit. This status will be
 reset after a configurable time limit or upon reception of a unit status request.
+
+.SH EXAMPLE
+Here follows an example showing how a job is assigned, volume is mounted,
+job released and volume unmounted.
+.P
+.nf
+#include <stdio.h>
+#include <stdlib.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <vdqm_api.h>
+
+int main(int argc, char *argv) {
+    int VolReqID, jobID, value, status, rc;
+    char *unit, *dgn, *VID;
+
+    if ( argc < 5 ) {
+        fprintf(stderr,"Usage: %s VolReqID unit dgn VID\\n",argv[0]);
+        exit(2);
+    }
+    VolReqID = atoi(argv[1]);
+    unit = argv[2];
+    dgn = argv[3];
+    VID = argv[4];
+
+    /*
+     * Assign the job. This call associates the VDQM specific VolReqID with
+     * the actual jobID which is to be used in all subsequent calls.
+     * The VolReqID is the key that identifies the volume request in
+     * the VDQM volume queue. It is given to the client that requested
+     * the volume to be mounted (see vdqm_SendVolReq()).
+     */
+    status = VDQM_UNIT_ASSIGN;
+    jobID = getpid();
+    rc = \fBvdqm_UnitStatus\fP(NULL,NULL,dgn,NULL,unit,&status,&VolReqID,jobID);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_UnitStatus(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    /*
+     * Do the physical mount....
+     */
+    ...
+    status = VDQM_VOL_MOUNT;
+    rc = \fBvdqm_UnitStatus\fP(NULL,VID,dgn,NULL,unit,&status,&value,jobID);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_UnitStatus(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    /*
+     * Do the tape IO...
+     */
+   ...
+    /*
+     * Job is finished. Release the reservation.
+     */
+    status = VDQM_UNIT_RELEASE;
+    rc = \fBvdqm_UnitStatus\fP(NULL,VID,dgn,NULL,unit,&status,&value,jobID);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_UnitStatus(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    /*
+     * Check if VDQM wants us to keep volume mounted for another job.
+     */
+    if ( (status & VDQM_VOL_UNMOUNT) ) {
+        /*
+         * No other job. We physically unload and unmount the volume....
+         */
+        ...
+        status = VDQM_VOL_UNMOUNT;
+        rc = \fBvdqm_UnitStatus\fP(NULL,VID,dgn,NULL,unit,&status,&value,jobID); 
+        if ( rc == -1 ) {
+            fprintf(stderr,"vdqm_UnitStatus(): %s\\n",sstrerror(serrno));
+            exit(1);
+        }
+    }
+    exit(0);
+}
+.fi
 
 .SH RETURN VALUES
 .PP
@@ -235,9 +324,8 @@ which has not yet been assigned.
 .B EVQBADVOLID
 A VDQM_UNIT_MOUNT unit status to mount a volume was requested with a
 different VOLID than specified in assinged volume request.
+.TP
 
 .SH SEE ALSO
-.BR vdqm_Connect(l), 
-.BR vdqm_Disconnect(l), 
-.BR vdqm_SendVolReq(l)
+vdqm_Connect(l), vdqm_Disconnect(l), vdqm_SendVolReq(l)
 
