@@ -33,7 +33,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
 BEGIN
  SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCopy.id, rh_FileSystem.id,
    rh_CastorFile.id, rh_CastorFile.fileId, rh_CastorFile.nsHost, rh_CastorFile.fileSize, rh_TapeCopy.id
-  INTO diskServerName, mountPoint, path, diskCopyId, fileSytemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+  INTO diskServerName, mountPoint, path, diskCopyId, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
   FROM rh_DiskServer, rh_FileSystem, rh_DiskCopy, rh_CastorFile, rh_TapeCopy, rh_Stream2TapeCopy
   WHERE rh_DiskServer.id = rh_FileSystem.diskserver
     AND rh_FileSystem.id = rh_DiskCopy.filesystem
