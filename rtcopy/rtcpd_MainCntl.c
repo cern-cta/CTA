@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.87 $ $Date: 2002/08/29 16:02:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.88 $ $Date: 2003/09/18 10:52:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1178,7 +1178,7 @@ void rtcpd_BroadcastException() {
 }
 
 static int rtcpd_ProcError(int *code) {
-    static int global_code, rc;
+    int rc = 0;
 
     if ( AbortFlag != 0 && code == NULL ) {
         return(proc_cntl.ProcError);
