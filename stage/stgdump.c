@@ -1,5 +1,14 @@
+/*
+ * $Id: stgdump.c,v 1.5 2002/11/19 08:57:32 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 2002 by CERN/IT/DS/HSM
+ * All rights reserved
+ */
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.4 $ $Date: 2002/11/19 08:55:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.5 $ $Date: 2002/11/19 08:57:32 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
