@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.11 2000/01/17 15:08:20 jdurand Exp $
+ * $Id: stgconvert.c,v 1.12 2000/01/26 16:48:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.11 $ $Date: 2000/01/17 15:08:20 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.12 $ $Date: 2000/01/26 16:48:26 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -1420,9 +1420,9 @@ void stgconvert_usage() {
          "                    -g %2d means: CASTOR/DISK -> CASTOR/CDB\n"
          "  -l <number>       maximum number to convert from CASTOR/CDB to CASTOR/DISK for stgpath\n"
          "  -L                Do nothing about stgpath\n"
-         "  -n                Output frequency. Default is every %d entries\n"
-         "  -u                Cdb username. Defaults to \"%s\"\n"
-         "  -p                Cdb password. Defaults to \"%s\"\n"
+         "  -n <number>       Output frequency. Default is every %d entries\n"
+         "  -u <login>        Cdb username. Defaults to \"%s\"\n"
+         "  -p <password>     Cdb password. Defaults to \"%s\"\n"
          "  -q                Do not print warnings\n"
          "  -t <type>         Restrict stgcat catalog to data of type:\n"
          "                    \"t\" (tape)\n"
