@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.81 2001/02/02 18:08:32 jdurand Exp $
+ * $Id: procio.c,v 1.82 2001/02/02 23:52:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.81 $ $Date: 2001/02/02 18:08:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.82 $ $Date: 2001/02/02 23:52:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -267,8 +267,9 @@ void procioreq(req_type, req_data, clienthost)
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
-	strcpy (stgreq.user, user);
-	strcpy (save_user, user);
+	strncpy (stgreq.user, user, CA_MAXUSRNAMELEN);
+	stgreq.user[CA_MAXUSRNAMELEN] = '\0';
+	strcpy (save_user, stgreq.user);
 
 	tppool_flag = 0;
 	silent_flag = 0;
@@ -427,7 +428,8 @@ void procioreq(req_type, req_data, clienthost)
 		goto reply;
 	}
 	strcpy (stgreq.group, gr->gr_name);
-	strcpy (save_group, gr->gr_name);
+	strncpy (save_group, gr->gr_name, CA_MAXGRPNAMELEN);
+	save_group[CA_MAXGRPNAMELEN] = '\0';
 
 	numvid = 0;
 	numvsn = 0;
@@ -2205,8 +2207,10 @@ void procputreq(req_type, req_data, clienthost)
 		goto reply;
 	}
 
-    strcpy(save_user,user);
-    strcpy(save_group,gr->gr_name);
+	strncpy(save_user,user,CA_MAXUSRNAMELEN);
+	save_user[CA_MAXUSRNAMELEN] = '\0';
+	strncpy(save_group,gr->gr_name, CA_MAXGRPNAMELEN);
+	save_group[CA_MAXGRPNAMELEN] = '\0';
 
 	stglogit (func, STG92, "stageput", user, uid, gid, clienthost);
 	nargs = req2argv (rbp, &argv);
