@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/05/24 14:12:05 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2004/06/08 15:59:12 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -61,7 +61,7 @@ CCOPTIM = -g
 #REDEF_RTCPC = -Drtcpc=rtcpcldc
 REDEF_RTCPC =
 
-DBLIBS = -L../castor -lcastorClient -L../castor/db/ora -lcastorCommonOra
+DBLIBS = -L../dlf -ldlf  -L../castor -lcastorClient -L../castor/db/ora -lcastorCommonOra
 
 #if defined(SONYRAW)
 SONYRFLG = -DSONYRAW
@@ -172,6 +172,8 @@ EMANPAGES_RTSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtstat.$(MANSU
 #endif
 PROGS_C = ProgramTargetName(tpread) \
 	  ProgramTargetName(tpwrite) \
+	  ProgramTargetName(VidWorker) \
+	  ProgramTargetName(rtcpclientd) \
 	  ProgramTargetName(dumptape) $(PROGS_RTSTAT)
 IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
 	   FileName($(BIN),ProgramTargetName(tpwrite)) \
@@ -214,9 +216,11 @@ RTCPD_OBJS =	rtcpd.Osuf $(TMSSERV) $(VMGRSERV) rtcp_CheckReq.Osuf \
 RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
 		$(TMSLIB) $(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \
 		rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf \
-		rtcpcldapi.Osuf rtcpcldcommon.Osuf
+		rtcpcldapi.Osuf rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf
 
 TPREAD_OBJS =	tpread.Osuf
+VIDWORKER_OBJS = VidWorker.Osuf
+RTCPCLD_OBJS = rtcpclientd.Osuf
 DUMPTAPE_OBJS =	dumptape.Osuf
 #if BuildRtstat
 RTSTAT_OBJS = rtstat.Osuf
@@ -265,6 +269,10 @@ rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
 #endif
 
 NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(VidWorker,$(VIDWORKER_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(rtcpclientd,$(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
 NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
