@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.9 2001/07/23 09:10:06 jdurand Exp $
+ * $Id: stagechng.c,v 1.10 2001/09/18 21:14:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.9 $ $Date: 2001/07/23 09:10:06 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.10 $ $Date: 2001/09/18 21:14:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -204,12 +204,12 @@ int main(argc, argv)
 	marshall_WORD (sbp, pid);
 
 	marshall_WORD (sbp, nargs);
+	for (i = 0; i < Coptind; i++)
+		marshall_STRING (sbp, argv[i]);
 	if (pflag == 0 && poolname) {
 		marshall_STRING (sbp, "-p");
 		marshall_STRING (sbp, poolname);
 	}
-	for (i = 0; i < Coptind; i++)
-		marshall_STRING (sbp, argv[i]);
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, STG51);
