@@ -1,9 +1,9 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.28 $ $Date: 2002/12/05 06:45:36 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.29 $ $Date: 2003/01/09 14:31:57 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -157,11 +157,11 @@ typedef struct {
 
 	/* RFIO Version64 used ? */
 	int     mode64;         /* mode 64 bits used                    */               
-	signed64 offset64;      /* current file offset                  */
-	signed64 lseekoff64;    /* Buffered lseek                       */
-	signed64 wrbyte_net64;  /* Write bytes to   network (V3)        */
-	signed64 rdbyte_net64;  /* Read  bytes from network (V3)        */
-	signed64 filesize64;    /* File size                (V3)        */
+	HYPER   offset64;       /* current file offset                  */
+	HYPER   lseekoff64;     /* Buffered lseek                       */
+	HYPER   wrbyte_net64;   /* Write bytes to   network (V3)        */
+	HYPER   rdbyte_net64;   /* Read  bytes from network (V3)        */
+	HYPER   filesize64;     /* File size                (V3)        */
         
 	FILE	*fp_save;	/* save ptr to FILE struct returned by popen */
 } RFILE ;
@@ -210,8 +210,8 @@ struct rfiostat	{
 	long    mkdiop ;        /* mkdir() count                */
 	long    renaop ;        /* rename() count               */
 	long    lockop ;        /* lockf() count                */
-	signed64 rnbr ;         /* byte read count              */
-	signed64 wnbr ;         /* byte written count           */
+	HYPER   rnbr ;          /* byte read count              */
+	HYPER   wnbr ;          /* byte written count           */
 	int     mode64;         /* Flag: true if 64bit in use   */
 } ;
 #endif /* RFIO_KERNEL */
