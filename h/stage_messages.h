@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.19 2002/09/23 09:14:44 jdurand Exp $
+ * $Id: stage_messages.h,v 1.20 2002/09/30 14:53:33 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -156,7 +156,7 @@
 #define	STG174  "STG174 - %s (fileid=%s@%s) %s : %s error : %s\n"
 #define	STG175  "STG175 - %s (fileid=%s@%s) %s\n"
 #define STG176  "STG176 - %s : fileclass %s@%s (classid %d) specifies a (uid=%ld,gid=%ld) filter and yours (%ld,%ld) do not match - this file will not be migrated\n"
-
+#define STG177  "STG177 - %s : retention period of %s seconds expired\n"
 #define	STG199	"STG199 - stage returns %d\n"
 
 /* Special message - a mimic of STG02 only for use with TAPE error message, when side is > 0 */
