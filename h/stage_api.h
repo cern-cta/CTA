@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.36 2001/03/21 17:33:17 jdurand Exp $
+ * $Id: stage_api.h,v 1.37 2001/03/22 10:57:21 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -229,6 +229,7 @@ typedef struct stage_hsm stage_hsm_t;
 #define STAGE_CLASS       0x0800000    /* --fileclass  [stage_qry]            */
 #define STAGE_QUEUE       0x1000000    /* --queue      [stage_qry]            */
 #define STAGE_COUNTERS    0x2000000    /* --counters   [stage_qry]            */
+#define STAGE_NOHSMCREAT  0x4000000    /* --nohsmcreat [stage_iowc]           */
 
 /* For stage_qry only */
 /* ------------------ */
