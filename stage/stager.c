@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.134 2001/03/19 12:18:59 jdurand Exp $
+ * $Id: stager.c,v 1.135 2001/03/19 18:17:18 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.134 $ $Date: 2001/03/19 12:18:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.135 $ $Date: 2001/03/19 18:17:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1095,14 +1095,14 @@ int stagein_castor_hsm_file() {
 					/* This file is very probably BEEING migrated ! Then it is normal */
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-							"File probably currently beeing migrated",sstrerror(EBUSY));
+							"stagein", "File probably currently beeing migrated");
 					RESTORE_EID;
 					RETURN (EBUSY);
 				} else {
 					/* But here, we found no valid segment - are they all STGSEGMENT_NOTOK */
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-							"File has not valid segment",sstrerror(USERR));
+							"stagein", "File has no valid segment");
 					RESTORE_EID;
 					RETURN (USERR);
 				}
@@ -1110,7 +1110,7 @@ int stagein_castor_hsm_file() {
 				/* This is really an empty file... */
 				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-						"Empty file (size == 0, no valid segment information)",sstrerror(USERR));
+						"stagein", "Empty file");
 				RESTORE_EID;
 				RETURN (USERR);
 			}
@@ -3652,6 +3652,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Monday 19 March, 2001 at 13:16:44 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 19 March, 2001 at 17:42:19 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
