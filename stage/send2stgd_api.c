@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-P
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
-int rc_shift2castor _PROTO((int));
+int rc_shift2castor _PROTO((int, int));
 int send2stgd_sort_stcp _PROTO((int, u_signed64, int, struct stgcat_entry *, int *, struct stgcat_entry **));
 int send2stgd_sort_by_fseq _PROTO((CONST void *, CONST void *));
 int send2stgd_api_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
@@ -158,10 +158,21 @@ int DLL_DECL stage_getlaststghost(laststghost)
 }
 
 
-int rc_shift2castor(rc)
+/* This routine takes really action only with STAGERs up to version 1.3.5.0 */
+/* Since version 1.3.5.1, the stager always returns only an serrno. The only */
+/* conversion needed is for the command-line clients, using rc_castor2shift() */
+/* We use the magic number send back by the daemon to detect if we have to do */
+/* conversion of not */
+int rc_shift2castor(magic,rc)
+	int magic;
 	int rc;
 {
-	/* Input  is a SHIFT  return code */
+	if (magic > STGMAGIC) {
+		/* The daemon returned an serrno, not a SHIFT error code */
+		return(rc);
+	}
+
+    /* Input  is a SHIFT  return code */
 	/* Output is a CASTOR return code */
 	switch (rc) {
 	case ETHELDERR:
@@ -184,6 +195,10 @@ int rc_shift2castor(rc)
 		return(ESTKILLED);
 	case CLEARED:
 		return(ESTCLEARED);
+	case CONFERR:
+		return(ESTCONF);
+	case LNKNSUP:
+		return(ESTLNKNSUP);
 	default:
 		return(rc);
 	}
@@ -374,7 +389,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		if (rep_type == STAGERC) {
 			(void) netclose (stg_s);
 			if (c) {
-				serrno = rc_shift2castor(c);
+				serrno = rc_shift2castor(magic,c);
 				c = -1;
 			}
 			break;
