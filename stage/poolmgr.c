@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.198 2002/05/23 10:20:48 jdurand Exp $
+ * $Id: poolmgr.c,v 1.199 2002/05/26 07:43:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.198 $ $Date: 2002/05/23 10:20:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.199 $ $Date: 2002/05/26 07:43:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -239,10 +239,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 	int nbmigrator_real;
-
+	extern char *stgconfigfile;
+	
 	strcpy (func, "getpoolconf");
-	if ((s = fopen (STGCONFIG, "r")) == NULL) {
-		stglogit (func, STG23, STGCONFIG);
+	if ((s = fopen (stgconfigfile, "r")) == NULL) {
+		stglogit (func, STG23, stgconfigfile);
 		return (ESTCONF);
 	}
 	

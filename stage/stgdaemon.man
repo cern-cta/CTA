@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.12 $ $Date: 2002/05/09 17:11:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.13 $ $Date: 2002/05/26 07:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/05/09 17:11:02 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/05/26 07:43:49 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -11,6 +11,8 @@ stgdaemon \- starts the stage daemon
 .BI \-f
 ] [
 .BI \-h
+] [
+.BI \-I " configfile"
 ] [
 .BI \-L " backlog"
 ] [
@@ -249,6 +251,10 @@ Runs in foreground
 .TP
 .BI \-h
 Print help
+.TP
+.BI \-I " configfile"
+Sets stager configuration file. This file must be local and default to \fB/etc/STGCONFIG\fP.
+.TP
 .TP
 .BI \-L " backlog"
 Sets listening backlog. Default value is 5.

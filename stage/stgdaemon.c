@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.196 2002/05/23 10:24:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.197 2002/05/26 07:43:48 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.196 $ $Date: 2002/05/23 10:24:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.197 $ $Date: 2002/05/26 07:43:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -212,6 +212,7 @@ time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
+char *stgconfigfile = STGCONFIG;    /* Stager configuration file */
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -398,7 +399,7 @@ int main(argc,argv)
 	done_rlimit_nproc = 0;
 	done_rlimit_nofile = 0;
 
-	while ((c = Cgetopt_long (argc, argv, "fhL:F:P:", longopts, NULL)) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "fhI:L:F:P:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			foreground = 1;
@@ -406,6 +407,9 @@ int main(argc,argv)
 		case 'h':
 			stgdaemon_usage();
 			exit(0);
+		case 'I':
+			stgconfigfile = Coptarg;
+			break;
 		case 'L':
 			if ((backlog = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"Listen queue (-L option) value '%s' : must be > 0\n",Coptarg);
@@ -447,6 +451,12 @@ int main(argc,argv)
 						 ,c,(unsigned long) c,c,(char) c);
 			break;
 		}
+	}
+
+	/* Check existence of config file right now */
+	if (stat (stgconfigfile, &st) != 0) {
+		fprintf(stderr, STG02, stgconfigfile, "stat", strerror(errno));
+		++errflg;
 	}
 
 	if (errflg != 0) {
@@ -1042,7 +1052,7 @@ int main(argc,argv)
 				}
 			}
 			if (c != 0) {
-				sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
+				sendrep (rpfd, MSG_ERR, STG09, stgconfigfile, "incorrect");
 			} else {
 				stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
@@ -3961,6 +3971,7 @@ void stgdaemon_usage() {
 		   "  where options can be\n"
 		   "  -f                   Foreground\n"
 		   "  -h                   This help\n"
+		   "  -I <%%s>              Configuration file\n"
 		   "  -L <%%d>              Listen backlog\n"
 		   "  --rlimit_nproc  <%%d> Max number of processes (or -P <%%d>)\n"
 		   "  --rlimit_nofile <%%d> Max number of open file (or -F <%%d>)\n"
