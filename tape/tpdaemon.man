@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.1 $ $Date: 1999/11/11 08:50:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.2 $ $Date: 1999/11/11 10:25:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON l "$Date: 1999/11/11 08:50:06 $"
+.TH TPDAEMON l "$Date: 1999/11/11 10:25:15 $"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -33,20 +33,29 @@ tape           5011/tcp                        # CASTOR tape daemon
 .RE
 .LP
 There must be one entry in the configuration file per tape drive giving:
-.HP
-drive name	as seen by the operators in the mount messages. The name
-cannot exceed 8 characters.
-.HP
-device group	CART, 8200, 8500, DAT, DLT, NTP, SD3 (Redwood) or 9840
-.HP
-device name	as defined in /dev.
+.RS
+.TP 1.2i
+drive name
+as seen by the operators in the mount messages.
+The name cannot exceed 8 characters.
+.TP
+device group
+must be a member of an installation defined set of "device groups"
+.TP
+device name
+as defined in /dev.
 The device must not rewind on close and have a Berkeley behaviour.
-.HP
-density		corresponding to the entry in /dev
-.HP
-initial status	up or down
-.HP
-robot/manual	if the drive is defined as part of a
+.TP
+density
+corresponding to the entry in /dev
+.TP
+initial status
+.B up
+or
+.B down
+.TP
+robot/manual
+if the drive is defined as part of a
 .BR robot ,
 there will be no check on the ring status. This field may also be set to
 .BI lmcp xxxx
@@ -58,8 +67,9 @@ for an STK robot driven by ACSLS,
 for a SONY DMS-24 or
 .BI smc x
 for a SCSI robot.
-.HP
-device type	for IBM
+.TP
+device type
+for IBM
 .B 3480
 compatible drives, IBM
 .BR 3590 ,
@@ -79,7 +89,8 @@ and
 connected to DEC alpha or Linux systems or IBM
 .BR 3590 s
 connected to AIX or Linux platforms, fast tape positionning is used.
-.TP 0
+.RE
+.LP
 If a tape drive supports several densities, there must be one line per density.
 .SH FILES
 .TP 1.5i
@@ -92,7 +103,6 @@ configuration file
 Here is an example of a configuration file:
 
 .nf
-#
 # 				Tape configuration
 #
 # drive	  dev		dev		density		initial	robot/	dev
