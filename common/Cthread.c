@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.21 1999/11/05 12:11:37 jdurand Exp $
+ * $Id: Cthread.c,v 1.22 1999/11/09 15:24:25 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.21 $ $Date: 1999/11/05 12:11:37 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.22 $ $Date: 1999/11/09 15:24:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -2302,6 +2302,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
 
   if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
     return(-1);
+  current = &Cmtx;
   while (current->next != NULL) {
     current = current->next;
     if (current->addr == addr) {
