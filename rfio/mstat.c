@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.22 2002/02/18 10:10:49 jdurand Exp $
+ * $Id: mstat.c,v 1.23 2002/02/25 16:46:15 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.22 $ $Date: 2002/02/18 10:10:49 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.23 $ $Date: 2002/02/25 16:46:15 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -375,14 +375,11 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
   int i;
   int rc;
 
-  INIT_TRACE("RFIO_TRACE");
-
   TRACE(3,"rfio","rfio_mstat_allocentry entered, Tid=%d", Tid);
 
   TRACE(3,"rfio","rfio_mstat_allocentry: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_mstat_allocentry: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   /* Scan it */
@@ -406,10 +403,8 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
   TRACE(3,"rfio","rfio_mstat_allocentry: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
     TRACE(3,"rfio","rfio_mstat_allocentry: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
-  END_TRACE();
   return(rc);
 }
 
@@ -423,14 +418,11 @@ static int rfio_mstat_findentry(hostname,Tid)
   int i;
   int rc;
 
-  INIT_TRACE("RFIO_TRACE");
-
   TRACE(3,"rfio","rfio_mstat_findentry entered, Tid=%d", Tid);
 
   TRACE(3,"rfio","rfio_mstat_findentry: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_mstat_findentry: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   /* Scan it */
@@ -449,10 +441,8 @@ static int rfio_mstat_findentry(hostname,Tid)
   TRACE(3,"rfio","rfio_mstat_findentry: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
     TRACE(3,"rfio","rfio_mstat_findentry: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
-  END_TRACE();
   return(rc);
 }
 
