@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.28 $ $Date: 2004/03/17 10:39:57 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.29 $ $Date: 2004/03/17 16:07:22 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -1056,7 +1056,7 @@ void *_Cpool_starter(arg)
 			  
 #ifdef CPOOL_DEBUG
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self());
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self(), index);
 				}
 #endif
 			  
