@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.85 $ $Release$ $Date: 2004/11/26 14:00:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.86 $ $Release$ $Date: 2004/11/26 14:06:38 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.85 $ $Release$ $Date: 2004/11/26 14:00:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.86 $ $Release$ $Date: 2004/11/26 14:06:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -953,6 +953,7 @@ static int alreadySelected(
     serrno = EINVAL;
     return(-1);
   }
+  if ( tape->file == NULL ) return(0);
   /*
    * Check last element first
    */
