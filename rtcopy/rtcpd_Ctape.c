@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.31 $ $Date: 2000/04/11 06:44:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.32 $ $Date: 2000/04/18 07:30:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -388,6 +388,15 @@ int rtcpd_Mount(tape_list_t *tape) {
          */
         if ( rc == 0 || (rc == -1 && save_serrno != EBUSY) ) break;
     } /* for (retry==0; retry<EBUSY_RETRIES; retry++) */
+    /*
+     * Retries didn't help...
+     */
+    if ( rc == -1 && save_serrno == EBUSY ) {
+         rtcp_log(LOG_ERR,"rtcpd_Mount() giving up after %d retries on EBUSY\n",
+                  retry);
+         rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
+    }
+
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
