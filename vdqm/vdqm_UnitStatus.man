@@ -1,6 +1,9 @@
 .\"
-.\" $Id: vdqm_UnitStatus.man,v 1.3 1999/09/02 15:12:03 obarring Exp $
+.\" $Id: vdqm_UnitStatus.man,v 1.4 1999/09/02 15:13:15 obarring Exp $
 .\" $Log: vdqm_UnitStatus.man,v $
+.\" Revision 1.4  1999/09/02 15:13:15  obarring
+.\" Add missing qoutes ""
+.\"
 .\" Revision 1.3  1999/09/02 15:12:03  obarring
 .\" Replace Id by date in header
 .\"
@@ -13,7 +16,7 @@
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l $Date: 1999/09/02 15:12:03 $
+.TH VDQM_UNITSTATUS l "$Date: 1999/09/02 15:13:15 $"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
