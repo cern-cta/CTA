@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.25 2000/12/21 15:36:36 jdurand Exp $
+ * $Id: procalloc.c,v 1.26 2001/01/12 08:35:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.25 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.26 $ $Date: 2001/01/12 08:35:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -179,7 +179,7 @@ void procallocreq(req_data, clienthost)
 	memcpy (stcp, &stgreq, sizeof(stgreq));
 	stcp->reqid = reqid;
 	stcp->status = STAGEALLOC;
-	stcp->c_time = time (0);
+	stcp->c_time = time(NULL);
 	stcp->a_time = stcp->c_time;
 	stcp->nbaccesses++;
 	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
@@ -364,7 +364,7 @@ void procgetreq(req_data, clienthost)
 		c = USERR;
 		goto reply;
 	}
-	stcp->a_time = time (0);
+	stcp->a_time = time(NULL);
 	stcp->nbaccesses++;
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
