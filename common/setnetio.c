@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.6 $ $Date: 2004/11/29 22:23:28 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* setnetio.c   Set network input/output characteristics                */
@@ -24,7 +24,7 @@ static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.5 $ $Date: 2000
 #include <trace.h>                      /* tracing definitions          */
 #include <Cnetdb.h>                     /* reentrant netdb funct.       */
 
-#if !defined(linux)
+#if !defined(linux) && !defined(_WIN32)
 extern char     *sys_errlist[];         /* External error list          */
 #endif
 extern char     *getifnam();            /* get interface name           */
