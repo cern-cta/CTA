@@ -1,16 +1,16 @@
-.\" $Id: stageqry_Disk.man,v 1.1 2002/09/15 07:04:30 jdurand Exp $
+.\" $Id: stageqry_Disk.man,v 1.2 2002/09/15 07:06:23 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry_Disk.man,v $ $Revision: 1.1 $ $Date: 2002/09/15 07:04:30 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stageqry_Disk.man,v $ $Revision: 1.2 $ $Date: 2002/09/15 07:06:23 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY_DISK "3" "$Date: 2002/09/15 07:04:30 $" "CASTOR" "Stage Library Functions"
+.TH STAGEQRY_DISK "3" "$Date: 2002/09/15 07:06:23 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stageqry_Disk \- Query the stager catalog about a DISK file
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-.BI "int stageqry_Hsm(u_signed64 " flags ,
+.BI "int stageqry_Disk(u_signed64 " flags ,
 .BI "char *" hostname ,
 .BI "char *" poolname ,
 .BI "char *" filename ,
