@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/20 14:52:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -533,6 +533,29 @@ namespace castor {
        * @exception Exception throws an Exception in case of error
        */
       virtual void resetStream(castor::stager::Stream* stream)
+        throw (castor::exception::Exception);
+
+      /**
+       * Selects a machine and FileSystem for a given job.
+       * @param fileSystems the list of allowed filesystems
+       * according to job requirements (given by id). This
+       * is the fileSystems' mountPoint, the corresponding
+       * machines are given by parameter machines
+       * @param machines the machines on which the filesystems
+       * in parameter fileSystems reside
+       * @param minFree the minimum free space that the fileSystem
+       * selected should have
+       * @mountPoint the selected fileSystem's mountPoint
+       * @diskServer the diskServer on which the selected
+       * fileSystem resides.
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void bestFileSystemForJob
+      (const std::vector<std::string>& fileSystems,
+       const std::vector<std::string>& machines,
+       u_signed64 minFree,
+       std::string* mountPoint,
+       std::string* diskServer)
         throw (castor::exception::Exception);
 
     }; // end of class RemoteStagerSvc

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/20 14:52:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -554,10 +554,27 @@ void castor::stager::RemoteStagerSvc::prepareForMigration
 }
 
 // -----------------------------------------------------------------------
-// prepareForMigration
+// resetStream
 // -----------------------------------------------------------------------
 void castor::stager::RemoteStagerSvc::resetStream
 (castor::stager::Stream* stream)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// bestFileSystemForJob
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::bestFileSystemForJob
+(const std::vector<std::string>& fileSystems,
+ const std::vector<std::string>& machines,
+ u_signed64 minFree,
+ std::string* mountPoint,
+ std::string* diskServer)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

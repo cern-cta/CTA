@@ -682,4 +682,33 @@ int Cstager_IStagerSvc_resetStream
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_Stream_t* stream);
 
+/**
+ * Selects a machine and FileSystem for a given job.
+ * Note that the caller is responsible for freeing
+ * the returned strings : mountPoint and diskServer
+ * @param stgSvc the IStagerSvc used
+ * @param fileSystems the list of allowed filesystems
+ * according to job requirements (given by id). This
+ * is the fileSystems' mountPoint, the corresponding
+ * machines are given by parameter machines
+ * @param machines the machines on which the filesystems
+ * in parameter fileSystems reside
+ * @param fileSystemsNb the length of the arrays fileSystems
+ * and machines
+ * @param minFree the minimum free space that the fileSystem
+ * selected should have
+ * @mountPoint the selected fileSystem's mountPoint
+ * @diskServer the diskServer on which the selected
+ * fileSystem resides.
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_bestFileSystemForJob
+(struct Cstager_IStagerSvc_t* stgSvc,
+ char** fileSystems, char** machines,
+ unsigned int fileSystemsNb, u_signed64 minFree,
+ char** mountPoint, char** diskServer);
+
 #endif // CASTOR_ISTAGERSVC_H

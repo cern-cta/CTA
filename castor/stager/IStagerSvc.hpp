@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/01/20 14:52:29 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -542,6 +542,29 @@ namespace castor {
        * @exception Exception throws an Exception in case of error
        */
       virtual void resetStream(castor::stager::Stream* stream)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Selects a machine and FileSystem for a given job.
+       * @param fileSystems the list of allowed filesystems
+       * according to job requirements (given by id). This
+       * is the fileSystems' mountPoint, the corresponding
+       * machines are given by parameter machines
+       * @param machines the machines on which the filesystems
+       * in parameter fileSystems reside
+       * @param minFree the minimum free space that the fileSystem
+       * selected should have
+       * @mountPoint the selected fileSystem's mountPoint
+       * @diskServer the diskServer on which the selected
+       * fileSystem resides.
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void bestFileSystemForJob
+      (const std::vector<std::string>& fileSystems,
+       const std::vector<std::string>& machines,
+       u_signed64 minFree,
+       std::string* mountPoint,
+       std::string* diskServer)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

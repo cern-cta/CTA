@@ -296,10 +296,20 @@ BEGIN
     AND Stream2TapeCopy.parent = streamId
     AND TapeCopy.status = 2 -- WAITInSTREAMS
     AND ROWNUM < 2;
-  res = 1;
+  res := 1;
 EXCEPTION
- WHEN NO_DATA_FOUND
-  res = 0;
+ WHEN NO_DATA_FOUND THEN
+  res := 0;
+END;
+
+/* PL/SQL method to update FileSystem weight for new streams */
+CREATE OR REPLACE PROCEDURE updateFsWeight
+(ds IN INTEGER, fs IN INTEGER, deviation IN INTEGER) AS
+BEGIN
+ UPDATE FileSystem SET weight = weight - deviation
+  WHERE diskServer = ds;
+ UPDATE FileSystem SET fsDeviation = 2 * deviation
+  WHERE id = fs;
 END;
 
 /* PL/SQL method implementing bestTapeCopyForStream */
@@ -333,10 +343,7 @@ BEGIN
   WHERE id = tapeCopyId;
  UPDATE Stream SET status = 3 -- RUNNING
   WHERE id = streamId;
- UPDATE FileSystem SET weight = weight - deviation
-  WHERE diskServer = fsDiskServer;
- UPDATE FileSystem SET fsDeviation = 2 * deviation
-  WHERE id = fileSystemId;
+ updateFsWeight(fsDiskServer, fileSystemId, deviation);
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
@@ -398,6 +405,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
+CREATE OR REPLACE TYPE strList IS TABLE OF VARCHAR(2048);
+CREATE OR REPLACE TYPE numList IS TABLE OF INTEGER;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -735,4 +744,51 @@ BEGIN
     DELETE FROM Stream WHERE id = sid;
     UPDATE Tape SET Stream = 0 WHERE Stream = sid;
   END IF;
+END;
+
+/* PL/SQL method implementing bestFileSystemForJob */
+CREATE OR REPLACE PROCEDURE bestFileSystemForJob
+(fileSystems IN strList, machines IN strList,
+ minFree IN INTEGER, rMountPoint OUT VARCHAR,
+ rDiskServer OUT VARCHAR) AS
+ ds NUMBER;
+ fs NUMBER;
+ dev NUMBER;
+ c1 castor.AnyCursor;
+ TYPE AnyCursor IS REF CURSOR;
+BEGIN
+ IF fileSystems.COUNT > 0 THEN
+  DECLARE
+   fsIds numList := numList();
+  BEGIN
+   fsIds.EXTEND(fileSystems.COUNT);
+   FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
+    SELECT FileSystem.id INTO fsIds(i)
+      FROM FileSystem, DiskServer
+     WHERE FileSystem.mountPoint = fileSystems(i)
+       AND DiskServer.name = machines(i);
+   END LOOP;
+   OPEN c1 FOR
+    SELECT FileSystem.mountPoint, Diskserver.name,
+           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
+    FROM FileSystem, DiskServer
+    WHERE FileSystem.diskserver = DiskServer.id
+     AND FileSystem.id MEMBER OF fsIds
+     AND FileSystem.free >= minFree
+     AND ROWNUM < 2
+    ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
+  END;
+ ELSE
+  OPEN c1 FOR
+   SELECT FileSystem.mountPoint, Diskserver.name,
+          DiskServer.id, FileSystem.id, FileSystem.fsDeviation
+   FROM FileSystem, DiskServer
+   WHERE FileSystem.diskserver = DiskServer.id
+    AND FileSystem.free >= minFree
+    AND ROWNUM < 2
+   ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
+ END IF;
+ FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
+ CLOSE c1;
+ updateFsWeight(ds, fs, dev);
 END;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/01/20 14:52:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -637,6 +637,35 @@ extern "C" {
       return -1;
     }
     return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_bestFileSystemForJob
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_bestFileSystemForJob
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   char** fileSystems, char** machines,
+   unsigned int fileSystemsNb, u_signed64 minFree,
+   char** mountPoint, char** diskServer) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      std::vector<std::string> fss;
+      std::vector<std::string> ms;
+      for (unsigned int i = 0; i < fileSystemsNb; i++) {
+        fss[i] = fileSystems[i];
+        ms[i] = machines[i];
+      }
+      std::string mp, ds;
+      stgSvc->stgSvc->bestFileSystemForJob
+        (fss, ms, minFree, &mp, &ds);
+      *mountPoint = strdup(mp.c_str());
+      *diskServer = strdup(ds.c_str());
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
   }
 
 }

@@ -550,6 +550,29 @@ namespace castor {
         virtual void resetStream(castor::stager::Stream* stream)
           throw (castor::exception::Exception);
 
+        /**
+         * Selects a machine and FileSystem for a given job.
+         * @param fileSystems the list of allowed filesystems
+         * according to job requirements (given by id). This
+         * is the fileSystems' mountPoint, the corresponding
+         * machines are given by parameter machines
+         * @param machines the machines on which the filesystems
+         * in parameter fileSystems reside
+         * @param minFree the minimum free space that the fileSystem
+         * selected should have
+         * @mountPoint the selected fileSystem's mountPoint
+         * @diskServer the diskServer on which the selected
+         * fileSystem resides.
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void bestFileSystemForJob
+        (const std::vector<std::string>& fileSystems,
+         const std::vector<std::string>& machines,
+         u_signed64 minFree,
+         std::string* mountPoint,
+         std::string* diskServer)
+          throw (castor::exception::Exception);
+
       private:
 
         /**
@@ -727,6 +750,12 @@ namespace castor {
 
         /// SQL statement object for function resetStream
         oracle::occi::Statement *m_resetStreamStatement;
+
+        /// SQL statement for function bestFileSystemForJob
+        static const std::string s_bestFileSystemForJobStatementString;
+
+        /// SQL statement object for function bestFileSystemForJob
+        oracle::occi::Statement *m_bestFileSystemForJobStatement;
 
       }; // end of class OraStagerSvc
 

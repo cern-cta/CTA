@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.106 $ $Release$ $Date: 2005/01/18 08:18:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.107 $ $Release$ $Date: 2005/01/20 14:52:29 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -174,6 +174,10 @@ const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementS
 const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
   "BEGIN resetStream(:1); END;";
 
+/// SQL statement for bestFileSystemForJob
+const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForJobStatementString =
+  "BEGIN bestFileSystemForJob(:1, :2, :3, :4, :5); END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -203,7 +207,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0),
-  m_resetStreamStatement(0) {
+  m_resetStreamStatement(0),
+  m_bestFileSystemForJobStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -259,6 +264,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
     deleteStatement(m_resetStreamStatement);
+    deleteStatement(m_bestFileSystemForJobStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -286,6 +292,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
   m_resetStreamStatement = 0;
+  m_bestFileSystemForJobStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -1984,3 +1991,50 @@ void castor::db::ora::OraStagerSvc::resetStream
     throw ex;
   }
 }
+
+// -----------------------------------------------------------------------
+// bestFileSystemForJob
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::bestFileSystemForJob
+(const std::vector<std::string>& fileSystems,
+ const std::vector<std::string>& machines,
+ u_signed64 minFree,
+ std::string* mountPoint,
+ std::string* diskServer)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_bestFileSystemForJobStatement) {
+      m_bestFileSystemForJobStatement =
+        createStatement(s_bestFileSystemForJobStatementString);
+      m_bestFileSystemForJobStatement->setAutoCommit(true);
+      m_bestFileSystemForJobStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_bestFileSystemForJobStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 2048);
+    }
+    // execute the statement and see whether we found something
+    setVector(m_bestFileSystemForJobStatement, 1, fileSystems, "STRLIST");
+    setVector(m_bestFileSystemForJobStatement, 2, machines, "STRLIST");
+    m_bestFileSystemForJobStatement->setDouble(3, minFree);
+    unsigned int nb = m_bestFileSystemForJobStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "bestFileSystemForJob did not return any result.";
+      throw ex;
+    }
+    // collect output
+    *mountPoint = m_bestFileSystemForJobStatement->getString(4);
+    *diskServer = m_bestFileSystemForJobStatement->getString(5);
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in bestFileSystemForJob."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+  
