@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.92 2002/07/18 11:12:45 jdurand Exp $
+ * $Id: procqry.c,v 1.93 2002/07/27 06:49:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.92 $ $Date: 2002/07/18 11:12:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.93 $ $Date: 2002/07/27 06:49:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -66,6 +66,7 @@ void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7],
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int, int, int));
 signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
+signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
 signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
 int get_retenp _PROTO((struct stgcat_entry *, char *));
 int get_mintime _PROTO((struct stgcat_entry *, char *));
@@ -185,49 +186,49 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	static char titleM[] = 
 		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Mintime\n";
 	static char titleL[] = 
-		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration\n";
+		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention\n";
 	static char titleLM[] = 
-		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Mintime\n";
+		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Mintime\n";
 	static char titleF[] = 
 		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Fileclass      Nameserver\n";
 	static char titleFM[] = 
 		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Mintime            Fileclass      Nameserver\n";
 	static char titleFL[] = 
-		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Fileclass      Nameserver\n";
+		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Fileclass      Nameserver\n";
 	static char titleFLM[] = 
-		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Mintime            Fileclass      Nameserver\n";
+		"Vid      Fseq Lbl Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Mintime            Fileclass      Nameserver\n";
 	static char title_A[] = 
 		"File name                            State      Nbacc.     Size    Pool\n";
 	static char title_AM[] = 
 		"File name                            State      Nbacc.     Size    Pool           Mintime\n";
 	static char title_AL[] = 
-		"File name                            State      Nbacc.     Size    Pool           Expiration\n";
+		"File name                            State      Nbacc.     Size    Pool           Retention\n";
 	static char title_ALM[] = 
-		"File name                            State      Nbacc.     Size    Pool           Expiration          Mintime\n";
+		"File name                            State      Nbacc.     Size    Pool           Retention           Mintime\n";
 	static char title_AF[] = 
 		"File name                            State      Nbacc.     Size    Pool           Fileclass      Nameserver\n";
 	static char title_AFM[] = 
 		"File name                            State      Nbacc.     Size    Pool           Mintime            Fileclass      Nameserver\n";
 	static char title_AFL[] = 
-		"File name                            State      Nbacc.     Size    Pool           Expiration          Fileclass      Nameserver\n";
+		"File name                            State      Nbacc.     Size    Pool           Retention           Fileclass      Nameserver\n";
 	static char title_AFLM[] = 
-		"File name                            State      Nbacc.     Size    Pool           Expiration          Mintime            Fileclass      Nameserver\n";
+		"File name                            State      Nbacc.     Size    Pool           Retention           Mintime            Fileclass      Nameserver\n";
 	static char title_I[] = 
 		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool\n";
 	static char title_IM[] = 
 		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Mintime\n";
 	static char title_IL[] = 
-		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration\n";
+		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention\n";
 	static char title_ILM[] = 
-		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Mintime\n";
+		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Mintime\n";
 	static char title_IF[] = 
 		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Fileclass      Nameserver\n";
 	static char title_IFM[] = 
 		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Mintime            Fileclass      Nameserver\n";
 	static char title_IFL[] = 
-		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Fileclass      Nameserver\n";
+		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Fileclass      Nameserver\n";
 	static char title_IFLM[] = 
-		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Expiration          Mintime            Fileclass      Nameserver\n";
+		"File name         Recfm Lrecl Blksiz State      Nbacc.     Size    Pool           Retention           Mintime            Fileclass      Nameserver\n";
 	struct tm *tm;
 	int uflag = 0;
 	char *user;
@@ -715,6 +716,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (fseq_list != NULL) free(fseq_list);
 			return;
 		} else {
+#ifdef STAGER_DEBUG
+			sendrep (rpfd, MSG_OUT, "Please do gdb /usr/local/bin/stgdaemon %d\n", (int) getpid());
+			sleep(10);
+#endif
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
@@ -1797,10 +1802,12 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	sci = scs;
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int isstageout_expired;
+		int isstagealloc_expired;
 		int isput_failed_expired;
 		int isother_ok;
 		signed64 put_failed_retenp;
 		signed64 stageout_retenp;
+		signed64 stagealloc_retenp;
 
 		if (stcp->reqid == 0) break;
 		/* Did user asked for a specific reqid ? */
@@ -1812,19 +1819,26 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		/* We are interested in: */
 		/* STAGED entries */
 		/* STAGEOUT entries that have expired retention period on disk */
+		/* STAGEALLOC entries that have expired retention period on disk */
 		/* PUT_FAILED entries that have expired retention period on disk */
 		isstageout_expired   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								   (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
 								   (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
 								   (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
 								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
-								   (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a expired retention period */
+								   (  (thistime - stcp->a_time) > stageout_retenp)); /* And with an expired retention period */
+		isstagealloc_expired   = (   ISSTAGEALLOC  (stcp)   &&     /* A STAGEALLOC file */
+								   (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
+								   (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
+								   (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
+								   (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) && /* And with a retention period */
+								   (  (thistime - stcp->a_time) > stagealloc_retenp)); /* And with an expired retention period */
 		isput_failed_expired = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								   ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
 								   (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
 								   (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got expired */
 		isother_ok = ISSTAGED(stcp);
-		if (! (isstageout_expired || isput_failed_expired || isother_ok)) continue;
+		if (! (isstageout_expired || isput_failed_expired || isstagealloc_expired || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
@@ -2073,7 +2087,22 @@ signed64 get_stageout_retenp(stcp)
 	if (nbpool == 0) return (-1);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (stcp->poolname, pool_p->name) == 0) 
-			return((time_t) (pool_p->stageout_retenp * ONE_DAY));
+			return((time_t) pool_p->stageout_retenp);
+	return ((signed64) -1);
+}
+
+signed64 get_stagealloc_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((time_t) pool_p->stagealloc_retenp);
 	return ((signed64) -1);
 }
 
@@ -2088,7 +2117,7 @@ signed64 get_put_failed_retenp(stcp)
 	if (nbpool == 0) return (-1);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (stcp->poolname, pool_p->name) == 0) 
-			return((time_t) (pool_p->put_failed_retenp * ONE_DAY));
+			return((time_t) pool_p->put_failed_retenp);
 	return ((signed64) -1);
 }
 
@@ -2112,7 +2141,34 @@ int get_retenp(stcp,timestr)
 				strcpy(timestr,"Expired");
 			} else {
 				time_t dummy_retenp;
-				this_retenp += stcp->a_time;
+				if ((INT_MAX - this_retenp) < stcp->a_time) {
+					/* Overflow */
+					this_retenp = INT_MAX;
+				} else {
+					this_retenp += stcp->a_time;
+				}
+				dummy_retenp = (time_t) this_retenp;
+				/* Retention period not yet expired */
+				stage_util_time(dummy_retenp,timestr);
+			}
+		} else {
+			strcpy(timestr,"INFINITE_LIFETIME");
+		}
+		break;
+	case STAGEALLOC:
+		/* stagealloc entry */
+		if ((this_retenp = get_stagealloc_retenp(stcp)) >= 0) {
+			/* There is a stagealloc retention period */
+			if ((this_time - stcp->a_time) > this_retenp) {
+				strcpy(timestr,"Expired");
+			} else {
+				time_t dummy_retenp;
+				if ((INT_MAX - this_retenp) < stcp->a_time) {
+					/* Overflow */
+					this_retenp = INT_MAX;
+				} else {
+					this_retenp += stcp->a_time;
+				}
 				dummy_retenp = (time_t) this_retenp;
 				/* Retention period not yet expired */
 				stage_util_time(dummy_retenp,timestr);
@@ -2130,7 +2186,12 @@ int get_retenp(stcp,timestr)
 				strcpy(timestr,"Expired");
 			} else {
 				time_t dummy_retenp;
-				this_retenp += stcp->a_time;
+				if ((INT_MAX - this_retenp) < stcp->a_time) {
+					/* Overflow */
+					this_retenp = INT_MAX;
+				} else {
+					this_retenp += stcp->a_time;
+				}
 				dummy_retenp = (time_t) this_retenp;
 				/* Retention period not yet expired */
 				stage_util_time(dummy_retenp,timestr);
@@ -2142,6 +2203,7 @@ int get_retenp(stcp,timestr)
 	default:
 		if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
 			(stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
+			(stcp->status & (STAGEALLOC|STAGED)) != (STAGEALLOC|STAGED) &&
 			(stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
 			(stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
 			/* Not a STAGEd migrated file */
@@ -2174,7 +2236,12 @@ int get_retenp(stcp,timestr)
 						strcpy(timestr,"Expired");
 					} else {
 						time_t dummy_retenp;
-						this_retenp += stcp->a_time;
+						if ((INT_MAX - this_retenp) < stcp->a_time) {
+							/* Overflow */
+							this_retenp = INT_MAX;
+						} else {
+							this_retenp += stcp->a_time;
+						}
 						dummy_retenp = (time_t) this_retenp;
 						/* Retention period not yet expired */
 						stage_util_time(dummy_retenp,timestr);
@@ -2215,7 +2282,12 @@ int get_mintime(stcp,timestr)
 			strcpy(timestr,"Expired");
 		} else {
 			time_t dummy_mintime_beforemigr;
-			this_mintime_beforemigr += stcp->a_time;
+			if ((INT_MAX - this_mintime_beforemigr) < stcp->a_time) {
+				/* Overflow */
+				this_mintime_beforemigr = INT_MAX;
+			} else {
+				this_mintime_beforemigr += stcp->a_time;
+			}
 			dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
 			/* Retention period not yet expired */
 			stage_util_time(dummy_mintime_beforemigr,timestr);
