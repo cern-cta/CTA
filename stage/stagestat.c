@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.16 2001/12/10 16:21:19 jdurand Exp $
+ * $Id: stagestat.c,v 1.17 2001/12/20 11:40:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.16 $ $Date: 2001/12/10 16:21:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.17 $ $Date: 2001/12/20 11:40:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -267,7 +267,7 @@ int main(argc, argv)
 
   rfio_errno = serrno = 0;
   if ((fd_acct = rfio_open (acctfile, O_RDONLY)) < 0) {
-	fprintf (stderr, "%s : open error : %s\n", acctfile, rfio_serror());
+	fprintf (stderr, "%s : rfio_open error : %s\n", acctfile, rfio_serror());
 	exit (USERR);
   }
   while (getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped)) {
@@ -800,9 +800,9 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
   if ((c = rfio_read (fd_acct,accthdr,sizeof(struct accthdr))) != sizeof(struct accthdr)) {
 	if (c == 0) return (0);
 	if (c > 0)
-      fprintf (stderr, "read returns %d\n", c);
+      fprintf (stderr, "rfio_read returns %d\n", c);
 	else
-      fprintf (stderr, "read error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
 	exit (SYERR);
   }
 
@@ -820,7 +820,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
     /* Not a STAGE accouting record - we just seek the pointer */
     rfio_errno = serrno = 0;
     if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
-      fprintf (stderr, "seek error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_lseek error : %s\n", rfio_serror());
       exit (SYERR);
     }
     return (accthdr->len);
@@ -829,9 +829,9 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
   rfio_errno = serrno = 0;
   if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
 	if (c >= 0)
-      fprintf (stderr, "read returns %d\n",c);
+      fprintf (stderr, "rfio_read returns %d\n",c);
     else
-      fprintf (stderr, "read error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
     exit (SYERR);
   }
   return (accthdr->len);
