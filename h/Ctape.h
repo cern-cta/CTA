@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.11 $ $Date: 1999/11/12 14:09:16 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.12 $ $Date: 1999/11/17 17:06:43 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -21,7 +21,7 @@
 #define	RBTFASTRI  60	/* fast retry interval for robotic operations */
 #define PRTBUFSZ  180
 #define REPBUFSZ 2800	/* must be >= max tape daemon reply size */
-#define REQBUFSZ 20000	/* must be >= max tape daemon request size */
+#define REQBUFSZ 1104	/* must be >= max tape daemon request size */
 #define SMSGI      30	/* retry interval when sending operator messages */
 #define TPMAGIC 0x141001
 #define TPTIMEOUT   5	/* netread timeout while receiving a request */
