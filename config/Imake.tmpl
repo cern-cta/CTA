@@ -1,0 +1,78 @@
+/*
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)Imake.tmpl,v 1.5 2004/06/09 08:45:47 CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+#define COMM	#
+#define NO	0
+#define YES	1
+#include <site.def>
+#if _AIX && _IBMR2
+#include <aix.cf>
+#endif
+#if hpux
+#include <hp.cf>
+#endif
+#if linux
+#include <linux.cf>
+#endif
+#if __Lynx__
+#include <lynx.cf>
+#endif
+#if sgi
+#include <sgi.cf>
+#endif
+#if sun
+#include <sun.cf>
+#endif
+#if __osf__ && __alpha
+#include <alpha_osf.cf>
+#endif
+#if _WIN32
+#include <Win32.cf>
+#endif
+
+#if Accounting
+ACCTFLAG=-DSACCT
+#endif
+BIN = InstallBinDir
+#ifdef DefaultCCOptions
+DEFCFLAGS = DefaultCCOptions
+#endif
+FILMANDIR = FilManDir
+FILMANSUFFIX = FilManSuffix
+LIBMANDIR = LibManDir
+LIBMANSUFFIX = LibManSuffix
+MANDIR = ManDir
+MANSUFFIX = ManSuffix
+#if !defined(_WIN32)
+CP = cp
+LD = cc
+LN = ln
+#endif
+#if HasRanlib
+RANLIB = ranlib
+#else
+RANLIB = echo '-> '
+#endif
+#if _WIN32
+SHELL = cmd
+#else
+SHELL = /bin/sh
+#endif
+
+#ifndef CurDir
+#define CurDir `pwd`
+#endif
+#ifndef FilesToClean
+#define FilesToClean *.o *.a *.so ,* .es1 core
+#endif
+#ifndef Osuf
+#define Osuf o
+#endif
+
+#include <Imake.rules>
+#include INCLUDE_IMAKEFILE
