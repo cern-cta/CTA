@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/01 11:57:00 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/09 15:33:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/01 11:57:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/09 15:33:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -138,11 +138,11 @@ int rtcpcld_initLogging(
      char *facilityName;
 {
   int rc, i;
-  char dlfErrBuf[1024];
-  extern dlf_facility_info_t g_dlf_fac_info;
-  
-  
-  (void)dlf_seterrbuf(dlfErrBuf,sizeof(dlfErrBuf)-1);
+  char *dlfErrBuf;
+  extern dlf_facility_info_t g_dlf_fac_info;  
+
+  dlfErrBuf = (char *)malloc(CA_MAXLINELEN+1);
+  (void)dlf_seterrbuf(dlfErrBuf,CA_MAXLINELEN);
   rc = dlf_init(facilityName);
   
   i=-1;

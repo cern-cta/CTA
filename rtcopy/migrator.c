@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/09 12:25:39 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/09 15:33:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/09 12:25:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/09 15:33:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -415,7 +415,9 @@ int migratorCallback(
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
   char *blkid = NULL, *func = NULL;
+  char dlfErrBuf[CA_MAXLINELEN+1];
 
+  (void)dlf_seterrbuf(dlfErrBuf,CA_MAXLINELEN);
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
                     childUuid,
