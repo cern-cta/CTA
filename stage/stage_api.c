@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.32 2001/12/06 17:37:43 jdurand Exp $
+ * $Id: stage_api.c,v 1.33 2001/12/19 17:26:50 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -260,6 +260,18 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* It is not allowed to have stcp_output != NULL and nstcp_output == NULL */
   if ((stcp_output != NULL) && (nstcp_output == NULL)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+
+  /* It is not allowed to have stpp_input == NULL and nstpp_input > 0 */
+  if ((stpp_input == NULL) && (nstpp_input > 0)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+
+  /* It is not allowed to have stpp_input != NULL and nstpp_input <= 0 */
+  if ((stpp_input != NULL) && (nstpp_input <= 0)) {
     serrno = EFAULT;
     return(-1);
   }
@@ -789,6 +801,9 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
     STSTR2BUF(stcp,u1.t.dgn,'g',buf,bufsize);
     STSTR2BUF(stcp,u1.t.fid,'f',buf,bufsize);
     STVAL2BUF(stcp,u1.t.retentd,'t',buf,bufsize);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+    STVAL2BUF_V3(stcp,u1.t.side," --side",buf,bufsize);
+#endif
     STSTR2BUF(stcp,u1.t.fseq,'q',buf,bufsize);
     /* Special case of filstat */
     if (stcp->u1.t.filstat == 'o') {
