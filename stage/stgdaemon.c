@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.219 2002/09/17 11:53:57 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.220 2002/09/20 12:33:29 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.219 $ $Date: 2002/09/17 11:53:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.220 $ $Date: 2002/09/20 12:33:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -248,7 +248,7 @@ void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
 void stgdaemon_wait4child _PROTO((int));
 int req2argv _PROTO((char *, char ***));
-int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
+int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int, int));
 int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 int file_modified _PROTO((int, char *, char *, uid_t, gid_t, int, char *));
 int check_coff_waiting_on_req _PROTO((int, int));
@@ -316,7 +316,7 @@ extern void check_delaymig _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
-extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int, int *, struct Cns_filestat *));
+extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int, int *, struct Cns_filestat *, int));
 extern char *findpoolname _PROTO((char *));
 extern int rc_shift2castor _PROTO((int,int));
 
@@ -983,6 +983,8 @@ int main(argc,argv)
 
 	/* remove uncompleted requests */
 	for (stcp = stcs; stcp < stce; ) {
+		int rc_upd_fileclass;
+
 		if (stcp->reqid == 0) {
 			break;
 		}
@@ -1025,21 +1027,44 @@ int main(argc,argv)
 				}
 			}
 		}
+		/* Check fileclass if it is a CASTOR file */
 		if (stcp->t_or_d == 'h') {
-			upd_fileclass(NULL,stcp,0,0,0);
+			if ((stcp->status == STAGEOUT) || (stcp->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED))) {
+				/* Force Cns_statx if it is a STAGEOUT or a STAGEOUT|CAN_BE_MIGR|PUT_FAILED file */
+				/* STAGEOUT files will be moved to STAGEOUT|CAN_BE_MIGR|PUT_FAILED automatically */
+				if ((rc_upd_fileclass = upd_fileclass(NULL,stcp,2,0,0)) < 0) {
+					/* Try to fetch fileclass only unless record was cleared */
+					if (serrno == ESTCLEARED) {
+						stcp++;
+						continue;
+					}
+					upd_fileclass(NULL,stcp,4,0,0);
+				}
+			} else {
+				if ((rc_upd_fileclass = upd_fileclass(NULL,stcp,0,0,0)) < 0) {
+					/* Try to fetch fileclass only unless record was cleared */
+					if (serrno == ESTCLEARED) {
+						stcp++;
+						continue;
+					}
+					upd_fileclass(NULL,stcp,4,0,0);
+				}
+			}
+		} else {
+			rc_upd_fileclass = -1;
 		}
-		if ((((stcp->status & 0xF) == STAGEIN) &&
-				 ((stcp->status & 0xF0) != STAGED)) ||
-				(stcp->status == (STAGEOUT|WAITING_SPC)) ||
-				(stcp->status == (STAGEOUT|WAITING_NS)) ||
-				(stcp->status == (STAGEALLOC|WAITING_SPC))) {
+		if ((((stcp->status & 0xF) == STAGEIN) && ((stcp->status & 0xF0) != STAGED)) ||
+			(stcp->status == (STAGEOUT|WAITING_SPC)) ||
+			(stcp->status == (STAGEOUT|WAITING_NS)) ||
+			(stcp->status == (STAGEALLOC|WAITING_SPC))
+			) {
 			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0, 0, 0) < 0) { /* remove incomplete file */
 				stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
-									rfio_serror());
+						  rfio_serror());
 				stcp++;
 			}
 		} else if ((stcp->status == STAGEOUT) ||
-					(stcp->status == STAGEALLOC)) {
+				   (stcp->status == STAGEALLOC)) {
 			u_signed64 actual_size_block;
 			off_t previous_actual_size = stcp->actual_size;
 			
@@ -1085,11 +1110,18 @@ int main(argc,argv)
 			update_migpool(&stcp,1,0);
 			stcp++;
 		} else if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-			stcp->status = STAGEOUT|CAN_BE_MIGR;
-			/* This is a file for automatic migration */
-			update_migpool(&stcp,1,0);
+			if ((stcp->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED)) &&
+				(rc_upd_fileclass < 0)) {
+				/* We know this file cannot be migrated */
+			} else {
+				stcp->status = STAGEOUT|CAN_BE_MIGR;
+				/* This is a file for automatic migration */
+				update_migpool(&stcp,1,0);
+			}
 			stcp++;
-		} else stcp++;
+		} else {
+			stcp++;
+		}
 	}
 
 	/* Get default upd_fileclasses_int from configuration if any (not from getenv because conf is re-checked again) */
@@ -4038,13 +4070,14 @@ int ask_stageout(req_type, upath, found_stcp)
 	return (0);
 }
 
-int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_put_failed)
+int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_put_failed, nohsmcreat_flag)
 		 int req_type;
 		 char *upath;
 		 int *subreqid;
 		 int can_be_migr_flag;
 		 struct stgcat_entry *forced_stcp;
 		 int was_put_failed;
+		 int nohsmcreat_flag;
 {
 	int found;
 	struct stat st;
@@ -4112,6 +4145,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 		if ((stcp->status == STAGEOUT) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "size", "zero-length file - removed from disk");
 				if (delfile(stcp, 0, 1, 1,
 							"upd_stageout update on zero-length to-be-migrated file ok",
 							stcp->uid, stcp->gid, 0, 0, 0) < 0) {
@@ -4126,7 +4160,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 					struct Cns_filestat Cnsfilestat;
 
 					/* This is a CASTOR HSM file */
-					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed,&yetdone_Cns_statx_flag,&Cnsfilestat)) != 0) {
+					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed,&yetdone_Cns_statx_flag,&Cnsfilestat,nohsmcreat_flag)) != 0) {
 						return(thisrc);
 					}
 					if (can_be_migr_flag) {
