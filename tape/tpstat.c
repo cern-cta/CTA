@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.3 $ $Date: 1999/11/03 07:55:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.4 $ $Date: 2000/08/29 08:02:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpstat - tape status display */
@@ -68,7 +68,11 @@ char	**argv;
 				else
 					strcpy (status, "assn");
 				pwd = getpwuid (drv_status[i].uid);
-				strcpy (name, pwd->pw_name);
+				if ((pwd = getpwuid (drv_status[i].uid)) == NULL) {
+					sprintf (name, "%d", drv_status[i].uid);
+				} else {
+					strcpy (name, pwd->pw_name);
+				}
 				sprintf (jobid, "%d", drv_status[i].jid);
 				if (drv_status[i].mode == WRITE_DISABLE)
 					ring = 'o';
