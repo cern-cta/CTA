@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.7 2004/12/06 20:36:28 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.8 2004/12/15 21:39:54 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.7 $ $Date: 2004/12/06 20:36:28 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.8 $ $Date: 2004/12/15 21:39:54 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -34,14 +34,12 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 int _free_prepareToGet_filereq (struct stage_prepareToGet_filereq  *ptr) { 
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->filename != NULL) free (ptr->filename);
-  free(ptr);
   return 0; 
 }
 
 int _free_prepareToGet_fileresp (struct stage_prepareToGet_fileresp  *ptr) { 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  free(ptr);
   return 0; 
 }
 
@@ -51,33 +49,28 @@ int _free_io_fileresp (struct stage_io_fileresp  *ptr){
   if (ptr->server != NULL) free (ptr->server);
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  free(ptr);
   return 0; 
 }
 int _free_prepareToPut_filereq (struct stage_prepareToPut_filereq  *ptr){ 
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->filename != NULL) free (ptr->filename);
-  free(ptr);
   return 0; 
 }
 int _free_prepareToPut_fileresp (struct stage_prepareToPut_fileresp  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  free(ptr);
   return 0; 
 }
 
 int _free_prepareToUpdate_filereq (struct stage_prepareToUpdate_filereq  *ptr) { 
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->filename != NULL) free (ptr->filename);
-  free(ptr);
   return 0; 
 }
 
 int _free_prepareToUpdate_fileresp (struct stage_prepareToUpdate_fileresp  *ptr) { 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  free(ptr);
   return 0; 
 }
 
@@ -85,50 +78,42 @@ int _free_prepareToUpdate_fileresp (struct stage_prepareToUpdate_fileresp  *ptr)
 
 int _free_filereq (struct stage_filereq  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
-  free(ptr);
   return 0; 
 }
 
 int _free_fileresp (struct stage_fileresp  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  free(ptr);
   return 0; 
 }
 
 int _free_updateFileStatus_filereq (struct stage_updateFileStatus_filereq  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
-  free(ptr);
   return 0; 
 }
 
 int _free_query_req (struct stage_query_req  *ptr){ 
   if (ptr->param != NULL) free (ptr->param);
-  free(ptr);
   return 0; 
 }
 
 int _free_filequery_resp (struct stage_filequery_resp  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->poolname != NULL) free (ptr->poolname);
-  free(ptr);
   return 0; 
 }
 
 int _free_requestquery_resp (struct stage_requestquery_resp  *ptr){ 
   if (ptr->requestId != NULL) free (ptr->requestId);
-  free(ptr);
   return 0; 
 }
 
 int _free_subrequestquery_resp (struct stage_subrequestquery_resp  *ptr){ 
-  free(ptr);
   return 0; 
 }
 
 int _free_findrequest_resp (struct stage_findrequest_resp  *ptr){ 
   if (ptr->requestId != NULL) free (ptr->requestId);
-  free(ptr);
   return 0; 
 }
 
