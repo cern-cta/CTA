@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/01 09:11:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/01 15:19:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,6 @@
 
 // Include Files
 #include "OraReqIdCnv.hpp"
-#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -76,10 +75,6 @@ const std::string castor::db::ora::OraReqIdCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraReqIdCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL existence statement for member request
-const std::string castor::db::ora::OraReqIdCnv::s_checkReqIdRequestExistStatementString =
-"SELECT id from rh_ReqIdRequest WHERE id = :1";
-
 /// SQL update statement for member request
 const std::string castor::db::ora::OraReqIdCnv::s_updateReqIdRequestStatementString =
 "UPDATE rh_ReqId SET request = : 1 WHERE id = :2";
@@ -95,7 +90,6 @@ castor::db::ora::OraReqIdCnv::OraReqIdCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_checkReqIdRequestExistStatement(0),
   m_updateReqIdRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -118,7 +112,6 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_checkReqIdRequestExistStatement);
     deleteStatement(m_updateReqIdRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -128,7 +121,6 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_checkReqIdRequestExistStatement = 0;
   m_updateReqIdRequestStatement = 0;
 }
 
@@ -184,21 +176,6 @@ void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  if (0 != obj->request()) {
-    // Check checkReqIdRequestExist statement
-    if (0 == m_checkReqIdRequestExistStatement) {
-      m_checkReqIdRequestExistStatement = createStatement(s_checkReqIdRequestExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkReqIdRequestExistStatement->setDouble(1, obj->request()->id());
-    oracle::occi::ResultSet *rset = m_checkReqIdRequestExistStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->request(), false);
-    }
-    // Close resultset
-    m_checkReqIdRequestExistStatement->closeResultSet(rset);
-  }
   // Check update statement
   if (0 == m_updateReqIdRequestStatement) {
     m_updateReqIdRequestStatement = createStatement(s_updateReqIdRequestStatementString);

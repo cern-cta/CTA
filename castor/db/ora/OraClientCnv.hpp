@@ -232,30 +232,6 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member request
-        static const std::string s_selectRequestStatementString;
-
-        /// SQL select statement object for member request
-        oracle::occi::Statement *m_selectRequestStatement;
-
-        /// SQL delete statement for member request
-        static const std::string s_deleteRequestStatementString;
-
-        /// SQL delete statement object for member request
-        oracle::occi::Statement *m_deleteRequestStatement;
-
-        /// SQL remote update statement for member request
-        static const std::string s_remoteUpdateRequestStatementString;
-
-        /// SQL remote update statement object for member request
-        oracle::occi::Statement *m_remoteUpdateRequestStatement;
-
-        /// SQL checkExist statement for member request
-        static const std::string s_checkRequestExistStatementString;
-
-        /// SQL checkExist statement object for member request
-        oracle::occi::Statement *m_checkRequestExistStatement;
-
         /// SQL update statement for member request
         static const std::string s_updateRequestStatementString;
 

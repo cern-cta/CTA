@@ -109,29 +109,9 @@ const std::string castor::db::ora::OraStageGetNextRequestCnv::s_deleteSubRequest
 const std::string castor::db::ora::OraStageGetNextRequestCnv::s_remoteUpdateSubRequestStatementString =
 "UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
 
-/// SQL select statement for member client
-const std::string castor::db::ora::OraStageGetNextRequestCnv::s_selectIClientStatementString =
-"SELECT id from rh_IClient WHERE request = :1";
-
-/// SQL delete statement for member client
-const std::string castor::db::ora::OraStageGetNextRequestCnv::s_deleteIClientStatementString =
-"UPDATE rh_IClient SET request = 0 WHERE request = :1";
-
-/// SQL remote update statement for member client
-const std::string castor::db::ora::OraStageGetNextRequestCnv::s_remoteUpdateIClientStatementString =
-"UPDATE rh_IClient SET request = : 1 WHERE id = :2";
-
-/// SQL existence statement for member client
-const std::string castor::db::ora::OraStageGetNextRequestCnv::s_checkIClientExistStatementString =
-"SELECT id from rh_IClient WHERE id = :1";
-
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStageGetNextRequestCnv::s_updateIClientStatementString =
 "UPDATE rh_StageGetNextRequest SET client = : 1 WHERE id = :2";
-
-/// SQL existence statement for member parent
-const std::string castor::db::ora::OraStageGetNextRequestCnv::s_checkRequestExistStatementString =
-"SELECT id from rh_Request WHERE id = :1";
 
 /// SQL update statement for member parent
 const std::string castor::db::ora::OraStageGetNextRequestCnv::s_updateRequestStatementString =
@@ -155,12 +135,7 @@ castor::db::ora::OraStageGetNextRequestCnv::OraStageGetNextRequestCnv() :
   m_selectSubRequestStatement(0),
   m_deleteSubRequestStatement(0),
   m_remoteUpdateSubRequestStatement(0),
-  m_selectIClientStatement(0),
-  m_deleteIClientStatement(0),
-  m_remoteUpdateIClientStatement(0),
-  m_checkIClientExistStatement(0),
   m_updateIClientStatement(0),
-  m_checkRequestExistStatement(0),
   m_updateRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -190,12 +165,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::reset() throw() {
     deleteStatement(m_deleteSubRequestStatement);
     deleteStatement(m_selectSubRequestStatement);
     deleteStatement(m_remoteUpdateSubRequestStatement);
-    deleteStatement(m_deleteIClientStatement);
-    deleteStatement(m_selectIClientStatement);
-    deleteStatement(m_remoteUpdateIClientStatement);
-    deleteStatement(m_checkIClientExistStatement);
     deleteStatement(m_updateIClientStatement);
-    deleteStatement(m_checkRequestExistStatement);
     deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -212,12 +182,7 @@ void castor::db::ora::OraStageGetNextRequestCnv::reset() throw() {
   m_selectSubRequestStatement = 0;
   m_deleteSubRequestStatement = 0;
   m_remoteUpdateSubRequestStatement = 0;
-  m_selectIClientStatement = 0;
-  m_deleteIClientStatement = 0;
-  m_remoteUpdateIClientStatement = 0;
-  m_checkIClientExistStatement = 0;
   m_updateIClientStatement = 0;
-  m_checkRequestExistStatement = 0;
   m_updateRequestStatement = 0;
 }
 
@@ -360,51 +325,6 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRepSubRequest(castor::stage
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepIClient(castor::stager::StageGetNextRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check selectIClient statement
-  if (0 == m_selectIClientStatement) {
-    m_selectIClientStatement = createStatement(s_selectIClientStatementString);
-  }
-  // retrieve the object from the database
-  m_selectIClientStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectIClientStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    u_signed64 clientId = (u_signed64)rset->getDouble(12);
-    if (0 != clientId &&
-        0 == obj->client() ||
-        obj->client()->id() != clientId) {
-      if (0 == m_deleteIClientStatement) {
-        m_deleteIClientStatement = createStatement(s_deleteIClientStatementString);
-      }
-      m_deleteIClientStatement->setDouble(1, obj->id());
-      m_deleteIClientStatement->executeUpdate();
-    }
-  }
-  // Close resultset
-  m_selectIClientStatement->closeResultSet(rset);
-  if (0 != obj->client()) {
-    // Check checkIClientExist statement
-    if (0 == m_checkIClientExistStatement) {
-      m_checkIClientExistStatement = createStatement(s_checkIClientExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkIClientExistStatement->setDouble(1, obj->client()->id());
-    oracle::occi::ResultSet *rset = m_checkIClientExistStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->client(), false, OBJ_Request);
-    } else {
-      // Check remote update statement
-      if (0 == m_remoteUpdateIClientStatement) {
-        m_remoteUpdateIClientStatement = createStatement(s_remoteUpdateIClientStatementString);
-      }
-      // Update remote object
-      m_remoteUpdateIClientStatement->setDouble(1, obj->id());
-      m_remoteUpdateIClientStatement->setDouble(2, obj->client()->id());
-      m_remoteUpdateIClientStatement->executeUpdate();
-    }
-    // Close resultset
-    m_checkIClientExistStatement->closeResultSet(rset);
-  }
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -420,21 +340,6 @@ void castor::db::ora::OraStageGetNextRequestCnv::fillRepIClient(castor::stager::
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageGetNextRequestCnv::fillRepRequest(castor::stager::StageGetNextRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  if (0 != obj->parent()) {
-    // Check checkRequestExist statement
-    if (0 == m_checkRequestExistStatement) {
-      m_checkRequestExistStatement = createStatement(s_checkRequestExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkRequestExistStatement->setDouble(1, obj->parent()->id());
-    oracle::occi::ResultSet *rset = m_checkRequestExistStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->parent(), false);
-    }
-    // Close resultset
-    m_checkRequestExistStatement->closeResultSet(rset);
-  }
   // Check update statement
   if (0 == m_updateRequestStatement) {
     m_updateRequestStatement = createStatement(s_updateRequestStatementString);

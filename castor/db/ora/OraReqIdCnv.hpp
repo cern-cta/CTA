@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/01 09:11:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/01 15:19:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -232,12 +232,6 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
-
-        /// SQL checkExist statement for member request
-        static const std::string s_checkReqIdRequestExistStatementString;
-
-        /// SQL checkExist statement object for member request
-        oracle::occi::Statement *m_checkReqIdRequestExistStatement;
 
         /// SQL update statement for member request
         static const std::string s_updateReqIdRequestStatementString;

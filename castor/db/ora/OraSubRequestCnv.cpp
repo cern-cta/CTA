@@ -103,10 +103,6 @@ const std::string castor::db::ora::OraSubRequestCnv::s_checkSubRequestExistState
 const std::string castor::db::ora::OraSubRequestCnv::s_updateSubRequestStatementString =
 "UPDATE rh_SubRequest SET parent = : 1 WHERE id = :2";
 
-/// SQL existence statement for member request
-const std::string castor::db::ora::OraSubRequestCnv::s_checkRequestExistStatementString =
-"SELECT id from rh_Request WHERE id = :1";
-
 /// SQL update statement for member request
 const std::string castor::db::ora::OraSubRequestCnv::s_updateRequestStatementString =
 "UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
@@ -128,7 +124,6 @@ castor::db::ora::OraSubRequestCnv::OraSubRequestCnv() :
   m_updateCastorFileStatement(0),
   m_checkSubRequestExistStatement(0),
   m_updateSubRequestStatement(0),
-  m_checkRequestExistStatement(0),
   m_updateRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -157,7 +152,6 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
     deleteStatement(m_updateCastorFileStatement);
     deleteStatement(m_checkSubRequestExistStatement);
     deleteStatement(m_updateSubRequestStatement);
-    deleteStatement(m_checkRequestExistStatement);
     deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -173,7 +167,6 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
   m_updateCastorFileStatement = 0;
   m_checkSubRequestExistStatement = 0;
   m_updateSubRequestStatement = 0;
-  m_checkRequestExistStatement = 0;
   m_updateRequestStatement = 0;
 }
 
@@ -328,21 +321,6 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  if (0 != obj->request()) {
-    // Check checkRequestExist statement
-    if (0 == m_checkRequestExistStatement) {
-      m_checkRequestExistStatement = createStatement(s_checkRequestExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkRequestExistStatement->setDouble(1, obj->request()->id());
-    oracle::occi::ResultSet *rset = m_checkRequestExistStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->request(), false);
-    }
-    // Close resultset
-    m_checkRequestExistStatement->closeResultSet(rset);
-  }
   // Check update statement
   if (0 == m_updateRequestStatement) {
     m_updateRequestStatement = createStatement(s_updateRequestStatementString);

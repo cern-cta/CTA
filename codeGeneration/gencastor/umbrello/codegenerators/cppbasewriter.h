@@ -282,8 +282,9 @@ class CppBaseWriter : public CppCastorWriter {
   struct Member {
     QString name;
     QString typeName;
-    Member(QString n, QString tn) :
-      name(n), typeName(tn) {}
+    bool abstract;
+    Member(QString n, QString tn, bool a = false) :
+      name(n), typeName(tn), abstract(a) {}
   };
 
   /**

@@ -730,17 +730,21 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                              parseMulti(a->getMultiA()),
                              parseAssocKind(a->getAssocType(), true)),
                    Member(a->getRoleNameB(),
-                          a->getObjectB()->getName()),
+                          a->getObjectB()->getName(),
+                          a->getObjectB()->getAbstract()),
                    Member(a->getRoleNameA(),
-                          a->getObjectA()->getName()));
+                          a->getObjectA()->getName(),
+                          a->getObjectA()->getAbstract()));
   } else {
     as = new Assoc(AssocType(parseMulti(a->getMultiA()),
                              parseMulti(a->getMultiB()),
                              parseAssocKind(a->getAssocType(), false)),
                    Member(a->getRoleNameA(),
-                          a->getObjectA()->getName()),
+                          a->getObjectA()->getName(),
+                          a->getObjectA()->getAbstract()),
                    Member(a->getRoleNameB(),
-                          a->getObjectB()->getName()));
+                          a->getObjectB()->getName(),
+                          a->getObjectB()->getAbstract()));
   }
   list.append(as);
 }

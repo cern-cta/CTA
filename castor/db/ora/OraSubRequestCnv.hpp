@@ -316,12 +316,6 @@ namespace castor {
         /// SQL update statement object for member parent
         oracle::occi::Statement *m_updateSubRequestStatement;
 
-        /// SQL checkExist statement for member request
-        static const std::string s_checkRequestExistStatementString;
-
-        /// SQL checkExist statement object for member request
-        oracle::occi::Statement *m_checkRequestExistStatement;
-
         /// SQL update statement for member request
         static const std::string s_updateRequestStatementString;
 

@@ -357,7 +357,8 @@ void CppHOraCnvWriter::writeMembers() {
                 << endl << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN) {
+          as->type.multiRemote != MULT_UNKNOWN &&
+          !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -405,21 +406,24 @@ void CppHOraCnvWriter::writeMembers() {
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
+        if (!as->remotePart.abstract) {
+          *m_stream << getIndent()
+                    << "/// SQL checkExist statement for member "
+                    << as->remotePart.name
+                    << endl << getIndent()
+                    << "static const std::string s_check"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "ExistStatementString;"
+                    << endl << endl << getIndent()
+                    << "/// SQL checkExist statement object for member "
+                    << as->remotePart.name
+                    << endl << getIndent()
+                    << "oracle::occi::Statement *m_check"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "ExistStatement;"
+                    << endl << endl;
+        }
         *m_stream << getIndent()
-                  << "/// SQL checkExist statement for member "
-                  << as->remotePart.name
-                  << endl << getIndent()
-                  << "static const std::string s_check"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatementString;"
-                  << endl << endl << getIndent()
-                  << "/// SQL checkExist statement object for member "
-                  << as->remotePart.name
-                  << endl << getIndent()
-                  << "oracle::occi::Statement *m_check"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatement;"
-                  << endl << endl << getIndent()
                   << "/// SQL update statement for member "
                   << as->remotePart.name
                   << endl << getIndent()

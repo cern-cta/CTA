@@ -379,7 +379,8 @@ void CppCppOraCnvWriter::writeConstants() {
                 << " WHERE Parent = :1\";" << endl << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN) {
+          as->type.multiRemote != MULT_UNKNOWN &&
+          !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -428,21 +429,23 @@ void CppCppOraCnvWriter::writeConstants() {
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
+        if (!as->remotePart.abstract) {
+          *m_stream << getIndent()
+                    << "/// SQL existence statement for member "
+                    << as->remotePart.name
+                    << endl << getIndent()
+                    << "const std::string "
+                    << m_classInfo->fullPackageName
+                    << "Ora" << m_classInfo->className
+                    << "Cnv::s_check"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "ExistStatementString =" << endl
+                    << getIndent()
+                    << "\"SELECT id from rh_"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << " WHERE id = :1\";" << endl << endl;
+        }
         *m_stream << getIndent()
-                  << "/// SQL existence statement for member "
-                  << as->remotePart.name
-                  << endl << getIndent()
-                  << "const std::string "
-                  << m_classInfo->fullPackageName
-                  << "Ora" << m_classInfo->className
-                  << "Cnv::s_check"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatementString =" << endl
-                  << getIndent()
-                  << "\"SELECT id from rh_"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << " WHERE id = :1\";" << endl << endl
-                  << getIndent()
                   << "/// SQL update statement for member "
                   << as->remotePart.name
                   << endl << getIndent()
@@ -451,7 +454,8 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "Ora" << m_classInfo->className
                   << "Cnv::s_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "StatementString =" << endl << getIndent()
+                  << "StatementString =" << endl
+                  << getIndent()
                   << "\"UPDATE rh_"
                   << m_classInfo->className
                   << " SET " << as->remotePart.name
@@ -614,7 +618,8 @@ void CppCppOraCnvWriter::writeConstructors() {
                 << "Statement(0)";
     } else {
       if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN) {
+          as->type.multiRemote != MULT_UNKNOWN &&
+          !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << "," << endl << getIndent()
                   << "  m_select"
@@ -629,10 +634,13 @@ void CppCppOraCnvWriter::writeConstructors() {
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
+        if (!as->remotePart.abstract) {
         *m_stream << "," << endl << getIndent()
                   << "  m_check"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatement(0)" << "," << endl
+                  << "ExistStatement(0)";
+        }
+        *m_stream << "," << endl
                   << getIndent() << "  m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement(0)";
@@ -710,7 +718,8 @@ void CppCppOraCnvWriter::writeReset() {
                 << "Statement);" << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN) {
+          as->type.multiRemote != MULT_UNKNOWN &&
+          !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
                   << "deleteStatement(m_delete"
@@ -726,11 +735,13 @@ void CppCppOraCnvWriter::writeReset() {
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
+        if (!as->remotePart.abstract) {
+          *m_stream << getIndent()
+                    << "deleteStatement(m_check"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "ExistStatement);" << endl;
+        }
         *m_stream << getIndent()
-                  << "deleteStatement(m_check"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatement);" << endl
-                  << getIndent()
                   << "deleteStatement(m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement);" << endl;
@@ -783,7 +794,8 @@ void CppCppOraCnvWriter::writeReset() {
                 << "Statement = 0;" << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
-          as->type.multiRemote != MULT_UNKNOWN) {
+          as->type.multiRemote != MULT_UNKNOWN &&
+          !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
                   << "m_select" << capitalizeFirstLetter(as->remotePart.typeName)
@@ -795,9 +807,12 @@ void CppCppOraCnvWriter::writeReset() {
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
+        if (!as->remotePart.abstract) {
+          *m_stream << getIndent()
+                    << "m_check" << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "ExistStatement = 0;" << endl;
+        }
         *m_stream << getIndent()
-                  << "m_check" << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "ExistStatement = 0;" << endl << getIndent()
                   << "m_update" << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement = 0;" << endl;
       }
@@ -1039,7 +1054,8 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << ", oracle::occi::SQLException) {"
             << endl;
   m_indent++;
-  if (as->type.multiLocal == MULT_ONE) {
+  if (as->type.multiLocal == MULT_ONE &&
+      !as->remotePart.abstract) {
     // 1 to 1, wee need to check whether the old remote object
     // should be updated
     *m_stream << getIndent() << "// Check select"
@@ -1113,96 +1129,99 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
               << "Statement->closeResultSet(rset);"
               << endl;
   }
-  // Common part to all * to 1 associations :
-  // See whether the remote end exists and create it if not
-  *m_stream << getIndent() << "if (0 != obj->"
-            << as->remotePart.name << "()) {" << endl;
-  m_indent++;
-  *m_stream << getIndent() << "// Check check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Exist statement" << endl << getIndent()
-            << "if (0 == m_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatement) {" << endl;
-  m_indent++;
-  *m_stream << getIndent() << "m_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatement = createStatement(s_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatementString);"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl << getIndent()
-            << "// retrieve the object from the database"
-            << endl << getIndent() << "m_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatement->setDouble(1, obj->"
-            << as->remotePart.name << "()->id());"
-            << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = m_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatement->executeQuery();"
-            << endl;
-  *m_stream << getIndent()
-            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
-            << endl;
-  m_indent++;
-  addInclude("\"castor/Constants.hpp\"");
-  *m_stream << getIndent()
-            << fixTypeName("BaseAddress",
-                           "castor",
-                           "")
-            << " ad(\"OraCnvSvc\", castor::SVC_ORACNV);"
-            << endl << getIndent()
-            << "cnvSvc()->createRep(&ad, obj->"
-            << as->remotePart.name
-            << "(), false";
-  if (as->type.multiLocal == MULT_ONE) {
-    *m_stream << ", OBJ_" << as->localPart.typeName;
-  }
-  *m_stream << ");" << endl;
-  m_indent--;
-  if (as->type.multiLocal == MULT_ONE) {
-    *m_stream << getIndent() << "} else {" << endl;
+  if (!as->remotePart.abstract) {
+    // Common part to all * to 1 associations, except if remote
+    // end is abstract :
+    // See whether the remote end exists and create it if not
+    *m_stream << getIndent() << "if (0 != obj->"
+              << as->remotePart.name << "()) {" << endl;
     m_indent++;
-    *m_stream << getIndent() << "// Check remote update statement"
-              << endl << getIndent()
-              << "if (0 == m_remoteUpdate" << as->remotePart.typeName
-              << "Statement) {" << endl;
+    *m_stream << getIndent() << "// Check check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "Exist statement" << endl << getIndent()
+              << "if (0 == m_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatement) {" << endl;
     m_indent++;
-    *m_stream << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement = createStatement(s_remoteUpdate"
-              << as->remotePart.typeName
-              << "StatementString);"
+    *m_stream << getIndent() << "m_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatement = createStatement(s_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl << getIndent()
-              << "// Update remote object"
+              << "// retrieve the object from the database"
+              << endl << getIndent() << "m_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatement->setDouble(1, obj->"
+              << as->remotePart.name << "()->id());"
               << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(1, obj->id());"
+              << "oracle::occi::ResultSet *rset = m_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatement->executeQuery();"
+              << endl;
+    *m_stream << getIndent()
+              << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+              << endl;
+    m_indent++;
+    addInclude("\"castor/Constants.hpp\"");
+    *m_stream << getIndent()
+              << fixTypeName("BaseAddress",
+                             "castor",
+                             "")
+              << " ad(\"OraCnvSvc\", castor::SVC_ORACNV);"
               << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(2, obj->"
+              << "cnvSvc()->createRep(&ad, obj->"
               << as->remotePart.name
-              << "()->id());"
-              << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->executeUpdate();"
+              << "(), false";
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << ", OBJ_" << as->localPart.typeName;
+    }
+    *m_stream << ");" << endl;
+    m_indent--;
+    if (as->type.multiLocal == MULT_ONE) {
+      *m_stream << getIndent() << "} else {" << endl;
+      m_indent++;
+      *m_stream << getIndent() << "// Check remote update statement"
+                << endl << getIndent()
+                << "if (0 == m_remoteUpdate" << as->remotePart.typeName
+                << "Statement) {" << endl;
+      m_indent++;
+      *m_stream << getIndent()
+                << "m_remoteUpdate" << as->remotePart.typeName
+                << "Statement = createStatement(s_remoteUpdate"
+                << as->remotePart.typeName
+                << "StatementString);"
+                << endl;
+      m_indent--;
+      *m_stream << getIndent() << "}" << endl << getIndent()
+                << "// Update remote object"
+                << endl << getIndent()
+                << "m_remoteUpdate" << as->remotePart.typeName
+                << "Statement->setDouble(1, obj->id());"
+                << endl << getIndent()
+                << "m_remoteUpdate" << as->remotePart.typeName
+                << "Statement->setDouble(2, obj->"
+                << as->remotePart.name
+                << "()->id());"
+                << endl << getIndent()
+                << "m_remoteUpdate" << as->remotePart.typeName
+                << "Statement->executeUpdate();"
+                << endl;
+      m_indent--;
+    }
+    *m_stream << getIndent() << "}" << endl
+              << getIndent() << "// Close resultset" << endl
+              << getIndent()
+              << "m_check"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "ExistStatement->closeResultSet(rset);"
               << endl;
     m_indent--;
+    *m_stream << getIndent() << "}" << endl;
   }
-  *m_stream << getIndent() << "}" << endl
-            << getIndent() << "// Close resultset" << endl
-            << getIndent()
-            << "m_check"
-            << capitalizeFirstLetter(as->remotePart.typeName)
-            << "ExistStatement->closeResultSet(rset);"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  // Last bit, still common to all * to 1 associations :
+  // Last bit, common to all * to 1 associations :
   // update the local object
   *m_stream << getIndent() << "// Check update statement"
             << endl << getIndent()
@@ -1490,7 +1509,8 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
-  if (as->type.multiLocal == MULT_ONE) {
+  if (as->type.multiLocal == MULT_ONE &&
+      !as->remotePart.abstract) {
     *m_stream << getIndent() << "// Check remote update statement"
               << endl << getIndent()
               << "if (0 == m_remoteUpdate" << as->remotePart.typeName
