@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:24:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.7 $ $Date: 1999/12/29 10:44:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -611,7 +611,7 @@ static int rtcpc_F_opt(int mode,
     rtcpFileRequest_t *filereq;
     char valid_recfm[][10] = {"U,f77","U","U,bin","F","FB","FBS",
         "FS","F,-f77",""};
-    char set_recfm[][2] =    {"U",    "U","F",    "F","F", "F",
+    char set_recfm[][2] =    {"U",    "U","U",    "F","F", "F",
         "F", "F"};
 
     if ( value == NULL ) {
@@ -657,8 +657,9 @@ static int rtcpc_F_opt(int mode,
                 }
             }
             
-            if ( strcmp(valid_recfm[i],"F,-f77") == 0 ) 
-                filereq->convert |= F77CONV;
+            if ( (strcmp(valid_recfm[i],"F,-f77") == 0) ||
+                 (strcmp(valid_recfm[i],"U,bin")  == 0) ) 
+                filereq->convert |= NOF77CW;
             
             if ( strcmp(set_recfm[i],"U") == 0 ) 
                 filereq->recordlength = 0;
@@ -1690,6 +1691,13 @@ static int rtcpc_diskfiles(int mode,
     tl = *tape;
 
     if ( filename != NULL ) {
+        if ( tl->file == NULL ) {
+            /*
+             * -q option was not specified. Default is -q 1
+             */
+            rc = newFileList(tape,&fl,mode);
+            if ( fl != NULL ) fl->filereq.tape_fseq = 1;
+        } 
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
             if ( ((filereq->tape_fseq > 0) || 
@@ -1699,7 +1707,7 @@ static int rtcpc_diskfiles(int mode,
                 break;
             }
         } CLIST_ITERATE_END(tl->file,fl);
-        if ( strcmp(filereq->file_path,filename) != 0 ) {
+        if ( (filereq != NULL) && (strcmp(filereq->file_path,filename) != 0) ) {
             if ( (fl == tl->file) && 
                  (fl->prev->filereq.tape_fseq == 0) &&
                  (filereq->position_method == TPPOSIT_FSEQ) &&
@@ -1726,7 +1734,7 @@ static int rtcpc_diskfiles(int mode,
                     filereq->tape_fseq = fl->prev->filereq.tape_fseq + 1;
                     filereq->concat = NOCONCAT_TO_EOD;
                     strcpy(filereq->file_path,filename);
-                }
+                } 
             } else if ( (fl == tl->file) && 
                         (((fl->prev->filereq.tape_fseq > 0) &&
                           (filereq->position_method == TPPOSIT_FSEQ)) ||
@@ -1744,7 +1752,7 @@ static int rtcpc_diskfiles(int mode,
                     fl->filereq = fl->prev->filereq;
                     fl->filereq.concat = CONCAT;
                     strcpy(fl->filereq.file_path,filename);
-                }
+                } 
             } else {
                 rtcp_log(LOG_ERR,"incorrect number of filenames specified\n");
                 serrno = EINVAL;

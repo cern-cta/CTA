@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.11 $ $Date: 1999/12/17 16:56:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.12 $ $Date: 1999/12/29 10:44:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -240,10 +240,10 @@ static int DiskFileOpen(int pool_index,
     /*
      * Open the disk file
      */
-    if ( *filereq->recfm == 'F' ) {
+    if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         /*
          * Normal Formatted file option. 
-         * Open the disk file
+         * Open the disk file as byte-stream.
          */
         flags = O_RDONLY | binmode;
         if ( tapereq->mode == WRITE_DISABLE ) {
@@ -281,7 +281,12 @@ static int DiskFileOpen(int pool_index,
         }
         DEBUG_PRINT((LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
             disk_fd));
-    } else if ( *filereq->recfm == 'U' ) {
+    } else if ( (*filereq->recfm == 'U') && 
+                ((filereq->convert & NOF77CW) == 0) ) {
+        /*
+         * FORTRAN sequential file access. Disk file contains FORTRAN
+         * control words
+         */
         rc = GetNewFortranUnit(pool_index,file);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskFileOpen() GetNewFortranUnit() failed\n");
@@ -321,8 +326,8 @@ static int DiskFileOpen(int pool_index,
             disk_fd = file->FortranUnit;
         }
     } else {
-        rtcp_log(LOG_ERR,"DiskFileOpen() unknown recfm %s\n",
-            filereq->recfm);
+        rtcp_log(LOG_ERR,"DiskFileOpen() unknown recfm %s + convert 0x%x\n",
+            filereq->recfm,filereq->convert);
         serrno = EINVAL;
         return(-1);
     }
@@ -360,7 +365,8 @@ static int DiskFileOpen(int pool_index,
          * return the socket.
          */
         s = (SOCKET)disk_fd;
-        if ( *filereq->recfm == 'U' ) s = (SOCKET)rfio_xysock(disk_fd);
+        if ( (*filereq->recfm == 'U') && ((filereq->convert & NOF77CW) == 0) )
+            s = (SOCKET)rfio_xysock(disk_fd);
         ifce = getifnam(s);
         if ( ifce == NULL )
             strcpy(filereq->ifce,"???");
@@ -383,9 +389,10 @@ static int DiskFileClose(int disk_fd,
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     filereq = &file->filereq;
 
-    if ( *filereq->recfm == 'F' ) {
+    if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
-    } else if ( *filereq->recfm == 'U' ) {
+    } else if ( (*filereq->recfm == 'U') && 
+                ((filereq->convert & NOF77CW) == 0) ) {
         rc = rfio_xyclose(file->FortranUnit," ",&irc);
         (void)ReturnFortranUnit(pool_index,file);
     }
@@ -488,12 +495,31 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( blksiz < 0 ) {
                 blksiz = filereq->blocksize;
                 lrecl = filereq->recordlength;
-                if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
-                else if (Uformat == TRUE) lrecl = 0;
+                if ( (lrecl <= 0) && ((Uformat == FALSE) ||
+                     ((convert & NOF77CW) != 0)) ) lrecl = blksiz;
+                else if ( (Uformat == TRUE) &&
+                          ((convert & NOF77CW) == 0) ) lrecl = 0;
                 filereq->TStartTransferDisk = (int)time(NULL);
             }
         }
         DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() buffer %d full\n",i));
+        /*
+         * Should never happen unless there is a bug.
+         */
+        if ( (databufs[i]->data_length > databufs[i]->maxlength) ||
+             (databufs[i]->data_length > databufs[i]->length) ) {
+            rtcp_log(LOG_ERR,"Buffer overflow!! databuf %d, (%d,%d,%d)\n",
+                     i,databufs[i]->data_length,databufs[i]->length,
+                     databufs[i]->maxlength);
+            rtcpd_AppendClientMsg(NULL,file,"Internal error. %s: buffer overflow\n",
+                                  filereq->file_path);
+            rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED);
+            (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+            (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+            if ( convert_buffer != NULL ) free(convert_buffer);
+            if ( f77conv_context != NULL ) free(f77conv_context);
+            return(-1);
+        }
         /*
          * Verify that actual buffer size matches block size
          */
@@ -549,18 +575,25 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
             }
             if ( nb_bytes > 0 ) {
+                /*
+                 * Convert from EBCDIC to ASCII character coding? 
+                 */
                 if ( (convert & EBCCONV) != 0 ) 
                     ebc2asc(databufs[i]->buffer,nb_bytes);
                 /*
                  * >>>>>>>>>>> write to disk <<<<<<<<<<<<<
                  */
-                if ( Uformat == FALSE ) {
+                if ( (Uformat == FALSE) || ((convert & NOF77CW) != 0) ) {
                     bufp = databufs[i]->buffer;
                     if ( (convert & FIXVAR) != 0 ) {
                         nb_bytes = rtcpd_FixToVar(bufp,
                             convert_buffer,nb_bytes,lrecl);
                         bufp = convert_buffer;
-                    } else if ( (convert & F77CONV) != 0 ) {
+                    } else if ( (Uformat == FALSE) &&
+                                ((convert & NOF77CW) != 0) ) {
+                        /*
+                         * F,-f77 format
+                         */
                         nb_bytes = rtcpd_f77RecToFix(bufp,
                             nb_bytes,lrecl,errmsgtxt,&f77conv_context);
                         if ( *errmsgtxt != '\0' ) 
@@ -572,6 +605,9 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     DK_STATUS(RTCP_PS_NOBLOCKING);
                     if ( rc == -1 ) save_serrno = rfio_errno;
                 } else {
+                    /*
+                     * All U format except U,bin 
+                     */
                     rc = 0;
                     for (j=0; j*blksiz < nb_bytes; j++) {
                         lrecl = databufs[i]->lrecl_table[j];
@@ -715,6 +751,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     int rc, irc, i, j, blksiz, lrecl, end_of_dkfile, current_bufsz;
     int status, nb_bytes, SendStartSignal, save_serrno;
     register int Uformat;
+    register int convert;
     register int debug = Debug;
     u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
@@ -735,8 +772,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
     Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
-    if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
-    else if ( Uformat == TRUE ) lrecl = 0;
+    convert = filereq->convert;
+    if ( (lrecl <= 0) && ((Uformat == FALSE) || ((convert & NOF77CW) != 0)) ) 
+        lrecl = blksiz;
+    else if ( (Uformat == TRUE) && ((convert & NOF77CW) == 0) ) lrecl = 0;
     
     /*
      * Calculate new actual buffer length
@@ -821,16 +860,17 @@ static int DiskToMemory(int disk_fd, int pool_index,
             rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
         }
         /*
-         * If U-format, re-allocate the lrecl_table[] if needed.
+         * If true U-format, re-allocate the lrecl_table[] if needed.
          */
-        if ( Uformat == TRUE ) rc = rtcpd_AdmUformatInfo(file,i);
+        if ( (Uformat == TRUE) && ((convert & NOF77CW) == 0) ) 
+            rc = rtcpd_AdmUformatInfo(file,i);
 
         /*
          * >>>>>>>>>>> read from disk <<<<<<<<<<<<<
          */
         DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
             nb_bytes,filereq->file_path));
-        if ( Uformat == FALSE ) {
+        if ( (Uformat == FALSE) || ((convert & NOF77CW) != 0) ) {
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
             if ( nb_bytes > 0 ) rc = rfio_read(disk_fd,bufp,nb_bytes);
@@ -838,6 +878,9 @@ static int DiskToMemory(int disk_fd, int pool_index,
             DK_STATUS(RTCP_PS_NOBLOCKING);
             if ( rc == -1 ) save_serrno = rfio_errno;
         } else {
+            /*
+             * All U formats except U,bin
+             */
             rc = irc = 0;
             databufs[i]->nbrecs = 0;
             for (j=0; j*blksiz < nb_bytes; j++) {
@@ -882,8 +925,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
         DK_SIZE(totsz);
 
         if ( (end_of_dkfile == TRUE) ||
-             ((rc < nb_bytes) && (Uformat == FALSE)) ||
-             ((irc == 2) && (Uformat == TRUE)) ) {
+             ((rc < nb_bytes) && 
+              ((Uformat == FALSE) || ((convert & NOF77CW) != 0))) ||
+             ((irc == 2) && 
+              ((Uformat == TRUE) && ((convert & NOF77CW) == 0))) ) {
             DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() End of file %s reached in buffer %d\n",
                 filereq->file_path,i));
             databufs[i]->end_of_tpfile = *end_of_tpfile;
@@ -911,16 +956,19 @@ static int DiskToMemory(int disk_fd, int pool_index,
          * very small disk files that all fit into a single
          * memory buffer.
          * 
-         * For U-format files we always start new files with a
+         * For true U-format files we always start new files with a
          * new buffer.
          */
-        if ( (Uformat == FALSE) &&
+        if ( ((Uformat == FALSE) || ((convert & NOF77CW) != 0)) &&
             ((databufs[i]->data_length == databufs[i]->length) ||
             ((databufs[i]->data_length == databufs[i]->bufendp) &&
              (databufs[i]->end_of_tpfile == TRUE ||
               databufs[i]->last_buffer == TRUE))) ) {
             databufs[i]->flag = BUFFER_FULL;
-        } else if ( Uformat == TRUE ) {
+        } else if ( (Uformat == TRUE) && ((convert & NOF77CW) == 0) ) {
+            /*
+             * All U formats except U,bin
+             */
             databufs[i]->flag = BUFFER_FULL;
         }
         /*
@@ -1145,6 +1193,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
     int rc, indxp, offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, next_bufsz, thIndex;
     register int convert;
+    register int debug = Debug;
 
     if ( client == NULL || tape == NULL || file == NULL ||
         poolsize <= 0 ) {
@@ -1184,6 +1233,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
             end_of_tpfile = FALSE;
             filereq = &nextfile->filereq;
             Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
+            convert = filereq->convert;
             if ( nexttape->next == tape && 
                  nextfile->next == nexttape->file ) last_file = TRUE;
             if ( last_file == TRUE || (nextfile->next->filereq.concat & 
@@ -1345,12 +1395,12 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                     indxp = indxp % nb_bufs;
                     if ( tapereq->mode == WRITE_ENABLE ) {
                         if ( (filereq->concat == NOCONCAT) ||
-                             (Uformat == TRUE) ) {
+                           ((Uformat == TRUE) && ((convert & NOF77CW) == 0)) ) {
                             /*
                              * Not concatenating on tape. Start next file
                              * with a brand new buffer except if previous
                              * file was empty we re-use the previous buffer.
-                             * Also U-format files start with new buffer
+                             * Also true U-format files start with new buffer
                              * since since in this case concatenation does 
                              * not imply any problems with partial blocks.
                              */

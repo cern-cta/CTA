@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.4 $ $Date: 1999/12/28 15:51:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.5 $ $Date: 1999/12/29 10:44:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -218,6 +218,17 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
+
+    /*
+     * F,-f77 format is valid for tape read mode only! 
+     */
+    if ( (mode == WRITE_ENABLE) && (*filereq->recfm == 'F') && 
+         ((filereq->convert & NOF77CW) != 0) ) {
+        serrno = EINVAL;
+        strcpy(errmsgtxt,"NOF77CW for F format is not valid for tape write");
+        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    } 
 
     /*
      * Blocksize and record length
