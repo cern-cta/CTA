@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.95 2001/02/02 09:49:26 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.96 2001/02/02 10:43:54 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.95 $ $Date: 2001/02/02 09:49:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.96 $ $Date: 2001/02/02 10:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -883,6 +883,7 @@ void prockilreq(req_type, req_data, clienthost)
 	struct passwd *pw;
 	struct group *gr;
 	int found = 0;
+	int c = 0;
 
 	rbp = req_data;
 	switch (req_type) {
@@ -948,7 +949,7 @@ void prockilreq(req_type, req_data, clienthost)
 			}
 		}
 		/* This will close cleanly the connection from the API */
-		sendrep (wqp->rpfd, STAGERC, req_type, (int) 0);
+		sendrep (wqp->rpfd, STAGERC, req_type, c);
 		break;
 	default:
 		break;
