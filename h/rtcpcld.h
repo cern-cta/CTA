@@ -175,13 +175,13 @@ int rtcpcld_initThreadPool _PROTO((
 int rtcpcld_cleanupTape _PROTO((
                                 tape_list_t *
                                 ));
-int rtcpcld_cleanupFile _PROTO((
-                                file_list_t *
-                                ));
-int rtcpcld_getTapesToDo _PROTO((
-                                 tape_list_t ***,
-                                 int *
+void rtcpcld_cleanupFile _PROTO((
+                                 file_list_t *
                                  ));
+void rtcpcld_getTapesToDo _PROTO((
+                                  tape_list_t ***,
+                                  int *
+                                  ));
 int rtcpcld_getSegmentsToDo _PROTO((
                                     tape_list_t *
                                     ));
