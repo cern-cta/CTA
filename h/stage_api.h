@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.27 2001/02/02 12:08:39 jdurand Exp $
+ * $Id: stage_api.h,v 1.28 2001/02/02 12:30:03 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -193,30 +193,30 @@ typedef struct stage_hsm stage_hsm_t;
 /* ========================================================================= */
 /* ===================== DEFINITION OF API FLAGS =========================== */
 /* ========================================================================= */
-#define STAGE_DEFERRED    0x00001     /* -A deferred  [stage_iowc]           */
-#define STAGE_GRPUSER     0x00002     /* -G           [stage_iowc,stage_qry] */
-#define STAGE_COFF        0x00004     /* -c off       [stage_iowc]           */
-#define STAGE_UFUN        0x00008     /* -U           [stage_iowc]           */
-#define STAGE_INFO        0x00010     /* -z           [stage_iowc]           */
-#define STAGE_ALL         0x00020     /* -a           [stage_qry]            */
-#define STAGE_LINKNAME    0x00040     /* -L           [stage_qry]            */
-#define STAGE_LONG        0x00080     /* -l           [stage_qry]            */
-#define STAGE_PATHNAME    0x00100     /* -P           [stage_qry]            */
-#define STAGE_SORTED      0x00200     /* -S           [stage_qry]            */
-#define STAGE_STATPOOL    0x00400     /* -s           [stage_qry]            */
-#define STAGE_TAPEINFO    0x00800     /* -T           [stage_qry]            */
-#define STAGE_USER        0x01000     /* -u           [stage_qry]            */
-#define STAGE_EXTENDED    0x02000     /* -x           [stage_qry]            */
-#define STAGE_ALLOCED     0x04000     /* -A           [stage_qry]            */
-#define STAGE_FILENAME    0x08000     /* -f           [stage_qry]            */
-#define STAGE_EXTERNAL    0x10000     /* -I           [stage_qry]            */
-#define STAGE_MULTIFSEQ   0x20000     /* -Q           [stage_qry]            */
-#define STAGE_MIGRULES    0x40000     /* --migrator   [stage_qry]            */
-#define STAGE_SILENT      0x80000     /* --silent     [stage_iowc]           */
+#define STAGE_DEFERRED    0x000001    /* -A deferred  [stage_iowc]           */
+#define STAGE_GRPUSER     0x000002    /* -G           [stage_iowc,stage_qry] */
+#define STAGE_COFF        0x000004    /* -c off       [stage_iowc]           */
+#define STAGE_UFUN        0x000008    /* -U           [stage_iowc]           */
+#define STAGE_INFO        0x000010    /* -z           [stage_iowc]           */
+#define STAGE_ALL         0x000020    /* -a           [stage_qry]            */
+#define STAGE_LINKNAME    0x000040    /* -L           [stage_qry]            */
+#define STAGE_LONG        0x000080    /* -l           [stage_qry]            */
+#define STAGE_PATHNAME    0x000100    /* -P           [stage_qry]            */
+#define STAGE_SORTED      0x000200    /* -S           [stage_qry]            */
+#define STAGE_STATPOOL    0x000400    /* -s           [stage_qry]            */
+#define STAGE_TAPEINFO    0x000800    /* -T           [stage_qry]            */
+#define STAGE_USER        0x001000    /* -u           [stage_qry]            */
+#define STAGE_EXTENDED    0x002000    /* -x           [stage_qry]            */
+#define STAGE_ALLOCED     0x004000    /* -A           [stage_qry]            */
+#define STAGE_FILENAME    0x008000    /* -f           [stage_qry]            */
+#define STAGE_EXTERNAL    0x010000    /* -I           [stage_qry]            */
+#define STAGE_MULTIFSEQ   0x020000    /* -Q           [stage_qry]            */
+#define STAGE_MIGRULES    0x040000    /* --migrator   [stage_qry]            */
+#define STAGE_SILENT      0x080000    /* --silent     [stage_iowc]           */
 #define STAGE_NOWAIT      0x100000    /* --nowait     [stage_iowc]           */
 #define STAGE_NOREGEXP    0x200000    /* --noregexp   [stage_qry]            */
 #define STAGE_DUMP        0x400000    /* --dump       [stage_qry]            */
-#define STAGE_FILECLASS   0x800000    /* --fileclass  [stage_qry]            */
+#define STAGE_CLASS       0x800000    /* --fileclass  [stage_qry]            */
 
 /* For stage_qry only */
 /* ------------------ */
