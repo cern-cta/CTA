@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.104 2001/02/12 08:32:48 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.105 2001/02/13 12:31:23 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.104 $ $Date: 2001/02/12 08:32:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.105 $ $Date: 2001/02/13 12:31:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2042,7 +2042,7 @@ void checkwaitq()
 							stcp_found = NULL;
 							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 								if (stcp_search->reqid == 0) break;
-								if (! ISCASTORBEINGMIG(stcp_search)) continue;
+								if (! (ISCASTORBEINGMIG(stcp_search) || ISCASTORWAITINGMIG(stcp))) continue;
 								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
 									if (stcp_found == NULL) {
 										stcp_found = stcp_search;
@@ -2053,6 +2053,7 @@ void checkwaitq()
 							if (stcp_found != NULL) {
 								update_migpool(stcp_found,-1,0);
 								stcp_found->status &= ~CAN_BE_MIGR;
+								stcp_found->status &= ~WAITING_MIGR;
 								stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 							} else {
 								update_migpool(stcp,-1,0);
