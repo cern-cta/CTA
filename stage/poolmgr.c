@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.158 2001/11/09 11:47:45 jdurand Exp $
+ * $Id: poolmgr.c,v 1.159 2001/11/30 11:45:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.158 $ $Date: 2001/11/09 11:47:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.159 $ $Date: 2001/11/30 11:45:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,27 +53,17 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.158 $ $Date: 20
 
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
+
 #if defined(_WIN32)
 static char strftime_format[] = "%b %d %H:%M:%S";
 #else /* _WIN32 */
 static char strftime_format[] = "%b %e %H:%M:%S";
 #endif /* _WIN32 */
 
-#if defined(_WIN32)
-static char strftime_format_sixmonthsold[] = "%b %d %Y";
-#else /* _WIN32 */
-static char strftime_format_sixmonthsold[] = "%b %e %Y";
-#endif /* _WIN32 */
-
 #if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
 /* Surpringly, on Silicon Graphics, strdup declaration depends on non-obvious macros */
 extern char *strdup _PROTO((CONST char *));
 #endif
-
-#ifdef SIXMONTHS
-#undef SIXMONTHS
-#endif
-#define SIXMONTHS (6*30*24*60*60)
 
 extern char *getconfent();
 extern char defpoolname[];
@@ -103,10 +93,10 @@ extern char *sys_errlist[];
 static struct migrator *migrators;
 struct fileclass *fileclasses;
 static int nbmigrator;
-static int nbpool;
+int nbpool;
 static char *nfsroot;
 static char **poolc;
-static struct pool *pools;
+struct pool *pools;
 #ifndef _WIN32
 struct sigaction sa_poolmgr;
 #endif
@@ -170,10 +160,6 @@ int checkpoolcleaned _PROTO((char ***));
 void checkpoolspace _PROTO(());
 int cleanpool _PROTO((char *));
 int get_create_file_option _PROTO((char *));
-int get_retenp _PROTO((struct stgcat_entry *, char *));
-int get_mintime _PROTO((struct stgcat_entry *, char *));
-signed64 get_put_failed_retenp _PROTO((char *));
-signed64 get_stageout_retenp _PROTO((char *));
 int poolalloc _PROTO((struct pool *, int));
 int checklastaccess _PROTO((char *, time_t));
 int enoughfreespace _PROTO((char *, int));
@@ -187,7 +173,7 @@ void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
 int mintime_beforemigr _PROTO((int));
-void check_lifetime_on_disk _PROTO(());
+void check_delaymig _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
 void bestnextpool_out _PROTO((char *, int));
@@ -197,7 +183,6 @@ int pool_elements_cmp _PROTO((CONST void *, CONST void *));
 void get_global_stream_count _PROTO((char *, int *, int *));
 char *findpoolname _PROTO((char *));
 u_signed64 findblocksize _PROTO((char *));
-int checkaccess _PROTO((char *));
 #if defined(_WIN32)
 extern int create_dir _PROTO((char *, uid_t, gid_t, int));
 #else
@@ -263,7 +248,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   defsize = 0;
   while (fgets (buf, sizeof(buf), s) != NULL) {
     int gotit;
-    if (buf[0] == '#') continue;	/* comment line */
+    char *pdash;
+
+    if ((pdash = strchr(buf,'#')) != NULL) {
+      *pdash = '\0';
+    }
     if ((p = strtok (buf, " \t\n")) == NULL) continue; 
     if (strcmp (p, "POOL") == 0) {
       nbpool++;
@@ -272,9 +261,9 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     while ((p = strtok (NULL, " \t\n")) != NULL) {
       if (strcmp (p, "MIGRATOR") == 0) {
         if (gotit != 0) {
-          stglogit (func, STG29);
-          fclose (s);
-          return (0);
+          stglogit (func, "STG29 - Bad MIGRATOR constructs\n");
+          errflg++;
+          goto reply;
         }
         nbmigrator++;
         gotit = 1;
@@ -283,8 +272,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   }
   if (nbpool == 0) {
     stglogit (func, STG29);
-    fclose (s);
-    return (0);
+    errflg++;
+    goto reply;
   }
   pools = (struct pool *) calloc (nbpool, sizeof(struct pool));
   if (nbmigrator > 0)
@@ -304,7 +293,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   nbpool_ent = -1;
   pool_p = pools - 1;
   while (fgets (buf, sizeof(buf), s) != NULL) {
-    if (buf[0] == '#') continue;	/* comment line */
+    char *pdash;
+
+    if ((pdash = strchr(buf,'#')) != NULL) {
+      *pdash = '\0';
+    }
     if ((p = strtok (buf, " \t\n")) == NULL) continue;
     if (strcmp (p, "POOL") == 0) {
       if (poolalloc (pool_p, nbpool_ent) < 0) {
@@ -384,7 +377,10 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
             goto reply;
           }
           stage_strtoi(&(pool_p->put_failed_retenp), p, &dp, 10);
-          if (*dp != '\0' || pool_p->put_failed_retenp <= 0) {
+          if (pool_p->put_failed_retenp < 0) pool_p->put_failed_retenp = -1;
+          if (*dp != '\0' || pool_p->put_failed_retenp == 0) {
+            if (*dp == '\0' && pool_p->put_failed_retenp == 0)
+              stglogit (func, STG26, "option", "pool_p->put_failed_retenp (should be <0 xor >0)");
             stglogit (func, STG26, "pool", pool_p->name);
             errflg++;
             goto reply;
@@ -396,7 +392,10 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
             goto reply;
           }
           stage_strtoi(&(pool_p->stageout_retenp), p, &dp, 10);
-          if (*dp != '\0' || pool_p->stageout_retenp <= 0) {
+          if (pool_p->stageout_retenp < 0) pool_p->stageout_retenp = -1;
+          if (*dp != '\0' || pool_p->stageout_retenp == 0) {
+            if (*dp == '\0' && pool_p->stageout_retenp == 0)
+              stglogit (func, STG26, "option", "pool_p->stageout_retenp (should be <0 xor >0)");
             stglogit (func, STG26, "pool", pool_p->name);
             errflg++;
             goto reply;
@@ -419,6 +418,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           }
           if ((int) strlen (p) > CA_MAXMIGRNAMELEN) {
             stglogit (func, STG27, "migrator", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+          if (pool_p->migr_name[0] != '\0') {
+            /* Yet defined !? */
+            stglogit (func, STG26, "pool", pool_p->name);
             errflg++;
             goto reply;
           }
@@ -609,6 +614,17 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     nbmigrator = nbmigrator_real;
   }
 
+  /* Verify garbage collector constants : start thresh should be higher than stop thresh */
+  /* otherwise this will loop : when gc will start stager will always answer there is */
+  /* nothing to delete because enough free space */
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    if (pool_p->gc_start_thresh >= pool_p->gc_stop_thresh) {
+      stglogit (func, STG163, pool_p->name, pool_p->gc_start_thresh, pool_p->gc_stop_thresh);
+      errflg++;
+      goto reply;
+    }
+  }
+
   /* associate pools with migrators */
 
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
@@ -629,7 +645,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   pool_p = pools - 1;
   migr_p = migrators - 1;
   while (fgets (buf, sizeof(buf), s) != NULL) {
-    if (buf[0] == '#') continue;    /* comment line */
+    char *pdash;
+
+    if ((pdash = strchr(buf,'#')) != NULL) {
+      *pdash = '\0';
+    }
     if ((p = strtok (buf, " \t\n")) == NULL) continue;
     if (strcmp (p, "POOL") == 0) {
       pool_p++;
@@ -707,13 +727,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
         strcpy (path, elemp->dirpath);
       else
         sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
-      /*    1) Check access avaibility with rfio_access: */
-      /* rfio_access (path, W_OK|F_OK|X_OK|R_OK) < 0 ? Error */
-      /* or 2) We simulate the TRUST* tests by doing some rfio calls */
-      /* checkaccess (path) != 0 ? Error */
+      PRE_RFIO;
       if (rfio_access (path, W_OK|F_OK|X_OK|R_OK) < 0) {
         stglogit (func, STG02, path, "rfio_access", rfio_serror());
       } else {
+        PRE_RFIO;
         if (rfio_statfs (path, &st) < 0) {
           stglogit (func, STG02, path, "rfio_statfs", rfio_serror());
         } else {
@@ -739,11 +757,13 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
  reply:
   fclose (s);
   if (errflg) {
-    for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-      if (pool_p->elemp != NULL) free (pool_p->elemp);
+    if (pools != NULL) {
+      for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+        if (pool_p->elemp != NULL) free (pool_p->elemp);
+      }
+      free (pools);
     }
-    free (pools);
-    if (migrators) free (migrators);
+    if (migrators != NULL) free (migrators);
     return (CONFERR);
   } else {
     /* This pointer will maintain a list of pools on which a gc have finished since last call */
@@ -823,6 +843,7 @@ int cleanpool(poolname)
   pid = pool_p->ovl_pid;
   if (pid < 0) {
     stglogit (func, STG02, "", "fork", sys_errlist[errno]);
+    pool_p->ovl_pid = 0;
     return (SYERR);
   } else if (pid == 0) {  /* we are in the child */
     gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
@@ -831,8 +852,9 @@ int cleanpool(poolname)
     execl (progfullpath, "cleaner", pool_p->gc, poolname, hostname, 0);
     stglogit (func, STG02, "cleaner", "execl", sys_errlist[errno]);
     exit (SYERR);
-  } else
+  } else {
     pool_p->cleanreqtime = time(NULL);
+  }
   return (0);
 }
 
@@ -1569,7 +1591,6 @@ rwcountersfs(poolname, ipath, status, req_type)
     }
     break;
   default:
-    /*
     stglogit ("rwcountersfs", "### Warning, called in unsupported mode %d (%s)\n", req_type,
               req_type == STAGEIN ? "STAGEIN" :
               (req_type == STAGEQRY ? "STAGEQRY" :
@@ -1578,12 +1599,10 @@ rwcountersfs(poolname, ipath, status, req_type)
                  (req_type == STAGEINIT ? "STAGEINIT" :
                   (req_type == STAGECAT ? "STAGECAT" :
                    (req_type == STAGEGET ? "STAGEGET" :
-                    (req_type == STAGEMIGPOOL ? "STAGEMIGPOOL" :
                      (req_type == STAGEFILCHG ? "STAGEFILCHG" :
                       (req_type == STAGESHUTDOWN ? "STAGESHUTDOWN" : "<unknown>"
                        )
                       )
-                     )
                     )
                    )
                   )
@@ -1591,7 +1610,6 @@ rwcountersfs(poolname, ipath, status, req_type)
                 )
                )
               );
-    */
     return;      
   }
   if ((p = strchr (ipath, ':')) != NULL) {
@@ -1862,6 +1880,10 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     }
     redomigpool();
   }
+  /* Reset the permanent RFIO connections */
+  /* [Needed in particular if pools have changed] */
+  rfio_end();
+  rfio_unend();
   return (c);
 }
 
@@ -1890,215 +1912,6 @@ int get_create_file_option(poolname)
   return (0);
 }
 
-signed64 get_put_failed_retenp(poolname)
-     char *poolname;
-{
-  int i;
-  struct pool *pool_p;
-
-  if (nbpool == 0) return (0);
-  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-    if (strcmp (poolname, pool_p->name) == 0) 
-      return((time_t) (pool_p->put_failed_retenp * ONE_DAY));
-  return (-1);
-}
-
-signed64 get_stageout_retenp(poolname)
-     char *poolname;
-{
-  int i;
-  struct pool *pool_p;
-
-  if (nbpool == 0) return (0);
-  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-    if (strcmp (poolname, pool_p->name) == 0) 
-      return((time_t) (pool_p->stageout_retenp * ONE_DAY));
-  return (-1);
-}
-
-/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
-/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
-int get_retenp(stcp,timestr)
-     struct stgcat_entry *stcp;
-     char *timestr;
-{
-  signed64 this_retenp;
-  time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
-  int ifileclass;
-
-  /* Depending of the status of the stcp we will return the correct current retention period on disk */
-  switch (stcp->status) {
-  case STAGEOUT:
-    /* stageout entry */
-    if ((this_retenp = get_stageout_retenp(stcp->poolname)) >= 0) {
-      /* There is a stageout retention period */
-      if ((this_time - stcp->a_time) > this_retenp) {
-        strcpy(timestr,"Exhausted");
-      } else {
-        time_t dummy_retenp;
-        this_retenp += stcp->a_time;
-        dummy_retenp = (time_t) this_retenp;
-        /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(dummy_retenp),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        if ((this_retenp - this_time) > SIXMONTHS) {
-          strftime(timestr,64,strftime_format_sixmonthsold,tp);
-        } else {
-          strftime(timestr,64,strftime_format,tp);
-        }
-      }
-    } else {
-      strcpy(timestr,"INFINITE_LIFETIME");
-    }
-    break;
-  case STAGEOUT|PUT_FAILED:
-  case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
-    /* put_failed entry (castor or not) */
-    if ((this_retenp = get_put_failed_retenp(stcp->poolname)) >= 0) {
-      /* There is a put_failed retention period */
-      if ((this_time - stcp->a_time) > this_retenp) {
-        strcpy(timestr,"Exhausted");
-      } else {
-        time_t dummy_retenp;
-        this_retenp += stcp->a_time;
-        dummy_retenp = (time_t) this_retenp;
-        /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(dummy_retenp),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        if ((this_retenp - this_time) > SIXMONTHS) {
-          strftime(timestr,64,strftime_format_sixmonthsold,tp);
-        } else {
-          strftime(timestr,64,strftime_format,tp);
-        }
-      }
-    } else {
-      return(-1);
-    }
-    break;
-  default:
-    if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
-        (stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
-        (stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
-        (stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
-      /* Not a STAGEd migrated file */
-      return(-1);
-    }
-    /* We distinguish between CASTOR entries and non-CASTOR entry */
-    switch (stcp->t_or_d) {
-    case 'h':
-      /* CASTOR entry */
-      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
-        return(-1);
-      }
-      /* If no explicit value for retention period we take the default */
-      if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) this_retenp = retenp_on_disk(ifileclass);
-#ifdef hpux
-      /* hpux10 complaints: 'cc: "poolmgr.c", line 2007: error 1654: Expression type is too large for switch expression.' */
-      switch ((time_t) this_retenp)
-#else
-      switch (this_retenp)
-#endif
-        {
-      case AS_LONG_AS_POSSIBLE:
-        strcpy(timestr,"AS_LONG_AS_POSSIBLE");
-        break;
-      case INFINITE_LIFETIME:
-        strcpy(timestr,"INFINITE_LIFETIME");
-        break;
-      default:
-        if ((this_time - stcp->a_time) > this_retenp) {
-          strcpy(timestr,"Exhausted");
-        } else {
-          time_t dummy_retenp;
-          this_retenp += stcp->a_time;
-          dummy_retenp = (time_t) this_retenp;
-          /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-          localtime_r(&(dummy_retenp),&tmstruc);
-          tp = &tmstruc;
-#else
-          tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-          if ((this_retenp - this_time) > SIXMONTHS) {
-            strftime(timestr,64,strftime_format_sixmonthsold,tp);
-          } else {
-            strftime(timestr,64,strftime_format,tp);
-          }
-        }
-        break;
-      }
-      break;
-    default:
-      return(-1);
-    }
-  }
-  /* Okay */
-  return(0);
-}
-
-/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
-/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
-int get_mintime(stcp,timestr)
-     struct stgcat_entry *stcp;
-     char *timestr;
-{
-  time_t this_mintime_beforemigr;
-  time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
-  int ifileclass;
-
-  if (stcp->t_or_d != 'h') return(-1);
-
-  /* Depending of the status of the stcp we will return the correct current retention period on disk */
-  switch (stcp->status) {
-  case STAGEOUT|CAN_BE_MIGR:
-    /* CASTOR entry */
-    if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
-      return(-1);
-    }
-    if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
-      this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
-    if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
-      strcpy(timestr,"Exhausted");
-    } else {
-      time_t dummy_mintime_beforemigr;
-      this_mintime_beforemigr += stcp->a_time;
-      dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
-      /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-      localtime_r(&(dummy_mintime_beforemigr),&tmstruc);
-      tp = &tmstruc;
-#else
-      tp = localtime(&(dummy_mintime_beforemigr));
-#endif /* _REENTRANT || _THREAD_SAFE */
-      if ((this_mintime_beforemigr - this_time) > SIXMONTHS) {
-        strftime(timestr,64,strftime_format_sixmonthsold,tp);
-      } else {
-        strftime(timestr,64,strftime_format,tp);
-      }
-    }
-    break;
-  default:
-    return(-1);
-  }
-  /* Okay */
-  return(0);
-}
 
 /* immediate parameter: used only if flag == 1;                */
 /* If 0           set only canbemigr or delaymigr stack        */
@@ -3601,10 +3414,10 @@ int migpoolfiles(pool_p)
               seteuid(tppool_vs_stcp[j].euid);
               stage_sleep(1);
               goto stagewrt_hsm_retry;
-            } else if (
-                       (serrno == SEINTERNAL) ||
-                       ((serrno >= ESTBASEOFF+1) && (serrno <= ESTMAXERR)) ||
-                       (serrno == EINVAL)
+            } else if ((serrno == SEINTERNAL) ||
+                       (serrno == EINVAL)     ||
+                       ISTAPESERRNO(serrno)   ||
+                       ISVDQMSERRNO(serrno)
                        ) {
               break;
             }
@@ -4100,7 +3913,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
   extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
   extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 
-  /* At first call - application have to set them to zero - default is then "stage" uid/gid */
+  /* At first call - application have to set them to zero - default is then STAGERGENERICUSER uid/gid */
   if (*euid != (uid_t) 0) {
     last_fileclass_euid = *euid;  /* We simulate a virtual previous explicit filter */
   }
@@ -4264,7 +4077,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
           *egid = (stcp_check->gid != start_passwd.pw_gid) ? stcp_check->gid : (last_fileclass_egid != 0 ? last_fileclass_egid : stcp_check->gid);
         }
       } else {
-        /* There is no filter at all so the default is "stage" account */
+        /* There is no filter at all so the default is STAGERGENERICUSER account */
         /* Current's stcp_check's uid is matching since there is no filter on this */
         *euid = stage_passwd.pw_uid;
         /* Current's stcp_check's gid is matching since there is no filter on this */
@@ -4433,145 +4246,52 @@ int mintime_beforemigr(ifileclass)
   return(fileclasses[ifileclass].Cnsfileclass.mintime_beforemigr);
 }
 
-void check_lifetime_on_disk() {
+void check_delaymig() {
 	time_t thistime = time(NULL);
 	struct stgcat_entry *stcp;
-	char *func = "check_lifetime_on_disk";
-	extern struct fileclass *fileclasses;
-	extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
-    signed64 put_failed_retenp;
-    signed64 stageout_retenp;
+    int i;
+    struct migrator *migr_p;
+    int have_delaymig = 0;
 
- check_lifetime_on_disk_redo:
-	for (stcp = stcs; stcp < stce; stcp++) {
-		int ifileclass;
-		int thisretenp;
-		int thisnextreqid;
-		int thismintime_beforemigr;
-
-		if (stcp->reqid == 0) break;
-
-        /* We keep in mind what would be the next reqid */
-        thisnextreqid = (stcp < (stce - 1)) ? (stcp+1)->reqid : 0;
-
-        /* There is NO automatic deletion for any record that is waiting on something else */
-        if (ISWAITING(stcp)) continue;
-
-        /* ======================= */
-        /* CHECK STAGEOUT LIFETIME */
-        /* ======================= */
-
-        /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
-        if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && ((stageout_retenp = get_stageout_retenp(stcp->poolname)) >= 0) && ((thistime - stcp->a_time) > stageout_retenp)) {
-          u_signed64 actual_size_block;
-          struct stat st;
-          int save_reqid = reqid;
-
-          reqid = 0;
-          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), ((stageout_retenp / ONE_DAY) > 1) ? "s" : "", "move to PUT_FAILED");
-          reqid = save_reqid;
-          if (rfio_stat(stcp->ipath, &st) == 0) {
-            stcp->actual_size = (u_signed64) st.st_size;
-            if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
-              /* This happens unfortunately if remote fs is an HP-UX file system */
-              actual_size_block = stcp->actual_size;
-            }
-          } else {
-            stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
-            /* No block information - assume mismatch with actual_size will be acceptable */
-            actual_size_block = stcp->actual_size;
-          }
-          rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
-          updfreespace (stcp->poolname, stcp->ipath,
-						(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
-          stcp->status |= PUT_FAILED;
-          /* If we do this it will be considered as a candidate for migration at next restart */
-          /*
-          if (stcp->t_or_d == 'h') {
-            stcp->status |= CAN_BE_MIGR;
-          }
-          */
-#ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
-#endif
-          savereqs();
-          continue;
-        }
-
-        /* ================================= */
-        /* CHECK STAGEOUT|PUTFAILED LIFETIME */
-        /* ================================= */
-
-        /* Is it a PUT_FAILED file that exceeds PUT_FAILED lifetime on disk ? */
-        if (ISSTAGEOUT(stcp) && ((stcp->status & PUT_FAILED) == PUT_FAILED) && ((put_failed_retenp = get_put_failed_retenp(stcp->poolname)) >= 0) && ((thistime - stcp->a_time) > put_failed_retenp)) {
-          stglogit (func, STG143, stcp->ipath, "put_failed", (int) (put_failed_retenp / ONE_DAY), ((put_failed_retenp / ONE_DAY) > 1) ? "s" : "", "deletion");
-          /* Candidate for garbage */
-          if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
-            stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
-          }
-          goto check_lifetime_on_disk_continue;
-        }
-
-		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
-		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
-
-        /* ======================================================= */
-        /* CHECK CASTOR's STAGEOUT|STAGED RETENTION PERIOD ON DISK */
-        /* ======================================================= */
-
-		if ((stcp->status & (STAGEOUT|STAGED)) == (STAGEOUT|STAGED)) {
-			/* We grab retention period on disk */
-			if (stcp->keep) continue;               /* Has -K option */
-			if ((thisretenp = stcp->u1.h.retenp_on_disk) < 0) thisretenp = retenp_on_disk(ifileclass);
-			if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
-			if (((int) (thistime - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
-				/* Candidate for garbage */
-				stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp->a_time));
-				if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk (retention period)", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
-					stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
-				}
-    	        goto check_lifetime_on_disk_continue;
-			}
-		}
-
-        /* ============================================================================= */
-        /* CHECK CASTOR's STAGEOUT|CAN_BE_MIGR LATENCY (mintime_beforemigr -> canbemigr) */
-        /* ============================================================================= */
-        
-		if (stcp->status == (STAGEOUT|CAN_BE_MIGR)) {
-          if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0)
-            thismintime_beforemigr = mintime_beforemigr(ifileclass);
-          if ((stcp->filler[0] != 'm') && (stcp->a_time + thismintime_beforemigr) <= thistime) {
-            /* This entry had a mintime_beforemigr and we have reached its latency value */
-            update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
-          }
-		}
-
-        continue;
-    check_lifetime_on_disk_continue:
-        if (thisnextreqid == 0) {
-          /* By definition we just have processed the last of the entries */
+    /* We do NOT loop if there is nothing to move from delay_migr to can_be_migr */
+    if (migrators != NULL) {
+      for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
+        if ((migr_p->global_predicates.nbfiles_delaymig > 0) ||
+            (migr_p->global_predicates.space_delaymig   > 0)) {
+          have_delaymig = 1;
           break;
         }
-        /* By definition we know that there is something after : we can check the content of *(stcp+1) */
-        if (thisnextreqid == (stcp+1)->reqid) {
-          /* The catalog has not been shifted - we can continue unless end of the catalog */
-          if (thisnextreqid == 0) break;
-          continue;
+      }
+    }
+
+    if (! have_delaymig) return;
+
+	for (stcp = stcs; stcp < stce; stcp++) {
+      int ifileclass;
+      int thismintime_beforemigr;
+
+      if (stcp->reqid == 0) break;
+      if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
+
+      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
+
+      /* There is NO automatic deletion for any record that is waiting on something else */
+      if (ISWAITING(stcp)) continue;
+
+      /* ============================================================================= */
+      /* CHECK CASTOR's STAGEOUT|CAN_BE_MIGR LATENCY (mintime_beforemigr -> canbemigr) */
+      /* ============================================================================= */
+        
+      if (stcp->status == (STAGEOUT|CAN_BE_MIGR)) {
+        if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0)
+          thismintime_beforemigr = mintime_beforemigr(ifileclass);
+        if ((stcp->filler[0] != 'm') && (stcp->a_time + thismintime_beforemigr) <= thistime) {
+          /* This entry had a mintime_beforemigr and we have reached its latency value */
+          update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
         }
-        if (thisnextreqid == stcp->reqid) {
-          /* The catalog has been shifted by one - we lye to the for() loop unless end of the catalog */
-          if (thisnextreqid == 0) break;
-          stcp--;
-          /* And we continue */
-          continue;
-        }
-        /* Here the catalog has been shifted by more than one, this is a bit too much */
-        /* for us so we restart the whole loop */
-        goto check_lifetime_on_disk_redo;
+      }
 	}
+	return;
 }
 
 int ispool_out(poolname)
@@ -5256,188 +4976,4 @@ void get_global_stream_count(server,nbreadserver,nbwriteserver)
       *nbwriteserver += elemp->nbwriteaccess;
     }
   }
-}
-
-int checkaccess(path)
-     char *path;
-{
-  char *dirpath_basename = "STGDAEMON_TESTDIR_DONOTDELETE";
-  char *dirpath = NULL;
-  char *fullpath_basename = "STGDAEMON_TESTFIL_DONOTDELETE";
-  char *fullpath = NULL;
-  char *func = "checkaccess";
-  int fd;
-  extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
-  extern struct passwd start_passwd;         /* Generic uid/gid at startup (admin) */
-  struct stat st;
-  int rc = 0;
-
-  if ((path == NULL) || (path[0] == '\0')) {
-    stglogit (func, STG02, (path == NULL) ? "<none>" : path, "argument", sstrerror(EINVAL));
-    rc = -1;
-    goto checkaccess_return;
-  }
-  if ((dirpath = malloc(strlen(path) + 1 + strlen(dirpath_basename) + 1)) == NULL) {
-    stglogit (func, STG02, path, "malloc()", strerror(errno));
-    rc = -1;
-    goto checkaccess_return;
-  }
-  strcpy(dirpath,path);
-  strcat(dirpath,"/");
-  strcat(dirpath,dirpath_basename);
-
-  /* Check directory creation */
-  /* We delete previous enventual incarnation of this directory */
-  if (rfio_stat(dirpath,&st) == 0) {
-    if (S_ISDIR(st.st_mode)) {
-      /* Hmmm... It does yet exist and is perhaps not empty - this directory is for our purpose ONLY */
-      /* and we have the right do to anything with it. So we open it and clear it */
-      DIR *dirp;
-      struct dirent *de;
-      char *thisname = NULL;
-      
-      stglogit (func, "STG02 - %s : yet exist and is a directory - purging it\n", dirpath);
-
-      if ((dirp = rfio_opendir(dirpath)) == NULL) {
-        stglogit (func, STG02, dirpath, "rfio_opendir()", rfio_serror());
-        rc = -1;
-        goto checkaccess_return;
-      }
-      while (( de = rfio_readdir(dirp)) != NULL ) {
-        if (thisname != NULL) {
-          free(thisname);
-          thisname = NULL;
-        }
-        if ((strcmp(de->d_name,".") == 0) || (strcmp(de->d_name,"..") == 0)) continue;
-        if ((thisname = malloc(strlen(dirpath) + 1 + strlen(de->d_name) + 1)) == NULL) {
-          stglogit (func, STG02, path, "malloc()", strerror(errno));
-          rc = -1;
-          rfio_closedir(dirp);
-          goto checkaccess_return;
-        }
-        strcpy(thisname,dirpath);
-        strcat(thisname,"/");
-        strcat(thisname,de->d_name);
-        if (rfio_unlink(thisname) != 0) {
-          stglogit (func, STG02, thisname, "rfio_unlink()", rfio_serror());
-          free(thisname);
-          rc = -1;
-          rfio_closedir(dirp);
-          goto checkaccess_return;
-        }
-      }
-      rfio_closedir(dirp);
-      if (rfio_rmdir(dirpath) != 0) {
-        /* Is it EACCESS ? Then it is probably because RMDIRTRUST is not in /etc/shift.conf on the */
-        /* remote machine, and it is truely not something explicitely recommended in the */
-        /* documentation... Let's su to the owner of the directory and retry... */
-        if (rfio_serrno() == EACCES) {
-          setegid(st.st_gid);
-          seteuid(st.st_uid);
-          if (rfio_rmdir(dirpath) != 0) {
-            stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-          }
-          setegid(start_passwd.pw_gid);                   /* Go back to admin */
-          seteuid(start_passwd.pw_uid);
-        } else {
-          stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-        }
-        /* We anyway continue... */
-      }
-    } else {
-      /* It does yet exist and is not a directory : we unlink it */
-      stglogit (func, "STG02 - %s : yet exist and is not a directory - deleting it\n", dirpath);
-      if (rfio_unlink(dirpath) != 0) {
-        stglogit (func, STG02, dirpath, "rfio_unlink()", rfio_serror());
-        rc = -1;
-        goto checkaccess_return;
-      }
-    }
-  }
-
-  /* Now try to create this directory with stage:st permissions */
-  if (create_dir(dirpath,stage_passwd.pw_uid,stage_passwd.pw_gid,(mode_t) 0755) != 0) {
-    rc = -1;
-    goto checkaccess_return;
-  }
-  /* Allocate space for the full pathname */
-  if ((fullpath = malloc(strlen(dirpath) + 1 + strlen(fullpath_basename) + 1)) == NULL) {
-    stglogit (func, STG02, path, "malloc()", strerror(errno));
-    rc = -1;
-    goto checkaccess_return;
-  }
-  strcpy(fullpath,dirpath);
-  strcat(fullpath,"/");
-  strcat(fullpath,fullpath_basename);
-
-  /* Now try to (re)create this file */
-  if ((fd = rfio_open(fullpath,O_WRONLY|O_CREAT|O_TRUNC, (mode_t) 0755)) < 0) {
-    stglogit (func, STG02, path, "rfio_open()", rfio_serror());
-    rc = -1;
-    goto checkaccess_return;
-  }
-  if (rfio_close(fd) != 0) {
-    stglogit (func, STG02, path, "rfio_close()", rfio_serror());
-    rc = -1;
-    goto checkaccess_return;
-  }
-  /* Try to chown it to stage:st */
-  if (rfio_chown(fullpath,stage_passwd.pw_uid,stage_passwd.pw_gid) < 0) {
-    stglogit (func, STG02, path, "rfio_chown()", rfio_serror());
-    rc = -1;
-    goto checkaccess_return;
-  }
-  /* Try to unlink this file */
-  if ((rfio_unlink(fullpath) != 0) && (rfio_serrno() != ENOENT)) {
-    stglogit (func, STG02, path, "rfio_unlink()", rfio_serror());
-    rc = -1;
-    goto checkaccess_return;
-  }
-  free(fullpath);
-  fullpath = NULL;
-  /* Try to rmdir the directory */
-  if (rfio_rmdir(dirpath) != 0) {
-    /* Is it EACCESS ? Then it is probably because RMDIRTRUST is not in /etc/shift.conf on the */
-    /* remote machine, and it is truely not something explicitely recommended in the */
-    /* documentation... Let's su to the owner of the directory and retry... */
-    if (rfio_serrno() == EACCES) {
-      setegid(stage_passwd.pw_gid);
-      seteuid(stage_passwd.pw_uid);
-      if (rfio_rmdir(dirpath) != 0) {
-            stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-      }
-      setegid(start_passwd.pw_gid);                   /* Go back to admin */
-      seteuid(start_passwd.pw_uid);
-    } else {
-      stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-    }
-  }
-  free(dirpath);
-  dirpath = NULL;
-
- checkaccess_return:
-  if (fullpath != NULL) {
-    rfio_unlink(fullpath);
-    free(fullpath);
-  }
-  if (dirpath != NULL) {
-    if (rfio_rmdir(dirpath) != 0) {
-      /* Is it EACCESS ? Then it is probably because RMDIRTRUST is not in /etc/shift.conf on the */
-      /* remote machine, and it is truely not something explicitely recommended in the */
-      /* documentation... Let's su to the owner of the directory and retry... */
-      if (rfio_serrno() == EACCES) {
-        setegid(stage_passwd.pw_gid);
-        seteuid(stage_passwd.pw_uid);
-        if (rfio_rmdir(dirpath) != 0) {
-          stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-        }
-        setegid(start_passwd.pw_gid);                   /* Go back to admin */
-        seteuid(start_passwd.pw_uid);
-      } else {
-        stglogit (func, STG02, dirpath, "rfio_rmdir()", rfio_serror());
-      }
-    }
-    free(dirpath);
-  }
-  return(rc);
 }
