@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.68 $ $Date: 2000/04/04 15:12:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.69 $ $Date: 2000/04/04 16:52:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -488,7 +488,7 @@ static int DiskFileClose(int disk_fd,
                          tape_list_t *tape,
                          file_list_t *file) {
     rtcpFileRequest_t *filereq;
-    int rc, irc;
+    int rc, irc, save_serrno, last_errno;
     diskIOstatus_t *diskIOstatus = NULL;
 
     if ( file == NULL ) return(-1);
@@ -499,10 +499,34 @@ static int DiskFileClose(int disk_fd,
              filereq->file_path,disk_fd);
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         rc = rfio_close(disk_fd);
+        last_errno = errno;
+        save_serrno = rfio_errno;
     } else if ( (*filereq->recfm == 'U') && 
                 ((filereq->convert & NOF77CW) == 0) ) {
         rc = rfio_xyclose(file->FortranUnit," ",&irc);
+        last_errno = errno;
+        save_serrno = rfio_errno;
         (void)ReturnFortranUnit(pool_index,file);
+    }
+    if ( rc == -1 ) {
+        rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",rfio_serror());
+
+        rtcp_log(LOG_ERR,"%s: errno = %d, serrno = %d, rfio_errno = %d\n",
+                 (*filereq->recfm == 'F' ? "rfio_close()" : "rfio_xyclose()"),
+                 last_errno,serrno,save_serrno);
+        if ( save_serrno == ENOSPC || (save_serrno == 0 &&
+                                       last_errno == ENOSPC) ) {
+            save_serrno = ENOSPC;
+            rtcp_log(LOG_DEBUG,"DiskFileClose(%s) ENOSPC detected\n",
+                                  filereq->file_path);
+            if ( *filereq->stageID != '\0' ) {
+                rtcp_log(LOG_DEBUG,"DiskFileClose(%s) stageID=<%s>, request local retry\n",
+                          filereq->file_path,filereq->stageID);
+                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_LOCAL_RETRY);
+            } else {
+                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
+            }
+        }
     }
 
     if ( (tape->tapereq.mode == WRITE_DISABLE) &&

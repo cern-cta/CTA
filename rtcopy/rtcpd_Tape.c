@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.59 $ $Date: 2000/04/04 12:47:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.60 $ $Date: 2000/04/04 16:52:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1075,7 +1075,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  rtcpd_SetProcError(RTCP_FAILED); \
          } \
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
-         if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
+         if ( ((severity|rtcpd_CheckProcError()) & RTCP_LOCAL_RETRY) == 0 ) { \
              if ( mode == WRITE_ENABLE ) { \
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
                  if ( rc != -1 && (nextfile->next->filereq.concat & CONCAT) != 0 ) { \
@@ -1600,7 +1600,8 @@ void *tapeIOthread(void *arg) {
      * prevent slow disk IO from piling up with too many large rtcopy 
      * on a single server.
      */
-    (void)WaitDiskIO();
+    rc = WaitDiskIO();
+    CHECK_PROC_ERR(nexttape->prev,NULL,"WaitDiskIO() error");
     TP_STATUS(RTCP_PS_RELEASE);
     rtcpd_Release(nexttape->prev,NULL);
     TP_STATUS(RTCP_PS_NOBLOCKING);
