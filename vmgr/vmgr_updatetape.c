@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 06:06:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_updatetape - update tape volume content information */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.3 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_updatetape(const char *vid, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
+vmgr_updatetape(const char *vid, int side, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
 {
 	int c;
 	char func[16];
@@ -50,7 +50,7 @@ vmgr_updatetape(const char *vid, u_signed64 BytesWritten, int CompressionFactor,
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_UPDTAPE);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -61,6 +61,7 @@ vmgr_updatetape(const char *vid, u_signed64 BytesWritten, int CompressionFactor,
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, vid);
+	marshall_WORD (sbp, side);
 	marshall_HYPER (sbp, BytesWritten);
 	marshall_WORD (sbp, CompressionFactor);
 	marshall_WORD (sbp, FilesWritten);
