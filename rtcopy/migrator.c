@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 14:10:47 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/27 15:05:04 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 14:10:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/27 15:05:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -297,8 +297,10 @@ int migratorCallbackMoreWork(
    * tape fseq.
    */
   fl = tape->file->prev;
-  if ( (fl->filereq.proc_status != RTCP_WAITING) ||
-       (rtcpcld_validPosition(fl->filereq.tape_fseq,NULL) == 1) ) {
+  if ( fl->filereq.proc_status != RTCP_WAITING ) {
+    /*
+     * Shouldn't happen
+     */
     serrno = SEINTERNAL;
     return(-1);
   }
