@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.9 $ $Date: 2001/09/19 06:34:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.10 $ $Date: 2002/04/08 09:09:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -13,11 +13,10 @@ static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.9 $ $Date: 2001
 #include <signal.h>
 #include <string.h>
 #include <sys/types.h>
+#include "Cgetopt.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-extern	int	optind;
-extern	char	*optarg;
 int reserve_done;
 char path[CA_MAXPATHLEN+1];
 
@@ -37,20 +36,29 @@ char	**argv;
 	int errflg = 0;
 	int flags = 0;
 	char *getacct();
+	gid_t gid;
 	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
+	static struct Coptions longopts[] = {
+		{"nbsides", REQUIRED_ARGUMENT, 0, TPOPT_NBSIDES},
+		{0, 0, 0, 0}
+	};
 	int nbhdr = -1;
+	int nbsides = 1;
 	char *p;
 	int side = 0;
 	char *tempnam();
+	uid_t uid;
 	static char vid[CA_MAXDENLEN+1] = "";
 	static char vsn[CA_MAXDENLEN+1] = "";
 
-	while ((c = getopt (argc, argv, "D:d:g:H:l:TV:v:")) != EOF) {
+	Copterr = 1;
+	Coptind = 1;
+	while ((c = Cgetopt_long (argc, argv, "D:d:g:H:l:TV:v:", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'D':
 			if (! drive[0]) {
-				if (strlen (optarg) <= CA_MAXUNMLEN) {
-					strcpy (drive, optarg);
+				if (strlen (Coptarg) <= CA_MAXUNMLEN) {
+					strcpy (drive, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-D");
 					errflg++;
@@ -62,8 +70,8 @@ char	**argv;
 			break;
 		case 'd':
 			if (! density[0]) {
-				if (strlen (optarg) <= CA_MAXDENLEN) {
-					strcpy (density, optarg);
+				if (strlen (Coptarg) <= CA_MAXDENLEN) {
+					strcpy (density, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-d");
 					errflg++;
@@ -75,8 +83,8 @@ char	**argv;
 			break;
 		case 'g':
 			if (! dgn[0]) {
-				if (strlen (optarg) <= CA_MAXDGNLEN) {
-					strcpy (dgn, optarg);
+				if (strlen (Coptarg) <= CA_MAXDGNLEN) {
+					strcpy (dgn, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-g");
 					errflg++;
@@ -88,7 +96,7 @@ char	**argv;
 			break;
 		case 'H':
 			if (nbhdr < 0) {
-				nbhdr = strtol (optarg, &dp, 10);
+				nbhdr = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0' ||
 				    nbhdr < 0 || nbhdr > 2) {
 					fprintf (stderr, TP006, "-H");
@@ -101,8 +109,8 @@ char	**argv;
 			break;
 		case 'l':
 			if (! lbltype[0]) {
-				if (strlen (optarg) <= CA_MAXLBLTYPLEN) {
-					strcpy (lbltype, optarg);
+				if (strlen (Coptarg) <= CA_MAXLBLTYPLEN) {
+					strcpy (lbltype, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-l");
 					errflg++;
@@ -117,8 +125,8 @@ char	**argv;
 			break;
 		case 'V':
 			if (! vid[0]) {
-				if (strlen (optarg) <= CA_MAXVIDLEN) {
-					strcpy (vid, optarg);
+				if (strlen (Coptarg) <= CA_MAXVIDLEN) {
+					strcpy (vid, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-V");
 					errflg++;
@@ -130,10 +138,8 @@ char	**argv;
 			break;
 		case 'v':
 			if (! vsn[0]) {
-				if (strlen (optarg) <= CA_MAXVSNLEN) {
-					strcpy (vsn, optarg);
-					if (! vid[0])
-						strcpy (vid, optarg);
+				if (strlen (Coptarg) <= CA_MAXVSNLEN) {
+					strcpy (vsn, Coptarg);
 				} else {
 					fprintf (stderr, TP006, "-v");
 					errflg++;
@@ -143,12 +149,20 @@ char	**argv;
 				errflg++;
 			}
 			break;
+		case TPOPT_NBSIDES:
+			if ((nbsides = strtol (Coptarg, &dp, 10)) < 0 ||
+			    *dp != '\0') {
+				fprintf (stderr,
+				    "invalid number of sides %s\n", Coptarg);
+				errflg++;
+			}
+			break;
 		case '?':
 			errflg++;
 			break;
 		}
 	}
-	if (! vid[0]) {
+	if (! vid[0] && ! vsn[0]) {
 		fprintf (stderr, TP031);
 		errflg++;
 	}
@@ -159,8 +173,9 @@ char	**argv;
 
 	/* Set default values */
 
+	if (! vid[0])
+		strcpy (vid, vsn);
 	if (nbhdr < 0) nbhdr = 1;
-	strcpy (path, tempnam(NULL, "tp"));
 
 #if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
@@ -171,18 +186,47 @@ char	**argv;
 #endif
 	signal (SIGTERM, cleanup);
 
-	/* Get defaults from TMS (if installed) */
+        if (*dgn == '\0') {
+#if TMS || VMGR
 
-#if TMS
-	p = getacct();
-	if (p == NULL) {
-		fprintf (stderr, TP027);
-		exit_prog (USERR);
-	}
-	strcpy (acctname, p);
-	if (tmscheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, acctname))
-		exit_prog (USERR);
+	/* If dgn not specified, get it from VMGR or TMS (if installed) */
+
+#if VMGR
+		uid = getuid();
+		gid = getgid();
+#if defined(_WIN32)
+		if (uid < 0 || gid < 0) {
+			fprintf (stderr, TP053);
+			exit_prog (USERR);
+		}
 #endif
+		if (c = vmgrcheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, uid, gid)) {
+#if TMS
+			if (c != ETVUNKN)
+#endif
+			{
+				fprintf (stderr, "%s\n", sstrerror(c));
+				exit_prog (USERR);
+			}
+#endif
+#if TMS
+			p = getacct();
+			if (p == NULL) {
+				fprintf (stderr, TP027);
+				exit_prog (USERR);
+			}
+			strcpy (acctname, p);
+			if (tmscheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, acctname))
+				exit_prog (USERR);
+#endif
+#if VMGR
+		}
+#endif
+#else
+		strcpy (dgn, DEFDGN);
+#endif
+	}
+	strcpy (path, tempnam(NULL, "tp"));
 
 	/* reserve resources */
 
@@ -195,9 +239,12 @@ char	**argv;
 
 	/* mount the tape, check if blank tape and write the prelabel */
 
-	if (Ctape_label (path, vid, side, dgn, density, drive, vsn,
-	    lbltype, nbhdr, flags, 0))
-		exit_prog ((serrno == ETOPAB || serrno == ETWPROT || serrno == EINVAL) ? USERR : SYERR);
+	for (side = 0; side < nbsides; side++) {
+		if (Ctape_label (path, vid, side, dgn, density, drive, vsn,
+		    lbltype, nbhdr, flags, 0))
+			exit_prog ((serrno == ETOPAB || serrno == ETWPROT || serrno == EINVAL) ?
+			    USERR : SYERR);
+	}
 	exit_prog (0);
 }
 
@@ -223,5 +270,6 @@ char *cmd;
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
 	    "[-D device_name] [-d density] [-g device_group_name]\n",
-	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",	    "[-v volume_serial_number]\n");
+	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",
+	    "[-v volume_serial_number] [--nbsides n]\n");
 }
