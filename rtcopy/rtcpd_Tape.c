@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.21 $ $Date: 2000/02/01 14:25:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.22 $ $Date: 2000/02/02 16:35:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1317,6 +1317,8 @@ void *tapeIOthread(void *arg) {
                      * file section (volume spanning) that starts in the
                      * middle of a concat (to tape) chain is not overwritten.
                      */
+                    nextfile->filereq.tape_fseq = 
+                        nextfile->prev->filereq.tape_fseq;
                     nextfile->filereq.TStartTransferTape = 
                         nextfile->prev->filereq.TStartTransferTape;
                     nextfile->filereq.TEndTransferTape = 
