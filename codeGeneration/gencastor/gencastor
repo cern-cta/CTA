@@ -6,8 +6,10 @@ if ("$1" == "-h") then
   exit
 else if ("$1" == "-w") then
   set WORKDIR=$2
+  set XMIFILE=$3
 else
   set WORKDIR=`pwd`
+  set XMIFILE=$1
 endif
 set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 
@@ -16,12 +18,15 @@ mkdir -p ${TMPDIR}/castor/db
 cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
 cp ${WORKDIR}/castor/db/oracleTrailer.sql ${TMPDIR}/castor/db/
 
-/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${WORKDIR}/codeGeneration/RH.xmi
+/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
 set pushdsilent
 pushd ${TMPDIR}
 foreach f (`find . -type f`)
   #echo $f
   if !(-f ${WORKDIR}/${f}) then
+    if !(-d `dirname ${WORKDIR}/${f}`) then
+      mkdir -p `dirname ${WORKDIR}/${f}`
+    endif
     echo "Creating $f"
     cp ${TMPDIR}/${f} ${WORKDIR}/$f
   else 
