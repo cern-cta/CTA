@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IClientFactory.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/16 11:01:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IClientFactory.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:33:36 $ $Author: jdurand $
  *
  * 
  *
@@ -40,7 +40,7 @@ struct C_IClient_t;
  * @result the resulting string, or 0 if an error occured
  */
 const char* C_IClientFactory_client2String
-(struct C_Iclient_t* cl, const char** errorMsg);
+(struct C_IClient_t* cl, const char** errorMsg);
     
 /**
  * creates a Client from its human readable
@@ -52,7 +52,7 @@ const char* C_IClientFactory_client2String
  * is responsible for its deallocation
  * @result the newly allocated client, or 0 in case of error
  */
-struct C_Iclient_t* C_IClientFactory_string2Client
+struct C_IClient_t* C_IClientFactory_string2Client
 (char* st, const char** errorMsg);
 
 #endif // CASTOR_ICLIENTFACTORY_H
