@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.6 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.7 $ $Date: 2001/05/04 05:15:37 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -17,11 +17,13 @@ static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.6 $ $Date: 2
 #if !defined(_WIN32)
 /*
  * _WIN32 strtok() is already MT safe where as others wait
- * for next POXIS release
+ * for next POSIX release
  */
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+#else
+#include <windows.h>
 #endif /* !_WIN32 */
 
 
@@ -44,6 +46,9 @@ char DLL_DECL *getacctent(pwd, acct, buf, buflen)
 #if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
         char *last = NULL;
 #endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
+#if defined(_WIN32)
+        OSVERSIONINFO osvi;
+#endif
 
         if (pwd == (struct passwd *)NULL) return(NULL);
 
@@ -54,12 +59,25 @@ char DLL_DECL *getacctent(pwd, acct, buf, buflen)
          * is reached.
          */
 #if defined(_WIN32)
-        if (strncmp (ACCT_FILE, "%SystemRoot%\\", 13) == 0 &&
-            (p = getenv ("SystemRoot"))) 
-            sprintf (acct_file, "%s\\%s", p, strchr (ACCT_FILE, '\\'));
-        else
+        memset (&osvi, 0, sizeof(osvi));
+        osvi.dwOSVersionInfoSize = sizeof(osvi);
+        GetVersionEx (&osvi);
+        if (osvi.dwMajorVersion > 5) {
+                if (strncmp (W2000MAPDIR, "%SystemRoot%\\", 13) == 0 &&
+                  (p = getenv ("SystemRoot")))
+                    sprintf (acct_file, "%s%s\\account", p, strchr (W2000MAPDIR, '\\'));
+                else
+                    sprintf (acct_file, "%s\\account", W2000MAPDIR);
+        } else {
+                if (strncmp (WNTMAPDIR, "%SystemRoot%\\", 13) == 0 &&
+                  (p = getenv ("SystemRoot")))
+                    sprintf (acct_file, "%s%s\\account", p, strchr (WNTMAPDIR, '\\'));
+                else
+                    sprintf (acct_file, "%s\\account", WNTMAPDIR);
+        }
+#else
+        strcpy (acct_file, ACCT_FILE);
 #endif
-            strcpy (acct_file, ACCT_FILE);
 
         if ((fp = fopen(acct_file, "r")) == NULL) {
 #if defined(NIS)
