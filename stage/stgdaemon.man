@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.15 2002/10/03 14:07:51 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.16 2002/10/03 14:33:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.16 $ $Date: 2002/10/03 14:33:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/03 14:07:51 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/03 14:33:53 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -86,25 +86,20 @@ like:
 sysreq          4001/tcp                        # SYSREQ/TCP
 .RE
 .LP
-On all disk servers having filesystems in the pool(s), there should be three
-entries in
+On all disk servers having filesystems in the pool(s), there should be four entries in
 .B /etc/shift.conf
-giving permission to the stager to execute programs, unlink files or create
-directories as root. The server where
+giving permission to the stager to execute programs, unlink files or create directories as root. The server where
 .B stgdaemon
-runs does not need these entries.
-For example:
+runs does not need these entries. For example:
 .RS
 .LP
-RFIOD   CHOWNTRUST     shd02
+RFIOD   XTRUST     shd02
 .br
-RFIOD   LINKTRUST        shd02
+RFIOD   FTRUST     shd02
 .br
-RFIOD   MKDIRTRUST     shd02
+RFIOD   RTRUST     shd02
 .br
-RFIOD   OPENTRUST       shd02
-.br
-RFIOD   POPENTRUST      shd02
+RFIOD   WTRUST     shd02
 .RE
 .HP
 There must be one entry in the configuration file per pool giving:
@@ -116,7 +111,16 @@ parameter in user commands
 .HP
 DEFSIZE	maximum filesize if the
 .B \-s
-option is not specified on user commands
+option is not specified on user commands. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
+.HP
+MAX_SETRETENP sets the maximum retention period a user can give for a CASTOR file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively.
+value the garbage collector is started.
+.HP
+PUT_FAILED_RETENP sets the retention period for a PUT_FAILED file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in PUT_FAILED can be a candidate for garbage collection.
+.HP
+STAGEOUT_RETENP sets the retention period for a STAGEOUT file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEOUT is removed.
+.HP
+STAGEALLOC_RETENP sets the retention period for a STAGEOUT file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEALLOC is removed.
 .HP
 GC_START_THRESH when the percentage of free space in the pool gets below this
 value the garbage collector is started.
@@ -132,6 +136,8 @@ GC	full path name of the garbage collector program (NFS syntax).
 .HP
 NO_FILE_CREATION suppress the creation of an empty file (stageout only).
 .HP
+EXPORT_HSM allows one pool to export its CASTOR files to another one, e.g. an internal disk to disk copy, instead of doing an explicit tape request when a CASTOR file does not exist in the destination pool. Works only if the user requests a CASTOR file in an explicit read\-only (O_RDONLY) mode, the file is not accessible in a pool, but already exists in another pool with the STAGED status. It is not recommended if the application can modify both disk versions of the file.
+.HP
 MIGRATOR name
 .HP
 MIG_START_THRESH when the percentage of free space in the pool gets below this
@@ -141,8 +147,7 @@ MIG_STOP_THRESH when the percentage of free space in the pool gets above this
 value the migrator is stopped.
 .HP
 MIG_DATA_THRESH when the amount of data ready to be migrated exceeds this value
-the migrator is started. The value is specified in bytes.
-A postfix letter can be used to specify the unit.
+the migrator is started. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
 For example,
 .B MIG_DATA_THRESH 800G
 specifies a 800 GB threshold.
@@ -220,7 +225,7 @@ file status: new = 'n', old = 'o'
 .br
 file sequence number requested by user
 .br
-label type: al, nl, sl or blp
+label type: al, nl, sl, blp or aul
 .br
 retention period in days
 .br
@@ -231,6 +236,28 @@ E_Tflags; error processing flags
 visual_identifier(s)
 .br
 volume_serial_number(s)
+.HP
+The disk, alloc or HSM (but non\-CASTOR) specific part contains:
+.br
+external filename
+.HP
+The CASTOR specific part contains:
+.br
+castor filename
+.br
+castor name server
+.br
+invariant on this castor name server
+.br
+associated fileclass
+.br
+tape pool
+.br
+retention period on disk
+.br
+minimum time before migration
+.br
+internal flag
 .LP
 A secondary catalog contains the list of symbolic links to the staged files.
 .LP
