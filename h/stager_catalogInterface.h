@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.11 2004/11/26 08:49:43 jdurand Exp $
+ * $Id: stager_catalogInterface.h,v 1.12 2004/11/26 09:38:09 jdurand Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -13,6 +13,7 @@
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "castor/stager/FileRequest.h"
 #include "castor/stager/DiskServer.h"
+#include "castor/stager/DiskServerStatusCode.h"
 #include "castor/stager/DiskPool.h"
 #include "castor/stager/SvcClass.h"
 #include "castor/stager/FileClass.h"
