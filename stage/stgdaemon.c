@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.8 1999/12/09 13:47:42 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.9 1999/12/10 18:32:52 jdurand Exp $
  */
 
 /*
@@ -7,8 +7,13 @@
  * All rights reserved
  */
 
+/*
+ * Nota : restore tab after emacs global identation:
+ * perl -pi -e 'while (s/^(\t*)(  )/$1\t/) {} ' /tmp/stgdaemon.c
+ */
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:47:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -149,7 +154,7 @@ main()
     (void) close(c);
   }
 #endif
-#endif
+#endif /* not TEST */
 #if defined(ultrix) || (defined(sun) && !defined(SOLARIS)) || (defined(_AIX) && defined(_IBMESA))
   signal (SIGCHLD, wait4child);
 #else
@@ -205,6 +210,7 @@ main()
 
   if (c = getpoolconf (defpoolname)) exit (c);
 
+#ifdef USECDB
   /* Get stager/database login:password */
   {
     FILE *configfd;
@@ -250,7 +256,7 @@ main()
 
   /* We compute the number of entries as well as the last used reqid */
   nbcat_ent = 0;
-  for (stcp = stcs; stcp < stce; ) {
+  for (stcp = stcs; stcp < stce; stcp++) {
     if (stcp->reqid == 0) {
       break;
     }
@@ -263,12 +269,70 @@ main()
   }
 
   nbpath_ent = 0;
-  for (stpp = stps; stpp < stpe; ) {
+  for (stpp = stps; stpp < stpe; stpp++) {
     if (stpp->reqid == 0) {
       break;
     }
     nbpath_ent++;
   }
+
+#else /* USECDB */
+        /* read stage catalog */
+
+        scfd = open (STGCAT, O_RDWR | O_CREAT, 0664);
+        fstat (scfd, &st);
+        if (st.st_size == 0) {
+                stgcat_bufsz = BUFSIZ;
+                stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
+                stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
+                nbcat_ent = 0;
+                close (scfd);
+                last_reqid = 0;
+        } else {
+                stgcat_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+                stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
+                stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
+                nbcat_ent = st.st_size / sizeof(struct stgcat_entry);
+                read (scfd, (char *) stcs, st.st_size);
+                close (scfd);
+                if (st.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
+                        stglogit (func, STG48, STGCAT);
+                        exit (SYERR);
+                }
+                for (stcp = stcs, i = 0; i < nbcat_ent; i++, stcp++)
+                        if (stcp->reqid == 0) {
+                                stglogit (func, STG48, STGCAT);
+                                exit (SYERR);
+                }
+                last_reqid = (stcs + nbcat_ent - 1)->reqid;
+        }
+        spfd = open (STGPATH, O_RDWR | O_CREAT, 0664);
+        fstat (spfd, &st);
+        if (st.st_size == 0) {
+                stgpath_bufsz = BUFSIZ;
+                stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
+                stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
+                nbpath_ent = 0;
+                close (spfd);
+        } else {
+                stgpath_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+                stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
+                stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
+                nbpath_ent = st.st_size / sizeof(struct stgpath_entry);
+                read (spfd, (char *) stps, st.st_size);
+                close (spfd);
+                if (st.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
+                        stglogit (func, STG48, STGPATH);
+                        exit (SYERR);
+                }
+                for (stpp = stps, i = 0; i < nbpath_ent; i++, stpp++)
+                        if (stpp->reqid == 0) {
+                                stglogit (func, STG48, STGPATH);
+                                exit (SYERR);
+                }
+        }
+
+#endif
 
   /* remove uncompleted requests */
   for (stcp = stcs; stcp < stce; ) {
@@ -480,7 +544,12 @@ procinireq(req_data, clienthost)
     sendrep (rpfd, STAGERC, STAGEINIT, USERR);
     return;
   }
+
+#ifdef linux
+  optind = 0;
+#else
   optind = 1;
+#endif
   while ((c = getopt (nargs, argv, "Fh:")) != EOF) {
     switch (c) {
     case 'F':
@@ -559,8 +628,10 @@ build_ipath(upath, stcp, pool_user)
   /* build full internal path name */
 
   sprintf (stcp->ipath+strlen(stcp->ipath), "/%s", stcp->group);
+
   p_u = stcp->ipath + strlen (stcp->ipath);
   sprintf (p_u, "/%s", pool_user);
+
   p_f = stcp->ipath + strlen (stcp->ipath);
   if (stcp->t_or_d == 't') {
     if (*(stcp->u1.t.fseq) != 'n')
@@ -1269,9 +1340,9 @@ savepath()
   int c, n;
   int spfd;
 
+#ifdef USECDB
   /* This function is now dummy with the DB interface */
-
-  /*
+#else
   if ((spfd = open (STGPATH, O_WRONLY)) < 0) {
     stglogit (func, STG02, STGPATH, "open", sys_errlist[errno]);
     return (-1);
@@ -1290,7 +1361,8 @@ savepath()
   ftruncate (spfd, n);
 #endif
   close (spfd);
-  */
+#endif
+
   return (0);
 }
 
@@ -1299,9 +1371,9 @@ savereqs()
   int c, n;
   int scfd;
 
+#ifdef USECDB
   /* This function is now dummy with the DB interface */
-
-  /*
+#else
   if ((scfd = open (STGCAT, O_WRONLY)) < 0) {
     stglogit (func, STG02, STGCAT, "open", sys_errlist[errno]);
     return (-1);
@@ -1320,7 +1392,8 @@ savereqs()
   ftruncate (scfd, n);
 #endif
   close (scfd);
-  */
+#endif
+
   return (0);
 }
 
@@ -1352,18 +1425,24 @@ upd_stageout(req_type, upath, subreqid)
   found = 0;
   /* first lets assume that internal and user path are different */
   for (stpp = stps; stpp < stpe; stpp++) {
+    stglogit(func, "stpp->reqid=%d...\n",stpp->reqid);
     if (stpp->reqid == 0) break;
+    stglogit(func, "stpp->reqid=%d, Comparing upath=\"%s\" and stpp->upath=\"%s\"\n",stpp->reqid,upath,stpp->upath);
     if (strcmp (upath, stpp->upath)) continue;
     found = 1;
     break;
   }
   if (found) {
     for (stcp = stcs; stcp < stce; stcp++) {
+      stglogit(func, "stcp->reqid=%d...\n",stcp->reqid);
+      stglogit(func, "stpp->reqid=%d == stcp->reqid=%d ?\n",stpp->reqid,stcp->reqid);
       if (stpp->reqid == stcp->reqid) break;
     }
   } else {
     for (stcp = stcs; stcp < stce; stcp++) {
+      stglogit(func, "stcp->reqid=%d...\n",stcp->reqid);
       if (stcp->reqid == 0) break;
+      stglogit(func, "stcp->reqid=%d, Comparing upath=\"%s\" and stcp->upath=\"%s\"\n",stcp->reqid,upath,stcp->ipath);
       if (strcmp (upath, stcp->ipath)) continue;
       found = 1;
       break;

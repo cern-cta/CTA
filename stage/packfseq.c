@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.6 1999/12/09 13:47:26 jdurand Exp $
+ * $Id: packfseq.c,v 1.7 1999/12/10 18:32:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.7 $ $Date: 1999/12/10 18:32:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -35,10 +35,10 @@ int fseqsz;
 	else
 		strcpy (fseq, (char *) (fseq_list + nbtpf - 1));
 	if ((i == nbdskf - 1) && (nbdskf < nbtpf)) {
-		n1 = strtol (fseq_list + i, &dp, 10);
+		n1 = strtol ((char *) (fseq_list + i), &dp, 10);
 		prev = n1;
 		for (j = i + 1; j < nbtpf; j++) {
-			n2 = strtol (fseq_list + j, &dp, 10);
+			n2 = strtol ((char *) (fseq_list + j), &dp, 10);
 			if (n2 != prev && n2 != prev + 1) {
 				if (prev > n1) {
 					sprintf (fseq_tmp, "-%d", prev);

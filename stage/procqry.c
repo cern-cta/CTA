@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.8 1999/12/09 13:47:29 jdurand Exp $
+ * $Id: procqry.c,v 1.9 1999/12/10 18:32:51 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:47:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <grp.h>
@@ -139,7 +140,11 @@ char *clienthost;
 		goto reply;
 	}
 	strcpy (group, gr->gr_name);
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "A:afGh:I:LlM:Pp:q:SsTuV:x")) != EOF) {
 		switch (c) {
 		case 'A':
@@ -282,8 +287,6 @@ char *clienthost;
 				strcpy (db_pwd, p_p);
 			}
 
-			stglogit(func, "Loging with User/Password = \"%s\"/\"<not printed>\"\n",db_user);
-          
 			if (stgdb_login(db_user,db_pwd,&dbfd_in_fork) != 0) {
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
 				exit(SYERR);

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.7 1999/12/09 13:47:30 jdurand Exp $
+ * $Id: procupd.c,v 1.8 1999/12/10 18:32:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:47:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.7 $ $Date: 1999
 
 extern char *optarg;
 extern int optind;
+extern int opterr, optopt;
 extern char *rfio_serror();
 extern char func[16];
 extern int reqid;
@@ -99,17 +100,21 @@ char *clienthost;
 	ifce = unknown;
 	upd_reqid = reqid;
 	upd_rpfd = rpfd;
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "b:D:F:f:h:I:L:q:R:s:T:U:W:Z:")) != EOF) {
-		switch (c) {
-		case 'b':
-			blksize = strtol (optarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-b");
-				errflg++;
-			}
-			break;
-		case 'D':
+        switch (c) {
+        case 'b':
+          blksize = strtol (optarg, &dp, 10);
+          if (*dp != '\0') {
+            sendrep (rpfd, MSG_ERR, STG06, "-b");
+            errflg++;
+          }
+          break;
+        case 'D':
 			dvn = optarg;
 			break;
 		case 'F':

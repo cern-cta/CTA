@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.7 1999/12/09 13:47:28 jdurand Exp $
+ * $Id: procio.c,v 1.8 1999/12/10 18:32:51 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:47:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <grp.h>
 #include <pwd.h>
@@ -130,7 +131,11 @@ char *clienthost;
 	strcpy (stgreq.group, gr->gr_name);
 	numvid = 0;
 	numvsn = 0;
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != EOF) {
 		switch (c) {
 		case 'A':	/* allocation mode */
@@ -625,8 +630,8 @@ notstaged:
 						delreq (stcp,1);
 						goto reply;
 					}
-					stgdb_ins_stgcat(&dbfd,stcp);
 				}
+				stgdb_ins_stgcat(&dbfd,stcp);
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
 				wfp++;
@@ -904,7 +909,11 @@ char *clienthost;
 		c = SYERR;
 		goto reply;
 	}
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "Gh:I:M:q:U:V:")) != EOF) {
 		switch (c) {
                 case 'G':

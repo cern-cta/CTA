@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.8 1999/12/09 13:47:27 jdurand Exp $
+ * $Id: procclr.c,v 1.9 1999/12/10 18:32:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:47:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.8 $ $Date: 1999
 #if SACCT
 #include "../h/sacct.h"
 #endif
+
 extern char *optarg;
 extern int optind;
 extern char *rfio_serror();
@@ -92,7 +93,11 @@ char *clienthost;
 		goto reply;
 	}
 	strcpy (group, gr->gr_name);
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "cGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
 		switch (c) {
 		case 'c':

@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.6 1999/12/09 13:47:43 jdurand Exp $
+ * $Id: stglogit.c,v 1.7 1999/12/10 18:32:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.7 $ $Date: 1999/12/10 18:32:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -27,6 +27,11 @@ stglogit(va_alist) va_dcl
 	struct tm *tm;
 	time_t current_time;
 	int fd_log;
+
+#ifdef __INSURE__
+    /* Insure do not like at all this routine... */
+    return;
+#endif
 
 	va_start (args);
 	func = va_arg (args, char *);

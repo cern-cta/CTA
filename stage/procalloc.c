@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.7 1999/12/09 13:47:27 jdurand Exp $
+ * $Id: procalloc.c,v 1.8 1999/12/10 18:32:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:47:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,7 +91,11 @@ char *clienthost;
 		goto reply;
 	}
 	strcpy (stgreq.group, gr->gr_name);
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "Gh:Pp:s:U:u:")) != EOF) {
 		switch (c) {
 		case 'G':
@@ -255,7 +259,11 @@ char *clienthost;
 		c = SYERR;
 		goto reply;
 	}
+#ifdef linux
+	optind = 0;
+#else
 	optind = 1;
+#endif
 	while ((c = getopt (nargs, argv, "Gh:Pp:U:u:")) != EOF) {
 		switch (c) {
 		case 'G':
