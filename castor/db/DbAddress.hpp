@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 06:56:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -50,8 +50,8 @@ namespace castor {
        * In this later case, the type will be deduced from the id.
        */
       DbAddress(const unsigned long id,
-		const std::string cnvSvcName,
-		const unsigned int objType = OBJ_INVALID);
+                const std::string cnvSvcName,
+                const unsigned int objType = OBJ_INVALID);
       
       /*
        * destructor
@@ -62,6 +62,11 @@ namespace castor {
        * gets the id of this address
        */
       virtual const unsigned long id() const { return m_id; }
+
+      /**
+       * set the id of this address
+       */
+      virtual const setId(const unsigned long id) { m_id = id; }
 
     private:
 

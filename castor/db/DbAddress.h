@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 06:56:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -44,6 +44,16 @@ int Cdb_DbAddress_create(const unsigned long id,
  * destructor
  */
 int Cdb_DbAddress_delete(Cdb_DbAddress_t* addr);
+
+/**
+ * Get the id of this address
+ */
+unsigned long Cdb_DbAddress_id(struct Cdb_DbAddress_t* obj);
+
+/**
+ * Set the id of this address
+ */
+void Cdb_DbAddress_setId(struct Cdb_DbAddress_t* obj, unsigned long id);
 
 /**
  * Cast into BaseAddress
