@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.101 2002/04/11 10:08:53 jdurand Exp $
+ * $Id: procupd.c,v 1.102 2002/04/30 12:40:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.101 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.102 $ $Date: 2002/04/30 12:40:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -92,6 +92,7 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *
 extern char *findpoolname _PROTO((char *));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int findfs _PROTO((char *, char **, char **));
+extern int rc_shift2castor _PROTO((int,int));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -115,21 +116,21 @@ procupdreq(req_type, magic, req_data, clienthost)
 {
 	char **argv = NULL;
 	int blksize = -1;
-	int c, i, n;
+	int c = 0, i, n;
 	struct stgcat_entry *cur;
 	char *dp;
 	char dsksrvr[CA_MAXHOSTNAMELEN + 1];
-	char *dvn;
+	char *dvn = NULL;
 	int errflg = 0;
 	char *fid = NULL;
 	int found, index_found;
 	char *fseq = NULL;
 	gid_t gid;
-	char *ifce;
+	char *ifce = NULL;
 	int j;
 	int key;
 	int lrecl = -1;
-	int nargs;
+	int nargs = 0;
 	char *p_cmd;
 	char *p_stat;
 	char *p, *q;
@@ -138,7 +139,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	int rc = -1;
 	char *recfm = NULL;
 	static char s_cmd[5][9] = {"", "stagein", "stageout", "stagewrt", "stageput"};
-	int size = 0;
+	u_signed64 size = 0;
 	struct stat st;
 	struct stgcat_entry *stcp;
 	int subreqid;
@@ -161,7 +162,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
-	u_signed64 actual_size_block;
+	u_signed64 actual_size_block = 0;
 	int api_out = 0;
 #if defined(_WIN32)
 	int mask;
@@ -177,6 +178,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	char *pool_user = NULL;
 	char *User;
 	char *name;
+	int checkrc;
 
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -313,10 +315,17 @@ procupdreq(req_type, magic, req_data, clienthost)
 				}
 				break;
 			case 's':
-				stage_strtoi(&size, Coptarg, &dp, 10);
-				if (*dp != '\0') {
+				if ((checkrc = stage_util_check_for_strutou64(Coptarg)) < 0) {
 					sendrep (rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
+				} else {
+					size = strutou64(Coptarg);
+					if (size <= 0) {
+						sendrep (rpfd, MSG_ERR, STG06, "-s");
+						errflg++;
+					} else {
+						if (checkrc == 0) size *= ONE_MB; /* Not unit : default MB */
+					}
 				}
 				break;
 			case 'T':
@@ -518,8 +527,6 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* This is for the return here at the end of the routine */
 					c = 0;
 				} else if (c) {
-					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-								(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 					delreq(stcp,0);
 					goto reply;
 				} else {
@@ -899,6 +906,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		dsksrvr[p - q] = '\0';
 		if (stcp->status == STAGEIN) {
 			char tmpbuf[21];
+			char tmpbuf2[21];
 
 			PRE_RFIO;
 			if (RFIO_STAT(stcp->ipath, &st) == 0) {
@@ -918,7 +926,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								dsksrvr, strrchr (stcp->ipath, '/')+1,
 								stcp->user, stcp->group,
 								clienthost, dvn, ifce,
-								u64tostr((u_signed64) size, tmpbuf, 0),
+								u64tostr(size, tmpbuf, 0),
 								waiting_time, transfer_time, rc);
 					} else {
 						/* Done in more than one segment */
@@ -926,7 +934,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 							dsksrvr, strrchr (stcp->ipath, '/')+1,
 							wfp->nb_segments, stcp->user, stcp->group,
 							u64tostr(stcp->actual_size, tmpbuf, 0),
-							size,
+							u64tostr(size,tmpbuf2,0),
 							rc);
 					}
 				} else if (wfp->size_to_recall > 0) {
@@ -936,7 +944,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						dsksrvr, strrchr (stcp->ipath, '/')+1,
 						wfp->nb_segments, stcp->user, stcp->group,
 						clienthost, dvn, ifce,
-						u64tostr((u_signed64) size, tmpbuf, 0),
+						u64tostr(size, tmpbuf, 0),
 						waiting_time, transfer_time, rc);
 				}
 #ifdef USECDB
@@ -948,8 +956,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
-				stcp->actual_size += (u_signed64) size;
-				wfp->size_yet_recalled += (u_signed64) size;
+				stcp->actual_size += size;
+				wfp->size_yet_recalled += size;
 				actual_size_block = stcp->actual_size;
 				goto rfio_stat_continue;
 			}
@@ -960,7 +968,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					dsksrvr, strrchr (stcp->ipath, '/')+1,
 					stcp->user, stcp->group,
 					clienthost, dvn, ifce,
-					u64tostr((u_signed64) size, tmpbuf, 0),
+					u64tostr(size, tmpbuf, 0),
 					waiting_time, transfer_time, rc);
 		}
 	}
@@ -1090,8 +1098,6 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
 			return;
 		} else if (c) {
-			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-						(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 			delreq(stcp,0);
 			wqp->status = c;
 			goto reply;
@@ -1644,7 +1650,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					strcmp (stcp->ipath, (wfp+1)->upath))
 				create_link (stcp, (wfp+1)->upath);
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-						(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
+						(signed64) (((signed64) stcp->size) - (signed64) actual_size_block));
 			check_waiting_on_req (subreqid, STAGED);
 		}
 		savereqs();
