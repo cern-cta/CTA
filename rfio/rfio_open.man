@@ -1,0 +1,91 @@
+.\"
+.\" $Id: rfio_open.man,v 1.1 2000/07/07 14:06:51 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_OPEN 3 "$Date: 2000/07/07 14:06:51 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_open \- opens a file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_open (const char *" path ,
+.BI "const int" flags ,
+.BI "const int" mode )
+.SH DESCRIPTION
+.B rfio_fopen
+opens the file whose name is the string pointed to by
+.BI path
+, a character string containing the filename specification, and associates a RFILE stream with it.
+.br
+.BI flags
+And ORing of the following values:
+.ft CW
+.nf
+.sp
+        O_RDONLY        Open for reading only
+        O_WRONLY        Open for writing only
+        O_RDWR          Open for reading and writing
+        O_NDELAY        Do not block on open
+        O_APPEND        Append on each write
+        O_CREAT         Create file if it does not exist
+        O_TRUNC         Truncate size to 0
+        O_EXCL          Error if create and file exists
+.ft
+.LP
+.fi
+
+.br
+.BI mode
+specifies the permission bits to be set if the file is created.
+.P
+Opening a file with O_APPEND set causes each write on the file to be appended to the end.  If O_TRUNC is specified and the file exists, the file is truncated to zero length.  If O_EXCL is set with O_CREAT, then if the file already exists, the open returns an error.  This can be used to implement a simple exclusive access locking mechanism.  If O_EXCL is set and the last component of the pathname is a symbolic link, the open will succeed even if the symbolic link points to an existing name.  If the O_NDELAY flag is specified and the open call would result in the process being blocked for some reason (for example waiting for a carrier on a dial-up line), the open returns immediately. The first time the process attempts to perform \IO\ on the open file, it will block (not currently implemented).
+
+.SH RETURN VALUE
+If successful, returns a non-negative integer which may be used to refer to the file on subsequent .\fBrfio_write\fP, \fBrfio_read\fP and rfio_close\fP calls. On failure, \fBrfio_open\fP returns -1 and the error code is stored in serrno.
+
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I statbuf
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.SH SEE ALSO
+.BR Castor_limits(4)
