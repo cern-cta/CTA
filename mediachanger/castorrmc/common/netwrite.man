@@ -1,0 +1,62 @@
+.\" @(#)$RCSfile: netwrite.man,v $ $Revision: 1.1 $ $Date: 2001/10/23 08:46:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1991-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NETWRITE 3 "$Date: 2001/10/23 08:46:52 $" CASTOR "Common Library Functions"
+.SH NAME
+netwrite \- send a message on a socket
+.SH SYNOPSIS
+\fB#include "net.h"\fR
+.sp
+.BI "int netwrite (int " s ,
+.BI "char *" buf ,
+.BI "int " nbytes );
+.sp
+.BI "ssize_t netwrite_timeout (int " s ,
+.BI "void *" buf ,
+.BI "size_t " nbytes ,
+.BI "int " timeout );
+.SH DESCRIPTION
+.B netwrite
+sends a message on a socket.
+.SH RETURN VALUE
+This routine returns the number of bytes if the operation was successful,
+0 if the connection was closed by the remote end
+or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EINTR
+The function was interrupted by a signal.
+.TP
+.B EBADF
+.I s
+is not a valid descriptor.
+.TP
+.B EAGAIN
+The socket is non-blocking and there is no space available in the system buffers
+for the message.
+.TP
+.B EFAULT
+.I buf
+is not a valid pointer.
+.TP
+.B EINVAL
+.I nbytes
+is negative or zero.
+.TP
+.B ENOTSOCK
+.I s
+is not a socket.
+.TP
+.B SECONNDROP
+Connection closed by remote end.
+.TP
+.B SETIMEDOUT
+Timed out.
+.SH SEE ALSO
+.BR send(2) ,
+.B neterror(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
