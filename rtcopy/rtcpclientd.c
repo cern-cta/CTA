@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/12 06:49:42 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/18 06:53:44 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/12 06:49:42 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/18 06:53:44 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -819,7 +819,9 @@ int rtcpcld_main(
 #endif /* _WIN32 */
   rc = 0;
   /*
-   * Main infinite processing loop
+   * Main infinite processing loop. Wake-up on either notify (UDP)
+   * or catalogue poll timeout (RTCPCLD_CATPOLL_TIMEOUT), or
+   * migration/recall child exit (EINTR).
    */
   for (;;) {
     rd_setcp = rd_set;
@@ -837,6 +839,10 @@ int rtcpcld_main(
     timeout_cp = timeout;
     checkWorkerExit();
     if ( rc < 0 ) {
+      /*
+       * Error, probably a child exit. If so, ignore and continue, otherwise
+       * log the error and continue.
+       */
       if ( save_errno == EINTR ) continue;
       errno = save_errno;
       (void)dlf_write(
@@ -855,12 +861,16 @@ int rtcpcld_main(
                       );
       continue;
     } else if ( (rc > 0) && FD_ISSET(*rtcpdSocket,&rd_setcp) ) {
+      /*
+       * Got a connection from a tape server (rtcpd). Start the
+       * tape migrator/recaller client.
+       */
       errno = serrno = 0;
       rc = rtcp_Listen(
                        *rtcpdSocket,
                        &acceptSocket,
                        -1,
-		       RTCP_ACCEPT_FROM_SERVER
+                       RTCP_ACCEPT_FROM_SERVER
                        );
       if ( rc == -1 ) {
         (void)dlf_write(
@@ -892,6 +902,9 @@ int rtcpcld_main(
         continue;
       }
       tape = NULL;
+      /*
+       * Find the request in our internal table
+       */
       rc = getTapeRequest(
                           tapereq.VolReqID,
                           tapereq.vid,
@@ -901,6 +914,9 @@ int rtcpcld_main(
                           &tape
                           );
       if ( rc == -1 || tape == NULL ) {
+        /*
+         * Not found or error
+         */
         closesocket(
                     acceptSocket
                     );
@@ -934,7 +950,8 @@ int rtcpcld_main(
       }
       if ( pid != 0 ) {
         /*
-         * Parent
+         * Parent, update the internal request list with the pid of
+         * the newly forked child.
          */
         (void)dlf_write(
                         mainUuid,
@@ -964,7 +981,7 @@ int rtcpcld_main(
       }
 
       /*
-       * Child
+       * Child, kick off the migrator/recaller program and exit.
        */
       inChild = 1;
 #if !defined(_WIN32)
@@ -988,8 +1005,15 @@ int rtcpcld_main(
                         );
         rc = rtcpcld_updateVIDStatus(tape, TAPE_WAITDRIVE, TAPE_FAILED);
       }
+      /*
+       * break out from for(;;), cleanup and exit
+       */
       break;    
     } else {
+      /*
+       * Notification or poll timeout. In either case, we check the catalogue
+       * for new stuff to do (Tape or Stream).
+       */
       if ( rc > 0 && FD_ISSET(*notificationSocket, &rd_setcp) ) {
         /*
          * We got notified. Message is not important since we will
@@ -1017,6 +1041,11 @@ int rtcpcld_main(
       for ( i=0; i<cnt; i++ ) {
         tape = tapeArray[i];
         tape->tapereq.TStartRequest = (int)time(NULL);
+        /*
+         * Add tape to internal list. This will automatically check
+         * if the request is already there and if so, prevent that
+         * the same tape+mode is submitted twice to VDQM.
+         */
         rc = updateRequestList(
                                tape,
                                -1
