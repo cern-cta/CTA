@@ -307,6 +307,7 @@
 "rtcpd_StartDiskIO(): Host not known",5,
 "rtcpd_StartDiskIO(): No route to host",5,
 "rtcpd_StartDiskIO(): Timed out",5,
+"rtcpd_StartDiskIO(): Protocol not supported",5,
 "Data protect",6,
 "ERROR OPENING DISK FILE: BAD ERROR NUMBER",6,
 "ERROR OPENING DISK FILE: I/O error",6,
@@ -333,4 +334,3 @@
 "Volume held",6,
 "write protected",6,
 "rtcpd_StartDiskIO(): Input/output error",6,
-"rtcpd_StartDiskIO(): Protocol not supported",6,
