@@ -133,6 +133,7 @@ int     s, size;
    if ( ! *socset ) {
       char * ifce, *p ;
       int bufsize ;
+      extern char * getconfent() ;
       extern char * getifnam() ;
 		
       (*socset)++ ;
