@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.16 2000/08/29 14:50:09 baud Exp $
+ * $Id: Ctape_api.h,v 1.17 2001/02/04 17:57:18 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.16 $ $Date: 2000/08/29 14:50:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.17 $ $Date: 2001/02/04 17:57:18 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -75,6 +75,7 @@ EXTERN_C struct devinfo DLL_DECL *Ctape_devinfo _PROTO((char *));
 EXTERN_C int DLL_DECL Ctape_dmpend();
 EXTERN_C int DLL_DECL Ctape_dmpfil _PROTO((char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *));
 EXTERN_C int DLL_DECL Ctape_dmpinit _PROTO((char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int));
+EXTERN_C void DLL_DECL (*Ctape_dmpmsg) _PROTO((int, const char *, ...));
 EXTERN_C int DLL_DECL Ctape_info _PROTO((char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *));
 EXTERN_C int DLL_DECL Ctape_kill _PROTO((char *));
 EXTERN_C int DLL_DECL Ctape_label _PROTO((char *, char *, int, char *, char *, char *, char *, char *, int, int, int));
