@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/05 13:15:50 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/05 13:15:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -495,19 +495,18 @@ void checkWorkerExit()
                       DLF_MSG_PARAM_INT,
                       value
                       );
+      /*
+       * Reset BUSY status in VMGR
+       */
+      if ( item->tape->tapereq.mode == WRITE_ENABLE ) {
+        (void)rtcpcld_updateTape(
+                                 item->tape,
+                                 NULL,
+                                 1,
+                                 0
+                                 );
+      }
       if ( value != 0 ) {
-        /*
-         * Reset BUSY status in case child terminated
-         * without cleanup
-         */
-        if ( item->tape->tapereq.mode == WRITE_ENABLE ) {
-          (void)rtcpcld_updateTape(
-                                   item->tape,
-                                   NULL,
-                                   1,
-                                   0
-                                   );
-        }
         (void)rtcpcld_setVIDFailedStatus(item->tape);
       }
       CLIST_DELETE(requestList,item);

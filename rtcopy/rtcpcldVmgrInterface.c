@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/01/05 13:15:51 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/01/05 13:15:51 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -603,32 +603,32 @@ int rtcpcld_updateTape(
      * Always reset the BUSY flag.
      */
     flags = flags & ~TAPE_BUSY;
-    if ( rtcpc_serrno > 0 ) {
-      /*
-       * Request finished. rtcpc_serrno should only be set if there was an error
-       */
-      switch (rtcpc_serrno) {
-      case ETWLBL:                          /* Wrong label type */
-      case ETWVSN:                          /* Wrong vsn */
-      case ETHELD:                          /* Volume held (TMS) */
-      case ETVUNKN:                         /* Volume unknown or absent (TMS) */
-      case ETOPAB:                          /* Operator cancel */
-      case ETNOSNS:                         /* No sense */
-        flags = DISABLED;
-        break;
-      case ETABSENT:                        /* Volume absent (TMS) */
-        flags = EXPORTED;
-        break;
-      case ETNXPD:                          /* File not expired */
-      case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
-        flags = TAPE_RDONLY;
-        break;
-      case ETARCH:                          /* Volume in inactive library */
-        flags = ARCHIVED;
-        break;
-      default:
-        break;
-      }
+  }
+  if ( rtcpc_serrno > 0 ) {
+    /*
+     * Request finished. rtcpc_serrno should only be set if there was an error
+     */
+    switch (rtcpc_serrno) {
+    case ETWLBL:                          /* Wrong label type */
+    case ETWVSN:                          /* Wrong vsn */
+    case ETHELD:                          /* Volume held (TMS) */
+    case ETVUNKN:                         /* Volume unknown or absent (TMS) */
+    case ETOPAB:                          /* Operator cancel */
+    case ETNOSNS:                         /* No sense */
+      flags = DISABLED;
+      break;
+    case ETABSENT:                        /* Volume absent (TMS) */
+      flags = EXPORTED;
+      break;
+    case ETNXPD:                          /* File not expired */
+    case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
+      flags = TAPE_RDONLY;
+      break;
+    case ETARCH:                          /* Volume in inactive library */
+      flags = ARCHIVED;
+      break;
+    default:
+      break;
     }
   }
 
