@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.11 $ $Date: 1999/12/24 10:07:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.12 $ $Date: 2000/01/03 14:27:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -529,7 +529,7 @@ unload_loop1:
 		}
 		if (tplbl == NL && lblcode == NL) break;
 		if (tplbl != NL)
-			tplogit (func, "vol1 = %s", vol1);
+			tplogit (func, "vol1 = %s\n", vol1);
 		if (lblcode != tplbl && vsnretry) {	/* wrong label type */
 			usrmsg (func, TP021, labels[lblcode], labels[tplbl]);
 			c = EACCES;
