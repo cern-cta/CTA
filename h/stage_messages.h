@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.18 2002/07/27 06:42:55 jdurand Exp $
+ * $Id: stage_messages.h,v 1.19 2002/09/23 09:14:44 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -88,7 +88,7 @@
 #define STG106  "STG106 - Internal error in %s for %s: %s\n"
 #define	STG107	"STG107 - %s:%s segment %d staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
 #define	STG108	"STG108 - %s:%s staged in %d tries by (%s,%s), actual_size %s size %s rc %d\n"
-#define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
+#define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d\n"
 #define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
 #define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
 #define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s), not migrated\n"
