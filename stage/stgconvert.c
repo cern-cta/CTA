@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.21 2000/03/23 17:15:02 jdurand Exp $
+ * $Id: stgconvert.c,v 1.22 2000/05/11 09:54:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.21 $ $Date: 2000/03/23 17:15:02 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.22 $ $Date: 2000/05/11 09:54:41 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -2265,9 +2265,6 @@ int stgdb_stppcmp(p1,p2)
 	} else if (stpp1->reqid > stpp2->reqid) {
 		return(1);
 	} else {
-		if (warns != 0) {
-			printf("### Warning : two elements in stgpath have same reqid (%d)\n",(int) stpp1->reqid);
-		}
 		return(0);
 	}
 }
