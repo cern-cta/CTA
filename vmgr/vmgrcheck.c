@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.1 $ $Date: 2002/03/05 16:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.2 $ $Date: 2002/03/06 06:20:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -12,7 +12,6 @@ static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.1 $ $Date: 20
 #include <sys/types.h>
 #include "serrno.h"
 #include "vmgr_api.h"
-#if VMGR
 vmgrcheck(vid, vsn, dgn, den, lbl, mode, uid, gid)
 char *vid;
 char *vsn;
@@ -93,4 +92,3 @@ gid_t gid;
 	}
 	return (errflg ? EINVAL : 0);
 }
-#endif
