@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2004/12/06 10:25:48 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2004/12/09 09:38:34 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -100,8 +100,7 @@ STAGER_OBJS = \
 		stager_job_service.Osuf \
 		stager_query_service.Osuf \
 		stager_service_run.Osuf \
-		stager_update_service.Osuf \
-		stager_util.Osuf
+		stager_update_service.Osuf
 STAGERADMIN_OBJS = stageradmin.Osuf
 OBSOLETE_OBJS = \
 		buildupath.Osuf \
@@ -125,6 +124,7 @@ STAGERLIB_OBJS = \
 		stager_extern_globals.Osuf \
 		stager_messages.Osuf \
 		stager_service.Osuf \
+		stager_util.Osuf \
 		stager_uuid.Osuf \
 		$(OBSOLETE_OBJS)
 
