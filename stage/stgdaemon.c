@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.93 2001/02/01 18:09:31 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.94 2001/02/01 18:40:20 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.93 $ $Date: 2001/02/01 18:09:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.94 $ $Date: 2001/02/01 18:40:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -706,6 +706,7 @@ int main(argc,argv)
 			rpfd = initreq_rpfd;
 			c = updpoolconf (defpoolname, defpoolname_in, defpoolname_out);
 			for (stcp = stcs; stcp < stce; stcp++) {
+				if (stcp->reqid == 0) break;
 				if ((stcp->status == STAGEIN) ||
 					(stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
