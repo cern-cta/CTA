@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.14 2004/12/07 10:50:54 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.15 2004/12/07 11:05:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.14 $ $Date: 2004/12/07 10:50:54 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.15 $ $Date: 2004/12/07 11:05:56 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -318,6 +318,7 @@ char    **argv;
   struct passwd *this_passwd;             /* password structure pointer */
 #endif
   int select_status;
+  int select_timeout = CHECKI;
   
    strcpy(logfile, "syslog"); /* default logfile */
    opterr++;
@@ -336,7 +337,7 @@ char    **argv;
    }
 #endif /* if WIN32 */
 #if !defined(_WIN32)
-   while ((option = getopt(argc,argv,"sdltf:p:P:D:nS:1")) != EOF)        {
+   while ((option = getopt(argc,argv,"sdltf:p:P:D:nS:1T:")) != EOF) {
       switch (option) {
          case 'd':
 			debug++;
@@ -353,6 +354,9 @@ char    **argv;
             break;
          case 't':
             singlethread++;
+            break;
+         case 'T':
+            select_timeout=atoi(optarg);
             break;
          case 'p':
             port=atoi(optarg);
@@ -798,7 +802,7 @@ char    **argv;
 #endif
     select_continue:
       memcpy (&readfd, &readmask, sizeof(readmask));
-      timeval.tv_sec = CHECKI;  /* must set each time for linux */
+      timeval.tv_sec = select_timeout;  /* must set each time for linux */
       timeval.tv_usec = 0;
       if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
 	log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
