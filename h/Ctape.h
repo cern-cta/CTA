@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.16 2000/01/07 13:44:26 baud Exp $
+ * $Id: Ctape.h,v 1.17 2000/01/09 14:36:49 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.16 $ $Date: 2000/01/07 13:44:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * $RCSfile: Ctape.h,v $ $Revision: 1.17 $ $Date: 2000/01/09 14:36:49 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -302,6 +302,7 @@ struct tptab {		/* tape drive table */
 
 struct devlblinfo {
 	char	path[CA_MAXPATHLEN+1];	/* pathname */
+	char	devtype[CA_MAXDVTLEN+1];	/* device type */
 	int	dev1tm;		/* one or two tapemarks at end of data */
 	int	rewritetm;	/* tapemark must be rewritten on Exabytes 8200 */
 	int	lblcode;	/* label code: AL, NL, SL or BLP */
