@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.2 $ $Date: 2002/06/05 11:50:44 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.3 $ $Date: 2002/06/07 07:21:38 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -73,9 +73,17 @@ Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
 	marshall_LONG (q, msglen);	/* update length field */
 
 	while ((c = send2Cupv (NULL, sendbuf, msglen, NULL, 0)) &&
-	    serrno == EVMGRNACT)
+	    serrno == ECUPVNACT)
 		sleep (RETRYI);
 	return (c);
 }
+
+
+
+
+
+
+
+
 
 
