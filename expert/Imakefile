@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2004/07/08 13:31:36 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2004/12/21 22:26:25 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
 #include <Project.tmpl>
@@ -35,11 +35,6 @@ LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #endif
 #endif
 #endif
-#if _WIN32
-EXPERTLIB = expert.lib
-#else
-EXPERTLIB = -L. -lexpert
-#endif
 OPSGRP = OperatorGid
 SPOOL = ExpertSpool
 LOGFILE = FileName($(SPOOL),log)
@@ -71,13 +66,13 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/expertd.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man3/expert_receive_data.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man3/expert_send_data.$(MANSUFFIX)
 
+#if BuildExpertLibrary
+LIB = LibraryTargetName(expert)
+#endif
 #if BuildExpertClient
-CLIENT = LibraryTargetName(expert) \
-	 ProgramTargetName(expexec)
-
+CLIENT = ProgramTargetName(expexec)
 IPROGS_C =	
-
-EPROGS_C = 	$(EXPORTBIN)/expexec
+EPROGS_C = $(EXPORTBIN)/expexec
 #endif
 #if BuildExpertDaemon
 PROGS_D = ProgramTargetName(expertd)
@@ -93,11 +88,11 @@ EXPERTLIB_OBJS	=	send2expert.Osuf \
 			exp_api.Osuf
 
 
-all: $(CLIENT) $(PROGS_D)
+all: $(LIB) $(CLIENT) $(PROGS_D)
 
-NormalProgramTarget(expertd,$(EXPERTD_OBJS), $(DEPLIB), $(LIBS))
+NormalProgramTarget(expertd,$(EXPERTD_OBJS),$(DEPLIB),$(LIBS))
 
-NormalProgramTarget(expexec,expexec.Osuf,LibraryTargetName(expert) $(DEPLIB),$(EXPERTLIB) $(LIBS))
+NormalProgramTarget(expexec,expexec.Osuf,$(DEPLIB),$(LIBS))
 
 NormalLibraryTarget(expert,$(EXPERTLIB_OBJS))
 
