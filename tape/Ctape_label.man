@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.11 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.12 $ $Date: 2002/04/08 14:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_LABEL 3 "$Date: 2002/04/08 14:53:27 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -24,7 +24,7 @@ the existing label checked and a new label written
 .BI "int " vdqm_reqid );
 .SH DESCRIPTION
 .B Ctape_label
-checks with TMS if the tape identified by
+checks with VMGR if the tape identified by
 .I vid
 is available, asks the operator or the robot to mount it on the drive selected
 by the tape daemon or specified by
@@ -50,8 +50,8 @@ for example a DVD.
 .TP
 .I dgn
 The device group name must be a member of an installation defined set of
-"device groups". It must match the device group specified in TMS (if installed).
-If this pointer is NULL, the value is taken from TMS or defaults to CART.
+"device groups". It must match the device group specified in VMGR (if installed).
+If this pointer is NULL, the value is taken from VMGR or defaults to CART.
 .TP
 .I density
 The supported alphanumeric densities are:
@@ -69,6 +69,7 @@ for double density IBM 3490 cartridges,
 .B 38KDC
 for 3490 cartridges with compaction (IDRC),
 .BR 8200 ,
+.BR 8200C ,
 .B 8500
 or
 .B 8500C
@@ -83,14 +84,20 @@ for DAT cartridges,
 .BR 10GC ,
 .BR 20G ,
 .BR 20GC ,
-.B 35G
+.BR 35G ,
+.BR 35GC ,
+.B 40G
 or
-.B 35GC
+.B 40GC
 for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590K cartridges,
 .BR 10G ,
 .BR 10GC ,
 .BR 25G ,
@@ -102,7 +109,16 @@ for Redwood cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
+It must match the density specified in VMGR (if installed).
 .TP
 .I drive
 specifies the drive name. If this pointer is NULL, a drive is selected by the
@@ -111,15 +127,16 @@ tape daemon.
 .I vsn
 specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long and is converted to upper case.
-The vsn must match the one specified in TMS.
+The vsn must match the one specified in VMGR.
 .TP
 .I lbltype
 may be
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
-It must match the label type specified in TMS.
+It must match the label type specified in VMGR.
 Default is
 .BR sl .
 .TP
@@ -153,7 +170,7 @@ I/O error.
 Drive not operational. The drive is automatically configured down.
 .TP
 .B EACCES
-Access denied by TMS.
+Access denied by VMGR.
 .TP
 .B EBUSY
 Requested drive is not free or no free drive.
