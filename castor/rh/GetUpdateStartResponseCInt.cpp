@@ -210,6 +210,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_emptyFile
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_emptyFile(castor::rh::GetUpdateStartResponse* instance, bool* var) {
+    *var = instance->emptyFile();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setEmptyFile
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setEmptyFile(castor::rh::GetUpdateStartResponse* instance, bool new_var) {
+    instance->setEmptyFile(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_GetUpdateStartResponse_addSources
   //----------------------------------------------------------------------------
   int Crh_GetUpdateStartResponse_addSources(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopyForRecall* obj) {

@@ -331,8 +331,13 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * is the responsability of the caller.
  * Depending on the available DiskCopies for the file
  * the SubRequest deals with, we have different cases :
- *  - no DiskCopy at all : a DiskCopy is created with
- * status DISKCOPY_WAITTAPERECALL. Null pointer is returned
+ *  - no DiskCopy at all and file is not of size 0 :
+ * a DiskCopy is created with status DISKCOPY_WAITTAPERECALL.
+ * Null pointer is returned
+ *  - no DiskCopy at all and file is of size 0 :
+ * a DiskCopy is created with status DISKCOPY_WAIDISK2DISKCOPY.
+ * This diskCopy is returned and the emptyFile content is
+ * set to true.
  *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
  * the SubRequest is linked to the one recalling and
  * put in SUBREQUEST_WAITSUBREQ status. Null pointer is
@@ -369,6 +374,8 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * by someone else and the caller should just wait
  * for its end. Note that the DiskCopies returned in
  * sources must be deallocated by the caller.
+ * @param emptyFile 1 if the resulting diskCopy
+ * deals with the recall of an empty file, 0 in all other cases
  * @param client the IClient object to use for client reply
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
@@ -382,6 +389,7 @@ int Cstager_IStagerSvc_getUpdateStart
  struct Cstager_DiskCopyForRecall_t*** sources,
  unsigned int* sourcesNb,
  struct Cstager_DiskCopy_t** diskCopy,
+ int *emptyFile,
  struct C_IClient_t** client);
 
 /**

@@ -31,6 +31,7 @@
 #include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_float_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
@@ -112,18 +113,6 @@ int Cstager_DiskCopyForRecall_diskcopyId(struct Cstager_DiskCopyForRecall_t* ins
 int Cstager_DiskCopyForRecall_setDiskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
 
 /**
- * Get the value of id
- * The id of this object
- */
-int Cstager_DiskCopyForRecall_id(struct Cstager_DiskCopyForRecall_t* instance, u_signed64* var);
-
-/**
- * Set the value of id
- * The id of this object
- */
-int Cstager_DiskCopyForRecall_setId(struct Cstager_DiskCopyForRecall_t* instance, u_signed64 new_var);
-
-/**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list
  */
 int Cstager_DiskCopyForRecall_addSubRequests(struct Cstager_DiskCopyForRecall_t* instance, struct Cstager_SubRequest_t* obj);
@@ -198,26 +187,38 @@ int Cstager_DiskCopyForRecall_clone(struct Cstager_DiskCopyForRecall_t* instance
 
 /**
  * Get the value of mountPoint
- * The mountpoint of the filesystem where the file to be recalled should be put
+ * The mountpoint of the filesystem where the file resides/should be put
  */
 int Cstager_DiskCopyForRecall_mountPoint(struct Cstager_DiskCopyForRecall_t* instance, const char** var);
 
 /**
  * Set the value of mountPoint
- * The mountpoint of the filesystem where the file to be recalled should be put
+ * The mountpoint of the filesystem where the file resides/should be put
  */
 int Cstager_DiskCopyForRecall_setMountPoint(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
 
 /**
  * Get the value of diskServer
- * The disk server on which the file to be recalled should be put
+ * The disk server on which the file resides/should be put
  */
 int Cstager_DiskCopyForRecall_diskServer(struct Cstager_DiskCopyForRecall_t* instance, const char** var);
 
 /**
  * Set the value of diskServer
- * The disk server on which the file to be recalled should be put
+ * The disk server on which the file resides/should be put
  */
 int Cstager_DiskCopyForRecall_setDiskServer(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
+
+/**
+ * Get the value of fsWeight
+ * The weight of the filesystem on which the file resides/should be put
+ */
+int Cstager_DiskCopyForRecall_fsWeight(struct Cstager_DiskCopyForRecall_t* instance, struct C_float_t* var);
+
+/**
+ * Set the value of fsWeight
+ * The weight of the filesystem on which the file resides/should be put
+ */
+int Cstager_DiskCopyForRecall_setFsWeight(struct Cstager_DiskCopyForRecall_t* instance, struct C_float_t new_var);
 
 #endif // CASTOR_STAGER_DISKCOPYFORRECALL_H

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
  *
  * 
  *
@@ -327,12 +327,15 @@ extern "C" {
    castor::stager::DiskCopyForRecall*** sources,
    unsigned int* sourcesNb,
    castor::stager::DiskCopy** diskCopy,
+   int *emptyFile,
    castor::IClient** client) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
+      bool ef;
       std::list<castor::stager::DiskCopyForRecall*> sourceslist;
       *client = stgSvc->stgSvc->getUpdateStart
-        (subreq, fileSystem, diskCopy, sourceslist);
+        (subreq, fileSystem, diskCopy, sourceslist, &ef);
+      *emptyFile = ef ? 1 : 0;
       *sourcesNb = sourceslist.size();
       if (*sourcesNb > 0) {
         *sources = (castor::stager::DiskCopyForRecall**)

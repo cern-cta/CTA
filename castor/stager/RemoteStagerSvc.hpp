@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -273,8 +273,13 @@ namespace castor {
        * is the responsability of the caller.
        * Depending on the available DiskCopies for the file
        * the SubRequest deals with, we have different cases :
-       *  - no DiskCopy at all : a DiskCopy is created with
-       * status DISKCOPY_WAITTAPERECALL. Null pointer is returned
+       *  - no DiskCopy at all and file is not of size 0 :
+       * a DiskCopy is created with status DISKCOPY_WAITTAPERECALL.
+       * Null pointer is returned
+       *  - no DiskCopy at all and file is of size 0 :
+       * a DiskCopy is created with status DISKCOPY_WAIDISK2DISKCOPY.
+       * This diskCopy is returned and the emptyFile content is
+       * set to true.
        *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
        * the SubRequest is linked to the one recalling and
        * put in SUBREQUEST_WAITSUBREQ status. Null pointer is
@@ -310,6 +315,8 @@ namespace castor {
        * by someone else and the caller should just wait
        * for its end. Note that the DiskCopies returned in
        * sources must be deallocated by the caller.
+       * @param emptyFile whether the resulting diskCopy
+       * deals with the recall of an empty file
        * @return the IClient object to use for client reply
        * @exception Exception in case of error
        */
@@ -317,7 +324,8 @@ namespace castor {
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
        castor::stager::DiskCopy** diskCopy,
-       std::list<castor::stager::DiskCopyForRecall*>& sources)
+       std::list<castor::stager::DiskCopyForRecall*>& sources,
+       bool* emptyFile)
         throw (castor::exception::Exception);
 
       /**

@@ -131,22 +131,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_id
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance, u_signed64* var) {
-    *var = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_setId
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_setId(castor::stager::DiskCopyForRecall* instance, u_signed64 new_var) {
-    instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_addSubRequests
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_addSubRequests(castor::stager::DiskCopyForRecall* instance, castor::stager::SubRequest* obj) {
@@ -224,6 +208,24 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setId(castor::stager::DiskCopyForRecall* instance,
+                                      u_signed64 id) {
+    instance->setId(id);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_id
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance,
+                                   u_signed64* ret) {
+    *ret = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_type
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_type(castor::stager::DiskCopyForRecall* instance,
@@ -272,6 +274,22 @@ extern "C" {
   int Cstager_DiskCopyForRecall_setDiskServer(castor::stager::DiskCopyForRecall* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setDiskServer(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_fsWeight
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_fsWeight(castor::stager::DiskCopyForRecall* instance, float* var) {
+    *var = instance->fsWeight();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setFsWeight
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setFsWeight(castor::stager::DiskCopyForRecall* instance, float new_var) {
+    instance->setFsWeight(new_var);
     return 0;
   }
 

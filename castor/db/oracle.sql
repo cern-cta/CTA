@@ -330,7 +330,7 @@ BEGIN
   NULL;
 END;
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048));
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER);
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
@@ -380,11 +380,14 @@ BEGIN
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  -- Try to find remote DiskCopies
- OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.diskcopyId
- FROM DiskCopy, SubRequest
+ OPEN sources
+ FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+            DiskCopy.diskcopyId, FileSystem.weight
+ FROM DiskCopy, SubRequest, FileSystem
  WHERE SubRequest.id = srId
    AND SubRequest.castorfile = DiskCopy.castorfile
-   AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+   AND FileSystem.id = DiskCopy.fileSystem;
  FETCH sources INTO dci, rpath, rstatus, rDiskCopyId;
  IF sources%NOTFOUND THEN
    -- No DiskCopy, create one for recall

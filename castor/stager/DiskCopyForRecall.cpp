@@ -39,7 +39,8 @@
 castor::stager::DiskCopyForRecall::DiskCopyForRecall() throw() :
   DiskCopy(),
   m_mountPoint(""),
-  m_diskServer("") {
+  m_diskServer(""),
+  m_fsWeight(0.0) {
 };
 
 //------------------------------------------------------------------------------
@@ -65,6 +66,7 @@ void castor::stager::DiskCopyForRecall::print(std::ostream& stream,
   // Output of all members
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "diskServer : " << m_diskServer << std::endl;
+  stream << indent << "fsWeight : " << m_fsWeight << std::endl;
   alreadyPrinted.insert(this);
 }
 

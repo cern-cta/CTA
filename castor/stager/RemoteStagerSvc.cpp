@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -259,9 +259,11 @@ public:
   GetUpdateStartResponseHandler
   (castor::IClient** result,
    castor::stager::DiskCopy** diskCopy,
-   std::list<castor::stager::DiskCopyForRecall*>& sources) :
+   std::list<castor::stager::DiskCopyForRecall*>& sources,
+   bool *emptyFile) :
     m_result(result), m_diskCopy(diskCopy),
-    m_sources(sources){}
+    m_sources(sources),
+    m_emptyFile(emptyFile){}
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
@@ -269,6 +271,7 @@ public:
       dynamic_cast<castor::rh::GetUpdateStartResponse*>(&r);
     *m_result = resp->client();
     *m_diskCopy = resp->diskCopy();
+    *m_emptyFile = resp->emptyFile();
     for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it =
            resp->sources().begin();
          it != resp->sources().end();
@@ -285,6 +288,8 @@ private:
   castor::stager::DiskCopy** m_diskCopy;
   // where to store the sources
   std::list<castor::stager::DiskCopyForRecall*>& m_sources;
+  // Where to store the emptyFile flag
+  bool* m_emptyFile;
 };
 
 
@@ -296,12 +301,14 @@ castor::stager::RemoteStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
  castor::stager::DiskCopy** diskCopy,
- std::list<castor::stager::DiskCopyForRecall*>& sources)
+ std::list<castor::stager::DiskCopyForRecall*>& sources,
+ bool* emptyFile)
   throw (castor::exception::Exception) {
   // placeholders for the result
   castor::IClient* result;
   // Build a response Handler
-  GetUpdateStartResponseHandler rh(&result, diskCopy, sources);
+  GetUpdateStartResponseHandler rh
+    (&result, diskCopy, sources, emptyFile);
   // Build the GetUpdateStartRequest
   castor::stager::GetUpdateStartRequest req;
   req.setSubreqId(subreq->id());

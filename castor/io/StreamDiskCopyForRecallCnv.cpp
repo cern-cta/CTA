@@ -42,7 +42,6 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "osdep.h"
 #include <string>
 #include <vector>
 
@@ -94,9 +93,9 @@ void castor::io::StreamDiskCopyForRecallCnv::createRep(castor::IAddress* address
   ad->stream() << obj->type();
   ad->stream() << obj->path();
   ad->stream() << obj->diskcopyId();
-  ad->stream() << obj->id();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->diskServer();
+  ad->stream() << obj->fsWeight();
   ad->stream() << obj->status();
 }
 
@@ -116,15 +115,15 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::createObj(castor::IAddr
   std::string diskcopyId;
   ad->stream() >> diskcopyId;
   object->setDiskcopyId(diskcopyId);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);
   std::string diskServer;
   ad->stream() >> diskServer;
   object->setDiskServer(diskServer);
+  float fsWeight;
+  ad->stream() >> fsWeight;
+  object->setFsWeight(fsWeight);
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::DiskCopyStatusCodes)status);

@@ -105,6 +105,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_emptyFile
+       * tells whether the diskCopy deals with the recall of an empty file
+       * @return the value of m_emptyFile
+       */
+      bool emptyFile() const {
+        return m_emptyFile;
+      }
+
+      /**
+       * Set the value of m_emptyFile
+       * tells whether the diskCopy deals with the recall of an empty file
+       * @param new_var the new value of m_emptyFile
+       */
+      void setEmptyFile(bool new_var) {
+        m_emptyFile = new_var;
+      }
+
+      /**
        * Add a castor::stager::DiskCopyForRecall* object to the m_sourcesVector list
        */
       void addSources(castor::stager::DiskCopyForRecall* add_object) {
@@ -136,6 +154,9 @@ namespace castor {
       }
 
     private:
+
+      /// tells whether the diskCopy deals with the recall of an empty file
+      bool m_emptyFile;
 
       std::vector<castor::stager::DiskCopyForRecall*> m_sourcesVector;
 

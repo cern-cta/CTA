@@ -186,6 +186,18 @@ int Crh_GetUpdateStartResponse_clone(struct Crh_GetUpdateStartResponse_t* instan
                                      struct C_IObject_t* ret);
 
 /**
+ * Get the value of emptyFile
+ * tells whether the diskCopy deals with the recall of an empty file
+ */
+int Crh_GetUpdateStartResponse_emptyFile(struct Crh_GetUpdateStartResponse_t* instance, int* var);
+
+/**
+ * Set the value of emptyFile
+ * tells whether the diskCopy deals with the recall of an empty file
+ */
+int Crh_GetUpdateStartResponse_setEmptyFile(struct Crh_GetUpdateStartResponse_t* instance, int new_var);
+
+/**
  * Add a struct Cstager_DiskCopyForRecall_t* object to the sources list
  */
 int Crh_GetUpdateStartResponse_addSources(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopyForRecall_t* obj);

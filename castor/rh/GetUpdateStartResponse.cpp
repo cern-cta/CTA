@@ -39,7 +39,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::GetUpdateStartResponse::GetUpdateStartResponse() throw() :
-  StartResponse() {
+  StartResponse(),
+  m_emptyFile(false) {
 };
 
 //------------------------------------------------------------------------------
@@ -62,6 +63,8 @@ void castor::rh::GetUpdateStartResponse::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->StartResponse::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "emptyFile : " << m_emptyFile << std::endl;
   alreadyPrinted.insert(this);
   {
     stream << indent << "Sources : " << std::endl;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.82 $ $Release$ $Date: 2004/12/07 17:15:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.83 $ $Release$ $Date: 2004/12/08 13:50:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -945,8 +945,10 @@ castor::db::ora::OraStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
  castor::stager::DiskCopy** diskCopy,
- std::list<castor::stager::DiskCopyForRecall*>& sources)
+ std::list<castor::stager::DiskCopyForRecall*>& sources,
+ bool* emptyFile)
   throw (castor::exception::Exception) {
+  *emptyFile = false;
   try {
     // Check whether the statements are ok
     if (0 == m_getUpdateStartStatement) {
@@ -1061,11 +1063,15 @@ castor::db::ora::OraStagerSvc::getUpdateStart
     *diskCopy = new castor::stager::DiskCopy();
     (*diskCopy)->setId(id);
     (*diskCopy)->setPath(m_getUpdateStartStatement->getString(4));
-    (*diskCopy)->setStatus
-      ((enum castor::stager::DiskCopyStatusCodes) status);
+    if (98 == status) {
+      (*diskCopy)->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
+      *emptyFile = true;
+    } else {
+      (*diskCopy)->setStatus
+        ((enum castor::stager::DiskCopyStatusCodes) status);
+    }
     (*diskCopy)->setDiskcopyId(m_getUpdateStartStatement->getString(8));
-    if ((*diskCopy)->status() ==
-        castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
+    if (status == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
         oracle::occi::ResultSet *rs =
           m_getUpdateStartStatement->getCursor(6);
@@ -1080,8 +1086,9 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           item->setPath(rs->getString(2));
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
           item->setDiskcopyId(rs->getString(4));
+          item->setFsWeight(rs->getFloat(5));
           sources.push_back(item);
-	  status = rs->status();
+          status = rs->status();
         }
       } catch (oracle::occi::SQLException e) {
         rollback();

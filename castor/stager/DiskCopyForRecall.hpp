@@ -97,7 +97,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_mountPoint
-       * The mountpoint of the filesystem where the file to be recalled should be put
+       * The mountpoint of the filesystem where the file resides/should be put
        * @return the value of m_mountPoint
        */
       std::string mountPoint() const {
@@ -106,7 +106,7 @@ namespace castor {
 
       /**
        * Set the value of m_mountPoint
-       * The mountpoint of the filesystem where the file to be recalled should be put
+       * The mountpoint of the filesystem where the file resides/should be put
        * @param new_var the new value of m_mountPoint
        */
       void setMountPoint(std::string new_var) {
@@ -115,7 +115,7 @@ namespace castor {
 
       /**
        * Get the value of m_diskServer
-       * The disk server on which the file to be recalled should be put
+       * The disk server on which the file resides/should be put
        * @return the value of m_diskServer
        */
       std::string diskServer() const {
@@ -124,20 +124,41 @@ namespace castor {
 
       /**
        * Set the value of m_diskServer
-       * The disk server on which the file to be recalled should be put
+       * The disk server on which the file resides/should be put
        * @param new_var the new value of m_diskServer
        */
       void setDiskServer(std::string new_var) {
         m_diskServer = new_var;
       }
 
+      /**
+       * Get the value of m_fsWeight
+       * The weight of the filesystem on which the file resides/should be put
+       * @return the value of m_fsWeight
+       */
+      float fsWeight() const {
+        return m_fsWeight;
+      }
+
+      /**
+       * Set the value of m_fsWeight
+       * The weight of the filesystem on which the file resides/should be put
+       * @param new_var the new value of m_fsWeight
+       */
+      void setFsWeight(float new_var) {
+        m_fsWeight = new_var;
+      }
+
     private:
 
-      /// The mountpoint of the filesystem where the file to be recalled should be put
+      /// The mountpoint of the filesystem where the file resides/should be put
       std::string m_mountPoint;
 
-      /// The disk server on which the file to be recalled should be put
+      /// The disk server on which the file resides/should be put
       std::string m_diskServer;
+
+      /// The weight of the filesystem on which the file resides/should be put
+      float m_fsWeight;
 
     }; // end of class DiskCopyForRecall
 

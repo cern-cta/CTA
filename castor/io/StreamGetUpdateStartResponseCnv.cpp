@@ -94,6 +94,7 @@ void castor::io::StreamGetUpdateStartResponseCnv::createRep(castor::IAddress* ad
   ad->stream() << obj->id();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->emptyFile();
 }
 
 //------------------------------------------------------------------------------
@@ -115,6 +116,9 @@ castor::IObject* castor::io::StreamGetUpdateStartResponseCnv::createObj(castor::
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  bool emptyFile;
+  ad->stream() >> emptyFile;
+  object->setEmptyFile(emptyFile);
   return object;
 }
 
