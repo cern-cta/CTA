@@ -1,7 +1,7 @@
 #
-# $Id: vdqmserv.sysconfig,v 1.1 2004/08/06 14:58:55 motiakov Exp $
+# $Id: vdqmserv.sysconfig,v 1.2 2004/08/12 16:46:01 motiakov Exp $
 #
-# @(#)$RCSfile: vdqmserv.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:58:55 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: vdqmserv.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:46:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 #
 # should vdqmserv run?
@@ -11,6 +11,7 @@ RUN_VDQMSERV="yes"
 
 if [ -f /etc/sysconfig/castor_security ]; then
 	. /etc/sysconfig/castor_security CENTRAL
+	export SECURE_CASTOR=1
 	export CSEC_TRACE=1
 	export CSEC_TRACEFILE=/usr/spool/vdqm/vdqm_trace
 fi

@@ -1,7 +1,7 @@
 #
-# $Id: rfiod.sysconfig,v 1.1 2004/08/06 14:59:47 motiakov Exp $
+# $Id: rfiod.sysconfig,v 1.2 2004/08/12 16:47:10 motiakov Exp $
 #
-# @(#)$RCSfile: rfiod.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:59:47 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rfiod.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:47:10 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should rfiod run?
 # any string but "yes" will equivalent to "NO"
@@ -14,6 +14,7 @@ RUN_RFIOD="yes"
 
 if [ -f /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security DISK
+	export SECURE_CASTOR=1
         export CSEC_TRACE=1
         export CSEC_TRACEFILE=/usr/spool/rfio/rfio_trace
 fi
