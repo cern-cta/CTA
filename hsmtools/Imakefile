@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/12/21 22:38:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/03/09 14:33:57 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -41,6 +41,10 @@ LIBS = ..\lib\shift.lib wsock32.lib ws2_32.lib /NODEFAULTLIB:libc.lib advapi32.l
 #endif
 #endif
 #endif
+#if _WIN32
+LIBS += ..\lib\castorCommonOra.lib
+#else
+#endif
 SPOOL = HsmToolsSpool
  
 COMM######################### FLAGS ##############################
@@ -52,33 +56,56 @@ CFLAGS =        -I$(INCLUDES) $(DFLAGS)
 COMM######################### DEPENDENCY LIBRARIES ###############
  
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
- 
+DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
 COMM######################### RULES ##############################
 
 MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/repack.$(MANSUFFIX) \
-	   $(MANDIR)/tapetohsm.$(MANSUFFIX)
+	   $(MANDIR)/tapetohsm.$(MANSUFFIX) \
+	   $(MANDIR)/enterFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/modifyFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/deleteFileClass.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX)))
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),modifyFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteFileClass.$(MANSUFFIX)))
 
 PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(repack) \
-	 ProgramTargetName(tapetohsm)
+	 ProgramTargetName(tapetohsm) \
+	 ProgramTargetName(enterFileClass) \
+	 ProgramTargetName(modifyFileClass) \
+	 ProgramTargetName(deleteFileClass) \
+	 ProgramTargetName(enterSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
-	 FileName($(BIN),ProgramTargetName(tapetohsm))
+	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
+	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
+	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
+	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
+	 FileName($(BIN),ProgramTargetName(enterSvcClass))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
-	 $(EXPORTBIN)/tapetohsm
+	 $(EXPORTBIN)/tapetohsm \
+	 $(EXPORTBIN)/enterFileClass \
+	 $(EXPORTBIN)/modifyFileClass \
+	 $(EXPORTBIN)/deleteFileClass \
+	 $(EXPORTBIN)/enterSvcClass \
 
 all: $(PROGS)
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(shlib,shift)
+MakeDepSharedLibrary(shlib,castorCommonOra)
 
 install: $(BIN) $(IPROGS) $(SPOOL)
 
@@ -91,6 +118,18 @@ IEXPORT(repack,$(EXPORTBIN),755);
 InstallProgram(tapetohsm,$(BIN),root,bin,755)
 IEXPORT(tapetohsm,$(EXPORTBIN),755);
 
+InstallProgram(enterFileClass,$(BIN),root,bin,755)
+IEXPORT(enterFileClass,$(EXPORTBIN),755);
+
+InstallProgram(modifyFileClass,$(BIN),root,bin,755)
+IEXPORT(modifyFileClass,$(EXPORTBIN),755);
+
+InstallProgram(deleteFileClass,$(BIN),root,bin,755)
+IEXPORT(deleteFileClass,$(EXPORTBIN),755);
+
+InstallProgram(enterSvcClass,$(BIN),root,bin,755)
+IEXPORT(enterSvcClass,$(EXPORTBIN),755);
+
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
  
@@ -101,9 +140,15 @@ MakeDir($(MANDIR),root,bin,0755)
 IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(tapetohsm,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(enterFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(modifyFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(deleteFileClass,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(modifyFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(deleteFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 export: $(EPROGS)
 
