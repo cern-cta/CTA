@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.9 $ $Date: 2000/01/10 10:24:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.10 $ $Date: 2000/01/10 14:53:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1221,7 +1221,7 @@ void *tapeIOthread(void *arg) {
                      * requests are clumped together and treated
                      * in a single call to MemoryToTape(). This means
                      * that the subsequent requests are not passed
-                     * to topen() and tclose() and hence the start
+                     * to topen() and tclose() and hence the sizes, start
                      * and end transfer time for each individual file
                      * is unknown. We simply set it to the total (all
                      * concatenated files together) start and end.
@@ -1230,8 +1230,19 @@ void *tapeIOthread(void *arg) {
                         nextfile->prev->filereq.TStartTransferTape;
                     nextfile->filereq.TEndTransferTape = 
                         nextfile->prev->filereq.TEndTransferTape;
+                    nextfile->filereq.TStartPosition = 
+                        nextfile->prev->filereq.TStartPosition;
+                    nextfile->filereq.TEndPosition = 
+                        nextfile->prev->filereq.TEndPosition;
                     nextfile->filereq.nbrecs = 
                         nextfile->prev->filereq.nbrecs;
+                    nextfile->filereq.bytes_from_host = 
+                        nextfile->prev->filereq.bytes_from_host;
+                    nextfile->filereq.bytes_out = 
+                        nextfile->prev->filereq.bytes_out;
+                    /*
+                     * bytes_in contains the value for each disk file. 
+                     */ 
                 }
                 nextfile->filereq.proc_status = RTCP_FINISHED;
                 tellClient(&client_socket,NULL,nextfile,0);
