@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.117 2001/03/13 08:05:31 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.118 2001/03/14 13:31:11 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.117 $ $Date: 2001/03/13 08:05:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.118 $ $Date: 2001/03/14 13:31:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2238,7 +2238,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		/* to the same disk file under one unique condition : there is only ONE */
 		/* other entry matching the disk file, it is a STAGEIN|STAGED one and its */
 		/* nbaccesses is <= 1 and it is an automatic delfile() call from procupd */
-		/* (.e.g at a STAGEWRT successful callback) */
+		/* (.e.g at a STAGEWRT successful callback) and it is another 'h' type */
 		struct stgcat_entry *stclp;
 
 		for (stclp = stcs; stclp < stce; stclp++) {
@@ -2259,7 +2259,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			}
 		}
 		if ((found == 0) ||
-			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) &&
+			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) && (stcp_perhaps_stagein->t_or_d == 'h') &&
 				(
 				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
 				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
@@ -2339,7 +2339,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		}
 	}
 	if (delreqflg) {
-		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) &&
+		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) && (stcp_perhaps_stagein->t_or_d == 'h') &&
 				(
 				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
 				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
