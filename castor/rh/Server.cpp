@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/23 15:34:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/23 16:16:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,6 +26,7 @@
 
 // Include Files
 #include "errno.h"
+#include "Cuuid.h"
 #include <signal.h>
 
 #include "castor/io/ServerSocket.hpp"
@@ -190,8 +191,19 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       }
       client->setIpAddress(ip);
       
-      // handle the request
+      // handle the request (and give a Cuuid to it)
+      // XXX Interface to Cuuid has to be improved !
+      // XXX its length has currently yo be hardcoded
+      // XXX wherever you use it !!!
+      Cuuid_t cuuid;
+      Cuuid_create(&cuuid);
+      char uuid[17];
+      uuid[17] = 0;
+      char* uuid2 = uuid;
+      marshall_UUID(uuid2, cuuid);
+      fr->setReqId(uuid);
       handleRequest(fr);
+      ack.setRequestId(uuid);
       ack.setStatus(true);
       
     } catch (castor::exception::Exception e) {
