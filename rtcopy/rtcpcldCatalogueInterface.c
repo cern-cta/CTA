@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.84 $ $Release$ $Date: 2004/11/26 13:58:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.85 $ $Release$ $Date: 2004/11/26 14:00:22 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.84 $ $Release$ $Date: 2004/11/26 13:58:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.85 $ $Release$ $Date: 2004/11/26 14:00:22 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -946,7 +946,7 @@ static int alreadySelected(
      tape_list_t *tape;
      struct Cstager_Segment_t *segment;
 {
-  struct Cstager_Segment_t *compSegment = NULL, segm = NULL;
+  struct Cstager_Segment_t *compSegment = NULL, *segm = NULL;
   file_list_t *fl;
   
   if ( (tape == NULL) || (segment == NULL) ) {
