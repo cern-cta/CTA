@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.156 2001/10/08 09:03:30 jdurand Exp $
+ * $Id: stager.c,v 1.157 2001/10/16 19:34:35 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.156 $ $Date: 2001/10/08 09:03:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.157 $ $Date: 2001/10/16 19:34:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2164,6 +2164,8 @@ int stagewrt_castor_hsm_file() {
 			}
 			if ((Flags != TAPE_FULL) && (stagewrt_nomoreupdatetape == 0)) {
 				/* If Flags is TAPE_FULL then it has already been set by the callback which called vmgr_updatetape */
+				/* We remove the busy flag if any */
+				Flags &= ~TAPE_BUSY;
 				if (vid[0] != '\0') {
 #ifdef STAGER_DEBUG
 					SAVE_EID;
@@ -4082,6 +4084,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Monday 08 October, 2001 at 11:02:34 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 16 October, 2001 at 21:33:14 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
