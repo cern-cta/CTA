@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.30 2001/12/04 10:29:55 jdurand Exp $
+ * $Id: stage_api.c,v 1.31 2001/12/05 10:08:22 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -181,6 +181,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries = 0;               /* Number of retries */
+  int nstg161 = 0;              /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -594,7 +595,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       serrno = USERR;
       break;
     }
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -937,6 +938,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries = 0;               /* Number of retries */
+  int nstg161 = 0;              /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
@@ -1111,7 +1113,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
     if ((c == 0) || (serrno == EINVAL)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -1269,6 +1271,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries = 0;               /* Number of retries */
+  int nstg161 = 0;              /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -1517,7 +1520,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -1545,6 +1548,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries = 0;               /* Number of retries */
+  int nstg161 = 0;              /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -1861,7 +1865,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -1996,3 +2000,124 @@ int DLL_DECL stageclr_Link(flags,hostname,linkname)
   strcpy(stpp_input.upath,linkname); /* Cannot be zero-length */
   return(stageclr_link(flags,hostname,1,&stpp_input));
 }
+
+int DLL_DECL stage_ping(flags,hostname)
+     u_signed64 flags;
+     char *hostname;
+{
+  int req_type = STAGE_PING;
+  int msglen;                   /* Buffer length (incremental) */
+  int ntries = 0;               /* Number of retries */
+  int nstg161 = 0;              /* Number of STG161 messages */
+  struct passwd *pw;            /* Password entry */
+  char *sbp, *p, *q;            /* Internal pointers */
+  char *sendbuf;                /* Socket send buffer pointer */
+  size_t sendbuf_size;          /* Total socket send buffer length */
+  uid_t euid;                   /* Current effective uid */
+  gid_t egid;                   /* Current effective gid */
+  int status;                   /* Variable overwritten by macros in header */
+  int c;                        /* Output of build_linkname() */
+  char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
+  int pid = 0;
+  int Tid = 0;
+  u_signed64 uniqueid = 0;
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
+  char *func = "stage_ping";
+
+  euid = geteuid();             /* Get current effective uid */
+  egid = getegid();             /* Get current effective gid */
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+#endif
+
+  if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    serrno = SEUSERUNKN;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
+  /* Our uniqueid is a combinaison of our pid and our threadid */
+  pid = getpid();
+  Cglobals_getTid(&Tid); /* Get CthreadId  - can be -1 */
+  Tid++;
+  uniqueid = (((u_signed64) pid) * ((u_signed64) 0xFFFFFFFF)) + Tid;
+
+  if (stage_setuniqueid((u_signed64) uniqueid) != 0) {
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
+  /* How many bytes do we need ? */
+  sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
+  sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
+  sendbuf_size += LONGSIZE;                /* Gid */
+  sendbuf_size += HYPERSIZE;               /* Flags */
+
+  /* Will we go over the maximum socket size (we say -1000 just to be safe v.s. header size) */
+  /* And anyway MAX_NETDATA_SIZE is alreayd 1MB by default which is high! */
+  if (sendbuf_size > MAX_NETDATA_SIZE) {
+    serrno = ESTMEM;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return(-1);
+  }
+
+  /* Build request header */
+  sbp = sendbuf;
+  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, req_type);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+  marshall_STRING(sbp, pw->pw_name);         /* Login name */
+  marshall_LONG (sbp, egid);                 /* gid */
+  marshall_HYPER (sbp, flags);               /* Flags */
+  /* Update request header */
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  /* Dial with the daemon */
+  while (1) {
+    c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
+    if ((c == 0) || (serrno == EINVAL)) break;
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  free(sendbuf);
+
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+
+  return (c);
+}
+
