@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.205 2002/06/03 13:33:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.206 2002/06/05 04:34:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.205 $ $Date: 2002/06/03 13:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.206 $ $Date: 2002/06/05 04:34:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2208,7 +2208,7 @@ void incr_migpool_counters(stcp,pool_p,immediate,ifileclass,thistime)
 	case 4:
 		/* We udpate global migrator variables (wait mode) if necessary */
 		if (stcp->filler[0] == 'd') {
-			/* Latency time has not yet exhausted but we move neverthless DELAY counters to CAN_BE_MIGR ones */
+			/* Latency time has not yet expired but we move neverthless DELAY counters to CAN_BE_MIGR ones */
 			stcp->u1.h.mintime_beforemigr = 0;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.88 2002/05/15 06:42:23 jdurand Exp $
+ * $Id: procqry.c,v 1.89 2002/06/05 04:34:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.88 $ $Date: 2002/05/15 06:42:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.89 $ $Date: 2002/06/05 04:34:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1794,8 +1794,8 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	scs = (struct sorted_ent *) calloc (nbcat_ent, sizeof(struct sorted_ent));
 	sci = scs;
 	for (stcp = stcs; stcp < stce; stcp++) {
-		int isstageout_exhausted;
-		int isput_failed_exhausted;
+		int isstageout_expired;
+		int isput_failed_expired;
 		int isother_ok;
 		signed64 put_failed_retenp;
 		signed64 stageout_retenp;
@@ -1811,18 +1811,18 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		/* STAGED entries */
 		/* STAGEOUT entries that have expired retention period on disk */
 		/* PUT_FAILED entries that have expired retention period on disk */
-		isstageout_exhausted   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
-									 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
-									 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
-									 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
-									 (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
-									 (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a exhausted retention period */
-		isput_failed_exhausted = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
-								     ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
-									 (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
-									 (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got exhausted */
+		isstageout_expired   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
+								   (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
+								   (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
+								   (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
+								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
+								   (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a expired retention period */
+		isput_failed_expired = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
+								   ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
+								   (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
+								   (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got expired */
 		isother_ok = ISSTAGED(stcp);
-		if (! (isstageout_exhausted || isput_failed_exhausted || isother_ok)) continue;
+		if (! (isstageout_expired || isput_failed_expired || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
@@ -2107,12 +2107,12 @@ int get_retenp(stcp,timestr)
 		if ((this_retenp = get_stageout_retenp(stcp)) >= 0) {
 			/* There is a stageout retention period */
 			if ((this_time - stcp->a_time) > this_retenp) {
-				strcpy(timestr,"Exhausted");
+				strcpy(timestr,"Expired");
 			} else {
 				time_t dummy_retenp;
 				this_retenp += stcp->a_time;
 				dummy_retenp = (time_t) this_retenp;
-				/* Retention period not yet exhausted */
+				/* Retention period not yet expired */
 				stage_util_time(dummy_retenp,timestr);
 			}
 		} else {
@@ -2125,12 +2125,12 @@ int get_retenp(stcp,timestr)
 		if ((this_retenp = get_put_failed_retenp(stcp)) >= 0) {
 			/* There is a put_failed retention period */
 			if ((this_time - stcp->a_time) > this_retenp) {
-				strcpy(timestr,"Exhausted");
+				strcpy(timestr,"Expired");
 			} else {
 				time_t dummy_retenp;
 				this_retenp += stcp->a_time;
 				dummy_retenp = (time_t) this_retenp;
-				/* Retention period not yet exhausted */
+				/* Retention period not yet expired */
 				stage_util_time(dummy_retenp,timestr);
 			}
 		} else {
@@ -2169,12 +2169,12 @@ int get_retenp(stcp,timestr)
 					break;
 				default:
 					if ((this_time - stcp->a_time) > this_retenp) {
-						strcpy(timestr,"Exhausted");
+						strcpy(timestr,"Expired");
 					} else {
 						time_t dummy_retenp;
 						this_retenp += stcp->a_time;
 						dummy_retenp = (time_t) this_retenp;
-						/* Retention period not yet exhausted */
+						/* Retention period not yet expired */
 						stage_util_time(dummy_retenp,timestr);
 					}
 					break;
@@ -2210,12 +2210,12 @@ int get_mintime(stcp,timestr)
 		if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
 			this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
 		if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
-			strcpy(timestr,"Exhausted");
+			strcpy(timestr,"Expired");
 		} else {
 			time_t dummy_mintime_beforemigr;
 			this_mintime_beforemigr += stcp->a_time;
 			dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
-			/* Retention period not yet exhausted */
+			/* Retention period not yet expired */
 			stage_util_time(dummy_mintime_beforemigr,timestr);
 		}
 		break;
