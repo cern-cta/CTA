@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.31 2003/04/28 10:03:13 jdurand Exp $
+ * $Id: stagealloc.c,v 1.32 2003/10/31 06:58:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.31 $ $Date: 2003/04/28 10:03:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.32 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -262,7 +262,7 @@ int main(argc, argv)
 
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == EINVAL || serrno == ESTCLEARED || serrno == ENOSPC || serrno == ESTKILLED) break;
+		if (c == 0 || serrno == EINVAL || serrno == ESTCLEARED || serrno == ENOSPC || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || serrno == ESTKILLED) break;
 		if (serrno == ESTLNKNSUP) {	/* symbolic links not supported on that platform */
 			c = 0;
 			break;

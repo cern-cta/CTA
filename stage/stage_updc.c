@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.28 2003/07/14 11:30:18 jdurand Exp $
+ * $Id: stage_updc.c,v 1.29 2003/10/31 06:58:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.28 $ $Date: 2003/07/14 11:30:18 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.29 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -301,7 +301,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -537,7 +537,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -656,7 +656,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -785,7 +785,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -903,7 +903,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -1054,7 +1054,7 @@ int DLL_DECL stage_updc_open(stageid, subreqid, flags)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -1205,7 +1205,7 @@ int DLL_DECL stage_updc_close(stageid, subreqid, flags)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;

@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.23 2003/09/14 05:59:35 jdurand Exp $
+ * $Id: stagechng.c,v 1.24 2003/10/31 06:58:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.23 $ $Date: 2003/09/14 05:59:35 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.24 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -274,7 +274,7 @@ int main(argc, argv)
 
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == EINVAL || serrno == ENOSPC) break;
+		if (c == 0 || serrno == EINVAL || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || serrno == ENOSPC) break;
 		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;

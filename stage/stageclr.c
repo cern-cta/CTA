@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.35 2003/09/08 15:40:09 jdurand Exp $
+ * $Id: stageclr.c,v 1.36 2003/10/31 06:58:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.35 $ $Date: 2003/09/08 15:40:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.36 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -336,7 +336,7 @@ int main(argc, argv)
 
 			while (1) {
 				c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-				if (c == 0 || serrno == EINVAL || serrno == EBUSY) break;
+				if (c == 0 || serrno == EINVAL || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || serrno == EBUSY) break;
 				if (serrno == ENOUGHF) break;
 				if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 				if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
@@ -365,7 +365,7 @@ int main(argc, argv)
 
 		while (1) {
 			c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-			if (c == 0 || serrno == EINVAL) break;
+			if (c == 0 || (serrno == ESTGROUP) || (serrno == ESTUSER) || (serrno == SEUSERUNKN) || (serrno == SEGROUPUNKN) || serrno == EINVAL) break;
 			if (serrno == ENOUGHF) {
 				c = 0;
 				break;
