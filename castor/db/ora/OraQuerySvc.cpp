@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/17 15:25:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/10 17:10:06 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -44,7 +44,7 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 //------------------------------------------------------------------------------
 /// SQL statement for tapesToDo
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-  "SELECT DiskCopy.id, DiskCopy.path, DiskCopy.diskcopyId, FileSystem.mountPoint, FileSystem.weight, DiskServer.name FROM CastorFile, DiskCopy, FileSystem, DiskServer WHERE CastorFile.fileId = :1 AND CastorFile.nsHost = :2 AND DiskCopy.castorFile = Castorfile.id AND DiskCopy.fileSystem = FileSystem.id and FileSystem.diskserver = DiskServer.id";
+  "SELECT DiskCopy.id, DiskCopy.path, FileSystem.mountPoint, FileSystem.weight, DiskServer.name FROM CastorFile, DiskCopy, FileSystem, DiskServer WHERE CastorFile.fileId = :1 AND CastorFile.nsHost = :2 AND DiskCopy.castorFile = Castorfile.id AND DiskCopy.fileSystem = FileSystem.id and FileSystem.diskserver = DiskServer.id";
 
 // -----------------------------------------------------------------------
 // OraQuerySvc
@@ -112,10 +112,9 @@ castor::db::ora::OraQuerySvc::diskCopies4File
         new castor::stager::DiskCopyForRecall();
       item->setId(rset->getInt(1));
       item->setPath(rset->getString(2));
-      item->setDiskcopyId(rset->getString(3));
-      item->setMountPoint(rset->getString(4));
-      item->setFsWeight(rset->getDouble(5));
-      item->setDiskServer(rset->getString(6));
+      item->setMountPoint(rset->getString(3));
+      item->setFsWeight(rset->getDouble(4));
+      item->setDiskServer(rset->getString(5));
       result.push_back(item);
     }
     return result;

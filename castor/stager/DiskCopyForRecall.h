@@ -100,18 +100,6 @@ int Cstager_DiskCopyForRecall_path(struct Cstager_DiskCopyForRecall_t* instance,
 int Cstager_DiskCopyForRecall_setPath(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
 
 /**
- * Get the value of diskcopyId
- * The Cuuid identifying the DiskCopy, stored as a human readable string
- */
-int Cstager_DiskCopyForRecall_diskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char** var);
-
-/**
- * Set the value of diskcopyId
- * The Cuuid identifying the DiskCopy, stored as a human readable string
- */
-int Cstager_DiskCopyForRecall_setDiskcopyId(struct Cstager_DiskCopyForRecall_t* instance, const char* new_var);
-
-/**
  * Get the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */

@@ -146,7 +146,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR(2048), fileSize INTEGER,
 
 /* SQL statements for type DiskCopy */
 DROP TABLE DiskCopy;
-CREATE TABLE DiskCopy (path VARCHAR(2048), diskcopyId VARCHAR(2048), gcWeight float, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
+CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
@@ -286,8 +286,7 @@ BEGIN
 END;
 
 /* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER,
-                                         uuid IN VARCHAR) AS
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
  SubRequestId NUMBER;
  dci NUMBER;
 BEGIN
@@ -297,7 +296,7 @@ SELECT SubRequest.id, DiskCopy.id
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 0, diskcopyId = uuid WHERE id = dci; -- DISKCOPY_STAGED
+UPDATE DiskCopy SET status = 0 WHERE id = dci; -- DISKCOPY_STAGED
 UPDATE SubRequest SET status = 1 WHERE id = SubRequestId; -- SUBREQUEST_RESTART
 UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 END;
@@ -329,8 +328,8 @@ BEGIN
   result := 1;  -- schedule and diskcopies available
   OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               DiskCopy.diskcopyId, FileSystem.weight,
-               FileSystem.mountPoint, DiskServer.name
+               FileSystem.weight, FileSystem.mountPoint,
+               DiskServer.name
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = rsubreqId
       AND SubRequest.castorfile = DiskCopy.castorfile
@@ -347,7 +346,7 @@ END;
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 

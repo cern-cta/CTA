@@ -42,7 +42,6 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskCopy::DiskCopy() throw() :
   m_path(""),
-  m_diskcopyId(""),
   m_gcWeight(0.0),
   m_id(0),
   m_fileSystem(0),
@@ -80,7 +79,6 @@ void castor::stager::DiskCopy::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "path : " << m_path << std::endl;
-  stream << indent << "diskcopyId : " << m_diskcopyId << std::endl;
   stream << indent << "gcWeight : " << m_gcWeight << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

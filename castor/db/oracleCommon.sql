@@ -94,8 +94,7 @@ BEGIN
 END;
 
 /* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER,
-                                         uuid IN VARCHAR) AS
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
  SubRequestId NUMBER;
  dci NUMBER;
 BEGIN
@@ -105,10 +104,16 @@ SELECT SubRequest.id, DiskCopy.id
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 0, diskcopyId = uuid WHERE id = dci; -- DISKCOPY_STAGED
+UPDATE DiskCopy SET status = 0 WHERE id = dci; -- DISKCOPY_STAGED
 UPDATE SubRequest SET status = 1 WHERE id = SubRequestId; -- SUBREQUEST_RESTART
 UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 END;
+
+/* PL/SQL method implementing castor package */
+CREATE OR REPLACE PACKAGE castor AS
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
+  TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
+END castor;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -137,8 +142,8 @@ BEGIN
   result := 1;  -- schedule and diskcopies available
   OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               DiskCopy.diskcopyId, FileSystem.weight,
-               FileSystem.mountPoint, DiskServer.name
+               FileSystem.weight, FileSystem.mountPoint,
+               DiskServer.name
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = rsubreqId
       AND SubRequest.castorfile = DiskCopy.castorfile
@@ -152,12 +157,6 @@ EXCEPTION
  WHEN NO_DATA_FOUND -- In this case, schedule for recall
  THEN result := 2;  -- schedule and no diskcopies
 END;
-
-/* PL/SQL method implementing castor package */
-CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
-  TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-END castor;
 
 /* Build diskCopy path from fileId */
 CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
@@ -173,8 +172,7 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR,
-         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
-         rDiskCopyId OUT VARCHAR,
+         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
@@ -190,8 +188,8 @@ BEGIN
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.diskcopyId
-  INTO dci, rpath, rstatus, rDiskCopyId
+ SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+  INTO dci, rpath, rstatus
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -202,14 +200,13 @@ BEGIN
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
-   rDiskCopyId := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  BEGIN
   -- Try to find remote DiskCopies
   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-         DiskCopy.diskcopyId, FileSystem.weight
-  INTO dci, rpath, rstatus, rDiskCopyId, rFsWeight
+         FileSystem.weight
+  INTO dci, rpath, rstatus, rFsWeight
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -224,13 +221,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     makeSubRequestWait(srId, dci);
     dci := 0;
     rpath := '';
-    rDiskCopyId := '';
     close sources;
   ELSE
     OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               DiskCopy.diskcopyId, FileSystem.weight,
-               FileSystem.mountPoint, DiskServer.name
+               FileSystem.weight, FileSystem.mountPoint,
+               DiskServer.name
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
@@ -263,9 +259,8 @@ END;
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
-         rdcId OUT INTEGER,
-         rdcStatus OUT INTEGER, rdcPath OUT VARCHAR,
-         rdcDiskCopyId OUT VARCHAR) AS
+         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
+         rdcPath OUT VARCHAR) AS
 BEGIN
  -- Get diskCopy Id
  SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
@@ -273,8 +268,8 @@ BEGIN
  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
                      fileSystem = fileSystemId
   WHERE id = rdcId
-  RETURNING status, path, diskcopyId
-  INTO rdcStatus, rdcPath, rdcDiskCopyId;
+  RETURNING status, path
+  INTO rdcStatus, rdcPath;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   NULL;
 END;

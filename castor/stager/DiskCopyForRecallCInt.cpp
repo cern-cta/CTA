@@ -114,23 +114,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_diskcopyId
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_diskcopyId(castor::stager::DiskCopyForRecall* instance, const char** var) {
-    *var = instance->diskcopyId().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_setDiskcopyId
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_setDiskcopyId(castor::stager::DiskCopyForRecall* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setDiskcopyId(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_gcWeight
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_gcWeight(castor::stager::DiskCopyForRecall* instance, float* var) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.102 $ $Release$ $Date: 2005/01/07 13:00:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.103 $ $Release$ $Date: 2005/01/10 17:10:06 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -112,7 +112,7 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
-  "BEGIN fileRecalled(:1, :2); END;";
+  "BEGIN fileRecalled(:1); END;";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -120,11 +120,11 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN putStart(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -624,18 +624,8 @@ void castor::db::ora::OraStagerSvc::fileRecalled
         createStatement(s_fileRecalledStatementString);
       m_fileRecalledStatement->setAutoCommit(true);
     }
-    // get a Cuuid for the DiskCopy
-    // XXX Interface to Cuuid has to be improved !
-    // XXX its length has currently yo be hardcoded
-    // XXX wherever you use it !!!
-    Cuuid_t cuuid;
-    Cuuid_create(&cuuid);
-    char uuid[CUUID_STRING_LEN+1];
-    uuid[CUUID_STRING_LEN] = 0;
-    Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
     // execute the statement and see whether we found something
     m_fileRecalledStatement->setDouble(1, tapeCopy->id());
-    m_fileRecalledStatement->setString(2, uuid);
     unsigned int nb =
       m_fileRecalledStatement->executeUpdate();
     if (nb == 0) {
@@ -1049,10 +1039,9 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
           item->setId((u_signed64) rs->getDouble(1));
           item->setPath(rs->getString(2));
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-          item->setDiskcopyId(rs->getString(4));
-          item->setFsWeight(rs->getFloat(5));
-          item->setMountPoint(rs->getString(6));
-          item->setDiskServer(rs->getString(7));
+          item->setFsWeight(rs->getFloat(4));
+          item->setMountPoint(rs->getString(5));
+          item->setDiskServer(rs->getString(6));
           sources.push_back(item);
           status = rs->next();
         }
@@ -1101,11 +1090,9 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       m_getUpdateStartStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
       m_getUpdateStartStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 2048);
+        (7, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (8, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (9, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -1119,8 +1106,8 @@ castor::db::ora::OraStagerSvc::getUpdateStart
         << "getUpdateStart : unable to schedule SubRequest.";
       throw ex;
     }
-    unsigned long euid = m_getUpdateStartStatement->getInt(8);
-    unsigned long egid = m_getUpdateStartStatement->getInt(9);
+    unsigned long euid = m_getUpdateStartStatement->getInt(7);
+    unsigned long egid = m_getUpdateStartStatement->getInt(8);
     // Check result
     u_signed64 id
       = (u_signed64)m_getUpdateStartStatement->getDouble(3);
@@ -1173,7 +1160,6 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       result->setStatus
         ((enum castor::stager::DiskCopyStatusCodes) status);
     }
-    result->setDiskcopyId(m_getUpdateStartStatement->getString(7));
     if (status == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
         oracle::occi::ResultSet *rs =
@@ -1186,10 +1172,9 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           item->setId((u_signed64) rs->getDouble(1));
           item->setPath(rs->getString(2));
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-          item->setDiskcopyId(rs->getString(4));
-          item->setFsWeight(rs->getFloat(5));
-          item->setMountPoint(rs->getString(6));
-          item->setDiskServer(rs->getString(7));
+          item->setFsWeight(rs->getFloat(4));
+          item->setMountPoint(rs->getString(5));
+          item->setDiskServer(rs->getString(6));
           sources.push_back(item);
           status = rs->next();
         }
@@ -1236,8 +1221,6 @@ castor::db::ora::OraStagerSvc::putStart
         (4, oracle::occi::OCCIINT);
       m_putStartStatement->registerOutParam
         (5, oracle::occi::OCCISTRING, 2048);
-      m_putStartStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
@@ -1256,7 +1239,6 @@ castor::db::ora::OraStagerSvc::putStart
       ((enum castor::stager::DiskCopyStatusCodes)
        m_putStartStatement->getInt(4));
     result->setPath(m_putStartStatement->getString(5));
-    result->setDiskcopyId(m_putStartStatement->getString(6));
     // return
     cnvSvc()->commit();
     return result;

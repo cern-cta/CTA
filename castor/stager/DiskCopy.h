@@ -101,18 +101,6 @@ int Cstager_DiskCopy_path(struct Cstager_DiskCopy_t* instance, const char** var)
 int Cstager_DiskCopy_setPath(struct Cstager_DiskCopy_t* instance, const char* new_var);
 
 /**
- * Get the value of diskcopyId
- * The Cuuid identifying the DiskCopy, stored as a human readable string
- */
-int Cstager_DiskCopy_diskcopyId(struct Cstager_DiskCopy_t* instance, const char** var);
-
-/**
- * Set the value of diskcopyId
- * The Cuuid identifying the DiskCopy, stored as a human readable string
- */
-int Cstager_DiskCopy_setDiskcopyId(struct Cstager_DiskCopy_t* instance, const char* new_var);
-
-/**
  * Get the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */

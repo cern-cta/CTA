@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/08 07:14:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.110 $ $Release$ $Date: 2005/01/10 17:13:44 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/08 07:14:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.110 $ $Release$ $Date: 2005/01/10 17:13:44 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1221,7 +1221,7 @@ static int nextSegmentToRecall(
   struct Cstager_DiskCopy_t *diskCopy = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
   char *diskServerName = NULL, *mountPointName = NULL, *pathName = NULL;
-  char *nsHost = NULL, *diskCopyId = NULL;
+  char *nsHost = NULL;
   file_list_t *fl = NULL;
   int rc, save_serrno;
   rtcpFileRequest_t *filereq = NULL;
@@ -1310,13 +1310,6 @@ static int nextSegmentToRecall(
                               diskCopy,
                               &castorFile
                               );
-  Cstager_DiskCopy_diskcopyId(
-                              diskCopy,
-                             (CONST char **)&diskCopyId
-                              );
-  if ( diskCopyId != NULL ) {
-    (void)string2Cuuid(&(filereq->stgReqId),diskCopyId);
-  }
   Cstager_DiskCopyForRecall_mountPoint(
                                        recallCandidate,
                                        (CONST char **)&mountPointName
@@ -1421,7 +1414,6 @@ int nextSegmentToMigrate(
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
   char *diskServer = NULL, *mountPoint = NULL, *relPath = NULL, *nsHost = NULL;
-  char *diskCopyId = NULL;
   int rc, save_serrno, nbDskCps = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ) {
@@ -1584,10 +1576,6 @@ int nextSegmentToMigrate(
                         (CONST char **)&relPath
                         );
   
-  Cstager_DiskCopy_diskcopyId(
-                              diskCopy,
-                             (CONST char **)&diskCopyId
-                              );
   if ( relPath == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1648,9 +1636,6 @@ int nextSegmentToMigrate(
   strcpy(filereq->recfm,"F");
   filereq->def_alloc = 0;
   filereq->proc_status = RTCP_WAITING;
-  if ( diskCopyId != NULL ) {
-    (void)string2Cuuid(&(filereq->stgReqId),diskCopyId);
-  }
 
   if ( diskServer != NULL ) {
     sprintf(filereq->file_path,"%s:%s/%s",diskServer,mountPoint,relPath);
