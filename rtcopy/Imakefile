@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2004/12/06 13:10:08 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2004/12/21 22:34:31 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -72,11 +72,11 @@ VMGRSERV = rtcp_CallVMGR.Osuf
 VMGRLIB = rtcpc_CallVMGR.Osuf
 #endif
 
-#if BuildVdqmClient
+#if BuildVdqmLibrary
 VDQMFLG = -DVDQM
 #endif
 
-#if BuildTapeClient
+#if BuildTapeLibrary
 CTAPEFLG = -DCTAPE
 #else
 CTAPEFLG = -DCTAPE_DUMMIES
@@ -145,7 +145,7 @@ RTCPFLAG=-DRTCP_SERVER
 RTCPFLAG=
 #endif
 
-#if BuildMonitorClient
+#if BuildMonitorLibrary
 MONITORFLAG=-DMONITOR
 #else
 MONITORFLAG=
@@ -233,7 +233,7 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),killjid.$(MANSUFFIX))) 
 #endif
 
-#if BuildMonitorClient 
+#if BuildMonitorLibrary
 RTCPD_MONITORCLIENT = Cmonit_rtcopyclient.Osuf
 #endif 
 
@@ -265,7 +265,11 @@ DUMPTAPE_OBJS =	dumptape.Osuf
 RTSTAT_OBJS = rtstat.Osuf
 #endif
 
-all: LibraryTargetName(rtcpapi) $(PROGS_C) $(PROGS_D)
+#if BuildRtcopyLibrary
+RTCPLIBTARGET=LibraryTargetName(rtcpapi)
+#endif
+
+all: $(RTCPLIBTARGET) $(PROGS_C) $(PROGS_D)
 
 rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
 			RemoveFile(rtcpc_SendRecv.c)
