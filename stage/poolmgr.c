@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.103 2001/03/05 15:31:31 jdurand Exp $
+ * $Id: poolmgr.c,v 1.104 2001/03/06 09:36:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.103 $ $Date: 2001/03/05 15:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.104 $ $Date: 2001/03/06 09:36:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -814,7 +814,8 @@ int ismigovl(pid, status)
   int found;
   int i;
   struct pool *pool_p;
-
+  struct stgcat_entry *stcp;
+  char *func = "ismigovl";
   if (nbpool == 0) return (0);
   found = 0;
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
@@ -828,6 +829,27 @@ int ismigovl(pid, status)
   pool_p->migr->mig_pid = 0;
   pool_p->migr->migreqtime = 0;
   pool_p->migr->migreqtime_last_end = time(NULL);
+  /* We check if there are remaining entries in WAITING_MIG status in this pool */
+  /* If so, this is the migrator that failed. */
+  for (stcp = stcs; stcp < stce; stcp++) {
+    if (stcp->reqid == 0) break;
+    if (strcmp(stcp->poolname, pool_p->name) != 0) continue;
+    if ((stcp->status & WAITING_MIGR) == WAITING_MIGR) {
+      /* This entry had a problem */
+      stglogit(func, "STG02 - %s still in WAITING_MIGR, changed to PUT_FAILED\n", stcp->u1.h.xfile);
+      stcp->status &= ~WAITING_MIGR;
+      /* The following will force update_migpool() to correctly update the being_migr counters */
+      stcp->status |= BEING_MIGR;
+      update_migpool(stcp,-1,0);
+      stcp->status |= PUT_FAILED;
+#ifdef USECDB
+      if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+        stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+      }
+#endif
+      savereqs ();
+    }
+  }
   return (1);
 }
 
@@ -2936,7 +2958,7 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* @@@@ EXCEPTIONNAL @@@@ */
-    /* Cnsfileclass.migr_time_interval = 1; */
+    Cnsfileclass.migr_time_interval = 1;
     /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
