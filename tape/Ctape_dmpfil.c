@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.2 $ $Date: 2000/03/09 08:43:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.3 $ $Date: 2000/06/11 06:54:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -183,6 +183,8 @@ int flags;
 		serrno = errno;
 		return (-1);
 	}
+
+	(void) clear_compression_stats (infd, path, devtype);
 
 	/* save dump parameters */
 
@@ -373,6 +375,7 @@ u_signed64 *Size;
 				dmp_usrmsg (MSG_OUT, " ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
 				dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
 				if (dmpparm.maxfile != 0 && nfile >= dmpparm.maxfile) {
+					(void) report_comp_stats (infd, path, dmpparm.devtype);
 					dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 					close (infd);
 					return (1);
@@ -393,6 +396,7 @@ u_signed64 *Size;
 					dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
 					if (lcode == 0 && dmpparm.maxfile != 0 &&
 					    nfile >= dmpparm.maxfile) {
+						(void) report_comp_stats (infd, path, dmpparm.devtype);
 						dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 						close (infd);
 						return (1);
@@ -544,6 +548,7 @@ u_signed64 *Size;
 		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DDS2 CARTRIDGE (4GB) *****\n",
 			perc);
 	}
+	(void) report_comp_stats (infd, path, dmpparm.devtype);
 	dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 	close (infd);
 	return (1);
@@ -733,6 +738,21 @@ char *label;
 	dmp_usrmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
 	dmp_usrmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
 	dmp_usrmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
+}
+
+report_comp_stats (infd, path, devtype)
+int infd;
+char *path;
+char *devtype;
+{
+	COMPRESSION_STATS compstats;
+
+	if (get_compression_stats (infd, path, devtype, &compstats) == 0) {
+		if (compstats.from_tape)
+			dmp_usrmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
+			    compstats.to_host / compstats.from_tape);
+	}
+	return (0);
 }
 
 Ctape_dmpend()
