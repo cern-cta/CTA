@@ -1,6 +1,9 @@
 /*
- * $Id: getuser.c,v 1.2 1999/07/23 12:13:23 obarring Exp $
+ * $Id: getuser.c,v 1.3 1999/07/29 07:40:41 obarring Exp $
  * $Log: getuser.c,v $
+ * Revision 1.3  1999/07/29 07:40:41  obarring
+ * Fix infile declaration
+ *
  * Revision 1.2  1999/07/23 12:13:23  obarring
  * Make MT safe
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getuser.c,v 1.2 1999/07/23 12:13:23 obarring Exp $";
+static char cvsId[] = "$Id: getuser.c,v 1.3 1999/07/29 07:40:41 obarring Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -30,17 +33,20 @@ extern char     *sys_errlist[] ;        /* System error list  */
 #ifndef MAPPING_FILE
 #if defined(_WIN32)
 #define MAPPING_FILE "%SystemRoot%\\system32\\drivers\\etc\\users.ext"
-static char _infile[CA_MAXPATHLEN+1];
+/*
+ * infile will be modified at runtime when %SystemRoot% is
+ * resolved. Must reserv enough space to hold new pathname.
+ */
+static char infile[CA_MAXPATHLEN+1] = MAPPING_FILE;
 #else
 #define MAPPING_FILE "/etc/ext.users"
+static char *infile = MAPPING_FILE;
 #endif  /* WIN32 */
 #endif  
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-
-static char *infile = MAPPING_FILE;
 
 /*
  * function finds the corresponding entry in the
@@ -69,7 +75,6 @@ int *to_gid ;
     char mapuid[6] ;
     char mapgid[6] ;
     int counter ;
-    char *infile;
 #if defined(_WIN32)
     char path[CA_MAXPATHLEN+1];
 #endif
@@ -80,8 +85,7 @@ int *to_gid ;
 #if defined(_WIN32)
     strcpy(path, infile);
     if( (strncmp(path, "%SystemRoot%\\", 13) == 0) && ((p = getenv ("SystemRoot")) != NULL) ) {
-        sprintf(_infile, "%s\\%s", p, strchr (path, '\\'));
-        infile = _infile;
+        sprintf(infile, "%s\\%s", p, strchr (path, '\\'));
     }
 #endif
    
