@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.39 $ $Date: 2000/03/14 16:50:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.40 $ $Date: 2000/03/15 14:44:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -322,12 +322,17 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
         }
     } CLIST_ITERATE_END(tape->file,fl);
     if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
-         strlen(qstr) + 6 < CA_MAXLINELEN &&
-         qstr[strlen(qstr)-1] == '-' && 
-        (tape->file->prev->filereq.concat & 
-         (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) == 0 ) {
-        sprintf(&qstr[strlen(qstr)],"%d",fseq);
-    }
+         strlen(qstr) + 6 < CA_MAXLINELEN ) { 
+        if ( qstr[strlen(qstr)-1] == '-' ) {
+            if ( (tape->file->prev->filereq.concat & 
+                 (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) == 0 )
+                sprintf(&qstr[strlen(qstr)],"%d",fseq);
+        } else {
+            if ( (tape->file->prev->filereq.concat & 
+                 (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) 
+                sprintf(&qstr[strlen(qstr)],"-"); 
+        }
+    } 
 
     if ( fidstr != NULL ) LOGLINE_APPEND(" -f %s",fidstr);
     if ( szstr != NULL ) LOGLINE_APPEND(" -s %s",szstr);
@@ -845,7 +850,7 @@ void rtcpd_SetProcError(int code) {
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
         proc_cntl.ProcError = RTCP_FAILED;
     }
-    if ( (rc & (RTCP_FAILED |RTCP_RESELECT_SERV | RTCP_EOD)) != 0 ) 
+    if ( (rc & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) 
         rtcpd_BroadcastException(); 
 
     return;

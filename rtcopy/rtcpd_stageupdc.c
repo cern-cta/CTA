@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.24 $ $Date: 2000/03/14 16:50:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.25 $ $Date: 2000/03/15 14:44:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -146,18 +146,29 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
                          sstrerror(serrno));
-                serrno = save_serrno;
-                if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
+                switch (save_serrno) {
+                case EINVAL:
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
+                    serrno = save_serrno;
                     return(-1);
+                case SECOMERR:
+                case SESYSERR:
+                    break;
+                default:
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_UNERR);
+                    serrno = save_serrno;
+                    return(-1);
+                }
                 continue;
             } 
         } 
-        if ( filereq->cprc != 0 || filereq->proc_status == RTCP_FINISHED ) {
+        if ( filereq->cprc != 0 || filereq->err.errorcode == ENOSPC ||
+             filereq->proc_status == RTCP_FINISHED ) {
             /*
              * Always give the return code
              */
             retval = 0;
-            rc = rtcp_RetvalSHIFT(tape,file,&retval);
+            rc = rtcp_RetvalCASTOR(tape,file,&retval); 
             if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
             else nb_bytes = filereq->bytes_out;
             strcpy(newpath,filereq->file_path);
@@ -190,17 +201,37 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->recordlength,
                                   filereq->recfm,
                                   newpath);
+            save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
-                         sstrerror(serrno));
-                serrno = save_serrno;
-                if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
+                         sstrerror(save_serrno));
+                switch (save_serrno) {
+                case EINVAL:
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
+                    serrno = save_serrno;
                     return(-1);
+                case SECOMERR:
+                case SESYSERR:
+                    break;
+                default:
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_UNERR);
+                    serrno = save_serrno;
+                    return(-1);
+                }
             } else break;
         }
         if ( rc == 0 ) break;
     } /* for ( retry=0; retry < RTCP_STGUPDC_RETRIES; retry++ ) */
-    if ( rc == -1 ) serrno = save_serrno;
+    if ( rc == -1 ) {
+        if ( save_serrno == SECOMERR || save_serrno == SESYSERR ) {
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_SYERR);
+            serrno = save_serrno;
+        } else {
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_UNERR);
+            serrno = save_serrno;
+        }
+        return(-1);
+    }
 #else /* !USE_STAGECMD */
     sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
     if ( filereq->cprc < 0 && 
@@ -293,12 +324,6 @@ int rtcpd_stageupdc(tape_list_t *tape,
              strcmp(filereq->file_path,".") == 0 ) {
             rtcp_log(LOG_ERR,
                     "rtcpd_stageupdc() deferred allocation and no new path received\n");
-            return(-1);
-        }
-        if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
-             filereq->err.errorcode == ENOSPC ) {
-            rtcp_log(LOG_ERR,
-                    "rtcpd_stageupdc() no new path received after ENOSPC\n");
             return(-1);
         }
     }

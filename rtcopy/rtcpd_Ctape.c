@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.21 $ $Date: 2000/03/13 11:38:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.22 $ $Date: 2000/03/15 14:44:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -427,16 +427,13 @@ int rtcpd_Position(tape_list_t *tape,
         if ((filereq->tape_fseq == prevreq->tape_fseq + 1) ||
             ((filereq->position_method & TPPOSIT_EOI) != 0 && 
              (prevreq->position_method & TPPOSIT_EOI) != 0) ) { 
-            if ( prevreq->cprc == 0 || (prevreq->cprc == LIMBYSZ &&
-                tapereq->mode == WRITE_ENABLE ) ) {
+            if ( prevreq->err.severity == RTCP_OK || 
+                ((prevreq->err.severity & RTCP_LIMBYSZ) != 0 &&
+                 tapereq->mode == WRITE_ENABLE ) ) {
                 flags |= NOPOS;
             }
         }
-    } else if ((filereq->concat == CONCAT_TO_EOD) &&
-               (tapereq->mode == WRITE_DISABLE) ) {
-        flags |= NOPOS;
     }
-
 
     do_retry = 1;
 
@@ -494,7 +491,8 @@ int rtcpd_Position(tape_list_t *tape,
                 severity = RTCP_RESELECT_SERV | RTCP_NORLS;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
-            case EACCES:    /* File not expired */
+            case EACCES:     /* File not expired */
+            case ENOENT:     /* File not found */
             case EINVAL:     /* Invalid parameter */
             case ETLBL:      /* Bad label structure */
             case ETEOV:      /* EOV found in multivolume set */
@@ -513,7 +511,6 @@ int rtcpd_Position(tape_list_t *tape,
                      */
                     severity = RTCP_OK | RTCP_EOD;
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
-                    (void)rtcpd_stageupdc(tape,file);
                     rc = 0;
                     break;
                 } else if ( filereq->concat == NOCONCAT_TO_EOD ) {
@@ -529,9 +526,6 @@ int rtcpd_Position(tape_list_t *tape,
                      */
                     severity = RTCP_FAILED | RTCP_EOD | RTCP_USERR;
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
-                    rc = rtcpd_stageupdc(tape,file);
-                    if ( rc == -1 ) rtcpd_SetReqStatus(NULL,file,serrno,
-                        RTCP_FAILED | RTCP_EOD | RTCP_SYERR);
                     break;
                 } else {
                     /*

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.7 $ $Date: 2000/03/13 11:37:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.8 $ $Date: 2000/03/15 14:44:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -39,7 +39,10 @@ extern char *geterr();
 #include <Ctape_api.h>
 #include <serrno.h>
 
-int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
+typedef enum maptype {map_shift,map_castor} maptype_t;
+
+static int rtcp_Retval(tape_list_t *tape, file_list_t *file, 
+                       int *Retval, maptype_t what) {
     tape_list_t *tl;
     file_list_t *fl;
     rtcpErrMsg_t *err;
@@ -73,24 +76,47 @@ int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
     } CLIST_ITERATE_END(tape,tl);
 
     if ( err != NULL ) {
-        if ( (err->severity & RTCP_FAILED) != 0 ) {
-            if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval = RSLCT;
-            else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
-            else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
-            else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
-            else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
-            else if ( (err->severity & RTCP_ENDVOL) != 0 ) retval = ENDVOL;
-            else retval = UNERR;
+        if ( (err->severity & (RTCP_FAILED|RTCP_LOCAL_RETRY) ) != 0 ) {
+            if ( what == map_castor ) retval = err->errorcode;
+            else {
+                if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval = RSLCT;
+                else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
+                else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
+                else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
+                else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
+                else if ( (err->severity & RTCP_ENDVOL) != 0 ) retval = ENDVOL;
+                else retval = UNERR;
+            }
         } else {
-            if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
-            else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
-            else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
-            else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
-            else if ( (err->severity & RTCP_ENDVOL) != 0 ) retval = ENDVOL;
+            if ( (err->severity & RTCP_BLKSKPD) != 0 ) 
+                if ( what == map_castor ) retval = ERTBLKSKPD;
+                else retval = BLKSKPD;
+            else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) 
+                if ( what == map_castor ) retval = ERTTPE_LSZ;
+                else retval = TPE_LSZ;
+            else if ( (err->severity & RTCP_MNYPARY) != 0 ) 
+                if ( what == map_castor ) retval = ERTMNYPARY;
+                else retval = MNYPARY;
+            else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) 
+                if ( what == map_castor ) retval = ERTLIMBYSZ;
+                else retval = LIMBYSZ;
+            else if ( (err->severity & RTCP_ENDVOL) != 0 ) 
+                if ( what == map_castor ) retval = err->errorcode;
+                else retval = ENDVOL;
             else retval = 0;
         }
     } else retval = 0;
 
     if ( Retval != NULL ) *Retval = retval;
     return(0);
+}
+
+int rtcp_RetvalSHIFT(tape_list_t *tape, file_list_t *file, int *Retval) {
+    maptype_t what = map_shift;
+    return(rtcp_Retval(tape,file,Retval,what));
+}
+
+int rtcp_RetvalCASTOR(tape_list_t *tape, file_list_t *file, int *Retval) {
+    maptype_t what = map_castor;
+    return(rtcp_Retval(tape,file,Retval,what));
 }

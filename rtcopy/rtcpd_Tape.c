@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.46 $ $Date: 2000/03/14 16:50:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.47 $ $Date: 2000/03/15 14:44:30 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -191,7 +191,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             databufs[i]->nb_waiters--;
             rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                              (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
+                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( (convert & FIXVAR) != 0 ) {
@@ -517,7 +517,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          */
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                          (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
+              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
             break;
         }
     } /* End of for (;;) */
@@ -643,7 +643,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             databufs[i]->nb_waiters--;
             rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                              (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
+                  (RTCP_LOCAL_RETRY|RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 break;
@@ -965,7 +965,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          */
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                          (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) break;
+              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) break;
     } /* for (;;) */
     if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
@@ -991,8 +991,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     save_errno = errno; \
     save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
-    if ( rc == -1 || (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 || \
-        (rtcpd_CheckProcError() & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) { \
+    if ( rc == -1 || (severity & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 || \
+        (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
          rtcp_log(LOG_ERR,"tapeIOthread() %s, errno=%d, serrno=%d\n",Z,\
                   save_errno,save_serrno); \
          rtcpd_BroadcastException(); \
@@ -1000,7 +1000,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
              if ( (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) \
                  rtcpd_SetProcError(severity); \
-             else \
+             else if ( (severity & RTCP_LOCAL_RETRY) == 0 ) \
                  rtcpd_SetProcError(RTCP_FAILED); \
          } \
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
@@ -1124,6 +1124,8 @@ void *tapeIOthread(void *arg) {
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
             mode = nexttape->tapereq.mode;
+            if ( mode == WRITE_DISABLE ) nextfile->filereq.err.severity =
+                nextfile->filereq.err.severity & ~RTCP_LOCAL_RETRY;
             /*
              * Handle file section number for multivolume requests. The
              * file section number is 1 for all files on first volume. Only
@@ -1193,6 +1195,10 @@ void *tapeIOthread(void *arg) {
                      ((nextfile->filereq.concat & CONCAT_TO_EOD) != 0) ) {
                     rtcpd_CheckReqStatus(NULL,nextfile,NULL,&severity); 
                     if ( severity == (RTCP_OK | RTCP_EOD) ) {
+                        nextfile->filereq.TEndTransferDisk = 
+                           nextfile->filereq.TEndTransferTape = (int)time(NULL);
+                        nextfile->filereq.err.severity |=
+                           nextfile->prev->filereq.err.severity;
                         (void)Cthread_mutex_lock_ext(databufs[indxp]->lock);
                         databufs[indxp]->flag = BUFFER_FULL;
                         (void)Cthread_cond_broadcast_ext(databufs[indxp]->lock);
