@@ -1,0 +1,42 @@
+{
+  Oracle's library, use of uninitialized value
+  Memcheck:Value4
+  obj:*/libclntsh.so*
+}
+{
+  Oracle's library, jump depending on uninitialized value in clntsh
+  Memcheck:Cond
+  obj:*/libclntsh.so*
+}
+{
+  Oracle's library, jump depending on uninitialized value in nnz10
+  Memcheck:Cond
+  obj:*/libnnz10.so*
+}
+{
+   Oracle's call to times
+   Memcheck:Param
+   times(buf)
+   fun:times
+   fun:kghinp
+}
+{
+   Oracle's call to pthread
+   core:PThread
+   fun:pthread_error
+   fun:pthread_mutex_destroy
+   fun:snsbittrm_ts
+}
+{
+   Oracle's call to pthread(2)
+   core:PThread
+   fun:pthread_error
+   fun:pthread_mutex_destroy
+   fun:sltsmxd
+}
+{
+   Oracle's call to free
+   Memcheck:Free
+   fun:_ZdlPv
+}
+
