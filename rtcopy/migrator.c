@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 13:58:27 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/03 17:15:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/03 13:58:27 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/03 17:15:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -143,7 +143,8 @@ int migratorCallbackFileCopied(
                             );
   if ( blkid == NULL ) blkid = strdup("unknown");
 
-  if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ) {
+  if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
+       ((filereq->cprc == -1) && (filereq->err.errorcode == ENOSPC)) ) {
     rc = rtcpcld_updateTape(
                             tape,
                             file,
@@ -185,50 +186,51 @@ int migratorCallbackFileCopied(
       return(-1);
     }
 
-    rc = rtcpcld_updateNsSegmentAttributes(tape,file);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDNSUPD),
-                      (struct Cns_fileid *)castorFileId,
-                      RTCPCLD_NB_PARAMS+6,
-                      "",
-                      DLF_MSG_PARAM_TPVID,
-                      tapereq->vid,
-                      "SIDE",
-                      DLF_MSG_PARAM_INT,
-                      tapereq->side,
-                      "MODE",
-                      DLF_MSG_PARAM_INT,
-                      tapereq->mode,
-                      "FSEQ",
-                      DLF_MSG_PARAM_INT,
-                      filereq->tape_fseq,
-                      "BLOCKID",
-                      DLF_MSG_PARAM_STR,
-                      blkid,
+    if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
+      rc = rtcpcld_updateNsSegmentAttributes(tape,file);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDNSUPD),
+                        (struct Cns_fileid *)castorFileId,
+                        RTCPCLD_NB_PARAMS+6,
+                        "",
+                        DLF_MSG_PARAM_TPVID,
+                        tapereq->vid,
+                        "SIDE",
+                        DLF_MSG_PARAM_INT,
+                        tapereq->side,
+                        "MODE",
+                        DLF_MSG_PARAM_INT,
+                        tapereq->mode,
+                        "FSEQ",
+                        DLF_MSG_PARAM_INT,
+                        filereq->tape_fseq,
+                        "BLOCKID",
+                        DLF_MSG_PARAM_STR,
+                        blkid,
                       "ERROR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      (void)rtcpcld_updcMigrFailed(
-                                   tape,
-                                   file
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        RTCPCLD_LOG_WHERE
+                        );
+        (void)rtcpcld_updcMigrFailed(
+                                     tape,
+                                     file
                                    );
-      serrno = save_serrno;
-      return(-1);
+        serrno = save_serrno;
+        return(-1);
+      }
+      rc = rtcpcld_updcFileMigrated(
+                                    tape,
+                                    file
+                                    );
+      if ( rc == -1 ) {
+        LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
+        return(-1);
+      }
     }
-    rc = rtcpcld_updcFileMigrated(
-                                  tape,
-                                  file
-                                  );
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
-      return(-1);
-    }
-
     if ( rtcpcld_lockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_lockTape()");
       return(-1);
