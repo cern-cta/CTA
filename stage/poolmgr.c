@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.137 2001/06/17 07:53:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.138 2001/06/20 13:27:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.137 $ $Date: 2001/06/17 07:53:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.138 $ $Date: 2001/06/20 13:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -176,6 +176,7 @@ struct pool_element *betterfs_vs_pool _PROTO((char *, int, u_signed64, int *));
 int pool_elements_cmp _PROTO((CONST void *, CONST void *));
 void get_global_stream_count _PROTO((char *, int *, int *));
 char *findpoolname _PROTO((char *));
+u_signed64 findblocksize _PROTO((char *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -780,6 +781,35 @@ findpoolname(path)
           return (pool_p->name);
       }
   return (NULL);
+}
+
+u_signed64
+findblocksize(path)
+     char *path;
+{
+  /* Not really predictable, 512 almost everywhere, but not always (hpux, some aix...) */
+  /* Taken from fileutils commentaries:
+     "A warning about du for HP-UX users: GNU du (and I'm sure BSD-derived
+     versions) counts the st_blocks field of the `struct stat' for each
+     file.  (It's best to use st_blocks where available, instead of
+     st_size, because otherwise you get wildly wrong answers for sparse
+     files like coredumps, and it counts indirect blocks.)  Chris Torek in
+     a comp.unix.wizards posting stated that in 4BSD st_blocks is always
+     counted in 512 byte blocks.  On HP-UX filesystems, however, st_blocks
+     is counted in 1024 byte blocks.  When GNU du is compiled on HP-UX, it
+     assumes that st_blocks counts 1024-byte blocks, because locally
+     mounted filesystems do; so to get the number of 512-byte blocks, it
+     doubles the st_blocks value.  (The HP-UX du seems to do the same
+     thing.)  This gives the correct numbers on HP-UX filesystems.  But for
+     4BSD filesystems mounted on HP-UX machines, it gives twice the correct
+     numbers; similarly, for HP-UX filesystems, du on 4BSD machines gives
+     half the correct numbers.  GNU ls with the -s option has the same
+     problem.  I know of no way to determine for a given filesystem or file
+     what units st_blocks is measured in.  The f_bsize element of `struct
+     statfs' does not work, because its meaning varies between different
+     versions of Unix."
+  */
+  return ((u_signed64) 512);
 }
 
 int iscleanovl(pid, status)
