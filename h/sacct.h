@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.7 2000/04/13 10:13:52 obarring Exp $
+ * $Id: sacct.h,v 1.8 2000/04/13 10:23:07 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.7 $ $Date: 2000/04/13 10:13:52 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.8 $ $Date: 2000/04/13 10:23:07 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -173,6 +173,9 @@ struct acctrtcp {	/* accounting record for rtcopy software */
 
 struct acctrtcp_timing {
     int jid;
+    int disk_KB;                       /* Disk file size (KBytes)*/
+    int tape_KB;                       /* Tape file size (KBytes) */
+    int host_KB;                       /* KBytes transferred to/from host */
     int TStartPosition;                /* Start time for position to this file */
     int TEndPosition;                  /* End time for position to this file */
     int TStartTransferDisk;            /* Start time for transfer to/from disk */
