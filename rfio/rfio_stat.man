@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.9 2001/11/14 10:44:28 jdurand Exp $
+.\" $Id: rfio_stat.man,v 1.10 2002/02/18 09:34:13 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.9 $ $Date: 2001/11/14 10:44:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.10 $ $Date: 2002/02/18 09:34:13 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2001/11/14 10:44:28 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2002/02/18 09:34:13 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -20,6 +20,8 @@ rfio_stat \- get information about a file or directory
 .BI "int rfio_lstat (const char *" path ", struct stat *" statbuf ");"
 .br
 .BI "int rfio_mstat (const char *" path ", struct stat *" statbuf ");"
+.br
+.BI "int rfio_mstat_reset ();"
 .br
 .BI "int rfio_end ();"
 .SH DESCRIPTION
@@ -49,18 +51,33 @@ The last
 .B rfio_mstat
 call should be followed by a call to
 .BR rfio_end .
+.LP
+.B rfio_mstat_reset
+is to be used when your program is forking. In such a case the permanent connections opened with
+.B rfio_mstat
+become shared between the parent and the child. Use
+.B rfio_mstat_reset
+to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon.
+.P
 See NOTES section below.
 .TP
 .I path
 specifies the logical pathname relative to the current directory or
 the full pathname.
+.TP
+.I statbuf
+is a pointer to a
+.B stat
+structure, receiving result of your query.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH NOTES
-Multiple connections using rfio_mstat are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_mstat by its parent.
+Multiple connections using rfio_mstat are thread-safe but not process-wide, therefore a forked child can share file descriptors opened with rfio_mstat by its parent. Use
+.B rfio_mstat_reset
+in such case.
 .P
 Multiple connections behaviour is undefined if you work in a multi-threaded environment and with threads \fBnot\fP created using the CASTOR's \fBCthread\fP interface.
 .SH ERRORS

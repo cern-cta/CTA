@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.4 2001/11/14 10:44:28 jdurand Exp $
+ * $Id: munlink.c,v 1.5 2002/02/18 09:34:13 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.4 $ $Date: 2001/11/14 10:44:28 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.5 $ $Date: 2002/02/18 09:34:13 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -22,23 +22,11 @@ static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.4 $ $Date: 2001
 #include "rfio.h"
 #include <Cglobals.h>
 #include <Cpwd.h>
-#ifdef _WIN32
-#include <process.h>
-#else
-#include <unistd.h>
-#endif
-
-#ifdef _WIN32
-typedef int _rfio_pgrp_t;
-#else
-typedef pid_t _rfio_pgrp_t;
-#endif
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int Tid;
-  _rfio_pgrp_t pgrp;
 } munlink_connects ;
 static munlink_connects munlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
@@ -46,7 +34,6 @@ static int rfio_smunlink _PROTO((int, char *));
 static int rfio_munlink_allocentry _PROTO((char *, int, int));
 static int rfio_munlink_findentry _PROTO((char *,int));
 static int rfio_unend_this _PROTO((int,int));
-static int rfio_munlink_findpgrp _PROTO((int));
 
 int DLL_DECL rfio_munlink(file)
      char *file ;
@@ -100,7 +87,7 @@ int DLL_DECL rfio_munlink(file)
       rc = rfio_smunlink(fd,filename) ;
       if ( rc != -1 ) {
         TRACE(2,"rfio","rfio_munlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-        (void)close(fd);
+        netclose(fd);
       }
       fd = -1;
     }
@@ -218,34 +205,18 @@ static int rfio_smunlink(s,filename)
   return(0) ;
 }
 
-static int rfio_munlink_findpgrp(Tid)
-     int Tid;
-{
-  if (Tid < 0) {
-    return(getpid());
-  } else {
-#ifdef linux
-    return(getpgrp());
-#else
-    return(getpid());
-#endif
-  }
-}
-
 int DLL_DECL rfio_unend()
 {
   int i,Tid, j=0 ;
   char buf[256];
   char *p=buf ;
   int rc = 0;
-  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
-  pgrp = rfio_munlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_unend entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
+  TRACE(3,"rfio","rfio_unend entered, Tid=%d", Tid);
 
   TRACE(3,"rfio","rfio_unend: Lock munlink_tab");
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
@@ -254,14 +225,6 @@ int DLL_DECL rfio_unend()
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if ((munlink_tab[i].pgrp > 0) && (munlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_unend: munlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pgrp, pgrp);
-      munlink_tab[i].s = -1;
-      munlink_tab[i].host[0] = '\0';
-      munlink_tab[i].Tid = -1;
-      munlink_tab[i].pgrp = 0;
-      continue;
-    }
     if (munlink_tab[i].Tid == Tid) {
       if ((munlink_tab[i].s >= 0) && (munlink_tab[i].host[0] != '\0')) {
         marshall_WORD(p, RFIO_MAGIC);
@@ -272,12 +235,11 @@ int DLL_DECL rfio_unend()
           TRACE(3, "rfio", "rfio_unend: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
         }
-        (void) close(munlink_tab[i].s);
+        netclose(munlink_tab[i].s);
       }
       munlink_tab[i].s = -1;
       munlink_tab[i].host[0] = '\0';
       munlink_tab[i].Tid = -1;
-      munlink_tab[i].pgrp = 0;
     }
   }
    
@@ -301,14 +263,12 @@ static int rfio_unend_this(s,flag)
   char buf[256];
   char *p=buf ;
   int rc = 0;
-  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
-  pgrp = rfio_munlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_unend_this(s=%d,flag=%d) entered, Tid=%d, pgrp=%d", s, flag, Tid, (int) pgrp);
+  TRACE(3,"rfio","rfio_unend_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
 
   TRACE(3,"rfio","rfio_unend_this: Lock munlink_tab");
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
@@ -317,14 +277,6 @@ static int rfio_unend_this(s,flag)
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if ((munlink_tab[i].pgrp > 0) && (munlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_unend_this: munlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pgrp, pgrp);
-      munlink_tab[i].s = -1;
-      munlink_tab[i].host[0] = '\0';
-      munlink_tab[i].Tid = -1;
-      munlink_tab[i].pgrp = 0;
-      continue;
-    }
     if (munlink_tab[i].Tid == Tid) {
       if ((munlink_tab[i].s == s) && (munlink_tab[i].host[0] != '\0')) {
         if (flag) {
@@ -336,11 +288,10 @@ static int rfio_unend_this(s,flag)
             TRACE(3, "rfio", "rfio_unend_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
         }
-        (void) close(munlink_tab[i].s);
+        netclose(munlink_tab[i].s);
         munlink_tab[i].s = -1;
         munlink_tab[i].host[0] = '\0';
         munlink_tab[i].Tid = -1;
-        munlink_tab[i].pgrp = 0;
       }
     }
   }
@@ -365,9 +316,6 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
 {
   int i;
   int rc;
-  _rfio_pgrp_t pgrp;
-
-  pgrp = rfio_munlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -380,20 +328,12 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((munlink_tab[i].pgrp > 0) && (munlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_munlink_allocentry: munlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pgrp, pgrp);
-      munlink_tab[i].s = -1;
-      munlink_tab[i].host[0] = '\0';
-      munlink_tab[i].Tid = -1;
-      munlink_tab[i].pgrp = 0;
-    }
     if (munlink_tab[i].host[0] == '\0') {
       rc = i;
       strncpy(munlink_tab[i].host,hostname,CA_MAXHOSTNAMELEN);
       munlink_tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
       munlink_tab[i].Tid = Tid;
       munlink_tab[i].s = s;
-      munlink_tab[i].pgrp = pgrp;
       goto _rfio_munlink_allocentry_return;
     }
   }
@@ -421,9 +361,6 @@ static int rfio_munlink_findentry(hostname,Tid)
 {
   int i;
   int rc;
-  _rfio_pgrp_t pgrp;
-
-  pgrp = rfio_munlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -436,13 +373,6 @@ static int rfio_munlink_findentry(hostname,Tid)
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((munlink_tab[i].pgrp > 0) && (munlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_munlink_findentry: munlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pgrp, pgrp);
-      munlink_tab[i].s = -1;
-      munlink_tab[i].host[0] = '\0';
-      munlink_tab[i].Tid = -1;
-      munlink_tab[i].pgrp = 0;
-    }
     if ((strcmp(munlink_tab[i].host,hostname) == 0) && (munlink_tab[i].Tid == Tid)) {
       rc = i;
       goto _rfio_munlink_findentry_return;
@@ -459,6 +389,45 @@ static int rfio_munlink_findentry(hostname,Tid)
     END_TRACE();
     return(-1);
   }
+  END_TRACE();
+  return(rc);
+}
+
+int DLL_DECL rfio_munlink_reset()
+{
+  int i,Tid, j=0 ;
+  char buf[256];
+  char *p=buf ;
+  int rc = 0;
+
+  INIT_TRACE("RFIO_TRACE");
+
+  Cglobals_getTid(&Tid);
+
+  TRACE(3,"rfio","rfio_munlink_reset entered, Tid=%d", Tid);
+
+  TRACE(3,"rfio","rfio_munlink_reset: Lock munlink_tab");
+  if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_munlink_reset: Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
+    return(-1);
+  }
+  for (i = 0; i < MAXMCON; i++) {
+    if (munlink_tab[i].s >= 0) {
+        TRACE(3,"rfio","rfio_munlink_reset: Resetting socket fd=%d, host=%s\n", munlink_tab[i].s, munlink_tab[i].host);
+        netclose(munlink_tab[i].s);
+    }
+    munlink_tab[i].s = -1;
+    munlink_tab[i].host[0] = '\0';
+    munlink_tab[i].Tid = -1;
+  }
+   
+  TRACE(3,"rfio","rfio_munlink_reset: Unlock munlink_tab");
+  if (Cmutex_unlock((void *) munlink_tab) != 0) {
+    TRACE(3,"rfio","rfio_munlink_reset: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
+    rc = -1;
+  }
+
   END_TRACE();
   return(rc);
 }

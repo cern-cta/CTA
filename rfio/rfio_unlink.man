@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_unlink.man,v 1.7 2001/11/14 10:44:28 jdurand Exp $
+.\" $Id: rfio_unlink.man,v 1.8 2002/02/18 09:34:14 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.7 $ $Date: 2001/11/14 10:44:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.8 $ $Date: 2002/02/18 09:34:14 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_UNLINK 3 "$Date: 2001/11/14 10:44:28 $" CASTOR "Rfio Library Functions"
+.TH RFIO_UNLINK 3 "$Date: 2002/02/18 09:34:14 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_unlink \- remove a file entry
 .SH SYNOPSIS
@@ -16,6 +16,8 @@ rfio_unlink \- remove a file entry
 .BI "int rfio_unlink (const char *" path ");"
 .br
 .BI "int rfio_munlink (const char *" path ");"
+.br
+.BI "int rfio_munlink_reset ();"
 .br
 .BI "int rfio_unend ();"
 .br
@@ -36,6 +38,21 @@ The last
 .B rfio_munlink
 call should be followed by a call to
 .BR rfio_unend .
+.LP
+.B rfio_munlink_reset
+is to be used when your program is forking. In such a case the permanent connections opened with
+.B rfio_munlink
+become shared between the parent and the child. Use
+.B rfio_munlink_reset
+to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon.
+.LP
+.B rfio_munlink_reset
+is to be used when your program is forking. In such a case the permanent connections opened with
+.B rfio_munlink
+become shared between the parent and the child. Use
+.B rfio_munlink_reset
+to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon.
+.P
 See NOTES section below.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
@@ -43,7 +60,9 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH NOTES
-Multiple connections using rfio_munlink are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_munlink by its parent.
+Multiple connections using rfio_munlink are thread-safe but not process-wide, therefore a forked child cann share file descriptors opened with rfio_munlink by its parent. Use
+.B rfio_msymlink_reset
+in such case.
 .P
 Multiple connections behaviour is undefined if you work in a multi-threaded environment and with threads \fBnot\fP created using the CASTOR's \fBCthread\fP interface.
 .SH ERRORS

@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.4 2001/11/14 10:44:28 jdurand Exp $
+ * $Id: msymlink.c,v 1.5 2002/02/18 09:34:13 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.4 $ $Date: 2001/11/14 10:44:28 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.5 $ $Date: 2002/02/18 09:34:13 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -22,23 +22,12 @@ static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.4 $ $Date: 200
 #include "rfio.h"
 #include <Cglobals.h>
 #include <Cpwd.h>
-#ifdef _WIN32
-#include <process.h>
-#else
-#include <unistd.h>
-#endif
-
-#ifdef _WIN32
-typedef int _rfio_pgrp_t;
-#else
-typedef pid_t _rfio_pgrp_t;
-#endif
+#include <net.h>
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int Tid;
-  _rfio_pgrp_t pgrp;
 } msymlink_connects ;
 static msymlink_connects msymlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
@@ -46,7 +35,6 @@ static int rfio_smsymlink _PROTO((int,  char *, char *));
 static int rfio_msymlink_allocentry _PROTO((char *, int, int));
 static int rfio_msymlink_findentry _PROTO((char *,int));
 static int rfio_symend_this _PROTO((int,int));
-static int rfio_msymlink_findpgrp _PROTO((int));
 
 int DLL_DECL rfio_msymlink(n1,file2)
      char *n1 ;
@@ -106,7 +94,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
       rc = rfio_smsymlink(fd,n1,filename) ;
       if ( rc != -1 ) {
         TRACE(2,"rfio","rfio_msymlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-        (void)close(fd);
+        netclose(fd);
       }
       fd = -1;
     }
@@ -224,34 +212,18 @@ static int rfio_smsymlink(s,n1,filename)
   return(0) ;
 }
 
-static int rfio_msymlink_findpgrp(Tid)
-     int Tid;
-{
-  if (Tid < 0) {
-    return(getpid());
-  } else {
-#ifdef linux
-    return(getpgrp());
-#else
-    return(getpid());
-#endif
-  }
-}
-
 int DLL_DECL rfio_symend()
 {
   int i,Tid, j=0 ;
   char buf[256];
   char *p=buf ;
   int rc = 0;
-  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
-  pgrp = rfio_msymlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_symend entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
+  TRACE(3,"rfio","rfio_symend entered, Tid=%d", Tid);
 
 
   TRACE(3,"rfio","rfio_symend: Lock msymlink_tab");
@@ -261,14 +233,6 @@ int DLL_DECL rfio_symend()
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_symend: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
-      msymlink_tab[i].s = -1;
-      msymlink_tab[i].host[0] = '\0';
-      msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pgrp = 0;
-      continue;
-    }
     if (msymlink_tab[i].Tid == Tid) {
       if ((msymlink_tab[i].s >= 0) && (msymlink_tab[i].host[0] != '\0')) {
         marshall_WORD(p, RFIO_MAGIC);
@@ -279,12 +243,11 @@ int DLL_DECL rfio_symend()
           TRACE(3, "rfio", "rfio_symend: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
         }
-        (void) close(msymlink_tab[i].s);
+        netclose(msymlink_tab[i].s);
       }
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pgrp = 0;
     }
   }
    
@@ -308,14 +271,12 @@ static int rfio_symend_this(s,flag)
   char buf[256];
   char *p=buf ;
   int rc = 0;
-  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
-  pgrp = rfio_msymlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_symend_this(s=%d,flag=%d) entered, Tid=%d, pgrp=%d", s, flag, Tid, (int) pgrp);
+  TRACE(3,"rfio","rfio_symend_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
 
   TRACE(3,"rfio","rfio_symend_this: Lock msymlink_tab");
   if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
@@ -324,14 +285,6 @@ static int rfio_symend_this(s,flag)
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_symend_this: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
-      msymlink_tab[i].s = -1;
-      msymlink_tab[i].host[0] = '\0';
-      msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pgrp = 0;
-      continue;
-    }
     if (msymlink_tab[i].Tid == Tid) {
       if ((msymlink_tab[i].s == s) && (msymlink_tab[i].host[0] != '\0')) {
         if (flag) {
@@ -343,11 +296,10 @@ static int rfio_symend_this(s,flag)
             TRACE(3, "rfio", "rfio_symend_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
         }
-        (void) close(msymlink_tab[i].s);
+        netclose(msymlink_tab[i].s);
         msymlink_tab[i].s = -1;
         msymlink_tab[i].host[0] = '\0';
         msymlink_tab[i].Tid = -1;
-        msymlink_tab[i].pgrp = 0;
       }
     }
   }
@@ -372,9 +324,6 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
 {
   int i;
   int rc;
-  _rfio_pgrp_t pgrp;
-
-  pgrp = rfio_msymlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -387,20 +336,12 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_msymlink_allocentry: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
-      msymlink_tab[i].s = -1;
-      msymlink_tab[i].host[0] = '\0';
-      msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pgrp = 0;
-    }
     if (msymlink_tab[i].host[0] == '\0') {
       rc = i;
       strncpy(msymlink_tab[i].host,hostname,CA_MAXHOSTNAMELEN);
       msymlink_tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
       msymlink_tab[i].Tid = Tid;
       msymlink_tab[i].s = s;
-      msymlink_tab[i].pgrp = pgrp;
       goto _rfio_msymlink_allocentry_return;
     }
   }
@@ -428,9 +369,6 @@ static int rfio_msymlink_findentry(hostname,Tid)
 {
   int i;
   int rc;
-  _rfio_pgrp_t pgrp;
-
-  pgrp = rfio_msymlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -443,13 +381,6 @@ static int rfio_msymlink_findentry(hostname,Tid)
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
-      TRACE(3,"rfio","rfio_msymlink_findentry: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
-      msymlink_tab[i].s = -1;
-      msymlink_tab[i].host[0] = '\0';
-      msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pgrp = 0;
-    }
     if ((strcmp(msymlink_tab[i].host,hostname) == 0) && (msymlink_tab[i].Tid == Tid)) {
       rc = i;
       goto _rfio_msymlink_findentry_return;
@@ -466,6 +397,45 @@ static int rfio_msymlink_findentry(hostname,Tid)
     END_TRACE();
     return(-1);
   }
+  END_TRACE();
+  return(rc);
+}
+
+int DLL_DECL rfio_msymlink_reset()
+{
+  int i,Tid, j=0 ;
+  char buf[256];
+  char *p=buf ;
+  int rc = 0;
+
+  INIT_TRACE("RFIO_TRACE");
+
+  Cglobals_getTid(&Tid);
+
+  TRACE(3,"rfio","rfio_msymlink_reset entered, Tid=%d", Tid);
+
+  TRACE(3,"rfio","rfio_msymlink_reset: Lock msymlink_tab");
+  if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
+    TRACE(3,"rfio","rfio_msymlink_reset: Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
+    return(-1);
+  }
+  for (i = 0; i < MAXMCON; i++) {
+    if (msymlink_tab[i].s >= 0) {
+        TRACE(3,"rfio","rfio_msymlink_reset: Resetting socket fd=%d, host=%s\n", msymlink_tab[i].s, msymlink_tab[i].host);
+        netclose(msymlink_tab[i].s);
+    }
+    msymlink_tab[i].s = -1;
+    msymlink_tab[i].host[0] = '\0';
+    msymlink_tab[i].Tid = -1;
+  }
+   
+  TRACE(3,"rfio","rfio_msymlink_reset: Unlock msymlink_tab");
+  if (Cmutex_unlock((void *) msymlink_tab) != 0) {
+    TRACE(3,"rfio","rfio_msymlink_reset: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
+    rc = -1;
+  }
+
   END_TRACE();
   return(rc);
 }
