@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.101 2001/03/06 21:35:17 jdurand Exp $
+ * $Id: procio.c,v 1.102 2001/03/07 18:36:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.101 $ $Date: 2001/03/06 21:35:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.102 $ $Date: 2001/03/07 18:36:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2642,6 +2642,9 @@ void procputreq(req_type, req_data, clienthost)
 				goto reply;
 			}
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				int had_put_failed;
+
+				had_put_failed = (((hsmfilesstcp[ihsmfiles]->status & PUT_FAILED) == PUT_FAILED) ? 1 : 0);
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					if (((hsmfilesstcp[ihsmfiles]->status) & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
 						hsmfilesstcp[ihsmfiles]->status |= BEING_MIGR;
@@ -2650,7 +2653,7 @@ void procputreq(req_type, req_data, clienthost)
 					}
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpool(hsmfilesstcp[ihsmfiles],1,2) != 0) {
+					if (update_migpool(hsmfilesstcp[ihsmfiles],1,had_put_failed ? 1 : 2) != 0) {
 						c = USERR;
 						goto reply;
 					}
@@ -2826,7 +2829,9 @@ void procputreq(req_type, req_data, clienthost)
 			/* Simulate a STAGEUPDC call on all CASTOR HSM files */
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 				int save_status;
+				int had_put_failed;
 
+				had_put_failed = (((hsmfilesstcp[ihsmfiles]->status & PUT_FAILED) == PUT_FAILED) ? 1 : 0);
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					if (((hsmfilesstcp[ihsmfiles]->status) & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
 						hsmfilesstcp[ihsmfiles]->status |= BEING_MIGR;
@@ -2835,7 +2840,7 @@ void procputreq(req_type, req_data, clienthost)
 					}
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpool(hsmfilesstcp[ihsmfiles],1,2) != 0) {
+					if (update_migpool(hsmfilesstcp[ihsmfiles],1,had_put_failed ? 1 : 2) != 0) {
 						c = USERR;
 						goto reply;
 					}
