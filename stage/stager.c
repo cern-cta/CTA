@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.93 2000/10/06 09:52:33 jdurand Exp $
+ * $Id: stager.c,v 1.94 2000/10/24 09:25:50 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.93 $ $Date: 2000/10/06 09:52:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.94 $ $Date: 2000/10/24 09:25:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -133,6 +133,7 @@ int dont_change_srv = 0;            /* If != 0 means that we will not change tap
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
 EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
+int rtcpd_PrintCmd _PROTO((tape_list_t *));
 #define STAGER_RTCP_DUMP(rtcpreq) {              \
 	tape_list_t *dumptl = rtcpreq;               \
 	do {                                         \
@@ -1079,6 +1080,8 @@ int stagein_castor_hsm_file() {
 	SAVE_EID;
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling rtcpc()\n");
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
+	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling rtcpd_PrintCmd()\n");
+    rtcpd_PrintCmd(rtcpcreqs[0]);
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(10)\n");
 	sleep(10);
 	RESTORE_EID;
@@ -1465,6 +1468,8 @@ int stagewrt_castor_hsm_file() {
 			SAVE_EID;
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling rtcpc()\n");
 			STAGER_RTCP_DUMP(rtcpcreqs[0]);
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling rtcpd_PrintCmd()\n");
+		    rtcpd_PrintCmd(rtcpcreqs[0]);
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(10)\n");
 			sleep(10);
 			RESTORE_EID;
@@ -1622,6 +1627,8 @@ int stage_tape() {
 	SAVE_EID;
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpc()\n");
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
+	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpd_PrintCmd()\n");
+    rtcpd_PrintCmd(rtcpcreqs[0]);
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(10)\n");
 	sleep(10);
 	RESTORE_EID;
@@ -2157,8 +2164,8 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 									 hostname);
 					switch (stcp->u1.t.fseq[0]) {
 					case 'n':
-						if (j >= (nbtpf - 1) && j > 0) {
-							/* Last (tape file, disk file) association reached and not the first of the disk file */
+						if (j > (nbtpf - 1)) {
+                          /* Last (tape file, disk file) association already reached */
 							fl[j_ok].filereq.concat = CONCAT;
 						}
 						fl[j_ok].filereq.position_method = TPPOSIT_EOI;
@@ -3008,7 +3015,274 @@ void init_hostname()
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 }
 
+#ifdef STAGER_DEBUG
+/*
+ * Log command line a'la SHIFT.
+ */
+#define LOGLINE_APPEND(X,Y) sprintf(&logline[strlen(logline)],(X),(Y))
+int rtcpd_PrintCmd(tape)
+     tape_list_t *tape;
+{
+  rtcpTapeRequest_t *tapereq;
+  rtcpFileRequest_t *filereq;
+  rtcpDumpTapeRequest_t *dumpreq;
+  tape_list_t *tl;
+  file_list_t *fl;
+  char *vid;
+  char *vsn;
+  char logline[CA_MAXLINELEN+1], common_fid[CA_MAXFIDLEN+1];
+  int mode,fseq;
+  u_signed64 common_sz;
+
+  if ( tape == NULL ) return(-1);
+
+  *logline = '\0';
+  tapereq = &tape->tapereq;
+  vid = tapereq->vid;
+  vsn = tapereq->vsn;
+  mode = tapereq->mode;
+  if ( tape->file != NULL ) 
+    sprintf(logline,"%s %s %s",(mode == WRITE_ENABLE ? "tpwrite" : "tpread"),
+            (*vid != '\0' ? "-V" : "-v"),(*vid != '\0' ? vid : vsn));
+  else
+    sprintf(logline,"dumptape %s %s",(*vid != '\0' ? "-V" : "-v"),
+            (*vid != '\0' ? vid : vsn));
+  CLIST_ITERATE_BEGIN(tape,tl) {
+    if ( tl != tape ) {
+      tapereq = &tl->tapereq;
+      LOGLINE_APPEND(":%s",
+                     (*vid != '\0' ? tapereq->vid : tapereq->vsn));
+    }
+  } CLIST_ITERATE_END(tape,tl);
+
+  if ( tape->file == NULL ) {
+    dumpreq = &tape->dumpreq;
+    if ( dumpreq->maxbyte >= 0 ) LOGLINE_APPEND(" -B %d",dumpreq->maxbyte);
+    if ( dumpreq->blocksize >= 0 ) LOGLINE_APPEND(" -b %d",dumpreq->blocksize);
+    if ( dumpreq->maxfile >= 0 ) LOGLINE_APPEND(" -F %d",dumpreq->maxfile);
+    if ( dumpreq->tp_err_action != -1 &&
+         (dumpreq->tp_err_action == IGNOREEOI) != 0 ) 
+      LOGLINE_APPEND(" -E %s","ignoreeoi");
+    if ( dumpreq->convert == EBCCONV ) LOGLINE_APPEND(" -C %s","ebcdic");
+    if ( dumpreq->fromblock >= 0 && dumpreq->toblock >= 0 ) {
+      LOGLINE_APPEND(" -N %d",dumpreq->fromblock);
+      LOGLINE_APPEND(",%d",dumpreq->toblock);
+    } else if ( dumpreq->toblock >= 0 ) {
+      LOGLINE_APPEND(" -N %d",dumpreq->toblock);
+    }
+    if ( *logline != '\0' ) sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s\n",logline);
+    return(0);
+  }
+  filereq = &tape->file->filereq;
+  if ( *filereq->recfm != '\0' ) {
+    LOGLINE_APPEND(" -F %s",filereq->recfm);
+    if ( filereq->convert > 0 && (filereq->convert & NOF77CW) != 0 ) {
+      if ( *filereq->recfm == 'F' ) LOGLINE_APPEND(",%s","-f77");
+      else if ( *filereq->recfm == 'U' ) LOGLINE_APPEND(",%s","bin");
+    }
+  }
+  if ( filereq->blocksize > 0 )
+    LOGLINE_APPEND(" -b %d",filereq->blocksize);
+  if ( filereq->recordlength > 0 ) 
+    LOGLINE_APPEND(" -L %d",filereq->recordlength);
+  if ( filereq->def_alloc > 0 )
+    LOGLINE_APPEND(" -A %s","deferred");
+  if ( filereq->rtcp_err_action != -1 &&
+       (filereq->rtcp_err_action & SKIPBAD) != 0 ) 
+    LOGLINE_APPEND(" -E %s","skip");
+  if ( filereq->rtcp_err_action != -1 &&
+       (filereq->rtcp_err_action & KEEPFILE) != 0 ) 
+    LOGLINE_APPEND(" -E %s","keep");
+  if ( filereq->tp_err_action != -1 &&
+       (filereq->tp_err_action & IGNOREEOI) != 0 ) 
+    LOGLINE_APPEND(" -E %s","ignoreeoi");
+  if ( filereq->tp_err_action != -1 &&
+       (filereq->tp_err_action & NOTRLCHK) != 0 )
+    LOGLINE_APPEND(" %s","-T");
+  if ( filereq->check_fid == CHECK_FILE )
+    LOGLINE_APPEND(" %s","-o");
+  if ( filereq->check_fid == NEW_FILE )
+    LOGLINE_APPEND(" %s","-n");
+  if ( *filereq->stageID != '\0' )
+    LOGLINE_APPEND(" -Z %s",filereq->stageID);
+  if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) { 
+    LOGLINE_APPEND("%s"," -C "); 
+    if ( (filereq->convert & EBCCONV) != 0 ) {
+      LOGLINE_APPEND("%s","ebcdic");
+    } else LOGLINE_APPEND("%s","ascii");
+    if ( (filereq->convert & FIXVAR) != 0 )
+      LOGLINE_APPEND(",%s","block");
+  } 
+
+  if ( filereq->maxnbrec > 0 )
+    LOGLINE_APPEND(" -N %d",(int)filereq->maxnbrec);
+
+  if ( filereq->position_method == TPPOSIT_EOI ||
+       filereq->position_method == TPPOSIT_FID ) {
+    fseq = 0;
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      if ( (fl->filereq.concat & CONCAT) == 0 ) fseq++;
+    } CLIST_ITERATE_END(tape->file,fl);
+    LOGLINE_APPEND(" -q %s",
+                   (filereq->position_method == TPPOSIT_EOI ? "n" : "u"));
+    if ( fseq > 1 ) LOGLINE_APPEND("%d",fseq);
+  }
+
+  fseq = filereq->tape_fseq;
+  if ( filereq->position_method == TPPOSIT_FSEQ ) {
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      filereq = &fl->filereq;
+      if ( fl == tape->file ) LOGLINE_APPEND(" -q %d",fseq);
+      else if ( filereq->tape_fseq != fseq ) {
+        if ( strlen(logline) + 11 >= CA_MAXLINELEN ) {
+          if ( logline[strlen(logline)-1] == '-' )
+            if ( (filereq->concat & 
+                  (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) 
+              sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s%d \\\n",logline,fseq);
+            else
+              sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s \\\n",logline);
+          else
+            sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s, \\\n",logline);
+          *logline = '\0';
+        }
+        if ( (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
+          if ( filereq->tape_fseq == fseq + 1 ) {
+            if ( *logline!='\0' && 
+                 logline[strlen(logline)-1] != '-' &&
+                 (fl->next->filereq.concat & 
+                  (NOCONCAT_TO_EOD|CONCAT_TO_EOD)) == 0 &&
+                 (fl->next->next->filereq.concat & 
+                  NOCONCAT_TO_EOD)  == 0 ) {
+              LOGLINE_APPEND("%s","-");
+            } else if ( *logline == '\0' ||
+                        (logline[strlen(logline)-1] == '-' && 
+                         ((fl->next->filereq.concat & CONCAT_TO_EOD) != 0 ||
+                          (fl->next->next->filereq.concat & 
+                           NOCONCAT_TO_EOD) != 0)) ) {
+              LOGLINE_APPEND("%d",filereq->tape_fseq);
+            }
+          } else {
+            if ( *logline!='\0' && 
+                 logline[strlen(logline)-1] != '-' ) {
+              LOGLINE_APPEND("%s",",");
+            } else if ( *logline != '\0' && fseq > 0 ) {
+              LOGLINE_APPEND("%d,",fseq);
+            }
+            LOGLINE_APPEND("%d",filereq->tape_fseq);
+          }
+        } else {
+          if ( fl != tape->file && 
+               (fl->prev->filereq.concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
+            if ( *logline!='\0' ) LOGLINE_APPEND("%s",",");
+            if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 ) 
+              LOGLINE_APPEND("%d",fseq);
+            else LOGLINE_APPEND("%d",filereq->tape_fseq);
+          }
+          if ( logline[strlen(logline)-1] != '-' )
+            LOGLINE_APPEND("%s","-");
+        }
+        fseq = filereq->tape_fseq;
+      }
+    } CLIST_ITERATE_END(tape->file,fl);
+    if ( logline[strlen(logline)-1] == '-' ) {
+      if ( (tape->file->prev->filereq.concat &
+            (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) == 0 ) {
+        if ( strlen(logline) + 11 >= CA_MAXLINELEN ) 
+          sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s%d \\\n",logline,fseq);
+        else LOGLINE_APPEND("%d",fseq);
+      }
+    } else if ( (tape->file->prev->filereq.concat &
+                 (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) {
+      if ( strlen(logline) + 4 >= CA_MAXLINELEN )
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s- \\\n",logline);
+      else LOGLINE_APPEND("%s","-");
+    }
+  }
+
+  filereq = &(tape->file->filereq);
+  *common_fid = '\0';
+  if ( *filereq->fid != '\0' ) {
+    strcpy(common_fid,filereq->fid);
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      if ( strcmp(common_fid,fl->filereq.fid) != 0  ) {
+        *common_fid = '\0';
+        break;
+      }
+    } CLIST_ITERATE_END(tape->file,fl);
+    if ( *common_fid != '\0' ) LOGLINE_APPEND(" -f %s",common_fid);
+  }
+
+  if ( *filereq->fid != '\0' && *common_fid == '\0' ) {
+    fseq = filereq->tape_fseq;
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      filereq = &fl->filereq;
+      if ( fl == tape->file ) LOGLINE_APPEND(" -f %s",filereq->fid);
+      else if ( filereq->tape_fseq != fseq || filereq->tape_fseq == -1 ) {
+        if ( !(mode==WRITE_ENABLE && (filereq->concat & CONCAT)!=0) ) { 
+          if ( strlen(logline)+strlen(filereq->fid)+5<CA_MAXLINELEN )
+            LOGLINE_APPEND(":%s",filereq->fid);
+          else {
+            sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s: \\\n",logline);
+            *logline = '\0';
+            LOGLINE_APPEND("%s",filereq->fid);
+          }
+        }
+        fseq = filereq->tape_fseq;
+      }
+    } CLIST_ITERATE_END(tape->file,fl);
+  }
+
+  filereq = &(tape->file->filereq);
+  common_sz = 0;
+  if ( filereq->maxsize > 0 ) {
+    common_sz = filereq->maxsize;
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      if ( fl->filereq.maxsize != common_sz ) {
+        common_sz = 0;
+        break;
+      }
+    } CLIST_ITERATE_END(tape->file,fl);
+    if ( common_sz != 0 ) LOGLINE_APPEND(" -s %d",
+                                         (unsigned int)(filereq->maxsize/(1024*1024)));
+  }
+  if ( filereq->maxsize > 0 && common_sz == 0 ) {
+    fseq = filereq->tape_fseq;
+    CLIST_ITERATE_BEGIN(tape->file,fl) {
+      filereq = &fl->filereq;
+      if ( fl == tape->file )  LOGLINE_APPEND(" -s %d",
+                                              (unsigned int)(filereq->maxsize/(1024*1024)));
+      else if ( (filereq->concat & CONCAT) == 0 ) {
+        if ( strlen(logline)+17<CA_MAXLINELEN )
+          LOGLINE_APPEND(":%d",
+                         (unsigned int)(filereq->maxsize/(1024*1024)));
+        else {
+          sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s: \\\n",logline);
+          *logline = '\0';
+          LOGLINE_APPEND("%d",
+                         (unsigned int)(filereq->maxsize/(1024*1024)));
+        }
+      }
+    } CLIST_ITERATE_END(tape->file,fl);
+  }
+
+  CLIST_ITERATE_BEGIN(tape->file,fl) {
+    filereq = &fl->filereq;
+    if ( !(mode==WRITE_DISABLE && (filereq->concat & CONCAT) != 0) ) {
+      if ( strlen(logline)+strlen(filereq->file_path)+4<CA_MAXLINELEN ) {
+        LOGLINE_APPEND(" %s",filereq->file_path);
+      } else {
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s \\\n",logline);
+        *logline = '\0';
+        LOGLINE_APPEND("%s",filereq->file_path);
+      }
+    }
+  } CLIST_ITERATE_END(tape->file,fl);
+  if ( *logline != '\0' ) sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] %s\n",logline);
+
+  return(0);
+}
+#endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Friday 06 October, 2000 at 11:46:13 CEST by Jean-Damien Durand (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 24 October, 2000 at 11:22:01 CEST by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
