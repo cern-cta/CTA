@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.4 1999/12/08 15:57:38 jdurand Exp $
+ * $Id: stgconvert.c,v 1.5 1999/12/09 08:09:08 jdurand Exp $
  */
 
 /*
@@ -32,7 +32,7 @@
 /* =============== */
 /* Local variables */
 /* =============== */
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 15:57:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 08:09:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ====== */
 /* Macros */
@@ -399,8 +399,8 @@ int main(argc,argv)
                    ,tape.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_tape\" [VID[0]=%s,FSEQ=%s] at offset 0x%lx\n",
-                   i,nstcp,tape.reqid,tape.vid[0],tape.fseq,(unsigned long) Cdb_offset);
+            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_tape\" [c_time=0x%lx,VID[0]=%s,FSEQ=%s] at offset 0x%lx\n",
+                   i,nstcp,tape.reqid,tape.c_time,tape.vid[0],tape.fseq,(unsigned long) Cdb_offset);
           }
           break;
         case 'd':
@@ -409,8 +409,8 @@ int main(argc,argv)
                    ,disk.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_disk\" [xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,disk.reqid,disk.xfile,(unsigned long) Cdb_offset);
+            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_disk\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
+                   i,nstcp,disk.reqid,disk.c_time,disk.xfile,(unsigned long) Cdb_offset);
           }
           break;
         case 'm':
@@ -419,18 +419,18 @@ int main(argc,argv)
                    ,hsm.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,hsm.reqid,hsm.xfile,(unsigned long) Cdb_offset);
+            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
+                   i,nstcp,hsm.reqid,hsm.c_time,hsm.xfile,(unsigned long) Cdb_offset);
           }
           break;
         case 'a':
           if (Cdb_insert(&Cdb_db,"stgcat_alloc",NULL,&alloc,&Cdb_offset) != 0) {
-            printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_hsm\" (%s)\n"
+            printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_alloc\" (%s)\n"
                    ,alloc.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_alloc\" [xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,hsm.reqid,hsm.xfile,(unsigned long) Cdb_offset);
+            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_alloc\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
+                   i,nstcp,alloc.reqid,alloc.c_time,alloc.xfile,(unsigned long) Cdb_offset);
           }
           break;
         default:
