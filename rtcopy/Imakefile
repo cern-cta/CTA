@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2004/06/16 14:58:08 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/06/18 11:14:12 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -111,7 +111,20 @@ TPCONFIGFILE = TapeConfigFile
 TPCONFIG = -DTPCONFIG=\"$(TPCONFIGFILE)\"
 
 RTCPCLDHOST = RtcpclientdHost
-RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\"
+
+#ifdef StagerSuperUser
+RTCPCLDUSER = StagerSuperUser
+#else
+RTCPCLDUSER = stage
+#endif
+
+#ifdef StagerSuperGroup
+RTCPCLDGROUP = StagerSuperGroup
+#else
+RTCPCLDGROUP = st
+#endif
+
+RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPCLDUSER)\" -DRTCPCLD_GROUP=\"$(RTCPCLDGROUP)\"
 
 THREADFLAGS = $(MTCCFLAGS)
 
