@@ -843,28 +843,30 @@ BEGIN
       (SELECT euid, egid, id from StagePutRequest UNION
        SELECT euid, egid, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- update the DiskCopy status
- UPDATE DiskCopy SET status = 10 -- CANBEMIGR
-  WHERE castorFile = cfid AND status = 6 -- STAGEOUT
-  RETURNING fileSystem INTO fsId;
- -- update the FileSystem free space
- updateFsFileClosed(fsId, reservedSpace, fs);
- -- if 0 length file, stop here
- IF fs = 0 THEN
-   COMMIT;
-   RETURN;
- END IF;
- -- get number of copies to create
+ -- get number of TapeCopies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
- -- Create TapeCopies
- <<TapeCopyCreation>>
- FOR i IN 1..nc LOOP
-  INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-    VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
-    RETURNING id INTO tcId;
-  INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
- END LOOP TapeCopyCreation;
+ -- if no tape copy or 0 length file, no migration
+ -- so we go directly to status STAGED
+ IF nc = 0 OR fs = 0 THEN
+   UPDATE DiskCopy SET status = 0 -- STAGED
+    WHERE castorFile = cfid AND status = 6 -- STAGEOUT
+   RETURNING fileSystem INTO fsId;
+ ELSE
+   -- update the DiskCopy status TO CANBEMIGR
+   UPDATE DiskCopy SET status = 10 -- CANBEMIGR
+    WHERE castorFile = cfid AND status = 6 -- STAGEOUT
+    RETURNING fileSystem INTO fsId;
+   -- Create TapeCopies
+   FOR i IN 1..nc LOOP
+    INSERT INTO TapeCopy (id, copyNb, castorFile, status)
+      VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
+      RETURNING id INTO tcId;
+    INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+   END LOOP;
+ END IF;
+ -- update the FileSystem free space
+ updateFsFileClosed(fsId, reservedSpace, fs);
  -- archive Subrequest
  archiveSubReq(srId);
  COMMIT;
