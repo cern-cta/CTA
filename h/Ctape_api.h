@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.3 $ $Date: 1999/10/13 14:43:35 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.4 $ $Date: 1999/11/19 17:01:18 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -56,9 +56,10 @@ extern int Ctape_config(char *, int, int);
 extern int Ctape_info(char *, int *, unsigned int *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
-extern int Ctape_label(char *, int, char *, char *, char *, char *, char *, int);
+extern int Ctape_label(char *, int, char *, char *, char *, char *, char *, int,
+	int);
 extern int Ctape_mount(char *, char *, int, char *, char *, char *, int,
-	char *, char *);
+	char *, char *, int);
 extern int Ctape_position(char *, int, int, int, unsigned int, int, int,
 	int, char *, char *, int, int, int, int);
 extern int Ctape_reserve(int, struct dgn_rsv *);
