@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2004/11/08 15:40:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2004/11/10 16:55:52 $ $Author: sponcec3 $
  *
  *
  *
@@ -648,7 +648,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo()
                  << castor::stager::SUBREQUEST_RESTART
                  << " OR status = "
                  << castor::stager::SUBREQUEST_RETRY
-                 << ") AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, poolName, xsize, priority, status INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
+                 << ") AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority, status INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
       m_subRequestToDoStatement->registerOutParam
@@ -683,12 +683,11 @@ castor::db::ora::OraStagerSvc::subRequestToDo()
     result->setRetryCounter(m_subRequestToDoStatement->getInt(2));
     result->setFileName(m_subRequestToDoStatement->getString(3));
     result->setProtocol(m_subRequestToDoStatement->getString(4));
-    result->setPoolName(m_subRequestToDoStatement->getString(5));
-    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
-    result->setPriority(m_subRequestToDoStatement->getInt(7));
+    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(5));
+    result->setPriority(m_subRequestToDoStatement->getInt(6));
     result->setStatus
       ((enum castor::stager::SubRequestStatusCodes)
-       m_subRequestToDoStatement->getInt(8));
+       m_subRequestToDoStatement->getInt(7));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {

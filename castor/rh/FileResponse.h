@@ -29,14 +29,13 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct C_IObject_t;
 struct Crh_FileResponse_t;
 struct Crh_Response_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class FileResponse
-// Response dealing with a unique file and given information on how to access it
+// A response dealing with a castor file
 //------------------------------------------------------------------------------
 
 /**
@@ -58,16 +57,6 @@ struct Crh_Response_t* Crh_FileResponse_getResponse(struct Crh_FileResponse_t* o
  * Dynamic cast from Response
  */
 struct Crh_FileResponse_t* Crh_FileResponse_fromResponse(struct Crh_Response_t* obj);
-
-/**
- * Cast into IObject
- */
-struct C_IObject_t* Crh_FileResponse_getIObject(struct Crh_FileResponse_t* obj);
-
-/**
- * Dynamic cast from IObject
- */
-struct Crh_FileResponse_t* Crh_FileResponse_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format
@@ -102,62 +91,88 @@ int Crh_FileResponse_type(struct Crh_FileResponse_t* instance,
 
 /**
  * Get the value of status
- * The current status of the file
+ * The status a the file we are considering
  */
-int Crh_FileResponse_status(struct Crh_FileResponse_t* instance, int* var);
+int Crh_FileResponse_status(struct Crh_FileResponse_t* instance, unsigned int* var);
 
 /**
  * Set the value of status
- * The current status of the file
+ * The status a the file we are considering
  */
-int Crh_FileResponse_setStatus(struct Crh_FileResponse_t* instance, int new_var);
+int Crh_FileResponse_setStatus(struct Crh_FileResponse_t* instance, unsigned int new_var);
 
 /**
- * Get the value of reqid
- * The request id
+ * Get the value of castorFileName
+ * The name of the file considered
  */
-int Crh_FileResponse_reqid(struct Crh_FileResponse_t* instance, const char** var);
+int Crh_FileResponse_castorFileName(struct Crh_FileResponse_t* instance, const char** var);
 
 /**
- * Set the value of reqid
- * The request id
+ * Set the value of castorFileName
+ * The name of the file considered
  */
-int Crh_FileResponse_setReqid(struct Crh_FileResponse_t* instance, const char* new_var);
+int Crh_FileResponse_setCastorFileName(struct Crh_FileResponse_t* instance, const char* new_var);
 
 /**
- * Get the value of server
- * The server where to find the file
+ * Get the value of fileSize
+ * The size of the file considered
  */
-int Crh_FileResponse_server(struct Crh_FileResponse_t* instance, const char** var);
+int Crh_FileResponse_fileSize(struct Crh_FileResponse_t* instance, u_signed64* var);
 
 /**
- * Set the value of server
- * The server where to find the file
+ * Set the value of fileSize
+ * The size of the file considered
  */
-int Crh_FileResponse_setServer(struct Crh_FileResponse_t* instance, const char* new_var);
+int Crh_FileResponse_setFileSize(struct Crh_FileResponse_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of port
- * The port where to find the file
+ * Get the value of errorCode
+ * The error code in case of error
  */
-int Crh_FileResponse_port(struct Crh_FileResponse_t* instance, int* var);
+int Crh_FileResponse_errorCode(struct Crh_FileResponse_t* instance, unsigned int* var);
 
 /**
- * Set the value of port
- * The port where to find the file
+ * Set the value of errorCode
+ * The error code in case of error
  */
-int Crh_FileResponse_setPort(struct Crh_FileResponse_t* instance, int new_var);
+int Crh_FileResponse_setErrorCode(struct Crh_FileResponse_t* instance, unsigned int new_var);
 
 /**
- * Get the value of protocol
- * The protocol to use to retrieve the file
+ * Get the value of errorMessage
+ * The error message in case of error
  */
-int Crh_FileResponse_protocol(struct Crh_FileResponse_t* instance, const char** var);
+int Crh_FileResponse_errorMessage(struct Crh_FileResponse_t* instance, const char** var);
 
 /**
- * Set the value of protocol
- * The protocol to use to retrieve the file
+ * Set the value of errorMessage
+ * The error message in case of error
  */
-int Crh_FileResponse_setProtocol(struct Crh_FileResponse_t* instance, const char* new_var);
+int Crh_FileResponse_setErrorMessage(struct Crh_FileResponse_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileId
+ * The castor file id identifying the file considered
+ */
+int Crh_FileResponse_fileId(struct Crh_FileResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ * The castor file id identifying the file considered
+ */
+int Crh_FileResponse_setFileId(struct Crh_FileResponse_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of subreqId
+ * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
+ */
+int Crh_FileResponse_subreqId(struct Crh_FileResponse_t* instance, const char** var);
+
+/**
+ * Set the value of subreqId
+ * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
+ */
+int Crh_FileResponse_setSubreqId(struct Crh_FileResponse_t* instance, const char* new_var);
 
 #endif // CASTOR_RH_FILERESPONSE_H

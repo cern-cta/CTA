@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/SubRequest.cpp
+ *                      castor/rh/FindReqResponse.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,10 +27,8 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
+#include "castor/rh/FindReqResponse.hpp"
+#include "castor/rh/Response.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -38,84 +36,41 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::SubRequest::SubRequest() throw() :
-  m_retryCounter(0),
-  m_fileName(""),
-  m_protocol(""),
-  m_xsize(),
-  m_priority(0),
-  m_subreqId(""),
-  m_id(),
-  m_diskcopy(0),
-  m_castorFile(0),
-  m_parent(0),
-  m_status(SubRequestStatusCodes(0)),
-  m_request(0) {
+castor::rh::FindReqResponse::FindReqResponse() throw() :
+  Response(),
+  m_reqId(""),
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::SubRequest::~SubRequest() throw() {
-  if (0 != m_parent) {
-    m_parent->removeChild(this);
-  }
-  if (0 != m_request) {
-    m_request->removeSubRequests(this);
-  }
+castor::rh::FindReqResponse::~FindReqResponse() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::SubRequest::print(std::ostream& stream,
-                                       std::string indent,
-                                       castor::ObjectSet& alreadyPrinted) const {
+void castor::rh::FindReqResponse::print(std::ostream& stream,
+                                        std::string indent,
+                                        castor::ObjectSet& alreadyPrinted) const {
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Call print on the parent class(es)
+  this->Response::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "retryCounter : " << m_retryCounter << std::endl;
-  stream << indent << "fileName : " << m_fileName << std::endl;
-  stream << indent << "protocol : " << m_protocol << std::endl;
-  stream << indent << "xsize : " << m_xsize << std::endl;
-  stream << indent << "priority : " << m_priority << std::endl;
-  stream << indent << "subreqId : " << m_subreqId << std::endl;
+  stream << indent << "reqId : " << m_reqId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Diskcopy : " << std::endl;
-  if (0 != m_diskcopy) {
-    m_diskcopy->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "CastorFile : " << std::endl;
-  if (0 != m_castorFile) {
-    m_castorFile->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "Parent : " << std::endl;
-  if (0 != m_parent) {
-    m_parent->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "status : " << m_status << std::endl;
-  stream << indent << "Request : " << std::endl;
-  if (0 != m_request) {
-    m_request->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::SubRequest::print() const {
+void castor::rh::FindReqResponse::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -123,28 +78,28 @@ void castor::stager::SubRequest::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::SubRequest::TYPE() {
-  return OBJ_SubRequest;
+int castor::rh::FindReqResponse::TYPE() {
+  return OBJ_FindReqResponse;
 }
 
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::SubRequest::setId(u_signed64 id) {
+void castor::rh::FindReqResponse::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-u_signed64 castor::stager::SubRequest::id() const {
+u_signed64 castor::rh::FindReqResponse::id() const {
   return m_id;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::SubRequest::type() const {
+int castor::rh::FindReqResponse::type() const {
   return TYPE();
 }
 

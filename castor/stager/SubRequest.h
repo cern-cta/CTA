@@ -132,28 +132,12 @@ int Cstager_SubRequest_protocol(struct Cstager_SubRequest_t* instance, const cha
 int Cstager_SubRequest_setProtocol(struct Cstager_SubRequest_t* instance, const char* new_var);
 
 /**
- * Get the value of poolName
- * The name of the TapePool to use for the file this SubRequest deals with
- */
-int Cstager_SubRequest_poolName(struct Cstager_SubRequest_t* instance, const char** var);
-
-/**
- * Set the value of poolName
- * The name of the TapePool to use for the file this SubRequest deals with
- */
-int Cstager_SubRequest_setPoolName(struct Cstager_SubRequest_t* instance, const char* new_var);
-
-/**
  * Get the value of xsize
- * The size of the file. This gives how many bytes should be allocated rather than
- * the default.
  */
 int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of xsize
- * The size of the file. This gives how many bytes should be allocated rather than
- * the default.
  */
 int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
 

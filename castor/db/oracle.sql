@@ -90,7 +90,15 @@ CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR(255), euid
 
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, priority NUMBER, subreqId VARCHAR(255), id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), xsize INTEGER, priority NUMBER, subreqId VARCHAR(255), id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
+
+/* SQL statements for type StageReleaseFilesRequest */
+DROP TABLE StageReleaseFilesRequest;
+CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), reqId VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type StageAbortRequest */
+DROP TABLE StageAbortRequest;
+CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), reqId VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE StageGetNextRequest;

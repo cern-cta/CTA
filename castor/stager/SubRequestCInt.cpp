@@ -159,23 +159,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SubRequest_poolName
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_poolName(castor::stager::SubRequest* instance, const char** var) {
-    *var = instance->poolName().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SubRequest_setPoolName
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_setPoolName(castor::stager::SubRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setPoolName(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SubRequest_xsize
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_xsize(castor::stager::SubRequest* instance, u_signed64* var) {

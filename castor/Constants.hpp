@@ -80,7 +80,15 @@ namespace castor {
     OBJ_FileRequest = 45,
     OBJ_QryRequest = 46,
     OBJ_StagePutNextRequest = 48,
-    OBJ_StageUpdateNextRequest = 49
+    OBJ_StageUpdateNextRequest = 49,
+    OBJ_StageAbortRequest = 50,
+    OBJ_StageReleaseFilesRequest = 51,
+    OBJ_Response = 52,
+    OBJ_IOResponse = 53,
+    OBJ_AbortResponse = 54,
+    OBJ_RequestQueryResponse = 55,
+    OBJ_FileQueryResponse = 56,
+    OBJ_FindReqResponse = 57
   };
     
   /**

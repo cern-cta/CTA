@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamSubRequestCnv.cpp
+ *                      castor/io/StreamFileQueryResponseCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "StreamSubRequestCnv.hpp"
+#include "StreamFileQueryResponseCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -37,116 +37,116 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/rh/FileQueryResponse.hpp"
 #include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamSubRequestCnv> s_factoryStreamSubRequestCnv;
-const castor::ICnvFactory& StreamSubRequestCnvFactory = 
-  s_factoryStreamSubRequestCnv;
+static castor::CnvFactory<castor::io::StreamFileQueryResponseCnv> s_factoryStreamFileQueryResponseCnv;
+const castor::ICnvFactory& StreamFileQueryResponseCnvFactory = 
+  s_factoryStreamFileQueryResponseCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamSubRequestCnv::StreamSubRequestCnv(castor::ICnvSvc* cnvSvc) :
+castor::io::StreamFileQueryResponseCnv::StreamFileQueryResponseCnv(castor::ICnvSvc* cnvSvc) :
   StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamSubRequestCnv::~StreamSubRequestCnv() throw() {
+castor::io::StreamFileQueryResponseCnv::~StreamFileQueryResponseCnv() throw() {
 }
 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSubRequestCnv::ObjType() {
-  return castor::stager::SubRequest::TYPE();
+const unsigned int castor::io::StreamFileQueryResponseCnv::ObjType() {
+  return castor::rh::FileQueryResponse::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSubRequestCnv::objType() const {
+const unsigned int castor::io::StreamFileQueryResponseCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
-                                                castor::IObject* object,
-                                                bool autocommit,
-                                                unsigned int type)
+void castor::io::StreamFileQueryResponseCnv::createRep(castor::IAddress* address,
+                                                       castor::IObject* object,
+                                                       bool autocommit,
+                                                       unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::SubRequest* obj = 
-    dynamic_cast<castor::stager::SubRequest*>(object);
+  castor::rh::FileQueryResponse* obj = 
+    dynamic_cast<castor::rh::FileQueryResponse*>(object);
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->retryCounter();
   ad->stream() << obj->fileName();
-  ad->stream() << obj->protocol();
-  ad->stream() << obj->xsize();
-  ad->stream() << obj->priority();
-  ad->stream() << obj->subreqId();
-  ad->stream() << obj->id();
+  ad->stream() << obj->fileId();
   ad->stream() << obj->status();
+  ad->stream() << obj->size();
+  ad->stream() << obj->poolName();
+  ad->stream() << obj->creationTime();
+  ad->stream() << obj->accessTime();
+  ad->stream() << obj->nbAccesses();
+  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::io::StreamFileQueryResponseCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
-  castor::stager::SubRequest* object = new castor::stager::SubRequest();
+  castor::rh::FileQueryResponse* object = new castor::rh::FileQueryResponse();
   // Now retrieve and set members
-  unsigned int retryCounter;
-  ad->stream() >> retryCounter;
-  object->setRetryCounter(retryCounter);
   std::string fileName;
   ad->stream() >> fileName;
   object->setFileName(fileName);
-  std::string protocol;
-  ad->stream() >> protocol;
-  object->setProtocol(protocol);
-  u_signed64 xsize;
-  ad->stream() >> xsize;
-  object->setXsize(xsize);
-  unsigned int priority;
-  ad->stream() >> priority;
-  object->setPriority(priority);
-  std::string subreqId;
-  ad->stream() >> subreqId;
-  object->setSubreqId(subreqId);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  unsigned int status;
+  ad->stream() >> status;
+  object->setStatus(status);
+  u_signed64 size;
+  ad->stream() >> size;
+  object->setSize(size);
+  std::string poolName;
+  ad->stream() >> poolName;
+  object->setPoolName(poolName);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
+  u_signed64 accessTime;
+  ad->stream() >> accessTime;
+  object->setAccessTime(accessTime);
+  unsigned int nbAccesses;
+  ad->stream() >> nbAccesses;
+  object->setNbAccesses(nbAccesses);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int status;
-  ad->stream() >> status;
-  object->setStatus((castor::stager::SubRequestStatusCodes)status);
   return object;
 }
 
 //------------------------------------------------------------------------------
 // marshalObject
 //------------------------------------------------------------------------------
-void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
-                                                    castor::io::StreamAddress* address,
-                                                    castor::ObjectSet& alreadyDone)
+void castor::io::StreamFileQueryResponseCnv::marshalObject(castor::IObject* object,
+                                                           castor::io::StreamAddress* address,
+                                                           castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::stager::SubRequest* obj = 
-    dynamic_cast<castor::stager::SubRequest*>(object);
+  castor::rh::FileQueryResponse* obj = 
+    dynamic_cast<castor::rh::FileQueryResponse*>(object);
   if (0 == obj) {
     // Case of a null pointer
     address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
@@ -155,10 +155,6 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->diskcopy(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -168,28 +164,13 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 // unmarshalObject
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::biniostream& stream,
-                                                                  castor::ObjectCatalog& newlyCreated)
+castor::IObject* castor::io::StreamFileQueryResponseCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                         castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::stager::SubRequest* obj = 
-    dynamic_cast<castor::stager::SubRequest*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objDiskcopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskcopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskcopy));
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRequest(dynamic_cast<castor::stager::FileRequest*>(objRequest));
   return object;
 }
 

@@ -165,27 +165,7 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_poolName
-       * The name of the TapePool to use for the file this SubRequest deals with
-       * @return the value of m_poolName
-       */
-      std::string poolName() const {
-        return m_poolName;
-      }
-
-      /**
-       * Set the value of m_poolName
-       * The name of the TapePool to use for the file this SubRequest deals with
-       * @param new_var the new value of m_poolName
-       */
-      void setPoolName(std::string new_var) {
-        m_poolName = new_var;
-      }
-
-      /**
        * Get the value of m_xsize
-       * The size of the file. This gives how many bytes should be allocated rather than
-       * the default.
        * @return the value of m_xsize
        */
       u_signed64 xsize() const {
@@ -194,8 +174,6 @@ namespace castor {
 
       /**
        * Set the value of m_xsize
-       * The size of the file. This gives how many bytes should be allocated rather than
-       * the default.
        * @param new_var the new value of m_xsize
        */
       void setXsize(u_signed64 new_var) {
@@ -366,10 +344,6 @@ namespace castor {
       /// The protocol that will be used to access the file this SubRequest deals with
       std::string m_protocol;
 
-      /// The name of the TapePool to use for the file this SubRequest deals with
-      std::string m_poolName;
-
-      /// The size of the file. This gives how many bytes should be allocated rather than the default.
       u_signed64 m_xsize;
 
       /// The priority defines in which order the files will be processed by the user when calling stage_get_next. The files of the SubRequest of same priority are given in a random order and lower priority files come first.

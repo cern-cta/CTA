@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/FileResponseCInt.cpp
+ *                      castor/rh/FileQueryResponseCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,196 +25,211 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/rh/FileResponse.hpp"
+#include "castor/rh/FileQueryResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
 
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_create
+  // Crh_FileQueryResponse_create
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_create(castor::rh::FileResponse** obj) {
-    *obj = new castor::rh::FileResponse();
+  int Crh_FileQueryResponse_create(castor::rh::FileQueryResponse** obj) {
+    *obj = new castor::rh::FileQueryResponse();
     return 0;
   }
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_delete
+  // Crh_FileQueryResponse_delete
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_delete(castor::rh::FileResponse* obj) {
+  int Crh_FileQueryResponse_delete(castor::rh::FileQueryResponse* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_getResponse
+  // Crh_FileQueryResponse_getResponse
   //----------------------------------------------------------------------------
-  castor::rh::Response* Crh_FileResponse_getResponse(castor::rh::FileResponse* obj) {
+  castor::rh::Response* Crh_FileQueryResponse_getResponse(castor::rh::FileQueryResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_fromResponse
+  // Crh_FileQueryResponse_fromResponse
   //----------------------------------------------------------------------------
-  castor::rh::FileResponse* Crh_FileResponse_fromResponse(castor::rh::Response* obj) {
-    return dynamic_cast<castor::rh::FileResponse*>(obj);
+  castor::rh::FileQueryResponse* Crh_FileQueryResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::FileQueryResponse*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_print
+  // Crh_FileQueryResponse_print
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_print(castor::rh::FileResponse* instance) {
+  int Crh_FileQueryResponse_print(castor::rh::FileQueryResponse* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_TYPE
+  // Crh_FileQueryResponse_TYPE
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_TYPE(int* ret) {
-    *ret = castor::rh::FileResponse::TYPE();
+  int Crh_FileQueryResponse_TYPE(int* ret) {
+    *ret = castor::rh::FileQueryResponse::TYPE();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_setId
+  // Crh_FileQueryResponse_setId
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_setId(castor::rh::FileResponse* instance,
-                             u_signed64 id) {
+  int Crh_FileQueryResponse_setId(castor::rh::FileQueryResponse* instance,
+                                  u_signed64 id) {
     instance->setId(id);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_id
+  // Crh_FileQueryResponse_id
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_id(castor::rh::FileResponse* instance,
-                          u_signed64* ret) {
+  int Crh_FileQueryResponse_id(castor::rh::FileQueryResponse* instance,
+                               u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_type
+  // Crh_FileQueryResponse_type
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_type(castor::rh::FileResponse* instance,
-                            int* ret) {
+  int Crh_FileQueryResponse_type(castor::rh::FileQueryResponse* instance,
+                                 int* ret) {
     *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_status
+  // Crh_FileQueryResponse_fileName
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_status(castor::rh::FileResponse* instance, unsigned int* var) {
-    *var = instance->status();
+  int Crh_FileQueryResponse_fileName(castor::rh::FileQueryResponse* instance, const char** var) {
+    *var = instance->fileName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_setStatus
+  // Crh_FileQueryResponse_setFileName
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_setStatus(castor::rh::FileResponse* instance, unsigned int new_var) {
-    instance->setStatus(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_castorFileName
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_castorFileName(castor::rh::FileResponse* instance, const char** var) {
-    *var = instance->castorFileName().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setCastorFileName
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setCastorFileName(castor::rh::FileResponse* instance, const char* new_var) {
+  int Crh_FileQueryResponse_setFileName(castor::rh::FileQueryResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setCastorFileName(snew_var);
+    instance->setFileName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_fileSize
+  // Crh_FileQueryResponse_fileId
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_fileSize(castor::rh::FileResponse* instance, u_signed64* var) {
-    *var = instance->fileSize();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setFileSize
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setFileSize(castor::rh::FileResponse* instance, u_signed64 new_var) {
-    instance->setFileSize(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_errorCode
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_errorCode(castor::rh::FileResponse* instance, unsigned int* var) {
-    *var = instance->errorCode();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setErrorCode
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setErrorCode(castor::rh::FileResponse* instance, unsigned int new_var) {
-    instance->setErrorCode(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_errorMessage
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_errorMessage(castor::rh::FileResponse* instance, const char** var) {
-    *var = instance->errorMessage().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_setErrorMessage
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_setErrorMessage(castor::rh::FileResponse* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setErrorMessage(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_FileResponse_fileId
-  //----------------------------------------------------------------------------
-  int Crh_FileResponse_fileId(castor::rh::FileResponse* instance, u_signed64* var) {
+  int Crh_FileQueryResponse_fileId(castor::rh::FileQueryResponse* instance, u_signed64* var) {
     *var = instance->fileId();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_setFileId
+  // Crh_FileQueryResponse_setFileId
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_setFileId(castor::rh::FileResponse* instance, u_signed64 new_var) {
+  int Crh_FileQueryResponse_setFileId(castor::rh::FileQueryResponse* instance, u_signed64 new_var) {
     instance->setFileId(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_subreqId
+  // Crh_FileQueryResponse_status
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_subreqId(castor::rh::FileResponse* instance, const char** var) {
-    *var = instance->subreqId().c_str();
+  int Crh_FileQueryResponse_status(castor::rh::FileQueryResponse* instance, unsigned int* var) {
+    *var = instance->status();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_FileResponse_setSubreqId
+  // Crh_FileQueryResponse_setStatus
   //----------------------------------------------------------------------------
-  int Crh_FileResponse_setSubreqId(castor::rh::FileResponse* instance, const char* new_var) {
+  int Crh_FileQueryResponse_setStatus(castor::rh::FileQueryResponse* instance, unsigned int new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_size
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_size(castor::rh::FileQueryResponse* instance, u_signed64* var) {
+    *var = instance->size();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setSize
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setSize(castor::rh::FileQueryResponse* instance, u_signed64 new_var) {
+    instance->setSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_poolName
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_poolName(castor::rh::FileQueryResponse* instance, const char** var) {
+    *var = instance->poolName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setPoolName
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setPoolName(castor::rh::FileQueryResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setSubreqId(snew_var);
+    instance->setPoolName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_creationTime
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_creationTime(castor::rh::FileQueryResponse* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setCreationTime
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setCreationTime(castor::rh::FileQueryResponse* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_accessTime
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_accessTime(castor::rh::FileQueryResponse* instance, u_signed64* var) {
+    *var = instance->accessTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setAccessTime
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setAccessTime(castor::rh::FileQueryResponse* instance, u_signed64 new_var) {
+    instance->setAccessTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_nbAccesses
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_nbAccesses(castor::rh::FileQueryResponse* instance, unsigned int* var) {
+    *var = instance->nbAccesses();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setNbAccesses
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setNbAccesses(castor::rh::FileQueryResponse* instance, unsigned int new_var) {
+    instance->setNbAccesses(new_var);
     return 0;
   }
 

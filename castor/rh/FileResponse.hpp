@@ -28,7 +28,6 @@
 #define CASTOR_RH_FILERESPONSE_HPP
 
 // Include Files
-#include "castor/IObject.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -43,9 +42,9 @@ namespace castor {
 
     /**
      * class FileResponse
-     * Response dealing with a unique file and given information on how to access it
+     * A response dealing with a castor file
      */
-    class FileResponse : public virtual Response, public virtual castor::IObject {
+    class FileResponse : public virtual Response {
 
     public:
 
@@ -104,112 +103,156 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_status
-       * The current status of the file
+       * The status a the file we are considering
        * @return the value of m_status
        */
-      int status() const {
+      unsigned int status() const {
         return m_status;
       }
 
       /**
        * Set the value of m_status
-       * The current status of the file
+       * The status a the file we are considering
        * @param new_var the new value of m_status
        */
-      void setStatus(int new_var) {
+      void setStatus(unsigned int new_var) {
         m_status = new_var;
       }
 
       /**
-       * Get the value of m_reqid
-       * The request id
-       * @return the value of m_reqid
+       * Get the value of m_castorFileName
+       * The name of the file considered
+       * @return the value of m_castorFileName
        */
-      std::string reqid() const {
-        return m_reqid;
+      std::string castorFileName() const {
+        return m_castorFileName;
       }
 
       /**
-       * Set the value of m_reqid
-       * The request id
-       * @param new_var the new value of m_reqid
+       * Set the value of m_castorFileName
+       * The name of the file considered
+       * @param new_var the new value of m_castorFileName
        */
-      void setReqid(std::string new_var) {
-        m_reqid = new_var;
+      void setCastorFileName(std::string new_var) {
+        m_castorFileName = new_var;
       }
 
       /**
-       * Get the value of m_server
-       * The server where to find the file
-       * @return the value of m_server
+       * Get the value of m_fileSize
+       * The size of the file considered
+       * @return the value of m_fileSize
        */
-      std::string server() const {
-        return m_server;
+      u_signed64 fileSize() const {
+        return m_fileSize;
       }
 
       /**
-       * Set the value of m_server
-       * The server where to find the file
-       * @param new_var the new value of m_server
+       * Set the value of m_fileSize
+       * The size of the file considered
+       * @param new_var the new value of m_fileSize
        */
-      void setServer(std::string new_var) {
-        m_server = new_var;
+      void setFileSize(u_signed64 new_var) {
+        m_fileSize = new_var;
       }
 
       /**
-       * Get the value of m_port
-       * The port where to find the file
-       * @return the value of m_port
+       * Get the value of m_errorCode
+       * The error code in case of error
+       * @return the value of m_errorCode
        */
-      int port() const {
-        return m_port;
+      unsigned int errorCode() const {
+        return m_errorCode;
       }
 
       /**
-       * Set the value of m_port
-       * The port where to find the file
-       * @param new_var the new value of m_port
+       * Set the value of m_errorCode
+       * The error code in case of error
+       * @param new_var the new value of m_errorCode
        */
-      void setPort(int new_var) {
-        m_port = new_var;
+      void setErrorCode(unsigned int new_var) {
+        m_errorCode = new_var;
       }
 
       /**
-       * Get the value of m_protocol
-       * The protocol to use to retrieve the file
-       * @return the value of m_protocol
+       * Get the value of m_errorMessage
+       * The error message in case of error
+       * @return the value of m_errorMessage
        */
-      std::string protocol() const {
-        return m_protocol;
+      std::string errorMessage() const {
+        return m_errorMessage;
       }
 
       /**
-       * Set the value of m_protocol
-       * The protocol to use to retrieve the file
-       * @param new_var the new value of m_protocol
+       * Set the value of m_errorMessage
+       * The error message in case of error
+       * @param new_var the new value of m_errorMessage
        */
-      void setProtocol(std::string new_var) {
-        m_protocol = new_var;
+      void setErrorMessage(std::string new_var) {
+        m_errorMessage = new_var;
+      }
+
+      /**
+       * Get the value of m_fileId
+       * The castor file id identifying the file considered
+       * @return the value of m_fileId
+       */
+      u_signed64 fileId() const {
+        return m_fileId;
+      }
+
+      /**
+       * Set the value of m_fileId
+       * The castor file id identifying the file considered
+       * @param new_var the new value of m_fileId
+       */
+      void setFileId(u_signed64 new_var) {
+        m_fileId = new_var;
+      }
+
+      /**
+       * Get the value of m_subreqId
+       * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+       * string
+       * @return the value of m_subreqId
+       */
+      std::string subreqId() const {
+        return m_subreqId;
+      }
+
+      /**
+       * Set the value of m_subreqId
+       * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+       * string
+       * @param new_var the new value of m_subreqId
+       */
+      void setSubreqId(std::string new_var) {
+        m_subreqId = new_var;
       }
 
     private:
 
     private:
 
-      /// The current status of the file
-      int m_status;
+      /// The status a the file we are considering
+      unsigned int m_status;
 
-      /// The request id
-      std::string m_reqid;
+      /// The name of the file considered
+      std::string m_castorFileName;
 
-      /// The server where to find the file
-      std::string m_server;
+      /// The size of the file considered
+      u_signed64 m_fileSize;
 
-      /// The port where to find the file
-      int m_port;
+      /// The error code in case of error
+      unsigned int m_errorCode;
 
-      /// The protocol to use to retrieve the file
-      std::string m_protocol;
+      /// The error message in case of error
+      std::string m_errorMessage;
+
+      /// The castor file id identifying the file considered
+      u_signed64 m_fileId;
+
+      /// The Cuuid of the SubRequest that dealt with this file, given as a human readable string
+      std::string m_subreqId;
 
       /// The id of this object
       u_signed64 m_id;
