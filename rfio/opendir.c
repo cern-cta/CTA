@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.10 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: opendir.c,v 1.11 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.10 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.11 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.10 $ $Date: 200
 #include <pwd.h>
 #include <stdlib.h>
 #include "rfio.h"               /* remote file I/O definitions          */
+#include "rfio_rdirfdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
 #if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
@@ -101,8 +102,7 @@ int s;
       }
       TRACE(2, "rfio", "freeing RFIO directory descriptor at 0X%X", rdirfdt[s]);
       (void) free((char *)rdirfdt[s]->dp.dd_buf);
-      (void) free((char *)rdirfdt[s]);
-      rdirfdt[s] = NULL;
+      rfio_rdirfdt_freeentry(s);
       TRACE(2, "rfio", "closing %d",s) ;
       (void) close(s) ;
    }
@@ -136,6 +136,7 @@ char  	*vmstr ;
    char  *dirname ;
    char       * p ;	/* Pointer to rfio buffer	*/
    RDIR      *rdp ;      /* Remote directory pointer     */
+   int rdp_index;
    RDIR      * dp ;      /* Local directory pointer      */
    WORD	   req ;
    struct passwd *pw;
@@ -212,14 +213,14 @@ char  	*vmstr ;
    /*
     * Remote file table is not large enough.
     */
-   if ( rdp->s >= MAXRFD ) {
+   if ((rdp_index = rfio_rdirfdt_allocentry(rdp->s)) == -1) {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rdp);
       (void) free(rdp);
       END_TRACE();
       errno= EMFILE ;
       return(NULL) ;
    }
-   rdirfdt[rdp->s]=rdp;
+   rdirfdt[rdp_index]=rdp;
    /*
     * Reserve space for the dirent buffer associated with this directory stream
     */

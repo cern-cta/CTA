@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.11 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: open.c,v 1.12 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.11 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.12 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.11 $ $Date: 2000/0
 
 #include <syslog.h>             /* system logger                        */
 #include "rfio.h"               /* remote file I/O definitions          */
+#include "rfio_rfilefdt.h"
 #include "rfcntl.h"             /* remote file control mapping macros   */
 #if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
@@ -99,25 +100,26 @@ int	passwd;
 int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
 int     s;
 {
+  int s_index;
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_cleanup(%d)", s);
 
-   if (rfilefdt[s] != NULL) {
-      if (rfilefdt[s]->magic != RFIO_MAGIC && rfilefdt[s]->magic != B_RFIO_MAGIC) {
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1) {
+      if (rfilefdt[s_index]->magic != RFIO_MAGIC && rfilefdt[s_index]->magic != B_RFIO_MAGIC) {
 	 serrno = SEBADVERSION ; 
 	 END_TRACE();
 	 return(-1);
       }
-      if (rfilefdt[s]->_iobuf.base != NULL)    {
-	 TRACE(2, "rfio", "freeing I/O buffer at 0X%X", rfilefdt[s]->_iobuf.base);
-	 (void) free(rfilefdt[s]->_iobuf.base);
+      if (rfilefdt[s_index]->_iobuf.base != NULL)    {
+	 TRACE(2, "rfio", "freeing I/O buffer at 0X%X", rfilefdt[s_index]->_iobuf.base);
+	 (void) free(rfilefdt[s_index]->_iobuf.base);
       }
-      TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfilefdt[s]);
-      (void) free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL;
+      TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfilefdt[s_index]);
+      rfio_rfilefdt_freeentry(s_index);
       TRACE(2, "rfio", "closing %d",s) ;
-      (void) close(s) ;
       (void)rfio_HsmIf_close(s);
+      (void) close(s) ;
    }
    END_TRACE();
    return(0);
@@ -129,8 +131,10 @@ char    *filepath ;
 int     flags,mode ;
 {
    int n;
+   int n_index;
    int old;
    int fd;
+   int fd_index;
 
    old = rfioreadopt(RFIO_READOPT);
 
@@ -146,8 +150,8 @@ int     flags,mode ;
 
 	    rfiosetopt(RFIO_READOPT,&newopt,4); /* 4 = dummy len value */
 	    fd = rfio_open_v2(filepath, flags, mode);
-	    if ((fd >= 0) && (fd < MAXRFD) && (rfilefdt[fd] != NULL))
-	       rfilefdt[fd]->version3 = 0;
+	    if ((fd_index = rfio_rfilefdt_findentry(fd,FINDRFILE_WITHOUT_SCAN)) != -1)
+	       rfilefdt[fd_index]->version3 = 0;
 	    return(fd);
 	 }
 	 else 
@@ -160,8 +164,8 @@ int     flags,mode ;
 	 int newopt = RFIO_STREAM | RFIO_STREAM_DONE;
 
 	 rfiosetopt(RFIO_READOPT,&newopt,4); /* 4 = dummy len value */
-	 if ((n >= 0) && (n < MAXRFD) && (rfilefdt[n] != NULL))
-	    rfilefdt[n]->version3 = 1;
+	 if ((n_index = rfio_rfilefdt_findentry(n,FINDRFILE_WITHOUT_SCAN)) != -1)
+	    rfilefdt[n_index]->version3 = 1;
 	 return(n);
       }
    }
@@ -169,8 +173,8 @@ int     flags,mode ;
    {
       /* Call previous version */
       fd = rfio_open_v2(filepath, flags, mode);
-      if ((fd >= 0) && (fd < MAXRFD) && (rfilefdt[fd] != NULL))
-	 rfilefdt[fd]->version3 = 0;
+      if ((fd_index = rfio_rfilefdt_findentry(fd,FINDRFILE_WITHOUT_SCAN)) != -1)
+	 rfilefdt[fd_index]->version3 = 0;
       return(fd);
    }
 } 
@@ -211,6 +215,7 @@ char  	*vmstr ;
    char  * account;
    char       * p ;	/* Pointer to rfio buffer	*/
    RFILE    * rfp ;	/* Remote file pointer          */
+   int rfp_index;
    WORD	   req ;
    struct passwd *pw;
    int 	    rt ; 	/* daemon in site(0) or not (1) */	
@@ -221,6 +226,7 @@ char  	*vmstr ;
    extern void rfio_setup_ext();
    extern char * getifnam() ;
    int old,n;
+   int n_index;
    char     rfio_buf[BUFSIZ];
 
    INIT_TRACE("RFIO_TRACE");
@@ -248,8 +254,8 @@ char  	*vmstr ;
       }
       else
       {
-	 if ((n >= 0) && (n < MAXRFD) && (rfilefdt[n] != NULL))
-	    rfilefdt[n]->version3 = 1;
+	 if ((n_index = rfio_rfilefdt_findentry(n,FINDRFILE_WITHOUT_SCAN)) != -1)
+	    rfilefdt[n_index]->version3 = 1;
 	 return(n);
       }
    }
@@ -327,17 +333,17 @@ char  	*vmstr ;
    /*
 	 * Remote file table is not large enough.
 	 */
-   if ( rfp->s >= MAXRFD ) {
+   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
       (void) free(rfp);
       END_TRACE();
       errno= EMFILE ;
       return -1 ;
    }
-   rfilefdt[rfp->s]=rfp;
+   rfilefdt[rfp_index]=rfp;
 
 	/* Set version3 to false since we are running version 2 here */
-   rfilefdt[rfp->s]->version3 = 0;
+   rfilefdt[rfp_index]->version3 = 0;
 
    bufsize= DEFIOBUFSIZE ;
    if ((p = getconfent("RFIO", "IOBUFSIZE", 0)) != NULL)        {

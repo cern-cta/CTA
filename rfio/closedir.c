@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.8 2000/09/20 13:52:50 jdurand Exp $
+ * $Id: closedir.c,v 1.9 2000/10/02 08:02:29 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.8 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.9 $ $Date: 2000/10/02 08:02:29 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
 
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
+#include "rfio_rdirfdt.h"
 
 /*
  * remote directory close
@@ -31,11 +32,12 @@ RDIR *dirp;
    int status;
    char *p;
    extern RDIR *rdirfdt[MAXRFD];
+   int s_index;
 
    /*
     * Search internal table for this directory pointer
     */
-   for ( s=0; s<MAXRFD; s++ ) if ( rdirfdt[s] == dirp ) break;
+   s_index = rfio_rdirfdt_findentry(dirp->s,FINDRDIR_WITH_SCAN);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_closedir(0x%x)", dirp);
@@ -43,7 +45,7 @@ RDIR *dirp;
    /*
     * The directory is local
     */
-   if ( s < 0 || s >= MAXRFD || rdirfdt[s] == NULL ) {
+   if (s_index == -1) {
       TRACE(2, "rfio", "rfio_closedir: check if HSM directory");
       if ( (status = rfio_HsmIf_closedir((DIR *)dirp)) != 0 ) {
           TRACE(2, "rfio", "rfio_closedir: using local closedir(0x%x)",dirp) ; 
@@ -60,10 +62,10 @@ RDIR *dirp;
    /*
     * Checking magic number
     */
-   if ( rdirfdt[s]->magic != RFIO_MAGIC ) {
+   s = rdirfdt[s_index]->s;
+   if ( rdirfdt[s_index]->magic != RFIO_MAGIC ) {
       serrno = SEBADVERSION ;
-      free((char *)rdirfdt[s]);
-      rdirfdt[s] = NULL;
+      rfio_rdirfdt_freeentry(s_index);
       (void) close(s) ;
       END_TRACE();
       return(-1);

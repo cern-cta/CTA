@@ -1,5 +1,5 @@
 /*
- * $Id: fread.c,v 1.6 2000/09/20 13:52:50 jdurand Exp $
+ * $Id: fread.c,v 1.7 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.6 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fread.c      Remote File I/O - write a binary file                   */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.6 $ $Date: 2000/0
  */
 #define RFIO_KERNEL     1 
 #include "rfio.h"    
+#include "rfio_rfilefdt.h"
 
 /*
  * Remote file read
@@ -28,8 +29,6 @@ int DLL_DECL rfio_fread(ptr, size, items, fp)
 	RFILE   *fp;                            /* remote file pointer          */
 {
 	int	rc ;
-	int remoteio = 0 ;
-	int i ;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_fread(%x, %d, %d, %x)", ptr, size, items, fp);
@@ -44,16 +43,7 @@ int DLL_DECL rfio_fread(ptr, size, items, fp)
 		return 0 ;
 	}
 
-	/*
-	 * The file is local : this is the only way to detect it !
-	 */
-	for ( i=0 ; i< MAXRFD  ; i++ ) {
-		if ( rfilefdt[i] == fp ) { 
-			remoteio ++ ;
-			break ;
-		}
-	}
-	if ( !remoteio ) {
+	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
 		TRACE(2,"rfio","rfio_fread() : using local fread() ") ;
 		rfio_errno = 0;
 		rc= fread(ptr, size, items, (FILE *)fp) ;

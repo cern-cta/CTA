@@ -1,5 +1,5 @@
 /*
- * $Id: preseek.c,v 1.7 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: preseek.c,v 1.8 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.7 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.8 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.7 $ $Date: 2000
 #include <sys/uio.h>
 #endif
 #include "rfio.h"     
+#include "rfio_rfilefdt.h"
 
 #include <stdlib.h>            /* malloc prototype */
 
@@ -36,6 +37,7 @@ int      s ;
 int  iovnb ;
 struct iovec *iov ;
 {
+  int s_index;
    char   * p ;		/* Pointer to buffer		*/
    int	 i ; 		/* Loop index			*/
    int    temp = 0 ; 	/* Temporary buffer exists ?	*/
@@ -48,17 +50,16 @@ struct iovec *iov ;
     * The file is local.
     * Nothing has to be done.
     */
-   if ( s >= MAXRFD || rfilefdt[s] == NULL ) {
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1 ) {
       END_TRACE() ;
       return 0 ;
    }
    /*
     * Checking magic number
     */
-   if ( rfilefdt[s]->magic != RFIO_MAGIC) {
+   if ( rfilefdt[s_index]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL ;
+      rfio_rfilefdt_freeentry(s_index);
       (void) close(s);
       END_TRACE();
       return -1 ;
@@ -73,21 +74,21 @@ struct iovec *iov ;
    /*
     * Repositionning file mark if needed.
     */
-   if ( (rfilefdt[s]->readissued || rfilefdt[s]->preseek) && rfilefdt[s]->lseekhow == -1 ) {
-      rfilefdt[s]->lseekhow= SEEK_SET ;
-      rfilefdt[s]->lseekoff= rfilefdt[s]->offset ;
+   if ( (rfilefdt[s_index]->readissued || rfilefdt[s_index]->preseek) && rfilefdt[s_index]->lseekhow == -1 ) {
+      rfilefdt[s_index]->lseekhow= SEEK_SET ;
+      rfilefdt[s_index]->lseekoff= rfilefdt[s_index]->offset ;
    }
    /*
     * Resetting flags.
     * preseek() is forbidden when RFIO aren't buffered.
     */
-   rfilefdt[s]->eof= 0 ; 
-   rfilefdt[s]->preseek= 0 ;
-   rfilefdt[s]->nbrecord= 0 ;
-   rfilefdt[s]->readissued= 0 ; 
-   if ( rfilefdt[s]->_iobuf.base ) {
-      rfilefdt[s]->_iobuf.count= 0 ; 
-      rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ; 
+   rfilefdt[s_index]->eof= 0 ; 
+   rfilefdt[s_index]->preseek= 0 ;
+   rfilefdt[s_index]->nbrecord= 0 ;
+   rfilefdt[s_index]->readissued= 0 ; 
+   if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count= 0 ; 
+      rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ; 
    }
    else 	{
       errno= EINVAL ; 
@@ -109,7 +110,7 @@ struct iovec *iov ;
    p= trp ;
    marshall_WORD(p,RFIO_MAGIC) ;
    marshall_WORD(p,RQST_PRESEEK) ;
-   marshall_LONG(p,rfilefdt[s]->_iobuf.dsize) ;
+   marshall_LONG(p,rfilefdt[s_index]->_iobuf.dsize) ;
    marshall_LONG(p,iovnb) ;
    p= trp + RQSTSIZE ;
    for(i= 0; i<iovnb; i ++) {
@@ -137,14 +138,14 @@ struct iovec *iov ;
       int   rcode ;
       int  msgsiz ;
 
-      msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;
+      msgsiz= rfilefdt[s_index]->_iobuf.hsize + rfilefdt[s_index]->_iobuf.dsize ;
       TRACE(2, "rfio", "rfio_preseek: reading %d bytes",msgsiz) ; 
-      if (netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz) {
+      if (netread_timeout(s,rfilefdt[s_index]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz) {
 	 TRACE(2,"rfio","rfio_preseek: read(): ERROR occured (errno=%d)",errno) ;
 	 END_TRACE() ;
 	 return -1 ; 
       }
-      p= rfilefdt[s]->_iobuf.base ;
+      p= rfilefdt[s_index]->_iobuf.base ;
       unmarshall_WORD(p,req) ;
       unmarshall_LONG(p,status) ;
       unmarshall_LONG(p,rcode)  ; 
@@ -157,10 +158,10 @@ struct iovec *iov ;
 	     END_TRACE() ; 
 	     return -1 ;
 	  }
-	  rfilefdt[s]->preseek= ( status == iovnb ) ? 2 : 1 ; 
-	  rfilefdt[s]->nbrecord= status ; 
-	  rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ; 
-	  rfilefdt[s]->_iobuf.count= 0 ; 
+	  rfilefdt[s_index]->preseek= ( status == iovnb ) ? 2 : 1 ; 
+	  rfilefdt[s_index]->nbrecord= status ; 
+	  rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ; 
+	  rfilefdt[s_index]->_iobuf.count= 0 ; 
 	  END_TRACE() ; 
 	  return 0 ;
        case RQST_PRESEEK:

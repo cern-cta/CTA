@@ -1,5 +1,5 @@
 /*
- * $Id: lockf.c,v 1.5 2000/05/29 16:42:01 obarring Exp $
+ * $Id: lockf.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.5 $ $Date: 2000/05/29 16:42:01 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.5 $ $Date: 2000/0
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include "rfio_rfilefdt.h"
 
 
 int DLL_DECL rfio_lockf(sd, op, siz)   	/* Remote lockf              	*/
@@ -37,7 +38,7 @@ long		siz;		/* locked region			*/
    /* 
     * The file is local
     */
-   if ((sd >= MAXRFD) || (rfilefdt[sd] == NULL)) {
+   if (rfio_rfilefdt_findentry(sd,FINDRFILE_WITHOUT_SCAN) == -1) {
       TRACE(1, "rfio", "rfio_lockf: using local lockf(%d, %d, %ld)",
 	    sd, op, siz);
       END_TRACE();

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.10 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: read.c,v 1.11 2000/10/02 08:02:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.10 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.11 $ $Date: 2000/10/02 08:02:32 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -25,6 +25,7 @@ extern char *sys_errlist[];     /* system error list                    */
 
 #define RFIO_KERNEL     1 
 #include "rfio.h"  
+#include "rfio_rfilefdt.h"
 
 /* Forward reference */
 
@@ -37,10 +38,12 @@ int DLL_DECL rfio_read(s, ptr, size)
 void    *ptr;
 int     s, size;
 {
+  int s_index;
+
    /* Remote file ? */
-   if ((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL))
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1)
    {
-      if (rfilefdt[s]->version3 == 1)
+      if (rfilefdt[s_index]->version3 == 1)
       {
 	 /* New V3 stream protocol for sequential transfers */
 	 return(rfio_read_v3(s,(char *)ptr,size));
@@ -60,6 +63,7 @@ int     s, size;
    int HsmType, save_errno;
    int nbytes ; 		/* Bytes still to read			*/
    int socset = 0 ;
+   int s_index;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_read(%d, %x, %d)", s, ptr, size);
@@ -95,7 +99,7 @@ int     s, size;
    /* 
     * The file is local.
     */
-   if ( s<0 || s >= MAXRFD || rfilefdt[s] == NULL) {
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2,"rfio","rfio_read: using local read(%d, %x, %d)", s, ptr, nbytes);
       status = read(s, ptr, nbytes);
 
@@ -113,10 +117,9 @@ int     s, size;
    /*
     * Checking magic number.
     */
-   if (rfilefdt[s]->magic != RFIO_MAGIC) {
+   if (rfilefdt[s_index]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL;
+      rfio_rfilefdt_freeentry(s_index);
       (void) close(s) ;
       END_TRACE();
       return(-1);
@@ -153,40 +156,40 @@ int     s, size;
     * A preseek has been issued. If rfio_preread() does not succeed 
     * in its search for the correct data, usual operations are done.
     */
-   if ( rfilefdt[s]->preseek ) {
+   if ( rfilefdt[s_index]->preseek ) {
       int 	offset ;	/* Saving current offset	*/
 
-      offset= rfilefdt[s]->offset ;
+      offset= rfilefdt[s_index]->offset ;
       status= rfio_preread(s, ptr, size) ;
       if ( status != -2 ) {
 	 END_TRACE() ;
 	 return status ;
       }
-      rfilefdt[s]->offset= offset ;
-      rfilefdt[s]->lseekhow= SEEK_SET ;
-      rfilefdt[s]->lseekoff= offset ;	
+      rfilefdt[s_index]->offset= offset ;
+      rfilefdt[s_index]->lseekhow= SEEK_SET ;
+      rfilefdt[s_index]->lseekoff= offset ;	
    }
    /*
     * The file mark has to be repositionned.
     * Local flags are reset.
     */
-   if ( rfilefdt[s]->lseekhow != -1 ) {
-      rfilefdt[s]->eof= 0 ; 
-      rfilefdt[s]->readissued= 0 ; 
-      if ( rfilefdt[s]->_iobuf.base ) {
-	 rfilefdt[s]->_iobuf.count= 0 ; 
-	 rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ; 
+   if ( rfilefdt[s_index]->lseekhow != -1 ) {
+      rfilefdt[s_index]->eof= 0 ; 
+      rfilefdt[s_index]->readissued= 0 ; 
+      if ( rfilefdt[s_index]->_iobuf.base ) {
+	 rfilefdt[s_index]->_iobuf.count= 0 ; 
+	 rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ; 
       }
    }
    /*
     * I/O are unbuffered.
     */
-   if ( rfilefdt[s]->_iobuf.base == NULL ) {
+   if ( rfilefdt[s_index]->_iobuf.base == NULL ) {
       /*
        * If the end of file has been reached, there is no
        * no need for sending a request across.
        */
-      if ( rfilefdt[s]->eof ) {
+      if ( rfilefdt[s_index]->eof ) {
 	 END_TRACE() ; 
 	 return 0 ; 
       }
@@ -194,29 +197,29 @@ int     s, size;
        * For unbuffered read ahead I/O, the request
        * size has to be always the same one.
        */
-      if ( rfilefdt[s]->ahead && rfilefdt[s]->_iobuf.dsize && rfilefdt[s]->_iobuf.dsize != size ) {
+      if ( rfilefdt[s_index]->ahead && rfilefdt[s_index]->_iobuf.dsize && rfilefdt[s_index]->_iobuf.dsize != size ) {
 	 TRACE(2,"rfio","rfio_read: request size %d is imcompatible with the previous one %d",
-	       size,rfilefdt[s]->_iobuf.dsize) ;
+	       size,rfilefdt[s_index]->_iobuf.dsize) ;
 	 errno= EINVAL ;
 	 END_TRACE() ; 
 	 return 0 ; 
       }
-      rfilefdt[s]->_iobuf.dsize= size ;
+      rfilefdt[s_index]->_iobuf.dsize= size ;
       /*
        * Sending a request to fill the
        * user buffer.
        */
       if ( (status= rfio_filbuf(s,ptr,size)) < 0 ) { 
-	 rfilefdt[s]->readissued= 0 ; 
+	 rfilefdt[s_index]->readissued= 0 ; 
          if ( HsmType == RFIO_HSM_CNS ) 
               rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
 	 END_TRACE() ; 
 	 return status ;
       }	
-      rfilefdt[s]->offset += status ; 
+      rfilefdt[s_index]->offset += status ; 
       if ( status != size ) {
-	 rfilefdt[s]->eof= 1 ; 
-	 rfilefdt[s]->readissued= 0 ; 
+	 rfilefdt[s_index]->eof= 1 ; 
+	 rfilefdt[s_index]->readissued= 0 ; 
       }
       END_TRACE() ;
       return status ; 
@@ -228,23 +231,23 @@ int     s, size;
       /*
        * There is still some valid data in cache.
        */
-      if ( rfilefdt[s]->_iobuf.count ) {
+      if ( rfilefdt[s_index]->_iobuf.count ) {
 	 int count ; 
 
-	 count= (nbytes>rfilefdt[s]->_iobuf.count) ? rfilefdt[s]->_iobuf.count : nbytes ;	
+	 count= (nbytes>rfilefdt[s_index]->_iobuf.count) ? rfilefdt[s_index]->_iobuf.count : nbytes ;	
 	 TRACE(2, "rfio", "rfio_read: copy %d cached bytes from 0X%X to 0X%X",count,
-	       rfilefdt[s]->_iobuf.ptr, ptr);
-	 (void) memcpy(ptr,rfilefdt[s]->_iobuf.ptr,count) ;
+	       rfilefdt[s_index]->_iobuf.ptr, ptr);
+	 (void) memcpy(ptr,rfilefdt[s_index]->_iobuf.ptr,count) ;
 	 ptr+= count ; 
 	 nbytes -= count ; 
-	 rfilefdt[s]->_iobuf.count -= count ;
-	 rfilefdt[s]->_iobuf.ptr += count ;
+	 rfilefdt[s_index]->_iobuf.count -= count ;
+	 rfilefdt[s_index]->_iobuf.ptr += count ;
       }
       /*
        * User request has been satisfied.
        */
       if ( nbytes == 0 ) {
-	 rfilefdt[s]->offset += size ;
+	 rfilefdt[s_index]->offset += size ;
 	 END_TRACE() ;
 	 return size ;
       }
@@ -252,29 +255,29 @@ int     s, size;
        * End of file has been reached. 
        * The user is returned what's left.
        */
-      if (rfilefdt[s]->eof) {
-	 rfilefdt[s]->offset += size - nbytes ;
+      if (rfilefdt[s_index]->eof) {
+	 rfilefdt[s_index]->offset += size - nbytes ;
 	 END_TRACE() ; 
 	 return ( size - nbytes ) ; 
       }
       /*
        * Buffer is going to be fill up.
        */
-      rfilefdt[s]->_iobuf.count = 0;
-      rfilefdt[s]->_iobuf.ptr = iodata(rfilefdt[s]);
-      status= rfio_filbuf(s,rfilefdt[s]->_iobuf.base,rfilefdt[s]->_iobuf.dsize) ; 
+      rfilefdt[s_index]->_iobuf.count = 0;
+      rfilefdt[s_index]->_iobuf.ptr = iodata(rfilefdt[s_index]);
+      status= rfio_filbuf(s,rfilefdt[s_index]->_iobuf.base,rfilefdt[s_index]->_iobuf.dsize) ; 
       if ( status < 0 ) {
-	 rfilefdt[s]->readissued= 0 ; 
+	 rfilefdt[s_index]->readissued= 0 ; 
          if ( HsmType == RFIO_HSM_CNS ) 
               rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
 	 END_TRACE() ; 
 	 return -1 ;
       }
-      if ( status != rfilefdt[s]->_iobuf.dsize ) {
-	 rfilefdt[s]->eof= 1 ; 
-	 rfilefdt[s]->readissued= 0 ; 
+      if ( status != rfilefdt[s_index]->_iobuf.dsize ) {
+	 rfilefdt[s_index]->eof= 1 ; 
+	 rfilefdt[s_index]->readissued= 0 ; 
       }
-      rfilefdt[s]->_iobuf.count= status ;
+      rfilefdt[s_index]->_iobuf.count= status ;
    }
 }
 
@@ -290,10 +293,16 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
 {
    int	ncount ;
    int	  ngot ;
+   int s_index;
 
    TRACE(1,"rfio","rfio_preread(%d,%x,%d)",s,buffer,size) ;
    ngot= 0 ;
    ncount= 0 ; 
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
+     serrno = SEINTERNAL;
+     END_TRACE() ; 
+     return -1 ; 	
+   }
    do 	{
       char 	   * p ;	/* Pointer to data buffer.		*/
       int	status ;
@@ -301,7 +310,7 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
       int	offset ;
       int	   len ; 
 
-      p= rfilefdt[s]->_iobuf.ptr ;
+      p= rfilefdt[s_index]->_iobuf.ptr ;
       unmarshall_LONG(p,offset) ; 
       unmarshall_LONG(p,len) ; 
       unmarshall_LONG(p,status) ; 
@@ -310,8 +319,8 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
        * Data we are looking for is in the current record.
        */
       TRACE(2,"rfio","rfio_preread: record offset is %d and its length is %d",offset,len) ;
-      TRACE(2,"rfio","rfio_preread: We want to go at offset %d",rfilefdt[s]->offset) ; 
-      if ( (offset <= rfilefdt[s]->offset) && (rfilefdt[s]->offset < (offset+len)) ) {
+      TRACE(2,"rfio","rfio_preread: We want to go at offset %d",rfilefdt[s_index]->offset) ; 
+      if ( (offset <= rfilefdt[s_index]->offset) && (rfilefdt[s_index]->offset < (offset+len)) ) {
 	 /*
 	  * lseek() or read() returned an error.
 	  */
@@ -323,17 +332,17 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
 	 /*
 	  * Copying data into user buffer.
 	  */
-	 p+= rfilefdt[s]->offset - offset ;
-	 ncount= min(size-ngot,status-(rfilefdt[s]->offset-offset)) ;
+	 p+= rfilefdt[s_index]->offset - offset ;
+	 ncount= min(size-ngot,status-(rfilefdt[s_index]->offset-offset)) ;
 	 TRACE(2, "rfio", "rfio_preread: copy %d cached bytes from 0X%X to 0X%X",ncount,p,buffer+ngot);
 	 (void) memcpy(buffer+ngot,p,ncount) ;
-	 rfilefdt[s]->offset += ncount ;
+	 rfilefdt[s_index]->offset += ncount ;
 	 ngot += ncount ;
 	 /*
 	  * The current record is reaching the end of file.
 	  */
 	 if ( len != status ) {
-	    rfilefdt[s]->eof= 1 ;
+	    rfilefdt[s_index]->eof= 1 ;
 	    END_TRACE() ;
 	    return ngot ;
 	 }
@@ -349,16 +358,16 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
        * Pointing to the next record.
        */
       if ( status == -1 ) {
-	 rfilefdt[s]->_iobuf.ptr += 4*LONGSIZE ;
+	 rfilefdt[s_index]->_iobuf.ptr += 4*LONGSIZE ;
       }
       else	{
-	 rfilefdt[s]->_iobuf.ptr += 4*LONGSIZE + status ;
+	 rfilefdt[s_index]->_iobuf.ptr += 4*LONGSIZE + status ;
       }
-      rfilefdt[s]->nbrecord -- ;
+      rfilefdt[s_index]->nbrecord -- ;
       /*
        * No more data in the buffer.
        */
-      if (  rfilefdt[s]->nbrecord == 0 ) {
+      if (  rfilefdt[s_index]->nbrecord == 0 ) {
 	 WORD	req ;
 	 int  msgsiz ;
 
@@ -366,36 +375,36 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
 	  * It was the last message.
 	  * No more data will be sent.
 	  */
-	 if ( rfilefdt[s]->preseek == 2 ) 
+	 if ( rfilefdt[s_index]->preseek == 2 ) 
 	    break  ;
 	 /*
 	  * Filling the buffer.
 	  */
-	 msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;	
+	 msgsiz= rfilefdt[s_index]->_iobuf.hsize + rfilefdt[s_index]->_iobuf.dsize ;	
 	 TRACE(2,"rfio","rfio_preread: reading %d bytes",msgsiz) ; 
-	 if ( netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz ) {
+	 if ( netread_timeout(s,rfilefdt[s_index]->_iobuf.base,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz ) {
 	    TRACE(2,"rfio","rfio_preread: read(): ERROR occured (errno=%d)",errno) ;
 	    END_TRACE() ;
 	    return -1 ;
 	 }
-	 p= rfilefdt[s]->_iobuf.base ;
+	 p= rfilefdt[s_index]->_iobuf.base ;
 	 unmarshall_WORD(p,req) ; 
 	 unmarshall_LONG(p,status) ; 
 	 unmarshall_LONG(p,rcode) ; 
 	 unmarshall_LONG(p,msgsiz) ; 
 	 if ( status == -1 )  break ; 
-	 rfilefdt[s]->nbrecord= status ;
-	 rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ;
-	 rfilefdt[s]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
+	 rfilefdt[s_index]->nbrecord= status ;
+	 rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
+	 rfilefdt[s_index]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
 
       }
-   } while( rfilefdt[s]->preseek ) ;
+   } while( rfilefdt[s_index]->preseek ) ;
    /*
     * Preseek data did not satisfied the read() request.
     * rfio_read() will process the request.
     */
-   rfilefdt[s]->nbrecord= 0 ;
-   rfilefdt[s]->preseek= 0 ; 
+   rfilefdt[s_index]->nbrecord= 0 ;
+   rfilefdt[s_index]->preseek= 0 ; 
    END_TRACE() ;
    return -2 ;
 }
@@ -417,28 +426,34 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
    int  hsize ; 		/* Message header size			*/
    int firstread= 0 ; 	/* The request has just been issued.	*/	
    char     rfio_buf[BUFSIZ];
+   int s_index;
 
    TRACE(1,"rfio","rfio_filbuf(0X%X,%d) entered",buffer,size) ;
-   hsize= rfilefdt[s]->_iobuf.hsize ;
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) < 0) {
+	 TRACE(2,"rfio","rfio_filbuf: rfio_rfilefdt_findentry(): ERROR occured (serrno=%d)", serrno) ;
+	 END_TRACE() ;
+	 return -1 ; 
+   }
+   hsize= rfilefdt[s_index]->_iobuf.hsize ;
    /*
     * If necessary a read request is sent.
     */
-   if ( ! rfilefdt[s]->readissued ) {
+   if ( ! rfilefdt[s_index]->readissued ) {
       firstread= 1 ;
       p= rfio_buf ; 
       marshall_WORD(p, RFIO_MAGIC);
-      marshall_WORD(p,(rfilefdt[s]->ahead)?RQST_READAHEAD:RQST_READ) ; 
+      marshall_WORD(p,(rfilefdt[s_index]->ahead)?RQST_READAHEAD:RQST_READ) ; 
       marshall_LONG(p,size) ;
-      marshall_LONG(p,rfilefdt[s]->lseekhow) ;
-      marshall_LONG(p,rfilefdt[s]->lseekoff) ; 
-      rfilefdt[s]->lseekhow= -1 ;
+      marshall_LONG(p,rfilefdt[s_index]->lseekhow) ;
+      marshall_LONG(p,rfilefdt[s_index]->lseekoff) ; 
+      rfilefdt[s_index]->lseekhow= -1 ;
       TRACE(2,"rfio","rfio_filbuf: writing %d bytes",RQSTSIZE) ;
       if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
 	 TRACE(2,"rfio","rfio_filbuf: write(): ERROR occured (errno=%d)", errno) ;
 	 END_TRACE() ;
 	 return -1 ; 
       }
-      if ( rfilefdt[s]->ahead ) rfilefdt[s]->readissued= 1 ; 
+      if ( rfilefdt[s_index]->ahead ) rfilefdt[s_index]->readissued= 1 ; 
    }
    /*
     * Reading data from network.
@@ -448,7 +463,7 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
        * The buffer is the user buffer. 
        * Only data can be written in it.
        */
-      if ( rfilefdt[s]->_iobuf.base == NULL ) {
+      if ( rfilefdt[s_index]->_iobuf.base == NULL ) {
 	 TRACE(2, "rfio", "rfio_filbuf: reading %d bytes",hsize) ; 
 	 if ( netread_timeout(s,rfio_buf,hsize,RFIO_CTRL_TIMEOUT) != hsize ) {
 	    TRACE(2,"rfio","rfio_filbuf: read(): ERROR occured (errno=%d)", errno);

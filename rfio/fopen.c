@@ -1,5 +1,5 @@
 /*
- * $Id: fopen.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
+ * $Id: fopen.c,v 1.5 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.5 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fopen.c      Remote File I/O - open a binary file                    */
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.4 $ $Date: 2000/0
 #define RFIO_KERNEL     1
 #include <fcntl.h>
 #include "rfio.h"    
+#include "rfio_rfilefdt.h"
 
 
 /*
@@ -29,6 +30,7 @@ RFILE DLL_DECL *rfio_fopen(file, mode)
 	char * mode ; 
 {
 	register int f, rw, oflags ;
+    int f_index;
 
 	INIT_TRACE("RFIO_TRACE") ;
 	TRACE(1, "rfio", "rfio_fopen(%s, %s)", file, mode) ;
@@ -55,9 +57,9 @@ RFILE DLL_DECL *rfio_fopen(file, mode)
 		return NULL ;
 	}
 
-	if ( rfilefdt[f] != NULL  ) {
+	if ( (f_index = rfio_rfilefdt_findentry(f,FINDRFILE_WITHOUT_SCAN)) != -1  ) {
 		END_TRACE() ; 
-		return (RFILE *) rfilefdt[f] ;
+		return (RFILE *) rfilefdt[f_index] ;
 	}
 	else {
 		TRACE(3,"rfio","rfio_fopen() : Using local FILE ptr ");

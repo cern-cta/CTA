@@ -1,5 +1,5 @@
 /*
- * $Id: fstat.c,v 1.7 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: fstat.c,v 1.8 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.7 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.8 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.7 $ $Date: 2000/0
  */
 #define RFIO_KERNEL     1   
 #include "rfio.h"          
+#include "rfio_rfilefdt.h"
 
 #include <stdlib.h>            /* malloc prototype */
 
@@ -33,13 +34,14 @@ struct stat *statbuf;
    char * trp ;
    int temp=0 ;
    char     rfio_buf[BUFSIZ];
-	
+   int s_index = -1;
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_fstat(%d, %x)", s, statbuf);
    /* 
     * The file is local
     */
-   if ( s>= MAXRFD || rfilefdt[s] == NULL) {
+   if (s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN) == -1) {
       TRACE(2, "rfio", "rfio_fstat: using local fstat(%d, %x)", s, statbuf);
       status = fstat(s, statbuf);
       rfio_errno = 0;
@@ -49,10 +51,9 @@ struct stat *statbuf;
    /*
     * Checking magic number.
     */
-   if (rfilefdt[s]->magic != RFIO_MAGIC) {
+   if (rfilefdt[s_index]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ; 
-      free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL ;
+      rfio_rfilefdt_freeentry(s_index);
       (void) close(s) ;
       END_TRACE();
       return(-1);
@@ -60,20 +61,20 @@ struct stat *statbuf;
    /*
     * File mark has to be repositionned.
     */
-   if ( (rfilefdt[s]->readissued || rfilefdt[s]->preseek) && rfilefdt[s]->lseekhow == -1 ) {
-      rfilefdt[s]->lseekhow= SEEK_SET ;
-      rfilefdt[s]->lseekoff= rfilefdt[s]->offset ; 
+   if ( (rfilefdt[s_index]->readissued || rfilefdt[s_index]->preseek) && rfilefdt[s_index]->lseekhow == -1 ) {
+      rfilefdt[s_index]->lseekhow= SEEK_SET ;
+      rfilefdt[s_index]->lseekoff= rfilefdt[s_index]->offset ; 
    }
    /*
     * Flags on current status are reset.
     */
-   rfilefdt[s]->eof= 0 ; 
-   rfilefdt[s]->preseek= 0 ;
-   rfilefdt[s]->nbrecord= 0 ;
-   rfilefdt[s]->readissued= 0 ; 
-   if ( rfilefdt[s]->_iobuf.base ) {
-      rfilefdt[s]->_iobuf.count= 0 ; 
-      rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ;
+   rfilefdt[s_index]->eof= 0 ; 
+   rfilefdt[s_index]->preseek= 0 ;
+   rfilefdt[s_index]->nbrecord= 0 ;
+   rfilefdt[s_index]->readissued= 0 ; 
+   if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count= 0 ; 
+      rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
    }	
    /*
     * Sending request.
@@ -82,10 +83,10 @@ struct stat *statbuf;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_FSTAT);
 /*
-  marshall_LONG(p, rfilefdt[s]->lseekhow) ; 
+  marshall_LONG(p, rfilefdt[s_index]->lseekhow) ; 
 */
-   marshall_LONG(p, rfilefdt[s]->lseekoff) ; 
-   marshall_LONG(p, rfilefdt[s]->lseekhow) ; 
+   marshall_LONG(p, rfilefdt[s_index]->lseekoff) ; 
+   marshall_LONG(p, rfilefdt[s_index]->lseekhow) ; 
    TRACE(2,"rfio","rfio_fstat: sending %d bytes",RQSTSIZE) ;
    if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
       TRACE(2, "rfio", "rfio_fstat: write(): ERROR occured (errno=%d)", errno);
@@ -100,8 +101,8 @@ struct stat *statbuf;
       LONG  rcode ;
       LONG msgsiz ;
 
-      TRACE(2, "rfio", "rfio_fstat: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-      if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
+      TRACE(2, "rfio", "rfio_fstat: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ; 
+      if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s_index]->_iobuf.hsize) {
 	 TRACE(2, "rfio", "rfio_fstat: read(): ERROR occured (errno=%d)", errno);
 	 if ( temp ) (void) free(trp) ; 
 	 END_TRACE() ;
@@ -145,7 +146,7 @@ struct stat *statbuf;
 	   * to receive data which is going to be thrown away.
 	   */
 	  if ( temp == 0 ) {
-	     if ( rfilefdt[s]->_iobuf.base==NULL || rfilefdt[s]->_iobuf.dsize<msgsiz ) {
+	     if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
 		temp= 1 ; 
 		TRACE(3,"rfio","rfio_fstat: allocating momentary buffer of size %d",msgsiz) ; 
 		if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {
@@ -155,7 +156,7 @@ struct stat *statbuf;
 		}
 	     }
 	     else
-		trp= iodata(rfilefdt[s]) ;
+		trp= iodata(rfilefdt[s_index]) ;
 	  }
 	  if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 	     TRACE(2,"rfio","rfio_fstat: read(): ERROR occured (errno=%d)",errno) ;

@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.9 2000/09/20 13:52:52 jdurand Exp $
+ * $Id: write.c,v 1.10 2000/10/02 08:02:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.9 $ $Date: 2000/09/20 13:52:52 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.10 $ $Date: 2000/10/02 08:02:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.9 $ $Date: 2000/0
  */
 #define RFIO_KERNEL     1  
 #include "rfio.h"  
+#include "rfio_rfilefdt.h"
 
 #include <stdlib.h>            /* malloc prototype */
 
@@ -28,10 +29,12 @@ int DLL_DECL rfio_write(s, ptr, size)
 void    *ptr;
 int     s, size;
 {
+  int s_index;
+
    /* Remote file ? */
-   if ((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL))
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1)
    {
-      if (rfilefdt[s]->version3 == 1)
+      if (rfilefdt[s_index]->version3 == 1)
       {
 	 /* New V3 stream protocol for sequential transfers */
 	 return(rfio_write_v3(s,(char *)ptr,size));
@@ -53,6 +56,7 @@ int     s, size;
    char * trp ; 	/* Pointer to a temp buffer	*/
    int temp=0 ;	/* Has it been allocated ? 	*/
    char     rfio_buf[BUFSIZ];
+   int s_index;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_write(%d, %x, %d)", s, ptr, size) ;
@@ -81,7 +85,7 @@ int     s, size;
    /*
     * The file is local.
     */
-   if ( s<0 || s>= MAXRFD || rfilefdt[s] == NULL) {
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2, "rfio", "rfio_write: using local write(%d, %x, %d)", s, ptr, size);
       status = write(s, ptr, size);
       if ( HsmType == RFIO_HSM_CNS ) {
@@ -97,10 +101,9 @@ int     s, size;
    /*
     * Checking magic number.
     */
-   if (rfilefdt[s]->magic != RFIO_MAGIC) {
+   if (rfilefdt[s_index]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ; 
-      free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL ;
+      rfio_rfilefdt_freeentry(s_index);
       (void) close(s) ;
       END_TRACE();
       return(-1);
@@ -108,20 +111,20 @@ int     s, size;
    /*
     * Repositionning file mark if needed.
     */
-   if ( (rfilefdt[s]->readissued || rfilefdt[s]->preseek) && rfilefdt[s]->lseekhow == -1 ) {
-      rfilefdt[s]->lseekhow= SEEK_SET ;
-      rfilefdt[s]->lseekoff= rfilefdt[s]->offset ;
+   if ( (rfilefdt[s_index]->readissued || rfilefdt[s_index]->preseek) && rfilefdt[s_index]->lseekhow == -1 ) {
+      rfilefdt[s_index]->lseekhow= SEEK_SET ;
+      rfilefdt[s_index]->lseekoff= rfilefdt[s_index]->offset ;
    }
    /*
     * Resetting flags
     */
-   rfilefdt[s]->eof= 0 ; 
-   rfilefdt[s]->preseek= 0 ;
-   rfilefdt[s]->nbrecord= 0 ;
-   rfilefdt[s]->readissued= 0 ; 
-   if ( rfilefdt[s]->_iobuf.base ) {
-      rfilefdt[s]->_iobuf.count= 0 ; 
-      rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ; 
+   rfilefdt[s_index]->eof= 0 ; 
+   rfilefdt[s_index]->preseek= 0 ;
+   rfilefdt[s_index]->nbrecord= 0 ;
+   rfilefdt[s_index]->readissued= 0 ; 
+   if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count= 0 ; 
+      rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ; 
    }
    /*
     * Sending request.
@@ -130,19 +133,19 @@ int     s, size;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_WRITE);
    marshall_LONG(p, size);
-   marshall_LONG(p, rfilefdt[s]->lseekhow) ; 
-   marshall_LONG(p, rfilefdt[s]->lseekoff) ; 
-   rfilefdt[s]->lseekhow= -1 ;
+   marshall_LONG(p, rfilefdt[s_index]->lseekhow) ; 
+   marshall_LONG(p, rfilefdt[s_index]->lseekoff) ; 
+   rfilefdt[s_index]->lseekhow= -1 ;
    TRACE(2, "rfio", "rfio_write: sending %d bytes",RQSTSIZE) ;
    if (netwrite_timeout(s, rfio_buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
       TRACE(2,"rfio","rfio_write: write(): ERROR occured (errno=%d)",errno) ;
       END_TRACE() ;
       return -1 ;
    }
-   if (rfilefdt[s]->bufsize < size) {
-      rfilefdt[s]->bufsize = size ;
-      TRACE(2, "rfio", "rfio_write: setsockopt(SOL_SOCKET, SO_SNDBUF): %d", rfilefdt[s]->bufsize) ;
-      if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&(rfilefdt[s]->bufsize),sizeof((rfilefdt[s]->bufsize))) == -1) {
+   if (rfilefdt[s_index]->bufsize < size) {
+      rfilefdt[s_index]->bufsize = size ;
+      TRACE(2, "rfio", "rfio_write: setsockopt(SOL_SOCKET, SO_SNDBUF): %d", rfilefdt[s_index]->bufsize) ;
+      if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&(rfilefdt[s_index]->bufsize),sizeof((rfilefdt[s_index]->bufsize))) == -1) {
 	 TRACE(2, "rfio" ,"rfio_write: setsockopt(SO_SNDBUF)") ;
       }
    }
@@ -160,8 +163,8 @@ int     s, size;
       LONG  rcode ;
       LONG msgsiz ;
 
-      TRACE(2, "rfio", "rfio_write: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-      if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_CTRL_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
+      TRACE(2, "rfio", "rfio_write: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ; 
+      if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_CTRL_TIMEOUT) != rfilefdt[s_index]->_iobuf.hsize) {
 	 TRACE(2, "rfio", "rfio_write: read(): ERROR occured (errno=%d)", errno);
 	 if ( temp ) (void) free(trp) ; 
 	 END_TRACE() ;
@@ -178,7 +181,7 @@ int     s, size;
           if ( status < 0 ) rfio_HsmIf_IOError(s,rfio_errno);
 	  if ( status < 0 && rcode == 0 )
 	     serrno = SENORCODE ;
-	  rfilefdt[s]->offset += status ;
+	  rfilefdt[s_index]->offset += status ;
 	  TRACE(1,"rfio","rfio_write: status %d, rcode %d",status,rcode) ;
 	  if ( temp ) (void) free(trp) ; 
 	  END_TRACE() ;
@@ -191,7 +194,7 @@ int     s, size;
 	   * receive data which is going to be thrown away.
 	   */
 	  if ( temp == 0 ) {
-	     if ( rfilefdt[s]->_iobuf.base==NULL || rfilefdt[s]->_iobuf.dsize<msgsiz ) {
+	     if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
 		temp= 1 ; 
 		TRACE(2,"rfio","rfio_write: allocating momentary buffer of size %d",msgsiz) ; 
 		if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {
@@ -201,7 +204,7 @@ int     s, size;
 		}
 	     }
 	     else
-		trp= iodata(rfilefdt[s]) ;
+		trp= iodata(rfilefdt[s_index]) ;
 	  }
 	  TRACE(2, "rfio", "rfio_write: reading %d bytes to throw them away",msgsiz) ; 
 	  if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {

@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.6 2000/09/20 13:52:50 jdurand Exp $
+ * $Id: fclose.c,v 1.7 2000/10/02 08:02:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.6 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:29 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.6 $ $Date: 2000/
  */
 #define RFIO_KERNEL     1     
 #include "rfio.h"    
+#include "rfio_rfilefdt.h"
 
 
 int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
@@ -26,7 +27,6 @@ RFILE *fp;                      /* Remote file pointer                  */
    static char     buf[256];       /* General input/output buffer          */
    char    *p = buf;
    int     status;
-   int i, remoteio=0 ;
 
 
    INIT_TRACE("RFIO_TRACE");
@@ -41,13 +41,7 @@ RFILE *fp;                      /* Remote file pointer                  */
    /*
     * The file is local : this is the only way to detect it !
     */
-   for ( i=0 ; i< MAXRFD  ; i++ ) {
-      if ( rfilefdt[i] == fp ) {
-	 remoteio ++ ;
-	 break ;
-      }
-   }
-   if ( !remoteio ) {
+   if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
       status= fclose((FILE *)fp) ;
       END_TRACE() ; 
       rfio_errno = 0;

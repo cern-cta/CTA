@@ -1,5 +1,5 @@
 /*
- * $Id: fflush.c,v 1.5 2000/09/20 13:52:50 jdurand Exp $
+ * $Id: fflush.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.5 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.5 $ $Date: 2000/
  */
 #define RFIO_KERNEL     1   
 #include "rfio.h"          
+#include "rfio_rfilefdt.h"
 
 /*
  * Remote file flush
@@ -27,7 +28,6 @@ int DLL_DECL rfio_fflush(fp)
 	RFILE *fp;             
 {
 	int     status;
-	int	i, remoteio = 0 ;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_fflush(%x)", fp);
@@ -38,16 +38,7 @@ int DLL_DECL rfio_fflush(fp)
 		return -1 ;
 	}
 
-	/*
-	 * The file is local : this is the only way to detect it !
-	 */
-	for ( i=0 ; i< MAXRFD  ; i++ ) {
-		if ( rfilefdt[i] == fp ) {
-			remoteio ++ ;
-			break ;
-		}
-	}
-	if ( !remoteio ) {
+	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1 ) {
 		status= fflush((FILE *)fp) ;
 		END_TRACE() ; 
 		rfio_errno = 0;

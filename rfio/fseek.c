@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.5 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: fseek.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.5 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Fabien Collin";
+static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Fabien Collin";
 #endif /* not lint */
 
 /* fseek.c      Remote File I/O - fseek library call */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.5 $ $Date: 2000/0
  */
 #define RFIO_KERNEL     1 
 #include "rfio.h"    
+#include "rfio_rfilefdt.h"
 
 /*
  * Remote file fseek
@@ -28,8 +29,6 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
      int whence;
 {
   int rc;
-  int remoteio = 0;
-  int i;
   
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_fseek(%x, %d, %d)", fp, offset, whence);
@@ -44,17 +43,7 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
     return -1;
   }
 
-  /*
-   * The file is local : this is the only way to detect it !
-   */
-  for (i = 0; i < MAXRFD; i++) {
-    if (rfilefdt[i] == fp) { 
-      remoteio++;
-      break;
-    }
-  }
-	
-  if (!remoteio) {
+  if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1) {
     TRACE(2,"rfio","rfio_fseek() : using local fseek() ");
     rc = fseek((FILE *)fp, offset, whence);
     rfio_errno = 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.7 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: pclose.c,v 1.8 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.7 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.8 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -20,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.7 $ $Date: 2000/
 #endif
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
+#include "rfio_rfilefdt.h"
 #ifndef linux
 extern char     *sys_errlist[]; /* External error list          	*/
 #endif
@@ -31,10 +32,7 @@ int DLL_DECL rfio_pclose(fs)
 RFILE 	*fs ;
 {
    char   * p  ; 
-   int  status ;
-   int i ;
-   int fss ;
-   int remoteio = 0 ;
+   int  status, fss ;
    char     buf[256];       /* General input/output buffer          */
 
    INIT_TRACE("RFIO_TRACE");
@@ -43,16 +41,7 @@ RFILE 	*fs ;
    /*
     * The file is local
     */
-   /*
-    * The file is local : this is the only way to detect it !
-    */
-   for ( i=0 ; i< MAXRFD  ; i++ ) {
-      if ( rfilefdt[i] == fs ) {
-	 remoteio ++ ;
-	 break ;
-      }
-   }
-   if ( !remoteio ) {
+   if (rfio_rfilefdt_findentry(fs->s,FINDRFILE_WITH_SCAN) == -1 ) {
       TRACE(2, "rfio", "rfio_pclose: using local pclose") ; 
 #if defined(_WIN32)
       status = _pclose(fs->fp_save);

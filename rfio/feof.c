@@ -1,5 +1,5 @@
 /*
- * $Id: feof.c,v 1.4 2000/09/20 13:52:50 jdurand Exp $
+ * $Id: feof.c,v 1.5 2000/10/02 08:02:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.4 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.5 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* feof.c      Remote File I/O - tell if the eof has been reached       */
@@ -19,13 +19,12 @@ static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.4 $ $Date: 2000/09
 
 #define RFIO_KERNEL     1  
 #include "rfio.h"         
+#include "rfio_rfilefdt.h"
 
 int rfio_feof(fp)
 	RFILE * fp ; 
 {
 	int     rc 	;
-	int i 		;
-	int remoteio=0 	;
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_feof(%x)", fp);
@@ -36,20 +35,10 @@ int rfio_feof(fp)
 		return -1 ;
 	}
 
-        /*
-         * The file is local : this is the only way to detect it !
-         */
-        for ( i=0 ; i< MAXRFD  ; i++ ) {
-                if ( rfilefdt[i] == fp ) {
-                        remoteio ++ ;
-                        break ;
-                }
-        }
-
 	/*
 	 * The file is local
 	 */
-	if ( !remoteio ) {
+	if (rfio_rfilefdt_findentry(fp->s,FINDRFILE_WITH_SCAN) == -1 ) {
 		rc= feof((FILE *)fp) ; 
 		END_TRACE() ; 
 		rfio_errno = 0;

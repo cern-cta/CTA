@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.8 2000/09/20 13:52:51 jdurand Exp $
+ * $Id: lseek.c,v 1.9 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.8 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.9 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -18,7 +18,8 @@ static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.8 $ $Date: 2000/0
  */
 #define RFIO_KERNEL     1  
 #include "rfio.h"     
- 
+#include "rfio_rfilefdt.h"
+
 #include <stdlib.h>            /* malloc prototype */
 
 /*
@@ -37,6 +38,7 @@ int    how ;
 {
    int     status ;
    char     rfio_buf[BUFSIZ];
+   int s_index = -1;
 
    INIT_TRACE("RFIO_TRACE") ;
    TRACE(1,"rfio","rfio_lseek(%d, %d, %x)",s,offset,how) ;
@@ -49,7 +51,7 @@ int    how ;
    /*
     * The file is local
     */
-   if ( s >= MAXRFD || rfilefdt[s] == NULL ) {
+   if (s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN) == -1 ) {
       TRACE(2, "rfio", "rfio_lseek: using local lseek(%d, %d, %d)",s,offset,how) ;
       status= lseek(s,offset,how) ; 
       rfio_errno = 0;
@@ -67,17 +69,16 @@ int    how ;
    /*
     * Checking magic number
     */
-   if ( rfilefdt[s]->magic != RFIO_MAGIC) {
+   if ( rfilefdt[s_index]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      free((char *)rfilefdt[s]);
-      rfilefdt[s] = NULL ;
+      rfio_rfilefdt_freeentry(s_index);
       (void) close(s);
       END_TRACE();
       return -1 ;
    }
 
    /* If RFIO version 3 enabled, then call the corresponding procedure */
-   if (rfilefdt[s]->version3 == 1)
+   if (rfilefdt[s_index]->version3 == 1)
      return(rfio_lseek_v3(s,offset,how));
 
    /*
@@ -86,12 +87,12 @@ int    how ;
     */
    if ( how == SEEK_CUR ) {
       how=SEEK_SET ;
-      offset+= rfilefdt[s]->offset ;
+      offset+= rfilefdt[s_index]->offset ;
    }
    /*
     * A preseek() is active.
     */
-   if ( rfilefdt[s]->preseek && how != SEEK_END ) {
+   if ( rfilefdt[s_index]->preseek && how != SEEK_END ) {
       status= rfio_lseekinbuf(s,offset) ;
       END_TRACE() ;
       return status ;
@@ -100,16 +101,16 @@ int    how ;
     * If I/O are bufferized and 
     * if the buffer is not empty.
     */
-   if ( rfilefdt[s]->_iobuf.base && rfilefdt[s]->_iobuf.count ) {
+   if ( rfilefdt[s_index]->_iobuf.base && rfilefdt[s_index]->_iobuf.count ) {
       if ( how != SEEK_END ) {
-	 if ( offset >= rfilefdt[s]->offset ) {
+	 if ( offset >= rfilefdt[s_index]->offset ) {
 	    /*
 	     * Data is currently in the buffer.
 	     */
-	    if ( (offset - rfilefdt[s]->offset) <= rfilefdt[s]->_iobuf.count ) {
-	       rfilefdt[s]->_iobuf.count -= offset - rfilefdt[s]->offset ;
-	       rfilefdt[s]->_iobuf.ptr += offset - rfilefdt[s]->offset ;
-	       rfilefdt[s]->offset= offset ; 
+	    if ( (offset - rfilefdt[s_index]->offset) <= rfilefdt[s_index]->_iobuf.count ) {
+	       rfilefdt[s_index]->_iobuf.count -= offset - rfilefdt[s_index]->offset ;
+	       rfilefdt[s_index]->_iobuf.ptr += offset - rfilefdt[s_index]->offset ;
+	       rfilefdt[s_index]->offset= offset ; 
 	       END_TRACE() ;
 	       return offset ; 
 	    }
@@ -117,59 +118,59 @@ int    how ;
 	     * Data should be in the next message.
 	     */
 	    else
-	       if (rfilefdt[s]->readissued && (offset-rfilefdt[s]->offset)<=(rfilefdt[s]->_iobuf.count+rfilefdt[s]->_iobuf.dsize)){
+	       if (rfilefdt[s_index]->readissued && (offset-rfilefdt[s_index]->offset)<=(rfilefdt[s_index]->_iobuf.count+rfilefdt[s_index]->_iobuf.dsize)){
 		  /*
 		   * Getting next message.
 		   */
-		  rfilefdt[s]->offset += rfilefdt[s]->_iobuf.count ;
-		  rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ;
-		  rfilefdt[s]->_iobuf.count= 0 ;
-		  status= rfio_filbuf(s,rfilefdt[s]->_iobuf.base,rfilefdt[s]->_iobuf.dsize) ;
+		  rfilefdt[s_index]->offset += rfilefdt[s_index]->_iobuf.count ;
+		  rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
+		  rfilefdt[s_index]->_iobuf.count= 0 ;
+		  status= rfio_filbuf(s,rfilefdt[s_index]->_iobuf.base,rfilefdt[s_index]->_iobuf.dsize) ;
 		  if ( status < 0 ) {
-		     rfilefdt[s]->readissued= 0 ; 
+		     rfilefdt[s_index]->readissued= 0 ; 
 		     END_TRACE() ;
 		     return -1 ;
 		  }
-		  if ( status != rfilefdt[s]->_iobuf.dsize  ) {
-		     rfilefdt[s]->eof= 1 ; 
-		     rfilefdt[s]->readissued= 0 ;
+		  if ( status != rfilefdt[s_index]->_iobuf.dsize  ) {
+		     rfilefdt[s_index]->eof= 1 ; 
+		     rfilefdt[s_index]->readissued= 0 ;
 		  }
-		  rfilefdt[s]->_iobuf.count= status ;
+		  rfilefdt[s_index]->_iobuf.count= status ;
 		  /*
 		   * Setting buffer pointers to the right place if possible.
 		   */
-		  if ( (offset - rfilefdt[s]->offset) <= rfilefdt[s]->_iobuf.count ) {
-		     rfilefdt[s]->_iobuf.count -= offset - rfilefdt[s]->offset ;
-		     rfilefdt[s]->_iobuf.ptr += offset - rfilefdt[s]->offset ;
-		     rfilefdt[s]->offset= offset ; 
+		  if ( (offset - rfilefdt[s_index]->offset) <= rfilefdt[s_index]->_iobuf.count ) {
+		     rfilefdt[s_index]->_iobuf.count -= offset - rfilefdt[s_index]->offset ;
+		     rfilefdt[s_index]->_iobuf.ptr += offset - rfilefdt[s_index]->offset ;
+		     rfilefdt[s_index]->offset= offset ; 
 		     END_TRACE() ;
 		     return offset ; 
 		  }	
 	       }
 	 }
 	 else 	{
-	    if ((rfilefdt[s]->offset-offset)<=(rfilefdt[s]->_iobuf.dsize-rfilefdt[s]->_iobuf.count) &&
-		( rfilefdt[s]->offset - offset ) <=  ( rfilefdt[s]->_iobuf.ptr - rfilefdt[s]->_iobuf.base) ) {
-	       rfilefdt[s]->_iobuf.count += rfilefdt[s]->offset - offset ;
-	       rfilefdt[s]->_iobuf.ptr -= rfilefdt[s]->offset - offset ;
-	       rfilefdt[s]->offset= offset ;
+	    if ((rfilefdt[s_index]->offset-offset)<=(rfilefdt[s_index]->_iobuf.dsize-rfilefdt[s_index]->_iobuf.count) &&
+		( rfilefdt[s_index]->offset - offset ) <=  ( rfilefdt[s_index]->_iobuf.ptr - rfilefdt[s_index]->_iobuf.base) ) {
+	       rfilefdt[s_index]->_iobuf.count += rfilefdt[s_index]->offset - offset ;
+	       rfilefdt[s_index]->_iobuf.ptr -= rfilefdt[s_index]->offset - offset ;
+	       rfilefdt[s_index]->offset= offset ;
 	       END_TRACE() ;
 	       return offset ;
 	    }
 	 }
       }
    }
-   rfilefdt[s]->lseekhow= how ;
-   rfilefdt[s]->lseekoff= offset ;
+   rfilefdt[s_index]->lseekhow= how ;
+   rfilefdt[s_index]->lseekoff= offset ;
    if ( how == SEEK_END) {
       status= rfio_forcelseek(s,offset,how) ; 
-      rfilefdt[s]->offset= status ;
+      rfilefdt[s_index]->offset= status ;
    }
    else	{
-      rfilefdt[s]->offset= offset ;
+      rfilefdt[s_index]->offset= offset ;
    }
    END_TRACE() ;
-   return rfilefdt[s]->offset ;
+   return rfilefdt[s_index]->offset ;
 }
 
 /*
@@ -181,6 +182,7 @@ int      s ;
 int offset ; 
 {
    char   * p ;	/* Pointer to buffer		*/
+   int s_index;
 
    INIT_TRACE("RFIO_TRACE") ;
    TRACE(1,"rfio","rfio_lseekinbuf(%d,%d)",s,offset) ;
@@ -188,7 +190,9 @@ int offset ;
    /*
     * Scanning records already requested.
     */
-   for(;;rfilefdt[s]->nbrecord -- ) {
+   s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN);
+
+   for(;;rfilefdt[s_index]->nbrecord -- ) {
       int  status ; 	/* Status of the read() request	*/
       int   rcode ;	/* Error code if any		*/
       int     off ; 	/* Offset of the current record	*/
@@ -197,25 +201,25 @@ int offset ;
       /*
        * The buffer is empty.
        */
-      if ( rfilefdt[s]->nbrecord == 0 ) {
+      if ( rfilefdt[s_index]->nbrecord == 0 ) {
 	 WORD	req ;
 	 int  msgsiz ;
 
 	 /*
 	  * No more data will arrive.
 	  */
-	 if ( rfilefdt[s]->preseek == 2 ) 
+	 if ( rfilefdt[s_index]->preseek == 2 ) 
 	    break ;
 	 /*
 	  * Filling the buffer.
 	  */
-	 msgsiz= rfilefdt[s]->_iobuf.hsize + rfilefdt[s]->_iobuf.dsize ;
+	 msgsiz= rfilefdt[s_index]->_iobuf.hsize + rfilefdt[s_index]->_iobuf.dsize ;
 	 TRACE(2,"rfio","rfio_lseekinbuf: reading %d bytes",msgsiz) ; 
-	 if ( netread_timeout(s,rfilefdt[s]->_iobuf.base,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
+	 if ( netread_timeout(s,rfilefdt[s_index]->_iobuf.base,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
 	    TRACE(2,"rfio","rfio_lseekinbuf: read() : ERROR occured (errno=%d)",errno) ;
 	    break ; 
 	 }
-	 p= rfilefdt[s]->_iobuf.base ;
+	 p= rfilefdt[s_index]->_iobuf.base ;
 	 unmarshall_WORD(p,req) ; 
 	 unmarshall_LONG(p,status) ; 
 	 unmarshall_LONG(p,rcode) ;
@@ -230,19 +234,19 @@ int offset ;
 	 /*
 	  * Resetting pointers.
 	  */
-	 rfilefdt[s]->nbrecord= status ;
-	 rfilefdt[s]->_iobuf.ptr= iodata(rfilefdt[s]) ; 
-	 rfilefdt[s]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
+	 rfilefdt[s_index]->nbrecord= status ;
+	 rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ; 
+	 rfilefdt[s_index]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
       }
       /*
        * The current record is the one we are looking for.
        */
-      p= rfilefdt[s]->_iobuf.ptr ;
+      p= rfilefdt[s_index]->_iobuf.ptr ;
       unmarshall_LONG(p,off) ; 
       unmarshall_LONG(p,len) ; 
       TRACE(2,"rfio","rfio_lseekinbuf: current record is at offset %d and of length %d",off,len) ; 
       if ( off <= offset && offset < off + len ) {
-	 rfilefdt[s]->offset= offset ;
+	 rfilefdt[s_index]->offset= offset ;
 	 END_TRACE() ;
 	 return offset ;
       }
@@ -252,20 +256,20 @@ int offset ;
       unmarshall_LONG(p,status) ; 
       unmarshall_LONG(p, rcode) ; 
       if ( status > 0 ) 
-	 rfilefdt[s]->_iobuf.ptr= p + status ;
+	 rfilefdt[s_index]->_iobuf.ptr= p + status ;
       else
-	 rfilefdt[s]->_iobuf.ptr= p ;
+	 rfilefdt[s_index]->_iobuf.ptr= p ;
    }
    /*
     * The offset requested in the preseek 
     * does not appear in the preseek list.
     * an lseek() will be done with the next read().
     */
-   rfilefdt[s]->nbrecord= 0 ; 
-   rfilefdt[s]->preseek= 0 ; 
-   rfilefdt[s]->lseekhow= SEEK_SET ;
-   rfilefdt[s]->lseekoff= offset ;
-   rfilefdt[s]->offset= offset ;
+   rfilefdt[s_index]->nbrecord= 0 ; 
+   rfilefdt[s_index]->preseek= 0 ; 
+   rfilefdt[s_index]->lseekhow= SEEK_SET ;
+   rfilefdt[s_index]->lseekoff= offset ;
+   rfilefdt[s_index]->offset= offset ;
    END_TRACE() ; 
    return offset ;
 }
@@ -283,20 +287,27 @@ int    how ;
    char * trp ;	/* Pointer to temporary buffer	*/
    int temp=0 ;	/* Is there a temporary buffer?	*/
    char     rfio_buf[BUFSIZ];
+   int s_index;
 
    INIT_TRACE("RFIO_TRACE") ;
    TRACE(1, "rfio", "rfio_forcelseek(%d, %d, %x)", s, offset, how) ;
-   if ( rfilefdt[s]->ahead ) rfilefdt[s]->readissued= 0 ; 
-   rfilefdt[s]->preseek= 0 ;
-   rfilefdt[s]->nbrecord= 0 ; 
-   rfilefdt[s]->eof= 0 ; 
+   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
+     serrno = SEINTERNAL;
+     TRACE(2, "rfio", "rfio_lseek: rfio_rfilefdt_findentry(): ERROR occured (serrno=%d)", serrno);
+     END_TRACE() ;
+     return -1 ;
+   }
+   if ( rfilefdt[s_index]->ahead ) rfilefdt[s_index]->readissued= 0 ; 
+   rfilefdt[s_index]->preseek= 0 ;
+   rfilefdt[s_index]->nbrecord= 0 ; 
+   rfilefdt[s_index]->eof= 0 ; 
    /*
     * If RFIO are buffered,
     * data in cache is invalidate.
     */
-   if ( rfilefdt[s]->_iobuf.base ) {
-      rfilefdt[s]->_iobuf.count=0;
-      rfilefdt[s]->_iobuf.ptr = iodata(rfilefdt[s]) ;
+   if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count=0;
+      rfilefdt[s_index]->_iobuf.ptr = iodata(rfilefdt[s_index]) ;
    }
    /*
     * Sending request.
@@ -317,16 +328,16 @@ int    how ;
     * is created to read unnecessary data and
     * to throw it away.
     */
-   if ( rfilefdt[s]->_iobuf.base == NULL ) {
-      TRACE(3,"rfio","rfio_forcelseek: allocating momentary buffer of size %d",rfilefdt[s]->_iobuf.dsize) ; 
-      if ( (trp= ( char *) malloc(rfilefdt[s]->_iobuf.dsize)) == NULL ) {
+   if ( rfilefdt[s_index]->_iobuf.base == NULL ) {
+      TRACE(3,"rfio","rfio_forcelseek: allocating momentary buffer of size %d",rfilefdt[s_index]->_iobuf.dsize) ; 
+      if ( (trp= ( char *) malloc(rfilefdt[s_index]->_iobuf.dsize)) == NULL ) {
 	 TRACE(3,"rfio","rfio_forcelseek: malloc(): ERROR occured (errno=%d)",errno) ; 
 	 END_TRACE() ; 
 	 return -1 ;
       }
    }
    else	{
-      trp= iodata(rfilefdt[s]) ; 
+      trp= iodata(rfilefdt[s_index]) ; 
    }
    /*
     * Getting data from the network.
@@ -337,8 +348,8 @@ int    how ;
       int   rcode ;
       int  msgsiz ;
 
-      TRACE(2, "rfio", "rfio_forcelseek: reading %d bytes",rfilefdt[s]->_iobuf.hsize) ; 
-      if (netread_timeout(s,rfio_buf,rfilefdt[s]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s]->_iobuf.hsize) {
+      TRACE(2, "rfio", "rfio_forcelseek: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ; 
+      if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s_index]->_iobuf.hsize) {
 	 TRACE(2,"rfio","rfio_forcelseek: read(): ERROR occured (errno=%d)",errno) ;
 	 if ( temp ) (void) free(trp) ; 
 	 END_TRACE() ;
@@ -364,7 +375,7 @@ int    how ;
 	   * to receive data which is going to be thrown away.
 	   */
 	  if ( temp == 0 ) {
-	     if ( rfilefdt[s]->_iobuf.base==NULL || rfilefdt[s]->_iobuf.dsize<msgsiz ) {
+	     if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
 		temp= 1 ; 
 		TRACE(3,"rfio","rfio_forcelseek: allocating momentary buffer of size %d",msgsiz) ; 
 		if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {
@@ -374,7 +385,7 @@ int    how ;
 		}
 	     }
 	     else
-		trp= iodata(rfilefdt[s]) ;
+		trp= iodata(rfilefdt[s_index]) ;
 	  }
 	  TRACE(2,"rfio","rfio_forcelseek: reading %d bytes to throw them away",msgsiz) ; 
 	  if ( netread_timeout(s,trp,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {

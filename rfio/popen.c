@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.6 2000/05/29 16:42:03 obarring Exp $
+ * $Id: popen.c,v 1.7 2000/10/02 08:02:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.6 $ $Date: 2000/0
 #endif
 #include <stdlib.h>
 #include "rfio.h"
+#include "rfio_rfilefdt.h"
 extern RFILE *rfilefdt[MAXRFD] ;
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
@@ -40,6 +41,7 @@ char *type 	;
 
    char *host 	;
    RFILE *rfp 	;
+   int rfp_index;
    char *p , *cp, *cp2    ;
    char command[MAXCOMSIZ]; /* command with remote syntax */
    char *uname 	;
@@ -133,14 +135,14 @@ char *type 	;
    /*
     * Remote file table is not large enough.
     */
-   if ( rfp->s >= MAXRFD ) {
+   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
       (void) free((char *)rfp);
       END_TRACE();
       errno= EMFILE ;
       return NULL ;
    }
-   rfilefdt[rfp->s]=rfp;
+   rfilefdt[rfp_index]=rfp;
 
 		
    p= buf ;
@@ -196,6 +198,6 @@ char *type 	;
       return NULL ;
    }
    else
-      return rfilefdt[rfp->s] ;
+      return rfilefdt[rfp_index] ;
 		
 }
