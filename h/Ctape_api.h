@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.13 2000/04/12 13:05:58 baud Exp $
+ * $Id: Ctape_api.h,v 1.14 2000/05/29 12:53:28 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.13 $ $Date: 2000/04/12 13:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.14 $ $Date: 2000/05/29 12:53:28 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -27,6 +27,7 @@ struct devinfo {	/* device characteristics */
 	int	bsr;		/* support backspace block */
 	int	eoitpmrks;	/* number of tapemarks at EOI */
 	int	fastpos;	/* use fast positionning because of directory */
+	int	lddtype;	/* load display type */
 	int	minblksize;
 	int	maxblksize;
 	int	defblksize;
