@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -413,6 +413,34 @@ namespace castor {
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object)
+        throw (castor::exception::Exception);
+
+      /**
+       * Recreates a castorFile. This method cleans up the
+       * database when a castor file is recreated. It first
+       * checks whether the recreation is possible.
+       * A recreation is considered to be possible if
+       * no TapeCopy of the given file is in TAPECOPY_SELECTED
+       * status and no DiskCopy of the file is in either
+       * DISKCOPY_WAITFS or DISKCOPY_WAITTAPERECALL or
+       * DISKCOPY_WAITDISK2DISKCOPY status.
+       * When recreation is not possible, a null pointer is
+       * returned.
+       * Else, all DiskCopies for the given file are marked
+       * INVALID (that is those not in DISKCOPY_FAILED and
+       * DISKCOPY_DELETED status) and all TapeCopies are
+       * deleted. A new DiskCopy is then created in
+       * DISKCOPY_WAITFS status and is returned.
+       * Note that everything is commited and that the caller
+       * is responsible for the deletion of the returned
+       * DiskCopy (if any)
+       * @param castorFile the file to recreate
+       * @return the new DiskCopy in DISKCOPY_WAITFS status
+       * or null if recreation is not possible
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual castor::stager::DiskCopy* recreateCastorFile
+      (castor::stager::CastorFile *castorFile)
         throw (castor::exception::Exception);
 
     }; // end of class RemoteStagerSvc

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2004/11/30 16:13:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -142,6 +142,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementStri
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
 
+/// SQL statement for scheduleSubRequest
+const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
+  "BEGIN recreateCastorFile(:1, :2); END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -156,7 +160,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0), m_selectFileSystemStatement(0),
   m_selectDiskPoolStatement(0), m_selectDiskServerStatement(0),
-  m_updateAndCheckSubRequestStatement(0) {
+  m_updateAndCheckSubRequestStatement(0),
+  m_recreateCastorFileStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -203,6 +208,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectDiskPoolStatement);
     deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
+    deleteStatement(m_recreateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -221,6 +227,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectDiskPoolStatement = 0;
   m_selectDiskServerStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
+  m_recreateCastorFileStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -1487,3 +1494,48 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
 }
 
+// -----------------------------------------------------------------------
+// recreateCastorFile
+// -----------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::db::ora::OraStagerSvc::recreateCastorFile
+(castor::stager::CastorFile *castorFile)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_recreateCastorFileStatement) {
+      m_recreateCastorFileStatement =
+        createStatement(s_recreateCastorFileStatementString);
+      m_recreateCastorFileStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
+      m_recreateCastorFileStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_recreateCastorFileStatement->setDouble(1, castorFile->id());
+    unsigned int nb = m_recreateCastorFileStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "recreateCastorFile did not return any result.";
+      throw ex;
+    }
+    // return
+    u_signed64 id =
+      (u_signed64)m_recreateCastorFileStatement->getDouble(2);
+    if (0 == id) return 0;
+    castor::stager::DiskCopy *result =
+      new castor::stager::DiskCopy();
+    result->setId(id);
+    result->setStatus(castor::stager::DISKCOPY_WAITFS);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in recreateCastorFile."
+      << std::endl << e.what();
+    throw ex;
+  }
+
+
+}

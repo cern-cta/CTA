@@ -427,6 +427,34 @@ namespace castor {
                                castor::IObject* object)
           throw (castor::exception::Exception);
 
+        /**
+         * Recreates a castorFile. This method cleans up the
+         * database when a castor file is recreated. It first
+         * checks whether the recreation is possible.
+         * A recreation is considered to be possible if
+         * no TapeCopy of the given file is in TAPECOPY_SELECTED
+         * status and no DiskCopy of the file is in either
+         * DISKCOPY_WAITFS or DISKCOPY_WAITTAPERECALL or
+         * DISKCOPY_WAITDISK2DISKCOPY status.
+         * When recreation is not possible, a null pointer is
+         * returned.
+         * Else, all DiskCopies for the given file are marked
+         * INVALID (that is those not in DISKCOPY_FAILED and
+         * DISKCOPY_DELETED status) and all TapeCopies are
+         * deleted. A new DiskCopy is then created in
+         * DISKCOPY_WAITFS status and is returned.
+         * Note that everything is commited and that the caller
+         * is responsible for the deletion of the returned
+         * DiskCopy (if any)
+         * @param castorFile the file to recreate
+         * @return the new DiskCopy in DISKCOPY_WAITFS status
+         * or null if recreation is not possible
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual castor::stager::DiskCopy* recreateCastorFile
+        (castor::stager::CastorFile *castorFile)
+          throw (castor::exception::Exception);
+
       private:
 
         /**
@@ -558,6 +586,12 @@ namespace castor {
 
         /// SQL statement object for function updateAndCheckSubRequest
         oracle::occi::Statement *m_updateAndCheckSubRequestStatement;
+
+        /// SQL statement for function recreateCastorFile
+        static const std::string s_recreateCastorFileStatementString;
+
+        /// SQL statement object for function recreateCastorFile
+        oracle::occi::Statement *m_recreateCastorFileStatement;
 
       }; // end of class OraStagerSvc
 

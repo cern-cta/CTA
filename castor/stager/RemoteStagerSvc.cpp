@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/30 14:34:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -252,12 +252,12 @@ bool castor::stager::RemoteStagerSvc::isSubRequestToSchedule
  * requests
  */
 class ScheduleSubReqResponseHandler : public castor::client::IResponseHandler {
- public:
+public:
   ScheduleSubReqResponseHandler
   (castor::stager::DiskCopy** result,
    std::list<castor::stager::DiskCopyForRecall*>& sources) :
     m_result(result), m_sources(sources){}
-  
+
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
     castor::rh::ScheduleSubReqResponse *resp =
@@ -420,3 +420,18 @@ void castor::stager::RemoteStagerSvc::updateRep(IAddress* address,
   castor::client::BaseClient client;
   client.sendRequest(&req, &rh);
 }
+
+// -----------------------------------------------------------------------
+// recreateCastorFile
+// -----------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::stager::RemoteStagerSvc::recreateCastorFile
+(castor::stager::CastorFile *castorFile)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
