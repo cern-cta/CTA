@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.11 2000/05/08 11:00:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.12 2000/05/12 11:58:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.11 $ $Date: 2000/05/08 11:00:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.12 $ $Date: 2000/05/12 11:58:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1207,6 +1207,11 @@ int migpoolfiles(pool_p)
       }
     } else {
       nfiles_per_request = found_nbfiles;
+    }
+
+    /* We limit the number of files per request to 50 so that we should not overload the buffer */
+    if (nfiles_per_request > 50) {
+      nfiles_per_request = 50;
     }
 
     if ((files = (stage_hsm_t *) calloc(nfiles_per_request,sizeof(stage_hsm_t))) == NULL) {
