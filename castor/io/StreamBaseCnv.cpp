@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -37,7 +37,7 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::io::StreamBaseCnv::StreamBaseCnv(Services*) :
+castor::io::StreamBaseCnv::StreamBaseCnv() :
   BaseObject(),
   m_cnvSvc(0) {
   m_cnvSvc = dynamic_cast<castor::io::StreamCnvSvc*>

@@ -11,7 +11,6 @@
 namespace castor {
 
   // Forward declarations
-  class Services;
   class IObject;
 
   namespace io {
@@ -27,7 +26,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamCuuidCnv(castor::Services* svcs);
+      StreamCuuidCnv();
 
       /**
        * Destructor

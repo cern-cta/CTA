@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -35,7 +35,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/Services.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Cuuid.hpp"
@@ -51,8 +50,8 @@ const castor::IFactory<castor::IConverter>& StreamCuuidCnvFactory =
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamCuuidCnv::StreamCuuidCnv(castor::Services* svcs) :
-  StreamBaseCnv(svcs) {}
+castor::io::StreamCuuidCnv::StreamCuuidCnv() :
+  StreamBaseCnv() {}
 
 //------------------------------------------------------------------------------
 // Destructor

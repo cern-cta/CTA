@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CnvFactory.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: CnvFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -70,7 +70,7 @@ namespace castor {
 
   template<class Converter> inline IConverter*
   CnvFactory<Converter>::instantiate(const std::string name) const {
-    return new Converter(0);
+    return new Converter();
   }
 
   template<class Converter>

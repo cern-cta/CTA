@@ -35,7 +35,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/Services.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/Client.hpp"
@@ -51,8 +50,8 @@ const castor::IFactory<castor::IConverter>& StreamClientCnvFactory =
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamClientCnv::StreamClientCnv(castor::Services* svcs) :
-  StreamBaseCnv(svcs) {}
+castor::io::StreamClientCnv::StreamClientCnv() :
+  StreamBaseCnv() {}
 
 //------------------------------------------------------------------------------
 // Destructor

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -33,7 +33,6 @@
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/IObject.hpp"
-#include "castor/Services.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/io/StreamAddress.hpp"
@@ -48,8 +47,8 @@ const castor::IFactory<castor::IConverter>& StreamPtrCnvFactory =
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamPtrCnv::StreamPtrCnv(castor::Services* svcs) :
-  StreamBaseCnv(svcs) {}
+castor::io::StreamPtrCnv::StreamPtrCnv() :
+  StreamBaseCnv() {}
 
 //------------------------------------------------------------------------------
 // Destructor

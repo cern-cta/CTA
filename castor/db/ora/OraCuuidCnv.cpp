@@ -8,7 +8,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/Services.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/stager/Cuuid.hpp"
@@ -51,8 +50,8 @@ const std::string castor::db::ora::OraCuuidCnv::s_deleteTypeStatementString =
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraCuuidCnv::OraCuuidCnv(castor::Services* svcs) :
-  OraBaseCnv(svcs),
+castor::db::ora::OraCuuidCnv::OraCuuidCnv() :
+  OraBaseCnv(),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

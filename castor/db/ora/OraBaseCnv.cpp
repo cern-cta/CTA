@@ -38,7 +38,7 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::OraBaseCnv::OraBaseCnv(Services*) :
+castor::db::OraBaseCnv::OraBaseCnv() :
   BaseObject(),
   m_cnvSvc(0),
   m_connection(0) {

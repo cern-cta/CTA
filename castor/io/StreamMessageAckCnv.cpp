@@ -35,7 +35,6 @@
 #include "castor/MessageAck.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/Services.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include <string>
 
@@ -49,8 +48,8 @@ const castor::IFactory<castor::IConverter>& StreamMessageAckCnvFactory =
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamMessageAckCnv::StreamMessageAckCnv(castor::Services* svcs) :
-  StreamBaseCnv(svcs) {}
+castor::io::StreamMessageAckCnv::StreamMessageAckCnv() :
+  StreamBaseCnv() {}
 
 //------------------------------------------------------------------------------
 // Destructor

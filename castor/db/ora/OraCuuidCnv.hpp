@@ -11,7 +11,6 @@
 namespace castor {
 
   // Forward declarations
-  class Services;
   class IObject;
 
   namespace db {
@@ -29,7 +28,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraCuuidCnv(castor::Services* svcs);
+        OraCuuidCnv();
 
         /**
          * Destructor

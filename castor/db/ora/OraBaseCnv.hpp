@@ -54,7 +54,7 @@ namespace castor {
       /**
        * Constructor
        */
-      OraBaseCnv(Services*);
+      OraBaseCnv();
 
       /**
        * Destructor
