@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.17 2002/02/26 09:08:33 baud Exp $
+ * $Id: read.c,v 1.18 2002/03/21 10:26:24 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.17 $ $Date: 2002/02/26 09:08:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.18 $ $Date: 2002/03/21 10:26:24 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -91,6 +91,7 @@ int     s, size;
                rfio_HsmIf_IOError(s,errno);
                errno = save_errno;
            }
+           END_TRACE();
            return(status);
        }
    }
@@ -458,6 +459,7 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
    char     rfio_buf[BUFSIZ];
    int s_index;
 
+   INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_filbuf(0X%X,%d) entered",buffer,size) ;
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) < 0) {
 	 TRACE(2,"rfio","rfio_filbuf: rfio_rfilefdt_findentry(): ERROR occured (serrno=%d)", serrno) ;
@@ -568,5 +570,6 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
     * Data we were waiting for has been received.
     */
    TRACE(1, "rfio", "rfio_filbuf: status %d, rcode %d", status, rcode) ;
+   END_TRACE() ;
    return status ;
 }

@@ -1,14 +1,14 @@
 /*
- * $Id: write.c,v 1.10 2000/10/02 08:02:33 jdurand Exp $
+ * $Id: write.c,v 1.11 2002/03/21 10:26:24 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.10 $ $Date: 2000/10/02 08:02:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.11 $ $Date: 2002/03/21 10:26:24 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -73,11 +73,14 @@ int     s, size;
     */
    HsmType = rfio_HsmIf_GetHsmType(s,&written_to); 
    if ( HsmType > 0 ) {
-       if ( written_to == 0 ) status = rfio_HsmIf_FirstWrite(s,ptr,size);
-       if ( status == -1 ) return(-1);
+       if ( written_to == 0 && (status = rfio_HsmIf_FirstWrite(s,ptr,size)) < 0) {
+           END_TRACE();
+           return(status);
+       }
        if ( HsmType != RFIO_HSM_CNS ) {
            status = rfio_HsmIf_write(s,ptr,size);
            if ( status == -1 ) rfio_HsmIf_IOError(s,errno);
+           END_TRACE();
            return(status);
        }
    }
