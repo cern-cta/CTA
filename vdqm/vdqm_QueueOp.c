@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.24 $ $Date: 2000/02/02 16:48:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.25 $ $Date: 2000/02/11 09:58:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1246,11 +1246,13 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     drvrec->drv.recvtime = time(NULL);
 
     GetStatusString(drvrec->drv.status,status_string);
-    log(LOG_INFO,"%s@%s DGN %s: current status:  %s\n",drvrec->drv.drive,
-        drvrec->drv.server,drvrec->drv.dgn,status_string);
+    log(LOG_INFO,"%s %s@%s (ID: %d, job %d): current status: %s\n",drvrec->drv.dgn,
+        drvrec->drv.drive,drvrec->drv.server,drvrec->drv.VolReqID,
+        drvrec->drv.jobID,status_string);
     GetStatusString(DrvReq->status,status_string);
-    log(LOG_INFO,"%s@%s DGN %s: requested status: %s\n",DrvReq->drive,
-        DrvReq->server,DrvReq->dgn,status_string);
+    log(LOG_INFO,"%s %s@%s (ID: %d, job %d): requested status: %s\n",DrvReq->dgn,
+        DrvReq->drive,DrvReq->server,DrvReq->VolReqID,DrvReq->jobID,
+        status_string);
     /*
      * Reset UNKNOWN status if necessary. Remember that entry status
      * in case there is a RELEASE since we then cannot allow the unit
@@ -1372,7 +1374,7 @@ n",
              */
             if ( !(DrvReq->status & VDQM_UNIT_RELEASE) &&
                 (drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
-                log(LOG_ERR,"vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=0x%x\n",
+                log(LOG_ERR,"vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=%d\n",
                     drvrec->drv.drive,drvrec->drv.server,drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADSTAT);
@@ -1398,13 +1400,15 @@ n",
             if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
                  (DrvReq->status & VDQM_UNIT_ASSIGN) ) {                
                 if (drvrec->drv.VolReqID != DrvReq->VolReqID){
-                    log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent VolReqIDs (0x%x, 0x%x) on ASSIGN\n",
+                    log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent VolReqIDs (%d,%d) on ASSIGN\n",
                         DrvReq->VolReqID,drvrec->drv.VolReqID);
                     FreeDgnContext(&dgn_context);
                     vdqm_SetError(EVQBADID);
                     return(-1);
                 } else {
                     drvrec->drv.jobID = DrvReq->jobID;
+                    log(LOG_INFO,"vdqm_NewDrvReq() assign VolReqID %d to jobID %d\n",
+                        DrvReq->VolReqID,DrvReq->jobID);
                 }
             }
             /*
@@ -1415,7 +1419,7 @@ n",
                 (DrvReq->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
                                    VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
                 (drvrec->drv.jobID != DrvReq->jobID) ) {
-                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (0x%x, 0x%x)\n",
+                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (%d,%d)\n",
                     DrvReq->jobID,drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADID);
@@ -1447,11 +1451,31 @@ n",
                  */
                 if ( (drvrec->drv.status & VDQM_UNIT_ASSIGN) &&
                     (drvrec->drv.jobID != DrvReq->jobID) ) {
-                    log(LOG_ERR,"vdqm_NewDrvReq(): attempt to re-assign ID=0x%x to an unit assigned to ID=0x%x\n",
+                    log(LOG_ERR,"vdqm_NewDrvReq(): attempt to re-assign ID=%d to an unit assigned to ID=%d\n",
                         drvrec->drv.jobID,DrvReq->jobID);
                     FreeDgnContext(&dgn_context);
                     vdqm_SetError(EVQBADID);
                     return(-1);
+                }
+                /*
+                 * If the unit was free, we set the new jobID. This is
+                 * local assign bypassing the normal VDQM logic (see comment
+                 * above). There is no VolReqID since VDQM is bypassed.
+                 */
+                if ( (drvrec->drv.status & VDQM_UNIT_FREE) ) {
+                    /*
+                     * We only allow this for local requests!
+                     */
+                    if ( strcmp(DrvReq->reqhost,drvrec->drv.server) != 0 ) {
+                        log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s local assign from %s\n",
+                        DrvReq->drive,DrvReq->server,DrvReq->reqhost);
+                        FreeDgnContext(&dgn_context);
+                        vdqm_SetError(EPERM);
+                        return(-1);
+                    }
+                    log(LOG_INFO,"vdqm_NewDrvRequest() local assign %s@%s to jobID %d\n",
+                        DrvReq->drive,DrvReq->server,DrvReq->jobID);
+                    drvrec->drv.jobID = DrvReq->jobID;
                 }
             }
             /*
@@ -1502,14 +1526,14 @@ n",
              * A mount volume request. The unit must first have been assigned.
              */
             if ( !(drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
-                log(LOG_ERR,"vdqm_NewDrvReq(): mount request of %s for jobID 0x%x on non-ASSIGNED unit\n",
+                log(LOG_ERR,"vdqm_NewDrvReq(): mount request of %s for jobID %d on non-ASSIGNED unit\n",
                     DrvReq->volid,DrvReq->jobID);
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQNOTASS);
                 return(-1);
             }
             if ( *DrvReq->volid == '\0' ) {
-                log(LOG_ERR,"vdqm_NewDrvReq(): mount request with empty VOLID for jobID 0x%x\n",
+                log(LOG_ERR,"vdqm_NewDrvReq(): mount request with empty VOLID for jobID %d\n",
                     drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADVOLID);
@@ -1519,7 +1543,7 @@ n",
              * Make sure that requested volume and assign volume record are the same
              */
             if ( drvrec->vol != NULL && strcmp(drvrec->vol->vol.volid,DrvReq->volid) ) {
-                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID 0x%x\n",
+                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID %d\n",
                     DrvReq->volid,drvrec->vol->vol.volid,DrvReq->jobID);
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADVOLID);
@@ -1668,11 +1692,16 @@ n",
                  * There is no volume on unit. Since a RELEASE has
                  * been requested the unit is FREE (no job and no volume
                  * assigned to it. Update status accordingly.
+                 * If client specified FORCE_UNMOUNT it means that there is
+                 * "something" (unknown to VDQM) mounted. We have to wait
+                 * for the unmount before resetting the status.
                  */
-                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
-                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
-                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
-                drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
+                if ( !(DrvReq->status & VDQM_FORCE_UNMOUNT) ) {
+                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
+                    drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
+                }
             }
         } 
         /*
