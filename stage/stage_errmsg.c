@@ -4,16 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.13 $ $Date: 2002/08/29 08:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.14 $ $Date: 2003/09/08 17:01:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef _WIN32
-#include <stdarg.h>         /* _WIN32's UNIX compatibility */
-#endif
-#include <varargs.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include "serrno.h"
@@ -166,12 +163,8 @@ int DLL_DECL stage_getlog(logfunction)
 
 /* stage_errmsg - send error message to user defined client buffer or to stderr */
 
-int DLL_DECL stage_errmsg(va_alist)
-		 va_dcl
-{
+int DLL_DECL stage_errmsg(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;
 	char *errbufp;
@@ -183,9 +176,7 @@ int DLL_DECL stage_errmsg(va_alist)
 	}
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start(args, msg);
 	if (func) {
 #if (defined(__osf__) && defined(__alpha))
 		sprintf (prtbuf, "%s: ", func);
@@ -228,18 +219,15 @@ int DLL_DECL stage_errmsg(va_alist)
 		}
 	}
 
+	va_end (args);
 	errno = save_errno;
 	return (0);
 }
 
 /* stage_outmsg - send output message to user defined client buffer or to stdout */
 
-int DLL_DECL stage_outmsg(va_alist)
-		 va_dcl
-{
+int DLL_DECL stage_outmsg(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;
 	char *outbufp;
@@ -251,9 +239,7 @@ int DLL_DECL stage_outmsg(va_alist)
 	}
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start(args,msg);
 
 	if (func) {
 #if (defined(__osf__) && defined(__alpha))
@@ -296,6 +282,7 @@ int DLL_DECL stage_outmsg(va_alist)
 			fprintf (stdout, "%s", prtbuf);
 		}
 	}
+	va_end (args);
 	errno = save_errno;
 	return (0);
 }
