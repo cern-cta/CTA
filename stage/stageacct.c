@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.6 1999/12/09 13:47:32 jdurand Exp $
+ * $Id: stageacct.c,v 1.7 2000/03/23 01:41:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.7 $ $Date: 2000/03/23 01:41:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -34,7 +34,7 @@ char *tapesrvr;
 	char *p;
 
 	if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
-	    (strcmp (p, "YES") && strcmp (p, "yes"))) return;
+			(strcmp (p, "YES") && strcmp (p, "yes"))) return;
 	memset ((char *) &acctstage, 0, sizeof(struct acctstage));
 	acctstage.subtype = subtype;
 	acctstage.uid = uid;
@@ -54,16 +54,16 @@ char *tapesrvr;
 			strcpy (acctstage.u2.s.u1.t.vid, stcp->u1.t.vid[0]);
 			strcpy (acctstage.u2.s.u1.t.tapesrvr, tapesrvr);
 			acctreclen = ((char *) acctstage.u2.s.u1.t.tapesrvr
-			    - (char *) &acctstage) + strlen (tapesrvr) + 1;
+					- (char *) &acctstage) + strlen (tapesrvr) + 1;
 		} else {
 			strcpy (acctstage.u2.s.u1.d.xfile, stcp->u1.d.xfile);
 			acctreclen = ((char *) acctstage.u2.s.u1.d.xfile
-			    - (char *) &acctstage) + strlen (stcp->u1.d.xfile) + 1;
+					- (char *) &acctstage) + strlen (stcp->u1.d.xfile) + 1;
 		}
 	} else {
 		strcpy (acctstage.u2.clienthost, clienthost);
 		acctreclen = ((char *) acctstage.u2.clienthost
-		    - (char *) &acctstage) + strlen (clienthost) + 1;
+				- (char *) &acctstage) + strlen (clienthost) + 1;
 	}
 
 	wsacct (ACCTSTAGE, &acctstage, acctreclen);

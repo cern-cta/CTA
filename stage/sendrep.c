@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.9 2000/02/11 11:06:55 jdurand Exp $
+ * $Id: sendrep.c,v 1.10 2000/03/23 01:41:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,7 +114,7 @@ sendrep(va_alist) va_dcl
 		marshall_LONG (rbp, strlen (file1) + 1);
 		marshall_STRING (rbp, file1);
 	}
-sndmsg:
+ sndmsg:
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite_timeout (rpfd, repbuf, repsize, STGTIMEOUT) != repsize) {
@@ -129,7 +129,7 @@ sndmsg:
 }
 
 iserrmsg(p)
-char *p;
+		 char *p;
 {
 	char *q;
 
@@ -140,7 +140,7 @@ char *p;
 		else
 			return (0);
 	if (strncmp (p+16, "tpread", 6) &&
-	    strncmp (p+16, "tpwrite", 7)) return (2);
+			strncmp (p+16, "tpwrite", 7)) return (2);
 	if ((q = strchr (p, ']')) == NULL) return (0);
 	if (*(q+3) == '!')
 		return (1);

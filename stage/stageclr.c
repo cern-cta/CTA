@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.9 2000/02/11 11:06:57 jdurand Exp $
+ * $Id: stageclr.c,v 1.10 2000/03/23 01:41:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,12 +30,14 @@ extern	char	*getconfent();
 extern	char	*optarg;
 extern	int	optind;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void cleanup _PROTO((int));
+void usage _PROTO((char *));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i, n;
-	void cleanup();
 	int errflg = 0;
 	int Gflag = 0;
 	uid_t Guid;
@@ -45,7 +47,7 @@ char	**argv;
 	char ibuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int iflag = 0;
 	int Lflag = 0;
-        int Mflag = 0;
+	int Mflag = 0;
 	int msglen;
 	int ntries = 0;
 	int numvid;
@@ -63,6 +65,7 @@ char	**argv;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	/* char repbuf[CA_MAXPATHLEN+1]; */
 
 	uid = getuid();
 	gid = getgid();
@@ -90,7 +93,6 @@ char	**argv;
 #endif
 				exit (SYERR);
 			}
-#if !defined(vms)
 			if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) {
 				fprintf (stderr, STG10, gr->gr_name);
 				errflg++;
@@ -101,27 +103,6 @@ char	**argv;
 				} else
 					Guid = pw->pw_uid;
 			}
-#else
-			if ((q = getconfent ("GRPUSER", gr->gr_name, 1)) == NULL) {
-				fprintf (stderr, STG10, gr->gr_name);
-				errflg++;
-			} else {
-				if ((p = strtok (q, " \n")) == NULL) {
-					fprintf (stderr, STG80, q);
-					errflg++;
-				}
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG81, q);
-					errflg++;
-				}
-				Guid = atoi (p);
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG82, q);
-					errflg++;
-				}
-				gid = atoi (p);
-			}
-#endif
 			break;
 		case 'h':
 			stghost = optarg;
@@ -186,12 +167,6 @@ char	**argv;
 		errflg++;
 	}
 
-#if defined(vms)
-	if (!Gflag) {
-		fprintf (stderr, STG83);
-		errflg++;
-	}
-#endif
 	if (errflg) {
 		usage (argv[0]);
 #if defined(_WIN32)
@@ -211,14 +186,10 @@ char	**argv;
 
 	/* Build request body */
 
-#if !defined(vms)
 	if ((pw = getpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
-#else
-	if ((pw = getpwnam (p = cuserid(NULL))) == NULL) {
-#endif
 		fprintf (stderr, STG11, p);
 #if defined(_WIN32)
 		WSACleanup();
@@ -271,14 +242,15 @@ char	**argv;
 			sbp = q;
 			marshall_LONG (sbp, msglen);	/* update length field */
 
-			while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-				if (c == 0 || c == USERR || c == EBUSY) break;
-				if (c == ENOUGHF) break;
-				if (c != ESTNACT && ntries++ > MAXRETRY) break;
+			while (1) {
+				c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+				if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == EBUSY) break;
+				if (serrno == ENOUGHF) break;
+				if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 				sleep (RETRYI);
 			}
-			if (c == ENOUGHF) break;
-			if (c && c != EBUSY && ! rc) rc = c;
+			if (serrno == ENOUGHF) break;
+			if (c && serrno != EBUSY && ! rc) rc = serrno;
 			sbp = sbpp;
 		}
 #if defined(_WIN32)
@@ -297,24 +269,25 @@ char	**argv;
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
 
-		while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-			if (c == 0 || c == USERR) break;
-			if (c == ENOUGHF) {
+		while (1) {
+			c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+			if (c == 0 || serrno == USERR || serrno == EINVAL) break;
+			if (serrno == ENOUGHF) {
 				c = 0;
 				break;
 			}
-			if (c != ESTNACT && ntries++ > MAXRETRY) break;
+			if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 			sleep (RETRYI);
 		}
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-		exit (c);
+		exit (c == 0 ? 0 : serrno);
 	}
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	signal (sig, SIG_IGN);
 
@@ -324,13 +297,12 @@ int sig;
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
-	  "[-c] [-h stage_host] [-G] [-I external_filename] [-i] [-L link]\n",
-	  "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
-          "[-q file_sequence_number(s)] [-remove_from_hsm] [-V visual_identifier(s)]\n");
-    return(0);
+					 "[-c] [-h stage_host] [-G] [-I external_filename] [-i] [-L link]\n",
+					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
+					 "[-q file_sequence_number(s)] [-remove_from_hsm] [-V visual_identifier(s)]\n");
 }

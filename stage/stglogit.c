@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.9 1999/12/16 12:39:48 jdurand Exp $
+ * $Id: stglogit.c,v 1.10 2000/03/23 01:42:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.9 $ $Date: 1999/12/16 12:39:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -29,8 +29,8 @@ int stglogit(va_alist) va_dcl
 	int fd_log;
 
 #ifdef __INSURE__
-    /* Insure do not like at all this routine... */
-    return(0);
+	/* Insure do not like at all this routine... */
+	return(0);
 #endif
 
 	va_start (args);
@@ -45,5 +45,5 @@ int stglogit(va_alist) va_dcl
 	fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
-    return(0);
+	return(0);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.10 2000/02/16 10:23:39 jdurand Exp $
+ * $Id: stageupdc.c,v 1.11 2000/03/23 01:41:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.10 $ $Date: 2000/02/16 10:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.11 $ $Date: 2000/03/23 01:41:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,9 +31,12 @@ extern	char	*optarg;
 extern	char	*sys_errlist[];
 #endif
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void usage _PROTO((char *));
+void cleanup _PROTO((int));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i;
 	void cleanup();
@@ -58,6 +61,7 @@ char	**argv;
 	WSADATA wsadata;
 #endif
 	char Zparm[CA_MAXHOSTNAMELEN + 1 + 14];
+	/* char repbuf[CA_MAXPATHLEN+1]; */
 
 	nargs = argc;
 	uid = getuid();
@@ -81,23 +85,26 @@ char	**argv;
 			}
 			break;
 		case 'Z':
-          strcpy (Zparm, optarg);
-          if ((p = strtok (Zparm, ".")) != NULL) {
-            reqid = strtol (p, &dp, 10);
-            if (*dp != '\0' ||
-                (p = strtok (NULL, "@")) == NULL) {
-              fprintf (stderr, STG06, "-Z\n");
-              errflg++;
-            } else {
-              key = strtol (p, &dp, 10);
-              if (*dp != '\0' ||
-                  (stghost = strtok (NULL, " ")) == NULL) {
-                fprintf (stderr, STG06, "-Z\n");
-                errflg++;
-              }
-            }
-          }
-          break;
+			strcpy (Zparm, optarg);
+			if ((p = strtok (Zparm, ".")) != NULL) {
+				reqid = strtol (p, &dp, 10);
+				if (*dp != '\0' ||
+						(p = strtok (NULL, "@")) == NULL) {
+					fprintf (stderr, STG06, "-Z\n");
+					errflg++;
+				} else {
+					key = strtol (p, &dp, 10);
+					if (*dp != '\0' ||
+							(stghost = strtok (NULL, " ")) == NULL) {
+						fprintf (stderr, STG06, "-Z\n");
+						errflg++;
+					}
+				}
+			} else {
+				fprintf (stderr, STG06, "-Z\n");
+				errflg++;
+			}
+			break;
 		case '?':
 			errflg++;
 			break;
@@ -199,19 +206,20 @@ char	**argv;
 #endif
 	signal (SIGTERM, cleanup);
 
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR || c == ENOSPC) break;
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == ENOSPC) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	signal (sig, SIG_IGN);
 #if defined(_WIN32)
@@ -220,14 +228,13 @@ int sig;
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s%s",
-	  "[-b max_block_size] [-D device_name] [-F record_format] [-f file_id]\n",
-	  "[-h stage_host] [-I network_interface] [-L record_length] [-q file_sequence_number]\n",
-	  "[-R return_code] [-s size] [-T transfer_time] [-U fun] [-W waiting_time]\n",
-	  "[-Z reqid.key@stagehost] pathname(s)\n");
-    return(0);
+					 "[-b max_block_size] [-D device_name] [-F record_format] [-f file_id]\n",
+					 "[-h stage_host] [-I network_interface] [-L record_length] [-q file_sequence_number]\n",
+					 "[-R return_code] [-s size] [-T transfer_time] [-U fun] [-W waiting_time]\n",
+					 "[-Z reqid.key@stagehost] pathname(s)\n");
 }

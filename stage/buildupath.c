@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.8 2000/02/11 11:06:48 jdurand Exp $
+ * $Id: buildupath.c,v 1.9 2000/03/23 01:40:48 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,9 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.8 $ $Date: 2000/02/11 11:06:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:40:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
-#if !defined(vms)
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -59,10 +58,10 @@ init_cwd_hostname()
 }
 
 resolvelinks(argvi, buf, buflen, req_type)
-char *argvi;
-char *buf;
-int buflen;
-int req_type;
+		 char *argvi;
+		 char *buf;
+		 int buflen;
+		 int req_type;
 {
 	char *dir;
 	char dsksrvr[CA_MAXHOSTNAMELEN + 1];
@@ -76,7 +75,7 @@ int req_type;
 		dir = ++p;
 		q = dir + strlen(nfsroot);
 		if (! *nfsroot ||
-		    strncmp (dir, nfsroot, strlen (nfsroot)) || *q != '/')	
+				strncmp (dir, nfsroot, strlen (nfsroot)) || *q != '/')	
 			/* server:/xxxx    where xxxx is not nfsroot */
 			if (strcmp (dsksrvr, hostname)) {
 				/* server is not the local machine */
@@ -88,8 +87,8 @@ int req_type;
 		dir = argvi;
 	q = dir + strlen(nfsroot);
 	if (*nfsroot &&
-	    strncmp (dir, nfsroot, strlen (nfsroot)) == 0 && *q == '/' &&
-	    (p = strchr (q + 1, '/')) != NULL) {
+			strncmp (dir, nfsroot, strlen (nfsroot)) == 0 && *q == '/' &&
+			(p = strchr (q + 1, '/')) != NULL) {
 		/* /shift syntax */
 		strncpy (dsksrvr, q + 1, p - q - 1);
 		dsksrvr[p - q - 1] = '\0';
@@ -121,9 +120,9 @@ int req_type;
 	}
 #endif
 	if ((! *nfsroot ||
-	    strncmp (linkbuf, nfsroot, strlen (nfsroot)) ||
-	    *(linkbuf + strlen(nfsroot)) != '/') /* not /shift syntax */
-	    && (strncmp (linkbuf, "/afs/", 5) || req_type == STAGEWRT))
+			 strncmp (linkbuf, nfsroot, strlen (nfsroot)) ||
+			 *(linkbuf + strlen(nfsroot)) != '/') /* not /shift syntax */
+			&& (strncmp (linkbuf, "/afs/", 5) || req_type == STAGEWRT))
 		if ((int) strlen (hostname) + (int) strlen (linkbuf) + 2 > buflen)
 			return (-1);
 		else
@@ -135,15 +134,13 @@ int req_type;
 			strcpy (buf, linkbuf);
 	return (0);
 }
-#endif
 
 build_linkname(argvi, path, size, req_type)
-char *argvi;
-char *path;
-int size;
-int req_type;
+		 char *argvi;
+		 char *path;
+		 int size;
+		 int req_type;
 {
-#if !defined(vms)
 	char buf[256];
 	int c;
 	char *p;
@@ -151,11 +148,11 @@ int req_type;
 	if (! initialized && (c = init_cwd_hostname())) return (c);
 	if (*argvi != '/' && strstr (argvi, ":/") == NULL) {
 		if ((! *nfsroot ||
-		    strncmp (cwd, nfsroot, strlen (nfsroot)) ||
-		    *(cwd + strlen(nfsroot)) != '/') /* not /shift syntax */
-		    && (strncmp (cwd, "/afs/", 5) || req_type == STAGEWRT))
+				 strncmp (cwd, nfsroot, strlen (nfsroot)) ||
+				 *(cwd + strlen(nfsroot)) != '/') /* not /shift syntax */
+				&& (strncmp (cwd, "/afs/", 5) || req_type == STAGEWRT))
 			if ((int) strlen (hostname) + (int) strlen (cwd) +
-			    (int) strlen (argvi) + 3 > size) {
+					(int) strlen (argvi) + 3 > size) {
 				fprintf (stderr, STG08, argvi);
 				return (USERR);
 			} else
@@ -174,24 +171,23 @@ int req_type;
 				fprintf (stderr, STG08, argvi);
 				return (USERR);
 			}
+			*p = '/';
 		} else {
 			fprintf (stderr, STG08, argvi);
 			return (USERR);
 		}
-		*p = '/';
 		strcat (path, p);
 	}
-#endif
 	return (0);
 }
 
 build_Upath(fun, path, size, req_type)
-int fun;
-char *path;
-int size;
-int req_type;
+		 int fun;
+		 char *path;
+		 int size;
+		 int req_type;
 {
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
 	char buf[16];
 	int c;
 
@@ -206,11 +202,11 @@ int req_type;
 #endif
 #endif
 	if ((! *nfsroot ||
-	    strncmp (cwd, nfsroot, strlen (nfsroot)) ||
-	    *(cwd + strlen(nfsroot)) != '/') /* not /shift syntax */
-	    && (strncmp (cwd, "/afs/", 5) || req_type == STAGEWRT))
+			 strncmp (cwd, nfsroot, strlen (nfsroot)) ||
+			 *(cwd + strlen(nfsroot)) != '/') /* not /shift syntax */
+			&& (strncmp (cwd, "/afs/", 5) || req_type == STAGEWRT))
 		if ((int) strlen (hostname) + (int) strlen (cwd) +
-		    (int) strlen (buf) + 3 > size) {
+				(int) strlen (buf) + 3 > size) {
 			fprintf (stderr, STG08, buf);
 			return (USERR);
 		} else

@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.15 2000/03/14 09:53:35 jdurand Exp $
+ * $Id: send2stgd.c,v 1.16 2000/03/23 01:41:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.15 $ $Date: 2000/03/14 09:53:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.16 $ $Date: 2000/03/23 01:41:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.15 $ $Date: 2
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -31,8 +31,8 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.15 $ $Date: 2
 #include "rfio.h"
 #include "net.h"
 #include "serrno.h"
-#include "stage.h"
 #include "osdep.h"
+#include "stage.h"
 #include "Cnetdb.h"
 
 extern int rfio_errno;
@@ -46,15 +46,43 @@ void dounlink _PROTO((char *));
 #ifndef _WIN32
 void wait4child _PROTO(());
 #endif
+int rc_shift2castor _PROTO((int));
 
-send2stgd(host, reqp, reql, want_reply)
-char *host;
-char *reqp;
-int reql;
-int want_reply;
+int rc_shift2castor(rc)
+		 int rc;
 {
+	/* Input  is a SHIFT  return code */
+	/* Output is a CASTOR return code */
+	switch (rc) {
+	case BLKSKPD:
+		return(ERTBLKSKPD);
+	case TPE_LSZ:
+		return(ERTTPE_LSZ);
+	case MNYPARI:
+		return(ERTMNYPARY);
+	case LIMBYSZ:
+		return(ERTLIMBYSZ);
+	case USERR:
+		return(EINVAL);
+	case SYERR:
+		return(SESYSERR);
+	default:
+		return(rc);
+	}
+}
+
+int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
+		 char *host;
+		 char *reqp;
+		 int reql;
+		 int want_reply;
+		 char *user_repbuf;
+		 int user_repbuf_len;
+{
+	int actual_replen = 0;
 	int c;
-	char file2[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
+	char file2[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
+	char func[16];
 	char *getconfent();
 	char *getenv();
 	struct hostent *hp;
@@ -68,81 +96,92 @@ int want_reply;
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 	int stg_s;
-	char stghost[64];
+	char stghost[CA_MAXHOSTNAMELEN+1];
 
+	strcpy (func, "send2stgd");
 #ifndef _WIN32
-  sa.sa_handler = wait4child;
-  sa.sa_flags = SA_RESTART;
-  sigaction (SIGCHLD, &sa, NULL);
+	sa.sa_handler = wait4child;
+	sa.sa_flags = SA_RESTART;
+	sigaction (SIGCHLD, &sa, NULL);
 #endif
 	link_rc = 0;
 	nb_ovl = 0;
 	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
-		fprintf (stderr, STG09, STG, "not defined in /etc/services");
-		return (CONFERR);
+		stage_errmsg (func, STG09, STG, "not defined in /etc/services");
+		serrno = SENOSSERV;
+		return (-1);
 	}
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
-		    (p = getconfent("STG", "HOST",0)) == NULL) {
-			fprintf (stderr, STG31);
-			return (CONFERR);
+				(p = getconfent("STG", "HOST",0)) == NULL) {
+			stage_errmsg (func, STG31);
+			serrno = SENOSHOST;
+			return (-1);
 		}
 		strcpy (stghost, p);
 	} else {
 		strcpy (stghost, host);
 	}
 	if ((hp = gethostbyname (stghost)) == NULL) {
-		fprintf (stderr, STG09, "Host unknown:", stghost);
-		return (CONFERR);
+		stage_errmsg (func, STG09, "Host unknown:", stghost);
+		serrno = SENOSHOST;
+		return (-1);
 	}
 	sin.sin_family = AF_INET;
 	sin.sin_port = sp->s_port;
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf (stderr, STG02, "", "socket", neterror());
-		return (SYERR);
+		stage_errmsg (func, STG02, "", "socket", neterror());
+		serrno = SECOMERR;
+		return (-1);
 	}
 
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+		if (
 #if defined(_WIN32)
-		if (WSAGetLastError() == WSAECONNREFUSED) {
+				WSAGetLastError() == WSAECONNREFUSED
 #else
-		if (errno == ECONNREFUSED) {
+				errno == ECONNREFUSED
 #endif
-			fprintf (stderr, STG00, stghost);
+				) {
+			stage_errmsg (func, STG00, stghost);
 			(void) netclose (stg_s);
-			return (ESTNACT);
+			serrno = ESTNACT;
+			return (-1);
 		} else {
-			fprintf (stderr, STG02, "", "connect", neterror());
+			stage_errmsg (func, STG02, "", "connect", neterror());
 			(void) netclose (stg_s);
-			return (SYERR);
+			serrno = SECOMERR;
+			return (-1);
 		}
 	}
 	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
 		if (n == 0)
-			fprintf (stderr, STG02, "", "send", sys_serrlist[SERRNO]);
+			stage_errmsg (func, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
-			fprintf (stderr, STG02, "", "send", neterror());
+			stage_errmsg (func, STG02, "", "send", neterror());
 		(void) netclose (stg_s);
-		return (SYERR);
+		serrno = SECOMERR;
+		return (-1);
 	}
 	if (! want_reply) {
 		(void) netclose (stg_s);
 		return (0);
 	}
-
+	
 	while (1) {
 		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
-				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
+				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
-				fprintf (stderr, STG02, "", "recv", neterror());
+				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			return (SYERR);
+			serrno = SECOMERR;
+			return (-1);
 		}
 		p = repbuf;
 		unmarshall_LONG (p, magic) ;
@@ -150,26 +189,40 @@ int want_reply;
 		unmarshall_LONG (p, c) ;
 		if (rep_type == STAGERC) {
 			(void) netclose (stg_s);
+			if (c) {
+				serrno = rc_shift2castor(c);
+				c = -1;
+			}
 			break;
 		}
 		if ((n = netread(stg_s, repbuf, c)) != c) {
 			if (n == 0)
-				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
+				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
-				fprintf (stderr, STG02, "", "recv", neterror());
+				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			c = SYERR;
-			break;
+			serrno = SECOMERR;
+			return (-1);
 		}
 		p = repbuf;
 		unmarshall_STRING (p, prtbuf);
 		switch (rep_type) {
 		case MSG_OUT:
-			printf ("%s", prtbuf);
+			if (user_repbuf != NULL) {
+				if (actual_replen + c <= user_repbuf_len)
+					n = c;
+				else
+					n = user_repbuf_len - actual_replen;
+				if (n) {
+					memcpy (user_repbuf + actual_replen, repbuf, n);
+					actual_replen += n;
+				}
+			} else
+				stage_outmsg (NULL, "%s", prtbuf);
 			break;
 		case MSG_ERR:
 		case RTCOPY_OUT:
-			fprintf (stderr, "%s", prtbuf);
+			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:
 			unmarshall_STRING (p, file2);
@@ -187,66 +240,77 @@ int want_reply;
 }
 
 int dosymlink (file1, file2)
-char *file1;
-char *file2;
+		 char *file1;
+		 char *file2;
 {
 	char *filename;
+	char func[16];
 	char *host;
 	int remote;
-
+	
+	strcpy (func, "send2stgd");
 	remote = rfio_parseln (file2, &host, &filename, NORDLINKS);
 	serrno = 0;
 	if (rfio_symlink (file1, file2) &&
-	    ((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
-		rfio_perror ("symlink");
-		if (serrno == SEOPNOTSUP) return (LNKNSUP);
+			((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
+		stage_errmsg (func, STG02, file1, "symlink", rfio_serror());
+		if (serrno == SEOPNOTSUP) {
+			serrno = ESTLNKNSUP;
+			return (-1);
+		}
 		if ((remote &&
-		    (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
-		    (remote == 0 && (errno == EACCES || errno == ENOENT)))
-			return (USERR);
-		else
-			return (SYERR);
+				 (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
+				(remote == 0 && (errno == EACCES || errno == ENOENT))) {
+			serrno = ESTLNKNCR;
+			return (-1);
+		} else {
+			serrno = SESYSERR;
+			return (-1);
+		}
 	}
 	return (0);
 }
 
-void dounlink (path)
-char *path;
+void
+dounlink (path)
+		 char *path;
 {
 	char *filename;
+	char func[16];
 	char *host;
 #if !defined(_WIN32)
 	int pid;
 	struct stat st;
 #endif
 	int remote;
-
+	
+	strcpy (func, "send2stgd");
 	remote = rfio_parseln (path, &host, &filename, NORDLINKS);
 	if (rfio_unlink (path)) {
 		if ((remote && rfio_errno == ENOENT) ||
-		    (remote == 0 && errno == ENOENT)) return;
+				(remote == 0 && errno == ENOENT)) return;
 #if !defined(_WIN32)
 		if (getuid() || (remote && rfio_errno != EACCES) ||
-		    (remote == 0 && errno != EACCES) ||
-		    strncmp (filename, "/afs/", 5) == 0) {
+				(remote == 0 && errno != EACCES) ||
+				strncmp (filename, "/afs/", 5) == 0) {
 #endif
-			fprintf (stderr, STG02, path, "unlink", rfio_serror());
+			stage_errmsg (func, STG02, path, "unlink", rfio_serror());
 			return;
 		}
 #if !defined(_WIN32)
 		if (rfio_lstat (path, &st) != 0) {
-			fprintf (stderr, STG02, path, "unlink(lstat)", rfio_serror());
+			stage_errmsg (func, STG02, path, "unlink(lstat)", rfio_serror());
 			return;
 		}
 		pid = fork ();
 		if (pid < 0) {
-			fprintf (stderr, STG02, path, "unlink(fork)", rfio_serror());
+			stage_errmsg (func, STG02, path, "unlink(fork)", rfio_serror());
 			return;
 		} else if (pid == 0) {
 			setgid (st.st_gid);
 			setuid (st.st_uid);
 			if (rfio_unlink (path)) {
-				fprintf (stderr, STG02, path, "unlink", rfio_serror());
+				stage_errmsg (func, STG02, path, "unlink", rfio_serror());
 				exit (SYERR);
 			}
 			exit (0);
@@ -259,11 +323,11 @@ char *path;
 #if !defined(_WIN32)
 void wait4child()
 {
-  int pid;
-  int status;
-  
-  while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
-    nb_ovl--;
+	int pid;
+	int status;
+	
+	while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
+		nb_ovl--;
 }
 #endif
 

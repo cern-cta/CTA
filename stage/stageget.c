@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.8 2000/01/09 10:26:07 jdurand Exp $
+ * $Id: stageget.c,v 1.9 2000/03/23 01:41:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,12 +30,14 @@ static gid_t gid;
 static struct passwd *pw;
 char *stghost;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void cleanup _PROTO((int));
+void usage _PROTO((char *));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i;
-	void cleanup();
 	char *dp;
 	int errflg = 0;
 	int fun = 0;
@@ -50,6 +52,7 @@ char	**argv;
 	char sendbuf[REQBUFSZ];
 	int uflag = 0;
 	uid_t uid;
+	/* char repbuf[CA_MAXPATHLEN+1]; */
 
 	nargs = argc;
 	uid = getuid();
@@ -88,7 +91,7 @@ char	**argv;
 	if (fun)
 		nargs++;
 	if (uflag == 0 &&
-	   (pool_user = getenv ("STAGE_USER")) != NULL)
+			(pool_user = getenv ("STAGE_USER")) != NULL)
 		nargs += 2;
 
 	/* Build request header */
@@ -147,27 +150,27 @@ char	**argv;
 	signal (SIGQUIT, cleanup);
 	signal (SIGTERM, cleanup);
 
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR) break;
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	signal (sig, SIG_IGN);
 
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s",
-	  "[-h stage_host] [-P] [-p pool] [-U fun] [-u user] pathname\n");
-    return(0);
+					 "[-h stage_host] [-P] [-p pool] [-U fun] [-u user] pathname\n");
 }

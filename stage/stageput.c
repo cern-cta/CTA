@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.8 2000/01/09 10:26:08 jdurand Exp $
+ * $Id: stageput.c,v 1.9 2000/03/23 01:41:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.8 $ $Date: 200
 #endif
 #include "marshall.h"
 #include "stage.h"
+
 extern	char	*getconfent();
 extern	int	optind;
 extern	char	*optarg;
@@ -37,12 +38,14 @@ static int pid;
 static struct passwd *pw;
 char *stghost;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void usage _PROTO((char *));
+void cleanup _PROTO((int));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i;
-	void cleanup();
 	char *dp;
 	int errflg = 0;
 	int fun = 0;
@@ -64,6 +67,7 @@ char	**argv;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	/* char repbuf[CA_MAXPATHLEN+1]; */
 
 	nargs = argc;
 	uid = getuid();
@@ -83,7 +87,6 @@ char	**argv;
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
-#if !defined(vms)
 			if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) {
 				fprintf (stderr, STG10, gr->gr_name);
 				errflg++;
@@ -95,28 +98,6 @@ char	**argv;
 				} else
 					Guid = pw->pw_uid;
 			}
-#else
-			if ((q = getconfent ("GRPUSER", gr->gr_name, 1)) == NULL) {
-				fprintf (stderr, STG10, gr->gr_name);
-				errflg++;
-			} else {
-				if ((p = strtok (q, " \n")) == NULL) {
-					fprintf (stderr, STG80, q);
-					errflg++;
-				}
-				(void) strcpy (Gname,p);
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG81, q);
-					errflg++;
-				}
-				Guid = atoi (p);
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG82, q);
-					errflg++;
-				}
-				gid = atoi (p);
-			}
-#endif
 			break;
 		case 'h':
 			stghost = optarg;
@@ -171,14 +152,10 @@ char	**argv;
 
 	/* Build request body */
 
-#if !defined(vms)
 	if ((pw = getpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
-#else
-	if ((pw = getpwnam (p = cuserid(NULL))) == NULL) {
-#endif
 		fprintf (stderr, STG11, p);
 		exit (SYERR);
 	}
@@ -193,7 +170,7 @@ char	**argv;
 	marshall_WORD (sbp, gid);
 	pid = getpid();
 	marshall_WORD (sbp, pid);
-
+	
 	marshall_WORD (sbp, nargs);
 	for (i = 0; i < optind; i++)
 		marshall_STRING (sbp, argv[i]);
@@ -235,22 +212,16 @@ char	**argv;
 		} else
 			marshall_STRING (sbp, path);
 	}
-#if defined(vms)
-	if (!Gflag) {
-		fprintf (stderr, STG83);
-		errflg++;
-	}
-#endif
 	if (errflg) {
 #if defined(_WIN32)
 		WSACleanup();
 #endif
 		exit (1);
 	}
-
+	
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-
+	
 #if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -259,30 +230,32 @@ char	**argv;
 	signal (SIGQUIT, cleanup);
 #endif
 	signal (SIGTERM, cleanup);
-
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR || c == LIMBYSZ || c == CLEARED ||
-		    c == ENOSPC) break;
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+	
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == LIMBYSZ || serrno == CLEARED ||
+				serrno == ENOSPC) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	int c;
 	int msglen;
 	char *q;
 	char *sbp;
 	char sendbuf[64];
-
+	/* char repbuf[CA_MAXPATHLEN+1]; */
+	
 	signal (sig, SIG_IGN);
-
+	
 	sbp = sendbuf;
 	marshall_LONG (sbp, STGMAGIC);
 	marshall_LONG (sbp, STAGEKILL);
@@ -294,20 +267,19 @@ int sig;
 	marshall_WORD (sbp, pid);
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd (stghost, sendbuf, msglen, 0);
+	c = send2stgd (stghost, sendbuf, msglen, 0, NULL, 0);
 #if defined(_WIN32)
 	WSACleanup();
 #endif
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s", "[-G] [-h stage_host] [-U fun] pathname(s)\n");
 	fprintf (stderr, "       %s ", cmd);
 	fprintf (stderr, "%s",
-	  "[-G] [-h stage_host] [-q file_sequence_number(s)] -V visual_identifier\n");
-    return(0);
+					 "[-G] [-h stage_host] [-q file_sequence_number(s)] -V visual_identifier\n");
 }

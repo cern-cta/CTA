@@ -1,5 +1,5 @@
 /*
- * $Id: stgcat2dbm.c,v 1.3 1999/12/09 13:47:39 jdurand Exp $
+ * $Id: stgcat2dbm.c,v 1.4 2000/03/23 01:41:50 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 extern char *sys_errlist[];
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.4 $ $Date: 2000/03/23 01:41:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 main()

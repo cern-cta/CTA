@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.8 2000/01/09 10:26:03 jdurand Exp $
+ * $Id: packfseq.c,v 1.9 2000/03/23 01:41:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -16,13 +16,13 @@ static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.8 $ $Date: 200
 #include "stage.h"
 
 packfseq(fseq_list, i, nbdskf, nbtpf, trailing, fseq, fseqsz)
-fseq_elem *fseq_list;
-int i;
-int nbdskf;
-int nbtpf;
-char trailing;
-char *fseq;
-int fseqsz;
+		 fseq_elem *fseq_list;
+		 int i;
+		 int nbdskf;
+		 int nbtpf;
+		 char trailing;
+		 char *fseq;
+		 int fseqsz;
 {
 	char *dp;
 	char fseq_tmp[CA_MAXFSEQLEN + 1];

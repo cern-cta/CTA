@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.7 1999/12/14 14:51:44 jdurand Exp $
+ * $Id: stageinit.c,v 1.8 2000/03/23 01:41:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.8 $ $Date: 2000/03/23 01:41:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -16,14 +16,18 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.7 $ $Date: 19
 #include <sys/types.h>
 #include <pwd.h>
 #include <netinet/in.h>
+#include <errno.h>
 #include "marshall.h"
 #include "stage.h"
 extern	char	*optarg;
 extern	int	optind;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void cleanup _PROTO((int));
+void usage _PROTO((char *));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i;
 	void cleanup();
@@ -37,7 +41,8 @@ char	**argv;
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;
-
+	/* char repbuf[CA_MAXPATHLEN+1]; */
+	
 	uid = getuid();
 	gid = getgid();
 	while ((c = getopt (argc, argv, "Fh:")) != EOF) {
@@ -87,25 +92,25 @@ char	**argv;
 	signal (SIGQUIT, cleanup);
 	signal (SIGTERM, cleanup);
 
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR || c == CONFERR) break;
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == CONFERR) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	signal (sig, SIG_IGN);
 
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s [-F] [-h stage_host]\n", cmd);
-    return(0);
 }

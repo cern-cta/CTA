@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.12 2000/02/11 11:06:51 jdurand Exp $
+ * $Id: procclr.c,v 1.13 2000/03/23 01:41:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.12 $ $Date: 2000/02/11 11:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.13 $ $Date: 2000/03/23 01:41:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,8 +47,8 @@ extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 
 void procclrreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+		 char *req_data;
+		 char *clienthost;
 {
 	char **argv;
 	int c, i, j;
@@ -87,7 +87,7 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-		reqid, STAGECLR, 0, 0, NULL, "");
+						 reqid, STAGECLR, 0, 0, NULL, "");
 #endif
 
 	if ((gr = getgrgid (gid)) == NULL) {
@@ -125,12 +125,12 @@ char *clienthost;
 			mfile = optarg;
 			break;
 		case 'm':
-                        minfree = strtol (optarg, &dp, 10);
-                        if (*dp != '\0' || minfree > 100) {
-                                sendrep (rpfd, MSG_ERR, STG06, "-m");
-                                errflg++;
-                        }
-                        break;
+			minfree = strtol (optarg, &dp, 10);
+			if (*dp != '\0' || minfree > 100) {
+				sendrep (rpfd, MSG_ERR, STG06, "-m");
+				errflg++;
+			}
+			break;
 		case 'P':
 			path = optarg;
 			if (*path == '\0') {
@@ -140,7 +140,7 @@ char *clienthost;
 			break;
 		case 'p':
 			if (strcmp (optarg, "NOPOOL") == 0 ||
-			    isvalidpool (optarg)) {
+					isvalidpool (optarg)) {
 				strcpy (poolname, optarg);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG32, optarg);
@@ -207,12 +207,12 @@ char *clienthost;
 				if (stpp->reqid == stcp->reqid) break;
 			}
 			if (cflag && stcp->poolname[0] &&
-			    enoughfreespace (stcp->poolname, minfree)) {
+					enoughfreespace (stcp->poolname, minfree)) {
 				c = ENOUGHF;
 				goto reply;
 			}
 			if (cflag && uid == 0 &&	/* probably garbage collector */
-			    checklastaccess (stcp->poolname, stcp->a_time)) {
+					checklastaccess (stcp->poolname, stcp->a_time)) {
 				c = EBUSY;
 				goto reply;
 			}
@@ -226,17 +226,17 @@ char *clienthost;
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
-					    enoughfreespace (stcp->poolname, minfree)) {
+							enoughfreespace (stcp->poolname, minfree)) {
 						c = ENOUGHF;
 						goto reply;
 					}
 					if (cflag && uid == 0 &&
-					    checklastaccess (stcp->poolname, stcp->a_time)) {
+							checklastaccess (stcp->poolname, stcp->a_time)) {
 						c = EBUSY;
 						goto reply;
 					}
 					if ((i = check_delete (stcp, gid, uid,
-					    group, user, rflag)) > 0) {
+																 group, user, rflag)) > 0) {
 						c = i;
 						goto reply;
 					}
@@ -278,7 +278,7 @@ char *clienthost;
 			}
 			found = 1;
 			if (cflag && stcp->poolname[0] &&
-			    enoughfreespace (stcp->poolname, minfree)) {
+					enoughfreespace (stcp->poolname, minfree)) {
 				c = ENOUGHF;
 				goto reply;
 			}
@@ -293,18 +293,18 @@ char *clienthost;
 			c = USERR;
 		}
 	}
-reply:
+ reply:
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGECLR, c);
 }
 
 check_delete(stcp, gid, uid, group, user, rflag)
-struct stgcat_entry *stcp;
-gid_t gid;
-uid_t uid;
-char *group;
-char *user;
-int rflag; /* True if HSM source file has to be removed */
+		 struct stgcat_entry *stcp;
+		 gid_t gid;
+		 uid_t uid;
+		 char *group;
+		 char *user;
+		 int rflag; /* True if HSM source file has to be removed */
 {
 	int found;
 	int i;
@@ -312,27 +312,27 @@ int rflag; /* True if HSM source file has to be removed */
 	struct waitf *wfp;
 	struct waitq *wqp;
 
-/*	return	<0	request deleted
- *		 0	running request (status set to CLEARED and req signalled)
- *		>0	in case of error
- */
+	/*	return	<0	request deleted
+	 *		 0	running request (status set to CLEARED and req signalled)
+	 *		>0	in case of error
+	 */
 
 	if (strcmp (group, STGGRP) && strcmp (group, stcp->group) && uid != 0) {
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
 		return (USERR);
 	}
 	if ((stcp->status & 0xF0) == STAGED ||
-	    stcp->status == (STAGEOUT | PUT_FAILED)) {
-                if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag) < 0) {
-                        sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
-                                rfio_serror());
-                        return (USERR);
+			stcp->status == (STAGEOUT | PUT_FAILED)) {
+		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag) < 0) {
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+							 rfio_serror());
+			return (USERR);
 		}
 	} else if (stcp->status == STAGEOUT || stcp->status == STAGEALLOC) {
-                if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
-                        sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
-                                rfio_serror());
-                        return (USERR);
+		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+							 rfio_serror());
+			return (USERR);
 		}
 	} else {	/* the request should be in the active/wait queue */
 		found = 0;
@@ -352,7 +352,7 @@ int rflag; /* True if HSM source file has to be removed */
 				/* is there an active stager overlay for this file? */
 				if (wqp->ovl_pid) {
 					stglogit (func, "killing process %d\n",
-						wqp->ovl_pid);
+										wqp->ovl_pid);
 					kill (wqp->ovl_pid, SIGINT);
 					wqp->ovl_pid = 0;
 				}
@@ -360,8 +360,8 @@ int rflag; /* True if HSM source file has to be removed */
 			}
 		}
 		sendrep (rpfd, MSG_ERR,
-		    "internal error: status=%x but req not in waitq\n",
-		    stcp->status);
+						 "internal error: status=%x but req not in waitq\n",
+						 stcp->status);
 		return (USERR);
 	}
 	return (-1);

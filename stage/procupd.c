@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.14 2000/02/11 11:06:53 jdurand Exp $
+ * $Id: procupd.c,v 1.15 2000/03/23 01:41:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.14 $ $Date: 2000/02/11 11:06:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.15 $ $Date: 2000/03/23 01:41:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,7 +38,6 @@ void procupdreq _PROTO((char *, char *));
 
 extern char *optarg;
 extern int optind;
-extern int opterr, optopt;
 extern char *rfio_serror();
 extern char func[16];
 extern int reqid;
@@ -50,9 +49,10 @@ extern struct waitq *waitqp;
 extern struct stgdb_fd dbfd;
 #endif
 
-void procupdreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+void
+procupdreq(req_data, clienthost)
+		 char *req_data;
+		 char *clienthost;
 {
 	char **argv;
 	int blksize = -1;
@@ -101,7 +101,7 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-		reqid, STAGEUPDC, 0, 0, NULL, "");
+						 reqid, STAGEUPDC, 0, 0, NULL, "");
 #endif
 
 	dvn = unknown;
@@ -114,15 +114,15 @@ char *clienthost;
 	optind = 1;
 #endif
 	while ((c = getopt (nargs, argv, "b:D:F:f:h:I:L:q:R:s:T:U:W:Z:")) != EOF) {
-        switch (c) {
-        case 'b':
-          blksize = strtol (optarg, &dp, 10);
-          if (*dp != '\0') {
-            sendrep (rpfd, MSG_ERR, STG06, "-b");
-            errflg++;
-          }
-          break;
-        case 'D':
+		switch (c) {
+		case 'b':
+			blksize = strtol (optarg, &dp, 10);
+			if (*dp != '\0') {
+				sendrep (rpfd, MSG_ERR, STG06, "-b");
+				errflg++;
+			}
+			break;
+		case 'D':
 			dvn = optarg;
 			break;
 		case 'F':
@@ -179,9 +179,9 @@ char *clienthost;
 			if ((p = strtok (optarg, ".")) != NULL) {
 				reqid = strtol (p, &dp, 10);
 				if ((p = strtok (NULL, "@")) != NULL) {
-                  key = strtol (p, &dp, 10);
+					key = strtol (p, &dp, 10);
 				}
-            }
+			}
 			break;
 		}
 	}
@@ -203,9 +203,9 @@ char *clienthost;
 	wqp = waitqp;
 	while (wqp) {
 		if (wqp->reqid == reqid &&
-		    wqp->key == key &&
-		    wqp->uid == uid &&
-		    wqp->gid == gid) {
+				wqp->key == key &&
+				wqp->uid == uid &&
+				wqp->gid == gid) {
 			found = 1;
 			break;
 		}
@@ -234,7 +234,7 @@ char *clienthost;
 		goto reply;
 	}
 	if ( rc < 0) {	/* -R not specified, i.e. tape mounted and positionned */
-      int has_been_modified = 0;
+		int has_been_modified = 0;
 		if (stcp->ipath[0] == '\0') {	/* deferred allocation */
 			c = build_ipath (wfp->upath, stcp, wqp->pool_user);
 			if (c > 0) goto reply;
@@ -244,57 +244,61 @@ char *clienthost;
 				stcp->status |= WAITING_SPC;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
 				strcpy (wqp->waiting_pool, stcp->poolname);
 				if (c = cleanpool (stcp->poolname)) goto reply;
 				return;
 			}
-            has_been_modified = 1;
+			has_been_modified = 1;
 		}
 		if (fseq && stcp->t_or_d == 't') {
 			if (*stcp->poolname &&
-			     stcp->u1.t.fseq[0] == 'u') {
+					stcp->u1.t.fseq[0] == 'u') {
 				p = strrchr (stcp->ipath, '/') + 1;
 				sprintf (p, "%s.%s.%s",
-				    stcp->u1.t.vid[0], fseq, stcp->u1.t.lbl);
-                has_been_modified = 1;
+								 stcp->u1.t.vid[0], fseq, stcp->u1.t.lbl);
+				has_been_modified = 1;
 				savereqs ();
 			}
 		}
-        if (has_been_modified != 0) {
+		if (has_been_modified != 0) {
 #ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-        }
+		}
 		sendrep (rpfd, MSG_OUT, stcp->ipath);
 		goto reply;
 	}
-	if ((p = strchr (stcp->ipath, ':')) != NULL) {
-		q = stcp->ipath;
-	} else {
-		q = strchr (stcp->ipath + 1, '/') + 1;
-		p = strchr (q, '/');
-	}
-	strncpy (dsksrvr, q, p - q);
-	dsksrvr[p - q] = '\0';
-	stglogit (func, STG97, dsksrvr, strrchr (stcp->ipath, '/')+1,
-		stcp->user, stcp->group,
-		clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
-	if (stcp->status == STAGEIN && rfio_stat (stcp->ipath, &st) == 0) {
-		stcp->actual_size = st.st_size;
-    }
+	if (stcp->ipath[0] != '\0') {
+		if ((p = strchr (stcp->ipath, ':')) != NULL) {
+			q = stcp->ipath;
+		} else {
+			q = strchr (stcp->ipath + 1, '/') + 1;
+			p = strchr (q, '/');
+		}
+		strncpy (dsksrvr, q, p - q);
+		dsksrvr[p - q] = '\0';
+		stglogit (func, STG97, dsksrvr, strrchr (stcp->ipath, '/')+1,
+						stcp->user, stcp->group,
+						clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
+		if (stcp->status == STAGEIN && rfio_stat (stcp->ipath, &st) == 0) {
+			stcp->actual_size = st.st_size;
 #ifdef USECDB
-	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-      sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-    }
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
+		}
+	} else {
+		stglogit (func, "### Warning : stcp->ipath == NULL\n");
+	}
 #if SACCT
 	stageacct (STGFILS, wqp->uid, wqp->gid, wqp->clienthost,
-		wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost);
+						 wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost);
 #endif
 	if (rc == 211) {	/* no more file on tape */
 		/* flag previous file as last file on tape */
@@ -315,8 +319,8 @@ char *clienthost;
 			stcp->status |= LAST_TPFILE;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 			break;
 		}
@@ -332,8 +336,8 @@ char *clienthost;
 			}
 			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0) < 0)
 				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
-				    "rfio_unlink", rfio_serror());
-			check_waiting_on_req (wfp->subreqid, FAILED);
+								 "rfio_unlink", rfio_serror());
+			check_waiting_on_req (wfp->subreqid, STG_FAILED);
 		}
 		wqp->nbdskf = wqp->nb_subreqs;
 		goto reply;
@@ -342,39 +346,39 @@ char *clienthost;
 	if (rc == 0)
 		p_stat = "succeeded";
 	else if (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ ||
-	    (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
+					 (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
 		p_stat = "warning";
 	else
 		p_stat = "failed";
 	if (stcp->t_or_d == 't')
 		sendrep (wqp->rpfd, MSG_ERR, STG41, p_cmd, p_stat,
-			fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
+						 fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
 	else if (stcp->t_or_d == 'd')
 		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
 	else if (stcp->t_or_d == 'm')
 		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
 	if ((rc != 0 && rc != LIMBYSZ &&
-	    rc != BLKSKPD && rc != TPE_LSZ && rc != MNYPARI) ||
-	    (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE) == 0)) {
+			 rc != BLKSKPD && rc != TPE_LSZ && rc != MNYPARI) ||
+			(rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE) == 0)) {
 		wqp->status = rc;
 		if (rc != ENOSPC) goto reply;
 		if (*stcp->poolname == '\0' ||
-		    stcp->status == STAGEWRT || stcp->status == STAGEPUT ||
-		    wqp->nb_clnreq++ > MAXRETRY) {
+				stcp->status == STAGEWRT || stcp->status == STAGEPUT ||
+				wqp->nb_clnreq++ > MAXRETRY) {
 			c = ENOSPC;
 			goto reply;
 		}
 		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
-				"rfio_unlink", rfio_serror());
+							 "rfio_unlink", rfio_serror());
 		wqp->status = 0;
 		wqp->clnreq_reqid = upd_reqid;
 		wqp->clnreq_rpfd = rpfd;
 		stcp->status |= WAITING_SPC;
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-        }
+			sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
 #endif
 		strcpy (wqp->waiting_pool, stcp->poolname);
 		if (c = cleanpool (stcp->poolname)) goto reply;
@@ -407,15 +411,15 @@ char *clienthost;
 			has_been_updated = 1;
 		}
 		if (fseq &&
-			(stcp->u1.t.fseq[0] == 'u' || stcp->u1.t.fseq[0] == 'n')) {
+				(stcp->u1.t.fseq[0] == 'u' || stcp->u1.t.fseq[0] == 'n')) {
 			strcpy (stcp->u1.t.fseq, fseq);
 			has_been_updated = 1;
 		}
 		if (has_been_updated != 0) {
 #ifdef USECDB
-          if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-            sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-          }
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 		}
 	}
@@ -438,22 +442,22 @@ char *clienthost;
 					delreq (stcp,0);
 				else if (delfile (stcp, 0, 1, 1, "stagewrt ok", uid, gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-						"rfio_unlink", rfio_serror());
+									 "rfio_unlink", rfio_serror());
 					stcp->status |= STAGED;
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                      sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                    }
+						sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
 #endif
 				}
 			} else {
 				stcp->status |= STAGED;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
-            }
+			}
 		}
 		i = 0;		/* reset these variables changed by the above loop */
 		wfp = wqp->wf;	/* and needed in the loop below */
@@ -465,18 +469,18 @@ char *clienthost;
 			stcp->status |= STAGED_LSZ;
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-        }
+			sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
 #endif
 		if (wqp->copytape)
 			sendinfo2cptape (rpfd, stcp);
 		if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 			create_link (stcp, wfp->upath);
 		if (wqp->Upluspath &&
-		    strcmp (stcp->ipath, (wfp+1)->upath))
+				strcmp (stcp->ipath, (wfp+1)->upath))
 			create_link (stcp, (wfp+1)->upath);
 		updfreespace (stcp->poolname, stcp->ipath,
-			stcp->size*1024*1024 - (int)stcp->actual_size);
+									stcp->size*1024*1024 - (int)stcp->actual_size);
 		check_waiting_on_req (subreqid, STAGED);
 	}
 	savereqs  ();
@@ -486,7 +490,7 @@ char *clienthost;
 		strcpy (wfp->upath, (wfp+1)->upath);
 	}
 	if (rc == MNYPARI) wqp->status = rc;
-reply:
+ reply:
 	free (argv);
 	reqid = upd_reqid;
 	rpfd = upd_rpfd;

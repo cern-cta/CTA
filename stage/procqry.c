@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.17 2000/02/11 14:28:48 jdurand Exp $
+ * $Id: procqry.c,v 1.18 2000/03/23 01:41:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.17 $ $Date: 2000/02/11 14:28:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.18 $ $Date: 2000/03/23 01:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -79,8 +79,8 @@ struct stgdb_fd *dbfd_query;
 #endif
 
 void procqryreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+		 char *req_data;
+		 char *clienthost;
 {
 	char *afile = NULL;
 	char **argv;
@@ -137,18 +137,18 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-		reqid, STAGEQRY, 0, 0, NULL, "");
+						 reqid, STAGEQRY, 0, 0, NULL, "");
 #endif
-
+	
 	if ((gr = getgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
 	}
 	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
-    /* Makes sure null terminates */
-    group[CA_MAXGRPNAMELEN] = '\0';
-
+	/* Makes sure null terminates */
+	group[CA_MAXGRPNAMELEN] = '\0';
+	
 #ifdef linux
 	optind = 0;
 #else
@@ -158,14 +158,17 @@ char *clienthost;
 		switch (c) {
 		case 'A':
 			afile = optarg;
+			if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-			if (regcomp (&preg, afile, 0)) {
+					regcomp (&preg, afile, 0)
 #else
-			if (! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')) {
+					! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-				sendrep (rpfd, MSG_ERR, STG06, "-A");
-				errflg++;
-			}
+					)
+				{
+					sendrep (rpfd, MSG_ERR, STG06, "-A");
+					errflg++;
+				}
 			break;
 		case 'a':	/* all groups */
 			aflag++;
@@ -188,11 +191,13 @@ char *clienthost;
 			break;
 		case 'M':
 			mfile = optarg;
+			if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-			if (regcomp (&preg, mfile, 0)) {
+					regcomp (&preg, mfile, 0)
 #else
-			if (! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')) {
+					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
+					) {
 				sendrep (rpfd, MSG_ERR, STG06, "-M");
 				errflg++;
 			}
@@ -202,7 +207,7 @@ char *clienthost;
 			break;
 		case 'p':
 			if (strcmp (optarg, "NOPOOL") == 0 ||
-			    isvalidpool (optarg)) {
+					isvalidpool (optarg)) {
 				strcpy (poolname, optarg);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG32, optarg);
@@ -269,18 +274,18 @@ char *clienthost;
 			/* it will not clash with current one owned by the main process.                   */
 
 #ifdef USECDB
-            strcpy(dbfd_in_fork.username,dbfd.username);
-            strcpy(dbfd_in_fork.password,dbfd.password);
+			strcpy(dbfd_in_fork.username,dbfd.username);
+			strcpy(dbfd_in_fork.password,dbfd.password);
 
 			if (stgdb_login(&dbfd_in_fork) != 0) {
-                sendrep(rpfd, MSG_ERR, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
+				sendrep(rpfd, MSG_ERR, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
 
 			/* Open the database */
 			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
-                sendrep(rpfd, MSG_ERR, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
+				sendrep(rpfd, MSG_ERR, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
@@ -301,7 +306,7 @@ char *clienthost;
 
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
-		    numvid, vid, fseq, xfile, afile, mfile);
+										 numvid, vid, fseq, xfile, afile, mfile);
 		goto reply;
 	}
 	if (sflag) {
@@ -310,13 +315,13 @@ char *clienthost;
 	}
 	if (Sflag) {
 		if (print_sorted_list (poolname, aflag, group, uflag, user,
-		    numvid, vid, fseq, xfile, afile, mfile) < 0)
+													 numvid, vid, fseq, xfile, afile, mfile) < 0)
 			c = SYERR;
 		goto reply;
 	}
 	if (Tflag) {
 		print_tape_info (poolname, aflag, group, uflag, user,
-		    numvid, vid, fseq);
+										 numvid, vid, fseq);
 		goto reply;
 	}
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -397,120 +402,120 @@ char *clienthost;
 		else
 			strcpy (p_stat, s_stat[stcp->status]);
 		if ((lflag || ((stcp->status & 0xFF0) == 0)) &&
-		    rfio_mstat (stcp->ipath, &st) == 0) {
+				rfio_mstat (stcp->ipath, &st) == 0) {
 			int has_been_updated = 0;
 
 			if (st.st_size > stcp->actual_size) {
 				stcp->actual_size = st.st_size;
-                has_been_updated = 1;
-          }
-          if (st.st_atime > stcp->a_time) {
-            stcp->a_time = st.st_atime;
-            has_been_updated = 1;
-          }
-          if (st.st_mtime > stcp->a_time) {
-            stcp->a_time = st.st_mtime;
-            has_been_updated = 1;
-          }
-          if (has_been_updated != 0) {
+				has_been_updated = 1;
+			}
+			if (st.st_atime > stcp->a_time) {
+				stcp->a_time = st.st_atime;
+				has_been_updated = 1;
+			}
+			if (st.st_mtime > stcp->a_time) {
+				stcp->a_time = st.st_mtime;
+				has_been_updated = 1;
+			}
+			if (has_been_updated != 0) {
 #ifdef USECDB
-            if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
-          }
+			}
 		}
 		if (stcp->t_or_d == 't') {
-		    if (xflag) {
-			if (sendrep (rpfd, MSG_OUT,
-			    "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
-			    stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
-			    p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
-				c = SYERR;
-				goto reply;
+			if (xflag) {
+				if (sendrep (rpfd, MSG_OUT,
+										 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
+										 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
+										 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+										 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
+					c = SYERR;
+					goto reply;
+				}
+			} else {
+				if (sendrep (rpfd, MSG_OUT,
+										 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
+										 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
+										 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+										 stcp->poolname) < 0) {
+					c = SYERR;
+					goto reply;
+				}
 			}
-		    } else {
-			if (sendrep (rpfd, MSG_OUT,
-			    "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
-			    stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
-			    p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname) < 0) {
-				c = SYERR;
-				goto reply;
-			}
-		    }
 		} else if ((stcp->t_or_d == 'd') || (stcp->t_or_d == 'a')) {
-		    if ((q = strrchr (stcp->u1.d.xfile, '/')) == NULL)
-			q = stcp->u1.d.xfile;
-		    else
-			q++;
-		    if (xflag) {
-			if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
-			    "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-			    stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname, stcp->reqid, stcp->ipath) < 0) ||
-			    (stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
-			    "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-			    p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname, stcp->reqid, stcp->ipath) < 0)) {
-				c = SYERR;
-				goto reply;
+			if ((q = strrchr (stcp->u1.d.xfile, '/')) == NULL)
+				q = stcp->u1.d.xfile;
+			else
+				q++;
+			if (xflag) {
+				if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
+													"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+													stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+													(float)(stcp->actual_size)/(1024.*1024.), p_size,
+													stcp->poolname, stcp->reqid, stcp->ipath) < 0) ||
+						(stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
+													"%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+													p_stat, stcp->nbaccesses,
+													(float)(stcp->actual_size)/(1024.*1024.), p_size,
+													stcp->poolname, stcp->reqid, stcp->ipath) < 0)) {
+					c = SYERR;
+					goto reply;
+				}
+			} else {
+				if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
+													"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
+													stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+													(float)(stcp->actual_size)/(1024.*1024.), p_size,
+													stcp->poolname) < 0) ||
+						(stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
+													"%-36s %-11s %5d %6.1f/%-4s %s\n", q,
+													p_stat, stcp->nbaccesses,
+													(float)(stcp->actual_size)/(1024.*1024.), p_size,
+													stcp->poolname) < 0)) {
+					c = SYERR;
+					goto reply;
+				}
 			}
-		    } else {
-			if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
-			    "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
-			    stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname) < 0) ||
-			    (stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
-			    "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
-			    p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname) < 0)) {
-				c = SYERR;
-				goto reply;
-			}
-		    }
 		} else {	/* stcp->t_or_d == 'm' */
-		    if ((q = strrchr (stcp->u1.m.xfile, '/')) == NULL)
-			q = stcp->u1.m.xfile;
-		    else
-			q++;
-		    if (xflag) {
-			if (sendrep (rpfd, MSG_OUT,
-			    "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-			    p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
-				c = SYERR;
-				goto reply;
+			if ((q = strrchr (stcp->u1.m.xfile, '/')) == NULL)
+				q = stcp->u1.m.xfile;
+			else
+				q++;
+			if (xflag) {
+				if (sendrep (rpfd, MSG_OUT,
+										 "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+										 p_stat, stcp->nbaccesses,
+										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+										 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
+					c = SYERR;
+					goto reply;
+				}
+			} else {
+				if (sendrep (rpfd, MSG_OUT,
+										 "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
+										 p_stat, stcp->nbaccesses,
+										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+										 stcp->poolname) < 0) {
+					c = SYERR;
+					goto reply;
+				}
 			}
-		    } else {
-			if (sendrep (rpfd, MSG_OUT,
-			    "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
-			    p_stat, stcp->nbaccesses,
-			    (float)(stcp->actual_size)/(1024.*1024.), p_size,
-			    stcp->poolname) < 0) {
-				c = SYERR;
-				goto reply;
-			}
-		    }
 		}
 		if (fflag) {
 			if ((stcp->t_or_d == 'a') || (stcp->t_or_d == 'd')) {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
-				    stcp->u1.d.xfile) < 0) {
+										 stcp->u1.d.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'm') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
-				    stcp->u1.m.xfile) < 0) {
+										 stcp->u1.m.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
@@ -519,25 +524,25 @@ char *clienthost;
 		if (lflag) {
 			tm = localtime (&stcp->c_time);
 			if (sendrep (rpfd, MSG_OUT,
-			    "\t\t\tcreated by  %-8.8s  %s  %04d/%02d/%02d %02d:%02d:%02d\n",
-			    stcp->user, stcp->group,
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-			    tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
+									 "\t\t\tcreated by  %-8.8s  %s  %04d/%02d/%02d %02d:%02d:%02d\n",
+									 stcp->user, stcp->group,
+									 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+									 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
 				c = SYERR;
 				goto reply;
 			}
 			tm = localtime (&stcp->a_time);
 			if (sendrep (rpfd, MSG_OUT,
-			    "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-			    tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
+									 "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
+									 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+									 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
 				c = SYERR;
 				goto reply;
 			}
 		}
 	}
 	rfio_end();
-reply:
+ reply:
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 	if (afile || mfile)
 		regfree (&preg);
@@ -546,29 +551,29 @@ reply:
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
 #ifdef USECDB
-      if (stgdb_close(dbfd_query) != 0) {
-        sendrep(rpfd, MSG_ERR, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
-      }
-      if (stgdb_logout(dbfd_query) != 0) {
-        sendrep(rpfd, MSG_ERR, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
-      }
+		if (stgdb_close(dbfd_query) != 0) {
+			sendrep(rpfd, MSG_ERR, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
+		}
+		if (stgdb_logout(dbfd_query) != 0) {
+			sendrep(rpfd, MSG_ERR, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
+		}
 #endif
-      exit (c);
-    }
+		exit (c);
+	}
 }
 
 void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
-char *poolname;
-int aflag;
-char *group;
-int uflag;
-char *user;
-int numvid;
-char vid[MAXVSN][7];
-char *fseq;
-char *xfile;
-char *afile;
-char *mfile;
+		 char *poolname;
+		 int aflag;
+		 char *group;
+		 int uflag;
+		 char *user;
+		 int numvid;
+		 char vid[MAXVSN][7];
+		 char *fseq;
+		 char *xfile;
+		 char *afile;
+		 char *mfile;
 {
 	int j;
 	char *p;
@@ -637,17 +642,17 @@ char *mfile;
 }
 
 print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
-char *poolname;
-int aflag;
-char *group;
-int uflag;
-char *user;
-int numvid;
-char vid[MAXVSN][7];
-char *fseq;
-char *xfile;
-char *afile;
-char *mfile;
+		 char *poolname;
+		 int aflag;
+		 char *group;
+		 int uflag;
+		 char *user;
+		 int numvid;
+		 char vid[MAXVSN][7];
+		 char *fseq;
+		 char *xfile;
+		 char *afile;
+		 char *mfile;
 {
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 
@@ -672,7 +677,7 @@ char *mfile;
 		if (stcp->reqid == 0) break;
 		if ((stcp->status & 0xF0) != STAGED) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
-			 if (stcp->poolname[0]) continue;
+			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
@@ -714,25 +719,25 @@ char *mfile;
 		if (rfio_mstat (stcp->ipath, &st) == 0) {
 			int has_been_updated = 0;
 
-          if (st.st_size > stcp->actual_size) {
-            stcp->actual_size = st.st_size;
-            has_been_updated = 1;
-          }
-          if (st.st_atime > stcp->a_time) {
-            stcp->a_time = st.st_atime;
-            has_been_updated = 1;
-          }
-          if (st.st_mtime > stcp->a_time) {
-            stcp->a_time = st.st_mtime;
-            has_been_updated = 1;
-          }
-          if (has_been_updated != 0) {
+			if (st.st_size > stcp->actual_size) {
+				stcp->actual_size = st.st_size;
+				has_been_updated = 1;
+			}
+			if (st.st_atime > stcp->a_time) {
+				stcp->a_time = st.st_atime;
+				has_been_updated = 1;
+			}
+			if (st.st_mtime > stcp->a_time) {
+				stcp->a_time = st.st_mtime;
+				has_been_updated = 1;
+			}
+			if (has_been_updated != 0) {
 #ifdef USECDB
-            if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
-          }
+			}
 		}
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
@@ -775,14 +780,14 @@ char *mfile;
 	for (scc = scf; scc; scc = scc->next) {
 		tm = localtime (&scc->stcp->a_time);
 		if (sendrep (rpfd, MSG_OUT,
-			"%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s\n",
-			tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-			tm->tm_hour, tm->tm_min, tm->tm_sec,
-			((float)(scc->stcp->actual_size))/(1024.*1024.),
-			scc->stcp->nbaccesses, scc->stcp->ipath,
-			(scc->stpp) ? scc->stpp->upath : scc->stcp->ipath) < 0) {
-				free (scs);
-				return (-1);
+								 "%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s\n",
+								 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+								 tm->tm_hour, tm->tm_min, tm->tm_sec,
+								 ((float)(scc->stcp->actual_size))/(1024.*1024.),
+								 scc->stcp->nbaccesses, scc->stcp->ipath,
+								 (scc->stpp) ? scc->stpp->upath : scc->stcp->ipath) < 0) {
+			free (scs);
+			return (-1);
 		}
 	}
 	free (scs);
@@ -790,14 +795,14 @@ char *mfile;
 }
 
 void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
-char *poolname;
-int aflag;
-char *group;
-int uflag;
-char *user;
-int numvid;
-char vid[MAXVSN][7];
-char *fseq;
+		 char *poolname;
+		 int aflag;
+		 char *group;
+		 int uflag;
+		 char *user;
+		 int numvid;
+		 char vid[MAXVSN][7];
+		 char *fseq;
 {
 	int j;
 	int poolflag = 0;
@@ -821,8 +826,8 @@ char *fseq;
 			if (fseq && strcmp (fseq, stcp->u1.t.fseq)) continue;
 		}
 		if (strcmp (stcp->u1.t.lbl, "al") &&
-		    strcmp (stcp->u1.t.lbl, "sl")) continue;
+				strcmp (stcp->u1.t.lbl, "sl")) continue;
 		sendrep (rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
-			stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
+						 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
 	}
 }

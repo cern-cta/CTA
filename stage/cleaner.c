@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.8 2000/02/11 11:06:49 jdurand Exp $
+ * $Id: cleaner.c,v 1.9 2000/03/23 01:41:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.8 $ $Date: 2000/02/11 11:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.9 $ $Date: 2000/03/23 01:41:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -20,8 +20,8 @@ char func[16];
 int reqid;
 static RFILE *rf;
 main(argc, argv)
-int argc;
-char **argv;
+		 int argc;
+		 char **argv;
 {
 	char buf[256];
 	int c;
@@ -48,17 +48,16 @@ char **argv;
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		stglogit (func, "garbage collector %s failed to start on pool %s@%s\n",
-			gc, poolname, hostname);
+							gc, poolname, hostname);
 		exit (SYERR);
 	}
 	stglogit (func, "garbage collector %s started on pool %s@%s\n",
-		gc, poolname, hostname);
+						gc, poolname, hostname);
 	while ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) > 0) {
 		buf[c] = 0;
 		p = buf;
 		if (saveflag) {
-			q = strchr (p, '\n');
-			if (q == NULL) {	/* line is still incomplete */
+			if ((q = strchr (p, '\n')) == NULL) {	/* line is still incomplete */
 				strcat (savebuf, p);
 				continue;
 			}

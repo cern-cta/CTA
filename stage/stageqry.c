@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.7 1999/12/14 14:51:45 jdurand Exp $
+ * $Id: stageqry.c,v 1.8 2000/03/23 01:41:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.8 $ $Date: 2000/03/23 01:41:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,13 +30,18 @@ extern	char	*getconfent();
 extern	char	*optarg;
 extern	int	optind;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+void usage _PROTO((char *));
+void cleanup _PROTO((int));
+#ifdef TESTCALLBACK
+void callbackfunction _PROTO((int, char*));
+#endif
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int Aflag = 0;
 	int c, i;
-	void cleanup();
 	int errflg = 0;
 	int Gflag = 0;
 	gid_t gid;
@@ -55,6 +60,13 @@ char	**argv;
 	char vid[MAXVSN][7];
 #if defined(_WIN32)
 	WSADATA wsadata;
+#endif
+
+#ifdef TESTCALLBACK
+	if (stage_setlogbuf(&callbackfunction) != 0) {
+		fprintf(stderr,"Initialization error (%s)\n",sstrerror(serrno));
+		exit(1);
+	}
 #endif
 
 	uid = getuid();
@@ -77,7 +89,6 @@ char	**argv;
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
-#if !defined(vms)
 			if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) {
 				fprintf (stderr, STG10, gr->gr_name);
 				errflg++;
@@ -87,26 +98,6 @@ char	**argv;
 					errflg++;
 				}
 			}
-#else
-			if ((q = getconfent ("GRPUSER", gr->gr_name, 1)) == NULL) {
-				fprintf (stderr, STG10, gr->gr_name);
-				errflg++;
-			} else {
-				if ((p = strtok (q, " \n")) == NULL) {
-					fprintf (stderr, STG80, q);
-					errflg++;
-				}
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG81, q);
-					errflg++;
-				}
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG82, q);
-					errflg++;
-				}
-				gid = atoi (p);
-			}
-#endif
 			break;
 		case 'h':
 			stghost = optarg;
@@ -132,12 +123,6 @@ char	**argv;
 	if (Aflag && Mflag)
 		errflg++;
 
-#if defined(vms)
-	if (!Gflag) {
-		fprintf (stderr, STG83);
-		errflg++;
-	}
-#endif
 	if (errflg) {
 		usage (argv[0]);
 		exit (USERR);
@@ -154,14 +139,10 @@ char	**argv;
 
 	/* Build request body */
 
-#if !defined(vms)
 	if ((pw = getpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
-#else
-	if ((pw = getpwnam (p = cuserid(NULL))) == NULL) {
-#endif
 		fprintf (stderr, STG11, p);
 		exit (SYERR);
 	}
@@ -170,17 +151,17 @@ char	**argv;
 	marshall_WORD (sbp, argc);
 	for (i = 0; i < argc; i++)
 		marshall_STRING (sbp, argv[i]);
-
+	
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-
+	
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, STG51);
 		exit (SYERR);
 	}
 #endif
-
+	
 #if !defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -189,36 +170,55 @@ char	**argv;
 	signal (SIGQUIT, cleanup);
 #endif
 	signal (SIGTERM, cleanup);
-
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR) break;
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+	
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	signal (sig, SIG_IGN);
-
+	
 #if defined(_WIN32)
 	WSACleanup();
 #endif
 	exit (USERR);
 }
 
-usage(cmd)
-char *cmd;
+#ifdef TESTCALLBACK
+void callbackfunction(flag,msg)
+		 int flag;
+		 char *msg;
+{
+	if (msg == NULL) {
+		return;
+	}
+	switch (flag) {
+	case MSG_OUT:
+		fprintf(stdout,"%s",msg);
+		break;
+	default:
+		fprintf(stderr,"%s",msg);
+		break;
+	}
+}
+#endif
+
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
-	  "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
-	  "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-S] [-s] [-T]\n",
-	  "[-u] [-V visual_identifier(s)] [-x]\n");
-    return(0);
+					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
+					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-S] [-s] [-T]\n",
+					 "[-u] [-V visual_identifier(s)] [-x]\n");
 }

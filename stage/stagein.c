@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.9 2000/02/11 11:06:57 jdurand Exp $
+ * $Id: stagein.c,v 1.10 2000/03/23 01:41:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,11 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.9 $ $Date: 2000
 #if defined(_WIN32)
 #define W_OK 2
 #else
-#if ! defined(vms)
 #include <unistd.h>
-#else
-#include <unixio.h>
-#endif
 #endif
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -50,12 +46,18 @@ static struct passwd *pw;
 char *stghost;
 char user[15];	/* login name */
 
-main(argc, argv)
-int	argc;
-char	**argv;
+#if TMS
+int tmscheck _PROTO((char *, char *, char *, char *, char *));
+#endif
+int chkdirw _PROTO((char *));
+void cleanup _PROTO((int));
+void usage _PROTO((char *));
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
 {
 	int c, i;
-	void cleanup();
 	static char den[6] = "";
 	int dflag = 0;
 	static char dgn[9] = "";
@@ -71,7 +73,7 @@ char	**argv;
 	char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	static char lbl[4] = "";
 	int lflag = 0;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(vms) || defined(_WIN32)
+#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
 	int mask;
 #else
 	mode_t mask;
@@ -97,20 +99,21 @@ char	**argv;
 	char vsn[MAXVSN][7];
 	int vflag = 0;
 	char xvsn[7*MAXVSN];
+	char **hsmfiles = NULL;
+	int nhsmfiles = 0;
+	int ihsmfiles;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
 
 	nargs = argc;
-#if !defined(vms)
+	if (
 #if defined(_WIN32)
-	if ((p = strrchr (argv[0], '\\')) != NULL)
+			(p = strrchr (argv[0], '\\')) != NULL
 #else
-	if ((p = strrchr (argv[0], '/')) != NULL)
+			(p = strrchr (argv[0], '/')) != NULL
 #endif
-#else
-	if ((p = strrchr (argv[0], ']')) != NULL)
-#endif
+			)
 		p++;
 	else
 		p = argv[0];
@@ -122,7 +125,7 @@ char	**argv;
 		fprintf (stderr, STG34);
 		errflg++;
 	}
-
+	
 	uid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
@@ -157,7 +160,6 @@ char	**argv;
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
-#if !defined(vms)
 			if ((p = getconfent ("GRPUSER", gr->gr_name, 0)) == NULL) {
 				fprintf (stderr, STG10, gr->gr_name);
 				errflg++;
@@ -169,28 +171,6 @@ char	**argv;
 				} else
 					Guid = pw->pw_uid;
 			}
-#else
-			if ((q = getconfent ("GRPUSER", gr->gr_name, 1)) == NULL) {
-				fprintf (stderr, STG10, gr->gr_name);
-				errflg++;
-			} else {
-				if ((p = strtok (q, " \n")) == NULL) {
-					fprintf (stderr, STG80, q);
-					errflg++;
-				}
-				(void) strcpy (Gname,p);
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG81, q);
-					errflg++;
-				}
-				Guid = atoi (p);
-				if ((p = strtok (NULL, " \n")) == NULL) {
-					fprintf (stderr, STG82, q);
-					errflg++;
-				}
-				gid = atoi (p);
-			}
-#endif
 			break;
 		case 'g':
 			stagetape++;
@@ -217,22 +197,77 @@ char	**argv;
 				strcpy (lbl, optarg);
 			break;
 		case 'M':
-			stagemig = 1;
-			if (strchr(optarg,':') == NULL) {
-				if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-					strcpy (hsm_path, hsm_host);
-					strcat (hsm_path, ":");
-					strcat (hsm_path, optarg);
-					argv[optind - 1] = hsm_path;
-				} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-					strcpy (hsm_path, hsm_host);
-					strcat (hsm_path, ":");
-					strcat (hsm_path, optarg);
-					argv[optind - 1] = hsm_path;
+			if (stagemig == nhsmfiles) {
+				if (nhsmfiles == 0) {
+					if ((hsmfiles = (char **) malloc(sizeof(char *))) == NULL) {
+						fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+						errflg++;
+					} else {
+						stagemig++;
+						hsmfiles[0] = NULL;
+					}
 				} else {
-					fprintf (stderr, STG54);
+					char **dummy;
+					if ((dummy = (char **) realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+						fprintf(stderr,"realloc error (%s)\n",strerror(errno));
+						errflg++;
+					} else {
+						hsmfiles = dummy;
+						stagemig++;
+						hsmfiles[nhsmfiles] = NULL;
+					}
+				}
+				if (stagemig == nhsmfiles + 1) {
+					int attached = 0;
+
+					/* Check if the option -M is attached or not */
+					if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
+						attached = 1;
+					}
+					if (strchr(optarg,':') == NULL) {
+						if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+							strcpy (hsm_path, hsm_host);
+							strcat (hsm_path, ":");
+							strcat (hsm_path, optarg);
+							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+								errflg++;
+							} else {
+								if (attached != 0) {
+									strcpy(hsmfiles[nhsmfiles],"-M");
+									strcat(hsmfiles[nhsmfiles++],hsm_path);
+								} else {
+									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+								}
+							}
+						} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+							strcpy (hsm_path, hsm_host);
+							strcat (hsm_path, ":");
+							strcat (hsm_path, optarg);
+							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+								errflg++;
+							} else {
+								if (attached != 0) {
+									strcpy(hsmfiles[nhsmfiles],"-M");
+									strcat(hsmfiles[nhsmfiles++],hsm_path);
+								} else {
+									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+								}
+							}
+						} else {
+							fprintf (stderr, STG54);
+							errflg++;
+						}
+						argv[optind - 1] = hsmfiles[nhsmfiles - 1];
+					}
+				} else {
+					fprintf (stderr, "Bad mapping between seen -M flags and internal versions\n");
 					errflg++;
 				}
+			} else {
+				fprintf (stderr, "Bad mapping between seen -M flags and internal versions\n");
+				errflg++;
 			}
 			break;
 		case 'n':
@@ -287,7 +322,7 @@ char	**argv;
 		}
 	}
 	if (req_type != STAGEIN && req_type != STAGEOUT &&
-	    optind >= argc && fun == 0) {
+			optind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
 		errflg++;
 	}
@@ -304,12 +339,6 @@ char	**argv;
 		errflg++;
 	}
 
-#if defined(vms)
-	if (!Gflag) {
-		fprintf (stderr, STG83);
-		errflg++;
-	}
-#endif
 	if (errflg) {
 		usage (argv[0]);
 		exit (1);
@@ -324,14 +353,10 @@ char	**argv;
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
-#if !defined(vms)
 	if ((pw = getpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
-#else
-	if ((pw = getpwnam (p = cuserid(NULL))) == NULL) {
-#endif
 		fprintf (stderr, STG11, p);
 #if defined(_WIN32)
 		WSACleanup();
@@ -369,9 +394,9 @@ char	**argv;
 #endif
 			exit (1);
 		}
-
+		
 		/* default parameters will be added to the argv list */
-
+		
 		if (vflag == 0) {
 			strcpy (xvsn, vsn[0]);
 			for (i = 1; i < numvid; i++)
@@ -388,19 +413,19 @@ char	**argv;
 	if (fun)
 		nargs++;
 	if (pflag == 0 && req_type != STAGEWRT && req_type != STAGECAT &&
-	   (poolname = getenv ("STAGE_POOL")) != NULL)
+			(poolname = getenv ("STAGE_POOL")) != NULL)
 		nargs += 2;
 	if (uflag == 0 &&
-	   (pool_user = getenv ("STAGE_USER")) != NULL)
+			(pool_user = getenv ("STAGE_USER")) != NULL)
 		nargs += 2;
 	if (pool_user &&
-	   ((pw = getpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
+			((pw = getpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
 		fprintf (stderr, STG11, pool_user);
 		errflg++;
 	}
-
+	
 	/* Build request header */
-
+	
 	sbp = sendbuf;
 	marshall_LONG (sbp, STGMAGIC);
 	marshall_LONG (sbp, req_type);
@@ -409,7 +434,7 @@ char	**argv;
 	marshall_LONG (sbp, msglen);
 
 	/* Build request body */
-
+	
 	marshall_STRING (sbp, user);	/* login name */
 	if (Gflag) {
 		marshall_STRING (sbp, Gname);
@@ -423,7 +448,7 @@ char	**argv;
 	marshall_WORD (sbp, mask);
 	pid = getpid();
 	marshall_WORD (sbp, pid);
-
+	
 	marshall_WORD (sbp, nargs);
 	for (i = 0; i < optind; i++)
 		marshall_STRING (sbp, argv[i]);
@@ -464,7 +489,7 @@ char	**argv;
 			continue;
 		} else {
 			if (poolname && strcmp (poolname, "NOPOOL") == 0 &&
-			    chkdirw (path) < 0) {
+					chkdirw (path) < 0) {
 				errflg++;
 				continue;
 			}
@@ -485,7 +510,7 @@ char	**argv;
 		} else if (c)
 			errflg++;
 		else if (poolname && strcmp (poolname, "NOPOOL") == 0 &&
-		    chkdirw (path) < 0) {
+						 chkdirw (path) < 0) {
 			errflg++;
 		} else {
 			if (sbp + strlen (path) - sendbuf >= sizeof(sendbuf)) {
@@ -501,10 +526,10 @@ char	**argv;
 #endif
 		exit (1);
 	}
-
+	
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-
+	
 #if ! defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -513,31 +538,32 @@ char	**argv;
 	signal (SIGQUIT, cleanup);
 #endif
 	signal (SIGTERM, cleanup);
-
-	while (c = send2stgd (stghost, sendbuf, msglen, 1)) {
-		if (c == 0 || c == USERR || c == BLKSKPD || c == TPE_LSZ ||
-		    c == MNYPARI || c == LIMBYSZ || c == CLEARED ||
-		    c == ENOSPC) break;
-		if (c == LNKNSUP) {	/* symbolic links not supported on that platform */
-			c = USERR;
+	
+	while (1) {
+		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		if (c == 0 || serrno == USERR || serrno == EINVAL || serrno == BLKSKPD || serrno == TPE_LSZ ||
+				serrno == MNYPARI || serrno == LIMBYSZ || serrno == CLEARED ||
+				serrno == ENOSPC) break;
+		if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
+			serrno = USERR;
 			break;
 		}
-		if (c != ESTNACT && ntries++ > MAXRETRY) break;
+		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c);
+	exit (c == 0 ? 0 : serrno);
 }
 
 #if TMS
-tmscheck(vid, vsn, dgn, den, lbl)
-char *vid;
-char *vsn;
-char *dgn;
-char *den;
-char *lbl;
+int tmscheck(vid, vsn, dgn, den, lbl)
+		 char *vid;
+		 char *vsn;
+		 char *dgn;
+		 char *den;
+		 char *lbl;
 {
 	int c, j;
 	int errflg = 0;
@@ -550,7 +576,7 @@ char *lbl;
 	static char tmslbl[3] = "  ";
 	char tmsreq[80];
 	static char tmsvsn[7] = "      ";
-
+	
 	sprintf (tmsreq, "VIDMAP %s QUERY (GENERIC SHIFT MESSAGE", vid);
 	reqlen = strlen (tmsreq);
 	while (1) {
@@ -585,7 +611,7 @@ char *lbl;
 	} else {
 		strcpy (vsn, tmsvsn);
 	}
-
+	
 	strncpy (tmsdgn, tmrepbuf+ 25, 6);
 	for  (j = 0; tmsdgn[j]; j++)
 		if (tmsdgn[j] == ' ') break;
@@ -599,7 +625,7 @@ char *lbl;
 	} else {
 		strcpy (dgn, tmsdgn);
 	}
-
+	
 	p = tmrepbuf + 32;
 	while (*p == ' ') p++;
 	j = tmrepbuf + 40 - p;
@@ -613,7 +639,7 @@ char *lbl;
 	} else {
 		strcpy (den, tmsden);
 	}
-
+	
 	tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
 	tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
 	if (*lbl) {
@@ -634,13 +660,13 @@ char *lbl;
  *	return	-1	in case of error
  *		0	if writable
  */
-chkdirw(path)
-char *path;
+int chkdirw(path)
+		 char *path;
 {
 	char *p, *q;
 	int rc;
 	char sav;
-
+	
 	if ((q = strchr (path, ':')) != NULL)
 		q++;
 	else
@@ -663,7 +689,7 @@ char *path;
 }
 
 void cleanup(sig)
-int sig;
+		 int sig;
 {
 	int c;
 	int msglen;
@@ -672,7 +698,7 @@ int sig;
 	char sendbuf[64];
 
 	signal (sig, SIG_IGN);
-
+	
 	sbp = sendbuf;
 	marshall_LONG (sbp, STGMAGIC);
 	marshall_LONG (sbp, STAGEKILL);
@@ -683,25 +709,24 @@ int sig;
 	marshall_WORD (sbp, gid);
 	marshall_WORD (sbp, pid);
 	msglen = sbp - sendbuf;
-        marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd (stghost, sendbuf, msglen, 0);
+	marshall_LONG (q, msglen);	/* update length field */
+	c = send2stgd (stghost, sendbuf, msglen, 0, NULL, 0);
 #if defined(_WIN32)
 	WSACleanup();
 #endif
 	exit (USERR);
 }
 
-int usage(cmd)
-char *cmd;
+void usage(cmd)
+		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s%s%s%s%s",
-	  "[-A alloc_mode] [-b max_block_size] [-C charconv] [-c off|on]\n",
-	  "[-d density] [-E error_action] [-F record_format] [-f file_id] [-G]\n",
-	  "[-g device_group_name] [-h stage_host] [-I external_filename] [-K]\n",
-	  "[-L record_length] [-l label_type] [-M hsmfile] [-N nread] [-n] [-o] [-p pool]\n",
-	  "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
-	  "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
-	  "[-X xparm] pathname(s)\n");
-    return(0);
+					 "[-A alloc_mode] [-b max_block_size] [-C charconv] [-c off|on]\n",
+					 "[-d density] [-E error_action] [-F record_format] [-f file_id] [-G]\n",
+					 "[-g device_group_name] [-h stage_host] [-I external_filename] [-K]\n",
+					 "[-L record_length] [-l label_type] [-M hsmfile [-M...]] [-N nread] [-n] [-o] [-p pool]\n",
+					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
+					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
+					 "[-X xparm] pathname(s)\n");
 }

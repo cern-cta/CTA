@@ -1,5 +1,5 @@
 /*
- * $Id: getlisttp.c,v 1.7 2000/02/11 11:06:49 jdurand Exp $
+ * $Id: getlisttp.c,v 1.8 2000/03/23 01:41:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.7 $ $Date: 2000/02/11 11:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.8 $ $Date: 2000/03/23 01:41:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -18,9 +18,9 @@ static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.7 $ $Date: 20
 extern char *optarg;
 
 getlist_of_vid(opt, v, num)
-char *opt;
-char v[MAXVSN][7];
-int *num;
+		 char *opt;
+		 char v[MAXVSN][7];
+		 int *num;
 {
 	int errflg = 0;
 	char *p;

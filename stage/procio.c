@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.14 2000/02/16 10:06:05 jdurand Exp $
+ * $Id: procio.c,v 1.15 2000/03/23 01:41:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.14 $ $Date: 2000/02/16 10:06:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.15 $ $Date: 2000/03/23 01:41:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,13 +57,19 @@ int last_tape_file;
 extern struct stgdb_fd dbfd;
 #endif
 
+/* This macro returns TRUE is the file is an hpss one */
+#define ISHPSS(xfile)   ( strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
+
+/* This macro returns TRUE is the file is an castor one */
+#define ISCASTOR(xfile) ( strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
+
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
 
 void procioreq(req_type, req_data, clienthost)
-int req_type;
-char *req_data;
-char *clienthost;
+		 int req_type;
+		 char *req_data;
+		 char *clienthost;
 {
 	int Aflag = 0;
 	int actual_poolflag;
@@ -106,6 +112,10 @@ char *clienthost;
 	char *user;
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
+	char **hsmfiles = NULL;
+	int nhsmfiles = 0;
+	int ihsmfiles;
+	int jhsmfiles;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -118,10 +128,10 @@ char *clienthost;
 	unmarshall_WORD (rbp, clientpid);
 
 	stglogit (func, STG92, req_type == STAGECAT ? "stagecat" : cmdnames[req_type],
-		stgreq.user, stgreq.uid, stgreq.gid, clienthost);
+						stgreq.user, stgreq.uid, stgreq.gid, clienthost);
 #if SACCT
 	stageacct (STGCMDR, stgreq.uid, stgreq.gid, clienthost,
-		reqid, req_type, 0, 0, NULL, "");
+						 reqid, req_type, 0, 0, NULL, "");
 #endif
 
 	nargs = req2argv (rbp, &argv);
@@ -140,6 +150,7 @@ char *clienthost;
 	strcpy (stgreq.group, gr->gr_name);
 	numvid = 0;
 	numvsn = 0;
+
 #ifdef linux
 	optind = 0;
 #else
@@ -151,7 +162,7 @@ char *clienthost;
 			if (strcmp (optarg, "deferred") == 0) {
 				if (req_type != STAGEIN) {
 					sendrep (rpfd, MSG_ERR, STG17, "-A deferred",
-						"stageout/stagewrt/stagecat");
+									 "stageout/stagewrt/stagecat");
 					errflg++;
 				} else
 					Aflag = 1; /* deferred space allocation */
@@ -186,7 +197,7 @@ char *clienthost;
 			if (strcmp (optarg, "off") == 0) {
 				if (req_type != STAGEIN){
 					sendrep (rpfd, MSG_ERR, STG17, "-c off",
-						"stageout/stagewrt/stagecat");
+									 "stageout/stagewrt/stagecat");
 					errflg++;
 				} else
 					concat_off = 1;
@@ -211,13 +222,13 @@ char *clienthost;
 			}
 			break;
 		case 'F':
-                        if (strcmp (optarg, "F") && strcmp (optarg, "FB") &&
-			    strcmp (optarg, "FBS") && strcmp (optarg, "FS") &&
-			    strcmp (optarg, "U") && strcmp (optarg, "U,bin") &&
-			    strcmp (optarg, "U,f77") && strcmp (optarg, "F,-f77")) {
+			if (strcmp (optarg, "F") && strcmp (optarg, "FB") &&
+					strcmp (optarg, "FBS") && strcmp (optarg, "FS") &&
+					strcmp (optarg, "U") && strcmp (optarg, "U,bin") &&
+					strcmp (optarg, "U,f77") && strcmp (optarg, "F,-f77")) {
 				sendrep (rpfd, MSG_ERR, STG06, "-F");
-                                errflg++;
-                        } else
+				errflg++;
+			} else
 				strncpy (stgreq.recfm, optarg, 3);
 			break;
 		case 'f':
@@ -246,7 +257,7 @@ char *clienthost;
 			break;
 		case 'l':
 			if (strcmp (optarg, "blp") ||
-			    (req_type != STAGEOUT && req_type != STAGEWRT))
+					(req_type != STAGEOUT && req_type != STAGEWRT))
 				strcpy (stgreq.u1.t.lbl, optarg);
 			else {
 				sendrep (rpfd, MSG_ERR, STG17, "-l blp", "stageout/stagewrt");
@@ -255,7 +266,20 @@ char *clienthost;
 			break;
 		case 'M':
 			stgreq.t_or_d = 'm';
-			strcpy (stgreq.u1.m.xfile, optarg);
+			if (nhsmfiles == 0) {
+				if ((hsmfiles = (char **) malloc(sizeof(char *))) == NULL) {
+					c = SYERR;
+					goto reply;
+				}
+			} else {
+				char **dummy = hsmfiles;
+				if ((dummy = (char **) realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+					c = SYERR;
+					goto reply;
+				}
+				hsmfiles = dummy;
+			}
+			hsmfiles[nhsmfiles++] = optarg;
 			break;
 		case 'N':
 			nread = optarg;
@@ -277,7 +301,7 @@ char *clienthost;
 			break;
 		case 'p':
 			if (strcmp (optarg, "NOPOOL") == 0 ||
-			    isvalidpool (optarg)) {
+					isvalidpool (optarg)) {
 				strcpy (stgreq.poolname, optarg);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG32, optarg);
@@ -381,6 +405,8 @@ char *clienthost;
 		Aflag = 0;
 	if (concat_off)
 		Aflag = 1;	/* force deferred space allocation */
+	if (req_type == STAGEIN && stgreq.t_or_d == 'm' && ! size)
+		Aflag = 1;  /* force deferred policy if stagein of an hsm file without -s option */
 	if (*stgreq.poolname == '\0') {
 		poolflag = 0;
 		if (req_type != STAGEWRT && req_type != STAGECAT)
@@ -423,50 +449,110 @@ char *clienthost;
 		upath[0] = '\0';
 	}
 
-	if ((req_type == STAGEIN &&
-	    ! Uflag && nbdskf > nbtpf && trailing != '-') ||
-	    (req_type != STAGEIN && nbtpf > nbdskf) ||
-	    (Uflag && nbdskf > 2)) {
-		sendrep (rpfd, MSG_ERR, STG19);
-		c = USERR;
-		goto reply;
+	/* In case of hsm request verify the exact mapping between number of hsm files */
+	/* and number of disk files.                                                   */
+	if (nhsmfiles > 0) {
+			int nhpssfiles = 0;
+			int ncastorfiles = 0;
+
+		if (nbdskf != nhsmfiles) {
+			sendrep (rpfd, MSG_ERR, STG19);
+			c = USERR;
+			goto reply;
+		}
+		/* And we also check that there is NO redundant hsm files (multiple equivalent ones) */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
+				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
+					sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
+					c = USERR;
+					goto reply;
+				}
+			}
+		}
+				/* We check that user do not mix different hsm types (hpss and castor) */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+					if (ISHPSS(hsmfiles[ihsmfiles])) {
+						++nhpssfiles;
+					}
+					if (ISCASTOR(hsmfiles[ihsmfiles])) {
+						++ncastorfiles;
+					}
+				}
+				/* No recognizes type ? */
+				if (nhpssfiles == 0 && ncastorfiles == 0) {
+					sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS not CASTOR)\n");
+					c = USERR;
+					goto reply;
+				}
+				/* At least one HPSS and one CASTOR */
+				if (nhpssfiles >  0 && ncastorfiles >  0) {
+					sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
+					c = USERR;
+					goto reply;
+				}
+				/* More than one HPSS not supported for the moment */
+				if (nhpssfiles > 1) {
+					sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
+					c = USERR;
+					goto reply;
+				}
+	} else {
+		if ((req_type == STAGEIN &&
+				 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
+				(req_type != STAGEIN && nbtpf > nbdskf) ||
+				(Uflag && nbdskf > 2)) {
+			sendrep (rpfd, MSG_ERR, STG19);
+			c = USERR;
+			goto reply;
+		}
+		if (req_type == STAGEIN && ! Uflag && nbdskf > nbtpf) {
+			fseq_list = (fseq_elem *) realloc (fseq_list, nbdskf * sizeof(fseq_elem));
+			j = strtol ((char *)(fseq_list + nbtpf - 1), &dp, 10) + 1;
+			for (i = nbtpf; i < nbdskf; i++, j++)
+				sprintf ((char *)(fseq_list + i), "%d", j);
+			nbtpf = nbdskf;
+		}
+		if (Uflag && nbdskf == 2)
+			Upluspath = 1;
 	}
-	if (req_type == STAGEIN && ! Uflag && nbdskf > nbtpf) {
-		fseq_list = (fseq_elem *) realloc (fseq_list, nbdskf * sizeof(fseq_elem));
-		j = strtol ((char *)(fseq_list + nbtpf - 1), &dp, 10) + 1;
-		for (i = nbtpf; i < nbdskf; i++, j++)
-			sprintf ((char *)(fseq_list + i), "%d", j);
-		nbtpf = nbdskf;
-	}
-	if (Uflag && nbdskf == 2)
-		Upluspath = 1;
 
 	/* Fetching HSM file size */
 
-	if (req_type == STAGEIN && stgreq.t_or_d == 'm' && !size) {
-		if (rfio_stat (stgreq.u1.m.xfile, &filemig_stat) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stgreq.u1.m.xfile,
-				"rfio_stat", rfio_serror());
-			c = USERR;
-			goto reply;
-		}
-		sprintf (filemig_size, "%d", (int) ((filemig_stat.st_size/(1024*1024)) + 1));
-		size = filemig_size;
-	}
+	/* 
+	 * Moved to the stager
+	 *
+	 if (req_type == STAGEIN && stgreq.t_or_d == 'm' && !size) {
+	 if (rfio_stat (stgreq.u1.m.xfile, &filemig_stat) < 0) {
+	 sendrep (rpfd, MSG_ERR, STG02, stgreq.u1.m.xfile,
+	 "rfio_stat", rfio_serror());
+	 c = USERR;
+	 goto reply;
+	 }
+	 sprintf (filemig_size, "%d", (int) ((filemig_stat.st_size/(1024*1024)) + 1));
+	 size = filemig_size;
+	 }
+	*/
 
 	/* Overwriting an existing HSM file is not allowed */
 
+	/* Moved to the stager */
+	/*
 	if ((req_type == STAGEOUT || req_type == STAGEWRT) && stgreq.t_or_d == 'm') {
-		if (rfio_stat (stgreq.u1.m.xfile, &filemig_stat) == 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stgreq.u1.m.xfile,
-				"rfio_stat", "file already exists");
-			c = USERR;
-			goto reply;
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				if (rfio_stat (hsmfiles[ihsmfiles], &filemig_stat) == 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
+									 "rfio_stat", "file already exists");
+					c = USERR;
+					goto reply;
+				}
+			}
 		}
-	}
+	*/
 
 	/* building catalog entries */
 
+	ihsmfiles = 0;
 	for (i = 0; i < nbdskf; i++) {
 		if (Uflag && i > 0) break;
 		if (stgreq.t_or_d == 't') {
@@ -481,11 +567,13 @@ char *clienthost;
 			}
 
 			if (packfseq (fseq_list, i, nbdskf, nbtpf, trailing,
-			    stgreq.u1.t.fseq, CA_MAXFSEQLEN + 1)) {
+										stgreq.u1.t.fseq, CA_MAXFSEQLEN + 1)) {
 				sendrep (rpfd, MSG_ERR, STG21);
 				c = USERR;
 				goto reply;
 			}
+		} else if (stgreq.t_or_d == 'm') {
+			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles++]);
 		}
 		if (nread) {
 			if ((p = strchr (nread, ':')) != NULL) *p = '\0';
@@ -514,8 +602,8 @@ char *clienthost;
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
 				savereqid = stcp->reqid;
 				stcp = newreq ();
@@ -531,13 +619,13 @@ char *clienthost;
 				stcp->status |= WAITING_REQ;
 #ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
-					stcp->uid, stcp->gid, clientpid,
-					Upluspath, reqid, req_type, nbdskf, &wfp);
+												stcp->uid, stcp->gid, clientpid,
+												Upluspath, reqid, req_type, nbdskf, &wfp);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 				}
@@ -559,7 +647,7 @@ char *clienthost;
 					stglogit (func, STG02, stcp->ipath, "stat", rfio_serror());
 					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-						    "rfio_unlink", rfio_serror());
+										 "rfio_unlink", rfio_serror());
 						c = SYERR;
 						goto reply;
 					}
@@ -571,11 +659,11 @@ char *clienthost;
 					 * request is for a larger size.
 					 */
 					if ((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) &&
-					    (stgreq.size > stcp->size)) {
+							(stgreq.size > stcp->size)) {
 						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0) < 0) {
 							sendrep (rpfd, MSG_ERR,
-							    STG02, stcp->ipath,
-							    "rfio_unlink", rfio_serror());
+											 STG02, stcp->ipath,
+											 "rfio_unlink", rfio_serror());
 							c = SYERR;
 							goto reply;
 						}
@@ -587,24 +675,24 @@ char *clienthost;
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
 #if SACCT
 				stageacct (STGFILS, stgreq.uid, stgreq.gid,
-				    clienthost, reqid, req_type, 0, 0, stcp, "");
+									 clienthost, reqid, req_type, 0, 0, stcp, "");
 #endif
 				sendrep (rpfd, MSG_ERR, STG96,
-					strrchr (stcp->ipath, '/')+1,
-					stcp->actual_size,
-					(float)(stcp->actual_size)/(1024.*1024.),
-					stcp->nbaccesses);
+								 strrchr (stcp->ipath, '/')+1,
+								 stcp->actual_size,
+								 (float)(stcp->actual_size)/(1024.*1024.),
+								 stcp->nbaccesses);
 				if (copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath &&
-				    strcmp (stcp->ipath, argv[optind+1]))
+						strcmp (stcp->ipath, argv[optind+1]))
 					create_link (stcp, argv[optind+1]);
 				break;
 			case STAGEOUT:
@@ -612,10 +700,10 @@ char *clienthost;
 				sendrep (rpfd, MSG_ERR, STG37);
 				c = USERR;
 				goto reply;
-notstaged:
+			notstaged:
 			default:
 				if (trailing == '-' && last_tape_file &&
-				    atoi (stgreq.u1.t.fseq) > last_tape_file) {
+						atoi (stgreq.u1.t.fseq) > last_tape_file) {
 					/* requested file is not on tape */
 					stglogit (func, "requested file is not on tape\n");
 					nbdskf = i;
@@ -633,8 +721,8 @@ notstaged:
 				stcp->nbaccesses++;
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
-					stcp->uid, stcp->gid, clientpid,
-					Upluspath, reqid, req_type, nbdskf, &wfp);
+												stcp->uid, stcp->gid, clientpid,
+												Upluspath, reqid, req_type, nbdskf, &wfp);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 				}
@@ -647,15 +735,15 @@ notstaged:
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
 						updfreespace (stcp->poolname, stcp->ipath,
-							stcp->size*1024*1024);
+													stcp->size*1024*1024);
 						delreq (stcp,1);
 						goto reply;
 					}
 				}
 #ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-                  sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-                }
+					sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
@@ -673,7 +761,7 @@ notstaged:
 			case STAGED:
 				if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-						"rfio_unlink", rfio_serror());
+									 "rfio_unlink", rfio_serror());
 					c = SYERR;
 					goto reply;
 				}
@@ -688,7 +776,7 @@ notstaged:
 				}
 				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-						"rfio_unlink", rfio_serror());
+									 "rfio_unlink", rfio_serror());
 					c = SYERR;
 					goto reply;
 				}
@@ -711,8 +799,8 @@ notstaged:
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 				stcp->status |= WAITING_SPC;
 				if (!wqp) wqp = add2wq (clienthost, user,
-					stcp->uid, stcp->gid, clientpid,
-					Upluspath, reqid, req_type, nbdskf, &wfp);
+																stcp->uid, stcp->gid, clientpid,
+																Upluspath, reqid, req_type, nbdskf, &wfp);
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
 				wqp->nbdskf++;
@@ -725,26 +813,26 @@ notstaged:
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024);
+											stcp->size*1024*1024);
 				delreq (stcp,1);
 				goto reply;
 			} else {
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath &&
-				    strcmp (stcp->ipath, argv[optind+1]))
+						strcmp (stcp->ipath, argv[optind+1]))
 					create_link (stcp, argv[optind+1]);
 			}
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 			break;
 		case STAGEWRT:
 			if (p = findpoolname (upath)) {
 				if (poolflag < 0 ||
-				    (poolflag > 0 && strcmp (stgreq.poolname, p)))
+						(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
 				strcpy (actual_poolname, p);
@@ -761,7 +849,7 @@ notstaged:
 				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
 					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-							"rfio_unlink", rfio_serror());
+										 "rfio_unlink", rfio_serror());
 						c = SYERR;
 						goto reply;
 					}
@@ -794,23 +882,23 @@ notstaged:
 			strcpy (stcp->ipath, upath);
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
-				stcp->gid, clientpid, Upluspath, reqid, req_type,
-				nbdskf, &wfp);
+															stcp->gid, clientpid, Upluspath, reqid, req_type,
+															nbdskf, &wfp);
 			wqp->copytape = copytape;
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
-			if (i < nbtpf)
+			if (i < nbtpf || nhsmfiles > 0)
 				wqp->nb_subreqs++;
 			wfp++;
 			break;
 		case STAGECAT:
 			if (p = findpoolname (upath)) {
 				if (poolflag < 0 ||
-				    (poolflag > 0 && strcmp (stgreq.poolname, p)))
+						(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
 				strcpy (actual_poolname, p);
@@ -838,7 +926,7 @@ notstaged:
 			strcpy (stcp->poolname, actual_poolname);
 			if (rfio_stat (upath, &st) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, upath, "rfio_stat",
-					rfio_serror());
+								 rfio_serror());
 				delreq (stcp,1);
 				goto reply;
 			}
@@ -849,8 +937,8 @@ notstaged:
 			strcpy (stcp->ipath, upath);
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 			break;
 		}
@@ -866,13 +954,15 @@ notstaged:
 		cleanpool (wqp->waiting_pool);
 	} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req)
 		fork_exec_stager (wqp);
+	if (hsmfiles != NULL) free(hsmfiles);
 	return;
-reply:
+ reply:
 	if (fseq_list) free (fseq_list);
 	free (argv);
+	if (hsmfiles != NULL) free(hsmfiles);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
-		reqid, req_type, 0, c, NULL, "");
+						 reqid, req_type, 0, c, NULL, "");
 #endif
 	sendrep (rpfd, STAGERC, req_type, c);
 	if (c && wqp) {
@@ -883,7 +973,7 @@ reply:
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024);
+											stcp->size*1024*1024);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
@@ -891,8 +981,8 @@ reply:
 }
 
 void procputreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+		 char *req_data;
+		 char *clienthost;
 {
 	char **argv;
 	int c, i;
@@ -937,7 +1027,7 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-		reqid, STAGEPUT, 0, 0, NULL, "");
+						 reqid, STAGEPUT, 0, 0, NULL, "");
 #endif
 
 	wqp = NULL;
@@ -953,8 +1043,8 @@ char *clienthost;
 #endif
 	while ((c = getopt (nargs, argv, "Gh:I:M:q:U:V:")) != EOF) {
 		switch (c) {
-                case 'G':
-                        break;
+		case 'G':
+			break;
 		case 'h':
 			break;
 		case 'I':
@@ -965,7 +1055,7 @@ char *clienthost;
 			hsmfile = optarg;
 			Mflag = 1;
 			break;
-                case 'q':       /* file sequence number(s) */
+		case 'q':       /* file sequence number(s) */
 			if ((q = strchr (optarg, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
@@ -987,13 +1077,13 @@ char *clienthost;
 				}
 				n2 = n1;
 			}
-                        break;
-                case 'V':       /* visual identifier */
+			break;
+		case 'V':       /* visual identifier */
 			strcpy (vid, optarg);
 			UPPER (vid);
 			numvid++;
-                        break;
-                }
+			break;
+		}
 	}
 	if (Iflag && numvid)
 		errflg++;
@@ -1025,8 +1115,8 @@ char *clienthost;
 				break;
 			}
 			if (found == 0 ||
-			    (stcp->status != STAGEOUT &&
-			    stcp->status != (STAGEOUT|PUT_FAILED))) {
+					(stcp->status != STAGEOUT &&
+					 stcp->status != (STAGEOUT|PUT_FAILED))) {
 				sendrep (rpfd, MSG_ERR, STG22);
 				c = USERR;
 				goto reply;
@@ -1035,17 +1125,17 @@ char *clienthost;
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024 - (int)stcp->actual_size);
+											stcp->size*1024*1024 - (int)stcp->actual_size);
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-				clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1067,8 +1157,8 @@ char *clienthost;
 			break;
 		}
 		if (found == 0 ||
-		    (stcp->status != STAGEOUT &&
-		    stcp->status != (STAGEOUT|PUT_FAILED))) {
+				(stcp->status != STAGEOUT &&
+				 stcp->status != (STAGEOUT|PUT_FAILED))) {
 			sendrep (rpfd, MSG_ERR, STG22);
 			c = USERR;
 			goto reply;
@@ -1077,17 +1167,17 @@ char *clienthost;
 			if (rfio_stat (stcp->ipath, &st) == 0)
 				stcp->actual_size = st.st_size;
 			updfreespace (stcp->poolname, stcp->ipath,
-				stcp->size*1024*1024 - (int)stcp->actual_size);
+										stcp->size*1024*1024 - (int)stcp->actual_size);
 		}
 		stcp->status = STAGEPUT;
 		stcp->a_time = time (0);
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-        }
+			sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
 #endif
 		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-			clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+														clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 		wfp->subreqid = stcp->reqid;
 		wqp->nbdskf++;
 		wqp->nb_subreqs++;
@@ -1101,7 +1191,7 @@ char *clienthost;
 			if (c = upd_stageout (STAGEPUT, upath, &subreqid))
 				goto reply;
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-				clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
@@ -1114,11 +1204,11 @@ char *clienthost;
 	free (argv);
 	fork_exec_stager (wqp);
 	return;
-reply:
+ reply:
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
-		reqid, STAGEPUT, 0, c, NULL, "");
+						 reqid, STAGEPUT, 0, c, NULL, "");
 #endif
 	sendrep (rpfd, STAGERC, STAGEPUT, c);
 	if (c && wqp) {
@@ -1130,8 +1220,8 @@ reply:
 			stcp->status = STAGEOUT|PUT_FAILED;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-              sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-            }
+				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
 		}
 		rmfromwq (wqp);
@@ -1139,10 +1229,10 @@ reply:
 }
 
 isstaged(cur, p, poolflag, poolname)
-struct stgcat_entry *cur;
-struct stgcat_entry **p;
-int poolflag;
-char *poolname;
+		 struct stgcat_entry *cur;
+		 struct stgcat_entry **p;
+		 int poolflag;
+		 char *poolname;
 {
 	int found = 0;
 	int i;
@@ -1156,14 +1246,14 @@ char *poolname;
 		if (poolflag == 0) {
 			if (stcp->poolname[0] == '\0') continue;
 		} else
-		/* if a specific pool was requested, the file must be there */
-		if (poolflag > 0) {
-			if (strcmp (poolname, stcp->poolname)) continue;
-		} else
-		/* if -p NOPOOL, the file should not reside in a pool */
-		if (poolflag < 0) {
-			if (stcp->poolname[0]) continue;
-		}
+			/* if a specific pool was requested, the file must be there */
+			if (poolflag > 0) {
+				if (strcmp (poolname, stcp->poolname)) continue;
+			} else
+				/* if -p NOPOOL, the file should not reside in a pool */
+				if (poolflag < 0) {
+					if (stcp->poolname[0]) continue;
+				}
 		if (cur->t_or_d == 't') {
 			for (i = 0; i < MAXVSN; i++)
 				if (strcmp (cur->u1.t.vid[i], stcp->u1.t.vid[i])) break;
@@ -1200,10 +1290,10 @@ char *poolname;
 }
 
 unpackfseq(fseq, req_type, trailing, fseq_list)
-char *fseq;
-int req_type;
-char *trailing;
-fseq_elem **fseq_list;
+		 char *fseq;
+		 int req_type;
+		 char *trailing;
+		 fseq_elem **fseq_list;
 {
 	char *dp;
 	int i;

@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.13 2000/02/11 11:06:50 jdurand Exp $
+ * $Id: procalloc.c,v 1.14 2000/03/23 01:41:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.13 $ $Date: 2000/02/11 11:06:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.14 $ $Date: 2000/03/23 01:41:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,8 +52,8 @@ void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
 
 void procallocreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+		 char *req_data;
+		 char *clienthost;
 {
 	char **argv;
 	int c, i;
@@ -90,7 +90,7 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, stgreq.uid, stgreq.gid, clienthost,
-		reqid, STAGEALLOC, 0, 0, NULL, "");
+						 reqid, STAGEALLOC, 0, 0, NULL, "");
 #endif
 
 	wqp = NULL;
@@ -168,8 +168,8 @@ char *clienthost;
 	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost, user,
-			stcp->uid, stcp->gid, clientpid,
-			Upluspath, reqid, STAGEALLOC, nbdskf, &wfp);
+														stcp->uid, stcp->gid, clientpid,
+														Upluspath, reqid, STAGEALLOC, nbdskf, &wfp);
 		wqp->Pflag = Pflag;
 		wfp->subreqid = stcp->reqid;
 		strcpy (wfp->upath, upath);
@@ -185,7 +185,7 @@ char *clienthost;
 		cleanpool (stcp->poolname);
 	} else if (c) {
 		updfreespace (stcp->poolname, stcp->ipath,
-			stcp->size*1024*1024);
+									stcp->size*1024*1024);
 		delreq (stcp,1);
 		goto reply;
 	} else {
@@ -194,13 +194,13 @@ char *clienthost;
 		if (*upath && strcmp (stcp->ipath, upath))
 			create_link (stcp, upath);
 		if (Upluspath &&
-		    strcmp (stcp->ipath, argv[optind+1]))
+				strcmp (stcp->ipath, argv[optind+1]))
 			create_link (stcp, argv[optind+1]);
 	}
 #ifdef USECDB
 	if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-      sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-    }
+		sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+	}
 #endif
 	savepath ();
 	savereqs ();
@@ -208,11 +208,11 @@ char *clienthost;
 	if (! wqp) goto reply;
 	free (argv);
 	return;
-reply:
+ reply:
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
-		reqid, STAGEALLOC, 0, c, NULL, "");
+						 reqid, STAGEALLOC, 0, c, NULL, "");
 #endif
 	sendrep (rpfd, STAGERC, STAGEALLOC, c);
 	if (c && wqp) {
@@ -223,7 +223,7 @@ reply:
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size*1024*1024);
+											stcp->size*1024*1024);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
@@ -231,8 +231,8 @@ reply:
 }
 
 void procgetreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+		 char *req_data;
+		 char *clienthost;
 {
 	char **argv;
 	char *basename;
@@ -264,7 +264,7 @@ char *clienthost;
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-		reqid, STAGEGET, 0, 0, NULL, "");
+						 reqid, STAGEGET, 0, 0, NULL, "");
 #endif
 
 	if ((gr = getgrgid (gid)) == NULL) {
@@ -312,9 +312,9 @@ char *clienthost;
 	if (pool_user == NULL)
 		pool_user = "stage";
 
-        nbdskf = nargs - optind;
-        if (Uflag && nbdskf == 2)
-                Upluspath = 1;
+	nbdskf = nargs - optind;
+	if (Uflag && nbdskf == 2)
+		Upluspath = 1;
 	strcpy (upath, argv[optind]);
 	if ((basename = strrchr (upath, '/')) == NULL)
 		basename = upath;
@@ -338,12 +338,12 @@ char *clienthost;
 					found = 1;
 					break;
 				}
-            }
+			}
 			*p = '/';
-        }
+		}
 	}
 	if (found == 0 ||
-	    stcp->status != (STAGEALLOC|STAGED)) {
+			stcp->status != (STAGEALLOC|STAGED)) {
 		sendrep (rpfd, MSG_ERR, STG22);
 		c = USERR;
 		goto reply;
@@ -352,23 +352,23 @@ char *clienthost;
 	stcp->nbaccesses++;
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-      sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-    }
+		sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+	}
 #endif
 	if (Pflag)
 		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);
 	if (Upluspath &&
-	    strcmp (stcp->ipath, argv[optind+1]))
+			strcmp (stcp->ipath, argv[optind+1]))
 		create_link (stcp, argv[optind+1]);
 	savereqs ();
 	c = 0;
-reply:
+ reply:
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
-		reqid, STAGEGET, 0, c, NULL, "");
+						 reqid, STAGEGET, 0, c, NULL, "");
 #endif
 	sendrep (rpfd, STAGERC, STAGEGET, c);
 }
