@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.4 $ $Date: 2003/01/23 17:30:25 $ CERN IT-ADC Olof Barring
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.5 $ $Date: 2003/03/11 08:58:09 $ CERN IT-ADC Olof Barring
 .\" Copyright (C) 2001 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMSERV 1 "$Date: 2003/01/23 17:30:25 $" CASTOR "VDQM server daemon"
+.TH VDQMSERV 1 "$Date: 2003/03/11 08:58:09 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserv \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -115,6 +115,9 @@ Contains the list of networks from which the requests are accepted
 .TP
 .B /usr/spool/vdqm/vdqm.log
 VDQM server log file
+.TP
+.B /usr/spool/vdqm/vdqm.drives
+Persistent list of drives, and their dedications. This file is used to reload the list of drives when vdqmserv is restarted.
 
 .SH EXAMPLE
 .nf
