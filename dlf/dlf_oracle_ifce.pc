@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2004/07/08 11:13:52 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2004/11/01 07:59:46 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -578,8 +578,8 @@ dlf_log_message_t *log_message;
 	int sev;
 	int fac;
 	int msn;
-	char nsi_str[23];
-	char par_str[23];
+	char nsi_str[24];
+	char par_str[24];
 	struct tm tmres;
 	char time_str[32];
 	int n;
@@ -730,7 +730,7 @@ dlf_log_message_t *log_message;
 		(message_seq.currval, :param->strval);
 		break;
 	      case DLF_MSG_PARAM_INT64:
-		(void) u64tostr (param->numval, par_str, -1);
+		(void) i64tostr (param->numval, par_str, -1);
 		EXEC SQL INSERT INTO dlf_num_param_values
 		(msg_seq_no, par_name, value)
 		VALUES
