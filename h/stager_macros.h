@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.3 2004/11/01 12:30:10 jdurand Exp $
+ * $Id: stager_macros.h,v 1.4 2004/11/06 08:38:16 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -38,58 +38,86 @@
 /* Gcc does not like statement like: xxxx ? 1 : "" */
 /* It will issue a warning about type mismatch... */
 /* So I convert the integers to string */
-#define STAGER_LOG(what,fileid,message,value) { \
+#define STAGER_LOG(what,fileid,message,value,message2,value2) { \
   char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
   extern Cuuid_t stagerUuid; \
   if (message != NULL) { \
-    dlf_write( \
-	      stagerUuid, \
-	      stagerMessages[what].defaultSeverity, \
-	      what, \
-	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+2, \
-	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	      message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
-	      STAGER_LOG_WHERE \
-	      ); \
+    if (message2 != NULL) { \
+      dlf_write( \
+	        stagerUuid, \
+	        stagerMessages[what].defaultSeverity, \
+	        what, \
+	        (struct Cns_fileid *)fileid, \
+	        STAGER_NB_PARAMS+3, \
+	        stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
+	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
+	        STAGER_LOG_WHERE \
+	        ); \
+    } else { \
+      dlf_write( \
+	        stagerUuid, \
+	        stagerMessages[what].defaultSeverity, \
+	        what, \
+	        (struct Cns_fileid *)fileid, \
+	        STAGER_NB_PARAMS+2, \
+	        stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
+	        STAGER_LOG_WHERE \
+	        ); \
+    } \
   } else { \
-    dlf_write( \
-	      stagerUuid, \
-	      stagerMessages[what].defaultSeverity, \
-	      what, \
-	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+1, \
-	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	      STAGER_LOG_WHERE \
-	      ); \
+    if (message2 != NULL) { \
+      dlf_write( \
+		stagerUuid, \
+		stagerMessages[what].defaultSeverity, \
+		what, \
+		(struct Cns_fileid *)fileid, \
+		STAGER_NB_PARAMS+2, \
+		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
+		STAGER_LOG_WHERE \
+		); \
+    } else { \
+      dlf_write( \
+		stagerUuid, \
+		stagerMessages[what].defaultSeverity, \
+		what, \
+		(struct Cns_fileid *)fileid, \
+		STAGER_NB_PARAMS+1, \
+		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+		STAGER_LOG_WHERE \
+		); \
+    } \
   } \
   serrno = _save_serrno; \
 }
 
-#define STAGER_LOG_EMERGENCY(fileid,string)   STAGER_LOG(STAGER_MSG_EMERGENCY,fileid, "STRING", string)
-#define STAGER_LOG_ALERT(fileid,string)       STAGER_LOG(STAGER_MSG_ALERT    ,fileid, "STRING", string)
-#define STAGER_LOG_ERROR(fileid,string)       STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string)
-#define STAGER_LOG_SYSCALL(fileid,string)     STAGER_LOG(STAGER_MSG_SYSCALL  ,fileid, "STRING", string)
-#define STAGER_LOG_WARNING(fileid,string)     STAGER_LOG(STAGER_MSG_WARNING  ,fileid, "STRING", string)
-#define STAGER_LOG_AUTH(fileid,string)        STAGER_LOG(STAGER_MSG_AUTH     ,fileid, "STRING", string)
-#define STAGER_LOG_SECURITY(fileid,string)    STAGER_LOG(STAGER_MSG_SECURITY ,fileid, "STRING", string)
-#define STAGER_LOG_USAGE(fileid,string)       STAGER_LOG(STAGER_MSG_USAGE    ,fileid, "STRING", string)
-#define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value)
-#define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string)
+#define STAGER_LOG_EMERGENCY(fileid,string)   STAGER_LOG(STAGER_MSG_EMERGENCY,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_ALERT(fileid,string)       STAGER_LOG(STAGER_MSG_ALERT    ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_ERROR(fileid,string)       STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_DB_ERROR(fileid,string,string2) STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, "STRING", string2)
+#define STAGER_LOG_SYSCALL(fileid,string)     STAGER_LOG(STAGER_MSG_SYSCALL  ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_WARNING(fileid,string)     STAGER_LOG(STAGER_MSG_WARNING  ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_AUTH(fileid,string)        STAGER_LOG(STAGER_MSG_AUTH     ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_SECURITY(fileid,string)    STAGER_LOG(STAGER_MSG_SECURITY ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_USAGE(fileid,string)       STAGER_LOG(STAGER_MSG_USAGE    ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value, NULL, NULL)
+#define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, NULL, NULL)
 #define STAGER_LOG_ENTER()                  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  );} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  , NULL, NULL);} \
 }
 #define STAGER_LOG_LEAVE()                  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  ); return; } \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL); return; } \
 }
 #define STAGER_LOG_RETURN(value)            { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value ); return(value);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL); return(value);} \
 }
 #define STAGER_LOG_RETURN_NULL()  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" ); return(NULL);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL); return(NULL);} \
 }
-#define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string)
+#define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_STARTUP() { \
   int _save_serrno = serrno; \
   dlf_write( \
@@ -119,9 +147,9 @@
   serrno = _save_serrno; \
   exit(value); \
 }
-#define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string)
+#define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_DEBUG(fileid,string)     { \
-  extern int stagerDebug; if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string);} \
+  extern int stagerDebug; if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, NULL, NULL);} \
 }
 
 #define CALLIT(args) { \
@@ -153,5 +181,14 @@
   } \
 }
 
+/* This macro avoid cut/paste of always the same code for methods not supposed to fail */
+#define STAGER_DB_METHOD_THAT_SHOULD_NOT_FAIL(method,table,member,label) { \
+  if (method (table,member) != 0) { \
+    serrno = SEINTERNAL; \
+    STAGER_LOG_DB_ERROR(fileid,#method,""); \
+    rc = -1; \
+    goto label; \
+  } \
+}
 
 #endif /* __stager_macros_h */
