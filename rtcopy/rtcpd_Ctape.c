@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.43 $ $Date: 2000/09/13 14:00:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.44 $ $Date: 2000/09/15 11:56:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -608,7 +608,7 @@ int rtcpd_Position(tape_list_t *tape,
                      * that the stager (if any) knows how many files
                      * there are on the tape.
                      */
-                    severity = RTCP_FAILED | RTCP_EOD | RTCP_USERR;
+                    severity = RTCP_OK | RTCP_EOD;
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                     break;
                 } else {
