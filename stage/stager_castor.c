@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.45 2003/11/04 13:25:35 jdurand Exp $
+ * $Id: stager_castor.c,v 1.46 2003/11/06 16:26:47 jdurand Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.45 $ $Date: 2003/11/04 13:25:35 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.46 $ $Date: 2003/11/06 16:26:47 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3037,7 +3037,7 @@ int stager_hsm_callback(tapereq,filereq)
 				/* gcc compiler bug - fixed or forbidden register was spilled. */
 				/* This may be due to a compiler bug or to impossible asm      */
 				/* statements or clauses.                                      */
-				if (filereq->host_bytes > 0) {
+				if ((filereq->cprc == 0) || (filereq->host_bytes > 0)) {
 					/* Something was truely writen to tape */
 					/* We are almost guaranteed that the header label was */
 					/* entirely writen -this fits in one block, and host_bytes */
@@ -3068,17 +3068,17 @@ int stager_hsm_callback(tapereq,filereq)
 				sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling vmgr_updatetape(vid=\"%s\",side=%d,BytesWriten=%s,CompressionFactor=%d,FilesWriten=%d,Flags=%d)\n",
 						tapereq->vid,
 						tapereq->side,
-						filereq->host_bytes > 0 ? u64tostr(filereq->bytes_in, tmpbuf1, 0) : "0",
-						filereq->host_bytes > 0 ? compression_factor : 0,
-						filereq->host_bytes > 0 ? 1 : 0,
+						((filereq->cprc == 0) || (filereq->host_bytes > 0)) ? u64tostr(filereq->bytes_in, tmpbuf1, 0) : "0",
+						((filereq->cprc == 0) || (filereq->host_bytes > 0)) > 0 ? compression_factor : 0,
+						((filereq->cprc == 0) || (filereq->host_bytes > 0)) ? 1 : 0,
 						Flags);
 				RESTORE_EID;
 #endif
 				if (vmgr_updatetape(tapereq->vid,
 									tapereq->side,
-									filereq->host_bytes > 0 ? filereq->bytes_in : 0,
-									filereq->host_bytes > 0 ? compression_factor : 0,
-									filereq->host_bytes > 0 ? 1 : 0,
+									((filereq->cprc == 0) || (filereq->host_bytes > 0)) ? filereq->bytes_in : 0,
+									((filereq->cprc == 0) || (filereq->host_bytes > 0)) ? compression_factor : 0,
+									((filereq->cprc == 0) || (filereq->host_bytes > 0)) ? 1 : 0,
 									Flags
 					) != 0) {
 					SAVE_EID;
@@ -3092,7 +3092,7 @@ int stager_hsm_callback(tapereq,filereq)
 					return(-1);
 				}
 
-				if (filereq->host_bytes > 0) {
+				if ((filereq->cprc == 0) || (filereq->host_bytes > 0)) {
 					/* Here we believe that there is at leat one block of data writen to tape */
 #ifdef STAGER_DEBUG
 					SAVE_EID;
