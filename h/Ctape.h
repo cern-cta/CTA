@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape.h,v 1.35 2001/06/11 05:16:46 baud Exp $
+ * $Id: Ctape.h,v 1.36 2002/04/08 07:52:30 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.35 $ $Date: 2001/06/11 05:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.36 $ $Date: 2002/04/08 07:52:30 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -37,6 +37,7 @@
 #define NL	2
 #define SL	3
 #define BLP	4
+#define AUL	5
 
 			/* supported densities */
 
@@ -325,5 +326,6 @@ struct devlblinfo {
 	char	vol1[81];	/* VOL1 label */
 	char	hdr1[81];	/* HDR1 label */
 	char	hdr2[81];	/* HDR2 label */
+	char	uhl1[81];	/* UHL1 label */
 };
 #endif
