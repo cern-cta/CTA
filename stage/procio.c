@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.104 2001/03/09 02:34:38 jdurand Exp $
+ * $Id: procio.c,v 1.105 2001/03/12 17:40:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.104 $ $Date: 2001/03/09 02:34:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.105 $ $Date: 2001/03/12 17:40:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2789,9 +2789,13 @@ void procputreq(req_type, req_data, clienthost)
 				break;
 			case 't':
 				++ntapefiles;
+				euid = uid;
+				egid = gid;
 				break;
 			case 'd':
 				++ndiskfiles;
+				euid = uid;
+				egid = gid;
 				break;
 			default:
 				sendrep (rpfd, MSG_ERR, STG33, upath, "unknown type");
