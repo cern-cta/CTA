@@ -1,0 +1,49 @@
+.\" $Id: stage_kill.man,v 1.1 2002/10/04 13:52:33 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_kill.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 13:52:33 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_KILL "3" "$Date: 2002/10/04 13:52:33 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_kill \- Signal a stage process
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_kill (int " signo ");"
+
+.SH DESCRIPTION
+The \fBstage_kill\fP API method allows the user application to tell a stager daemon that its current request is to be aborted. This should be used in signal handlers.
+
+.SH PARAMETERS
+.TP 1.5i
+.I signo
+Signal number
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B ESTNACT
+Stager not active
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+\fBstage_kill\fP is thread\-safe.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
