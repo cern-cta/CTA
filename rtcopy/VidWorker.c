@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/07/30 15:35:14 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/03 11:04:45 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/07/30 15:35:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/03 11:04:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -198,7 +198,8 @@ static int processGetMoreWorkCallback(
      */
     rc = rtcpcld_setFileStatus(
                                &fl->filereq,
-                               SEGMENT_COPYRUNNING
+                               SEGMENT_COPYRUNNING,
+                               0 /* Not urgent to notify the client */
                                );
     if ( rc == -1 ) {
       (void)dlf_write(
@@ -347,7 +348,8 @@ int rtcpcld_Callback(
       else status = SEGMENT_FAILED;
       rc = rtcpcld_setFileStatus(
                                  filereq,
-                                 status
+                                 status,
+                                 1
                                  );
       if ( rc == -1 ) {
         (void)dlf_write(
