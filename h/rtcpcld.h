@@ -27,7 +27,7 @@ typedef struct RtcpcldVIDChild {
     struct RtcpcldVIDChild *prev;
 } RtcpcldVIDChild_t;
 
-#define ID_TYPE unsigned long
+#define ID_TYPE u_signed64
 #if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
 enum NotificationState {
   NOT_NOTIFIED,
