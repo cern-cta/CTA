@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.31 2001/03/05 13:36:40 jdurand Exp $
+ * $Id: stagein.c,v 1.32 2001/03/13 13:06:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.31 $ $Date: 2001/03/05 13:36:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.32 $ $Date: 2001/03/13 13:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -533,7 +533,7 @@ int main(argc, argv)
 							} else {
 								/* When user specifies -q<fseq>, in reality the fseq on tape is fseq1+<fseq>-1 */
 								/* so we have to verify that fseq1+<fseq>-1 does not exceed fseq2 */
-								if ((qvalue + fseq1 - 1) > fseq2) {
+								if ((qvalue < 0) || ((qvalue + fseq1 - 1) > fseq2)) {
 									fprintf (stderr, "STG33 - For %s VIDMAP volume, -q option value must be in range [%d,%d]\n", vid[i], 1, fseq2 - fseq1 + 1);
 									errflg++;
 								} else {
