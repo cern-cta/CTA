@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)stream.c,v 1.36 2004/01/23 10:27:46 CERN/IT/PDP/DM F
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
+#define strtok(X,Y) strtok_r(X,Y,&last)
 
 #if !defined(_WIN32)
 #include <sys/time.h>
@@ -1311,6 +1312,7 @@ int     flags;
    struct sockaddr_in sin; /* socket address (internet) struct     */
    char    *host;          /* host name chararcter string          */
    char    *p, *cp;        /* character string pointers            */
+   char *last = NULL;
    register int    retrycnt; /* number of NOMORERFIO retries       */
    register int    retryint; /* interval between NOMORERFIO retries*/
    register int    crtycnt = 0; /* connect retry count             */
