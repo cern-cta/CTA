@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.150 2001/06/18 18:54:15 jdurand Exp $
+ * $Id: stager.c,v 1.151 2001/07/11 10:39:16 jdurand Exp $
  */
 
 /*
@@ -9,6 +9,15 @@
 
 /* Do we want to maintain maxsize for the transfert... ? */
 /* #define SKIP_FILEREQ_MAXSIZE */
+
+/* Do you want to check size of the file on disk v.s. size in the Castor Name Server ? */
+#define SKIP_CHECK_FILESIZE
+
+/* Do you want to hardcode the limit of number of file sequences on a tape ? */
+#define MAX_TAPE_FSEQ 9999
+
+/* Do you want to hardcode the limit of number of files per rtcpc() request ? */
+#define MAX_RTCPC_FILEREQ 1000
 
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
@@ -22,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.150 $ $Date: 2001/06/18 18:54:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.151 $ $Date: 2001/07/11 10:39:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1662,12 +1671,15 @@ int stagewrt_castor_hsm_file() {
 	/* We initialize those size arrays */
 	i = 0;
 	for (stcp = stcs; stcp < stce; stcp++, i++) {
+#ifndef SKIP_CHECK_FILESIZE
 		struct Cns_fileid Cnsfileid;
+#endif
 
 		SETEID(stcp->uid,stcp->gid);
-		if (rfio_stat (stcp->ipath, &statbuf) < 0) {
+#ifndef SKIP_CHECK_FILESIZE
+		if (rfio_mstat (stcp->ipath, &statbuf) < 0) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat",rfio_serror());
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_mstat",rfio_serror());
 			RESTORE_EID;
 			if (use_subreqid) {
 				SET_HSM_IGNORE(i,rfio_serrno());
@@ -1685,6 +1697,9 @@ int stagewrt_castor_hsm_file() {
 			}
 			RETURN (USERR);
 		}
+#else
+		statbuf.st_size = stcp->actual_size;
+#endif /* SKIP_CHECK_FILESIZE */
 
 		/* Search for castor a-la-unix path in the file to stagewrt */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
@@ -1696,6 +1711,7 @@ int stagewrt_castor_hsm_file() {
 
 		hsm_totalsize[i] = (u_signed64) statbuf.st_size;
 
+#ifndef SKIP_CHECK_FILESIZE
 		/* We compare with the stcp->actual_size - they have to match */
 		if (hsm_totalsize[i] != stcp->actual_size) {
 			SAVE_EID;
@@ -1721,6 +1737,8 @@ int stagewrt_castor_hsm_file() {
 				RETURN (SYERR);
 			}
 		}
+#endif /* SKIP_CHECK_FILESIZE */
+
 #ifndef FULL_STAGEWRT_HSM
 		if (ISSTAGEWRT(stcs)) {
 			/* Here we support limitation of number of bytes in write-to-tape */
@@ -1741,6 +1759,10 @@ int stagewrt_castor_hsm_file() {
 		hsm_fseq[i] = -1;
 		hsm_vid[i] = NULL;
 	}
+
+#ifndef SKIP_CHECK_FILESIZE
+		rfio_end();
+#endif
 
 	while (1) {
 		u_signed64 totalsize_to_transfer;
@@ -1792,6 +1814,26 @@ int stagewrt_castor_hsm_file() {
 					&fseq,                  /* fseq      (output)              */
 					&estimated_free_space   /* freespace (output)              */
 					) == 0) {
+#ifdef MAX_TAPE_FSEQ
+					if (fseq > MAX_TAPE_FSEQ) {
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, "STG02 - %s : vmgr_gettape returns fseq > MAX_TAPE_FSEQ=%d\n", vid, MAX_TAPE_FSEQ);
+						sendrep (rpfd, MSG_ERR, "STG02 - %s : Flagging tape RDONLY\n", vid);
+						RESTORE_EID;
+						if (vmgr_updatetape(vid,
+											(u_signed64) 0,
+											0,
+											0,
+											TAPE_RDONLY
+							) != 0) {
+							SAVE_EID;
+							sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape", sstrerror(serrno));
+							RESTORE_EID;
+						}
+						vid[0] = '\0';
+						continue;
+					}
+#endif
 					break;
 			}
 
@@ -1884,6 +1926,15 @@ int stagewrt_castor_hsm_file() {
 			RETURN (USERR);
 		}
 
+#ifdef MAX_RTCPC_FILEREQ
+		if ((iend - istart + 1) > MAX_RTCPC_FILEREQ) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, "STG02 - stagewrt_castor_hsm_file : MAX_RTCPC_FILEREQ=%d reached. Migration will be sequentially splitted\n",MAX_RTCPC_FILEREQ);
+			RESTORE_EID;
+			iend = MAX_RTCPC_FILEREQ + istart - 1;
+			stcp_end = stcp_start + MAX_RTCPC_FILEREQ;
+		}
+#endif
 		/* From now on we know that stcp[istart,iend] fulfill a-priori the requirement */
 		nbcat_ent_current = iend - istart + 1;
 		fseq_start = fseq_end = -1;
@@ -1893,6 +1944,19 @@ int stagewrt_castor_hsm_file() {
 				hsm_fseq[i] = fseq++;
 				fseq_end = hsm_fseq[i];
 				if (fseq_start == -1) fseq_start = fseq_end;
+#ifdef MAX_TAPE_FSEQ
+				if (fseq_end >= MAX_TAPE_FSEQ) {
+					/* We reached the last allowed tape sequence number */
+					if (i < iend) {
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, "STG02 - stagewrt_castor_hsm_file : MAX_TAPE_FSEQ=%d reached. Migration will be sequentially splitted\n",MAX_TAPE_FSEQ);
+						RESTORE_EID;
+						/* By changing iend now we make sure next iteration will not go in there */
+						iend = i;
+						stcp_end = stcp_start + (iend - istart + 1);
+					}
+				}
+#endif
 			} else {
 				hsm_vid[i] = NULL;
 				hsm_fseq[i] = -1;
@@ -3594,6 +3658,24 @@ int stager_hsm_callback(tapereq,filereq)
 					/* that the transfer of this HSM file IS ok                 */
 					hsm_status[stager_client_true_i] = 1;
 				}
+#ifdef MAX_TAPE_FSEQ
+				if (filereq->tape_fseq >= MAX_TAPE_FSEQ) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Reached MAX_TAPE_FSEQ=%d\n", tapereq->vid, MAX_TAPE_FSEQ);
+					sendrep (rpfd, MSG_ERR, "STG02 - %s : Flagging tape RDONLY\n", tapereq->vid);
+					RESTORE_EID;
+					if (vmgr_updatetape(tapereq->vid,
+										(u_signed64) 0,
+										0,
+										0,
+										TAPE_RDONLY
+						) != 0) {
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
+						RESTORE_EID;
+					}
+				}
+#endif
 			}
 		} else {
 			{
@@ -3867,6 +3949,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Monday 18 June, 2001 at 20:51:00 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 04 July, 2001 at 19:16:19 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
