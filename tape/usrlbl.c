@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:41:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -35,7 +35,7 @@ int nrr;
 	devlblinfop = calloc (nrr, sizeof(struct devlblinfo));
 	if (devlblinfop == NULL) {
 		Ctape_errmsg ("initlabelroutines", TP005);
-		serrno = SYERR;
+		serrno = ENOMEM;
 		return (-1);
 	}
 	return (0);
