@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.18 $ $Date: 2002/09/04 07:35:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.19 $ $Date: 2002/09/04 08:06:56 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -149,7 +149,7 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
      SOCKET fd;
      void *vptr;
-     size_t n;
+     ssize_t n;
      int timeout;
 {
   size_t nleft;                /* Bytes to read */
@@ -171,7 +171,7 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
-    return(netread(fd,vptr,n));
+    return(netread(fd,vptr,(int) n));
   }
 
 #ifndef _WIN32
@@ -251,7 +251,7 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
      SOCKET fd;
      void *vptr;
-     size_t n;
+     ssize_t n;
      int timeout;
 {
   size_t nleft;                /* Bytes to read */
@@ -273,7 +273,7 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
-    return(netwrite(fd,vptr,n));
+    return(netwrite(fd,vptr,(int) n));
   }
 
 #ifndef _WIN32
