@@ -31,8 +31,7 @@ struct stagerService {
   int serviceSelectTimer;
   int serviceProcessTimer;
   int nbActiveThreads;
-  int notifyThreadId;
-  int signal;
+  int notified;
   int notTheFirstTime;
 };
 
