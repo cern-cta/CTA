@@ -14,6 +14,7 @@
 
 #include <osdep.h>
 
+#define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
 #define MAXFSEQ 15	/* maximum fseq string length for one disk file */
 #define	MAXGRPNAMELEN	3
