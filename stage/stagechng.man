@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.7 2001/09/26 09:13:54 jdurand Exp $
+.\" $Id: stagechng.man,v 1.8 2001/11/30 12:12:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.8 $ $Date: 2001/11/30 12:12:28 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGECHNG l "$Date: 2001/11/30 12:12:28 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
@@ -53,7 +53,7 @@ before migration, the retention period on disk (
 .BI status
 of an 
 .BI hsmfile.
-The minimum time before migration is in second unit, while the retention period on disk is in day unit. The status can be an explicit value that correspond to a bit-OR'ed of several values, known only a-priori to stager gurus. Neverthless the shortcuts
+The status can be an explicit value that correspond to a bit-OR'ed of several values, known only a-priori to stager gurus. Neverthless the shortcuts
 .BI CAN_BE_MIGR
 and
 .BI STAGEOUT|CAN_BE_MIGR
@@ -72,7 +72,7 @@ Restrict the action on CASTOR HSM name that is
 .IR hsmfile .
 .TP
 .BI \--mintime " mintime"
-Sets the minimum time before migration, with respect to original value of its fileclass. You cannot extend a minimum time before migration, only decrease it. Unit is in second.
+Sets the minimum time before migration, with respect to original value of its fileclass. You cannot extend a minimum time before migration, only decrease it. Default unit is in second. If the option value ends with 'S', 's', second is also assumed. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day. With 'Y' or 'y', unit is the year (365 days).
 .TP
 .BI \-p " poolname"
 Restrict the pools where file is to be searched in pool
@@ -83,7 +83,7 @@ This may also be specified thru the environment variable STAGE_POOL.
 Forces the search to this internal request id.
 .TP
 .BI \--retenp " retenp"
-Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Unit is in day.
+Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Default unit is in second. If the option value ends with 'S', 's', second is also assumed. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day. With 'Y' or 'y', unit is the year (365 days).
 .TP
 .BI \--status " status"
 Sets the internal status. Only
