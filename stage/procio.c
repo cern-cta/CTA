@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.35 2000/08/07 15:06:39 baud Exp $
+ * $Id: procio.c,v 1.36 2000/09/01 13:17:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.35 $ $Date: 2000/08/07 15:06:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.36 $ $Date: 2000/09/01 13:17:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,6 +69,7 @@ static char one[2] = "1";
 
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
+extern int isuserlevel _PROTO((char *));
 
 void procioreq(req_type, req_data, clienthost)
 		 int req_type;
@@ -103,6 +104,8 @@ void procioreq(req_type, req_data, clienthost)
 	int nbtpf;
 	struct stgcat_entry *newreq();
 	int nhsmfiles = 0;
+	int nuserlevel = 0;
+	int nexplevel = 0;
 	int no_upath = 0;
 	char *nread = NULL;
 	int numvid, numvsn;
@@ -122,6 +125,9 @@ void procioreq(req_type, req_data, clienthost)
 	char *user;
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
+	int nhpssfiles = 0;
+	int ncastorfiles = 0;
+
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -465,9 +471,6 @@ void procioreq(req_type, req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-		int nhpssfiles = 0;
-		int ncastorfiles = 0;
-
 		if (nbdskf != nhsmfiles) {
 			sendrep (rpfd, MSG_ERR, STG19);
 			c = USERR;
@@ -500,11 +503,23 @@ void procioreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 				++ncastorfiles;
+                /* And we take the opportunity to decide which level of migration (user/exp) */
+				if (isuserlevel(hsmfiles[ihsmfiles])) {
+					nuserlevel++;
+        		} else {
+          			nexplevel++;
+        		}
 			}
 		}
-		/* No recognizes type ? */
+		/* No recognized type ? */
 		if (nhpssfiles == 0 && ncastorfiles == 0) {
 			sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
+			c = USERR;
+			goto reply;
+		}
+		/* Mixed CASTOR types ? */
+		if (ncastorfiles > 0 && nuserlevel > 0 && nexplevel > 0) {
+			sendrep (rpfd, MSG_ERR, "Mixing user-level and experiment-level CASTOR files is not allowed\n");
 			c = USERR;
 			goto reply;
 		}
@@ -514,7 +529,7 @@ void procioreq(req_type, req_data, clienthost)
 			c = USERR;
 			goto reply;
 		} else if (ncastorfiles > 0) {
-			/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
+			/* It is a CASTOR request, so stgreq.t_or_d, previously equal to 'm', is set to 'h' */
 			stgreq.t_or_d = 'h';
 		} else if (nhpssfiles > 1) {
 			/* More than one HPSS not supported for the moment */
@@ -889,18 +904,27 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 			break;
 		case STAGEWRT:
-			if (p = findpoolname (upath)) {
-				if (poolflag < 0 ||
-						(poolflag > 0 && strcmp (stgreq.poolname, p)))
-					sendrep (rpfd, MSG_ERR, STG49, upath, p);
+          /*
+			if (ncastorfiles > 0 && poolflag == 1) {
 				actual_poolflag = 1;
-				strcpy (actual_poolname, p);
+				strcpy (actual_poolname, stgreq.poolname);
 			} else {
-				if (poolflag > 0)
-					sendrep (rpfd, MSG_ERR, STG50, upath);
-				actual_poolflag = -1;
-				actual_poolname[0] = '\0';
+          */
+				if (p = findpoolname (upath)) {
+					if (poolflag < 0 ||
+							(poolflag > 0 && strcmp (stgreq.poolname, p)))
+						sendrep (rpfd, MSG_ERR, STG49, upath, p);
+					actual_poolflag = 1;
+					strcpy (actual_poolname, p);
+				} else {
+					if (poolflag > 0)
+						sendrep (rpfd, MSG_ERR, STG50, upath);
+					actual_poolflag = -1;
+					actual_poolname[0] = '\0';
+				}
+                /*
 			}
+                */
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case NOTSTAGED:
 				break;
@@ -980,22 +1004,33 @@ void procioreq(req_type, req_data, clienthost)
 			wqp->nbdskf++;
 			if (i < nbtpf || nhsmfiles > 0)
 				wqp->nb_subreqs++;
-			if (nhsmfiles > 0) wqp->Migrationflag = 1;
+			/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
+			/* -> Migrationflag set to 1 */
+			if (nhsmfiles > 0) wqp->Migrationflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
 			wfp++;
 			break;
 		case STAGECAT:
-			if (p = findpoolname (upath)) {
-				if (poolflag < 0 ||
-						(poolflag > 0 && strcmp (stgreq.poolname, p)))
-					sendrep (rpfd, MSG_ERR, STG49, upath, p);
+          /*
+			if (ncastorfiles > 0 && poolflag == 1) {
 				actual_poolflag = 1;
-				strcpy (actual_poolname, p);
+				strcpy (actual_poolname, stgreq.poolname);
 			} else {
-				if (poolflag > 0)
-					sendrep (rpfd, MSG_ERR, STG50, upath);
-				actual_poolflag = -1;
-				actual_poolname[0] = '\0';
+          */
+				if (p = findpoolname (upath)) {
+					if (poolflag < 0 ||
+							(poolflag > 0 && strcmp (stgreq.poolname, p)))
+						sendrep (rpfd, MSG_ERR, STG49, upath, p);
+					actual_poolflag = 1;
+					strcpy (actual_poolname, p);
+				} else {
+					if (poolflag > 0)
+						sendrep (rpfd, MSG_ERR, STG50, upath);
+					actual_poolflag = -1;
+					actual_poolname[0] = '\0';
+				}
+                /*
 			}
+                */
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case NOTSTAGED:
 				break;
@@ -1086,7 +1121,6 @@ void procputreq(req_data, clienthost)
 	struct group *gr;
 	int Iflag = 0;
 	int Mflag = 0;
-	int Migrationflag = 0;
 	char *name;
 	int nargs;
 	int nbdskf;
@@ -1112,6 +1146,8 @@ void procputreq(req_data, clienthost)
 	int jhsmfiles;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
+	int nuserlevel = 0;
+	int nexplevel = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1201,9 +1237,6 @@ void procputreq(req_data, clienthost)
 			UPPER (vid);
 			numvid++;
 			break;
-		case 'm':       /* Global Migration flag */
-			Migrationflag++;
-			break;
 		}
 	}
 	if (Iflag && numvid)
@@ -1211,12 +1244,6 @@ void procputreq(req_data, clienthost)
 
 	if (Mflag && numvid)
 		errflg++;
-
-	if (Migrationflag && ! Mflag) /* Cannot force migration flag without hsm file */
-		errflg++;
-
-	if (Mflag && ! Migrationflag) /* force migration flag if hsm file */
-		Migrationflag++;
 
 	if ((Iflag || Mflag) && (optind != nargs))
 		errflg++;
@@ -1247,11 +1274,23 @@ void procputreq(req_data, clienthost)
 			}
 			if (ISCASTOR(hsmfiles[ihsmfiles])) {
 				++ncastorfiles;
+                /* And we take the opportunity to decide which level of migration (user/exp) */
+				if (isuserlevel(hsmfiles[ihsmfiles])) {
+					nuserlevel++;
+        		} else {
+          			nexplevel++;
+        		}
 			}
 		}
 		/* No recognizes type ? */
 		if (nhpssfiles == 0 && ncastorfiles == 0) {
 			sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
+			c = USERR;
+			goto reply;
+		}
+		/* Mixed CASTOR types ? */
+		if (ncastorfiles > 0 && nuserlevel > 0 && nexplevel > 0) {
+			sendrep (rpfd, MSG_ERR, "Mixing user-level and experiment-level CASTOR files is not allowed\n");
 			c = USERR;
 			goto reply;
 		}
@@ -1369,6 +1408,7 @@ void procputreq(req_data, clienthost)
 				if ((hsmfilesstcp[ihsmfiles]->status & 0xF) != STAGEOUT &&
 						 (hsmfilesstcp[ihsmfiles]->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)) {
 					sendrep (rpfd, MSG_ERR, STG22);
+					stglogit (func, "hsmfilesstcp[ihsmfiles=%d]->status [0x%lx] & 0xF) gives 0x%lx != STAGEOUT [0x%lx]\n", ihsmfiles, hsmfilesstcp[ihsmfiles]->status, hsmfilesstcp[ihsmfiles]->status & 0xF, STAGEOUT);
 					c = USERR;
 					goto reply;
 				}
@@ -1395,7 +1435,9 @@ void procputreq(req_data, clienthost)
 				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
-				wqp->Migrationflag = Migrationflag;
+				/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
+				/* -> Migrationflag set to 1 */
+				if (nhsmfiles > 0) wqp->Migrationflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
 				wfp++;
 			}
 		}
