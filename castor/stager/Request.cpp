@@ -97,7 +97,12 @@ void castor::stager::Request::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "client : " << m_client << std::endl;
+  stream << indent << "Client : " << std::endl;
+  if (0 != m_client) {
+    m_client->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------
