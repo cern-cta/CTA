@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.33 2002/02/11 14:08:46 jdurand Exp $
+ * $Id: stgconvert.c,v 1.34 2002/05/07 07:03:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.33 $ $Date: 2002/02/11 14:08:46 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.34 $ $Date: 2002/05/07 07:03:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -45,6 +45,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.33 $ $Date: 2
 #include "Cdb_lock.h"
 #include "Cdb_config.h"
 #include "Cgetopt.h"
+#include "Castor_limits.h"
 
 /* =============== */
 /* Local variables */
@@ -779,13 +780,17 @@ int main(argc,argv)
 						continue;
 					}
 					
-					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					if (thisstcp.reqid > CA_MAXSTGREQID) {
+						printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 					} else {
-						++i;
-						if (i == 1 || i % frequency == 0) {
-							last_reqid = thisstcp.reqid;
-							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+							printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+						} else {
+							++i;
+							if (i == 1 || i % frequency == 0) {
+								last_reqid = thisstcp.reqid;
+								printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+							}
 						}
 					}
 				}
@@ -808,13 +813,17 @@ int main(argc,argv)
 						if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
 						} else {
-							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							if (thisstcp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstcp.reqid;
-									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+									printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstcp.reqid;
+										printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
@@ -925,13 +934,17 @@ int main(argc,argv)
 						continue;
 					}
 
-					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					if (thisstcp.reqid > CA_MAXSTGREQID) {
+						printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 					} else {
-						++i;
-						if (i == 1 || i % frequency == 0) {
-							last_reqid = thisstcp.reqid;
-							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+							printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+						} else {
+							++i;
+							if (i == 1 || i % frequency == 0) {
+								last_reqid = thisstcp.reqid;
+								printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+							}
 						}
 					}
 				}
@@ -954,13 +967,17 @@ int main(argc,argv)
 						if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
 						} else {
-							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							if (thisstcp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstcp.reqid;
-									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+									printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstcp.reqid;
+										printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
@@ -1072,13 +1089,17 @@ int main(argc,argv)
 						continue;
 					}
 					
-					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					if (thisstcp.reqid > CA_MAXSTGREQID) {
+						printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 					} else {
-						++i;
-						if (i == 1 || i % frequency == 0) {
-							last_reqid = thisstcp.reqid;
-							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+							printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+						} else {
+							++i;
+							if (i == 1 || i % frequency == 0) {
+								last_reqid = thisstcp.reqid;
+								printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+							}
 						}
 					}
 				}
@@ -1101,13 +1122,17 @@ int main(argc,argv)
 						if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
 						} else {
-							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							if (thisstcp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstcp.reqid;
-									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+									printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstcp.reqid;
+										printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
@@ -1219,13 +1244,17 @@ int main(argc,argv)
 						continue;
 					}
 					
-					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					if (thisstcp.reqid > CA_MAXSTGREQID) {
+						printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 					} else {
-						++i;
-						if (i == 1 || i % frequency == 0) {
-							last_reqid = thisstcp.reqid;
-							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+							printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+						} else {
+							++i;
+							if (i == 1 || i % frequency == 0) {
+								last_reqid = thisstcp.reqid;
+								printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+							}
 						}
 					}
 				}
@@ -1248,13 +1277,17 @@ int main(argc,argv)
 						if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&castor,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",castor.reqid);
 						} else {
-							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							if (thisstcp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstcp.reqid;
-									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+									printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstcp.reqid;
+										printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
@@ -1367,13 +1400,17 @@ int main(argc,argv)
 						continue;
 					}
 					
-					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					if (thisstcp.reqid > CA_MAXSTGREQID) {
+						printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 					} else {
-						++i;
-						if (i == 1 || i % frequency == 0) {
-							last_reqid = thisstcp.reqid;
-							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+							printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+						} else {
+							++i;
+							if (i == 1 || i % frequency == 0) {
+								last_reqid = thisstcp.reqid;
+								printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+							}
 						}
 					}
 				}
@@ -1396,13 +1433,17 @@ int main(argc,argv)
 						if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,NULL,&alloc) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
 						} else {
-							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							if (thisstcp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstcp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstcp.reqid;
-									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+									printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstcp.reqid;
+										printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
@@ -1598,13 +1639,17 @@ int main(argc,argv)
 					}
 					
 					if (convert_status == 0) {
-						if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
-							printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+						if (thisstpp.reqid > CA_MAXSTGREQID) {
+							printf("### reqid = %d > %d !?\n", thisstpp.reqid, CA_MAXSTGREQID);
 						} else {
-							++i;
-							if (i == 1 || i % frequency == 0) {
-								last_reqid = thisstpp.reqid;
-								printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+							if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
+								printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+							} else {
+								++i;
+								if (i == 1 || i % frequency == 0) {
+									last_reqid = thisstpp.reqid;
+									printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+								}
 							}
 						}
 					}
@@ -1629,13 +1674,17 @@ int main(argc,argv)
 							printf("### Cannot convert entry with reqid = %d from Cdb's table \"stgcat_link\"\n"
 										 ,link.reqid);
 						} else {
-							if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
-								printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+							if (thisstpp.reqid > CA_MAXSTGREQID) {
+								printf("### reqid = %d > %d !?\n", thisstpp.reqid, CA_MAXSTGREQID);
 							} else {
-								++i;
-								if (i == 1 || i % frequency == 0) {
-									last_reqid = thisstpp.reqid;
-									printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+								if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
+									printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+								} else {
+									++i;
+									if (i == 1 || i % frequency == 0) {
+										last_reqid = thisstpp.reqid;
+										printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+									}
 								}
 							}
 							if (ntoclean >= 2) {
