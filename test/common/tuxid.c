@@ -1,5 +1,5 @@
 /*
- * $Id: tuxid.c,v 1.2 2001/05/22 11:37:07 jdurand Exp $
+ * $Id: tuxid.c,v 1.3 2001/05/22 11:41:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tuxid.c,v $ $Revision: 1.2 $ $Date: 2001/05/22 11:37:07 $ CERN IT-PDP/DM Jean-Philippe Baud, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: tuxid.c,v $ $Revision: 1.3 $ $Date: 2001/05/22 11:41:13 $ CERN IT-PDP/DM Jean-Philippe Baud, Jean-Damien Durand";
 #endif /* not lint */
 
 #define _POSIX_
@@ -361,12 +361,12 @@ void usage(progname)
 {
   printf("Usage: %s [options]\n"
           "where options are:\n"
-          "  --grnam <grnam> Test \"grnam\" (group entry name)\n"
-          "  --gid   <gid>   Test \"gid\"   (group entry id)\n"
+          "  --grnam <grnam> Test getgrnam() (group entry name)\n"
+          "  --gid   <gid>   Test getgrgid() (group entry id)\n"
           "  --help          This help\n"
-          "  --pwnam <pwnam> Test \"pwnam\" (password entry name)\n"
+          "  --pwnam <pwnam> Test getpwnam() (password entry name)\n"
           "  --self          Test everything using your local account\n"
-          "  --uid   <uid>   Test \"uid\"   (password entry uid)\n"
+          "  --uid   <uid>   Test getpwuid() (password entry uid)\n"
           "  --verbose       See values in return\n"
           "\n"
          "If no option is given, then self-test using your login name, uid and gid will be performed\n",
