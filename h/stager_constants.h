@@ -1,9 +1,9 @@
 /*
- * $Id: stagerConstants.h,v 1.8 2004/10/27 13:22:19 jdurand Exp $
+ * $Id: stager_constants.h,v 1.1 2004/10/28 09:02:52 jdurand Exp $
  */
 
-#ifndef __stagerConstants_h
-#define __stagerConstants_h
+#ifndef __stager_constants_h
+#define __stager_constants_h
 
 #include "osdep.h"
 
@@ -70,4 +70,4 @@
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
-#endif /* __stagerConstants_h */
+#endif /* __stager_constants_h */
