@@ -6,6 +6,11 @@
 #include <sys/stat.h>
 #include "stage.h"
 extern char *sys_errlist[];
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.2 $ $Date: 1999/12/08 16:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+
 main()
 {
 	datum content;

@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.2 1999/12/02 14:38:42 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.3 1999/12/08 16:05:58 jdurand Exp $
  */
 
 /*
@@ -12,6 +12,11 @@
 #include "Cdb_api.h"
 #include "Cstage_db.h"
 #include "stage.h"
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 16:05:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* not lint */
+
 
 int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
      struct stgcat_entry *stcp;
