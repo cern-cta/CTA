@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.4 1999/07/20 13:38:11 obarring Exp $
+ * $Id: Cthread.c,v 1.5 1999/07/20 13:45:37 jdurand Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.5  1999/07/20 13:45:37  jdurand
+ * *** empty log message ***
+ *
  * Revision 1.4  1999/07/20 13:38:11  obarring
  * Add call to Cglobals_init()
  *
@@ -439,6 +442,9 @@ CTHREAD_DECL Cthread_init() {
 /* This routine is to make sure that, in a      */
 /* a thread environment at least, some internal */
 /* Cthread structure are correctly initialized  */
+/* ============================================ */
+/* This routine should be called internally by  */
+/* any Cthread function.                        */
 /* ============================================ */
 int _Cthread_init() {
   int status;
@@ -3216,4 +3222,5 @@ CTHREAD_DECL _Cthread_self(void) {
 
   return(n);
 }
+
 
