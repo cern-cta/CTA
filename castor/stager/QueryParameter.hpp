@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/StageRequestQueryRequest.hpp
+ *                      castor/stager/QueryParameter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,11 +24,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_HPP
-#define CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_HPP
+#ifndef CASTOR_STAGER_QUERYPARAMETER_HPP
+#define CASTOR_STAGER_QUERYPARAMETER_HPP
 
 // Include Files
-#include "castor/stager/QryRequest.hpp"
+#include "castor/IObject.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -37,27 +38,27 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
-  class IObject;
 
   namespace stager {
 
     /**
-     * class StageRequestQueryRequest
-     * A query related request.
+     * class QueryParameter
+     * A parameter of a query request. Depending on its type, its value can contain a
+     * fileName, a requestId, a fileId, ...
      */
-    class StageRequestQueryRequest : public virtual QryRequest {
+    class QueryParameter : public virtual castor::IObject {
 
     public:
 
       /**
        * Empty Constructor
        */
-      StageRequestQueryRequest() throw();
+      QueryParameter() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~StageRequestQueryRequest() throw();
+      virtual ~QueryParameter() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -97,6 +98,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_value
+       * Value of this parameter. The meaning depends on the type.
+       * @return the value of m_value
+       */
+      std::string value() const {
+        return m_value;
+      }
+
+      /**
+       * Set the value of m_value
+       * Value of this parameter. The meaning depends on the type.
+       * @param new_var the new value of m_value
+       */
+      void setValue(std::string new_var) {
+        m_value = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -114,15 +133,36 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_queryType
+       * @return the value of m_queryType
+       */
+      RequestQueryType queryType() const {
+        return m_queryType;
+      }
+
+      /**
+       * Set the value of m_queryType
+       * @param new_var the new value of m_queryType
+       */
+      void setQueryType(RequestQueryType new_var) {
+        m_queryType = new_var;
+      }
+
     private:
+
+      /// Value of this parameter. The meaning depends on the type.
+      std::string m_value;
 
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class StageRequestQueryRequest
+      RequestQueryType m_queryType;
+
+    }; // end of class QueryParameter
 
   }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_HPP
+#endif // CASTOR_STAGER_QUERYPARAMETER_HPP

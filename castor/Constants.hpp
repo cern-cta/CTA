@@ -101,7 +101,8 @@ namespace castor {
     OBJ_PutStartRequest = 67,
     OBJ_StartResponse = 68,
     OBJ_IObject = 69,
-    OBJ_IAddress = 70
+    OBJ_IAddress = 70,
+    OBJ_QueryParameter = 71
   };
     
   /**
@@ -144,7 +145,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[71];
+  extern const char* ObjectsIdStrings[72];
 
   /**
    * Names of the differents Services, used to display

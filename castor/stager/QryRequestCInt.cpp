@@ -28,9 +28,11 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -272,6 +274,35 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_QryRequest_setClient(castor::stager::QryRequest* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_addParameters
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_addParameters(castor::stager::QryRequest* instance, castor::stager::QueryParameter* obj) {
+    instance->addParameters(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_removeParameters
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_removeParameters(castor::stager::QryRequest* instance, castor::stager::QueryParameter* obj) {
+    instance->removeParameters(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_parameters
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_parameters(castor::stager::QryRequest* instance, castor::stager::QueryParameter*** var, int* len) {
+    std::vector<castor::stager::QueryParameter*>& result = instance->parameters();
+    *len = result.size();
+    *var = (castor::stager::QueryParameter**) malloc((*len) * sizeof(castor::stager::QueryParameter*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

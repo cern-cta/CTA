@@ -170,6 +170,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type QueryParameter refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepQueryParameter(castor::stager::StageRequestQueryRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type SvcClass refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -194,6 +202,15 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type QueryParameter refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjQueryParameter(castor::stager::StageRequestQueryRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -261,6 +278,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL select statement for member parameters
+        static const std::string s_selectQueryParameterStatementString;
+
+        /// SQL select statement object for member parameters
+        oracle::occi::Statement *m_selectQueryParameterStatement;
+
+        /// SQL delete statement for member parameters
+        static const std::string s_deleteQueryParameterStatementString;
+
+        /// SQL delete statement object for member parameters
+        oracle::occi::Statement *m_deleteQueryParameterStatement;
+
+        /// SQL remote update statement for member parameters
+        static const std::string s_remoteUpdateQueryParameterStatementString;
+
+        /// SQL remote update statement object for member parameters
+        oracle::occi::Statement *m_remoteUpdateQueryParameterStatement;
 
         /// SQL checkExist statement for member svcClass
         static const std::string s_checkSvcClassExistStatementString;

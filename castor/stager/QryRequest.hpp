@@ -31,6 +31,7 @@
 #include "castor/stager/Request.hpp"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -38,6 +39,9 @@ namespace castor {
   class ObjectSet;
 
   namespace stager {
+
+    // Forward declarations
+    class QueryParameter;
 
     /**
      * class QryRequest
@@ -72,6 +76,39 @@ namespace castor {
        * Outputs this object in a human readable format
        */
       virtual void print() const;
+
+      /**
+       * Add a QueryParameter* object to the m_parametersVector list
+       */
+      void addParameters(QueryParameter* add_object) {
+        m_parametersVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a QueryParameter* object from m_parametersVector
+       */
+      void removeParameters(QueryParameter* remove_object) {
+        for (unsigned int i = 0; i < m_parametersVector.size(); i++) {
+          QueryParameter* item = m_parametersVector[i];
+          if (item == remove_object) {
+            std::vector<QueryParameter*>::iterator it = m_parametersVector.begin() + i;
+            m_parametersVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of QueryParameter* objects held by m_parametersVector
+       * @return list of QueryParameter* objects held by m_parametersVector
+       */
+      std::vector<QueryParameter*>& parameters() {
+        return m_parametersVector;
+      }
+
+    private:
+
+      std::vector<QueryParameter*> m_parametersVector;
 
     }; // end of class QryRequest
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.70 $ $Release$ $Date: 2004/12/16 11:01:16 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.71 $ $Release$ $Date: 2004/12/16 18:52:19 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -131,6 +131,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamMoverCloseRequestCnv.cpp \
               io/StreamPtrCnv.cpp \
               io/StreamPutStartRequestCnv.cpp \
+              io/StreamQueryParameterCnv.cpp \
               io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamSegmentCnv.cpp \
@@ -205,6 +206,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/DiskServer.cpp \
               stager/DiskServerCInt.cpp \
               stager/DiskServerStatusCode.cpp \
+              stager/Disk2DiskCopyDoneRequest.cpp \
+              stager/Disk2DiskCopyDoneRequestCInt.cpp \
               stager/FileClass.cpp \
               stager/FileClassCInt.cpp \
               stager/FileRequest.cpp \
@@ -231,8 +234,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/StartRequestCInt.cpp \
               stager/SvcClass.cpp \
               stager/SvcClassCInt.cpp \
-              stager/Disk2DiskCopyDoneRequest.cpp \
-              stager/Disk2DiskCopyDoneRequestCInt.cpp \
+              stager/QueryParameter.cpp \
+              stager/QueryParameterCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
               stager/SegmentStatusCodes.cpp \

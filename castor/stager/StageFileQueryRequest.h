@@ -32,6 +32,7 @@
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_QryRequest_t;
+struct Cstager_QueryParameter_t;
 struct Cstager_Request_t;
 struct Cstager_StageFileQueryRequest_t;
 struct Cstager_SvcClass_t;
@@ -91,6 +92,25 @@ int Cstager_StageFileQueryRequest_print(struct Cstager_StageFileQueryRequest_t* 
  * Gets the type of this kind of objects
  */
 int Cstager_StageFileQueryRequest_TYPE(int* ret);
+
+/***********************************************/
+/* Implementation of QryRequest abstract class */
+/***********************************************/
+
+/**
+ * Add a struct Cstager_QueryParameter_t* object to the parameters list
+ */
+int Cstager_StageFileQueryRequest_addParameters(struct Cstager_StageFileQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
+
+/**
+ * Remove a struct Cstager_QueryParameter_t* object from parameters
+ */
+int Cstager_StageFileQueryRequest_removeParameters(struct Cstager_StageFileQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
+
+/**
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters
+ */
+int Cstager_StageFileQueryRequest_parameters(struct Cstager_StageFileQueryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 
 /********************************************/
 /* Implementation of Request abstract class */

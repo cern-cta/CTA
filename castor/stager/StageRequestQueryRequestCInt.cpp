@@ -28,11 +28,12 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -106,6 +107,35 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageRequestQueryRequest_TYPE(int* ret) {
     *ret = castor::stager::StageRequestQueryRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_addParameters
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_addParameters(castor::stager::StageRequestQueryRequest* instance, castor::stager::QueryParameter* obj) {
+    instance->addParameters(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_removeParameters
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_removeParameters(castor::stager::StageRequestQueryRequest* instance, castor::stager::QueryParameter* obj) {
+    instance->removeParameters(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_parameters
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_parameters(castor::stager::StageRequestQueryRequest* instance, castor::stager::QueryParameter*** var, int* len) {
+    std::vector<castor::stager::QueryParameter*>& result = instance->parameters();
+    *len = result.size();
+    *var = (castor::stager::QueryParameter**) malloc((*len) * sizeof(castor::stager::QueryParameter*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 
@@ -325,23 +355,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_parameter
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_parameter(castor::stager::StageRequestQueryRequest* instance, const char** var) {
-    *var = instance->parameter().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_setParameter
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_setParameter(castor::stager::StageRequestQueryRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setParameter(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageRequestQueryRequest_id
   //----------------------------------------------------------------------------
   int Cstager_StageRequestQueryRequest_id(castor::stager::StageRequestQueryRequest* instance, u_signed64* var) {
@@ -354,22 +367,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageRequestQueryRequest_setId(castor::stager::StageRequestQueryRequest* instance, u_signed64 new_var) {
     instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_status
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_status(castor::stager::StageRequestQueryRequest* instance, castor::stager::RequestQueryType* var) {
-    *var = instance->status();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageRequestQueryRequest_setStatus
-  //----------------------------------------------------------------------------
-  int Cstager_StageRequestQueryRequest_setStatus(castor::stager::StageRequestQueryRequest* instance, castor::stager::RequestQueryType new_var) {
-    instance->setStatus(new_var);
     return 0;
   }
 

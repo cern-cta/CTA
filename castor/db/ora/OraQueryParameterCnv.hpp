@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraStageFileQueryRequestCnv.hpp
+ *                      castor/db/ora/OraQueryParameterCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,8 +24,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_ORA_STAGEFILEQUERYREQUEST_HPP
-#define CASTOR_DB_ORA_STAGEFILEQUERYREQUEST_HPP
+#ifndef CASTOR_DB_ORA_QUERYPARAMETER_HPP
+#define CASTOR_DB_ORA_QUERYPARAMETER_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -39,36 +39,27 @@ namespace castor {
   class IObject;
   class ICnvSvc;
 
-  // Forward declarations
-  namespace stager {
-
-    // Forward declarations
-    class StageFileQueryRequest;
-
-  }; // end of namespace stager
-
   namespace db {
 
     namespace ora {
 
       /**
-       * class OraStageFileQueryRequestCnv
-       * A converter for storing/retrieving StageFileQueryRequest into/from an Oracle
-       * database
+       * class OraQueryParameterCnv
+       * A converter for storing/retrieving QueryParameter into/from an Oracle database
        */
-      class OraStageFileQueryRequestCnv : public OraBaseCnv {
+      class OraQueryParameterCnv : public OraBaseCnv {
 
       public:
 
         /**
          * Constructor
          */
-        OraStageFileQueryRequestCnv(castor::ICnvSvc* cnvSvc);
+        OraQueryParameterCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor
          */
-        virtual ~OraStageFileQueryRequestCnv() throw();
+        virtual ~OraQueryParameterCnv() throw();
 
         /**
          * Gets the object type.
@@ -170,30 +161,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type QueryParameter refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepQueryParameter(castor::stager::StageFileQueryRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSvcClass(castor::stager::StageFileQueryRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type IClient refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepIClient(castor::stager::StageFileQueryRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -202,31 +169,6 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type QueryParameter refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjQueryParameter(castor::stager::StageFileQueryRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSvcClass(castor::stager::StageFileQueryRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type IClient refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjIClient(castor::stager::StageFileQueryRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -255,18 +197,6 @@ namespace castor {
         /// SQL statement object for request update
         oracle::occi::Statement *m_updateStatement;
 
-        /// SQL statement for request status insertion
-        static const std::string s_insertStatusStatementString;
-
-        /// SQL statement object for request status insertion
-        oracle::occi::Statement *m_insertStatusStatement;
-
-        /// SQL statement for status deletion
-        static const std::string s_deleteStatusStatementString;
-
-        /// SQL statement object for request status deletion
-        oracle::occi::Statement *m_deleteStatusStatement;
-
         /// SQL statement for type storage 
         static const std::string s_storeTypeStatementString;
 
@@ -279,43 +209,7 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member parameters
-        static const std::string s_selectQueryParameterStatementString;
-
-        /// SQL select statement object for member parameters
-        oracle::occi::Statement *m_selectQueryParameterStatement;
-
-        /// SQL delete statement for member parameters
-        static const std::string s_deleteQueryParameterStatementString;
-
-        /// SQL delete statement object for member parameters
-        oracle::occi::Statement *m_deleteQueryParameterStatement;
-
-        /// SQL remote update statement for member parameters
-        static const std::string s_remoteUpdateQueryParameterStatementString;
-
-        /// SQL remote update statement object for member parameters
-        oracle::occi::Statement *m_remoteUpdateQueryParameterStatement;
-
-        /// SQL checkExist statement for member svcClass
-        static const std::string s_checkSvcClassExistStatementString;
-
-        /// SQL checkExist statement object for member svcClass
-        oracle::occi::Statement *m_checkSvcClassExistStatement;
-
-        /// SQL update statement for member svcClass
-        static const std::string s_updateSvcClassStatementString;
-
-        /// SQL update statement object for member svcClass
-        oracle::occi::Statement *m_updateSvcClassStatement;
-
-        /// SQL update statement for member client
-        static const std::string s_updateIClientStatementString;
-
-        /// SQL update statement object for member client
-        oracle::occi::Statement *m_updateIClientStatement;
-
-      }; // end of class OraStageFileQueryRequestCnv
+      }; // end of class OraQueryParameterCnv
 
     }; // end of namespace ora
 
@@ -323,4 +217,4 @@ namespace castor {
 
 }; // end of namespace castor
 
-#endif // CASTOR_DB_ORA_STAGEFILEQUERYREQUEST_HPP
+#endif // CASTOR_DB_ORA_QUERYPARAMETER_HPP

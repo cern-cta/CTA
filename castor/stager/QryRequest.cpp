@@ -27,9 +27,11 @@
 // Include Files
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/Request.hpp"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -42,6 +44,7 @@ castor::stager::QryRequest::QryRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::QryRequest::~QryRequest() throw() {
+  m_parametersVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -59,6 +62,17 @@ void castor::stager::QryRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->Request::print(stream, indent, alreadyPrinted);
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "Parameters : " << std::endl;
+    int i;
+    std::vector<QueryParameter*>::const_iterator it;
+    for (it = m_parametersVector.begin(), i = 0;
+         it != m_parametersVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

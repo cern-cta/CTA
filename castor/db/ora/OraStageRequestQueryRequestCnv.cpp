@@ -39,9 +39,11 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/RequestQueryType.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <set>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -55,7 +57,7 @@ const castor::ICnvFactory& OraStageRequestQueryRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_insertStatementString =
-"INSERT INTO StageRequestQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, parameter, id, svcClass, client, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12,:13,:14) RETURNING id INTO :15";
+"INSERT INTO StageRequestQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11,:12) RETURNING id INTO :13";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_deleteStatementString =
@@ -63,11 +65,11 @@ const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_deleteState
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, parameter, id, svcClass, client, status FROM StageRequestQueryRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client FROM StageRequestQueryRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_updateStatementString =
-"UPDATE StageRequestQueryRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, parameter = :11, status = :12 WHERE id = :13";
+"UPDATE StageRequestQueryRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_storeTypeStatementString =
@@ -84,6 +86,18 @@ const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_insertStatu
 /// SQL statement for request status deletion
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_deleteStatusStatementString =
 "DELETE FROM requestsStatus WHERE id = :1";
+
+/// SQL select statement for member parameters
+const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_selectQueryParameterStatementString =
+"SELECT id from QueryParameter WHERE  = :1";
+
+/// SQL delete statement for member parameters
+const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_deleteQueryParameterStatementString =
+"UPDATE QueryParameter SET  = 0 WHERE id = :1";
+
+/// SQL remote update statement for member parameters
+const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_remoteUpdateQueryParameterStatementString =
+"UPDATE QueryParameter SET  = :1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageRequestQueryRequestCnv::s_checkSvcClassExistStatementString =
@@ -110,6 +124,9 @@ castor::db::ora::OraStageRequestQueryRequestCnv::OraStageRequestQueryRequestCnv(
   m_deleteStatusStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_selectQueryParameterStatement(0),
+  m_deleteQueryParameterStatement(0),
+  m_remoteUpdateQueryParameterStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
   m_updateIClientStatement(0) {}
@@ -136,6 +153,9 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::reset() throw() {
     deleteStatement(m_deleteStatusStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_deleteQueryParameterStatement);
+    deleteStatement(m_selectQueryParameterStatement);
+    deleteStatement(m_remoteUpdateQueryParameterStatement);
     deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
     deleteStatement(m_updateIClientStatement);
@@ -149,6 +169,9 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::reset() throw() {
   m_deleteStatusStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_selectQueryParameterStatement = 0;
+  m_deleteQueryParameterStatement = 0;
+  m_remoteUpdateQueryParameterStatement = 0;
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
   m_updateIClientStatement = 0;
@@ -180,6 +203,9 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillRep(castor::IAddress* 
     dynamic_cast<castor::stager::StageRequestQueryRequest*>(object);
   try {
     switch (type) {
+    case castor::OBJ_QueryParameter :
+      fillRepQueryParameter(obj);
+      break;
     case castor::OBJ_SvcClass :
       fillRepSvcClass(obj);
       break;
@@ -201,6 +227,56 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillRep(castor::IAddress* 
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.what() << std::endl;
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepQueryParameter
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageRequestQueryRequestCnv::fillRepQueryParameter(castor::stager::StageRequestQueryRequest* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // check select statement
+  if (0 == m_selectQueryParameterStatement) {
+    m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
+  }
+  // Get current database data
+  std::set<int> parametersList;
+  m_selectQueryParameterStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectQueryParameterStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    parametersList.insert(rset->getInt(1));
+  }
+  m_selectQueryParameterStatement->closeResultSet(rset);
+  // update parameters and create new ones
+  for (std::vector<castor::stager::QueryParameter*>::iterator it = obj->parameters().begin();
+       it != obj->parameters().end();
+       it++) {
+    if (0 == (*it)->id()) {
+      cnvSvc()->createRep(0, *it, false, OBJ_QryRequest);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateQueryParameterStatement) {
+        m_remoteUpdateQueryParameterStatement = createStatement(s_remoteUpdateQueryParameterStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateQueryParameterStatement->setDouble(1, obj->id());
+      m_remoteUpdateQueryParameterStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateQueryParameterStatement->executeUpdate();
+      std::set<int>::iterator item;
+      if ((item = parametersList.find((*it)->id())) != parametersList.end()) {
+        parametersList.erase(item);
+      }
+    }
+  }
+  // Delete old links
+  for (std::set<int>::iterator it = parametersList.begin();
+       it != parametersList.end();
+       it++) {
+    if (0 == m_deleteQueryParameterStatement) {
+      m_deleteQueryParameterStatement = createStatement(s_deleteQueryParameterStatementString);
+    }
+    m_deleteQueryParameterStatement->setDouble(1, *it);
+    m_deleteQueryParameterStatement->executeUpdate();
   }
 }
 
@@ -261,6 +337,9 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillObj(castor::IAddress* 
   castor::stager::StageRequestQueryRequest* obj = 
     dynamic_cast<castor::stager::StageRequestQueryRequest*>(object);
   switch (type) {
+  case castor::OBJ_QueryParameter :
+    fillObjQueryParameter(obj);
+    break;
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
     break;
@@ -273,6 +352,54 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillObj(castor::IAddress* 
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjQueryParameter
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageRequestQueryRequestCnv::fillObjQueryParameter(castor::stager::StageRequestQueryRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectQueryParameterStatement) {
+    m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> parametersList;
+  m_selectQueryParameterStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectQueryParameterStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    parametersList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_selectQueryParameterStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::QueryParameter*> toBeDeleted;
+  for (std::vector<castor::stager::QueryParameter*>::iterator it = obj->parameters().begin();
+       it != obj->parameters().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = parametersList.find((*it)->id())) == parametersList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      parametersList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::stager::QueryParameter*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeParameters(*it);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = parametersList.begin();
+       it != parametersList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::stager::QueryParameter* remoteObj = 
+      dynamic_cast<castor::stager::QueryParameter*>(item);
+    obj->addParameters(remoteObj);
   }
 }
 
@@ -293,7 +420,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillObjSvcClass(castor::st
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -331,7 +458,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillObjIClient(castor::sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(14);
+  u_signed64 clientId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -369,7 +496,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(13, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -388,12 +515,10 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setString(11, obj->parameter());
-    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
-    m_insertStatement->setInt(14, (int)obj->status());
+    m_insertStatement->setDouble(11, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(12, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(15));
+    obj->setId((u_signed64)m_insertStatement->getDouble(13));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -430,11 +555,9 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::createRep(castor::IAddress
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
-                    << "  parameter : " << obj->parameter() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl
-                    << "  status : " << obj->status() << std::endl;
+                    << "  client : " << obj->client() << std::endl;
     throw ex;
   }
 }
@@ -466,9 +589,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::updateRep(castor::IAddress
     m_updateStatement->setString(8, obj->svcClassName());
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
-    m_updateStatement->setString(11, obj->parameter());
-    m_updateStatement->setInt(12, (int)obj->status());
-    m_updateStatement->setDouble(13, obj->id());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -524,6 +645,11 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::deleteRep(castor::IAddress
     m_deleteStatement->executeUpdate();
     m_deleteStatusStatement->setDouble(1, obj->id());
     m_deleteStatusStatement->executeUpdate();
+    for (std::vector<castor::stager::QueryParameter*>::iterator it = obj->parameters().begin();
+         it != obj->parameters().end();
+         it++) {
+      cnvSvc()->deleteRep(0, *it, false);
+    }
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }
@@ -585,9 +711,7 @@ castor::IObject* castor::db::ora::OraStageRequestQueryRequestCnv::createObj(cast
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setParameter(rset->getString(11));
-    object->setId((u_signed64)rset->getDouble(12));
-    object->setStatus((enum castor::stager::RequestQueryType)rset->getInt(15));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -643,9 +767,7 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::updateObj(castor::IObject*
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setParameter(rset->getString(11));
-    object->setId((u_signed64)rset->getDouble(12));
-    object->setStatus((enum castor::stager::RequestQueryType)rset->getInt(15));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

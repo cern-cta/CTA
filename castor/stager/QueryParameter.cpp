@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/StageRequestQueryRequest.cpp
+ *                      castor/stager/QueryParameter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,8 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/QryRequest.hpp"
-#include "castor/stager/StageRequestQueryRequest.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -37,40 +36,41 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::StageRequestQueryRequest::StageRequestQueryRequest() throw() :
-  QryRequest(),
-  m_id(0) {
+castor::stager::QueryParameter::QueryParameter() throw() :
+  m_value(""),
+  m_id(0),
+  m_queryType(RequestQueryType(0)) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::StageRequestQueryRequest::~StageRequestQueryRequest() throw() {
+castor::stager::QueryParameter::~QueryParameter() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::StageRequestQueryRequest::print(std::ostream& stream,
-                                                     std::string indent,
-                                                     castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# StageRequestQueryRequest #]" << std::endl;
+void castor::stager::QueryParameter::print(std::ostream& stream,
+                                           std::string indent,
+                                           castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# QueryParameter #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
-  // Call print on the parent class(es)
-  this->QryRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "value : " << m_value << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "queryType : " << RequestQueryTypeStrings[m_queryType] << std::endl;
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::StageRequestQueryRequest::print() const {
+void castor::stager::QueryParameter::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -78,21 +78,21 @@ void castor::stager::StageRequestQueryRequest::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::StageRequestQueryRequest::TYPE() {
-  return OBJ_StageRequestQueryRequest;
+int castor::stager::QueryParameter::TYPE() {
+  return OBJ_QueryParameter;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::StageRequestQueryRequest::type() const {
+int castor::stager::QueryParameter::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::stager::StageRequestQueryRequest::clone() {
-  return new StageRequestQueryRequest(*this);
+castor::IObject* castor::stager::QueryParameter::clone() {
+  return new QueryParameter(*this);
 }
 

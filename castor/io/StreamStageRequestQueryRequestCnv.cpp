@@ -38,11 +38,12 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/RequestQueryType.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -100,9 +101,7 @@ void castor::io::StreamStageRequestQueryRequestCnv::createRep(castor::IAddress* 
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
-  ad->stream() << obj->parameter();
   ad->stream() << obj->id();
-  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -145,15 +144,9 @@ castor::IObject* castor::io::StreamStageRequestQueryRequestCnv::createObj(castor
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
-  std::string parameter;
-  ad->stream() >> parameter;
-  object->setParameter(parameter);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int status;
-  ad->stream() >> status;
-  object->setStatus((castor::stager::RequestQueryType)status);
   return object;
 }
 
@@ -174,6 +167,12 @@ void castor::io::StreamStageRequestQueryRequestCnv::marshalObject(castor::IObjec
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    address->stream() << obj->parameters().size();
+    for (std::vector<castor::stager::QueryParameter*>::iterator it = obj->parameters().begin();
+         it != obj->parameters().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
@@ -195,6 +194,13 @@ castor::IObject* castor::io::StreamStageRequestQueryRequestCnv::unmarshalObject(
   // Fill object with associations
   castor::stager::StageRequestQueryRequest* obj = 
     dynamic_cast<castor::stager::StageRequestQueryRequest*>(object);
+  unsigned int parametersNb;
+  ad.stream() >> parametersNb;
+  for (unsigned int i = 0; i < parametersNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    IObject* objParameters = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addParameters(dynamic_cast<castor::stager::QueryParameter*>(objParameters));
+  }
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));

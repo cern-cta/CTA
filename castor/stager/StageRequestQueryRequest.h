@@ -28,11 +28,11 @@
 #define CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_H
 
 // Include Files and Forward declarations for the C world
-#include "castor/stager/RequestQueryType.h"
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_QryRequest_t;
+struct Cstager_QueryParameter_t;
 struct Cstager_Request_t;
 struct Cstager_StageRequestQueryRequest_t;
 struct Cstager_SvcClass_t;
@@ -92,6 +92,25 @@ int Cstager_StageRequestQueryRequest_print(struct Cstager_StageRequestQueryReque
  * Gets the type of this kind of objects
  */
 int Cstager_StageRequestQueryRequest_TYPE(int* ret);
+
+/***********************************************/
+/* Implementation of QryRequest abstract class */
+/***********************************************/
+
+/**
+ * Add a struct Cstager_QueryParameter_t* object to the parameters list
+ */
+int Cstager_StageRequestQueryRequest_addParameters(struct Cstager_StageRequestQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
+
+/**
+ * Remove a struct Cstager_QueryParameter_t* object from parameters
+ */
+int Cstager_StageRequestQueryRequest_removeParameters(struct Cstager_StageRequestQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
+
+/**
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters
+ */
+int Cstager_StageRequestQueryRequest_parameters(struct Cstager_StageRequestQueryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 
 /********************************************/
 /* Implementation of Request abstract class */
@@ -252,20 +271,6 @@ int Cstager_StageRequestQueryRequest_clone(struct Cstager_StageRequestQueryReque
                                            struct C_IObject_t* ret);
 
 /**
- * Get the value of parameter
- * The parameter of this query. Depending on its type, it may contain different
- * things, e.g. a filename, a reqid, a usertag or a fileid
- */
-int Cstager_StageRequestQueryRequest_parameter(struct Cstager_StageRequestQueryRequest_t* instance, const char** var);
-
-/**
- * Set the value of parameter
- * The parameter of this query. Depending on its type, it may contain different
- * things, e.g. a filename, a reqid, a usertag or a fileid
- */
-int Cstager_StageRequestQueryRequest_setParameter(struct Cstager_StageRequestQueryRequest_t* instance, const char* new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */
@@ -276,15 +281,5 @@ int Cstager_StageRequestQueryRequest_id(struct Cstager_StageRequestQueryRequest_
  * The id of this object
  */
 int Cstager_StageRequestQueryRequest_setId(struct Cstager_StageRequestQueryRequest_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of status
- */
-int Cstager_StageRequestQueryRequest_status(struct Cstager_StageRequestQueryRequest_t* instance, enum Cstager_RequestQueryType_t* var);
-
-/**
- * Set the value of status
- */
-int Cstager_StageRequestQueryRequest_setStatus(struct Cstager_StageRequestQueryRequest_t* instance, enum Cstager_RequestQueryType_t new_var);
 
 #endif // CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_H
