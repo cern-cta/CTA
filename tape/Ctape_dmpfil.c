@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.14 $ $Date: 2001/07/30 12:51:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.15 $ $Date: 2002/01/24 08:26:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -225,6 +225,7 @@ u_signed64 *Size;
 {
 	int avg_block_length;
 	int errcat = 0;
+	u_signed64 filesize;
 	int goodrec = 0;
 	char label[81];
 	static char labels[4][3] = {"nl", "al", "nl", "sl"};
@@ -240,10 +241,10 @@ u_signed64 *Size;
 	static int qbov = 1;
 	int qlab = 0;
 	u_signed64 sum_block_length = 0;
-	float tape_used = 0;
+	static float tape_used = 0;
+	char tmpbuf[21];
 
-	if (Size)
-		*Size = 0;
+	filesize = 0;
 	while (1) {
 		nbytes = read (infd, buffer, dmpparm.maxblksize);
 		if (nbytes > 0) {		/* record found */
@@ -362,8 +363,7 @@ u_signed64 *Size;
 				}
 			}
 			qlab = 0;
-			if (Size)
-				*Size += nbytes;
+			filesize += nbytes;
 			if (irec >= dmpparm.fromblock &&
 				(dmpparm.toblock == 0 || irec <= dmpparm.toblock)) {
 				dumpblock (buffer, nbytes);
@@ -415,8 +415,12 @@ u_signed64 *Size;
 				nfile++;
 				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      FILE %d CONTAINED %d BLOCKS.\n",
 					nfile, irec);
+				if (Size)
+					*Size = filesize;
 				if (goodrec != 0) {
 					avg_block_length = sum_block_length / goodrec;
+					Ctape_dmpmsg (MSG_OUT, "                                 FILE SIZE WAS %s BYTES\n",
+						u64tostr (filesize, tmpbuf, 0));
 					Ctape_dmpmsg (MSG_OUT, "                                 MAXIMUM BLOCK LENGTH WAS %d BYTES\n",
 						max_block_length);
 					Ctape_dmpmsg (MSG_OUT, "                                 MINIMUM BLOCK LENGTH WAS %d BYTES\n",
