@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.43 2002/11/22 08:56:03 jdurand Exp $
+ * $Id: stagestat.c,v 1.44 2003/03/06 17:45:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.43 $ $Date: 2002/11/22 08:56:03 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.44 $ $Date: 2003/03/06 17:45:24 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -41,6 +41,9 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.43 $ $Date: 2
 #include "u64subr.h"
 #include "Cnetdb.h"
 #include <ctype.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 
 /* Macro to swap byte order */
 
