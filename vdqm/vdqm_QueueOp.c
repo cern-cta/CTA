@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.11 $ $Date: 1999/11/22 15:27:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.12 $ $Date: 1999/11/23 10:11:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1128,9 +1128,12 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     } else if ( DrvReq->status & VDQM_UNIT_UP ) {
         /*
          * Unit configured up. Make sure that "down" status is reset.
+         * Also, if there is no job and no volume on the unit, set it FREE.
          */
         drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
         drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
+        if ( drvrec->vol == NULL && *drvrec->drv.volid == '\0' )
+            drvrec->drv.status |= VDQM_UNIT_FREE;
         drvrec->drv.status |= DrvReq->status;
     } else {
         if ( !(drvrec->drv.status & VDQM_UNIT_UP) ) {
