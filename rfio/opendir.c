@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.5 1999/12/10 19:45:08 baran Exp $
+ * $Id: opendir.c,v 1.6 2000/05/02 06:33:23 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:45:08 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.6 $ $Date: 2000/05/02 06:33:23 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -20,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.5 $ $Date: 1999
 #include <stdlib.h>
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfcntl.h"             /* remote file control mapping macros   */
+#include <arpa/inet.h>          /* for inet_ntoa()                      */
 #include <Cpwd.h>
 
 #ifndef linux
