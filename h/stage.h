@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.47 2001/03/02 18:19:06 jdurand Exp $
+ * $Id: stage.h,v 1.48 2001/03/04 19:06:41 jdurand Exp $
  */
 
 /*
@@ -258,6 +258,7 @@
 #define STG138  "STG138 - Fileclass %s@%s (classid %d) : specifies %d nbcopies and %d nbtppools - only both zero or both non-zero is legal - invalid fileclass - Please contact your admin\n"
 #define STG139  "STG139 - %s : fileclass %s@%s (classid %d) specifies %d nbcopies and %d nbtppools - this file will not be migrated\n"
 #define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
+#define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 
 			/* stage daemon return codes and states */
 

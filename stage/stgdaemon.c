@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.110 2001/03/02 18:16:50 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.111 2001/03/04 19:06:51 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.110 $ $Date: 2001/03/02 18:16:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.111 $ $Date: 2001/03/04 19:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -771,6 +771,13 @@ int main(argc,argv)
 
 				rbp = req_hdr;
 				unmarshall_LONG (rbp, magic);
+
+				if ((magic != STGMAGIC) && (magic != STGMAGIC2)) {
+					stglogit(func, STG141, (unsigned long) magic);
+					close(rqfd);
+					goto endreq;
+				}
+
 				unmarshall_LONG (rbp, req_type);
 				unmarshall_LONG (rbp, msglen);
 				rpfd = rqfd;
