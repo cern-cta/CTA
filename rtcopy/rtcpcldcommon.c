@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/21 16:15:27 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/21 16:15:27 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -316,7 +316,7 @@ int rtcpcld_sendNotifyByAddr(
   struct sockaddr_in to;
   struct hostent *hp;
   SOCKET s;
-  char byteToSend;
+  char byteToSend = '\0';
   int rc;
 
   s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
