@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.244 $ $Date: 2003/09/25 07:35:58 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.245 $ $Date: 2003/09/25 07:41:01 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3641,12 +3641,12 @@ void delreqid(thisreqid,nodb_delete_flag)
 int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2], t_or_d = 0;
-	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
-	char arg_api_flag[2];      /* Flag telling if this is an API call or not */
+	char arg_Aflag[11], arg_silent[11], arg_use_subreqid[11], t_or_d = 0;
+	char arg_key[11], arg_nbsubreqs[11], arg_reqid[11], arg_nretry[11], arg_rpfd[11], arg_concat_off_fseq[11];
+	char arg_api_flag[11];      /* Flag telling if this is an API call or not */
 	char arg_api_flags[21];    /* Flag giving the API flags themselves */
-	char arg_rtcp_uid[21];     /* Explicit uid under which the process will run */
-	char arg_rtcp_gid[21];     /* Explicit uid under which the process will run */
+	char arg_rtcp_uid[11];     /* Explicit uid under which the process will run */
+	char arg_rtcp_gid[11];     /* Explicit uid under which the process will run */
 	int c, i, sav_ovl_pid;
 	static int pfd[2];
 	int pid;
