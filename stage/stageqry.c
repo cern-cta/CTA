@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.34 2002/10/20 08:26:19 jdurand Exp $
+ * $Id: stageqry.c,v 1.35 2002/10/26 13:19:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.34 $ $Date: 2002/10/20 08:26:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.35 $ $Date: 2002/10/26 13:19:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -142,7 +142,6 @@ int main(argc, argv)
 
 	memset(&stcp,0,sizeof(struct stgcat_entry));
     /* In case it is an HSM request we make sure retenp_on_disk and mintime_before_migr are not logged for nothing */
-	stcp.reqid = -1;
 	numvid = 0;
     Coptind = 1;
 	Copterr = 1;
@@ -155,6 +154,7 @@ int main(argc, argv)
 				stcp.t_or_d = 'a';
 				strncpy(stcp.u1.d.xfile,Coptarg,(CA_MAXHOSTNAMELEN+MAXPATH));
 			}
+			flags |= STAGE_ALLOCED;
 			break;
 		case 'a':
 			flags |= STAGE_ALL;
@@ -232,9 +232,11 @@ int main(argc, argv)
 			break;
 		case 0:
 			/* Here are the long options */
-			if (reqid_flag && stcp.reqid < 0) {
+			if (reqid_flag && stcp.reqid == 0) {
 				if ((stcp.reqid = atoi(Coptarg)) < 0) {
 					stcp.reqid = 0;
+				} else {
+					flags |= STAGE_REQID;					
 				}
 			}
 			if (side_flag && ! have_parsed_side) {
@@ -278,6 +280,12 @@ int main(argc, argv)
 			stcp.u1.h.retenp_on_disk = -1;
 			stcp.u1.h.mintime_beforemigr = -1;
 		}
+	}
+	if (stcp.poolname[0] != '\0' && ! stcp.t_or_d) {
+		/* Use user's -p option and nothing else */
+		stcp.t_or_d = 'm'; /* Needed to pass reqid in the protocol */
+		stcp.u1.h.retenp_on_disk = -1;
+		stcp.u1.h.mintime_beforemigr = -1;
 	}
     if (noregexp_flag) flags |= STAGE_NOREGEXP;
     if (dump_flag) flags |= STAGE_DUMP;
