@@ -1,16 +1,16 @@
-.\" $Id: stage_seterrbuf.man,v 1.5 2002/09/08 07:22:06 jdurand Exp $
+.\" $Id: stage_seterrbuf.man,v 1.6 2002/09/08 07:27:00 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_seterrbuf.man,v $ $Revision: 1.5 $ $Date: 2002/09/08 07:22:06 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_seterrbuf.man,v $ $Revision: 1.6 $ $Date: 2002/09/08 07:27:00 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_SETERRBUF "3" "$Date: 2002/09/08 07:22:06 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_SETERRBUF "3" "$Date: 2002/09/08 07:27:00 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_seterrbuf \- Set error buffer
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-.BI "int stage_setlog(char *" buffer ", int " buflen ");"
+.BI "int stage_seterrbuf(char *" buffer ", int " buflen ");"
 
 .SH DESCRIPTION
 The \fBstage_seterrbuf\fP API method is setting the error buffer of stage API. Unless this method is called or global log messages are setted using \fBstage_setlog\fP method, error messages will always go to stderr by default.
