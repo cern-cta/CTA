@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/15 07:33:07 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/26 14:33:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/15 07:33:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/26 14:33:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,6 @@ WSADATA wsadata;
 #include <castor/stager/Segment.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
-#include <castor/stager/IStagerSvc.h>
 #include <castor/stager/CastorFile.h>
 #include <castor/stager/TapeCopy.h>
 #include <castor/Services.h>
