@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.42 $ $Date: 2004/02/25 13:55:27 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.43 $ $Date: 2004/08/09 10:05:42 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2202,6 +2202,7 @@ int DLL_DECL dumpFileReq(file_list_t *fl) {
     DUMPSTR(indent,filereq->fid);
     DUMPSTR(indent,filereq->ifce);
     DUMPSTR(indent,filereq->stageID);
+    DUMPINT(indent,filereq->stageSubreqID);
     DUMPINT(indent,filereq->VolReqID);
     DUMPINT(indent,filereq->jobID);
     DUMPINT(indent,filereq->position_method);
