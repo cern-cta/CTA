@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.202 2002/06/05 13:22:34 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.203 2002/06/10 13:56:36 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.202 $ $Date: 2002/06/05 13:22:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.203 $ $Date: 2002/06/10 13:56:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -223,11 +223,11 @@ char cns_error_buffer[512];         /* Cns error buffer */
 char cupv_error_buffer[512];         /* Upv error buffer */
 char *stgconfigfile = STGCONFIG;    /* Stager configuration file */
 
+#ifdef MONITOR
 /* For monitoring */
 time_t last_monitormsg_sent = 0;
 time_t last_init_time = 0;
-time_t monitormsg_int = 0;
-
+#endif
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, int, unsigned long, char *, char *));
@@ -1061,9 +1061,9 @@ int main(argc,argv)
 	/* main loop */
 	while (1) {
 
-    	        /* @@@@@@@@@@@@@ MONITOR @@@@@@@@@@@@@ */
-	        /* Every xxx seconds call monitor API  */
-	        /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  */
+		/* @@@@@@@@@@@@@ MONITOR @@@@@@@@@@@@@ */
+		/* Every xxx seconds call monitor API  */
+		/* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  */
 
 #ifdef MONITOR
 	        check_send_monitormsg();
@@ -1120,9 +1120,9 @@ int main(argc,argv)
 			if (c != 0) {
 				sendrep (rpfd, MSG_ERR, STG09, stgconfigfile, "incorrect");
 			} else {
-			        /* @@@@@@@@@@@@@@@@@@@@@@@ */
-			        /* RESET MONITOR KNOWLEDGE */
-			        /* @@@@@@@@@@@@@@@@@@@@@@@ */
+				/* @@@@@@@@@@@@@@@@@@@@@@@ */
+				/* RESET MONITOR KNOWLEDGE */
+				/* @@@@@@@@@@@@@@@@@@@@@@@ */
 			  last_init_time = time(NULL);
 			  stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
