@@ -1,7 +1,11 @@
 /*
- * $Id: socket_timeout.c,v 1.5 1999/10/15 14:49:06 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.6 1999/10/20 18:41:48 jdurand Exp $
  *
  * $Log: socket_timeout.c,v $
+ * Revision 1.6  1999/10/20 18:41:48  jdurand
+ * Removed the signal handling if compiled under Windows
+ * Changed one errno setting to its serrno equivalent
+ *
  * Revision 1.5  1999/10/15 14:49:06  jdurand
  * Wrapped sigaction aroung __INSURE__ #define because insure++ do not like at
  * all the parameters we give to sigaction - another side effect of insure++ ?
@@ -33,26 +37,34 @@
 #include <sys/select.h>
 #endif
 #include <sys/types.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "net.h"
 #include "serrno.h"
 #include "socket_timeout.h"
 
+#ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
 #if defined(__STDC__)
 typedef void    Sigfunc(int);
 #else
 typedef void    Sigfunc();
 #endif
+#endif
 
 #if defined(__STDC__)
 int      _net_readable(int, int);
 int      _net_writable(int, int);
+#ifndef _WIN32
 Sigfunc *_netsignal(int, Sigfunc *);
+#endif
 #else
 int      _net_readable();
 int      _net_writable();
+#ifndef _WIN32
 Sigfunc *_netsignal();
+#endif
 #endif
 
 ssize_t netread_timeout(fd, vptr, n, timeout)
@@ -66,17 +78,21 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
   ssize_t flag = 0;            /* != 0 means error */
   char  *ptr   = NULL;         /* Temp. pointer */
   int     select_status = 0;
+#ifndef _WIN32
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
+#endif
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
     return(netread(fd,vptr,n));
   }
 
+#ifndef _WIN32
   /* In any case we catch and trap SIGPIPE */
   if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
     return(-1);
   }
+#endif
 
   ptr   = vptr;
   nleft = n;
@@ -86,7 +102,7 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
     if ((select_status = _net_readable(fd, timeout)) <= 0) {
       if (select_status == 0) {
         /* Timeout */
-        errno = ETIMEDOUT;
+        serrno = SETIMEDOUT;
       }
       flag = -1;
       break;
@@ -112,8 +128,11 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
       ptr   += nread;
     }
   }
+
+#ifndef _WIN32
   /* Restore previous handlers */
   _netsignal(SIGPIPE, sigpipe);
+#endif
 
   if (flag != 0) {
     /* Return -1 if error */
@@ -133,7 +152,9 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
   ssize_t nwritten = 0;        /* Bytes yet read */
   ssize_t flag = 0;            /* != 0 means error */
   char  *ptr   = NULL;         /* Temp. pointer */
+#ifndef _WIN32
   Sigfunc *sigpipe;            /* Old SIGPIPE handler */
+#endif
   int     select_status = 0;
 
   /* If not timeout, we go to normal function */
@@ -141,10 +162,12 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
     return(netwrite(fd,vptr,n));
   }
 
+#ifndef _WIN32
   /* In any case we catch and trap SIGPIPE */
   if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
     return(-1);
   }
+#endif
 
   ptr      = vptr;
   nleft    = n;
@@ -153,7 +176,7 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
     if ((select_status = _net_writable(fd, timeout)) <= 0) {
       if (select_status == 0) {
         /* Timeout */
-        errno = ETIMEDOUT;
+        serrno = SETIMEDOUT;
       }
       flag = -1;
       break;
@@ -171,8 +194,11 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
       ptr   += nwritten;
     }
   }
+
+#ifndef _WIN32
   /* Restore previous handlers */
   _netsignal(SIGPIPE, sigpipe);
+#endif
 
   if (flag != 0) {
     /* Return -1 if error */
@@ -182,6 +208,7 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
   return(n - nleft);
 }
 
+#ifndef _WIN32
 Sigfunc *_netsignal(signo, func)
      int signo;
      Sigfunc *func;
@@ -215,6 +242,7 @@ Sigfunc *_netsignal(signo, func)
   }
   return(oact.sa_handler);
 }
+#endif
 
 void _netalarm(signo)
      int signo;
