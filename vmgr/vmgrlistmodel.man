@@ -1,0 +1,54 @@
+.\" @(#)$RCSfile: vmgrlistmodel.man,v $ $Revision: 1.1 $ $Date: 2000/04/11 09:34:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTMODEL 1 "$Date: 2000/04/11 09:34:48 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistmodel \- query the CASTOR Volume Manager about a given model or list all existing cartridge models
+.SH SYNOPSIS
+.B vmgrlistmodel
+[
+.BI --mo " model"
+] [
+.BI --ml " media_letter"
+]
+.SH DESCRIPTION
+.B vmgrlistmodel
+queries the CASTOR Volume Manager about a given cartridge model or list all
+existing cartridge models in tabular form:
+.HP 1.2i
+model		model of cartridge.
+.HP
+media_letter	media identification letter.
+.HP
+capacity		native capacity (without compression).
+.HP
+media_cost
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistmodel
+3490   E 800.00M 0
+3480     200.00M 0
+3590   J  10.00G 0
+3590E  K  40.00G 0
+8200       2.00G 0
+8500       5.00G 0
+9840   R  20.00G 0
+DAT120     4.00G 0
+DLT2      10.00G 0
+DLT4      20.00G 0
+DLT7   D  35.00G 0
+SD1M      43.00G 0
+SD1L      96.00G 0
+SD3S   A  10.00G 0
+SD3M   B  25.00G 0
+SD3L   C  50.00G 0
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR vmgr_entermodel(3) ,
+.B vmgrentermodel(1)

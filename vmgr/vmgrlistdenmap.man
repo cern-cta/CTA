@@ -1,0 +1,68 @@
+.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.1 $ $Date: 2000/04/11 09:34:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTDENMAP 1 "$Date: 2000/04/11 09:34:46 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistdenmap \- list all existing triplets model/media_letter/density in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrlistdenmap
+.SH DESCRIPTION
+.B vmgrlistdenmap
+lists all existing triplets model/media_letter/density in the CASTOR Volume
+Manager in tabular form:
+.HP 1.2i
+model		model of cartridge.
+.HP
+media_letter	media identification letter.
+.HP
+density		alphanumeric density.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistdenmap
+3480     38000
+3480     38KC
+3490   E 38KD
+3490   E 38KDC
+3590   J 10G
+3590   J 10GC
+3590E  K 40G
+3590E  K 40GC
+8200     8200
+8500     8200
+8500     8200C
+8500     8500
+8500     8500C
+9840   R 20G
+9840   R 20GC
+DAT120   DDS
+DAT120   DDSC
+DLT2     10G
+DLT2     10GC
+DLT4     10G
+DLT4     10GC
+DLT4     20G
+DLT4     20GC
+DLT7   D 10G
+DLT7   D 10GC
+DLT7   D 20G
+DLT7   D 20GC
+DLT7   D 35G
+DLT7   D 35GC
+SD1M     RAW
+SD1L     RAW
+SD3S   A 10G
+SD3S   A 10GC
+SD3M   B 25G
+SD3M   B 25GC
+SD3L   C 50G
+SD3L   C 50GC
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR vmgr_enterdenmap(3) ,
+.B vmgrenterdenmap(1)
