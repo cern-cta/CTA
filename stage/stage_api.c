@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.19 2001/06/08 13:52:51 jdurand Exp $
+ * $Id: stage_api.c,v 1.20 2001/06/08 14:41:25 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1614,6 +1614,9 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   case 'd':                             /* - disk files */
   case 'm':                             /* - non-CASTOR HSM files */
   case 'h':                             /* - CASTOR HSM files */
+    flagsok &= ~STAGE_LINKNAME;
+    flagsok &= ~STAGE_PATHNAME;
+    break;
   case 'p':                             /* - For path - ignored */
     flagsok &= ~STAGE_LINKNAME;
     flagsok |= STAGE_PATHNAME;
