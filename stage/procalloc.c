@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.37 2002/03/04 09:49:42 jdurand Exp $
+ * $Id: procalloc.c,v 1.38 2002/03/04 11:08:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.37 $ $Date: 2002/03/04 09:49:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.38 $ $Date: 2002/03/04 11:08:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -33,7 +33,8 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.37 $ $Date: 2
 #ifdef USECDB
 #include "stgdb_Cdb_ifce.h"
 #endif
-#include <serrno.h>
+#include <errno.h>
+#include "serrno.h"
 #include "osdep.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
