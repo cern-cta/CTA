@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.11 2000/03/24 10:10:06 jdurand Exp $
+ * $Id: stageclr.c,v 1.12 2000/05/08 10:43:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.11 $ $Date: 2000/03/24 10:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.12 $ $Date: 2000/05/08 10:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.11 $ $Date: 20
 #endif
 #include "marshall.h"
 #include "stage.h"
+extern	char	*getenv();
 extern	char	*getconfent();
 extern	char	*optarg;
 extern	int	optind;
@@ -62,6 +63,8 @@ int main(argc, argv)
 	char *stghost = NULL;
 	uid_t uid;
 	char vid[MAXVSN][7];
+	char *hsm_host;
+	char hsm_path[CA_MAXHOSTNAMELEN + MAXPATH];
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -127,6 +130,22 @@ int main(argc, argv)
 			break;
 		case 'M':
 			Mflag++;
+			if (strchr(optarg,':') == NULL) {
+				if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+					strcpy (hsm_path, hsm_host);
+					strcat (hsm_path, ":");
+					strcat (hsm_path, optarg);
+					argv[optind - 1] = hsm_path;
+				} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+					strcpy (hsm_path, hsm_host);
+					strcat (hsm_path, ":");
+					strcat (hsm_path, optarg);
+					argv[optind - 1] = hsm_path;
+				} else {
+					fprintf (stderr, STG54);
+					errflg++;
+				}
+			}
 			break;
 		case 'P':
 			Pflag = optind - 1;
