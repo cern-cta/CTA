@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.2 $ $Date: 2000/05/03 15:50:10 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.3 $ $Date: 2000/08/08 10:07:31 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,12 +27,16 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.2 $ $Date: 2000
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include "../h/sacct.h"
-#include "../h/rfio.h"
+#include <osdep.h>
+#include <sacct.h>
+#include <rfio.h>
+#include <net.h>
+#if defined(VDQM)
+#define VDQMSERV
+#include <vdqm_api.h>
+#endif /* VDQM */
 
 #define MAXDGP 20		/* Maximum number of device groups */
-#define MAXLEN 8		/* Current max length of device group names */
-				/* and server names */
 #define MAXSERVS 40		/* Maximum number of servers */
 #define MAXVOLLEN 7		/* Current max length of volume lablel */
 #define NUMDIVS 60		/* Number of divisions required for graph */
@@ -61,7 +65,7 @@ int stdin_flag = 0;		/* Standard input flag */
 int server_failed = 0;	        /* Flag set if an open or read has failed */
 int max_acctreclen = 0;
 
-static char devgrps[MAXDGP][MAXLEN]; /* Array storing device group names */
+static char devgrps[MAXDGP][CA_MAXDGNLEN+1]; /* Array storing device group names */
 
 struct devstats {		/* Structure to store unit information */
   time_t assigned;		/* Time unit assigned */
@@ -102,7 +106,7 @@ struct grpstats *grp_requests = NULL;
 
 struct job_ids {		/* Structure to store list of job ids */
   int jid;			/* Job id */
-  char server[MAXLEN];		/* Server name */
+  char server[CA_MAXHOSTNAMELEN+1];/* Server name */
   struct job_ids *previous;	/* Pointer to previous record */
   struct job_ids *next;		/* Pointer to next record */
 };
@@ -110,7 +114,7 @@ struct job_ids *jobid = NULL;
 struct job_ids *lastjd = NULL;
 
 struct numq {			/* Structure storing queue length information */
-  char devname[MAXLEN];		/* Device group name, eg: CART, 8500 */
+  char devname[CA_MAXDGNLEN+1];	/* Device group name, eg: CART, 8500 */
   int global_maxq;		/* Max global q length for each device group */
   int lastval[NUMDIVS];		/* Array to store last value per timeslot */
   int maxq;			/* Max q length for specified device group */
@@ -122,8 +126,17 @@ struct numq *first = NULL;
 struct numq *new = NULL;
 struct numq *current = NULL;
 
+#if defined(VDQM)
+typedef struct DrvList {
+  vdqmDrvReq_t drv;
+  struct DrvList *next;
+  struct DrvList *prev;
+} DrvList_t;
+DrvList_t *drvlist = NULL;
+#endif /* VDQM */
+
 struct servlist {		/* Linked list of server names */
-  char servname[MAXLEN];	/* Server name */
+  char servname[CA_MAXHOSTNAMELEN+1];/* Server name */
   struct servlist *next;	/* Pointer to next record */
 };
 static struct servlist *devgrpserv[MAXDGP]; /* Array of pointers to device */
@@ -131,8 +144,8 @@ static struct servlist *devgrpserv[MAXDGP]; /* Array of pointers to device */
 
 struct serverqlength {		/* Structure storing the current queue length */
 				/* for a device group and server */
-  char devname[MAXLEN];		/* Device group name, eg: CART, 8500 */
-  char servname[MAXLEN];	/* Server name */
+  char devname[CA_MAXDGNLEN+1];	/* Device group name, eg: CART, 8500 */
+  char servname[CA_MAXHOSTNAMELEN+1];/* Server name */
   int qlength;			/* Current q length for this dev group/server */
   struct serverqlength *next;	/* Pointer to next record */
 };
@@ -154,6 +167,8 @@ void set_max_acctreclen() {
       max_acctreclen = sizeof(struct accttape);
   if ( sizeof(struct acctrtcp) > max_acctreclen ) 
       max_acctreclen = sizeof(struct acctrtcp);
+  if ( sizeof(struct acctrtcp_timing) > max_acctreclen )
+      max_acctreclen = sizeof(struct acctrtcp_timing);
   if ( sizeof(struct acctstage) > max_acctreclen ) 
       max_acctreclen = sizeof(struct acctstage);
 }
@@ -172,7 +187,7 @@ char **argv;
   char bufs[MAXSERVS][256];	/* Input buffers */
   int c = 0;			/* Temp command line switch variable */
   time_t cvt_datime();		/* Date function */
-  char devgroup[MAXLEN];	/* Device group name */
+  char devgroup[CA_MAXDGNLEN+1];/* Device group name */
   int dev_found = 0;		/* Flag to indicate if given device is valid */
   int Dflag = 0;		/* If set device utilisation requested */
   int div = 0;			/* Size of time intervals for graphs */
@@ -200,7 +215,7 @@ char **argv;
   char servers[MAXSERVS][9];	/* Full server list */
   char server_errors[MAXSERVS][9]; /* List of servers on which open failed */
   int servers_failed[MAXSERVS];	/* Flag set if an open has failed */
-  char serv_name[MAXLEN];	/* Server name */
+  char serv_name[CA_MAXHOSTNAMELEN+1];/* Server name */
   int Sflag = 0;		/* If set server is specified */
   int sflag = 0;		/* If set start time given */
   int smallest_time_server = 0;	/* Smallest current accthdr timestamp server */
@@ -235,8 +250,14 @@ char **argv;
 				/* that we know if it is used or not */
   serv_name[0] = '\0';		/* Make sure that devgroup is set null so */
 				/* that we know if it is used or not */
-  num_devs = create_devicelist(devgrps);
+#if defined(VDQM)
+  if ( get_drvlist() == -1 ) {
+      fprintf(stderr,"Failed to get drive list from VDQM\n");
+      exit(1);
+  }
+#endif /* VDQM */
 
+  num_devs = create_devicelist(devgrps);
 
 /* Read in command line arguments and set flags accordingly */
 
@@ -843,7 +864,7 @@ char *servname;
 add_gph_info(rp, timestamp, divisions, server_name, endtime)
 time_t endtime, divisions[];
 struct accttape *rp;
-char server_name[MAXLEN];
+char server_name[CA_MAXHOSTNAMELEN+1];
 {
   struct dev_usage *dptr = NULL;	/* Pointer to dev_usage record */
   int i = 0;				/* Counter */
@@ -1255,11 +1276,50 @@ int expbufsize;
 
 /* ************************************************************************** */
 
+#if defined(VDQM)
+/* Function to get drive list from VDQM */
+
+int get_drvlist() {
+  int rc = 0;
+  vdqmnw_t *nw = NULL;
+  DrvList_t *drvreq = NULL;
+  DrvList_t *tmpdrv = NULL;
+  int last_id = 0;
+  int found = 0;
+
+  do {
+    if ( drvreq == NULL ) 
+      drvreq = (DrvList_t *)calloc(1,sizeof(DrvList_t));
+    if ( drvreq == NULL ) {
+        perror("malloc()");
+        return(-1);
+    }
+    rc = vdqm_NextDrive(&nw,&drvreq->drv);
+    if ( rc != -1 && *drvreq->drv.server != '\0' && 
+         *drvreq->drv.drive != '\0' &&
+         drvreq->drv.DrvReqID != last_id ) {
+      found = 0;
+      CLIST_ITERATE_BEGIN(drvlist,tmpdrv) {
+        if ( strcmp(tmpdrv->drv.dgn,drvreq->drv.dgn) == 0 &&
+             strcmp(tmpdrv->drv.server,drvreq->drv.server) == 0 ) found = 1;
+      } CLIST_ITERATE_END(drvlist,tmpdrv);
+      if ( found == 0 ) { 
+        CLIST_INSERT(drvlist,drvreq);
+        last_id = drvreq->drv.DrvReqID;
+        drvreq = NULL;
+      }
+    }
+  } while ( rc != -1 );
+  /* Last drvreq not used */
+  if ( drvreq != NULL ) free(drvreq);
+  return(0);
+}
+#endif /* VDQM */
 
 /* Function to create device group list */
 
 create_devicelist(devgrps)
-char devgrps[MAXDGP][MAXLEN];
+char devgrps[MAXDGP][CA_MAXDGNLEN+1];
 {
   int i = 0;			/* Counter */
   char *d = NULL;		/* Token pointer */
@@ -1269,8 +1329,9 @@ char devgrps[MAXDGP][MAXLEN];
   char *server_list = NULL;	/* Pointer to matching entry */
   char *current_server = NULL;	/* Pointer to token */
   struct servlist *currentserv = NULL; /* Pointer to next server name entry */
-  char * getconfent();	/* Function to exract server names from config file */
-  static char tpservtypes[][10] = {"TPSERV","TPSERVR","TPSERVW"};
+#if defined(VDQM)
+  DrvList_t *tmpdrv = NULL;
+#endif /* VDQM */
 
 /* Clear the devgrpserv list before using it for the first time */
 
@@ -1278,53 +1339,32 @@ char devgrps[MAXDGP][MAXLEN];
     devgrpserv[i] = NULL;
   }
 
+/* Travers the list of all drives provided by VDQM. Get all device group     */
+/* names and create a linked list of server names which belong to each       */
+/* device group.                                                             */
 
-/* Open and read the configuration file and extract the names of all devices */
-/* currently in use.  Also create a linked list of server names which belong */
-/* to each device group. */
+#if defined(VDQM)
+  CLIST_ITERATE_BEGIN(drvlist,tmpdrv) {
+     for (i=0; (devgrps[i] != NULL && strcmp(devgrps[i],tmpdrv->drv.dgn) &&
+          i<num_devs); i++);
+     current_server = tmpdrv->drv.server;
+     if (devgrpserv[i] == NULL) {
+       devgrpserv[i] = (struct servlist *)calloc(1,sizeof(struct servlist));
+       currentserv = devgrpserv[i];
+     } else {
+       if ( i < num_devs ) currentserv = devgrpserv[i];
+       while (currentserv->next != NULL ) currentserv = currentserv->next;
+       currentserv->next = (struct servlist *)calloc(1,sizeof(struct servlist));
+       currentserv = currentserv->next;
+     }
+     strcpy(currentserv->servname, current_server);
+     if ( i == num_devs ) {
+       strcpy(devgrps[num_devs], tmpdrv->drv.dgn);
+       num_devs++;
+     }
+  } CLIST_ITERATE_END(drvlist,tmpdrv);
+#endif /* VDQM */
 
-  if ((fp = fopen(CONFIGFILE, "r")) != NULL) {
-    if ((fgets(buf, sizeof(buf), fp)) != NULL) {;
-      do {
-        d = strtok(buf, " \t\n");
-        if (d != '\0') {
-	  for (i=0; strcmp(d,tpservtypes[i]) && i<3; i++);
-          if (i<3) {
-            d = strtok(NULL, " \t");
-            if (strcmp(d, "CT1") == 0) {
-              continue;
-            }
-            server_list = getconfent(tpservtypes[i], d, 1);
-	    for (i=0; (devgrps[i] != NULL && strcmp(devgrps[i],d) &&
-		       i<num_devs); i++);
-            current_server = strtok(server_list, " ");
-            while (current_server != NULL){
-              if (devgrpserv[i] == NULL) {
-                devgrpserv[i] = (struct servlist *)calloc(1,
-                                        sizeof(struct servlist));
-                currentserv = devgrpserv[i];
-              }
-              else {
-		if ( i < num_devs ) currentserv = devgrpserv[i];
-		while (currentserv->next != NULL ) currentserv = currentserv->next;
-                currentserv->next = (struct servlist *)calloc(1,
-                                     sizeof(struct servlist));
-                currentserv = currentserv->next;
-              }
-              strcpy(currentserv->servname, current_server);
-              current_server = strtok(NULL, " ");
-            }
-            currentserv = NULL;
-	    if ( i == num_devs ) {
-	      strcpy(devgrps[num_devs], d);
-	      num_devs++;
-	    }
-          }
-        }
-      } while ((fgets(buf, sizeof(buf), fp)) != NULL);
-    }
-  }
-  fclose(fp);
   return num_devs;
 }
 
@@ -1345,34 +1385,30 @@ int num_devs;
   int k = 0;			/* Counter */
   int server_found = 0;		/* Flag set if server found */
   int numservs = 0;		/* Number of servers */
-  char * getconfent();	/* Function to exract server names from config file */
-  static char tpservtypes[][10] = {"TPSERV","TPSERVR","TPSERVW"};
+#if defined(VDQM)
+  DrvList_t *tmpdrv = NULL;
+#endif /* VDQM */
 
+/* Using drive list created by get_drvlist() and extract the names  of all */
+/* servers currently in use.                                               */
 
-/* Using getconfent function read the shift.conf file and extract the names */
-/* of all servers currently in use */
-
-  for(i = 0; i < num_devs; i++) {
-    for (k = 0; k < 3; k++) {
-      if ( (server_list = getconfent(tpservtypes[k], devgrps[i], 1)) != NULL ) {
-	current_server = strtok(server_list, " ");
-	while (current_server != NULL) {
-	  server_found = 0;
-	  for (j = 0; j < numservs; j++) {
-	    if ((strcmp(list[j], current_server)) == 0) {
-	      server_found = 1;
-	      break;
-	    }
-	  }
-	  if (!server_found) {
-	    strcpy(list[numservs], current_server);
-	    numservs++;
-	  }
-	  current_server = strtok(NULL, " ");
-	}
+#if defined(VDQM)
+  CLIST_ITERATE_BEGIN(drvlist,tmpdrv) {
+    current_server = tmpdrv->drv.server;
+    server_found = 0;
+    for (j = 0; j < numservs; j++) {
+      if ((strcmp(list[j], current_server)) == 0) {
+        server_found = 1;
+        break;
       }
     }
-  }
+    if (!server_found) {
+      strcpy(list[numservs], current_server);
+      numservs++;
+    }
+  } CLIST_ITERATE_END(drvlist,tmpdrv);
+#endif /* VDQM */
+
   return numservs;
 }
 
@@ -1383,7 +1419,7 @@ int num_devs;
 
 create_reqserverlist(dev_found, devgroup, list, num_devs)
 int dev_found;
-char devgroup[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
 char list[MAXSERVS][9];
 int num_devs;
 {
@@ -1391,25 +1427,23 @@ int num_devs;
   char *current_server = NULL;	/* Pointer to token */
   int numservs = 0;		/* Number of servers to be read */
   int i = 0;
-  char * getconfent();	/* Function to exract server names from config file */
-  static char tpservtypes[][10] = {"TPSERV","TPSERVR","TPSERVW"};
+#if defined(VDQM)
+  DrvList_t *tmpdrv = NULL;
+#endif /* VDQM */
 
 /* If a device has been specified create its list of servers else create a  */
 /* list of all the servers in use */
 
-  if (dev_found) {
-    for (i=0; i < 3; i++) {
-      if ( (server_list = getconfent(tpservtypes[i], devgroup, 1)) != NULL) {
-	current_server = strtok(server_list, " ");
-	while (current_server != NULL){
-	  strcpy(list[numservs], current_server);
-	  numservs++;
-	  current_server = strtok(NULL, " ");
-	}
+  if ( dev_found ) {
+#if defined(VDQM)
+    CLIST_ITERATE_BEGIN(drvlist,tmpdrv) {
+      if ( strcmp(tmpdrv->drv.dgn,devgroup) == 0 ) {
+        strcpy(list[numservs], tmpdrv->drv.server);
+        numservs++;
       }
-    }
-  }
-  else {
+    } CLIST_ITERATE_END(drvlist,tmpdrv);
+#endif /* VDQM */
+  } else {
     numservs = create_serverlist(list, num_devs);
   }
   return numservs;
@@ -1846,7 +1880,7 @@ time_t starttime;
 time_t endtime;
 int num_devs;
 char option;
-char devgroup[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
 {
   struct grpstats *gp = NULL;	/* Pointer to grpstats record */
   struct group *gr = NULL;	/* Pointer to group record */
@@ -1947,8 +1981,8 @@ time_t starttime;
 time_t endtime;
 struct numq *record;
 time_t divisions[];
-char devgroup[MAXLEN];
-char serv_name[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
+char serv_name[CA_MAXHOSTNAMELEN+1];
 int num_devs;
 {
   int i = 0;			/* Counter */
@@ -2043,7 +2077,7 @@ time_t starttime;
 time_t endtime;
 int num_devs;
 struct summary *sumstats;
-char devgroup[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
 {
   int i = 0;			/* Counter */
   int t_requests = 0;
@@ -2255,7 +2289,7 @@ time_t endtime;
 print_tpentry(rp, timestamp, devgroup, Lflag, expstruct,servname)
 struct accttape *rp;
 time_t timestamp;
-char devgroup[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
 int Lflag;
 regex_t *expstruct;
 char *servname;
@@ -2263,7 +2297,7 @@ char *servname;
 print_tpentry(rp, timestamp, devgroup, Lflag, expbuf,servname)
 struct accttape *rp;
 time_t timestamp;
-char devgroup[MAXLEN];
+char devgroup[CA_MAXDGNLEN+1];
 int Lflag;
 char *expbuf;
 char *servname;
