@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.15 2000/05/12 15:50:57 jdurand Exp $
+ * $Id: Cglobals.c,v 1.16 2000/05/31 10:33:52 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.15 $ $Date: 2000/05/12 15:50:57 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.16 $ $Date: 2000/05/31 10:33:52 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -74,56 +74,42 @@ int alloc_size = 1000;
  * Note that we cannot include serrno.h to get the definitions
  * since it re-defines serrno if _REENTRANT.
  */
-extern int serrno;
-int serrno;
-extern int rfio_errno;
-int rfio_errno;
-extern int Copterr;
-int Copterr;
-extern int Coptind;
-int Coptind;
-extern int Coptopt;
-int Coptopt;
-extern int Coptreset;
-int Coptreset;
-extern char *Coptarg;
-char *Coptarg;
-extern int Coptarg_key;
-int Coptarg_key;
+EXTERN_C int DLL_DECL serrno;
+int DLL_DECL serrno;
+EXTERN_C int DLL_DECL rfio_errno;
+int DLL_DECL rfio_errno;
+EXTERN_C int DLL_DECL Copterr;
+int DLL_DECL Copterr;
+EXTERN_C int DLL_DECL Coptind;
+int DLL_DECL Coptind;
+EXTERN_C int DLL_DECL Coptopt;
+int DLL_DECL Coptopt;
+EXTERN_C int DLL_DECL Coptreset;
+int DLL_DECL Coptreset;
+EXTERN_C char DLL_DECL *Coptarg;
+char DLL_DECL *Coptarg;
+EXTERN_C int DLL_DECL Coptarg_key;
+int DLL_DECL Coptarg_key;
 /*
  * Function prototypes for multi-thread env. version of errno externals
  */
-#if defined(__STDC__)
-int *C__serrno(void);
-int *C__rfio_errno(void);
-int *C__Copterr(void);
-int *C__Coptind(void);
-int *C__Coptopt(void);
-int *C__Coptreset(void);
-char **C__Coptarg(void);
-#else /* __STDC__ */
-int *C__serrno();
-int *C__rfio_errno();
-int *C__Copterr();
-int *C__Coptind();
-int *C__Coptopt();
-int *C__Coptreset();
-char **C__Coptarg();
-#endif /* __STDC__ */
+int DLL_DECL *C__serrno _PROTO((void));
+int DLL_DECL *C__rfio_errno _PROTO((void));
+int DLL_DECL *C__Copterr _PROTO((void));
+int DLL_DECL *C__Coptind _PROTO((void));
+int DLL_DECL *C__Coptopt _PROTO((void));
+int DLL_DECL *C__Coptreset _PROTO((void));
+char DLL_DECL **C__Coptarg _PROTO((void));
 
 #if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
 /* 
  * We need to define a thread safe h_errno for these systems...
  */
-extern int h_errno;
+EXTERN_C int DLL_DECL h_errno;
 /*
  * Function prototypes for muti-thread env. version of h_errno external
  */
-#if defined(__STDC__)
-int *C__h_errno(void);
-#else /* __STDC__ */
-int *C__h_errno();
-#endif /* __STDC__ */
+int DLL_DECL *C__h_errno _PROTO((void));
 
 #endif /* hpux ||HPUX10 || sgi || SOLARIS */
 
@@ -132,10 +118,10 @@ int *C__h_errno();
  * Globals that existed prior to this call are all re-assigned as
  * thread-specific to calling thread (normally the main thread).
  */
-void Cglobals_init(getspec,setspec,getTid)
-	int (*getspec) _PROTO((int *, void **));
+void DLL_DECL Cglobals_init(getspec,setspec,getTid)
+    int (*getspec) _PROTO((int *, void **));
     int (*setspec) _PROTO((int *, void *));
-    int (*getTid) _PROTO(());
+    int (*getTid) _PROTO((void));
 {
     int i,rc;
     int *key;
@@ -187,7 +173,7 @@ void Cglobals_init(getspec,setspec,getTid)
  * in multi-thread environment. This routine should be called for
  * every internal static storage in the Castor library.
  */
-void Cglobals_get(key, addr, size)
+void DLL_DECL Cglobals_get(key, addr, size)
      int *key;
      void **addr;
      size_t size;
@@ -238,7 +224,7 @@ void Cglobals_get(key, addr, size)
  * thread has *NOT* been created with a Cthread_create()).
  * 
  */ 
-void Cglobals_getTid(Tid)
+void DLL_DECL Cglobals_getTid(Tid)
      int *Tid;
 {
     if ( Tid == NULL ) return;
@@ -247,7 +233,7 @@ void Cglobals_getTid(Tid)
     return;
 } 
 
-int *C__serrno() {
+int DLL_DECL *C__serrno() {
     int rc;
     int *addr;
 
@@ -275,7 +261,7 @@ int *C__serrno() {
     }
 }
 
-int *C__rfio_errno() {
+int DLL_DECL *C__rfio_errno() {
     int rc;
     int *addr;
 
@@ -303,7 +289,7 @@ int *C__rfio_errno() {
     }
 }
 
-int *C__Copterr() {
+int DLL_DECL *C__Copterr() {
     int rc;
     int *addr;
 
@@ -331,7 +317,7 @@ int *C__Copterr() {
     }
 }
 
-int *C__Coptind() {
+int DLL_DECL *C__Coptind() {
     int rc;
     int *addr;
 
@@ -359,7 +345,7 @@ int *C__Coptind() {
     }
 }
 
-int *C__Coptopt() {
+int DLL_DECL *C__Coptopt() {
     int rc;
     int *addr;
 
@@ -387,7 +373,7 @@ int *C__Coptopt() {
     }
 }
 
-int *C__Coptreset() {
+int DLL_DECL *C__Coptreset() {
     int rc;
     int *addr;
 
@@ -415,7 +401,7 @@ int *C__Coptreset() {
     }
 }
 
-char **C__Coptarg() {
+char DLL_DECL **C__Coptarg() {
     int rc;
     char **addr;
 
@@ -444,7 +430,7 @@ char **C__Coptarg() {
 }
 
 #if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
-int *C__h_errno() {
+int DLL_DECL *C__h_errno() {
     int rc;
     int *addr;
 

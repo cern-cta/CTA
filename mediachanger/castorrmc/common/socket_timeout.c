@@ -1,14 +1,10 @@
 /*
- * $Id: socket_timeout.c,v 1.10 2000/04/05 09:58:20 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.10 $ $Date: 2000/04/05 09:58:20 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.11 $ $Date: 2000/05/31 10:33:54 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -55,8 +51,8 @@ Sigfunc *_netsignal();
 #endif
 #endif
 
-ssize_t netread_timeout(fd, vptr, n, timeout)
-     int fd;
+ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
+     SOCKET fd;
      void *vptr;
      size_t n;
      int timeout;
@@ -136,8 +132,8 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
   return(n - nleft);
 }
 
-ssize_t netwrite_timeout(fd, vptr, n, timeout)
-     int fd;
+ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
+     SOCKET fd;
      void *vptr;
      size_t n;
      int timeout;
