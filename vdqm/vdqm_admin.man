@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.4 $ $Date: 2001/10/24 08:19:05 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VDQM_ADMIN 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "VDQM Administrator Commands"
+.TH VDQM_ADMIN 1 "$Date: 2001/10/24 08:19:05 $" CASTOR "VDQM Administrator Commands"
 .SH NAME
 vdqm_admin \- administrate VDQM server
 .SH SYNOPSIS
@@ -14,7 +14,7 @@ vdqm_admin \- administrate VDQM server
 .RB [ -dedicate ]
 .RB [ -deldrv ]
 .RB [ -delvol ]
-.RB [ option\ value\ ... ]
+.RB [ option value ... ]
 
 .SH DESCRIPTION
 .B vdqm_admin
@@ -24,54 +24,58 @@ command syntax consist of a switch describing the action (e.g. ping, shutdown)
 followed by a
 .I option value ...
 pairs that depend on the requested action. Possible options-value pairs are
+.sp
+.RS
+.BI "-dgn " device_group
+.sp
+.BI "-server " server_name
+.sp
+.BI "-drive " drive_name
+.sp
+.BI "-vid " VID
+.sp
+.BI "-match " dedicate_string
+.sp
+.BI "-reqid " request_ID
 .RE
-.BI "-dgn <" device\ group ">"
-.RE
-.BI "-server <" server\ name ">"
-.RE
-.BI "-drive <" drive\ name ">"
-.RE
-.BI "-vid <" VID ">"
-.RE
-.BI "-match <" dedicate\ string ">"
-.RE
-.BI "-reqid <" request\ ID ">"
-.PP
+.sp
 Here follows a description of the individual actions and the associated
 option-value pair.
 .PP
 .BI "-ping"
 \- ping the VDQM server to detect whether it is ALIVE, HOLD or DEAD. The
 following option-value pairs can be specified: 
-.RE
-.BI "-dgn <" device\ group ">"
-.RE
-.BI "-vid <" VID ">"
-.RE
-.BI "-reqid <" request\ ID ">"
+.sp
+.BI "-dgn " device_group
+.sp
+.BI "-vid " VID
+.sp
+.BI "-reqid " request_ID
 .RS
 In this case the queue position for that volume request is given.
-.PP
+.RE
+.sp
 .BI "-shutdown"
 \- shutdown the VDQM server.
-.PP
+.sp
 .BI "-hold"
 \- put the VDQM server in HOLD mode (no further requests will be accepted).
-.PP
+.sp
 .BI "-release"
 \- release the VDQM server from HOLD mode.
-.PP
+.sp
 .BI "-dedicate"
 \- dedicate the specified drive to clients matching the dedication expression.
 The following option-value pairs must be provided:
-.RE
-.BI "-dgn <" device\ group ">"
-.RE
-.BI "-server <" server\ name ">"
-.RE
-.BI "-drive <" drive\ name ">"
-.RE
-.BI "-match <" dedication\ string ">"
+.sp
+.RS
+.BI "-dgn " device_group
+.sp
+.BI "-server " server_name
+.sp
+.BI "-drive " drive_name
+.sp
+.BI "-match " dedication_string
 .RS
 If the
 .BI "-match"
@@ -79,26 +83,30 @@ option is omitted any previous dedication of that drive will be revoked.
 The patter matching string must be of the form:
 .I uid=.*,gid=.*,name=.*,host=.*,vid=.*,mode=.*,datestr.*,timestr.*,age.*
 (only the fields to be changed need to be specified, see example below).
-.PP
+.RE
+.RE
+.sp
 .BI "-deldrv"
 \- delete the specified drive from the VDQM data base.
 The following option-value pairs must be provided:
-.RE
-.BI "-dgn <" device\ group ">"
-.RE
-.BI "-server <" server\ name ">"
-.RE
-.BI "-drive <" drive\ name ">"
+.sp
 .RS
-.PP
+.BI "-dgn " device_group
+.sp
+.BI "-server " server_name
+.sp
+.BI "-drive " drive_name
+.RE
+.sp
 .BI "-delvol"
 \- delete the specified volume request from the VDQM data base.
 The following option-value pairs must be provided:
-.RE
-.BI "-dgn <" device\ group ">"
-.RE
-.BI "-reqid <" request\ ID ">"
+.sp
 .RS
+.BI "-dgn " device_group
+.sp
+.BI "-reqid " request_ID
+.RE
 
 .SH EXAMPLE
 .nf
