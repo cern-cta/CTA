@@ -1,5 +1,5 @@
 /*
- * $Id: stager_messages.h,v 1.2 2004/11/08 10:56:04 jdurand Exp $
+ * $Id: stager_messages.h,v 1.3 2004/11/09 11:04:43 jdurand Exp $
  */
 
 #ifndef __stager_messages_h
@@ -33,6 +33,7 @@ enum stagerMessagesNo {
 struct stagerMessages {
   int msgNo;
   int defaultSeverity;
+  int severity2LogLevel;
   char what2Type[CA_MAXLINELEN+1];
   char messageTxt[CA_MAXLINELEN+1];
 };
