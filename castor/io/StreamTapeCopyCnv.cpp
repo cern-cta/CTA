@@ -128,7 +128,7 @@ void castor::io::StreamTapeCopyCnv::marshalObject(castor::IObject* object,
     address->stream() << castor::OBJ_Ptr << 0;
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
-    cnvSvc()->createRep(address, obj, true);
+    createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
     address->stream() << obj->stream().size();

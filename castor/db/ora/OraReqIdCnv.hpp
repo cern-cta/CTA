@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/29 10:03:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define CASTOR_DB_ORA_REQID_HPP
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/db/ora/OraBaseCnv.hpp"
 #include "castor/exception/Exception.hpp"
@@ -94,7 +95,7 @@ namespace castor {
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool autocommit,
-                               unsigned int type)
+                               unsigned int type = castor::OBJ_INVALID)
           throw (castor::exception::Exception);
 
         /**

@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- *
+ * 
  *
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
@@ -28,18 +28,22 @@
 #define CASTOR_IO_CLIENT_HPP
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 
 namespace castor {
 
   // Forward declarations
+  class ObjectSet;
+  class ObjectCatalog;
   class IObject;
 
   namespace io {
+
+    // Forward declarations
+    class StreamAddress;
 
     /**
      * class StreamClientCnv
@@ -86,7 +90,7 @@ namespace castor {
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              bool autocommit,
-                             unsigned int type)
+                             unsigned int type = castor::OBJ_INVALID)
         throw (castor::exception::Exception);
 
       /**

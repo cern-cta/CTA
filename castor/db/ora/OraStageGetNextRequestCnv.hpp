@@ -28,6 +28,7 @@
 #define CASTOR_DB_ORA_STAGEGETNEXTREQUEST_HPP
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/db/ora/OraBaseCnv.hpp"
 #include "castor/exception/Exception.hpp"
@@ -95,7 +96,7 @@ namespace castor {
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool autocommit,
-                               unsigned int type)
+                               unsigned int type = castor::OBJ_INVALID)
           throw (castor::exception::Exception);
 
         /**

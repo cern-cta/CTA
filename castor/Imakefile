@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.44 $ $Release$ $Date: 2004/10/26 15:00:28 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.45 $ $Release$ $Date: 2004/10/29 10:03:46 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -126,6 +126,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamStageQryRequestCnv.cpp \
               io/StreamStageUpdcRequestCnv.cpp \
               io/StreamStringResponseCnv.cpp \
+              io/StreamSubRequestCnv.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamTapeCopyCnv.cpp \
               io/StreamTapePoolCnv.cpp \

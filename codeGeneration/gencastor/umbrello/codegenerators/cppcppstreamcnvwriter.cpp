@@ -261,7 +261,7 @@ void CppCppStreamCnvWriter::writeMarshal() {
   *m_stream << getIndent()
             << "// Case of a pointer to a non streamed object"
             << endl << getIndent()
-            << "cnvSvc()->createRep(address, obj, true);"
+            << "createRep(address, obj, true);"
             << endl;
   // Mark object as done
   *m_stream << getIndent() << "// Mark object as done"
@@ -432,5 +432,6 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
     }
   }
   m_indent--;
-  *m_stream << getIndent() << "}" << endl << endl;
+  *m_stream << getIndent() << "return object;" << endl
+            << getIndent() << "}" << endl << endl;
 }

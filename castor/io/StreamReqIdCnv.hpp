@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/29 10:03:49 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define CASTOR_IO_REQID_HPP
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
@@ -89,7 +90,7 @@ namespace castor {
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              bool autocommit,
-                             unsigned int type)
+                             unsigned int type = castor::OBJ_INVALID)
         throw (castor::exception::Exception);
 
       /**

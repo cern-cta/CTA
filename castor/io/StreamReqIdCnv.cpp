@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/29 08:23:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/29 10:03:49 $ $Author: sponcec3 $
  *
  * 
  *
@@ -125,7 +125,7 @@ void castor::io::StreamReqIdCnv::marshalObject(castor::IObject* object,
     address->stream() << castor::OBJ_Ptr << 0;
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
-    cnvSvc()->createRep(address, obj, true);
+    createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->request(), address, alreadyDone);

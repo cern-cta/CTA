@@ -55,6 +55,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
      "as is the default.\n" +
      "@exception Exception throws an Exception in cas of error",
      *m_stream);
+  addInclude("\"castor/Constants.hpp\"");
   *m_stream << getIndent()
             << "virtual void createRep("
             << fixTypeName("IAddress*",
@@ -73,7 +74,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
             << "                       bool autocommit,"
             << endl
             << getIndent()
-            << "                       unsigned int type)"
+            << "                       unsigned int type = castor::OBJ_INVALID)"
             << endl
             << getIndent()
             << "  throw ("

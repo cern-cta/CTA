@@ -35,11 +35,11 @@
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/stager/Request.hpp"
+#include "osdep.h"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -108,7 +108,7 @@ castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* addres
   unsigned short port;
   ad->stream() >> port;
   object->setPort(port);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   return object;
@@ -128,7 +128,7 @@ void castor::io::StreamClientCnv::marshalObject(castor::IObject* object,
     address->stream() << castor::OBJ_Ptr << 0;
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
-    cnvSvc()->createRep(address, obj, true);
+    createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
@@ -153,4 +153,6 @@ castor::IObject* castor::io::StreamClientCnv::unmarshalObject(castor::io::binios
     dynamic_cast<castor::rh::Client*>(object);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
+return object;
 }
+

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 14:48:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 10:03:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define CASTOR_DB_ORA_STAGEFILCHGREQUEST_HPP
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/db/ora/OraBaseCnv.hpp"
 #include "castor/exception/Exception.hpp"
@@ -95,7 +96,7 @@ namespace castor {
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool autocommit,
-                               unsigned int type)
+                               unsigned int type = castor::OBJ_INVALID)
           throw (castor::exception::Exception);
 
         /**
