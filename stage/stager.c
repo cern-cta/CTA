@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.113 2001/01/19 11:05:17 jdurand Exp $
+ * $Id: stager.c,v 1.114 2001/01/19 12:31:03 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.113 $ $Date: 2001/01/19 11:05:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.114 $ $Date: 2001/01/19 12:31:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3093,6 +3093,19 @@ int stager_hsm_callback(tapereq,filereq)
 			(unsigned long) filereq->err.severity,
 			(int) filereq->err.errorcode,
 			(unsigned long) filereq->err.errorcode);
+		if (filereq->err.errorcode == ETPARIT ||
+			filereq->err.errorcode == ETUNREC ||
+			filereq->err.errorcode == ETLBL ||
+			tapereq->err.errorcode == ETPARIT ||
+			tapereq->err.errorcode == ETLBL ||
+			tapereq->err.errorcode == ETUNREC) {
+			sendrep(rpfd, MSG_ERR, "### [%s] Calling vmgr_updatetape(vid=\"%s\",0,0,0,DISABLED)\n",
+				castor_hsm,
+				tapereq->vid);
+			if (vmgr_updatetape(tapereq->vid, 0, 0, 0, DISABLED) != 0) {
+				sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape", sstrerror(serrno));
+			}
+		}
 		RESTORE_EID;
 		callback_error = 1;
 		return(-1);
@@ -3166,6 +3179,6 @@ int get_subreqid(stcp)
 
 
 /*
- * Last Update: "Friday 19 January, 2001 at 12:04:26 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 19 January, 2001 at 13:30:01 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
