@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.62 2001/07/12 16:02:42 jdurand Exp $
+ * $Id: procqry.c,v 1.63 2001/09/18 21:02:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.62 $ $Date: 2001/07/12 16:02:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.63 $ $Date: 2001/09/18 21:02:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -449,15 +449,15 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 			if (t_or_d != 't') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 		}
         if ((t_or_d == 't') && stcp_input.u1.t.fseq[0] != '\0') {
 			if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
-				if ((nbtpf = unpackfseq (Coptarg, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0) {
+				if ((nbtpf = unpackfseq (stcp_input.u1.t.fseq, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0) {
 					sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
-					c = SYERR;
+					c = USERR;
 					goto reply;
 				}
 			} else {
@@ -629,7 +629,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 	}
 
-	if (fseq != NULL && fseq_list != NULL) {
+	if ((fseq != NULL) && (fseq_list != NULL)) {
 		sendrep (rpfd, MSG_ERR, STG35, "-q", "-Q");
 		errflg++;
     }
@@ -871,6 +871,9 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				strcpy (p_size, "*");
 			else
 				sprintf (p_size, "%d", stcp->size);
+		else if (stcp->status == (STAGEIN|STAGED))
+			/* Case of stageing of a zero-length file */
+			strcpy (p_size, "0");
 		else
 			strcpy (p_size, "*");
 		if (stcp->status & 0xF0)
@@ -1917,5 +1920,5 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 /*
- * Last Update: "Thursday 12 July, 2001 at 17:58:45 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 13 September, 2001 at 16:30:02 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
