@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) 2000-2001 by CERN IT-PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: dumptape.c,v $ $Revision: 1.2 $ $Date: 2001/08/17 13:38:45 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
+/*
+ * dumptape.c - RTCOPY dumptape command line command
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
@@ -54,11 +67,13 @@ int main(int argc, char *argv[]) {
     } CLIST_ITERATE_END(tape,tl);
 
     if ( retval == 0 && AbortFlag == 0 ) {
-        rc = rtcp_RetvalSHIFT(tape,NULL,&retval);
+        (void)rtcp_RetvalSHIFT(tape,NULL,&retval);
+        if ( rc == -1 && retval == 0 ) retval = USERR;
     } else {
         rc = 0;
         if ( retval == 0 ) retval = USERR;
     }
+
     if ( retval == 0 ) rtcp_log(LOG_INFO,"command successful\n");
     else rtcp_log(LOG_INFO,"command failed\n");
     return(retval);
