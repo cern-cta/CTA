@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.96 2001/02/02 10:43:54 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.97 2001/02/02 12:12:51 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.96 $ $Date: 2001/02/02 10:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.97 $ $Date: 2001/02/02 12:12:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -183,7 +183,12 @@ int savereqs _PROTO(());
 #if defined(_WIN32)
 int create_dir _PROTO((char *, uid_t, gid_t, int));
 #else
+#ifdef hpux
+/* What the hell does hpux does not like this prototype ??? */
+int create_dir _PROTO(());
+#else
 int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
+#endif
 #endif
 int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
 int fork_exec_stager _PROTO((struct waitq *));
