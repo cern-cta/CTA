@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2004/06/25 15:10:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2004/06/29 14:11:50 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -62,7 +62,7 @@ libshift.sl libshift.so:     $(LIBRARIES0)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
-	@for i in $? ;\
+	@for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
@@ -71,7 +71,7 @@ libcastorCommonOra.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
-	@for i in $? ;\
+	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS2))
 	@-rm -rf tmp
@@ -80,7 +80,7 @@ libcastorProto.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
-	@for i in $? ;\
+	@for i in $(LIBRARIES3) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS3))
 	@-rm -rf tmp
