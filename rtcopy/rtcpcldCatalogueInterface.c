@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.114 $ $Release$ $Date: 2005/01/16 13:27:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.115 $ $Release$ $Date: 2005/01/19 11:00:33 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.114 $ $Release$ $Date: 2005/01/16 13:27:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.115 $ $Release$ $Date: 2005/01/19 11:00:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -793,7 +793,7 @@ int rtcpcld_getTapesToDo(
     *tapeArray = (tape_list_t **)calloc(nbItems,sizeof(tape_list_t *));
     if ( *tapeArray == NULL ) {
       save_serrno = errno;
-      LOG_SYSCALL_ERR("Cthread_mutex_lock(currentTapeFseq)");
+      LOG_SYSCALL_ERR("calloc()");
       rc = -1;
     }
     
@@ -804,6 +804,13 @@ int rtcpcld_getTapesToDo(
     }
   }
 
+  /*
+   * If we got some tapes, we return success even
+   * there were errors with other tapes. The errors
+   * have been logged and rtcpclientd cab continue
+   * to struggle with what we got...
+   */
+  if ( nbItems > 0 ) rc = 0;
   if ( rc == -1 ) {
     serrno = save_serrno;
   } else {
