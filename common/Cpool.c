@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.14 1999/11/21 14:00:49 obarring Exp $
+ * $Id: Cpool.c,v 1.15 1999/11/25 15:36:19 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -35,7 +35,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.14 $ $Date: 1999/11/21 14:00:49 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.15 $ $Date: 1999/11/25 15:36:19 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -1248,8 +1248,7 @@ void *Cpool_calloc(file,line,nmemb,size)
      size_t size;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = NULL;
-  void             *result;
+  struct Cmalloc_t *previous = &Cmalloc;
   char             *dummy;
 
   if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
@@ -1273,31 +1272,43 @@ void *Cpool_calloc(file,line,nmemb,size)
     current = current->next;
   }
 
+  /* If there is no entry yet, then previous will be equal to &Cmalloc */
+
+#ifdef __INSURE__
+  /* Insure don't like when malloc result is stored in a dereferenced variable */
+  _Insure_set_option("runtime","off");
+#endif
   /* We create an element */
-  if ((current = malloc(sizeof(struct Cmalloc_t))) == NULL) {
+  if ((previous->next = malloc(sizeof(struct Cmalloc_t))) == NULL) {
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
     return(NULL);
   }
   /* We create the requested memory */
-  if ((result = calloc(nmemb,size)) == NULL) {
-    free(current);
+  if ((previous->next->start = calloc(nmemb,size)) == NULL) {
+    free(previous->next);
+    previous->next = NULL;
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
     return(NULL);
   }
-  /* We fill the new element */
-  current->start = result;
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
   /* will be rejected by a lot of compilers (exception I know is gcc) */
-  dummy  = (char *) result;
+  dummy  = (char *) previous->next->start;
   dummy += ((nmemb * size) - 1);
-  current->end   = dummy;
-  current->next  = NULL;
-
-  /* We update internal pointer */
-  if (previous != NULL) {
-    previous->next = current;
-  }
+  previous->next->end   = dummy;
+  previous->next->next  = NULL;
 
   /* We return the result of _calloc */
-  return(result);
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
+  return(previous->next->start);
 }
 
 /* ============================================ */
@@ -1319,8 +1330,7 @@ void *Cpool_malloc(file,line,size)
      size_t size;
 {
   struct Cmalloc_t *current  = &Cmalloc;
-  struct Cmalloc_t *previous = NULL;
-  void             *result;
+  struct Cmalloc_t *previous = &Cmalloc;
   char             *dummy;
 
   if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
@@ -1343,31 +1353,44 @@ void *Cpool_malloc(file,line,size)
     previous = current;
     current = current->next;
   }
+
+  /* If there is no entry yet, then previous will be equal to &Cmalloc */
+
+#ifdef __INSURE__
+  /* Insure don't like when malloc result is stored in a dereferenced variable */
+  _Insure_set_option("runtime","off");
+#endif
   /* We create an element */
-  if ((current = malloc(sizeof(struct Cmalloc_t))) == NULL) {
+  if ((previous->next = malloc(sizeof(struct Cmalloc_t))) == NULL) {
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
     return(NULL);
   }
   /* We create the requested memory */
-  if ((result = malloc(size)) == NULL) {
-    free(current);
+  if ((previous->next->start = malloc(size)) == NULL) {
+    free(previous->next);
+    previous->next = NULL;
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
     return(NULL);
   }
-  /* We fill the new element */
-  current->start   = result;
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
   /* will be rejected by a lot of compilers (exception I know is gcc) */
-  dummy            = (char *) result;
-  dummy           += (size-1);
-  current->end     = dummy;
-  current->next    = NULL;
+  dummy  = (char *) previous->next->start;
+  dummy += (size - 1);
+  previous->next->end  = (void *) dummy;
+  previous->next->next = NULL;
 
-  /* We update internal pointer */
-  if (previous != NULL) {
-    previous->next = current;
-  }
-
-  /* We return the result of _calloc */
-  return(result);
+  /* We return the result of _malloc */
+#ifdef __INSURE__
+  /* Restore runtime checking */
+    _Insure_set_option("runtime","on");
+#endif
+  return(previous->next->start);
 }
 
 /* ============================================ */
