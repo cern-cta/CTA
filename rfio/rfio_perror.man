@@ -1,0 +1,30 @@
+.\"
+.\" $Id: rfio_perror.man,v 1.1 2001/06/01 07:22:50 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_perror.man,v $ $Revision: 1.1 $ $Date: 2001/06/01 07:22:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_PERROR 3 "$Date: 2001/06/01 07:22:50 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_perror \- print error message corresponding to the last RFIO function failure
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "void rfio_perror (const char *" umsg ");"
+.sp
+.BI "char *rfio_serror ();"
+.SH DESCRIPTION
+.B rfio_serror
+gets error message corresponding to the last RFIO function failure (local or
+remote).
+.B rfio_perror
+produces a message on standard error describing the last RFIO error.
+The message is prefixed with
+.I umsg
+followed by a colon and a blank.
+.SH RETURN VALUE
+.B rfio_serror
+returns a pointer to the error string.
