@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.20 $ $Date: 2000/03/13 11:38:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.21 $ $Date: 2000/05/29 16:46:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -117,17 +117,18 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
                      * for this medium errors (like sending a mail to
                      * operator or raising an alarm).
                      */
+                    severity = RTCP_RESELECT_SERV | RTCP_USERR;
                     sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
                     if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
                         j = atoi(p);
                         severity = j;
                     }
+                    break;
                 case ETNOSNS:       /* No sense data available   */
-                    if ( !(severity & RTCP_NORETRY) ) {
-                        severity = RTCP_RESELECT_SERV;
-                    }
+                    severity = RTCP_RESELECT_SERV | RTCP_UNERR;
+                    break;
                 default :
-                    severity = severity | RTCP_UNERR;
+                    severity = RTCP_FAILED | RTCP_UNERR;
                     break;
             }
             break;
