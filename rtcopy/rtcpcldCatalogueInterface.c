@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/10/27 07:58:20 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/10/27 11:05:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/10/27 07:58:20 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/10/27 11:05:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1095,10 +1095,10 @@ static int nextSegmentToDo(
     serrno = save_serrno;
     return(-1);
   }
-  Cstager_DiskCopyForRecall_diskCopy(
-                                     recallCandidate,
-                                     &diskCopy
-                                     );
+  Cstager_DiskCopyForRecall_getDiskCopy(
+                                        recallCandidate,
+                                        &diskCopy
+                                        );
   Cstager_DiskCopy_path(
                         diskCopy,
                         (CONST char **)&pathName
@@ -1111,19 +1111,47 @@ static int nextSegmentToDo(
                                        recallCandidate,
                                        (CONST char **)&diskServerName
                                        );
-  if ( (pathName == NULL) ||
-       (mountPointName == NULL) ||
-       (diskServerName == NULL) ) {
-    serrno = SEINTERNAL;
+  if ( (pathName == NULL) || (*pathName == '\0') ||
+       (mountPointName == NULL) || (*mountPointName == '\0') ||
+       (diskServerName == NULL) || (*diskServerName == '\0') ||
+       ((strlen(pathName)+
+         strlen(mountPointName)+1+
+         strlen(diskServerName)+1) > sizeof(file->filereq.file_path)-1) ) {
+    if ( (strlen(pathName)+
+          strlen(mountPointName)+1+
+          strlen(diskServerName)+1) > sizeof(file->filereq.file_path)-1 ) {
+      save_serrno = E2BIG;
+    } else {
+      save_serrno = SEINTERNAL;
+    }
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_BADPATH,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DISKSRV",
+                    DLF_MSG_PARAM_STR,
+                    (diskServerName == NULL ? "(null)" : diskServerName),
+                    "MNTPNT",
+                    DLF_MSG_PARAM_STR,
+                    (mountPointName == NULL ? "(null)" : mountPointName),
+                    "PATHNAME",
+                    DLF_MSG_PARAM_STR,
+                    (pathName == NULL ? "(null)" : pathName),
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = save_serrno;
     return(-1);
   }
   
-  if ( (strlen(pathName)+
-        strlen(mountPointName)+1+
-        strlen(diskServerName)+2) > sizeof(file->filereq.file_path)-1 ) {
-    serrno = E2BIG;
-    return(-1);
-  }
+  sprintf(
+          file->filereq.file_path,
+          "%s:%s/%s",
+          diskServerName,
+          mountPointName,
+          pathName
+          );
   return(0);
 }
 
@@ -1153,11 +1181,10 @@ static int procSegmentsForTape(
   enum Cstager_SegmentStatusCodes_t cmpStatus;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
-  char *diskPath, *nsHost;
+  char *nsHost;
   unsigned char *blockid;
   struct Cns_fileid fileid;
-  int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, segmUpdated;
-  int newFileReqs = 0, incompleteSegments = 0, prevFseq = -1;
+  int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, newFileReqs = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
     serrno = EINVAL;
@@ -1215,6 +1242,12 @@ static int procSegmentsForTape(
     return(-1);
   }
 
+  /*
+   * The segments returned by the catalogue are not sorted
+   * in any particular order. Let's sort them in tape fseq
+   * order so that at least consecutive tape files are positioned
+   * efficiently.
+   */
   qsort(
         (void *)segmArray,
         (size_t)nbItems,
@@ -1224,7 +1257,6 @@ static int procSegmentsForTape(
 
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
-    segmUpdated = 0;
     Cstager_Segment_status(segmArray[i],&cmpStatus);
     if ( cmpStatus == SEGMENT_UNPROCESSED ) {
       Cstager_Segment_blockid(
@@ -1268,13 +1300,10 @@ static int procSegmentsForTape(
                       DLF_LVL_SYSTEM,
                       RTCPCLD_MSG_FILEREQ,
                       (struct Cns_fileid *)&fileid,
-                      2,
+                      1,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
-                      fseq,
-                      "PATH",
-                      DLF_MSG_PARAM_STR,
-                      diskPath
+                      fseq
                       );
       newFileReqs = 1;
       fl->filereq.concat = NOCONCAT;
@@ -1296,13 +1325,10 @@ static int procSegmentsForTape(
      */
     fl->filereq.blocksize = 32760;
     
+    /*
+     * Path is set when this segment is ready for processing.
+     */
     strcpy(fl->filereq.file_path,".");
-    if ( (diskPath != NULL) && (*diskPath != '\0') &&
-         (strcmp(diskPath,".") != 0) ) {
-      strncpy(fl->filereq.file_path,
-              diskPath,
-              sizeof(fl->filereq.file_path)-1);
-    }
     
     Cstager_Segment_bytes_in(
                              segmArray[i],
@@ -1316,50 +1342,8 @@ static int procSegmentsForTape(
                            segmArray[i],
                            &(fl->filereq.offset)
                            );
-    if ( segmUpdated == 1 ) {
-      ID_TYPE _key = 0;
-      Cstager_Segment_id(segmArray[i],&_key);
-      iObj = Cstager_Segment_getIObject(segmArray[i]);
-      rc = C_Services_updateRep(*svcs,iAddr,iObj,0);
-      if ( rc == -1 ) {
-        save_serrno = serrno;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+4,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "C_Services_updateRep()",
-                        "DBKEY",
-                        DLF_MSG_PARAM_INT,
-                        (int)_key,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        C_Services_errorMsg(*svcs),
-                        RTCPCLD_LOG_WHERE
-                        );
-        rc = C_Services_rollback(*svcs,iAddr);
-        C_IAddress_delete(iAddr);
-        if ( segmArray != NULL ) free(segmArray);
-        serrno = save_serrno;
-        return(-1);
-      }
-    }
-
   }
 
-  /*
-   * Commit all new segment updates
-   */
-  rc = C_Services_commit(*svcs,iAddr);
-
-  C_IAddress_delete(iAddr);
-  
   if ( segmArray != NULL ) free(segmArray);
   if ( newFileReqs == 0 ) {
     serrno = EAGAIN;
