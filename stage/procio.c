@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.128 2001/06/07 15:20:46 jdurand Exp $
+ * $Id: procio.c,v 1.129 2001/06/20 13:23:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.128 $ $Date: 2001/06/07 15:20:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.129 $ $Date: 2001/06/20 13:23:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1164,6 +1164,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 		}
 	} else nbtpf = 1;
+
+	/* Root protection */
+	if (ISROOT(save_uid,save_gid)) {
+		sendrep (rpfd, MSG_ERR, STG156, ROOTUIDLIMIT, ROOTGIDLIMIT);
+		errflg++;
+	}
 
 	if (errflg != 0) {
 		c = USERR;
