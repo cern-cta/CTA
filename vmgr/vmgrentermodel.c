@@ -20,7 +20,7 @@ int main(argc, argv)
 
   if (argc != 5) {
     fprintf (stderr,
-             "usage: vmgr_entermodel model media_letter native_capacity media_cost\n"
+             "usage: vmgrentermodel model media_letter native_capacity media_cost\n"
              "\n"
              "  where model            Model type         ex: SD3\n"
              "        media_letter     Media Iden         ex: B\n"

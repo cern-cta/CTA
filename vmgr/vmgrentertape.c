@@ -25,7 +25,7 @@ main(argc, argv)
 
   if (argc != 11) {
     fprintf (stderr,
-             "usage: vmgr_entertape vid vsn dgn density lbltype model media_letter manufacturer sn poolname\n"
+             "usage: vmgrentertape vid vsn dgn density lbltype model media_letter manufacturer sn poolname\n"
              "\n"
              "  where vid              Volume ID               ex: Y31100\n"
              "        vsn              Volume SN               ex: Y31100\n"
