@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2004/12/21 22:32:04 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2005/01/11 07:50:24 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -139,6 +139,11 @@ all: $(STAGELIBTARGET) $(PROGS_STAGER)
 NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+
+#if BuildStageClient
+STAGEIN_OBJS=stagein.Osuf
+NormalProgramTarget(stagein,$(STAGEIN_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+#endif
 
 MakeDepLibrary(lib,shift)
 
