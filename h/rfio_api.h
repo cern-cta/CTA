@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.38 $ $Date: 2002/11/19 09:04:55 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.39 $ $Date: 2002/11/21 13:01:34 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -240,8 +240,10 @@ EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
                                       /* parse file path                  */
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
                                       /* parse file path                  */
+#if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
 EXTERN_C int  DLL_DECL stat64tostat _PROTO((const struct stat64 *, struct stat *));
                                   /* copy from a stat64 struct to a stat  */
+#endif
 EXTERN_C void DLL_DECL striptb _PROTO((char *));  
                                   /* strip trailing blanks                */
 
