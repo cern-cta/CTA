@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rstatus.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:29:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rstatus.c,v $ $Revision: 1.4 $ $Date: 1999/11/17 10:54:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rstatus - get resource reservation status */
@@ -59,8 +59,8 @@ int nbdgp;
 
 	/* Build request body */
  
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);      /* update length field */
@@ -75,7 +75,7 @@ int nbdgp;
 			serrno = SEUBUF2SMALL;
 			return (-1);
 		}
-		unmarshall_WORD (rbp, rsv_status[i].uid);
+		unmarshall_LONG (rbp, rsv_status[i].uid);
 		unmarshall_LONG (rbp, rsv_status[i].jid);
 		unmarshall_WORD (rbp, rsv_status[i].count);
 		for (j = 0; j < rsv_status[i].count; j++) {

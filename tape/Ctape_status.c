@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 14:54:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.4 $ $Date: 1999/11/17 10:54:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_status - get drive status */
@@ -58,8 +58,8 @@ int nbentries;
 
 	/* Build request body */
  
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);      /* update length field */
@@ -74,7 +74,7 @@ int nbentries;
 			serrno = SEUBUF2SMALL;
 			return (-1);
 		}
-		unmarshall_WORD (rbp, drv_status[i].uid);
+		unmarshall_LONG (rbp, drv_status[i].uid);
 		unmarshall_LONG (rbp, drv_status[i].jid);
 		unmarshall_STRING (rbp, drv_status[i].dgn);
 		unmarshall_WORD (rbp, drv_status[i].status);

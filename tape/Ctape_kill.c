@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:14:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.5 $ $Date: 1999/11/17 10:54:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_kill - cancel a tape mount or position request */
@@ -89,8 +89,8 @@ char *path;
  
 	/* Build request body */
 
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_STRING (sbp, fullpath);
 

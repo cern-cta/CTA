@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.6 $ $Date: 1999/11/16 14:40:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.7 $ $Date: 1999/11/17 10:54:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_info - get tape file information */
@@ -99,8 +99,8 @@ char *recfm;
  
 	/* Build request body */
 
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, fullpath);
  
 	msglen = sbp - sendbuf;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.5 $ $Date: 1999/10/13 14:29:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.6 $ $Date: 1999/11/17 10:54:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -151,8 +151,8 @@ int nbhdr;
  
         /* Build request body */
  
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_STRING (sbp, acctname);
 	marshall_STRING (sbp, path);

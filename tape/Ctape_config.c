@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.10 $ $Date: 1999/11/17 10:36:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.11 $ $Date: 1999/11/17 10:53:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -74,8 +74,8 @@ int reason;
  
 	/* Build request body */
 
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, drive);
 	marshall_WORD (sbp, status);
 	marshall_WORD (sbp, reason);

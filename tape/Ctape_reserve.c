@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)Ctape_reserve.c,v 1.5 1999-10-13 16:32:37+02 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.7 $ $Date: 1999/11/17 10:54:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_reserve - reserve tape resources */
@@ -60,8 +60,8 @@ struct dgn_rsv dgn_rsv[];
  
         /* Build request body */
  
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_WORD (sbp, count);
 	for (i = 0; i < count; i++) {
