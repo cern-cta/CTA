@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.9 $ $Date: 2000/01/12 17:51:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.10 $ $Date: 2000/01/13 16:10:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1459,6 +1459,8 @@ static int rtcpc_v_opt(int mode,
             if ( tl->file == NULL ) {
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
+                    if ( tl != *tape && tl->prev->file != NULL ) 
+                        tl->file->filereq = tl->prev->file->filereq;
                     tl->file->filereq.tape_fseq = 0;
                 }
             }
@@ -1525,6 +1527,8 @@ static int rtcpc_V_opt(int mode,
             if ( tl->file == NULL ) {
                 rc = newFileList(&tl,NULL,mode);
                 if ( rc != -1 ) {
+                    if ( tl != *tape && tl->prev->file != NULL )
+                        tl->file->filereq = tl->prev->file->filereq;
                     tl->file->filereq.tape_fseq = 0;
                 }
             }
@@ -1817,6 +1821,19 @@ static int rtcpc_diskfiles(int mode,
             filereq->disk_fseq = disk_fseq;
         } CLIST_ITERATE_END(tl->file,fl);
     }
+    /*
+     * If multi-volume, copy last file element of first volume to the
+     * other volumes. This makes sense since it is the same tape file.
+     */
+    CLIST_ITERATE_BEGIN(*tape,tl) {
+        if ( tl != *tape ) {
+            if ( tl->file == NULL ) {
+                rc = newFileList(&tl,NULL,mode);
+                if ( rc == -1 ) return(rc);
+            }
+            tl->file->filereq = (*tape)->file->filereq;
+        }
+    } CLIST_ITERATE_END(*tape,tl);
 
     return(rc);
 }
