@@ -1,4 +1,6 @@
 /*
+ * $Id: Cns_main.c,v 1.8 2004/08/12 14:02:18 motiakov Exp $
+ *
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -163,6 +165,15 @@ struct main_args *main_args;
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
+#ifdef CSEC
+	if ((p = getenv ("SCNS_PORT")) || (p = getconfent ("SCNS", "PORT", 0))) {
+		sin.sin_port = htons ((unsigned short)atoi (p));
+	} else if (sp = getservbyname ("scns", "tcp")) {
+		sin.sin_port = sp->s_port;
+	} else {
+		sin.sin_port = htons ((unsigned short)SCNS_PORT);
+	}
+#else
 	if ((p = getenv ("CNS_PORT")) || (p = getconfent ("CNS", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else if (sp = getservbyname ("cns", "tcp")) {
@@ -170,6 +181,7 @@ struct main_args *main_args;
 	} else {
 		sin.sin_port = htons ((unsigned short)CNS_PORT);
 	}
+#endif
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		nslogit (func, NS002, "setsockopt", neterror());
