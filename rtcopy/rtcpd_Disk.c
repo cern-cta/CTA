@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 10:03:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.5 $ $Date: 1999/12/08 11:58:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1005,7 +1005,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     rc = 0;
     disk_fd = DiskFileOpen(pool_index,tape,file);
     if ( disk_fd == -1 ) {
-        tellClient(&client_socket,NULL,file,rc);
+        tellClient(&client_socket,NULL,file,disk_fd);
         rtcp_CloseConnection(&client_socket);
         return((void *)&failure);
     }
