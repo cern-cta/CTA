@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.35 $ $Date: 2000/02/11 10:49:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.36 $ $Date: 2000/02/14 13:20:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -40,6 +40,7 @@ extern char *geterr();
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
+#include <sacct.h>
 #define RFIO_KERNEL 1
 #include <rfio.h>
 #include <rfio_errno.h>
@@ -68,6 +69,7 @@ typedef struct thread_arg {
                                   * should be marked end_to_tpfile=TRUE */
     tape_list_t *tape;
     file_list_t *file;
+    rtcpClientInfo_t *client;
 } thread_arg_t;
 
 thread_arg_t *thargs = NULL;
@@ -302,6 +304,7 @@ static int DiskFileOpen(int pool_index,
     int rc, irc, save_serrno, disk_fd, flags, use_rfioV3, severity;
     diskIOstatus_t *diskIOstatus = NULL;
     char *ifce;
+    char node[2];
     SOCKET s;
     char Uformat_flags[8];
     register int debug = Debug;
@@ -422,8 +425,9 @@ static int DiskFileOpen(int pool_index,
                 strcat(Uformat_flags,"E");
             }
         }
+        strcpy(node," ");
         DK_STATUS(RTCP_PS_OPEN);
-        rc = rfio_xyopen(filereq->file_path," ",file->FortranUnit,0,
+        rc = rfio_xyopen(filereq->file_path,node,file->FortranUnit,0,
                          Uformat_flags,&irc);
         DK_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc != 0 || irc != 0 ) {
@@ -1033,6 +1037,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
          */
         DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
             nb_bytes,filereq->file_path));
+        rc = irc = 0;
         if ( (Uformat == FALSE) || ((convert & NOF77CW) != 0) ) {
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
@@ -1044,7 +1049,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
             /*
              * All U formats except U,bin
              */
-            rc = irc = 0;
             databufs[i]->nbrecs = 0;
             for (j=0; j*blksiz < nb_bytes; j++) {
                 bufp = databufs[i]->buffer + j*blksiz;
@@ -1235,10 +1239,12 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
             } else { \
                 (void) rtcpd_stageupdc(tape,file); \
+                (void)rtcp_WriteAccountRecord(client,file,RTCPEMSG); \
             if ( AbortFlag == 0 ) \
         } else if ( mode == WRITE_DISABLE ) {\
             (void) tellClient(&client_socket,X,Y,0); \
             rtcpd_SetProcError(severity); \
+            (void)rtcp_WriteAccountRecord(client,file,RTCPEMSG); \
         if ( disk_fd != -1 ) \
         rtcp_CloseConnection(&client_socket); \
         if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_DISABLE ) \
@@ -1249,6 +1255,7 @@ void *diskIOthread(void *arg) {
     tape_list_t *tape, *tl;
     file_list_t *file, *fl;
     rtcpClientInfo_t *client;
+    rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus = NULL;
     u_signed64 nbbytes;
@@ -1274,6 +1281,7 @@ void *diskIOthread(void *arg) {
     tape = ((thread_arg_t *)arg)->tape;
     file = ((thread_arg_t *)arg)->file;
     client = ((thread_arg_t *)arg)->client;
+    client_socket = ((thread_arg_t *)arg)->client_socket;
     pool_index = ((thread_arg_t *)arg)->pool_index;
     indxp = ((thread_arg_t *)arg)->start_indxp;
     offset = ((thread_arg_t *)arg)->start_offset;
@@ -1428,6 +1436,7 @@ void *diskIOthread(void *arg) {
 
         tellClient(&client_socket,NULL,file,rc);
         (void)rtcp_WriteAccountRecord(client,tape,file,RTCPPRC); 
+        (void)rtcp_WriteAccountRecord(client,file,RTCPPRC); 
         rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d, proc_status=%d severity=%d\n",
             filereq->tape_fseq,filereq->file_path,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
@@ -1774,6 +1783,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             tharg->tape = nexttape;
             tharg->file = nextfile;
             tharg->client = client;
+            tharg->end_of_tpfile = end_of_tpfile;
             tharg->last_file = last_file;
             tharg->pool_index = thIndex;
             tharg->start_indxp = indxp;
