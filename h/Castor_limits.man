@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.7 2001/05/17 09:15:50 baud Exp $
+.\" $Id: Castor_limits.man,v 1.8 2001/07/25 09:40:37 baud Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2001/05/17 09:15:50 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2001/07/25 09:40:37 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -24,6 +24,11 @@ Default value: 15
 maximum length for user comments in metadata
 .br
 Default value: 255
+.TP
+.B CA_MAXDENFIELDS
+maximum number of density values in devinfo
+.br
+Default value: 8
 .TP
 .B CA_MAXDENLEN
 maximum length for a alphanumeric density
