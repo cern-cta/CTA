@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.5 $ $Date: 2003/12/28 12:04:48 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.6 $ $Date: 2004/06/07 16:37:18 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -38,6 +38,12 @@
 #define DLF_LVL_ALL         -1
 #define DLF_LVL_SERVICE_ONLY 0
 
+#define CLOSE_RETURN(x) \
+        { \
+        fclose (in_file); \
+        return (x); \
+        }
+
 /* Function prototypes */
 
 EXTERN_C int DLL_DECL dlf_init _PROTO((const char*));
@@ -51,6 +57,7 @@ EXTERN_C int DLL_DECL dlf_add_to_log_dst _PROTO((int, int, const char*, int, dlf
 EXTERN_C dlf_log_dst_t DLL_DECL * dlf_find_server _PROTO((int));
 EXTERN_C char DLL_DECL * dlf_get_msg_text _PROTO((int));
 EXTERN_C int DLL_DECL dlf_gettexts _PROTO((const char*, unsigned int*, dlf_msg_text_slist_t*));
+EXTERN_C int DLL_DECL dlf_gettexts_from_file _PROTO((const char*, unsigned int*, dlf_msg_text_slist_t*));
 EXTERN_C int DLL_DECL dlf_add_to_text_list _PROTO((int, const char*, dlf_msg_text_slist_t*));
 EXTERN_C char DLL_DECL * dlf_format_str _PROTO((char*, int, const char*, ...));
 EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t, int, int, struct Cns_fileid*, int, ...));
