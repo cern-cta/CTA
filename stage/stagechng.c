@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.1 2000/06/16 14:34:22 jdurand Exp $
+ * $Id: stagechng.c,v 1.2 2000/06/17 07:53:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.1 $ $Date: 2000/06/16 14:34:22 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.2 $ $Date: 2000/06/17 07:53:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -70,7 +70,7 @@ int main(argc, argv)
 		exit (USERR);
 	}
 #endif
-	while ((c = getopt (argc, argv, "p:")) != EOF) {
+	while ((c = getopt (argc, argv, "h:")) != EOF) {
 		switch (c) {
 		case 'h':
 			stghost = optarg;
