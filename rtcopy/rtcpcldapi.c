@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/07/30 11:27:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/07/30 11:56:30 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.27 $ $Date: 2004/07/30 11:27:56 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.28 $ $Date: 2004/07/30 11:56:30 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -935,7 +935,7 @@ static int getUpdates(
   enum Cstager_SegmentStatusCodes_t segmOldStatus, segmNewStatus;
   tape_list_t *tape;
   file_list_t *file;
-  int rc, save_serrno;
+  int rc, save_serrno, callGetMoreInfo;
   char *segmCksumAlgorithm, *errmsgtxt, *vwAddress;
   unsigned char *blockid;
   ID_TYPE key;
@@ -1015,7 +1015,8 @@ static int getUpdates(
         tape->tapereq.tprc = -1;
         return(-1);
       }
-      
+
+      callGetMoreInfo = 0;
       CLIST_ITERATE_BEGIN(tpIterator->segments,segmIterator) 
         {
           /*
@@ -1124,20 +1125,7 @@ static int getUpdates(
                 break;
               case SEGMENT_WAITFSEQ:
               case SEGMENT_WAITPATH:
-                rc = getMoreInfo(tape);
-                if ( rc == -1 ) {
-                  save_serrno = serrno;
-                } else {
-                  rc = updateSegmList(tpIterator,tape->file);
-                  if ( rc == -1 ) {
-                    save_serrno = serrno;
-                  } else {
-                    rc = doFullUpdate(tpIterator,tape);
-                    if ( rc == -1 ) save_serrno = serrno;
-                  }
-                }
-                if ( rc == -1 ) serrno = save_serrno;
-                return(rc);
+                callGetMoreInfo = 1;
                 break;
               case SEGMENT_UNKNOWN:
                 rtcp_log(
@@ -1160,6 +1148,24 @@ static int getUpdates(
           }
         }
       CLIST_ITERATE_END(tpIterator->segments,segmIterator);
+      if ( callGetMoreInfo != 0 ) {
+        rc = getMoreInfo(tape);
+        if ( rc == -1 ) {
+          save_serrno = serrno;
+        } else {
+          rc = updateSegmList(tpIterator,tape->file);
+          if ( rc == -1 ) {
+            save_serrno = serrno;
+          } else {
+            rc = doFullUpdate(tpIterator,tape);
+            if ( rc == -1 ) save_serrno = serrno;
+          }
+        }
+        if ( rc == -1 ) {
+          serrno = save_serrno;
+          return(rc);
+        }
+      }
     }
   CLIST_ITERATE_END(tpList,tpIterator);
   return(0);
