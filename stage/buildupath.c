@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.17 2002/04/11 10:01:04 jdurand Exp $
+ * $Id: buildupath.c,v 1.18 2002/04/23 12:02:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.17 $ $Date: 2002/04/11 10:01:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.18 $ $Date: 2002/04/23 12:02:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,8 +43,8 @@ static int initialized = 0;
 static char nfsroot[MAXPATH];
 */
 
-int  DLL_DECL  build_linkname _PROTO((char *, char *, int, int));
-int  DLL_DECL  build_Upath _PROTO((int, char *, int, int));
+int  DLL_DECL  build_linkname _PROTO((char *, char *, size_t, int));
+int  DLL_DECL  build_Upath _PROTO((int, char *, size_t, int));
 static int init_cwd_hostname _PROTO(());
 static int resolvelinks _PROTO((char *, char *, int, int));
 
@@ -185,7 +185,7 @@ static int resolvelinks(argvi, buf, buflen, req_type)
 int DLL_DECL build_linkname(argvi, path, size, req_type)
 		 char *argvi;
 		 char *path;
-		 int size;
+		 size_t size;
 		 int req_type;
 {
 	char buf[CA_MAXPATHLEN+1];
@@ -251,7 +251,7 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 int DLL_DECL build_Upath(fun, path, size, req_type)
 		 int fun;
 		 char *path;
-		 int size;
+		 size_t size;
 		 int req_type;
 {
 #if !defined(_WIN32)
