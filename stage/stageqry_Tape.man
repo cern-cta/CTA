@@ -1,10 +1,10 @@
-.\" $Id: stageqry_Tape.man,v 1.1 2002/09/15 06:39:28 jdurand Exp $
+.\" $Id: stageqry_Tape.man,v 1.2 2002/09/15 07:03:02 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry_Tape.man,v $ $Revision: 1.1 $ $Date: 2002/09/15 06:39:28 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stageqry_Tape.man,v $ $Revision: 1.2 $ $Date: 2002/09/15 07:03:02 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY_TAPE "3" "$Date: 2002/09/15 06:39:28 $" "CASTOR" "Stage Library Functions"
+.TH STAGEQRY_TAPE "3" "$Date: 2002/09/15 07:03:02 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stageqry_Tape \- Query the stager catalog about a tape
 .SH SYNOPSIS
@@ -201,6 +201,9 @@ Bad address
 .TP
 .B EINVAL
 Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
 .TP
 .B SECONNDROP
 Connection closed by remote end
