@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.77 2000/11/21 10:43:02 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.78 2000/11/21 12:03:23 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.77 $ $Date: 2000/11/21 10:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.78 $ $Date: 2000/11/21 12:03:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1035,7 +1035,12 @@ checkovlstatus(pid, status)
 		reqid = 0;
 		stglogit (func, "cleaner process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
-	} else {	/* it was a "stager" or a "stageqry" or a "migrator" overlay */
+	/* was it a "migrator" overlay ? */
+	} else if (ismigovl (pid, status)) {
+		reqid = 0;
+		stglogit (func, "migration process %d exiting with status %x\n",
+							pid, status & 0xFFFF);
+	} else {	/* it was a "stager" or a "stageqry" overlay */
 		found =  0;
 		wqp = waitqp;
 		while (wqp) {
@@ -1051,7 +1056,7 @@ checkovlstatus(pid, status)
 				pid, status & 0xFFFF);
 		} else {
 			reqid = wqp->reqid;
-			stglogit (func, "%s process %d exiting with status %x\n", ismigovl (pid, status) ? "migration" : "stager",
+			stglogit (func, "stager process %d exiting with status %x\n",
 				pid, status & 0xFFFF);
 			wqp->ovl_pid = 0;
 			if (wqp->status == 0)
