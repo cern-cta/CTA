@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.19 2005/02/01 13:52:17 bcouturi Exp $
+ * $Id: JobSvcThread.cpp,v 1.20 2005/02/03 08:56:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.19 $ $Date: 2005/02/01 13:52:17 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.20 $ $Date: 2005/02/03 08:56:22 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -559,6 +559,9 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     if (stgSvc) stgSvc->release();
     throw e;
   }
+
+  // Delete Request From the database
+  stgSvc->deleteRep(&ad, req, true);
 
   // Cleanup
   if (req) delete req;
