@@ -1,0 +1,50 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 12:14:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "tape" directory
+
+INCLUDES = FileName(FileName(..,..),h)
+#if linux
+LIBS = -L../../lib -lshift -lnsl
+#else
+#if SOLARIS
+LIBS = -L../../lib -lshift -lsocket -lnsl
+#else
+#if defined(_AIX) && defined(_IBMR2)
+LIBS = -L../../lib -lshift -lodm
+#else
+#if _WIN32
+LIBS = ..\..\lib\shift.lib wsock32.lib advapi32.lib
+#else
+LIBS = -L../../lib -lshift
+#endif
+#endif
+#endif
+#endif
+
+PROGS = ProgramTargetName(Ctape_test1)
+
+CFLAGS = -I$(INCLUDES)
+
+GLOBLIB = DepLibraryTargetName(FileName(..,lib),shift)
+
+all: $(PROGS)
+
+NormalProgramTarget(Ctape_test1,Ctape_test1.Osuf,$(GLOBLIB),$(LIBS))
+
+MakeDepLibrary(FileName(..,lib),shift)
+
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+depend:
+	makedepend -Y$(INCLUDES) *.c
+ 
+Makefiles:
+ 
