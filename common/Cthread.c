@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.18 1999/10/15 14:35:20 jdurand Exp $
+ * $Id: Cthread.c,v 1.19 1999/10/20 18:36:56 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.18 $ $Date: 1999/10/15 14:35:20 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.19 $ $Date: 1999/10/20 18:36:56 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -132,7 +132,7 @@ typedef pid_t Cth_pid_t;
  * Use handles as an option. Default is critical
  * section which should be more efficient in normal
  * working conditions. Try to set
- * _CTHREAD_WIN32MTXIf if perf. is low on
+ * _CTHREAD_WIN32MTX if perf. is low on
  * on multi-CPU platforms
  */
 #  ifdef _CTHREAD_WIN32MTX
@@ -631,7 +631,7 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     status = routine(routineargs);
 
     /* Destroy the entry in Cthread internal linked list */
-    _Cthread_destroy(Cthread_self());
+    _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
 	return((unsigned)status);
 }
 /* ============================================ */
@@ -689,7 +689,7 @@ void __cdecl _Cthread_start_thread(void *arg) {
     status = routine(routineargs);
 
     /* Destroy the entry in Cthread internal linked list */
-    _Cthread_destroy(Cthread_self());
+    _Cthread_destroy(__FILE__,__LINE__,Cthread_self());
 	return;
 }
 #else /* _CTHREAD_PROTO_WIN32 */
@@ -1387,7 +1387,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
       }
       break;
 	}
-    _Cthread_destroy(cid);
+    _Cthread_destroy(__FILE__,__LINE__,cid);
   }
   return(n);
 #else /* _CTHREAD_PROTO_WIN32 */
@@ -2059,7 +2059,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
     rc = -1;
 #endif /* _CTHREAD_PROTO */
   } else {
-#if _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32
+#if _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32
 	  /* timeout > 0 : pthread_cond_timedwait */
     struct timeval          tv;
     struct timespec         ts;
@@ -2072,8 +2072,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
       ts.tv_sec = tv.tv_sec + timeout;
       /* microsec to nanosec */
       ts.tv_nsec = tv.tv_usec * 1000;
-#endif /* _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32 */
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
       if ((n = pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts))) {
         errno = n;
@@ -2082,7 +2081,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
       if (pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts)) {
         serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
@@ -2090,7 +2089,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
       if ((n = pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts))) {
         errno = n;
@@ -2099,20 +2098,21 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-      rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
-#else
+#  else
       serrno = SEOPNOTSUP;
-      rc = -1;
+	  rc = -1;
+#  endif
+	}
+#else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
+    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
 #endif
-    }
   }
 
   /* This end of the routine will decrease the number */
   /* of wait doing a Wait_Condition on addr           */
 
   /* Decrease the number of waiting threads */
-  --current->nwait;
+   --current->nwait;
 
   return(rc);
 #endif /* ifdef _NOCTHREAD */
@@ -2236,7 +2236,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
     rc = -1;
 #endif /* _CTHREAD_PROTO */
   } else {
-#if _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32
+#if _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32
 	  /* timeout > 0 : pthread_cond_timedwait */
     struct timeval          tv;
     struct timespec         ts;
@@ -2249,8 +2249,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
       ts.tv_sec = tv.tv_sec + timeout;
       /* microsec to nanosec */
       ts.tv_nsec = tv.tv_usec * 1000;
-#endif /* _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32 */
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
       if ((n = pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts))) {
         errno = n;
@@ -2259,7 +2258,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
       if (pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts)) {
         serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
@@ -2267,7 +2266,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
       if ((n = pthread_cond_timedwait(&(current->cond),
                                       &(current->mtx),&ts))) {
         errno = n;
@@ -2276,15 +2275,14 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
       } else {
         rc = 0;
       }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-      rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
-#else
+#  else
       serrno = SEOPNOTSUP;
-      rc = -1;
+	  rc = -1;
+#  endif
+	}
+#else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */ 
+    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
 #endif
-    }
-    /* OK */
-    /* [jdurand] why is it there ??? rc = 0; */
   }
 
   /* This end of the routine will decrease the number */
@@ -3138,21 +3136,14 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 #else 
   /* This is a thread implementation */
   if (timeout < 0) {
-#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && !defined(_CTHREAD_WIN32MTX)
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     /*
      * Use Win32 critical section
      */
-#ifdef CTHREAD_DEBUG
-    if (file != NULL) {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] in _Cthread_obtain_mtx called at %s:%d : Enter Critical section 0x%x\n",
-            _Cthread_self(),file,line,mtx);
-    }
-#endif /* CTHREAD_DEBUG */
     EnterCriticalSection(&(mtx->mtx));
     mtx->nb_locks++;
     return(0);
-#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
     /* Try to get the lock */
 #    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_lock(mtx))) {
@@ -3178,9 +3169,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     serrno = SEOPNOTSUP;
     return(-1);
 #    endif /* _CTHREAD_PROTO */
-#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
   } else if (timeout == 0) {
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
@@ -3189,14 +3180,14 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_trylock(mtx) != 1) {
       serrno = SECTHREADERR;
       return(-1);
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
@@ -3205,7 +3196,7 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
         mtx->nb_locks++;
         return(0);
@@ -3213,10 +3204,10 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
       serrno = SECTHREADERR;
       return(-1);
     }
-#else
+#  else
     serrno = SEOPNOTSUP;
     return(-1);
-#endif /* _CTHREAD_PROTO */
+#  endif /* _CTHREAD_PROTO */
   } else {
     /* This code has been kept from comp.programming.threads */
     /* timeout > 0 */
@@ -3228,15 +3219,15 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     Timeout = timeout * 1000;
 
     while (timewaited < Timeout && ! gotmutex) {
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
       if ((n = pthread_mutex_trylock(mtx)))
         errno = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
       n = pthread_mutex_trylock(mtx);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
       if ((n = pthread_mutex_trylock(mtx)))
         errno = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
       n = -1;
       if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
           n = 0;
@@ -3244,10 +3235,10 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
       } else {
         errno = EBUSY;
       }
-#else
+#  else
       serrno = SEOPNOTSUP;
       return(-1);
-#endif /* _CTHREAD_PROTO */
+#  endif /* _CTHREAD_PROTO */
       if (errno == EDEADLK || n == 0) {
         gotmutex = 1;
         return(0);
@@ -3260,7 +3251,7 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
         /* usleep is in micro-seconds, not milli seconds... */
         usleep((Timeout * 1000)/20);
-#endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
     serrno = ETIMEDOUT;
@@ -3352,21 +3343,14 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
 #else 
   /* This is a thread implementation */
   if (timeout < 0) {
-#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && !defined(_CTHREAD_WIN32MTX)
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     /*
      * Use Win32 critical section
      */
-#ifdef CTHREAD_DEBUG
-    if (file != NULL) {
-      if (Cthread_debug != 0)
-        log(LOG_INFO,"[Cthread    [%2d]] in _Cthread_obtain_mtx called at %s:%d : Enter Critical section 0x%x\n",
-            _Cthread_self(),file,line,mtx);
-    }
-#endif /* CTHREAD_DEBUG */
     EnterCriticalSection(&(mtx->mtx));
     mtx->nb_locks++;
     return(0);
-#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
     /* Try to get the lock */
 #    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_lock(mtx))) {
@@ -3392,9 +3376,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     serrno = SEOPNOTSUP;
     return(-1);
 #    endif /* _CTHREAD_PROTO */
-#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
   } else if (timeout == 0) {
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
@@ -3403,14 +3387,14 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_mutex_trylock(mtx) != 1) {
       serrno = SECTHREADERR;
       return(-1);
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
@@ -3419,7 +3403,7 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     } else {
       return(0);
     }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
         mtx->nb_locks++;
         return(0);
@@ -3427,10 +3411,10 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
       serrno = SECTHREADERR;
       return(-1);
     }
-#else
+#  else
     serrno = SEOPNOTSUP;
     return(-1);
-#endif /* _CTHREAD_PROTO */
+#  endif /* _CTHREAD_PROTO */
   } else {
     /* This code has been kept from comp.programming.threads */
     /* timeout > 0 */
@@ -3442,15 +3426,15 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     Timeout = timeout * 1000;
 
     while (timewaited < Timeout && ! gotmutex) {
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
       if ((n = pthread_mutex_trylock(mtx)))
         errno = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
       n = pthread_mutex_trylock(mtx);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
       if ((n = pthread_mutex_trylock(mtx)))
         errno = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
       n = -1;
       if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
           n = 0;
@@ -3458,10 +3442,10 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
       } else {
         errno = EBUSY;
       }
-#else
+#  else
       serrno = SEOPNOTSUP;
       return(-1);
-#endif /* _CTHREAD_PROTO */
+#  endif /* _CTHREAD_PROTO */
       if (errno == EDEADLK || n == 0) {
         gotmutex = 1;
         return(0);
@@ -3474,10 +3458,10 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
         /* usleep is in micro-seconds, not milli seconds... */
         usleep((Timeout * 1000)/20);
-#endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
-    serrno = ETIMEDOUT;
+    serrno = SETIMEDOUT;
     return(-1);
   }
 #endif /* ifndef _CTHREAD */
@@ -4531,7 +4515,7 @@ static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
     /*
      * Relase the external mutex here.
      */
-    _Cthread_release_mtx(mtx);
+    _Cthread_release_mtx(NULL,0,mtx);
     /* Wait for either event to become signaled, 
      * due to _Cthread_win32_cond_signal being called or 
      * _Cthread_win32_cond_broadcast being called.
@@ -4581,7 +4565,7 @@ static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
     /*
      * Reacquire the mutex before returning
      */
-    return(_Cthread_obtain_mtx(mtx,timeout));
+    return(_Cthread_obtain_mtx(NULL,0,mtx,timeout));
 }
 /* ============================================ */
 /* Routine  : _Cthread_win32_cond_broadcast     */
