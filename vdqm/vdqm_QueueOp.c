@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.52 $ $Date: 2003/12/10 12:41:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.53 $ $Date: 2003/12/10 14:50:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -124,9 +124,14 @@ int vdqm_LockAllQueues() {
     rc = LockQueues();
     if ( rc == -1 ) return(-1);
     CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
+        rc = UnlockQueues();
+        if ( rc == -1 ) break;
         rc = LockDgnQueue(tmp);
         if ( rc == -1 ) break;
+        rc = LockQueues();
+        if ( rc == -1 ) break;
     } CLIST_ITERATE_END(dgn_queues,tmp);
+    if ( rc == 0 ) rc = UnlockQueues();
     return(rc);
 }
 
@@ -134,8 +139,14 @@ int vdqm_UnlockAllQueues() {
     int rc = 0;
     dgn_element_t *tmp = NULL;
 
+    rc = LockQueues();
+    if ( rc == -1 ) return(-1);
     CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
+        rc = UnlockQueues();
+        if ( rc == -1 ) break;
         rc = UnlockDgnQueue(tmp);
+        if ( rc == -1 ) break;
+        rc = LockQueues();
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(dgn_queues,tmp);
     if ( rc == -1 ) (void)UnlockQueues();
