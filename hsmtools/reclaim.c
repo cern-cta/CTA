@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.2 $ $Date: 2001/01/25 08:45:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.3 $ $Date: 2002/01/22 16:23:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
@@ -23,7 +23,7 @@ int argc;
 char **argv;
 {
 	int c;
-	char *Cns_hosts;
+	char *Cns_hosts = NULL;
 	FILE *df;
 	struct Cns_direntape *dtp;
 	int errflg = 0;
@@ -109,7 +109,7 @@ char **argv;
 			exit (SYERR);
 		}
 		(void) Cns_listtape (host, vid, CNS_LIST_END, &list);
-		if (! host) break;
+		if (! Cns_hosts) break;
 		host = strtok (NULL, " \t\n");
 		if (! host) break;
 	}
