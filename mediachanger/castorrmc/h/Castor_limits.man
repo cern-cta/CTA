@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.3 2000/02/16 10:42:37 baud Exp $
+.\" $Id: Castor_limits.man,v 1.4 2000/09/21 15:38:06 jdurand Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2000/02/16 10:42:37 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2000/09/21 15:38:06 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -49,6 +49,11 @@ Default value: 17
 maximum length for a fseq string
 .br
 Default value: 14
+.TP
+.B CA_MAXGID
+maximum value for gid
+.br
+Default value: 0x7FFFFFFF
 .TP
 .B CA_MAXGRPNAMELEN
 maximum length for a group name
@@ -126,6 +131,11 @@ Default value: 77
 maximum value for a stager request id
 .br
 Default value: 999999
+.TP
+.B CA_MAXUID
+maximum value for uid
+.br
+Default value: 0x7FFFFFFF
 .TP
 .B CA_MAXUNMLEN
 maximum length for a drive name
