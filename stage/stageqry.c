@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.19 2001/03/03 06:19:28 jdurand Exp $
+ * $Id: stageqry.c,v 1.20 2001/06/21 10:36:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.19 $ $Date: 2001/03/03 06:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.20 $ $Date: 2001/06/21 10:36:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -267,9 +267,10 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s%s",
-					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
-					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range] [-S] [-s] [-T]\n",
-					 "[-u] [-V visual_identifier(s)] [-x]\n",
-					 "[--class] [--counters] [--dump] [--migrator] [--noregexp] [--queue] [--reqid reqid]\n");
+	fprintf (stderr, "%s",
+					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n"
+					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range]\n"
+					 "[-S] [-s] [-T] [-u] [-V visual_identifier(s)] [-x]\n"
+					 "[--class] [--counters] [--dump] [--migrator] [--noregexp]\n"
+					 "[--queue] [--reqid reqid]\n");
 }
