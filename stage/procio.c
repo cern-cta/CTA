@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.62 2000/11/27 17:54:54 jdurand Exp $
+ * $Id: procio.c,v 1.63 2000/12/12 14:49:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.62 $ $Date: 2000/11/27 17:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.63 $ $Date: 2000/12/12 14:49:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,6 +43,8 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.62 $ $Date: 2000
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "rfio_api.h"
+#include "Cgetopt.h"
+
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -50,8 +52,6 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.62 $ $Date: 2000
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
 
-extern char *optarg;
-extern int optind;
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
@@ -75,7 +75,7 @@ extern int isuserlevel _PROTO((char *));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
-extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
@@ -147,6 +147,7 @@ void procioreq(req_type, req_data, clienthost)
 	struct waitq *wqp = NULL;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
+	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -182,15 +183,12 @@ void procioreq(req_type, req_data, clienthost)
 	numvid = 0;
 	numvsn = 0;
 
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != -1) {
 		switch (c) {
 		case 'A':	/* allocation mode */
-			if (strcmp (optarg, "deferred") == 0) {
+			if (strcmp (Coptarg, "deferred") == 0) {
 				if (req_type != STAGEIN && req_type != STAGEWRT) {
 					/* We will better check afterwards for STAGEWRT */
 					/* this depends on other option -M existence */
@@ -199,20 +197,20 @@ void procioreq(req_type, req_data, clienthost)
 					errflg++;
 				} else
 					Aflag = 1; /* deferred space allocation */
-			} else if (strcmp (optarg, "immediate")) {
+			} else if (strcmp (Coptarg, "immediate")) {
 				sendrep (rpfd, MSG_ERR, STG06, "-A");
 				errflg++;
 			}
 			break;
 		case 'b':
-			stgreq.blksize = strtol (optarg, &dp, 10);
+			stgreq.blksize = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0' || stgreq.blksize == 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-b");
 				errflg++;
 			}
 			break;
 		case 'C':	/* character conversion */
-			p = strtok (optarg,",") ;
+			p = strtok (Coptarg,",") ;
 			while (p != NULL) {
 				if (strcmp (p, "ebcdic") == 0) {
 					stgreq.charconv |= EBCCONV;
@@ -227,27 +225,27 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case 'c':	/* concatenation */
-			if (strcmp (optarg, "off") == 0) {
+			if (strcmp (Coptarg, "off") == 0) {
 				if (req_type != STAGEIN){
 					sendrep (rpfd, MSG_ERR, STG17, "-c off",
 									 "stageout/stagewrt/stagecat");
 					errflg++;
 				} else
 					concat_off = 1;
-			} else if (strcmp (optarg, "on")) {
+			} else if (strcmp (Coptarg, "on")) {
 				sendrep (rpfd, MSG_ERR, STG06, "-c");
 				errflg++;
 			}
 			break;
 		case 'd':
-			strcpy (stgreq.u1.t.den, optarg);
+			strcpy (stgreq.u1.t.den, Coptarg);
 			break;
 		case 'E':
-			if (strcmp (optarg, "skip") == 0)
+			if (strcmp (Coptarg, "skip") == 0)
 				stgreq.u1.t.E_Tflags |= SKIPBAD;
-			else if (strcmp (optarg, "keep") == 0)
+			else if (strcmp (Coptarg, "keep") == 0)
 				stgreq.u1.t.E_Tflags |= KEEPFILE;
-			else if (strcmp (optarg, "ignoreeoi") == 0)
+			else if (strcmp (Coptarg, "ignoreeoi") == 0)
 				stgreq.u1.t.E_Tflags |= IGNOREEOI;
 			else {
 				sendrep (rpfd, MSG_ERR, STG06, "-E");
@@ -255,43 +253,43 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case 'F':
-			if (strcmp (optarg, "F") && strcmp (optarg, "FB") &&
-					strcmp (optarg, "FBS") && strcmp (optarg, "FS") &&
-					strcmp (optarg, "U") && strcmp (optarg, "U,bin") &&
-					strcmp (optarg, "U,f77") && strcmp (optarg, "F,-f77")) {
+			if (strcmp (Coptarg, "F") && strcmp (Coptarg, "FB") &&
+					strcmp (Coptarg, "FBS") && strcmp (Coptarg, "FS") &&
+					strcmp (Coptarg, "U") && strcmp (Coptarg, "U,bin") &&
+					strcmp (Coptarg, "U,f77") && strcmp (Coptarg, "F,-f77")) {
 				sendrep (rpfd, MSG_ERR, STG06, "-F");
 				errflg++;
 			} else
-				strncpy (stgreq.recfm, optarg, 3);
+				strncpy (stgreq.recfm, Coptarg, 3);
 			break;
 		case 'f':
-			fid = optarg;
+			fid = Coptarg;
 			break;
 		case 'G':
 			break;
 		case 'g':
-			strcpy (stgreq.u1.t.dgn, optarg);
+			strcpy (stgreq.u1.t.dgn, Coptarg);
 			break;
 		case 'h':
 			break;
 		case 'I':
 			stgreq.t_or_d = 'd';
-			strcpy (stgreq.u1.d.xfile, optarg);
+			strcpy (stgreq.u1.d.xfile, Coptarg);
 			break;
 		case 'K':
 			stgreq.keep = 1;
 			break;
 		case 'L':
-			stgreq.lrecl = strtol (optarg, &dp, 10);
+			stgreq.lrecl = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0' || stgreq.lrecl == 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-L");
 				errflg++;
 			}
 			break;
 		case 'l':
-			if (strcmp (optarg, "blp") ||
+			if (strcmp (Coptarg, "blp") ||
 					(req_type != STAGEOUT && req_type != STAGEWRT))
-				strcpy (stgreq.u1.t.lbl, optarg);
+				strcpy (stgreq.u1.t.lbl, Coptarg);
 			else {
 				sendrep (rpfd, MSG_ERR, STG17, "-l blp", "stageout/stagewrt");
 				errflg++;
@@ -314,7 +312,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				hsmfiles = dummy;
 			}
-			hsmfiles[nhsmfiles++] = optarg;
+			hsmfiles[nhsmfiles++] = Coptarg;
 			/* We check that there is no redundant hsm files (multiple equivalent ones) */
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 				for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
@@ -326,23 +324,23 @@ void procioreq(req_type, req_data, clienthost)
 				}
 			}
 			/* We check that user do not mix different hsm types (hpss and castor) */
-			if (ISHPSS(optarg)) {
-				if (ISCASTORHOST(optarg)) {
-					sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", optarg);
+			if (ISHPSS(Coptarg)) {
+				if (ISCASTORHOST(Coptarg)) {
+					sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", Coptarg);
 					c = USERR;
 					goto reply;
 				}
 				++nhpssfiles;
 			}
-			if (ISCASTOR(optarg)) {
-				if (ISHPSSHOST(optarg)) {
-					sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", hsmfiles[ihsmfiles]);
+			if (ISCASTOR(Coptarg)) {
+				if (ISHPSSHOST(Coptarg)) {
+					sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", Coptarg);
 					c = USERR;
 					goto reply;
 				}
 				++ncastorfiles;
                 /* And we take the opportunity to decide which level of migration (user/exp) */
-				if (isuserlevel(optarg)) {
+				if (isuserlevel(Coptarg)) {
 					nuserlevel++;
         		} else {
           			nexplevel++;
@@ -350,7 +348,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			/* No recognized type ? */
 			if (nhpssfiles == 0 && ncastorfiles == 0) {
-				sendrep (rpfd, MSG_ERR, "Cannot determine %s type (HPSS nor CASTOR)\n", optarg);
+				sendrep (rpfd, MSG_ERR, "Cannot determine %s type (HPSS nor CASTOR)\n", Coptarg);
 				c = USERR;
 				goto reply;
 			}
@@ -371,7 +369,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case 'N':
-			nread = optarg;
+			nread = Coptarg;
 			p = strtok (nread, ":");
 			while (p != NULL) {
 				j = strtol (p, &dp, 10);
@@ -389,22 +387,22 @@ void procioreq(req_type, req_data, clienthost)
 			stgreq.u1.t.filstat = 'o';
 			break;
 		case 'p':
-			if (strcmp (optarg, "NOPOOL") == 0 ||
-					isvalidpool (optarg)) {
-				strcpy (stgreq.poolname, optarg);
+			if (strcmp (Coptarg, "NOPOOL") == 0 ||
+					isvalidpool (Coptarg)) {
+				strcpy (stgreq.poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, optarg);
+				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
 		case 'q':
-			fseq = optarg;
+			fseq = Coptarg;
 			break;
 		case 'S':
-			strcpy (stgreq.u1.t.tapesrvr, optarg);
+			strcpy (stgreq.u1.t.tapesrvr, Coptarg);
 			break;
 		case 's':
-			size = optarg;
+			size = Coptarg;
 			p = strtok (size, ":");
 			while (p != NULL) {
 				j = strtol (p, &dp, 10);
@@ -419,14 +417,14 @@ void procioreq(req_type, req_data, clienthost)
 			stgreq.u1.t.E_Tflags |= NOTRLCHK;
 			break;
 		case 't':
-			stgreq.u1.t.retentd = strtol (optarg, &dp, 10);
+			stgreq.u1.t.retentd = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-t");
 				errflg++;
 			}
 			break;
 		case 'u':
-			pool_user = optarg;
+			pool_user = Coptarg;
 			break;
 		case 'U':
 			if (req_type == STAGECAT) {
@@ -437,7 +435,7 @@ void procioreq(req_type, req_data, clienthost)
 			break;
 		case 'V':
 			stgreq.t_or_d = 't';
-			q = strtok (optarg, ":");
+			q = strtok (Coptarg, ":");
 			while (q != NULL) {
 				strcpy (stgreq.u1.t.vid[numvid], q);
 				UPPER (stgreq.u1.t.vid[numvid]);
@@ -447,7 +445,7 @@ void procioreq(req_type, req_data, clienthost)
 			break;
 		case 'v':
 			stgreq.t_or_d = 't';
-			q = strtok (optarg, ":");
+			q = strtok (Coptarg, ":");
 			while (q != NULL) {
 				strcpy (stgreq.u1.t.vsn[numvsn], q);
 				UPPER (stgreq.u1.t.vsn[numvsn]);
@@ -456,8 +454,8 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case 'X':
-			if ((int) strlen (optarg) < sizeof(stgreq.u1.d.Xparm)) {
-				strcpy (stgreq.u1.d.Xparm, optarg);
+			if ((int) strlen (Coptarg) < sizeof(stgreq.u1.d.Xparm)) {
+				strcpy (stgreq.u1.d.Xparm, Coptarg);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG06, "-X");
 				errflg++;
@@ -491,7 +489,7 @@ void procioreq(req_type, req_data, clienthost)
 		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is only valid with -V option\n");
 		errflg++;
 	}
-	if (concat_off && (nargs - optind != 0)) {
+	if (concat_off && (nargs - Coptind != 0)) {
 		sendrep (rpfd, MSG_ERR, "STG17 - option -c off is only valid without explicit disk files\n");
 		errflg++;
 	}
@@ -584,7 +582,7 @@ void procioreq(req_type, req_data, clienthost)
 	}
 
 	/* compute number of disk files */
-	nbdskf = nargs - optind;
+	nbdskf = nargs - Coptind;
 	if (nbdskf == 0) {
 		if (poolflag < 0) {	/* -p NOPOOL */
 			sendrep (rpfd, MSG_ERR, STG07);
@@ -599,7 +597,7 @@ void procioreq(req_type, req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-		if ((nargs - optind) > 0 && nbdskf != nhsmfiles) {
+		if ((nargs - Coptind) > 0 && nbdskf != nhsmfiles) {
 			sendrep (rpfd, MSG_ERR, STG19);
 			c = USERR;
 			goto reply;
@@ -731,11 +729,17 @@ void procioreq(req_type, req_data, clienthost)
 			}
 		}
 		if (no_upath == 0)
-			strcpy (upath, argv[optind+i]);
+			strcpy (upath, argv[Coptind+i]);
 
 		switch (req_type) {
 		case STAGEIN:
 			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
+			case ISSTAGEDBUSY:
+				c = EBUSY;
+				goto reply;
+			case ISSTAGEDSYERR:
+				c = SYERR;
+				goto reply;
 			case STAGEIN:	/* stage in progress */
 			case STAGEIN|WAITING_SPC:	/* waiting space */
 				stcp->nbaccesses++;
@@ -762,8 +766,10 @@ void procioreq(req_type, req_data, clienthost)
 				}
 #endif
 				if (!wqp) {
-					wqp = add2wq (clienthost, user,
-									stcp->uid, stcp->gid, clientpid,
+					wqp = add2wq (clienthost,
+									user, stcp->uid, stcp->gid,
+									user, stcp->uid, stcp->gid,
+									clientpid,
 									Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
@@ -781,7 +787,7 @@ void procioreq(req_type, req_data, clienthost)
 				wfp++;
 				if (Upluspath) {
 					wfp->subreqid = stcp->reqid;
-					strcpy (wfp->upath, argv[optind+1]);
+					strcpy (wfp->upath, argv[Coptind+1]);
 				}
 				break;
 			case STAGED:		/* staged */
@@ -860,8 +866,8 @@ void procioreq(req_type, req_data, clienthost)
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath &&
-						strcmp (stcp->ipath, argv[optind+1]))
-					create_link (stcp, argv[optind+1]);
+						strcmp (stcp->ipath, argv[Coptind+1]))
+					create_link (stcp, argv[Coptind+1]);
 				break;
 			case STAGEOUT:
 			case STAGEOUT|WAITING_SPC:
@@ -894,9 +900,9 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
 				if (!wqp) {
-					wqp = add2wq (clienthost, user,
-									stcp->uid,
-									stcp->gid,
+					wqp = add2wq (clienthost,
+									user, stcp->uid, stcp->gid,
+									user, stcp->uid, stcp->gid,
 									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
@@ -928,7 +934,7 @@ void procioreq(req_type, req_data, clienthost)
 				wfp++;
 				if (Upluspath) {
 					wfp->subreqid = stcp->reqid;
-					strcpy (wfp->upath, argv[optind+1]);
+					strcpy (wfp->upath, argv[Coptind+1]);
 				}
 			}
 			break;
@@ -942,6 +948,12 @@ void procioreq(req_type, req_data, clienthost)
 				}
 			}
 			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
+			case ISSTAGEDBUSY:
+				c = EBUSY;
+				goto reply;
+			case ISSTAGEDSYERR:
+				c = SYERR;
+				goto reply;
 			case NOTSTAGED:
 				break;
 			case STAGED:
@@ -1012,16 +1024,19 @@ void procioreq(req_type, req_data, clienthost)
 			stcp->nbaccesses++;
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 				stcp->status |= WAITING_SPC;
-				if (!wqp) wqp = add2wq (clienthost, user,
-						stcp->uid, stcp->gid, clientpid,
-						Upluspath, reqid, req_type, nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+				if (!wqp) wqp = add2wq (clienthost,
+										user, stcp->uid, stcp->gid,
+										user, stcp->uid, stcp->gid,
+										clientpid,
+										Upluspath, reqid, req_type, nbdskf, &wfp,
+										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
 				wqp->nbdskf++;
 				wfp++;
 				if (Upluspath) {
 					wfp->subreqid = stcp->reqid;
-					strcpy (wfp->upath, argv[optind+1]);
+					strcpy (wfp->upath, argv[Coptind+1]);
 				}
 				strcpy (wqp->pool_user, pool_user);
 				strcpy (wqp->waiting_pool, stcp->poolname);
@@ -1034,8 +1049,8 @@ void procioreq(req_type, req_data, clienthost)
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath &&
-						strcmp (stcp->ipath, argv[optind+1]))
-					create_link (stcp, argv[optind+1]);
+						strcmp (stcp->ipath, argv[Coptind+1]))
+					create_link (stcp, argv[Coptind+1]);
 			}
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
@@ -1066,11 +1081,11 @@ void procioreq(req_type, req_data, clienthost)
 				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0) {
 					/* File already exist */
 					/* We already checked that nbdskf is equal to nhsmfiles */
-					/* So using index ihsmfiles onto argv[optind + ihsmfiles] will point */
+					/* So using index ihsmfiles onto argv[Coptind + ihsmfiles] will point */
 					/* immediately to the correct disk file associated with this HSM file */
 					/* We compare the size of the disk file with the size in Name Server */
-					if (rfio_stat(argv[optind + ihsmfiles], &filemig_stat) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, argv[optind + ihsmfiles], "rfio_stat", rfio_serror());
+					if (rfio_stat(argv[Coptind + ihsmfiles], &filemig_stat) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, argv[Coptind + ihsmfiles], "rfio_stat", rfio_serror());
 						c = USERR;
 						setegid(0);
 						seteuid(0);
@@ -1090,7 +1105,7 @@ void procioreq(req_type, req_data, clienthost)
 					} else if (correct_size <= 0) {
 						sendrep (rpfd, MSG_OUT,
 									"STG98 - %s size is of zero size - not migrated\n",
-									argv[optind + ihsmfiles]);
+									argv[Coptind + ihsmfiles]);
 						c = USERR;
 						setegid(0);
 						seteuid(0);
@@ -1101,7 +1116,7 @@ void procioreq(req_type, req_data, clienthost)
 							sendrep (rpfd, MSG_OUT,
 										"STG98 - %s renewed (size differs vs. %s)\n",
 										hsmfiles[ihsmfiles],
-										argv[optind + ihsmfiles]);
+										argv[Coptind + ihsmfiles]);
 						}
 						forced_Cns_creatx = 1;
 					}
@@ -1140,6 +1155,12 @@ void procioreq(req_type, req_data, clienthost)
 			setegid(0);
 			seteuid(0);
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
+			case ISSTAGEDBUSY:
+				c = EBUSY;
+				goto reply;
+			case ISSTAGEDSYERR:
+				c = SYERR;
+				goto reply;
 			case NOTSTAGED:
 				break;
 			case STAGED:
@@ -1237,17 +1258,36 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 			if (! Aflag) {
 				/* This is immediate migration */
-				if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
-										stcp->gid, clientpid, Upluspath, reqid, req_type,
-										nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
-				wqp->copytape = copytape;
+				if (!wqp) {
+					uid_t uid_waitq;
+					gid_t gid_waitq;
+					char *user_waitq;
+					char *user_stage = "stage";
+
+					/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
+					if (ncastorfiles > 0 && nuserlevel > 0) {
+						uid_waitq = stpasswd->pw_uid;
+						gid_waitq = stpasswd->pw_gid;
+ 						user_waitq = user_stage;
+					} else {
+						uid_waitq = stcp->uid;
+						gid_waitq = stcp->gid;
+						user_waitq = user;
+					}
+					wqp = add2wq (clienthost,
+									user, stcp->uid, stcp->gid,
+									user_waitq, uid_waitq, gid_waitq,
+									clientpid, Upluspath, reqid, req_type,
+									nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+					wqp->copytape = copytape;
+				}
 				wfp->subreqid = stcp->reqid;
 				wqp->nbdskf++;
 				if (i < nbtpf || nhsmfiles > 0)
 					wqp->nb_subreqs++;
 				/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
 				/* -> StageIDflag set to 1 */
-				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? -1 : 0;
+				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
 				wfp++;
 			}
 			break;
@@ -1265,6 +1305,12 @@ void procioreq(req_type, req_data, clienthost)
 				actual_poolname[0] = '\0';
 			}
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
+			case ISSTAGEDBUSY:
+				c = EBUSY;
+				goto reply;
+			case ISSTAGEDSYERR:
+				c = SYERR;
+				goto reply;
 			case NOTSTAGED:
 				break;
 			default:
@@ -1399,19 +1445,16 @@ void procputreq(req_data, clienthost)
 #endif
 
 	wqp = NULL;
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "Gh:I:mM:q:U:V:")) != -1) {
 		switch (c) {
 		case 'G':
 			break;
 		case 'h':
 			break;
 		case 'I':
-			externfile = optarg;
+			externfile = Coptarg;
 			Iflag = 1;
 			break;
 		case 'm':
@@ -1439,24 +1482,24 @@ void procputreq(req_data, clienthost)
 				}
 				hsmfilesstcp = dummy2;
 			}
-			hsmfiles[nhsmfiles++] = optarg;
+			hsmfiles[nhsmfiles++] = Coptarg;
 			break;
 		case 'q':       /* file sequence number(s) */
-			if ((q = strchr (optarg, '-')) != NULL) {
+			if ((q = strchr (Coptarg, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
 					errflg++;
 				}
-				n1 = strtol (optarg, &dp, 10);
+				n1 = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
 					errflg++;
 				}
 				*q = '-';
 			} else {
-				n1 = strtol (optarg, &dp, 10);
+				n1 = strtol (Coptarg, &dp, 10);
 				if (*dp != '\0') {
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
 					errflg++;
@@ -1465,7 +1508,7 @@ void procputreq(req_data, clienthost)
 			}
 			break;
 		case 'V':       /* visual identifier */
-			strcpy (vid, optarg);
+			strcpy (vid, Coptarg);
 			UPPER (vid);
 			numvid++;
 			break;
@@ -1477,7 +1520,7 @@ void procputreq(req_data, clienthost)
 	if (Mflag && numvid)
 		errflg++;
 
-	if ((Iflag || Mflag) && (optind != nargs))
+	if ((Iflag || Mflag) && (Coptind != nargs))
 		errflg++;
 
 	if (migrationflag && ! Mflag) {
@@ -1561,8 +1604,8 @@ void procputreq(req_data, clienthost)
 				break;
 			}
 			if (found == 0 ||
-					(stcp->status != STAGEOUT &&
-					 stcp->status != (STAGEOUT|PUT_FAILED))) {
+					((stcp->status != STAGEOUT) &&
+					 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
 				sendrep (rpfd, MSG_ERR, STG22);
 				c = USERR;
 				goto reply;
@@ -1583,7 +1626,9 @@ void procputreq(req_data, clienthost)
 				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
+			if (!wqp) wqp = add2wq (clienthost,
+									user, uid, gid,
+									user, uid, gid,
 									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
@@ -1602,9 +1647,9 @@ void procputreq(req_data, clienthost)
 				/* It can happen that we get twice the same HSM filename on the same stageput */
 				/* Neverthless the first one cannot be catched a second time because it will have */
 				/* to fulfill also the correction condition on its current status */
-				if ((stcp->status & 0xF) == STAGEOUT ||
-					(stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED) ||
-					(stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
+				if (((stcp->status & 0xF) == STAGEOUT) ||
+					((stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) ||
+					((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) {
 					for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 						if (strcmp (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, hsmfiles[ihsmfiles]) != 0)
 							continue;
@@ -1622,8 +1667,8 @@ void procputreq(req_data, clienthost)
 		}
 		if (Iflag) {
 			if (found == 0 ||
-					(stcp->status != STAGEOUT &&
-					 stcp->status != (STAGEOUT|PUT_FAILED))) {
+					((stcp->status != STAGEOUT) &&
+					 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
 				sendrep (rpfd, MSG_ERR, STG22);
 				c = USERR;
 				goto reply;
@@ -1644,7 +1689,9 @@ void procputreq(req_data, clienthost)
 				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
+			if (!wqp) wqp = add2wq (clienthost,
+									user, uid, gid,
+									user, uid, gid,
 									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
@@ -1678,7 +1725,7 @@ void procputreq(req_data, clienthost)
 				if (migrationflag != 0 && (hsmfilesstcp[ihsmfiles]->status  != (STAGEOUT|CAN_BE_MIGR) &&
 											hsmfilesstcp[ihsmfiles]->status != (STAGEOUT|CAN_BE_MIGR|PUT_FAILED) &&
 											hsmfilesstcp[ihsmfiles]->status != (STAGEOUT|CAN_BE_MIGR|BEING_MIGR) &&
-											hsmfilesstcp[ihsmfiles]->status != (STAGEWRT|CAN_BE_MIGR))) {
+											hsmfilesstcp[ihsmfiles]->status != (STAGEWRT|CAN_BE_MIGR|BEING_MIGR))) {
 					sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles],"is not eligible for automatic migration\n");
 					c = USERR;
 					goto reply;
@@ -1707,8 +1754,13 @@ void procputreq(req_data, clienthost)
 					/* We make upd_stageout believe that it is a normal stageput following a stageout */
 					save_status = hsmfilesstcp[ihsmfiles]->status;
 					hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
-					if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, NULL)) {
-						hsmfilesstcp[ihsmfiles]->status = save_status;
+					if ((c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, NULL)) != 0) {
+						if (c != CLEARED) {
+							hsmfilesstcp[ihsmfiles]->status = save_status;
+						} else {
+							/* Entry has been deleted - user asks to put on tape zero-length file !? */
+							c = USERR;
+						}
 						goto reply;
 					}
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT;
@@ -1718,27 +1770,34 @@ void procputreq(req_data, clienthost)
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
-				if (!wqp) wqp = add2wq (clienthost, user_waitq, uid_waitq, gid_waitq,
+				if (!wqp) wqp = add2wq (clienthost,
+										user, uid, gid,
+										user_waitq, uid_waitq, gid_waitq,
 										clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
 				/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
 				/* -> StageIDflag set to 1 */
-				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? (migrationflag != 0 ? 1 : -1) : 0;
+				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
+				wqp->background = migrationflag;
 				wfp++;
 			}
 		}
 	} else {
+		uid_t uid_waitq;
+		gid_t gid_waitq;
+		char *user_waitq;
+		char *user_stage = "stage";
 		struct stgcat_entry *found_stcp;
 
 		/* compute number of disk files */
-		nbdskf = nargs - optind;
+		nbdskf = nargs - Coptind;
 
 		/* We verify that, if there is CASTOR HSM files, there is NO mixing between userlevel and explevel ones */
 		/* and, if there are also other types of files, there is NO userlevel CASTOR's ones. */
 		for (i = 0; i < nbdskf; i++) {
-			strcpy (upath, argv[optind+i]);
+			strcpy (upath, argv[Coptind+i]);
 			if (c = ask_stageout (STAGEPUT, upath, &found_stcp))
 				goto reply;
 			switch (found_stcp->t_or_d) {
@@ -1750,8 +1809,23 @@ void procputreq(req_data, clienthost)
 					break;
 				case 'h':
 					++ncastorfiles;
-					if ((found_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						sendrep(rpfd, MSG_ERR, STG33, upath, "is already flagged for the automatic migration\n");
+					/* We accept migration flag (-m) only on specific status */
+					if (migrationflag != 0 && (found_stcp->status  != (STAGEOUT|CAN_BE_MIGR) &&
+												found_stcp->status != (STAGEOUT|CAN_BE_MIGR|PUT_FAILED) &&
+												found_stcp->status != (STAGEOUT|CAN_BE_MIGR|BEING_MIGR) &&
+												found_stcp->status != (STAGEWRT|CAN_BE_MIGR|BEING_MIGR))) {
+						sendrep(rpfd, MSG_ERR, STG33, upath,"is not eligible for automatic migration\n");
+						c = USERR;
+						goto reply;
+					/* We accept absence of migration flag (-m) only on absence of specific status */
+					} else if (migrationflag == 0 && (found_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR &&
+													(found_stcp->status & PUT_FAILED) != PUT_FAILED) {
+						if ((found_stcp->status == (STAGEPUT|CAN_BE_MIGR)) ||
+							((found_stcp->status & BEING_MIGR) == BEING_MIGR)) {
+							sendrep(rpfd, MSG_ERR, STG33, upath, "is already being migrated");
+						} else {
+							sendrep(rpfd, MSG_ERR, STG33, upath, "is already flagged for the automatic migration");
+						}
 						c = USERR;
 						goto reply;
 					}
@@ -1830,12 +1904,17 @@ void procputreq(req_data, clienthost)
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 				int save_status;
 
-				/* We make upd_stageout believe that it is a normal stageput following a stageupdc followinga stageout */
+				/* We make upd_stageout believe that it is a normal stageput following a stageupdc following a stageout */
 				/* This will force Cns_setfsize to be called. */
 				save_status = hsmfilesstcp[ihsmfiles]->status;
 				hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
-				if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, hsmfilesstcp[ihsmfiles])) {
-					hsmfilesstcp[ihsmfiles]->status = save_status;
+				if ((c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, hsmfilesstcp[ihsmfiles])) != 0) {
+					if (c != CLEARED) {
+						hsmfilesstcp[ihsmfiles]->status = save_status;
+					} else {
+						/* Entry has been deleted - user asks to put on tape zero-length file !? */
+						c = USERR;
+					}
 					goto reply;
 				}
 				hsmfilesstcp[ihsmfiles]->status = STAGEPUT;
@@ -1847,19 +1926,43 @@ void procputreq(req_data, clienthost)
 			}
 		}
 
+		/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
+		if (ncastorfiles > 0 && nuserlevel > 0) {
+			uid_waitq = stpasswd->pw_uid;
+			gid_waitq = stpasswd->pw_gid;
+ 			user_waitq = user_stage;
+		} else {
+			uid_waitq = uid;
+			gid_waitq = gid;
+			user_waitq = user;
+		}
+
+
 		for (i = 0; i < nbdskf; i++) {
-			strcpy (upath, argv[optind+i]);
+			strcpy (upath, argv[Coptind+i]);
 			if (ncastorfiles <= 0) {
 				/* We call upd_stageout as normal for all files except CASTOR HSM ones */
-				if (c = upd_stageout (STAGEPUT, upath, &subreqid, 0, NULL))
+				if ((c = upd_stageout (STAGEPUT, upath, &subreqid, 0, NULL)) != 0) {
+					if (c == CLEARED) {
+						/* Entry has been deleted - user asks to put on tape zero-length file !? */
+						c = USERR;
+					}
 					goto reply;
+				}
+			} else {
+				subreqid = hsmfilesstcp[i]->reqid;
 			}
-			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
+			if (!wqp) wqp = add2wq (clienthost,
+									user, uid, gid,
+									user_waitq, uid_waitq, gid_waitq,
 									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
-			if (nuserlevel > 0) wqp->StageIDflag = (migrationflag != 0 ? 1 : -1);
+			/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
+			/* -> StageIDflag set to 1 */
+			if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
+			wqp->background = migrationflag;
 			wfp++;
 		}
 	}
@@ -1880,10 +1983,14 @@ void procputreq(req_data, clienthost)
 	if (c) {
 		if (wqp) {
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+				found = 0;
 				for (stcp = stcs; stcp < stce; stcp++) {
-					if (wfp->subreqid == stcp->reqid)
+					if (wfp->subreqid == stcp->reqid) {
+						found = 1;
 						break;
+					}
 				}
+				if (found == 0) continue;
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					update_migpool(stcp,-1);
 					if ((stcp->status & STAGEWRT) == STAGEWRT) {
@@ -1905,19 +2012,16 @@ void procputreq(req_data, clienthost)
 			/* It was a stageput that failed immediately (for example, because gid is not in group file) */
 			/* We need to check the specific case when the HSM file had the CAN_BE_MIGR flag */
 			/* Please note that at this stage we have not yet filled the hsmfilesstcp array */
-#ifdef linux
-			optind = 0;
-#else
-			optind = 1;
-#endif
-			while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V:")) != EOF) {
+			Coptind = 1;
+			Copterr = 0;
+			while ((c = Cgetopt (nargs, argv, "Gh:I:mM:q:U:V:")) != -1) {
 				switch (c) {
 				case 'M':
-					/* HSM filename is pointed by optarg */
+					/* HSM filename is pointed by Coptarg */
 					for (stcp = stcs; stcp < stce; stcp++) {
 						if (stcp->reqid == 0) break;
 						if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
-						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, optarg) != 0) continue;
+						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, Coptarg) != 0) continue;
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 							update_migpool(stcp,-1);
 							if ((stcp->status & STAGEWRT) == STAGEWRT) {
@@ -1955,6 +2059,8 @@ isstaged(cur, p, poolflag, poolname)
 	int thisfseq;
 	int i;
 	struct stgcat_entry *stcp;
+	struct stgcat_entry *stcp_castor_name = NULL;
+	struct stgcat_entry *stcp_castor_invariants = NULL;
 
 	last_tape_file = 0;
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -2000,18 +2106,25 @@ isstaged(cur, p, poolflag, poolname)
 		} else if (cur->t_or_d == 'm') {
 			if (strcmp (cur->u1.m.xfile, stcp->u1.m.xfile)) continue;
 		} else if (cur->t_or_d == 'h') {
-			if (strcmp (cur->u1.h.server, stcp->u1.h.server) != 0 || cur->u1.h.fileid != stcp->u1.h.fileid) continue;
-			/* Invariants already exist and the are same - was this file renamed ? */
-			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile)) {
-				sendrep(rpfd, MSG_ERR, STG101, cur->u1.h.xfile, stcp->u1.h.xfile);
-				strcpy(stcp->u1.h.xfile,cur->u1.h.xfile);
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			/* Remember if we found this HSM name */
+			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile) == 0) stcp_castor_name = stcp;
+
+			/* Remember if we found this HSM invariant pair */
+			if (strcmp (cur->u1.h.server, stcp->u1.h.server) == 0 &&
+				cur->u1.h.fileid == stcp->u1.h.fileid) stcp_castor_invariants = stcp;
+
+			if (stcp_castor_name != NULL) {
+				if (stcp_castor_name == stcp_castor_invariants) {
+					/* If we matched totally name + invariants, with same stcp, we got it */
+					found = 1;
+					break;
+				} else if (stcp_castor_invariants != NULL) {
+					/* If we matched totally name + invariants, with not same stcp, we neverthless get out */
+					break;
 				}
-#endif
-				savereqs ();
 			}
+			/* We did not match name nor invariant */
+			continue;
 		} else {
 			if (strcmp (cur->u1.d.xfile, stcp->u1.d.xfile)) continue;
 		}
@@ -2019,8 +2132,61 @@ isstaged(cur, p, poolflag, poolname)
 		break;
 	}
 	if (! found) {
+		if (cur->t_or_d == 'h' && (stcp_castor_name != NULL || stcp_castor_invariants != NULL)) {
+			if (stcp_castor_name != NULL) {
+				int stcp_castor_invariants_reqid = ((stcp_castor_invariants != NULL) ?
+														stcp_castor_invariants->reqid : 0);
+				/* Matched name only - this stcp is always to be removed if possible */
+				if (((stcp_castor_name->status & BEING_MIGR) == BEING_MIGR) ||
+					(stcp_castor_name->status == (STAGEPUT|CAN_BE_MIGR))) {
+					/* We cannot delete this file - it is busy */
+					sendrep(rpfd, MSG_ERR, "STG02 - Cannot delete obsolete (invariants differs) but busy file %s\n", stcp_castor_name->u1.h.xfile);
+					return(ISSTAGEDBUSY);
+				}
+				if (delfile (stcp_castor_name, ((stcp_castor_name->status & 0xF0) == STAGED ||
+												(stcp_castor_name->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) ?
+												0 : 1,
+												 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp_castor_name->ipath, "rfio_unlink", rfio_serror());
+						return(ISSTAGEDSYERR);
+				}
+				if (stcp_castor_invariants_reqid != 0) {
+					int found_stcp_invariants = 0;
+					/* We called delfile that changed stcp locations in memory (it is doing a memcpy()) */
+					/* The only way to protect us against this memcpy() is to search again in memory */
+					/* This operation is quite quick */
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if (stcp->reqid == stcp_castor_invariants_reqid) {
+							found_stcp_invariants = 1;
+							stcp_castor_invariants = stcp;
+							break;
+						}
+					}
+					if (found_stcp_invariants == 0) {
+						sendrep(rpfd, MSG_ERR, STG105, "isstaged", "Cannot recover stcp_castor_invariants");
+						return(ISSTAGEDSYERR);
+					}
+				}
+			}
+			if (stcp_castor_invariants != NULL) {
+				/* Matched invariants which is to be kept and renamed */
+				sendrep(rpfd, MSG_ERR, STG101, cur->u1.h.xfile, stcp_castor_invariants->u1.h.xfile);
+				strcpy(stcp_castor_invariants->u1.h.xfile,cur->u1.h.xfile);
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp_castor_invariants) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				savereqs ();
+				stcp = stcp_castor_invariants;
+				goto isstaged_return;
+			}
+			return (NOTSTAGED);
+		}
 		return (NOTSTAGED);
 	} else {
+	isstaged_return:
 		*p = stcp;
 		if ((stcp->status & 0xF0) == STAGED) {
 			return (STAGED);
