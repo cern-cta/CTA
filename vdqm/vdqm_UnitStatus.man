@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.8 $ $Date: 1999/11/19 17:05:38 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.9 $ $Date: 1999/11/26 15:34:35 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 1999/11/19 17:05:38 $"
+.TH VDQM_UNITSTATUS l "$Date: 1999/11/26 15:34:35 $"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -137,6 +137,15 @@ parameter may contain the volume identifier of the unmounted volume. VDQM will t
 cross-check this value with its internal table and return an error if the volume
 identifiers do not correspond.
 .PP
+.B VDQM_UNIT_QUERY
+\- query the status of specified unit. For each of the input parameters that 
+are not NULL pointers the corresponding value is returned (if available). The
+.I value
+parameter will contain either the running jobID (if status VDQM_UNIT_ASSIGN is
+set) or the VolReqID (if status is VDQM_UNIT_BUSY but not VDQM_UNIT_ASSIGN).
+Note that the VDQM_UNIT_QUERY should not be combined with any other status. If
+it is, the VDQM_UNIT_QUERY is ignored.
+.PP
 .B VDQM_UNIT_ERROR
 \- increment error counter for this unit in VDQM. This status should be
 set after a medium error. 
@@ -191,6 +200,9 @@ and value/jobID parameters:
 either a VDQM_UNIT_ASSIGN request with a NULL value field or an invalid
 jobID (less or equal to zero), or a VDQM_VOL_MOUNT, VDQM_UNIT_RELEASE
 or VDQM_UNIT_MBCOUNT request with an invalid jobID. 
+.TP
+.B ENOENT
+A VDQM_UNIT_QUERY has been issued for a drive that is not known to VDQM.
 .TP
 .B EPERM
 Either a VDQM_UNIT_DOWN request from host different from tape server
