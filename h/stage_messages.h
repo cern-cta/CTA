@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.20 2002/09/30 14:53:33 jdurand Exp $
+ * $Id: stage_messages.h,v 1.21 2003/05/12 12:23:37 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -110,9 +110,9 @@
 #define STG128  "STG128 - Fileclass %s@%s (classid %d) have duplicated tape pool %s - Please contact your admin  - duplicate removed\n"
 #define STG129  "STG129 - Fileclass %s@%s (classid %d) have its number of tape pools finally reduced from %d to %d\n"
 #define STG130  "STG130 - Fileclass %s@%s (classid %d) have %d number of copies v.s. %d tppools - copies possible reduced to %d\n"
-#define STG131  "STG131 - %s not removed - Retention period %d > %d seconds lifetime\n"
+#define STG131  "STG131 - %s not removed - Retention period %d > %d (now)\n"
 #define STG132  "STG132 - %s fileclass : %s\n"
-#define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d v.s. %d seconds lifetime\n"
+#define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d v.s. %d (now)\n"
 #define STG134  "STG134 - Tape %s is not accessible (%s status)\n"
 #define STG135  "STG135 - Stream No %d : %d HSM files - %s bytes - tape pool %s\n"
 #define STG136  "STG136 - %s (copy number No %d) claims that start segment No %d is ok, while its segment No %d (same copy number) is NOT - Please contact your admin - copy number No %d declared non valid for recall\n"
@@ -123,9 +123,9 @@
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
 #define STG143  "STG143 - %s : %s lifetime on disk exceeds %d day%s - %s\n"
-#define STG144  "STG144 - %s : retention period on disk is %d second%s (%s value)\n"
-#define STG145  "STG145 - %s : retention period on disk changed from %d second%s (%s value) to %d second%s (%s value)\n"
-#define STG146  "STG146 - %s : retention period on disk unchanged to %d second%s (%s value)\n"
+/* NOT USED #define STG144  "STG144 - %s : retention period on disk is %d second%s (%s value)\n" */
+/* NOT USED #define STG145  "STG145 - %s : retention period on disk changed from %d second%s (%s value) to %d second%s (%s value)\n" */
+/* NOT USED #define STG146  "STG146 - %s : retention period on disk unchanged to %d second%s (%s value)\n" */
 #define STG147  "STG147 - invalid value for option %s, maximum value is %s\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
 #define STG149  "STG149 - %s : will not be migrated until pool %s have an associated migrator\n"
@@ -137,7 +137,7 @@
 #define STG155  "STG155 - HSM File %s, pool %s, fileid %s@%s moved from DELAY_MIGR to CAN_BE_MIGR\n"
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 #define STG157  "STG157 - HSM File %s was renamed to %s (fileid %s@%s), input updated\n"
-#define STG158  "STG158 - %s : Fileclass %s@%s (classid %d) retention period %d is overwriten to %d v.s. %d seconds lifetime\n"
+#define STG158  "STG158 - %s : Fileclass %s@%s (classid %d) retention period %d is overwriten to %d\n"
 #define STG159  "STG159 - %s : Tape pools differ : \"%s\" v.s. \"%s\" - Catalog updated\n"
 #define STG160  "STG160 - Reaching system maximum number of file descriptors (%ld) - Please wait\n"
 #define STG161  "STG161 - Stage not available or in pause mode - Please wait\n"
@@ -157,6 +157,9 @@
 #define	STG175  "STG175 - %s (fileid=%s@%s) %s\n"
 #define STG176  "STG176 - %s : fileclass %s@%s (classid %d) specifies a (uid=%ld,gid=%ld) filter and yours (%ld,%ld) do not match - this file will not be migrated\n"
 #define STG177  "STG177 - %s : retention period of %s seconds expired\n"
+#define STG178  "STG178 - Pool %s have metapool %s yet existing as a real pool name\n"
+#define	STG179	"STG179 - Metapool %s can be used only for recall in explicit read-only mode\n"
+#define	STG180	"STG180 - Metapool %s translated to pool %s\n"
 #define	STG199	"STG199 - stage returns %d\n"
 
 /* Special message - a mimic of STG02 only for use with TAPE error message, when side is > 0 */
