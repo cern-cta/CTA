@@ -72,6 +72,14 @@ const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL update statement for member 
+const std::string castor::db::ora::OraSvcClassCnv::s_updateRequestStatementString =
+"UPDATE rh_SvcClass SET  = : 1 WHERE id = :2";
+
+/// SQL update statement for member 
+const std::string castor::db::ora::OraSvcClassCnv::s_updateCastorFileStatementString =
+"UPDATE rh_SvcClass SET  = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -82,7 +90,9 @@ castor::db::ora::OraSvcClassCnv::OraSvcClassCnv() :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_updateRequestStatement(0),
+  m_updateCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -104,6 +114,8 @@ void castor::db::ora::OraSvcClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_updateRequestStatement);
+    deleteStatement(m_updateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -112,6 +124,8 @@ void castor::db::ora::OraSvcClassCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_updateRequestStatement = 0;
+  m_updateCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -175,7 +189,8 @@ void castor::db::ora::OraSvcClassCnv::fillObj(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit)
+                                                bool autocommit,
+                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::SvcClass* obj = 
     dynamic_cast<castor::stager::SvcClass*>(object);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/14 16:34:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,6 +29,7 @@
 
 // Include Files
 #include "IService.hpp"
+#include "Constants.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -64,17 +65,21 @@ namespace castor {
     virtual IConverter* converter(const unsigned int id) = 0;
 
     /**
-     * create foreign representation from a C++ Object
+     * create foreign representation from a C++ Object.
      * @param address where to store the representation of
      * the object
      * @param object the object to deal with
      * @param autocommit whether the changes to the database
      * should be commited or not
+     * @param type if not OBJ_INVALID, the ids representing
+     * the links to objects of this type will not set to 0
+     * as is the default.
      * @exception Exception throws an Exception in case of error
      */
     virtual void createRep(IAddress* address,
                            IObject* object,
-                           bool autocommit)
+                           bool autocommit,
+                           unsigned int type = OBJ_INVALID)
       throw (castor::exception::Exception) = 0;
 
     /**

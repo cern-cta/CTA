@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -227,41 +231,11 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member fileSystems
-        static const std::string s_insertDiskServer2FileSystemStatementString;
-
-        /// SQL insert statement object for member fileSystems
-        oracle::occi::Statement *m_insertDiskServer2FileSystemStatement;
-
-        /// SQL delete statement for member fileSystems
-        static const std::string s_deleteDiskServer2FileSystemStatementString;
-
-        /// SQL delete statement object for member fileSystems
-        oracle::occi::Statement *m_deleteDiskServer2FileSystemStatement;
-
         /// SQL select statement for member fileSystems
-        static const std::string s_DiskServer2FileSystemStatementString;
+        static const std::string s_selectFileSystemStatementString;
 
         /// SQL select statement object for member fileSystems
-        oracle::occi::Statement *m_DiskServer2FileSystemStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertDiskServer2DiskServerStatusCodeStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertDiskServer2DiskServerStatusCodeStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteDiskServer2DiskServerStatusCodeStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteDiskServer2DiskServerStatusCodeStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_DiskServer2DiskServerStatusCodeStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_DiskServer2DiskServerStatusCodeStatement;
+        oracle::occi::Statement *m_selectFileSystemStatement;
 
       }; // end of class OraDiskServerCnv
 

@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -243,47 +247,17 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member tape
-        static const std::string s_insertTape2SegmentStatementString;
+        /// SQL update statement for member tape
+        static const std::string s_updateTapeStatementString;
 
-        /// SQL insert statement object for member tape
-        oracle::occi::Statement *m_insertTape2SegmentStatement;
+        /// SQL update statement object for member tape
+        oracle::occi::Statement *m_updateTapeStatement;
 
-        /// SQL delete statement for member tape
-        static const std::string s_deleteTape2SegmentStatementString;
+        /// SQL update statement for member copy
+        static const std::string s_updateTapeCopyStatementString;
 
-        /// SQL delete statement object for member tape
-        oracle::occi::Statement *m_deleteTape2SegmentStatement;
-
-        /// SQL insert statement for member copy
-        static const std::string s_insertTapeCopy2SegmentStatementString;
-
-        /// SQL insert statement object for member copy
-        oracle::occi::Statement *m_insertTapeCopy2SegmentStatement;
-
-        /// SQL delete statement for member copy
-        static const std::string s_deleteTapeCopy2SegmentStatementString;
-
-        /// SQL delete statement object for member copy
-        oracle::occi::Statement *m_deleteTapeCopy2SegmentStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertSegment2SegmentStatusCodesStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertSegment2SegmentStatusCodesStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteSegment2SegmentStatusCodesStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteSegment2SegmentStatusCodesStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_Segment2SegmentStatusCodesStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_Segment2SegmentStatusCodesStatement;
+        /// SQL update statement object for member copy
+        oracle::occi::Statement *m_updateTapeCopyStatement;
 
       }; // end of class OraSegmentCnv
 

@@ -91,7 +91,9 @@ void CppCppBaseCnvWriter::writeCreateRep() {
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
             << " object,"
             << endl << getIndent() << str
-            << "bool autocommit)" << endl
+            << "bool autocommit,"
+            << endl << getIndent() << str
+            << "unsigned int type)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",

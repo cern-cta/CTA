@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/11 16:44:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
  *
  * 
  *
@@ -76,7 +76,8 @@ const unsigned int castor::io::StreamPtrCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         bool autocommit)
+                                         bool autocommit,
+                                         unsigned int type)
   throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
   castor::exception::Internal ex;

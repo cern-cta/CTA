@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -275,53 +279,41 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL update statement for member diskcopy
+        static const std::string s_updateDiskCopyStatementString;
+
+        /// SQL update statement object for member diskcopy
+        oracle::occi::Statement *m_updateDiskCopyStatement;
+
+        /// SQL update statement for member castorFile
+        static const std::string s_updateCastorFileStatementString;
+
+        /// SQL update statement object for member castorFile
+        oracle::occi::Statement *m_updateCastorFileStatement;
+
         /// SQL insert statement for member parent
-        static const std::string s_insertSubRequest2SubRequestStatementString;
+        static const std::string s_insertSubRequestStatementString;
 
         /// SQL insert statement object for member parent
-        oracle::occi::Statement *m_insertSubRequest2SubRequestStatement;
+        oracle::occi::Statement *m_insertSubRequestStatement;
 
         /// SQL delete statement for member parent
-        static const std::string s_deleteSubRequest2SubRequestStatementString;
+        static const std::string s_deleteSubRequestStatementString;
 
         /// SQL delete statement object for member parent
-        oracle::occi::Statement *m_deleteSubRequest2SubRequestStatement;
+        oracle::occi::Statement *m_deleteSubRequestStatement;
 
         /// SQL select statement for member parent
-        static const std::string s_SubRequest2SubRequestStatementString;
+        static const std::string s_selectSubRequestStatementString;
 
         /// SQL select statement object for member parent
-        oracle::occi::Statement *m_SubRequest2SubRequestStatement;
+        oracle::occi::Statement *m_selectSubRequestStatement;
 
-        /// SQL insert statement for member request
-        static const std::string s_insertRequest2SubRequestStatementString;
+        /// SQL update statement for member request
+        static const std::string s_updateRequestStatementString;
 
-        /// SQL insert statement object for member request
-        oracle::occi::Statement *m_insertRequest2SubRequestStatement;
-
-        /// SQL delete statement for member request
-        static const std::string s_deleteRequest2SubRequestStatementString;
-
-        /// SQL delete statement object for member request
-        oracle::occi::Statement *m_deleteRequest2SubRequestStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertSubRequest2SubRequestStatusCodesStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertSubRequest2SubRequestStatusCodesStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteSubRequest2SubRequestStatusCodesStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteSubRequest2SubRequestStatusCodesStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_SubRequest2SubRequestStatusCodesStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_SubRequest2SubRequestStatusCodesStatement;
+        /// SQL update statement object for member request
+        oracle::occi::Statement *m_updateRequestStatement;
 
       }; // end of class OraSubRequestCnv
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 13:43:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,6 +27,7 @@
 #ifndef IO_STREAMCNVSVC_HPP
 #define IO_STREAMCNVSVC_HPP 1
 
+#include "castor/Constants.hpp"
 #include "castor/BaseCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -76,11 +77,15 @@ namespace castor {
        * @param object the object to deal with
        * @param autocommit whether the changes to the database
        * should be commited or not
+       * @param type if not OBJ_INVALID, the ids representing
+       * the links to objects of this type will not set to 0
+       * as is the default.
        * @exception Exception throws an Exception in case of error
        */
       virtual void createRep(IAddress* address,
                              IObject* object,
-                             bool autocommit)
+                             bool autocommit,
+                             unsigned int type = OBJ_INVALID)
         throw (castor::exception::Exception);
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/14 09:40:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
  *
  * 
  *
@@ -64,7 +64,7 @@ const std::string castor::db::ora::OraReqIdCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraReqIdCnv::s_updateStatementString =
-"UPDATE rh_ReqId SET value = :1, request = :2 WHERE id = :3";
+"UPDATE rh_ReqId SET value = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraReqIdCnv::s_storeTypeStatementString =
@@ -74,13 +74,9 @@ const std::string castor::db::ora::OraReqIdCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraReqIdCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member request
-const std::string castor::db::ora::OraReqIdCnv::s_insertReqIdRequest2ReqIdStatementString =
-"INSERT INTO rh_ReqIdRequest2ReqId (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member request
-const std::string castor::db::ora::OraReqIdCnv::s_deleteReqIdRequest2ReqIdStatementString =
-"DELETE FROM rh_ReqIdRequest2ReqId WHERE Parent = :1 AND Child = :2";
+/// SQL update statement for member request
+const std::string castor::db::ora::OraReqIdCnv::s_updateReqIdRequestStatementString =
+"UPDATE rh_ReqId SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -93,8 +89,7 @@ castor::db::ora::OraReqIdCnv::OraReqIdCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertReqIdRequest2ReqIdStatement(0),
-  m_deleteReqIdRequest2ReqIdStatement(0) {}
+  m_updateReqIdRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -116,8 +111,7 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertReqIdRequest2ReqIdStatement);
-    deleteStatement(m_deleteReqIdRequest2ReqIdStatement);
+    deleteStatement(m_updateReqIdRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -126,8 +120,7 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertReqIdRequest2ReqIdStatement = 0;
-  m_deleteReqIdRequest2ReqIdStatement = 0;
+  m_updateReqIdRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -197,27 +190,23 @@ void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* ob
       obj->request()->id() != requestId) {
     cnvSvc()->deleteRepByAddress(&ad, false);
     requestId = 0;
-    if (0 == m_deleteReqIdRequest2ReqIdStatement) {
-      m_deleteReqIdRequest2ReqIdStatement = createStatement(s_deleteReqIdRequest2ReqIdStatementString);
-    }
-    m_deleteReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
-    m_deleteReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
-    m_deleteReqIdRequest2ReqIdStatement->executeUpdate();
   }
-  // Update object or create new one
+  // Update remote object or create new one
   if (requestId == 0) {
     if (0 != obj->request()) {
       cnvSvc()->createRep(&ad, obj->request(), false);
-      if (0 == m_insertReqIdRequest2ReqIdStatement) {
-        m_insertReqIdRequest2ReqIdStatement = createStatement(s_insertReqIdRequest2ReqIdStatementString);
-      }
-      m_insertReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
-      m_insertReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
-      m_insertReqIdRequest2ReqIdStatement->executeUpdate();
     }
   } else {
     cnvSvc()->updateRep(&ad, obj->request(), false);
   }
+  // Check update statement
+  if (0 == m_updateReqIdRequestStatement) {
+    m_updateReqIdRequestStatement = createStatement(s_updateReqIdRequestStatementString);
+  }
+  // Update local object
+  m_updateReqIdRequestStatement->setDouble(1, obj->request()->id());
+  m_updateReqIdRequestStatement->setDouble(2, obj->id());
+  m_updateReqIdRequestStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -286,7 +275,8 @@ void castor::db::ora::OraReqIdCnv::fillObjReqIdRequest(castor::stager::ReqId* ob
 //------------------------------------------------------------------------------
 void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
                                              castor::IObject* object,
-                                             bool autocommit)
+                                             bool autocommit,
+                                             unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);
@@ -308,7 +298,7 @@ void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->value());
     m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setDouble(3, obj->request() ? obj->request()->id() : 0);
+    m_insertStatement->setDouble(3, (type == OBJ_ReqIdRequest && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -356,8 +346,7 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->value());
-    m_updateStatement->setDouble(2, obj->request() ? obj->request()->id() : 0);
-    m_updateStatement->setDouble(3, obj->id());
+    m_updateStatement->setDouble(2, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -408,17 +397,6 @@ void castor::db::ora::OraReqIdCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    // Delete link to request object
-    if (0 != obj->request()) {
-      // Check whether the statement is ok
-      if (0 == m_deleteReqIdRequest2ReqIdStatement) {
-        m_deleteReqIdRequest2ReqIdStatement = createStatement(s_deleteReqIdRequest2ReqIdStatementString);
-      }
-      // Delete links to objects
-      m_deleteReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
-      m_deleteReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
-      m_deleteReqIdRequest2ReqIdStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -469,7 +447,6 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
     // Now retrieve and set members
     object->setValue(rset->getString(1));
     object->setId((u_signed64)rset->getDouble(2));
-    u_signed64 requestId = (u_signed64)rset->getDouble(3);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

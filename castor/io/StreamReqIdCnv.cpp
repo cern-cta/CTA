@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/11 16:44:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
  *
  * 
  *
@@ -80,7 +80,8 @@ const unsigned int castor::io::StreamReqIdCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamReqIdCnv::createRep(castor::IAddress* address,
                                            castor::IObject* object,
-                                           bool autocommit)
+                                           bool autocommit,
+                                           unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);

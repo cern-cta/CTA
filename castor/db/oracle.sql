@@ -26,8 +26,6 @@ END;
 /* SQL statements for type Client */
 DROP TABLE rh_Client;
 CREATE TABLE rh_Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
-DROP TABLE rh_Request2IClient;
-CREATE TABLE rh_Request2IClient (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type StageInRequest */
 DROP TABLE rh_StageInRequest;
@@ -52,14 +50,12 @@ CREATE TABLE rh_StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid N
 /* SQL statements for type ReqId */
 DROP TABLE rh_ReqId;
 CREATE TABLE rh_ReqId (value VARCHAR(255), id INTEGER PRIMARY KEY, request INTEGER);
-DROP TABLE rh_ReqIdRequest2ReqId;
-CREATE TABLE rh_ReqIdRequest2ReqId (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type SubRequest */
 DROP TABLE rh_SubRequest;
 CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, request INTEGER, status INTEGER);
-DROP TABLE rh_Request2SubRequest;
-CREATE TABLE rh_Request2SubRequest (Parent INTEGER, Child INTEGER);
+DROP TABLE rh_SubRequest2SubRequest;
+CREATE TABLE rh_SubRequest2SubRequest (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;
@@ -72,10 +68,6 @@ CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VA
 /* SQL statements for type Segment */
 DROP TABLE rh_Segment;
 CREATE TABLE rh_Segment (blockid CHAR(4), fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR(255), segmCksum NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
-DROP TABLE rh_Tape2Segment;
-CREATE TABLE rh_Tape2Segment (Parent INTEGER, Child INTEGER);
-DROP TABLE rh_TapeCopy2Segment;
-CREATE TABLE rh_TapeCopy2Segment (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type TapePool */
 DROP TABLE rh_TapePool;
@@ -84,8 +76,6 @@ CREATE TABLE rh_TapePool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 /* SQL statements for type TapeCopy */
 DROP TABLE rh_TapeCopy;
 CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, stream INTEGER, castorFile INTEGER, status INTEGER);
-DROP TABLE rh_CastorFile2TapeCopy;
-CREATE TABLE rh_CastorFile2TapeCopy (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type CastorFile */
 DROP TABLE rh_CastorFile;
@@ -94,16 +84,10 @@ CREATE TABLE rh_CastorFile (fileId INTEGER, nsHost VARCHAR(255), size INTEGER, i
 /* SQL statements for type DiskCopy */
 DROP TABLE rh_DiskCopy;
 CREATE TABLE rh_DiskCopy (path VARCHAR(255), id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
-DROP TABLE rh_FileSystem2DiskCopy;
-CREATE TABLE rh_FileSystem2DiskCopy (Parent INTEGER, Child INTEGER);
-DROP TABLE rh_CastorFile2DiskCopy;
-CREATE TABLE rh_CastorFile2DiskCopy (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type FileSystem */
 DROP TABLE rh_FileSystem;
 CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, randomize NUMBER, mountPoint VARCHAR(255), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER);
-DROP TABLE rh_DiskServer2FileSystem;
-CREATE TABLE rh_DiskServer2FileSystem (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type SvcClass */
 DROP TABLE rh_SvcClass;
@@ -116,8 +100,6 @@ CREATE TABLE rh_DiskPool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 /* SQL statements for type Stream */
 DROP TABLE rh_Stream;
 CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tapePool INTEGER, status INTEGER);
-DROP TABLE rh_TapePool2Stream;
-CREATE TABLE rh_TapePool2Stream (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type FileClass */
 DROP TABLE rh_FileClass;

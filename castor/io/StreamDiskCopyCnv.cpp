@@ -82,7 +82,8 @@ const unsigned int castor::io::StreamDiskCopyCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskCopyCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              bool autocommit)
+                                              bool autocommit,
+                                              unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::DiskCopy* obj = 
     dynamic_cast<castor::stager::DiskCopy*>(object);

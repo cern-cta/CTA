@@ -82,7 +82,8 @@ const unsigned int castor::io::StreamTapeCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCnv::createRep(castor::IAddress* address,
                                           castor::IObject* object,
-                                          bool autocommit)
+                                          bool autocommit,
+                                          unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);

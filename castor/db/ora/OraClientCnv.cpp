@@ -64,7 +64,7 @@ const std::string castor::db::ora::OraClientCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraClientCnv::s_updateStatementString =
-"UPDATE rh_Client SET ipAddress = :1, port = :2, request = :3 WHERE id = :4";
+"UPDATE rh_Client SET ipAddress = :1, port = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraClientCnv::s_storeTypeStatementString =
@@ -74,13 +74,9 @@ const std::string castor::db::ora::OraClientCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraClientCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member request
-const std::string castor::db::ora::OraClientCnv::s_insertRequest2IClientStatementString =
-"INSERT INTO rh_Request2IClient (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member request
-const std::string castor::db::ora::OraClientCnv::s_deleteRequest2IClientStatementString =
-"DELETE FROM rh_Request2IClient WHERE Parent = :1 AND Child = :2";
+/// SQL update statement for member request
+const std::string castor::db::ora::OraClientCnv::s_updateRequestStatementString =
+"UPDATE rh_Client SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -93,8 +89,7 @@ castor::db::ora::OraClientCnv::OraClientCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertRequest2IClientStatement(0),
-  m_deleteRequest2IClientStatement(0) {}
+  m_updateRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -116,8 +111,7 @@ void castor::db::ora::OraClientCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertRequest2IClientStatement);
-    deleteStatement(m_deleteRequest2IClientStatement);
+    deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -126,8 +120,7 @@ void castor::db::ora::OraClientCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertRequest2IClientStatement = 0;
-  m_deleteRequest2IClientStatement = 0;
+  m_updateRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -197,27 +190,23 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
       obj->request()->id() != requestId) {
     cnvSvc()->deleteRepByAddress(&ad, false);
     requestId = 0;
-    if (0 == m_deleteRequest2IClientStatement) {
-      m_deleteRequest2IClientStatement = createStatement(s_deleteRequest2IClientStatementString);
-    }
-    m_deleteRequest2IClientStatement->setDouble(1, obj->request()->id());
-    m_deleteRequest2IClientStatement->setDouble(2, obj->id());
-    m_deleteRequest2IClientStatement->executeUpdate();
   }
-  // Update object or create new one
+  // Update remote object or create new one
   if (requestId == 0) {
     if (0 != obj->request()) {
-      cnvSvc()->createRep(&ad, obj->request(), false);
-      if (0 == m_insertRequest2IClientStatement) {
-        m_insertRequest2IClientStatement = createStatement(s_insertRequest2IClientStatementString);
-      }
-      m_insertRequest2IClientStatement->setDouble(1, obj->request()->id());
-      m_insertRequest2IClientStatement->setDouble(2, obj->id());
-      m_insertRequest2IClientStatement->executeUpdate();
+      cnvSvc()->createRep(&ad, obj->request(), false, OBJ_IClient);
     }
   } else {
     cnvSvc()->updateRep(&ad, obj->request(), false);
   }
+  // Check update statement
+  if (0 == m_updateRequestStatement) {
+    m_updateRequestStatement = createStatement(s_updateRequestStatementString);
+  }
+  // Update local object
+  m_updateRequestStatement->setDouble(1, obj->request()->id());
+  m_updateRequestStatement->setDouble(2, obj->id());
+  m_updateRequestStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -286,7 +275,8 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraClientCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              bool autocommit)
+                                              bool autocommit,
+                                              unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);
@@ -309,7 +299,7 @@ void castor::db::ora::OraClientCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->ipAddress());
     m_insertStatement->setInt(2, obj->port());
     m_insertStatement->setDouble(3, obj->id());
-    m_insertStatement->setDouble(4, obj->request() ? obj->request()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_Request && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -359,8 +349,7 @@ void castor::db::ora::OraClientCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setInt(1, obj->ipAddress());
     m_updateStatement->setInt(2, obj->port());
-    m_updateStatement->setDouble(3, obj->request() ? obj->request()->id() : 0);
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -411,17 +400,6 @@ void castor::db::ora::OraClientCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    // Delete link to request object
-    if (0 != obj->request()) {
-      // Check whether the statement is ok
-      if (0 == m_deleteRequest2IClientStatement) {
-        m_deleteRequest2IClientStatement = createStatement(s_deleteRequest2IClientStatementString);
-      }
-      // Delete links to objects
-      m_deleteRequest2IClientStatement->setDouble(1, obj->request()->id());
-      m_deleteRequest2IClientStatement->setDouble(2, obj->id());
-      m_deleteRequest2IClientStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -473,7 +451,6 @@ castor::IObject* castor::db::ora::OraClientCnv::createObj(castor::IAddress* addr
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
     object->setId((u_signed64)rset->getDouble(3));
-    u_signed64 requestId = (u_signed64)rset->getDouble(4);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -275,41 +279,35 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member diskFileCopies
-        static const std::string s_insertCastorFile2DiskCopyStatementString;
+        /// SQL update statement for member 
+        static const std::string s_updateSubRequestStatementString;
 
-        /// SQL insert statement object for member diskFileCopies
-        oracle::occi::Statement *m_insertCastorFile2DiskCopyStatement;
+        /// SQL update statement object for member 
+        oracle::occi::Statement *m_updateSubRequestStatement;
 
-        /// SQL delete statement for member diskFileCopies
-        static const std::string s_deleteCastorFile2DiskCopyStatementString;
+        /// SQL update statement for member svcClass
+        static const std::string s_updateSvcClassStatementString;
 
-        /// SQL delete statement object for member diskFileCopies
-        oracle::occi::Statement *m_deleteCastorFile2DiskCopyStatement;
+        /// SQL update statement object for member svcClass
+        oracle::occi::Statement *m_updateSvcClassStatement;
+
+        /// SQL update statement for member fileClass
+        static const std::string s_updateFileClassStatementString;
+
+        /// SQL update statement object for member fileClass
+        oracle::occi::Statement *m_updateFileClassStatement;
 
         /// SQL select statement for member diskFileCopies
-        static const std::string s_CastorFile2DiskCopyStatementString;
+        static const std::string s_selectDiskCopyStatementString;
 
         /// SQL select statement object for member diskFileCopies
-        oracle::occi::Statement *m_CastorFile2DiskCopyStatement;
-
-        /// SQL insert statement for member copies
-        static const std::string s_insertCastorFile2TapeCopyStatementString;
-
-        /// SQL insert statement object for member copies
-        oracle::occi::Statement *m_insertCastorFile2TapeCopyStatement;
-
-        /// SQL delete statement for member copies
-        static const std::string s_deleteCastorFile2TapeCopyStatementString;
-
-        /// SQL delete statement object for member copies
-        oracle::occi::Statement *m_deleteCastorFile2TapeCopyStatement;
+        oracle::occi::Statement *m_selectDiskCopyStatement;
 
         /// SQL select statement for member copies
-        static const std::string s_CastorFile2TapeCopyStatementString;
+        static const std::string s_selectTapeCopyStatementString;
 
         /// SQL select statement object for member copies
-        oracle::occi::Statement *m_CastorFile2TapeCopyStatement;
+        oracle::occi::Statement *m_selectTapeCopyStatement;
 
       }; // end of class OraCastorFileCnv
 

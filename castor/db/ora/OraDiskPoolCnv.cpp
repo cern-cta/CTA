@@ -76,17 +76,9 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member fileSystems
-const std::string castor::db::ora::OraDiskPoolCnv::s_insertDiskPool2FileSystemStatementString =
-"INSERT INTO rh_DiskPool2FileSystem (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member fileSystems
-const std::string castor::db::ora::OraDiskPoolCnv::s_deleteDiskPool2FileSystemStatementString =
-"DELETE FROM rh_DiskPool2FileSystem WHERE Parent = :1 AND Child = :2";
-
 /// SQL select statement for member fileSystems
-const std::string castor::db::ora::OraDiskPoolCnv::s_DiskPool2FileSystemStatementString =
-"SELECT Child from rh_DiskPool2FileSystem WHERE Parent = :1";
+const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementString =
+"SELECT id from rh_FileSystem WHERE diskPool = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -99,9 +91,7 @@ castor::db::ora::OraDiskPoolCnv::OraDiskPoolCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertDiskPool2FileSystemStatement(0),
-  m_deleteDiskPool2FileSystemStatement(0),
-  m_DiskPool2FileSystemStatement(0) {}
+  m_selectFileSystemStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -123,8 +113,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertDiskPool2FileSystemStatement);
-    deleteStatement(m_DiskPool2FileSystemStatement);
+    deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -133,9 +122,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertDiskPool2FileSystemStatement = 0;
-  m_deleteDiskPool2FileSystemStatement = 0;
-  m_DiskPool2FileSystemStatement = 0;
+  m_selectFileSystemStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -184,24 +171,24 @@ void castor::db::ora::OraDiskPoolCnv::fillRep(castor::IAddress* address,
 void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool* obj)
   throw (castor::exception::Exception) {
   // check select statement
-  if (0 == m_DiskPool2FileSystemStatement) {
-    m_DiskPool2FileSystemStatement = createStatement(s_DiskPool2FileSystemStatementString);
+  if (0 == m_selectFileSystemStatement) {
+    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // Get current database data
   std::set<int> fileSystemsList;
-  m_DiskPool2FileSystemStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_DiskPool2FileSystemStatement->executeQuery();
+  m_selectFileSystemStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     fileSystemsList.insert(rset->getInt(1));
   }
-  m_DiskPool2FileSystemStatement->closeResultSet(rset);
-  // update segments and create new ones
+  m_selectFileSystemStatement->closeResultSet(rset);
+  // update fileSystems and create new ones
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
        it != obj->fileSystems().end();
        it++) {
     std::set<int>::iterator item;
     if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
-      cnvSvc()->createRep(0, *it, false);
+      cnvSvc()->createRep(0, *it, false, OBJ_DiskPool);
     } else {
       fileSystemsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -244,18 +231,18 @@ void castor::db::ora::OraDiskPoolCnv::fillObj(castor::IAddress* address,
 void castor::db::ora::OraDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool* obj)
   throw (castor::exception::Exception) {
   // Check select statement
-  if (0 == m_DiskPool2FileSystemStatement) {
-    m_DiskPool2FileSystemStatement = createStatement(s_DiskPool2FileSystemStatementString);
+  if (0 == m_selectFileSystemStatement) {
+    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // retrieve the object from the database
   std::set<int> fileSystemsList;
-  m_DiskPool2FileSystemStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_DiskPool2FileSystemStatement->executeQuery();
+  m_selectFileSystemStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     fileSystemsList.insert(rset->getInt(1));
   }
   // Close ResultSet
-  m_DiskPool2FileSystemStatement->closeResultSet(rset);
+  m_selectFileSystemStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::FileSystem*> toBeDeleted;
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
@@ -290,7 +277,8 @@ void castor::db::ora::OraDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool
 //------------------------------------------------------------------------------
 void castor::db::ora::OraDiskPoolCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit)
+                                                bool autocommit,
+                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::DiskPool* obj = 
     dynamic_cast<castor::stager::DiskPool*>(object);

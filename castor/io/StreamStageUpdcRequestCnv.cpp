@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/13 09:01:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/14 16:34:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -84,7 +84,8 @@ const unsigned int castor::io::StreamStageUpdcRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageUpdcRequestCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool autocommit)
+                                                      bool autocommit,
+                                                      unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StageUpdcRequest* obj = 
     dynamic_cast<castor::stager::StageUpdcRequest*>(object);

@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -259,53 +263,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member segments
-        static const std::string s_insertTapeCopy2SegmentStatementString;
+        /// SQL update statement for member stream
+        static const std::string s_updateStreamStatementString;
 
-        /// SQL insert statement object for member segments
-        oracle::occi::Statement *m_insertTapeCopy2SegmentStatement;
-
-        /// SQL delete statement for member segments
-        static const std::string s_deleteTapeCopy2SegmentStatementString;
-
-        /// SQL delete statement object for member segments
-        oracle::occi::Statement *m_deleteTapeCopy2SegmentStatement;
+        /// SQL update statement object for member stream
+        oracle::occi::Statement *m_updateStreamStatement;
 
         /// SQL select statement for member segments
-        static const std::string s_TapeCopy2SegmentStatementString;
+        static const std::string s_selectSegmentStatementString;
 
         /// SQL select statement object for member segments
-        oracle::occi::Statement *m_TapeCopy2SegmentStatement;
+        oracle::occi::Statement *m_selectSegmentStatement;
 
-        /// SQL insert statement for member castorFile
-        static const std::string s_insertCastorFile2TapeCopyStatementString;
+        /// SQL update statement for member castorFile
+        static const std::string s_updateCastorFileStatementString;
 
-        /// SQL insert statement object for member castorFile
-        oracle::occi::Statement *m_insertCastorFile2TapeCopyStatement;
-
-        /// SQL delete statement for member castorFile
-        static const std::string s_deleteCastorFile2TapeCopyStatementString;
-
-        /// SQL delete statement object for member castorFile
-        oracle::occi::Statement *m_deleteCastorFile2TapeCopyStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertTapeCopy2TapeCopyStatusCodesStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertTapeCopy2TapeCopyStatusCodesStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteTapeCopy2TapeCopyStatusCodesStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteTapeCopy2TapeCopyStatusCodesStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_TapeCopy2TapeCopyStatusCodesStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_TapeCopy2TapeCopyStatusCodesStatement;
+        /// SQL update statement object for member castorFile
+        oracle::occi::Statement *m_updateCastorFileStatement;
 
       }; // end of class OraTapeCopyCnv
 

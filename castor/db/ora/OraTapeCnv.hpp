@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -227,41 +231,11 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member segments
-        static const std::string s_insertTape2SegmentStatementString;
-
-        /// SQL insert statement object for member segments
-        oracle::occi::Statement *m_insertTape2SegmentStatement;
-
-        /// SQL delete statement for member segments
-        static const std::string s_deleteTape2SegmentStatementString;
-
-        /// SQL delete statement object for member segments
-        oracle::occi::Statement *m_deleteTape2SegmentStatement;
-
         /// SQL select statement for member segments
-        static const std::string s_Tape2SegmentStatementString;
+        static const std::string s_selectSegmentStatementString;
 
         /// SQL select statement object for member segments
-        oracle::occi::Statement *m_Tape2SegmentStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertTape2TapeStatusCodesStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertTape2TapeStatusCodesStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteTape2TapeStatusCodesStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteTape2TapeStatusCodesStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_Tape2TapeStatusCodesStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_Tape2TapeStatusCodesStatement;
+        oracle::occi::Statement *m_selectSegmentStatement;
 
       }; // end of class OraTapeCnv
 

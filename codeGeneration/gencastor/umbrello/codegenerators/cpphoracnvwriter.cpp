@@ -306,99 +306,113 @@ void CppHOraCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_N ||
-        as->type.kind == COMPOS_PARENT ||
-        as->type.kind == AGGREG_PARENT) {
+    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->type.multiRemote == MULT_N &&
+        as->type.multiLocal == MULT_N) {
+      // N to N association
+      // Here we will use a dedicated table for the association
+      // Find out the parent and child in this table
+      Member* firstMember;
+      Member* secondMember;
+      if (as->type.kind == COMPOS_PARENT ||
+          as->type.kind == AGGREG_PARENT) {
+        firstMember = &(as->localPart);
+        secondMember = &(as->remotePart);
+      } else if (as->type.kind == COMPOS_CHILD ||
+                 as->type.kind == AGGREG_CHILD) {
+        firstMember = &(as->remotePart);
+        secondMember = &(as->localPart);
+      } else {
+        // Case of a symetrical association
+        if (as->remotePart.name < as->localPart.name) {
+          firstMember = &(as->remotePart);
+          secondMember = &(as->localPart);
+        } else {
+          firstMember = &(as->localPart);
+          secondMember = &(as->remotePart);
+        }
+      }
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
                 << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_insert"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL insert statement object for member "
-                << as->remotePart.name
+                << secondMember->name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_insert"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->remotePart.name
+                << secondMember->name
                 << endl << getIndent()
                 << "static const std::string s_delete"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement object for member "
-                << as->remotePart.name
+                << secondMember->name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_delete"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
-                << as->remotePart.name
+                << secondMember->name
                 << endl << getIndent()
-                << "static const std::string s_"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "static const std::string s_select"
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL select statement object for member "
-                << as->remotePart.name
+                << secondMember->name
                 << endl << getIndent()
-                << "oracle::occi::Statement *m_"
-                << capitalizeFirstLetter(as->localPart.typeName)
-                << "2"
-                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "oracle::occi::Statement *m_select"
+                << capitalizeFirstLetter(secondMember->typeName)
                 << "Statement;"
                 << endl << endl;
-    } else if (as->type.kind == COMPOS_CHILD ||
-               as->type.kind == AGGREG_CHILD) {
-      *m_stream << getIndent()
-                << "/// SQL insert statement for member "
-                << as->remotePart.name
-                << endl << getIndent()
-                << "static const std::string s_insert"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "2" << capitalizeFirstLetter(as->localPart.typeName)
-                << "StatementString;"
-                << endl << endl << getIndent()
-                << "/// SQL insert statement object for member "
-                << as->remotePart.name
-                << endl << getIndent()
-                << "oracle::occi::Statement *m_insert"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "2" << capitalizeFirstLetter(as->localPart.typeName)
-                << "Statement;"
-                << endl << endl << getIndent()
-                << "/// SQL delete statement for member "
-                << as->remotePart.name
-                << endl << getIndent()
-                << "static const std::string s_delete"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "2" << capitalizeFirstLetter(as->localPart.typeName)
-                << "StatementString;"
-                << endl << endl << getIndent()
-                << "/// SQL delete statement object for member "
-                << as->remotePart.name
-                << endl << getIndent()
-                << "oracle::occi::Statement *m_delete"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "2" << capitalizeFirstLetter(as->localPart.typeName)
-                << "Statement;"
-                << endl << endl;
+    } else {
+      if (as->type.multiRemote == MULT_N) {
+        // One to N association
+        // In this case, the child has a column with the id of its parent
+        *m_stream << getIndent()
+                  << "/// SQL select statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "static const std::string s_select"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "StatementString;"
+                  << endl << endl << getIndent()
+                  << "/// SQL select statement object for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "oracle::occi::Statement *m_select"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement;"
+                  << endl << endl;
+      } else {
+        // * to 1 association, we need to be able to update
+        // the id of the remote object in the local table
+        *m_stream << getIndent()
+                  << "/// SQL update statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "static const std::string s_update"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "StatementString;"
+                  << endl << endl << getIndent()
+                  << "/// SQL update statement object for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "oracle::occi::Statement *m_update"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement;"
+                  << endl << endl;
+      }
     }
   }
 }

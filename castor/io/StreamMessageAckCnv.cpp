@@ -78,7 +78,8 @@ const unsigned int castor::io::StreamMessageAckCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit)
+                                                bool autocommit,
+                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::MessageAck* obj = 
     dynamic_cast<castor::MessageAck*>(object);

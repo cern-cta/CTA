@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
  *
  * 
  *
@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -228,17 +232,11 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member request
-        static const std::string s_insertReqIdRequest2ReqIdStatementString;
+        /// SQL update statement for member request
+        static const std::string s_updateReqIdRequestStatementString;
 
-        /// SQL insert statement object for member request
-        oracle::occi::Statement *m_insertReqIdRequest2ReqIdStatement;
-
-        /// SQL delete statement for member request
-        static const std::string s_deleteReqIdRequest2ReqIdStatementString;
-
-        /// SQL delete statement object for member request
-        oracle::occi::Statement *m_deleteReqIdRequest2ReqIdStatement;
+        /// SQL update statement object for member request
+        oracle::occi::Statement *m_updateReqIdRequestStatement;
 
       }; // end of class OraReqIdCnv
 

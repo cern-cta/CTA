@@ -76,17 +76,9 @@ const std::string castor::db::ora::OraFileClassCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraFileClassCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_insertFileClass2CastorFileStatementString =
-"INSERT INTO rh_FileClass2CastorFile (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_deleteFileClass2CastorFileStatementString =
-"DELETE FROM rh_FileClass2CastorFile WHERE Parent = :1 AND Child = :2";
-
 /// SQL select statement for member 
-const std::string castor::db::ora::OraFileClassCnv::s_FileClass2CastorFileStatementString =
-"SELECT Child from rh_FileClass2CastorFile WHERE Parent = :1";
+const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementString =
+"SELECT id from rh_CastorFile WHERE fileClass = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -99,9 +91,7 @@ castor::db::ora::OraFileClassCnv::OraFileClassCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertFileClass2CastorFileStatement(0),
-  m_deleteFileClass2CastorFileStatement(0),
-  m_FileClass2CastorFileStatement(0) {}
+  m_selectCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -123,8 +113,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertFileClass2CastorFileStatement);
-    deleteStatement(m_FileClass2CastorFileStatement);
+    deleteStatement(m_selectCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -133,9 +122,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertFileClass2CastorFileStatement = 0;
-  m_deleteFileClass2CastorFileStatement = 0;
-  m_FileClass2CastorFileStatement = 0;
+  m_selectCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -184,24 +171,24 @@ void castor::db::ora::OraFileClassCnv::fillRep(castor::IAddress* address,
 void castor::db::ora::OraFileClassCnv::fillRepCastorFile(castor::stager::FileClass* obj)
   throw (castor::exception::Exception) {
   // check select statement
-  if (0 == m_FileClass2CastorFileStatement) {
-    m_FileClass2CastorFileStatement = createStatement(s_FileClass2CastorFileStatementString);
+  if (0 == m_selectCastorFileStatement) {
+    m_selectCastorFileStatement = createStatement(s_selectCastorFileStatementString);
   }
   // Get current database data
   std::set<int> List;
-  m_FileClass2CastorFileStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_FileClass2CastorFileStatement->executeQuery();
+  m_selectCastorFileStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectCastorFileStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     List.insert(rset->getInt(1));
   }
-  m_FileClass2CastorFileStatement->closeResultSet(rset);
-  // update segments and create new ones
+  m_selectCastorFileStatement->closeResultSet(rset);
+  // update  and create new ones
   for (std::vector<castor::stager::CastorFile*>::iterator it = obj->().begin();
        it != obj->().end();
        it++) {
     std::set<int>::iterator item;
     if ((item = List.find((*it)->id())) == List.end()) {
-      cnvSvc()->createRep(0, *it, false);
+      cnvSvc()->createRep(0, *it, false, OBJ_FileClass);
     } else {
       List.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -244,18 +231,18 @@ void castor::db::ora::OraFileClassCnv::fillObj(castor::IAddress* address,
 void castor::db::ora::OraFileClassCnv::fillObjCastorFile(castor::stager::FileClass* obj)
   throw (castor::exception::Exception) {
   // Check select statement
-  if (0 == m_FileClass2CastorFileStatement) {
-    m_FileClass2CastorFileStatement = createStatement(s_FileClass2CastorFileStatementString);
+  if (0 == m_selectCastorFileStatement) {
+    m_selectCastorFileStatement = createStatement(s_selectCastorFileStatementString);
   }
   // retrieve the object from the database
   std::set<int> List;
-  m_FileClass2CastorFileStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_FileClass2CastorFileStatement->executeQuery();
+  m_selectCastorFileStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectCastorFileStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     List.insert(rset->getInt(1));
   }
   // Close ResultSet
-  m_FileClass2CastorFileStatement->closeResultSet(rset);
+  m_selectCastorFileStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::CastorFile*> toBeDeleted;
   for (std::vector<castor::stager::CastorFile*>::iterator it = obj->().begin();

@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -259,35 +263,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member copies
-        static const std::string s_insertFileSystem2DiskCopyStatementString;
+        /// SQL update statement for member diskPool
+        static const std::string s_updateDiskPoolStatementString;
 
-        /// SQL insert statement object for member copies
-        oracle::occi::Statement *m_insertFileSystem2DiskCopyStatement;
-
-        /// SQL delete statement for member copies
-        static const std::string s_deleteFileSystem2DiskCopyStatementString;
-
-        /// SQL delete statement object for member copies
-        oracle::occi::Statement *m_deleteFileSystem2DiskCopyStatement;
+        /// SQL update statement object for member diskPool
+        oracle::occi::Statement *m_updateDiskPoolStatement;
 
         /// SQL select statement for member copies
-        static const std::string s_FileSystem2DiskCopyStatementString;
+        static const std::string s_selectDiskCopyStatementString;
 
         /// SQL select statement object for member copies
-        oracle::occi::Statement *m_FileSystem2DiskCopyStatement;
+        oracle::occi::Statement *m_selectDiskCopyStatement;
 
-        /// SQL insert statement for member diskserver
-        static const std::string s_insertDiskServer2FileSystemStatementString;
+        /// SQL update statement for member diskserver
+        static const std::string s_updateDiskServerStatementString;
 
-        /// SQL insert statement object for member diskserver
-        oracle::occi::Statement *m_insertDiskServer2FileSystemStatement;
-
-        /// SQL delete statement for member diskserver
-        static const std::string s_deleteDiskServer2FileSystemStatementString;
-
-        /// SQL delete statement object for member diskserver
-        oracle::occi::Statement *m_deleteDiskServer2FileSystemStatement;
+        /// SQL update statement object for member diskserver
+        oracle::occi::Statement *m_updateDiskServerStatement;
 
       }; // end of class OraFileSystemCnv
 

@@ -67,7 +67,7 @@ const std::string castor::db::ora::OraDiskServerCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskServerCnv::s_updateStatementString =
-"UPDATE rh_DiskServer SET name = :1, status = :2 WHERE id = :3";
+"UPDATE rh_DiskServer SET name = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskServerCnv::s_storeTypeStatementString =
@@ -77,29 +77,9 @@ const std::string castor::db::ora::OraDiskServerCnv::s_storeTypeStatementString 
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member fileSystems
-const std::string castor::db::ora::OraDiskServerCnv::s_insertDiskServer2FileSystemStatementString =
-"INSERT INTO rh_DiskServer2FileSystem (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member fileSystems
-const std::string castor::db::ora::OraDiskServerCnv::s_deleteDiskServer2FileSystemStatementString =
-"DELETE FROM rh_DiskServer2FileSystem WHERE Parent = :1 AND Child = :2";
-
 /// SQL select statement for member fileSystems
-const std::string castor::db::ora::OraDiskServerCnv::s_DiskServer2FileSystemStatementString =
-"SELECT Child from rh_DiskServer2FileSystem WHERE Parent = :1";
-
-/// SQL insert statement for member status
-const std::string castor::db::ora::OraDiskServerCnv::s_insertDiskServer2DiskServerStatusCodeStatementString =
-"INSERT INTO rh_DiskServer2DiskServerStatusCode (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member status
-const std::string castor::db::ora::OraDiskServerCnv::s_deleteDiskServer2DiskServerStatusCodeStatementString =
-"DELETE FROM rh_DiskServer2DiskServerStatusCode WHERE Parent = :1 AND Child = :2";
-
-/// SQL select statement for member status
-const std::string castor::db::ora::OraDiskServerCnv::s_DiskServer2DiskServerStatusCodeStatementString =
-"SELECT Child from rh_DiskServer2DiskServerStatusCode WHERE Parent = :1";
+const std::string castor::db::ora::OraDiskServerCnv::s_selectFileSystemStatementString =
+"SELECT id from rh_FileSystem WHERE diskserver = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -112,12 +92,7 @@ castor::db::ora::OraDiskServerCnv::OraDiskServerCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertDiskServer2FileSystemStatement(0),
-  m_deleteDiskServer2FileSystemStatement(0),
-  m_DiskServer2FileSystemStatement(0),
-  m_insertDiskServer2DiskServerStatusCodeStatement(0),
-  m_deleteDiskServer2DiskServerStatusCodeStatement(0),
-  m_DiskServer2DiskServerStatusCodeStatement(0) {}
+  m_selectFileSystemStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -139,10 +114,7 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertDiskServer2FileSystemStatement);
-    deleteStatement(m_DiskServer2FileSystemStatement);
-    deleteStatement(m_insertDiskServer2DiskServerStatusCodeStatement);
-    deleteStatement(m_DiskServer2DiskServerStatusCodeStatement);
+    deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -151,12 +123,7 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertDiskServer2FileSystemStatement = 0;
-  m_deleteDiskServer2FileSystemStatement = 0;
-  m_DiskServer2FileSystemStatement = 0;
-  m_insertDiskServer2DiskServerStatusCodeStatement = 0;
-  m_deleteDiskServer2DiskServerStatusCodeStatement = 0;
-  m_DiskServer2DiskServerStatusCodeStatement = 0;
+  m_selectFileSystemStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -205,30 +172,24 @@ void castor::db::ora::OraDiskServerCnv::fillRep(castor::IAddress* address,
 void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskServer* obj)
   throw (castor::exception::Exception) {
   // check select statement
-  if (0 == m_DiskServer2FileSystemStatement) {
-    m_DiskServer2FileSystemStatement = createStatement(s_DiskServer2FileSystemStatementString);
+  if (0 == m_selectFileSystemStatement) {
+    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // Get current database data
   std::set<int> fileSystemsList;
-  m_DiskServer2FileSystemStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_DiskServer2FileSystemStatement->executeQuery();
+  m_selectFileSystemStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     fileSystemsList.insert(rset->getInt(1));
   }
-  m_DiskServer2FileSystemStatement->closeResultSet(rset);
-  // update segments and create new ones
+  m_selectFileSystemStatement->closeResultSet(rset);
+  // update fileSystems and create new ones
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
        it != obj->fileSystems().end();
        it++) {
     std::set<int>::iterator item;
     if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
-      cnvSvc()->createRep(0, *it, false);
-      if (0 == m_insertDiskServer2FileSystemStatement) {
-        m_insertDiskServer2FileSystemStatement = createStatement(s_insertDiskServer2FileSystemStatementString);
-      }
-      m_insertDiskServer2FileSystemStatement->setDouble(1, obj->id());
-      m_insertDiskServer2FileSystemStatement->setDouble(2, (*it)->id());
-      m_insertDiskServer2FileSystemStatement->executeUpdate();
+      cnvSvc()->createRep(0, *it, false, OBJ_DiskServer);
     } else {
       fileSystemsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -240,12 +201,6 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
-    if (0 == m_deleteDiskServer2FileSystemStatement) {
-      m_deleteDiskServer2FileSystemStatement = createStatement(s_deleteDiskServer2FileSystemStatementString);
-    }
-    m_deleteDiskServer2FileSystemStatement->setDouble(1, obj->id());
-    m_deleteDiskServer2FileSystemStatement->setDouble(2, *it);
-    m_deleteDiskServer2FileSystemStatement->executeUpdate();
   }
 }
 
@@ -277,18 +232,18 @@ void castor::db::ora::OraDiskServerCnv::fillObj(castor::IAddress* address,
 void castor::db::ora::OraDiskServerCnv::fillObjFileSystem(castor::stager::DiskServer* obj)
   throw (castor::exception::Exception) {
   // Check select statement
-  if (0 == m_DiskServer2FileSystemStatement) {
-    m_DiskServer2FileSystemStatement = createStatement(s_DiskServer2FileSystemStatementString);
+  if (0 == m_selectFileSystemStatement) {
+    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // retrieve the object from the database
   std::set<int> fileSystemsList;
-  m_DiskServer2FileSystemStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_DiskServer2FileSystemStatement->executeQuery();
+  m_selectFileSystemStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     fileSystemsList.insert(rset->getInt(1));
   }
   // Close ResultSet
-  m_DiskServer2FileSystemStatement->closeResultSet(rset);
+  m_selectFileSystemStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::FileSystem*> toBeDeleted;
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
@@ -323,7 +278,8 @@ void castor::db::ora::OraDiskServerCnv::fillObjFileSystem(castor::stager::DiskSe
 //------------------------------------------------------------------------------
 void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool autocommit)
+                                                  bool autocommit,
+                                                  unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::DiskServer* obj = 
     dynamic_cast<castor::stager::DiskServer*>(object);
@@ -345,7 +301,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setDouble(3, (int)obj->status());
+    m_insertStatement->setDouble(3, 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -393,8 +349,7 @@ void castor::db::ora::OraDiskServerCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setDouble(2, (int)obj->status());
-    m_updateStatement->setDouble(3, obj->id());
+    m_updateStatement->setDouble(2, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

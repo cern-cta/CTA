@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageQryRequestCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/13 09:01:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageQryRequestCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
  *
  * 
  *
@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -271,41 +275,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member subRequests
-        static const std::string s_insertRequest2SubRequestStatementString;
+        /// SQL update statement for member svcClass
+        static const std::string s_updateSvcClassStatementString;
 
-        /// SQL insert statement object for member subRequests
-        oracle::occi::Statement *m_insertRequest2SubRequestStatement;
-
-        /// SQL delete statement for member subRequests
-        static const std::string s_deleteRequest2SubRequestStatementString;
-
-        /// SQL delete statement object for member subRequests
-        oracle::occi::Statement *m_deleteRequest2SubRequestStatement;
+        /// SQL update statement object for member svcClass
+        oracle::occi::Statement *m_updateSvcClassStatement;
 
         /// SQL select statement for member subRequests
-        static const std::string s_Request2SubRequestStatementString;
+        static const std::string s_selectSubRequestStatementString;
 
         /// SQL select statement object for member subRequests
-        oracle::occi::Statement *m_Request2SubRequestStatement;
+        oracle::occi::Statement *m_selectSubRequestStatement;
 
-        /// SQL insert statement for member client
-        static const std::string s_insertRequest2IClientStatementString;
+        /// SQL update statement for member client
+        static const std::string s_updateIClientStatementString;
 
-        /// SQL insert statement object for member client
-        oracle::occi::Statement *m_insertRequest2IClientStatement;
-
-        /// SQL delete statement for member client
-        static const std::string s_deleteRequest2IClientStatementString;
-
-        /// SQL delete statement object for member client
-        oracle::occi::Statement *m_deleteRequest2IClientStatement;
-
-        /// SQL select statement for member client
-        static const std::string s_Request2IClientStatementString;
-
-        /// SQL select statement object for member client
-        oracle::occi::Statement *m_Request2IClientStatement;
+        /// SQL update statement object for member client
+        oracle::occi::Statement *m_updateIClientStatement;
 
       }; // end of class OraStageQryRequestCnv
 

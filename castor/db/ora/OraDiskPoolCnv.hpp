@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -227,23 +231,11 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member fileSystems
-        static const std::string s_insertDiskPool2FileSystemStatementString;
-
-        /// SQL insert statement object for member fileSystems
-        oracle::occi::Statement *m_insertDiskPool2FileSystemStatement;
-
-        /// SQL delete statement for member fileSystems
-        static const std::string s_deleteDiskPool2FileSystemStatementString;
-
-        /// SQL delete statement object for member fileSystems
-        oracle::occi::Statement *m_deleteDiskPool2FileSystemStatement;
-
         /// SQL select statement for member fileSystems
-        static const std::string s_DiskPool2FileSystemStatementString;
+        static const std::string s_selectFileSystemStatementString;
 
         /// SQL select statement object for member fileSystems
-        oracle::occi::Statement *m_DiskPool2FileSystemStatement;
+        oracle::occi::Statement *m_selectFileSystemStatement;
 
       }; // end of class OraDiskPoolCnv
 

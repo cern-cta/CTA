@@ -79,7 +79,8 @@ const unsigned int castor::io::StreamStringResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStringResponseCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool autocommit)
+                                                    bool autocommit,
+                                                    unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::StringResponse* obj = 
     dynamic_cast<castor::rh::StringResponse*>(object);

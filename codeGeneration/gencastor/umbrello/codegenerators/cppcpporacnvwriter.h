@@ -47,6 +47,10 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
   /// writes reset method
   void writeReset();
 
+  /// Chooses an order for 2 members in an assoc
+  void ordonnateMembersInAssoc(Assoc* as,
+                               Member** firstMember,
+                               Member** secondMember);
   /// writes fillRep methods
   void writeFillRep();
     
@@ -87,14 +91,11 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
    * @param statement the statement name, ie "insert" or "update"
    * @param attr the attribute given by the pair name, type
    * @param n the number of this attribute
-   * @param isAssoc whether this attribute is issued from
-   * an association. Default is not.
    * @param isEnum whether this attribute is an enumeration type
    */
   void writeSingleSetIntoStatement(QString statement,
                                    Member pair,
                                    int n,
-                                   bool isAssoc = false,
                                    bool isEnum = false);
 
   /**

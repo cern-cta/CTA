@@ -69,7 +69,7 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCopyCnv::s_updateStatementString =
-"UPDATE rh_TapeCopy SET stream = :1, castorFile = :2, status = :3 WHERE id = :4";
+"UPDATE rh_TapeCopy SET  WHERE id = :1";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeCopyCnv::s_storeTypeStatementString =
@@ -79,37 +79,17 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL insert statement for member segments
-const std::string castor::db::ora::OraTapeCopyCnv::s_insertTapeCopy2SegmentStatementString =
-"INSERT INTO rh_TapeCopy2Segment (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member segments
-const std::string castor::db::ora::OraTapeCopyCnv::s_deleteTapeCopy2SegmentStatementString =
-"DELETE FROM rh_TapeCopy2Segment WHERE Parent = :1 AND Child = :2";
+/// SQL update statement for member stream
+const std::string castor::db::ora::OraTapeCopyCnv::s_updateStreamStatementString =
+"UPDATE rh_TapeCopy SET stream = : 1 WHERE id = :2";
 
 /// SQL select statement for member segments
-const std::string castor::db::ora::OraTapeCopyCnv::s_TapeCopy2SegmentStatementString =
-"SELECT Child from rh_TapeCopy2Segment WHERE Parent = :1";
+const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementString =
+"SELECT id from rh_Segment WHERE copy = :1";
 
-/// SQL insert statement for member castorFile
-const std::string castor::db::ora::OraTapeCopyCnv::s_insertCastorFile2TapeCopyStatementString =
-"INSERT INTO rh_CastorFile2TapeCopy (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member castorFile
-const std::string castor::db::ora::OraTapeCopyCnv::s_deleteCastorFile2TapeCopyStatementString =
-"DELETE FROM rh_CastorFile2TapeCopy WHERE Parent = :1 AND Child = :2";
-
-/// SQL insert statement for member status
-const std::string castor::db::ora::OraTapeCopyCnv::s_insertTapeCopy2TapeCopyStatusCodesStatementString =
-"INSERT INTO rh_TapeCopy2TapeCopyStatusCodes (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member status
-const std::string castor::db::ora::OraTapeCopyCnv::s_deleteTapeCopy2TapeCopyStatusCodesStatementString =
-"DELETE FROM rh_TapeCopy2TapeCopyStatusCodes WHERE Parent = :1 AND Child = :2";
-
-/// SQL select statement for member status
-const std::string castor::db::ora::OraTapeCopyCnv::s_TapeCopy2TapeCopyStatusCodesStatementString =
-"SELECT Child from rh_TapeCopy2TapeCopyStatusCodes WHERE Parent = :1";
+/// SQL update statement for member castorFile
+const std::string castor::db::ora::OraTapeCopyCnv::s_updateCastorFileStatementString =
+"UPDATE rh_TapeCopy SET castorFile = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -122,14 +102,9 @@ castor::db::ora::OraTapeCopyCnv::OraTapeCopyCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_insertTapeCopy2SegmentStatement(0),
-  m_deleteTapeCopy2SegmentStatement(0),
-  m_TapeCopy2SegmentStatement(0),
-  m_insertCastorFile2TapeCopyStatement(0),
-  m_deleteCastorFile2TapeCopyStatement(0),
-  m_insertTapeCopy2TapeCopyStatusCodesStatement(0),
-  m_deleteTapeCopy2TapeCopyStatusCodesStatement(0),
-  m_TapeCopy2TapeCopyStatusCodesStatement(0) {}
+  m_updateStreamStatement(0),
+  m_selectSegmentStatement(0),
+  m_updateCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -151,12 +126,9 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_insertTapeCopy2SegmentStatement);
-    deleteStatement(m_TapeCopy2SegmentStatement);
-    deleteStatement(m_insertCastorFile2TapeCopyStatement);
-    deleteStatement(m_deleteCastorFile2TapeCopyStatement);
-    deleteStatement(m_insertTapeCopy2TapeCopyStatusCodesStatement);
-    deleteStatement(m_TapeCopy2TapeCopyStatusCodesStatement);
+    deleteStatement(m_updateStreamStatement);
+    deleteStatement(m_selectSegmentStatement);
+    deleteStatement(m_updateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -165,14 +137,9 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_insertTapeCopy2SegmentStatement = 0;
-  m_deleteTapeCopy2SegmentStatement = 0;
-  m_TapeCopy2SegmentStatement = 0;
-  m_insertCastorFile2TapeCopyStatement = 0;
-  m_deleteCastorFile2TapeCopyStatement = 0;
-  m_insertTapeCopy2TapeCopyStatusCodesStatement = 0;
-  m_deleteTapeCopy2TapeCopyStatusCodesStatement = 0;
-  m_TapeCopy2TapeCopyStatusCodesStatement = 0;
+  m_updateStreamStatement = 0;
+  m_selectSegmentStatement = 0;
+  m_updateCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -249,7 +216,7 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
     cnvSvc()->deleteRepByAddress(&ad, false);
     streamId = 0;
   }
-  // Update object or create new one
+  // Update remote object or create new one
   if (streamId == 0) {
     if (0 != obj->stream()) {
       cnvSvc()->createRep(&ad, obj->stream(), false);
@@ -257,6 +224,14 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
   } else {
     cnvSvc()->updateRep(&ad, obj->stream(), false);
   }
+  // Check update statement
+  if (0 == m_updateStreamStatement) {
+    m_updateStreamStatement = createStatement(s_updateStreamStatementString);
+  }
+  // Update local object
+  m_updateStreamStatement->setDouble(1, obj->stream()->id());
+  m_updateStreamStatement->setDouble(2, obj->id());
+  m_updateStreamStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -265,30 +240,24 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
 void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* obj)
   throw (castor::exception::Exception) {
   // check select statement
-  if (0 == m_TapeCopy2SegmentStatement) {
-    m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+  if (0 == m_selectSegmentStatement) {
+    m_selectSegmentStatement = createStatement(s_selectSegmentStatementString);
   }
   // Get current database data
   std::set<int> segmentsList;
-  m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_TapeCopy2SegmentStatement->executeQuery();
+  m_selectSegmentStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     segmentsList.insert(rset->getInt(1));
   }
-  m_TapeCopy2SegmentStatement->closeResultSet(rset);
+  m_selectSegmentStatement->closeResultSet(rset);
   // update segments and create new ones
   for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
        it != obj->segments().end();
        it++) {
     std::set<int>::iterator item;
     if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
-      cnvSvc()->createRep(0, *it, false);
-      if (0 == m_insertTapeCopy2SegmentStatement) {
-        m_insertTapeCopy2SegmentStatement = createStatement(s_insertTapeCopy2SegmentStatementString);
-      }
-      m_insertTapeCopy2SegmentStatement->setDouble(1, obj->id());
-      m_insertTapeCopy2SegmentStatement->setDouble(2, (*it)->id());
-      m_insertTapeCopy2SegmentStatement->executeUpdate();
+      cnvSvc()->createRep(0, *it, false, OBJ_TapeCopy);
     } else {
       segmentsList.erase(item);
       cnvSvc()->updateRep(0, *it, false);
@@ -300,12 +269,6 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
        it++) {
     castor::db::DbAddress ad(*it, " ", 0);
     cnvSvc()->deleteRepByAddress(&ad, false);
-    if (0 == m_deleteTapeCopy2SegmentStatement) {
-      m_deleteTapeCopy2SegmentStatement = createStatement(s_deleteTapeCopy2SegmentStatementString);
-    }
-    m_deleteTapeCopy2SegmentStatement->setDouble(1, obj->id());
-    m_deleteTapeCopy2SegmentStatement->setDouble(2, *it);
-    m_deleteTapeCopy2SegmentStatement->executeUpdate();
   }
 }
 
@@ -336,27 +299,23 @@ void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy
       obj->castorFile()->id() != castorFileId) {
     cnvSvc()->deleteRepByAddress(&ad, false);
     castorFileId = 0;
-    if (0 == m_deleteCastorFile2TapeCopyStatement) {
-      m_deleteCastorFile2TapeCopyStatement = createStatement(s_deleteCastorFile2TapeCopyStatementString);
-    }
-    m_deleteCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-    m_deleteCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-    m_deleteCastorFile2TapeCopyStatement->executeUpdate();
   }
-  // Update object or create new one
+  // Update remote object or create new one
   if (castorFileId == 0) {
     if (0 != obj->castorFile()) {
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
-      if (0 == m_insertCastorFile2TapeCopyStatement) {
-        m_insertCastorFile2TapeCopyStatement = createStatement(s_insertCastorFile2TapeCopyStatementString);
-      }
-      m_insertCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-      m_insertCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-      m_insertCastorFile2TapeCopyStatement->executeUpdate();
     }
   } else {
     cnvSvc()->updateRep(&ad, obj->castorFile(), false);
   }
+  // Check update statement
+  if (0 == m_updateCastorFileStatement) {
+    m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
+  }
+  // Update local object
+  m_updateCastorFileStatement->setDouble(1, obj->castorFile()->id());
+  m_updateCastorFileStatement->setDouble(2, obj->id());
+  m_updateCastorFileStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -432,18 +391,18 @@ void castor::db::ora::OraTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* ob
 void castor::db::ora::OraTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* obj)
   throw (castor::exception::Exception) {
   // Check select statement
-  if (0 == m_TapeCopy2SegmentStatement) {
-    m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+  if (0 == m_selectSegmentStatement) {
+    m_selectSegmentStatement = createStatement(s_selectSegmentStatementString);
   }
   // retrieve the object from the database
   std::set<int> segmentsList;
-  m_TapeCopy2SegmentStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_TapeCopy2SegmentStatement->executeQuery();
+  m_selectSegmentStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
     segmentsList.insert(rset->getInt(1));
   }
   // Close ResultSet
-  m_TapeCopy2SegmentStatement->closeResultSet(rset);
+  m_selectSegmentStatement->closeResultSet(rset);
   // Update objects and mark old ones for deletion
   std::vector<castor::stager::Segment*> toBeDeleted;
   for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
@@ -517,7 +476,8 @@ void castor::db::ora::OraTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit)
+                                                bool autocommit,
+                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
@@ -538,9 +498,9 @@ void castor::db::ora::OraTapeCopyCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setDouble(1, obj->id());
-    m_insertStatement->setDouble(2, obj->stream() ? obj->stream()->id() : 0);
-    m_insertStatement->setDouble(3, obj->castorFile() ? obj->castorFile()->id() : 0);
-    m_insertStatement->setDouble(4, (int)obj->status());
+    m_insertStatement->setDouble(2, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setDouble(3, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setDouble(4, 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -588,10 +548,7 @@ void castor::db::ora::OraTapeCopyCnv::updateRep(castor::IAddress* address,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setDouble(1, obj->stream() ? obj->stream()->id() : 0);
-    m_updateStatement->setDouble(2, obj->castorFile() ? obj->castorFile()->id() : 0);
-    m_updateStatement->setDouble(3, (int)obj->status());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setDouble(1, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -647,17 +604,6 @@ void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
          it++) {
       cnvSvc()->deleteRep(0, *it, false);
     }
-    // Delete link to castorFile object
-    if (0 != obj->castorFile()) {
-      // Check whether the statement is ok
-      if (0 == m_deleteCastorFile2TapeCopyStatement) {
-        m_deleteCastorFile2TapeCopyStatement = createStatement(s_deleteCastorFile2TapeCopyStatementString);
-      }
-      // Delete links to objects
-      m_deleteCastorFile2TapeCopyStatement->setDouble(1, obj->castorFile()->id());
-      m_deleteCastorFile2TapeCopyStatement->setDouble(2, obj->id());
-      m_deleteCastorFile2TapeCopyStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -707,8 +653,6 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
     castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
     // Now retrieve and set members
     object->setId((u_signed64)rset->getDouble(1));
-    u_signed64 streamId = (u_signed64)rset->getDouble(2);
-    u_signed64 castorFileId = (u_signed64)rset->getDouble(3);
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
     m_selectStatement->closeResultSet(rset);
     return object;

@@ -86,11 +86,15 @@ namespace castor {
          * @param object the object to deal with
          * @param autocommit whether the changes to the database
          * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
          * @exception Exception throws an Exception in cas of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool autocommit,
+                               unsigned int type)
           throw (castor::exception::Exception);
 
         /**
@@ -243,53 +247,17 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL insert statement for member 
-        static const std::string s_insertStream2TapeCopyStatementString;
-
-        /// SQL insert statement object for member 
-        oracle::occi::Statement *m_insertStream2TapeCopyStatement;
-
-        /// SQL delete statement for member 
-        static const std::string s_deleteStream2TapeCopyStatementString;
-
-        /// SQL delete statement object for member 
-        oracle::occi::Statement *m_deleteStream2TapeCopyStatement;
-
         /// SQL select statement for member 
-        static const std::string s_Stream2TapeCopyStatementString;
+        static const std::string s_selectTapeCopyStatementString;
 
         /// SQL select statement object for member 
-        oracle::occi::Statement *m_Stream2TapeCopyStatement;
+        oracle::occi::Statement *m_selectTapeCopyStatement;
 
-        /// SQL insert statement for member tapePool
-        static const std::string s_insertTapePool2StreamStatementString;
+        /// SQL update statement for member tapePool
+        static const std::string s_updateTapePoolStatementString;
 
-        /// SQL insert statement object for member tapePool
-        oracle::occi::Statement *m_insertTapePool2StreamStatement;
-
-        /// SQL delete statement for member tapePool
-        static const std::string s_deleteTapePool2StreamStatementString;
-
-        /// SQL delete statement object for member tapePool
-        oracle::occi::Statement *m_deleteTapePool2StreamStatement;
-
-        /// SQL insert statement for member status
-        static const std::string s_insertStream2StreamStatusCodesStatementString;
-
-        /// SQL insert statement object for member status
-        oracle::occi::Statement *m_insertStream2StreamStatusCodesStatement;
-
-        /// SQL delete statement for member status
-        static const std::string s_deleteStream2StreamStatusCodesStatementString;
-
-        /// SQL delete statement object for member status
-        oracle::occi::Statement *m_deleteStream2StreamStatusCodesStatement;
-
-        /// SQL select statement for member status
-        static const std::string s_Stream2StreamStatusCodesStatementString;
-
-        /// SQL select statement object for member status
-        oracle::occi::Statement *m_Stream2StreamStatusCodesStatement;
+        /// SQL update statement object for member tapePool
+        oracle::occi::Statement *m_updateTapePoolStatement;
 
       }; // end of class OraStreamCnv
 
