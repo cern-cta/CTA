@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.10 2000/11/24 07:29:07 jdurand Exp $
+ * $Id: lseek.c,v 1.11 2002/01/18 16:23:29 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.10 $ $Date: 2000/11/24 07:29:07 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.11 $ $Date: 2002/01/18 16:23:29 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -164,7 +164,9 @@ int    how ;
    rfilefdt[s_index]->lseekoff= offset ;
    if ( how == SEEK_END) {
       status= rfio_forcelseek(s,offset,how) ; 
+      rfilefdt[s_index]->eof= 1 ;
       rfilefdt[s_index]->offset= status ;
+      rfilefdt[s_index]->lseekoff= status ;
    }
    else	{
       rfilefdt[s_index]->offset= offset ;
