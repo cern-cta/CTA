@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.59 2000/11/21 10:41:33 jdurand Exp $
+ * $Id: procio.c,v 1.60 2000/11/25 11:16:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.59 $ $Date: 2000/11/21 10:41:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.60 $ $Date: 2000/11/25 11:16:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.59 $ $Date: 2000
 #include "Cns_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "rfio_api.h"
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -51,7 +52,6 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.59 $ $Date: 2000
 
 extern char *optarg;
 extern int optind;
-extern char *rfio_serror();
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
@@ -111,14 +111,12 @@ void procioreq(req_type, req_data, clienthost)
 	char *fid = NULL;
 	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
 	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
+	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
 	char filemig_size[5];
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
-	struct Cns_fileid *hsmfileids = NULL;
-	u_signed64 *hsmsizes = NULL;
 	char **hsmfiles = NULL;
-	time_t *hsmmtimes = NULL;
 	int ihsmfiles;
 	int jhsmfiles;
 	char *name;
@@ -193,9 +191,11 @@ void procioreq(req_type, req_data, clienthost)
 		switch (c) {
 		case 'A':	/* allocation mode */
 			if (strcmp (optarg, "deferred") == 0) {
-				if (req_type != STAGEIN) {
+				if (req_type != STAGEIN && req_type != STAGEWRT) {
+					/* We will better check afterwards for STAGEWRT */
+					/* this depends on other option -M existence */
 					sendrep (rpfd, MSG_ERR, STG17, "-A deferred",
-									 "stageout/stagewrt/stagecat");
+									 "stageout/stagecat");
 					errflg++;
 				} else
 					Aflag = 1; /* deferred space allocation */
@@ -300,32 +300,75 @@ void procioreq(req_type, req_data, clienthost)
 		case 'M':
 			stgreq.t_or_d = 'm';
 			if (nhsmfiles == 0) {
-				if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL ||
-				    (hsmfileids = (struct Cns_fileid *) malloc(sizeof(struct Cns_fileid))) == NULL ||
-				    (hsmsizes   = (u_signed64 *)        malloc(sizeof(u_signed64))) == NULL ||
-				    (hsmmtimes  = (time_t *)            malloc(sizeof(time_t))) == NULL) {
+				if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL) {
+					sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
 					c = SYERR;
 					goto reply;
 				}
 			} else {
 				char **dummy = hsmfiles;
-				struct Cns_fileid *dummy2 = hsmfileids;
-				u_signed64 *dummy3 = hsmsizes;
-				time_t *dummy4 = hsmmtimes;
-
-				if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL ||
-				    (dummy2 = (struct Cns_fileid *) realloc(hsmfileids,(nhsmfiles+1) * sizeof(struct Cns_fileid))) == NULL ||
-				    (dummy3 = (u_signed64 *)        realloc(hsmsizes,(nhsmfiles+1) * sizeof(u_signed64))) == NULL ||
-				    (dummy4 = (time_t *)            realloc(hsmmtimes,(nhsmfiles+1) * sizeof(time_t))) == NULL) {
+				if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+					sendrep (rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
 					c = SYERR;
 					goto reply;
 				}
 				hsmfiles = dummy;
-				hsmfileids = dummy2;
-				hsmsizes = dummy3;
-				hsmmtimes = dummy4;
 			}
 			hsmfiles[nhsmfiles++] = optarg;
+			/* We check that there is no redundant hsm files (multiple equivalent ones) */
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
+					if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
+						sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
+						c = USERR;
+						goto reply;
+					}
+				}
+			}
+			/* We check that user do not mix different hsm types (hpss and castor) */
+			if (ISHPSS(optarg)) {
+				if (ISCASTORHOST(optarg)) {
+					sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", optarg);
+					c = USERR;
+					goto reply;
+				}
+				++nhpssfiles;
+			}
+			if (ISCASTOR(optarg)) {
+				if (ISHPSSHOST(optarg)) {
+					sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", hsmfiles[ihsmfiles]);
+					c = USERR;
+					goto reply;
+				}
+				++ncastorfiles;
+                /* And we take the opportunity to decide which level of migration (user/exp) */
+				if (isuserlevel(optarg)) {
+					nuserlevel++;
+        		} else {
+          			nexplevel++;
+        		}
+			}
+			/* No recognized type ? */
+			if (nhpssfiles == 0 && ncastorfiles == 0) {
+				sendrep (rpfd, MSG_ERR, "Cannot determine %s type (HPSS nor CASTOR)\n", optarg);
+				c = USERR;
+				goto reply;
+			}
+			/* Mixed CASTOR types ? */
+			if (ncastorfiles > 0 && nuserlevel > 0 && nexplevel > 0) {
+				sendrep (rpfd, MSG_ERR, "Mixing user-level and experiment-level CASTOR files is not allowed\n");
+				c = USERR;
+				goto reply;
+			}
+			/* Mixed HSM types ? */
+			if (nhpssfiles >  0 && ncastorfiles >  0) {
+				sendrep (rpfd, MSG_ERR, "HPSS and CASTOR files on the same command-line is not allowed\n");
+				c = USERR;
+				goto reply;
+			} else if (ncastorfiles > 0) {
+				/* It is a CASTOR request, so stgreq.t_or_d, previously equal to 'm', is set to 'h' */
+				stgreq.t_or_d = 'h';
+			}
 			break;
 		case 'N':
 			nread = optarg;
@@ -426,6 +469,12 @@ void procioreq(req_type, req_data, clienthost)
 	}
 	if (Aflag && strcmp (stgreq.poolname, "NOPOOL") == 0) {
 		sendrep (rpfd, MSG_ERR, STG17, "-A deferred", "-p NOPOOL");
+		errflg++;
+	}
+	if (Aflag && req_type == STAGEWRT && ncastorfiles == 0) {
+		/* If deferred allocation for stagewrt, we check for existence of -M option */
+		/* The -M option values validity themselves will be checked later */
+		sendrep (rpfd, MSG_ERR, STG47, "stagewrt -A deferred is valid only with CASTOR HSM files (-M /castor/...)\n");
 		errflg++;
 	}
 #ifndef CONCAT_OFF
@@ -555,157 +604,6 @@ void procioreq(req_type, req_data, clienthost)
 			c = USERR;
 			goto reply;
 		}
-		/* And we also check that there is NO redundant hsm files (multiple equivalent ones) */
-		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
-				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
-					sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
-					c = USERR;
-					goto reply;
-				}
-			}
-		}
-		/* We check that user do not mix different hsm types (hpss and castor) */
-		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-			if (ISHPSS(hsmfiles[ihsmfiles])) {
-				if (ISCASTORHOST(hsmfiles[ihsmfiles])) {
-					sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", hsmfiles[ihsmfiles]);
-					c = USERR;
-					goto reply;
-				}
-				++nhpssfiles;
-			}
-			if (ISCASTOR(hsmfiles[ihsmfiles])) {
-				if (ISHPSSHOST(hsmfiles[ihsmfiles])) {
-					sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", hsmfiles[ihsmfiles]);
-					c = USERR;
-					goto reply;
-				}
-				++ncastorfiles;
-                /* And we take the opportunity to decide which level of migration (user/exp) */
-				if (isuserlevel(hsmfiles[ihsmfiles])) {
-					nuserlevel++;
-        		} else {
-          			nexplevel++;
-        		}
-			}
-		}
-		/* No recognized type ? */
-		if (nhpssfiles == 0 && ncastorfiles == 0) {
-			sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
-			c = USERR;
-			goto reply;
-		}
-		/* Mixed CASTOR types ? */
-		if (ncastorfiles > 0 && nuserlevel > 0 && nexplevel > 0) {
-			sendrep (rpfd, MSG_ERR, "Mixing user-level and experiment-level CASTOR files is not allowed\n");
-			c = USERR;
-			goto reply;
-		}
-		/* At least one HPSS and one CASTOR */
-		if (nhpssfiles >  0 && ncastorfiles >  0) {
-			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
-			c = USERR;
-			goto reply;
-		} else if (ncastorfiles > 0) {
-			/* It is a CASTOR request, so stgreq.t_or_d, previously equal to 'm', is set to 'h' */
-			stgreq.t_or_d = 'h';
-		}
-		/* Depending in req_type we contact NameServer accordingly */
-		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-			switch (req_type) {
-			case STAGEIN:
-				setegid(stgreq.gid);
-				seteuid(stgreq.uid);
-				switch (stgreq.t_or_d) {
-				case 'h':
-					/* Suppose the file is of zero size ? We can catch it right now */
-					memset(&(hsmfileids[ihsmfiles]),0,sizeof(struct Cns_fileid));
-					if (Cns_statx(hsmfiles[ihsmfiles], &(hsmfileids[ihsmfiles]), &Cnsfilestat) != 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
-						c = USERR;
-						setegid(0);
-						seteuid(0);
-						goto reply;
-					}
-					hsmmtimes[ihsmfiles] = Cnsfilestat.mtime;
-					hsmsizes[ihsmfiles] = Cnsfilestat.filesize;
-					break;
-				case 'm':
-					/* Suppose the file is of zero size ? We can catch it right now */
-					if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
-						c = USERR;
-						setegid(0);
-						seteuid(0);
-						goto reply;
-					}
-					hsmmtimes[ihsmfiles] = filemig_stat.st_mtime;
-					hsmsizes[ihsmfiles] = (u_signed64) filemig_stat.st_size;
-					break;
-				default:
-					break;
-				}
-				setegid(0);
-				seteuid(0);
-				break;
-			case STAGEOUT:
-				/* Special case for CASTOR's HSM files : We check in advance if the file is not "busy" */
-				if (stgreq.t_or_d == 'h') {
-					memset(&(hsmfileids[ihsmfiles]),0,sizeof(struct Cns_fileid));
-					if (Cns_statx(hsmfiles[ihsmfiles], &(hsmfileids[ihsmfiles]), &Cnsfilestat) == 0) {
-						/* File already exist */
-						strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
-						strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
-						stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
-						switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
-							case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
-							case STAGEPUT|CAN_BE_MIGR:
-								/* And is busy with respect to our knowledge */
-								sendrep (rpfd, MSG_ERR, STG37);
-								c = EBUSY;
-								goto reply;
-							default:
-								break;
-						}
-					}
-				}
-				/* There is intentionnaly no 'break' here */
-			case STAGEWRT:
-				setegid(stgreq.gid);
-				seteuid(stgreq.uid);
-				switch (stgreq.t_or_d) {
-				case 'h':
-					/* Overwriting an existing CASTOR HSM file is allowed (read/write mode) */
-					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &(hsmfileids[ihsmfiles])) != 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
-						c = USERR;
-						setegid(0);
-						seteuid(0);
-						goto reply;
-					}
-					hsmmtimes[ihsmfiles] = time(0);
-					break;
-				case 'm':
-					/* Overwriting an existing non-CASTOR HSM file is not allowed */
-					if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
-						c = USERR;
-						setegid(0);
-						seteuid(0);
-						goto reply;
-					}
-					break;
-				default:
-					break;
-				}
-				setegid(0);
-				seteuid(0);
-				break;
-			default:
-				break;
-			}
-		}
 	} else {
 		if ((req_type == STAGEIN &&
 				 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
@@ -735,6 +633,12 @@ void procioreq(req_type, req_data, clienthost)
 		nbdskf = nhsmfiles;
 	}
 	for (i = 0; i < nbdskf; i++) {
+		time_t hsmmtime;
+		int forced_Cns_creatx = 0;
+		int forced_rfio_stat = 0;
+		u_signed64 correct_size;
+		u_signed64 hsmsize;
+
 		ihsmfiles++;
 		if (Uflag && i > 0) break;
 		if (stgreq.t_or_d == 't') {
@@ -767,8 +671,8 @@ void procioreq(req_type, req_data, clienthost)
 			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles]);
 		} else if (stgreq.t_or_d == 'h') {
 			strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
-			strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
-			stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
+			stgreq.u1.h.server[0] = '\0';
+			stgreq.u1.h.fileid = 0;
 		}
 		if (nread) {
 			if ((p = strchr (nread, ':')) != NULL) *p = '\0';
@@ -778,11 +682,46 @@ void procioreq(req_type, req_data, clienthost)
 				nread = p + 1;
 			}
 		}
-		/* We have in hsmsizes[ihsmfiles] the actual_size in the NameServer    */
-		/* If the user did not specified -s option (max bytes to transfer) we  */
-		/* use this information.                                               */
 		if (req_type == STAGEIN && nhsmfiles > 0 && ! size) {
-			stgreq.size = (int) ((hsmsizes[ihsmfiles] > ONE_MB) ? (hsmsizes[ihsmfiles] / ONE_MB + 1) : 1);
+			/* We have the actual_size in the NameServer                           */
+			/* If the user did not specified -s option (max bytes to transfer) we  */
+			/* use this information.                                               */
+			struct Cns_fileid Cnsfileid;
+
+			setegid(stgreq.gid);
+			seteuid(stgreq.uid);
+			switch (stgreq.t_or_d) {
+			case 'h':
+				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
+					c = USERR;
+					setegid(0);
+					seteuid(0);
+					goto reply;
+				}
+				strcpy(stgreq.u1.h.server,Cnsfileid.server);
+				stgreq.u1.h.fileid = Cnsfileid.fileid;
+				hsmmtime = Cnsfilestat.mtime;
+				hsmsize = Cnsfilestat.filesize;
+				break;
+			case 'm':
+				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
+					c = USERR;
+					setegid(0);
+					seteuid(0);
+					goto reply;
+				}
+				hsmmtime = filemig_stat.st_mtime;
+				hsmsize = (u_signed64) filemig_stat.st_size;
+				break;
+			default:
+				break;
+			}
+			setegid(0);
+			seteuid(0);
+			stgreq.size = (int) ((hsmsize > ONE_MB) ? (hsmsize / ONE_MB + 1) : 1);
 		} else if (size) {
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stgreq.size = strtol (size, &dp, 10);
@@ -855,7 +794,7 @@ void procioreq(req_type, req_data, clienthost)
 						goto reply;
 					}
 					goto notstaged;
-				} else if (nhsmfiles > 0 && hsmmtimes[ihsmfiles] > stcp->a_time) {
+				} else if (nhsmfiles > 0 && hsmmtime > stcp->a_time) {
 					/*
 					 * HSM File exists but has a modified time higher than what
 					 * is known to the stager.
@@ -887,12 +826,18 @@ void procioreq(req_type, req_data, clienthost)
 					}
 				}
 			case STAGEWRT:
+			case STAGEWRT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
 				if (stcp->t_or_d == 'h') {
 					/* update access time in Cns */
 					struct Cns_fileid Cnsfileid;
 					strcpy (Cnsfileid.server, stcp->u1.h.server);
 					Cnsfileid.fileid = stcp->u1.h.fileid;
+					setegid(stgreq.gid);
+					seteuid(stgreq.uid);
 					(void) Cns_setatime (NULL, &Cnsfileid);
+					setegid(0);
+					seteuid(0);
 				}
 				stcp->a_time = time (0);
 				stcp->nbaccesses++;
@@ -988,6 +933,14 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			break;
 		case STAGEOUT:
+			if (stgreq.t_or_d == 'h') {
+				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0) {
+					/* CASTOR file already exist */
+					strcpy(stgreq.u1.h.server,Cnsfileid.server);
+					stgreq.u1.h.fileid = Cnsfileid.fileid;
+				}
+			}
 			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
 			case NOTSTAGED:
 				break;
@@ -999,8 +952,6 @@ void procioreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 				break;
-			/* Please note : If status is STAGEOUT|CAN_BE_MIGR|BEING_MIGR it is refused */
-			/*               upper in this source */
 			case STAGEOUT:
 			case STAGEOUT|CAN_BE_MIGR:
 			case STAGEOUT|WAITING_SPC:
@@ -1021,10 +972,33 @@ void procioreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 				break;
+			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+			case STAGEWRT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+			case STAGEPUT|CAN_BE_MIGR:
+				sendrep (rpfd, MSG_ERR, STG37);
+				c = EBUSY;
+				goto reply;
 			default:
 				sendrep (rpfd, MSG_ERR, STG37);
 				c = USERR;
 				goto reply;
+			}
+			if (stgreq.t_or_d == 'h') {
+				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
+				if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
+					c = USERR;
+					setegid(0);
+					seteuid(0);
+					goto reply;
+				}
+				setegid(0);
+				seteuid(0);
+				strcpy(stgreq.u1.h.server,Cnsfileid.server);
+				stgreq.u1.h.fileid = Cnsfileid.fileid;
 			}
 			stcp = newreq ();
 			memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -1082,6 +1056,89 @@ void procioreq(req_type, req_data, clienthost)
 				actual_poolflag = -1;
 				actual_poolname[0] = '\0';
 			}
+			setegid(stgreq.gid);
+			seteuid(stgreq.uid);
+			switch (stgreq.t_or_d) {
+			case 'h':
+				/* If it is a stagewrt on CASTOR file and if this file have the same size we assume */
+				/* that user wants to do a second copy. */
+				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0) {
+					/* File already exist */
+					/* We already checked that nbdskf is equal to nhsmfiles */
+					/* So using index ihsmfiles onto argv[optind + ihsmfiles] will point */
+					/* immediately to the correct disk file associated with this HSM file */
+					/* We compare the size of the disk file with the size in Name Server */
+					if (rfio_stat(argv[optind + ihsmfiles], &filemig_stat) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, argv[optind + ihsmfiles], "rfio_stat", rfio_serror());
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					correct_size = (u_signed64) filemig_stat.st_size;
+					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+						/* If user specified a maxsize of bytes to transfer and if this */
+						/* maxsize is lower than physical file size, then the size of */
+						/* of the migrated file will be the minimum of the twos */
+						correct_size = (u_signed64) (stgreq.size * ONE_MB);
+					}
+					if (correct_size > 0 && correct_size == Cnsfilestat.filesize) {
+						/* Same size and > 0 : we assume user asks for a new copy */
+						strcpy(stgreq.u1.h.server,Cnsfileid.server);
+						stgreq.u1.h.fileid = Cnsfileid.fileid;
+					} else if (correct_size <= 0) {
+						sendrep (rpfd, MSG_OUT,
+									"STG98 - %s size is of zero size - not migrated\n",
+									argv[optind + ihsmfiles]);
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					} else {
+						/* Not the same size or diskfile size is zero */
+						if (Cnsfilestat.filesize > 0) {
+							sendrep (rpfd, MSG_OUT,
+										"STG98 - %s renewed (size differs vs. %s)\n",
+										hsmfiles[ihsmfiles],
+										argv[optind + ihsmfiles]);
+						}
+						forced_Cns_creatx = 1;
+					}
+				} else {
+					/* We will have to create it */
+					forced_Cns_creatx = 1;
+					forced_rfio_stat = 1;
+				}
+				if (forced_Cns_creatx != 0) {
+					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					strcpy(stgreq.u1.h.server,Cnsfileid.server);
+					stgreq.u1.h.fileid = Cnsfileid.fileid;
+				}
+				hsmmtime = time(0);
+				/* Here, in any case, Cnsfileid is filled */
+				break;
+			case 'm':
+				/* Overwriting an existing non-CASTOR HSM file is not allowed */
+				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
+					c = USERR;
+					setegid(0);
+					seteuid(0);
+					goto reply;
+				}
+				break;
+			default:
+				break;
+			}
+			setegid(0);
+			seteuid(0);
 			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname)) {
 			case NOTSTAGED:
 				break;
@@ -1100,6 +1157,14 @@ void procioreq(req_type, req_data, clienthost)
 			case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
 				delreq (stcp,0);
 				break;
+			case STAGEOUT|CAN_BE_MIGR:
+			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+			case STAGEPUT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR:
+			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+				sendrep (rpfd, MSG_ERR, STG37);
+				c = EBUSY;
+				goto reply;
 			case STAGEWRT:
 				if (stcp->t_or_d == 't' && *stcp->u1.t.fseq == 'n') break;
 			default:
@@ -1107,38 +1172,36 @@ void procioreq(req_type, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			if (stgreq.t_or_d == 'h') {
-				if (rfio_stat (upath, &st) == 0) {
-					u_signed64 correct_size;
-
-					correct_size = (u_signed64) st.st_size;
-#ifdef U1H_WRT_WITH_MAXSIZE
-					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
-						/* If use specified a maxsize of bytes to transfer and if this */
-						/* maxsize is lower than physical file size, then the size of */
-						/* of the migrated file will be the minimum of the twos */
-						correct_size = (u_signed64) (stgreq.size * ONE_MB);
-					}
-#endif
-					/* We set the size in the name server */
-					setegid(stgreq.gid);
-					seteuid(stgreq.uid);
-					if (Cns_setfsize(NULL,&(hsmfileids[ihsmfiles]),correct_size) != 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
-							"Cns_setfsize", sstrerror(serrno));
-						setegid(0);
-						seteuid(0);
-						c = SYERR;
+			if (stgreq.t_or_d == 'h' && forced_Cns_creatx != 0) {
+				if (forced_rfio_stat != 0) {
+					if (rfio_stat (upath, &st) == 0) {
+						correct_size = (u_signed64) st.st_size;
+						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
+							/* If user specified a maxsize of bytes to transfer and if this */
+							/* maxsize is lower than physical file size, then the size of */
+							/* of the migrated file will be the minimum of the twos */
+							correct_size = (u_signed64) (stgreq.size * ONE_MB);
+						}
+					} else {
+						sendrep (rpfd, MSG_ERR, STG02, upath,
+							"rfio_stat", rfio_serror());
+						c = USERR;
 						goto reply;
 					}
+				}
+				/* We set the size in the name server */
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
+				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
+						"Cns_setfsize", sstrerror(serrno));
 					setegid(0);
 					seteuid(0);
-				} else {
-					sendrep (rpfd, MSG_ERR, STG02, upath,
-						"rfio_stat", rfio_serror());
 					c = SYERR;
 					goto reply;
 				}
+				setegid(0);
+				seteuid(0);
 			}
 			stcp = newreq ();
 			memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -1162,23 +1225,31 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			stcp->a_time = time (0);
 			strcpy (stcp->ipath, upath);
+			stcp->nbaccesses = 1;
+			if (Aflag) {
+				/* CAN_BE_MIGR flag will be added by update_migpool */
+				update_migpool(stcp,1);
+			}
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
 				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
-									stcp->gid, clientpid, Upluspath, reqid, req_type,
-									nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
-			wqp->copytape = copytape;
-			wfp->subreqid = stcp->reqid;
-			wqp->nbdskf++;
-			if (i < nbtpf || nhsmfiles > 0)
-				wqp->nb_subreqs++;
-			/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
-			/* -> StageIDflag set to 1 */
-			if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? -1 : 0;
-			wfp++;
+			if (! Aflag) {
+				/* This is immediate migration */
+				if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
+										stcp->gid, clientpid, Upluspath, reqid, req_type,
+										nbdskf, &wfp, stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq);
+				wqp->copytape = copytape;
+				wfp->subreqid = stcp->reqid;
+				wqp->nbdskf++;
+				if (i < nbtpf || nhsmfiles > 0)
+					wqp->nb_subreqs++;
+				/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
+				/* -> StageIDflag set to 1 */
+				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? -1 : 0;
+				wfp++;
+			}
 			break;
 		case STAGECAT:
 			if (p = findpoolname (upath)) {
@@ -1240,17 +1311,11 @@ void procioreq(req_type, req_data, clienthost)
 	} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req)
 		fork_exec_stager (wqp);
 	if (hsmfiles != NULL) free(hsmfiles);
-	if (hsmsizes != NULL) free(hsmsizes);
-	if (hsmfileids != NULL) free(hsmfileids);
-	if (hsmmtimes != NULL) free(hsmmtimes);
 	return;
  reply:
 	if (fseq_list) free (fseq_list);
 	free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
-	if (hsmsizes != NULL) free(hsmsizes);
-	if (hsmfileids != NULL) free(hsmfileids);
-	if (hsmmtimes != NULL) free(hsmmtimes);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, req_type, 0, c, NULL, "");
@@ -1538,7 +1603,8 @@ void procputreq(req_data, clienthost)
 				/* Neverthless the first one cannot be catched a second time because it will have */
 				/* to fulfill also the correction condition on its current status */
 				if ((stcp->status & 0xF) == STAGEOUT ||
-					(stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) {
+					(stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED) ||
+					(stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
 					for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 						if (strcmp (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, hsmfiles[ihsmfiles]) != 0)
 							continue;
@@ -1617,7 +1683,11 @@ void procputreq(req_data, clienthost)
 					goto reply;
 				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
+					if ((hsmfilesstcp[ihsmfiles]->status) & (STAGEWRT|CAN_BE_MIGR) == (STAGEWRT|CAN_BE_MIGR)) {
+						hsmfilesstcp[ihsmfiles]->status |= BEING_MIGR;
+					} else {
+						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
+					}
 					hsmfilesstcp[ihsmfiles]->a_time = time (0);
 				} else {
 					int save_status;
@@ -1804,7 +1874,11 @@ void procputreq(req_data, clienthost)
 				}
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					update_migpool(stcp,-1);
-					stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+					if ((stcp->status & STAGEWRT) == STAGEWRT) {
+						delreq(stcp,0);
+					} else {
+						stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+					}
 				} else {
 					stcp->status = STAGEOUT|PUT_FAILED;
 				}
@@ -1834,9 +1908,11 @@ void procputreq(req_data, clienthost)
 						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, optarg) != 0) continue;
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 							update_migpool(stcp,-1);
-							stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-						} else {
-							stcp->status = STAGEOUT|PUT_FAILED;
+							if ((stcp->status & STAGEWRT) == STAGEWRT) {
+								delreq(stcp,0);
+							} else {
+								stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+							}
 						}
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
