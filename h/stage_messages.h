@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.17 2002/04/30 12:15:04 jdurand Exp $
+ * $Id: stage_messages.h,v 1.18 2002/07/27 06:42:55 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -126,7 +126,7 @@
 #define STG144  "STG144 - %s : retention period on disk is %d second%s (%s value)\n"
 #define STG145  "STG145 - %s : retention period on disk changed from %d second%s (%s value) to %d second%s (%s value)\n"
 #define STG146  "STG146 - %s : retention period on disk unchanged to %d second%s (%s value)\n"
-#define STG147  "STG147 - invalid value for option %s, maximum value is %d %s\n"
+#define STG147  "STG147 - invalid value for option %s, maximum value is %s\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
 #define STG149  "STG149 - %s : will not be migrated until pool %s have an associated migrator\n"
 #define STG150  "STG150 - %s : mintime_beforemigr unchanged to %d second%s (%s value)\n"
