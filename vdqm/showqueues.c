@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.17 $ $Date: 2003/08/18 11:13:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.18 $ $Date: 2003/08/18 12:05:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -296,8 +296,8 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     buf,
                     now - tmp1->drvreq.recvtime,
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
-                    tmp1->volreq.volid,
                     buf_volid,
+                    tmp1->volreq.volid,
                     (tmp1->volreq.mode == 0 ? "R" : "W"),
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
                     buf_id,
@@ -325,15 +325,14 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                 strncpy(buf_volid, NONE_VOLUME, BUF_SIZE-1);
             }
             
-            fprintf(stdout,"DN %s %s@%s %s %s %d (%s)\n",
+            fprintf(stdout,"DN %s %s@%s %s %d (%s) %s\n",
                     tmp1->drvreq.dgn,
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
                     buf,
-                    buf_volid,
                     now - tmp1->drvreq.recvtime,
-                    (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION);
-           
+                    (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
+                    buf_volid);           
             
         } else if ( *server == '\0' || 
                     strcmp(server,tmp1->volreq.server) == 0 ) {
