@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.148 2001/09/22 05:55:42 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.149 2001/09/22 07:33:03 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.148 $ $Date: 2001/09/22 05:55:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.149 $ $Date: 2001/09/22 07:33:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -161,12 +161,14 @@ struct stgdb_fd dbfd;
 struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 struct passwd start_passwd;
 char localhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
+unsigned long ipaddrlocal;
+int have_ipaddrlocal;
 time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
 time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 
 void prockilreq _PROTO((int, char *, char *));
-void procinireq _PROTO((int, char *, char *));
+void procinireq _PROTO((int, unsigned long, char *, char *));
 void procshutdownreq _PROTO((char *, char *));
 void check_upd_fileclasses _PROTO(());
 void checkpoolstatus _PROTO(());
@@ -369,6 +371,15 @@ int main(argc,argv)
 	if (gethostname(localhost,sizeof(localhost)) != 0)   {
 		stglogit(func, "Cannot get local hostname (%s) - forcing \"localhost\"\n", strerror(errno));
 		strcpy(localhost,"localhost");
+	}
+
+	/* Get localhostname IP addr */
+	if ((hp = Cgethostbyname(localhost)) == NULL) {
+		stglogit (func, STG02, localhost, "Cgethostbyname", sstrerror(serrno));
+		have_ipaddrlocal = 0;
+	} else {
+		have_ipaddrlocal = 1;
+		ipaddrlocal = (unsigned long) ((struct in_addr *)(hp->h_addr))->s_addr;
     }
 
 	/* Force environment variable to be sure that all our callbacks, forked processes, etc... will really go there... */
@@ -882,7 +893,7 @@ int main(argc,argv)
 						procupdreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGEINIT:
-						procinireq (req_type, req_data, clienthost);
+						procinireq (req_type, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
 					case STAGEALLOC:
 						procallocreq (req_data, clienthost);
@@ -1015,8 +1026,9 @@ void prockilreq(req_type, req_data, clienthost)
 	}
 }
 
-void procinireq(req_type, req_data, clienthost)
+void procinireq(req_type, ipaddr, req_data, clienthost)
 		 int req_type;
+		 unsigned long ipaddr;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -1026,11 +1038,15 @@ void procinireq(req_type, req_data, clienthost)
 	int nargs;
 	char *rbp;
 	char *user;
+	char *p;
 	int errflg = 0;
+	char *func = "stageinit";
+	struct hostent *hp_verif;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
 	unmarshall_WORD (rbp, gid);
+	stglogit (func, "STG92 - %s request by %s (,%d) from %s\n", "stageinit", user, gid, clienthost);
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
@@ -1042,7 +1058,34 @@ void procinireq(req_type, req_data, clienthost)
 		sendrep (rpfd, STAGERC, STAGEINIT, USERR);
 		return;
 	}
+	/* Do some check */
+	/* - is it coming for a root account ? */
+	if (! ISGIDROOT(gid)) {
+		free (argv);
+		sendrep (rpfd, MSG_ERR, STG02, "", "stageinit", strerror(EPERM));
+		sendrep (rpfd, STAGERC, STAGEINIT, USERR);
+		return;
+	}
+	/* - Do we want to force it to come from local host ? */
+	if ((p = getconfent("STG", "STAGEINIT_FROM_LOCALHOST", 0)) != NULL) {
+		if (atoi(p) != 0) {
+			if (! have_ipaddrlocal) {
+				stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Localhost's %s IP address unavailable\n", localhost);
+			} else {
+				/* Verify remote IP address */
+				if (ipaddr != ipaddrlocal) {
+					unsigned char *s_client = (unsigned char *) &ipaddr;
+					unsigned char *s_local  = (unsigned char *) &ipaddrlocal;
 
+					free (argv);
+					stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
+					sendrep (rpfd, MSG_ERR, STG02, clienthost, "stageinit", strerror(EPERM));
+					sendrep (rpfd, STAGERC, STAGEINIT, USERR);
+					return;
+				}
+			}
+		}
+	}
 	Coptind = 1;
 	Copterr = 0;
 	while ((c = Cgetopt (nargs, argv, "Fh:X")) != -1) {
@@ -3399,5 +3442,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Saturday 22 September, 2001 at 07:50:02 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Saturday 22 September, 2001 at 09:27:14 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
