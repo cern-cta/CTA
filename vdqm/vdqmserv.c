@@ -1,6 +1,9 @@
 /*
- * $Id: vdqmserv.c,v 1.1 1999/07/27 09:22:26 obarring Exp $
+ * $Id: vdqmserv.c,v 1.2 1999/07/29 09:14:41 obarring Exp $
  * $Log: vdqmserv.c,v $
+ * Revision 1.2  1999/07/29 09:14:41  obarring
+ * Replace TABs with 4 SPACE
+ *
  * Revision 1.1  1999/07/27 09:22:26  obarring
  * First version
  *
@@ -41,38 +44,38 @@ void initlog(char *, int, char *);
 int vdqm_shutdown;
 
 int main() {
-	vdqmnw_t *nw, *nwtable;
-	int rc, poolID;
+    vdqmnw_t *nw, *nwtable;
+    int rc, poolID;
     extern int vdqm_shutdown;
 
-	initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
+    initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
     log(LOG_INFO,"main:\n\n ******* VDQM SERVER START ******\n\n");
-	rc = vdqm_InitNW(&nw);
-	if ( rc == -1 ) {
-		log(LOG_ERR,"vdqm_InitNw(): %s\n",NWERRTXT);
-		return(vdqm_CleanUp(nw,1));
-	}
-	rc = vdqm_InitPool(&nwtable);
-	if ( rc == -1 ) {
-		log(LOG_ERR,"vdqm_InitPool(): %s\n",ERRTXT);
-		return(vdqm_CleanUp(nw,1));
-	}
-	poolID = rc;
+    rc = vdqm_InitNW(&nw);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_InitNw(): %s\n",NWERRTXT);
+        return(vdqm_CleanUp(nw,1));
+    }
+    rc = vdqm_InitPool(&nwtable);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_InitPool(): %s\n",ERRTXT);
+        return(vdqm_CleanUp(nw,1));
+    }
+    poolID = rc;
     vdqm_shutdown = 0;
-	
-	for (;;) {
-		rc = vdqm_Listen(nw);
+    
+    for (;;) {
+        rc = vdqm_Listen(nw);
         if ( vdqm_shutdown ) break;
-		if ( rc == -1 ) {
-			log(LOG_ERR,"vdqm_Listen(): %s\n",NWERRTXT);
-			continue;
-		}
-		rc = vdqm_GetPool(poolID,nw,nwtable);
-		if ( rc == -1 ) {
-			log(LOG_ERR,"vdqm_GetPool(): %s\n",ERRTXT);
-			break;
-		}
-	}
+        if ( rc == -1 ) {
+            log(LOG_ERR,"vdqm_Listen(): %s\n",NWERRTXT);
+            continue;
+        }
+        rc = vdqm_GetPool(poolID,nw,nwtable);
+        if ( rc == -1 ) {
+            log(LOG_ERR,"vdqm_GetPool(): %s\n",ERRTXT);
+            break;
+        }
+    }
     log(LOG_INFO,"main:\n\n ******* VDQM SERVER EXIT ******\n\n");
-	return(vdqm_CleanUp(nw,1));
+    return(vdqm_CleanUp(nw,1));
 }
