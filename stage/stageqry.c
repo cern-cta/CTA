@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.29 2002/09/26 09:15:05 jdurand Exp $
+ * $Id: stageqry.c,v 1.30 2002/09/26 09:43:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.29 $ $Date: 2002/09/26 09:15:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.30 $ $Date: 2002/09/26 09:43:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -402,7 +402,6 @@ void record_callback(stcp,stpp)
 	int dospace = 0;
 	char *thespace = " ";
 	char *thena = withna_flag ? "N/A" : "";
-#define FPRINTF if (! check_format_string) fprintf
 
 	if ((stcp == NULL) && (stpp == NULL)) {
 		if (! check_format_string) {
@@ -430,239 +429,259 @@ void record_callback(stcp,stpp)
 		q = strtok (p,",");
 		while (q != NULL) {
 			qnext = strtok(NULL, ",");
-			if (dospace == 1) FPRINTF(fd,thespace);
+			if (dospace == 1 && ! check_format_string) fprintf(fd,thespace);
 			/* ----------------------------------- */
 			if (strcmp (q, "blksize") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%7s" : "%s","blksize");
+					fprintf(fd,qnext ? "%7s" : "%s","blksize");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
-					FPRINTF(fd,qnext ? "%7d" : "%d",stcp->blksize);
+					fprintf(fd,qnext ? "%7d" : "%d",stcp->blksize);
 				} else {
-					FPRINTF(fd,qnext ? "%7s" : "%s",thena);
+					fprintf(fd,qnext ? "%7s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "charconv") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-8s" : "%s","charconv");
+					fprintf(fd,qnext ? "%-8s" : "%s","charconv");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
 					char charconvstring[1024];
-					FPRINTF(fd,qnext ? "%-8s" : "%s",stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) stcp->charconv) == 0 ? charconvstring : thena);
+					fprintf(fd,qnext ? "%-8s" : "%s",stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) stcp->charconv) == 0 ? charconvstring : thena);
 				} else {
-					FPRINTF(fd,qnext ? "%-8s" : "%s",thena);
+					fprintf(fd,qnext ? "%-8s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "keep") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-4s" : "%s","keep");
+					fprintf(fd,qnext ? "%-4s" : "%s","keep");
 					goto next_token;
 				}
-				FPRINTF(fd,qnext ? "%-4s" : "%s",stcp->keep ? "K" : thena);
+				fprintf(fd,qnext ? "%-4s" : "%s",stcp->keep ? "K" : thena);
 				/* ----------------------------------- */
 			} else if (strcmp (q, "lrecl") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%7s" : "%s","lrecl");
+					fprintf(fd,qnext ? "%7s" : "%s","lrecl");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
-					FPRINTF(fd,qnext ? "%7d" : "%d",stcp->lrecl);
+					fprintf(fd,qnext ? "%7d" : "%d",stcp->lrecl);
 				} else {
-					FPRINTF(fd,qnext ? "%7s" : "%s",thena);
+					fprintf(fd,qnext ? "%7s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "nread") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,"%7s","nread");
+					fprintf(fd,"%7s","nread");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
-					FPRINTF(fd,"%7d",stcp->nread);
+					fprintf(fd,"%7d",stcp->nread);
 				} else {
-					FPRINTF(fd,"%7s",thena);
+					fprintf(fd,"%7s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "poolname") == 0) {
-				int themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("poolname"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("poolname"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"poolname");
+						fprintf(fd,"%-*s",themax,"poolname");
 					} else {
-						FPRINTF(fd,"%-s","poolname");
+						fprintf(fd,"%-s","poolname");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->poolname[0] != '\0' ? stcp->poolname : thena);
+					fprintf(fd,"%-*s",themax,stcp->poolname[0] != '\0' ? stcp->poolname : thena);
 				} else {
-					FPRINTF(fd,"%-s",stcp->poolname[0] != '\0' ? stcp->poolname : thena);
+					fprintf(fd,"%-s",stcp->poolname[0] != '\0' ? stcp->poolname : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "recfm") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-5s" : "%s","recfm");
+					fprintf(fd,qnext ? "%-5s" : "%s","recfm");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
-					FPRINTF(fd,qnext ? "%-5s" : "%s",stcp->recfm[0] != '\0' ? stcp->recfm : thena);
+					fprintf(fd,qnext ? "%-5s" : "%s",stcp->recfm[0] != '\0' ? stcp->recfm : thena);
 				} else {
-					FPRINTF(fd,qnext ? "%-5s" : "%s",thena);
+					fprintf(fd,qnext ? "%-5s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "size") == 0) {
-				/* We always force number of characters - more pretty - not consuming (small length) */
 				char tmpbuf[21];
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					if (withunit_flag) {
-						FPRINTF(fd,"%8s","size");
+						fprintf(fd,"%8s","size");
 					} else {
-						FPRINTF(fd,"%20s","size");
+						fprintf(fd,"%20s","size");
 					}
 					goto next_token;
 				}
 				if (withunit_flag) {
-					FPRINTF(fd,"%8s",u64tostru(stcp->size,tmpbuf,8));
+					fprintf(fd,"%8s",u64tostru(stcp->size,tmpbuf,8));
 				} else {
-					FPRINTF(fd,"%20s",u64tostr(stcp->size,tmpbuf,20));
+					fprintf(fd,"%20s",u64tostr(stcp->size,tmpbuf,20));
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "ipath") == 0) {
-				int themax = THEMAX((CA_MAXHOSTNAMELEN+MAXPATH),THEMAX(strlen("ipath"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX((CA_MAXHOSTNAMELEN+MAXPATH),THEMAX(strlen("ipath"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"ipath");
+						fprintf(fd,"%-*s",themax,"ipath");
 					} else {
-						FPRINTF(fd,"%s","ipath");
+						fprintf(fd,"%s","ipath");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->ipath[0] != '\0' ? stcp->ipath : thena);
+					fprintf(fd,"%-*s",themax,stcp->ipath[0] != '\0' ? stcp->ipath : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->ipath[0] != '\0' ? stcp->ipath : thena);
+					fprintf(fd,"%s",stcp->ipath[0] != '\0' ? stcp->ipath : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "t_or_d") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-6s" : "%s","t_or_d");
+					fprintf(fd,qnext ? "%-6s" : "%s","t_or_d");
 					goto next_token;
 				}
 				if (stcp->t_or_d) {
-					FPRINTF(fd,qnext ? "%-6c" : "%c",stcp->t_or_d);
+					fprintf(fd,qnext ? "%-6c" : "%c",stcp->t_or_d);
 				} else {
-					FPRINTF(fd,qnext ? "%-6s" : "%s",thena);
+					fprintf(fd,qnext ? "%-6s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "group") == 0) {
-				int themax = THEMAX(CA_MAXGRPNAMELEN,THEMAX(strlen("group"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXGRPNAMELEN,THEMAX(strlen("group"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"group");
+						fprintf(fd,"%-*s",themax,"group");
 					} else {
-						FPRINTF(fd,"%s","group");
+						fprintf(fd,"%s","group");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->group[0] != '\0' ? stcp->group : thena);
+					fprintf(fd,"%-*s",themax,stcp->group[0] != '\0' ? stcp->group : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->group[0] != '\0' ? stcp->group : thena);
+					fprintf(fd,"%s",stcp->group[0] != '\0' ? stcp->group : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "user") == 0) {
-				int themax = THEMAX(CA_MAXUSRNAMELEN,THEMAX(strlen("user"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXUSRNAMELEN,THEMAX(strlen("user"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"user");
+						fprintf(fd,"%-*s",themax,"user");
 					} else {
-						FPRINTF(fd,"%s","user");
+						fprintf(fd,"%s","user");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->user[0] != '\0' ? stcp->user : thena);
+					fprintf(fd,"%-*s",themax,stcp->user[0] != '\0' ? stcp->user : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->user[0] != '\0' ? stcp->user : thena);
+					fprintf(fd,"%s",stcp->user[0] != '\0' ? stcp->user : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "uid") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-10s" : "%s","uid");
+					fprintf(fd,qnext ? "%-10s" : "%s","uid");
 					goto next_token;
 				}
 				if (stcp->uid) {
-					FPRINTF(fd,qnext ? "%-10d" : "%d",stcp->uid);
+					fprintf(fd,qnext ? "%-10d" : "%d",stcp->uid);
 				} else {
-					FPRINTF(fd,qnext ? "%-10s" : "%s",thena);
+					fprintf(fd,qnext ? "%-10s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "gid") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-10s" : "%s","gid");
+					fprintf(fd,qnext ? "%-10s" : "%s","gid");
 					goto next_token;
 				}
 				if (stcp->gid) {
-					FPRINTF(fd,qnext ? "%-10d" : "%d",stcp->gid);
+					fprintf(fd,qnext ? "%-10d" : "%d",stcp->gid);
 				} else {
-					FPRINTF(fd,qnext ? "%-10s" : "%s",thena);
+					fprintf(fd,qnext ? "%-10s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "mask") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%11s" : "%s","mask");
+					fprintf(fd,qnext ? "%11s" : "%s","mask");
 					goto next_token;
 				}
 				if (stcp->mask) {
 					char dummy[12];
 					sprintf(dummy, "0%o", stcp->mask);
-					FPRINTF(fd,qnext ? "%11s" : "%s",dummy);
+					fprintf(fd,qnext ? "%11s" : "%s",dummy);
 				} else {
-					FPRINTF(fd,qnext ? "%11s" : "%s",thena);
+					fprintf(fd,qnext ? "%11s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "reqid") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%10s" : "%s","reqid");
+					fprintf(fd,qnext ? "%10s" : "%s","reqid");
 					goto next_token;
 				}
 				if (stcp->reqid) {
-					FPRINTF(fd,qnext ? "%10d" : "%d",stcp->reqid);
+					fprintf(fd,qnext ? "%10d" : "%d",stcp->reqid);
 				} else {
-					FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+					fprintf(fd,qnext ? "%10s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "status") == 0) {
+				if (check_format_string) goto next_token;
 				if (withstatusnumber_flag) {
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						FPRINTF(fd,qnext ? "%10s" : "%s","status");
+						fprintf(fd,qnext ? "%10s" : "%s","status");
 						goto next_token;
 					}
 					if (stcp->reqid) {
-						FPRINTF(fd,qnext ? "%10d" : "%d",stcp->status);
+						fprintf(fd,qnext ? "%10d" : "%d",stcp->status);
 					} else {
-						FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+						fprintf(fd,qnext ? "%10s" : "%s",thena);
 					}
 				} else {
 					/* Short version of status user-friendly */
@@ -698,48 +717,48 @@ void record_callback(stcp,stpp)
 						/* Do first the header */
 						/* Unless last token we have to reserve space */
 						if (qnext) {
-							FPRINTF(fd,"%-*s",themax,"status");
+							fprintf(fd,"%-*s",themax,"status");
 						} else {
-							FPRINTF(fd,"%s","status");
+							fprintf(fd,"%s","status");
 						}
 						goto next_token;
 					}
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,p_stat);
+						fprintf(fd,"%-*s",themax,p_stat);
 					} else {
-						FPRINTF(fd,"%s",p_stat);
+						fprintf(fd,"%s",p_stat);
 					}
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "actual_size") == 0) {
-				/* We always force number of characters - more pretty - not consuming (small length) */
 				char tmpbuf[21];
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					if (withunit_flag) {
-						FPRINTF(fd,"%11s","actual_size");
+						fprintf(fd,"%11s","actual_size");
 					} else {
-						FPRINTF(fd,"%20s","actual_size");
+						fprintf(fd,"%20s","actual_size");
 					}
 					goto next_token;
 				}
 				if (withunit_flag) {
-					FPRINTF(fd,"%11s",u64tostru(stcp->size,tmpbuf,8));
+					fprintf(fd,"%11s",u64tostru(stcp->actual_size,tmpbuf,8));
 				} else {
-					FPRINTF(fd,"%20s",u64tostr(stcp->size,tmpbuf,20));
+					fprintf(fd,"%20s",u64tostr(stcp->actual_size,tmpbuf,20));
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "c_time") == 0) {
+				if (check_format_string) goto next_token;
 				if (withtimenumber_flag) {
-					/* We always force number of characters - more pretty - not consuming (small length) */
 					char tmpbuf[21];
           
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						FPRINTF(fd,"%20s","c_time");
+						fprintf(fd,"%20s","c_time");
 						goto next_token;
 					}
-					FPRINTF(fd,"%20s",u64tostr((u_signed64) stcp->c_time,tmpbuf,20));
+					fprintf(fd,"%20s",u64tostr((u_signed64) stcp->c_time,tmpbuf,20));
 				} else {
 					/* In practice it will not exceed 15 characters */
 					char timestr[64];
@@ -747,23 +766,23 @@ void record_callback(stcp,stpp)
 					stage_util_time((time_t) stcp->c_time, timestr);
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						FPRINTF(fd,"%-15s","c_time");
+						fprintf(fd,"%-15s","c_time");
 						goto next_token;
 					}
-					FPRINTF(fd,"%-15s",timestr);
+					fprintf(fd,"%-15s",timestr);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "a_time") == 0) {
+				if (check_format_string) goto next_token;
 				if (withtimenumber_flag) {
-					/* We always force number of characters - more pretty - not consuming (small length) */
 					char tmpbuf[21];
           
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						FPRINTF(fd,"%20s","a_time");
+						fprintf(fd,"%20s","a_time");
 						goto next_token;
 					}
-					FPRINTF(fd,"%20s",u64tostr((u_signed64) stcp->a_time,tmpbuf,20));
+					fprintf(fd,"%20s",u64tostr((u_signed64) stcp->a_time,tmpbuf,20));
 				} else {
 					/* In practice it will not exceed 15 characters */
 					char timestr[64];
@@ -771,317 +790,345 @@ void record_callback(stcp,stpp)
 					stage_util_time((time_t) stcp->a_time, timestr);
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						FPRINTF(fd,"%-15s","a_time");
+						fprintf(fd,"%-15s","a_time");
 						goto next_token;
 					}
-					FPRINTF(fd,"%-15s",timestr);
+					fprintf(fd,"%-15s",timestr);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "nbaccesses") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%10s" : "%s","nbaccesses");
+					fprintf(fd,qnext ? "%10s" : "%s","nbaccesses");
 					goto next_token;
 				}
-				FPRINTF(fd,qnext ? "%10d" : "%d",stcp->nbaccesses);
+				fprintf(fd,qnext ? "%10d" : "%d",stcp->nbaccesses);
 				/* ----------------------------------- */
 			} else if (strcmp (q, "den") == 0) {
-				int themax = THEMAX(CA_MAXDENLEN,THEMAX(strlen("den"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXDENLEN,THEMAX(strlen("den"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"den");
+						fprintf(fd,"%-*s",themax,"den");
 					} else {
-						FPRINTF(fd,"%s","den");
+						fprintf(fd,"%s","den");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.den[0] != '\0' ? stcp->u1.t.den : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "dgn") == 0) {
-				int themax = THEMAX(CA_MAXDGNLEN,THEMAX(strlen("dgn"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXDGNLEN,THEMAX(strlen("dgn"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"dgn");
+						fprintf(fd,"%-*s",themax,"dgn");
 					} else {
-						FPRINTF(fd,"%s","dgn");
+						fprintf(fd,"%s","dgn");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.dgn[0] != '\0' ? stcp->u1.t.dgn : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "fid") == 0) {
-				int themax = THEMAX(CA_MAXFIDLEN,THEMAX(strlen("fid"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXFIDLEN,THEMAX(strlen("fid"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"fid");
+						fprintf(fd,"%-*s",themax,"fid");
 					} else {
-						FPRINTF(fd,"%s","fid");
+						fprintf(fd,"%s","fid");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fid[0] != '\0' ? stcp->u1.t.fid : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "filstat") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-7s" : "%s","filstat");
+					fprintf(fd,qnext ? "%-7s" : "%s","filstat");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't' && stcp->u1.t.filstat != '\0') {
-					FPRINTF(fd,qnext ? "%-7c" : "%c",stcp->u1.t.filstat);
+					fprintf(fd,qnext ? "%-7c" : "%c",stcp->u1.t.filstat);
 				} else {
-					FPRINTF(fd,qnext ? "%-7s" : "%s",thena);
+					fprintf(fd,qnext ? "%-7s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "fseq") == 0) {
-				int themax = THEMAX(CA_MAXFSEQLEN,THEMAX(strlen("fseq"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXFSEQLEN,THEMAX(strlen("fseq"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%*s",themax,"fseq");
+						fprintf(fd,"%*s",themax,"fseq");
 					} else {
-						FPRINTF(fd,"%s","fseq");
+						fprintf(fd,"%s","fseq");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
+					fprintf(fd,"%*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "lbl") == 0) {
-				int themax = THEMAX(CA_MAXLBLTYPLEN,THEMAX(strlen("lbl"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXLBLTYPLEN,THEMAX(strlen("lbl"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"lbl");
+						fprintf(fd,"%-*s",themax,"lbl");
 					} else {
-						FPRINTF(fd,"%s","lbl");
+						fprintf(fd,"%s","lbl");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.lbl[0] != '\0' ? stcp->u1.t.lbl : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "retentd") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%10s" : "%s","retentd");
+					fprintf(fd,qnext ? "%10s" : "%s","retentd");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't' && stcp->u1.t.retentd != 0) {
-					FPRINTF(fd,qnext ? "%10d" : "%d",stcp->u1.t.retentd);
+					fprintf(fd,qnext ? "%10d" : "%d",stcp->u1.t.retentd);
 				} else {
-					FPRINTF(fd,qnext ? "%10s" : "%s",thena);
+					fprintf(fd,qnext ? "%10s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "side") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%2s" : "%s","side");
+					fprintf(fd,qnext ? "%2s" : "%s","side");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
-					FPRINTF(fd,qnext ? "%2d" : "%d",stcp->u1.t.side);
+					fprintf(fd,qnext ? "%2d" : "%d",stcp->u1.t.side);
 				} else {
-					FPRINTF(fd,qnext ? "%2s" : "%s",thena);
+					fprintf(fd,qnext ? "%2s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "tapesrvr") == 0) {
-				int themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("tapesrvr"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("tapesrvr"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"tapesrvr");
+						fprintf(fd,"%-*s",themax,"tapesrvr");
 					} else {
-						FPRINTF(fd,"%s","tapesrvr");
+						fprintf(fd,"%s","tapesrvr");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.tapesrvr[0] != '\0' ? stcp->u1.t.tapesrvr : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "E_Tflags") == 0) {
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,qnext ? "%-16s" : "%s","E_Tflags");
+					fprintf(fd,qnext ? "%-16s" : "%s","E_Tflags");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 't') {
 					char E_Tflagsstring[1024];
-					FPRINTF(fd,qnext ? "%-16s" : "%s",stage_util_E_Tflags2string((char *) E_Tflagsstring, (int) 1024, (int) stcp->u1.t.E_Tflags) == 0 ? E_Tflagsstring : thena);
+					fprintf(fd,qnext ? "%-16s" : "%s",stage_util_E_Tflags2string((char *) E_Tflagsstring, (int) 1024, (int) stcp->u1.t.E_Tflags) == 0 ? E_Tflagsstring : thena);
 				} else {
-					FPRINTF(fd,qnext ? "%-16s" : "%s",thena);
+					fprintf(fd,qnext ? "%-16s" : "%s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "vid") == 0) {
+				int themax;
+				if (check_format_string) goto next_token;
 				/* In practice there is never more than one VID, so we say CA_MAXVIDLEN instead of MAXVSN*CA_MAXVIDLEN */
-				int themax = THEMAX(CA_MAXVIDLEN,THEMAX(strlen("vid"),strlen(thena)));
+				themax = THEMAX(CA_MAXVIDLEN,THEMAX(strlen("vid"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"vid");
+						fprintf(fd,"%-*s",themax,"vid");
 					} else {
-						FPRINTF(fd,"%s","vid");
+						fprintf(fd,"%s","vid");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vid[0][0] != '\0' ? stcp->u1.t.vid[0] : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "vsn") == 0) {
+				int themax;
+				if (check_format_string) goto next_token;
 				/* In practice there is never more than one VSN, so we say CA_MAXVSNLEN instead of MAXVSN*CA_MAXVSNLEN */
-				int themax = THEMAX(CA_MAXVSNLEN,THEMAX(strlen("vsn"),strlen(thena)));
+				themax = THEMAX(CA_MAXVSNLEN,THEMAX(strlen("vsn"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"vsn");
+						fprintf(fd,"%-*s",themax,"vsn");
 					} else {
-						FPRINTF(fd,"%s","vsn");
+						fprintf(fd,"%s","vsn");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.vsn[0][0] != '\0' ? stcp->u1.t.vsn[0] : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "xfile") == 0) {
-				int themax = THEMAX(STAGE_MAX_HSMLENGTH,THEMAX(strlen("xfile"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(STAGE_MAX_HSMLENGTH,THEMAX(strlen("xfile"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"xfile");
+						fprintf(fd,"%-*s",themax,"xfile");
 					} else {
-						FPRINTF(fd,"%s","xfile");
+						fprintf(fd,"%s","xfile");
 					}
 					goto next_token;
 				}
 				/* Formally stcp->u1.d.xfile, stcp->u1.h.xfile and stcp->u1.m.xfile points to exactly the same address */
 				/* In fact the xfile member have no meaning only when we talk about tape files */
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
+					fprintf(fd,"%s",stcp->t_or_d != 't' && stcp->u1.d.xfile[0] != '\0' ? stcp->u1.d.xfile : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "server") == 0) {
-				int themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("server"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXHOSTNAMELEN,THEMAX(strlen("server"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"server");
+						fprintf(fd,"%-*s",themax,"server");
 					} else {
-						FPRINTF(fd,"%s","server");
+						fprintf(fd,"%s","server");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.server[0] != '\0' ? stcp->u1.h.server : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "fileid") == 0) {
-				/* We always force number of characters - more pretty - not consuming (small length) */
 				char tmpbuf[21];
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,"%20s","fileid");
+					fprintf(fd,"%20s","fileid");
 					goto next_token;
 				}
-				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.fileid != '\0' ? u64tostr(stcp->u1.h.fileid,tmpbuf,20) : thena);
+				fprintf(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.fileid != '\0' ? u64tostr(stcp->u1.h.fileid,tmpbuf,20) : thena);
 				/* ----------------------------------- */
 			} else if (strcmp (q, "fileclass") == 0) {
 				/* We always force number of characters - more pretty - not consuming (small length) */
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,"%9s","fileclass");
+					fprintf(fd,"%9s","fileclass");
 					goto next_token;
 				}
 				if (stcp->t_or_d == 'h' && stcp->u1.h.fileclass != 0) {
-					FPRINTF(fd,"%9d",stcp->u1.h.fileclass);
+					fprintf(fd,"%9d",stcp->u1.h.fileclass);
 				} else {
-					FPRINTF(fd,"%9s",thena);
+					fprintf(fd,"%9s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "tppool") == 0) {
-				int themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("tppool"),strlen(thena)));
+				int themax;
+				if (check_format_string) goto next_token;
+				themax = THEMAX(CA_MAXPOOLNAMELEN,THEMAX(strlen("tppool"),strlen(thena)));
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
 					if (qnext) {
-						FPRINTF(fd,"%-*s",themax,"tppool");
+						fprintf(fd,"%-*s",themax,"tppool");
 					} else {
-						FPRINTF(fd,"%s","tppool");
+						fprintf(fd,"%s","tppool");
 					}
 					goto next_token;
 				}
 				if (qnext) {
-					FPRINTF(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
+					fprintf(fd,"%-*s",themax,stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
 				} else {
-					FPRINTF(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
+					fprintf(fd,"%s",stcp->t_or_d == 'h' && stcp->u1.h.tppool[0] != '\0' ? stcp->u1.h.tppool : thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "retenp_on_disk") == 0) {
-				/* We always force number of characters - more pretty - not consuming (small length) */
 				char tmpbuf[21];
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,"%20s","retenp_on_disk");
+					fprintf(fd,"%20s","retenp_on_disk");
 					goto next_token;
 				}
-				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.retenp_on_disk >= 0 ? u64tostr(stcp->u1.h.retenp_on_disk,tmpbuf,20) : thena);
+				fprintf(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.retenp_on_disk >= 0 ? u64tostr(stcp->u1.h.retenp_on_disk,tmpbuf,20) : thena);
 				/* ----------------------------------- */
 			} else if (strcmp (q, "mintime_beforemigr") == 0) {
-				/* We always force number of characters - more pretty - not consuming (small length) */
 				char tmpbuf[21];
+				if (check_format_string) goto next_token;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					FPRINTF(fd,"%20s","mintime_beforemigr");
+					fprintf(fd,"%20s","mintime_beforemigr");
 					goto next_token;
 				}
-				FPRINTF(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.mintime_beforemigr >= 0 ? u64tostr(stcp->u1.h.mintime_beforemigr,tmpbuf,20) : thena);
+				fprintf(fd,"%20s",stcp->t_or_d == 'h' && stcp->u1.h.mintime_beforemigr >= 0 ? u64tostr(stcp->u1.h.mintime_beforemigr,tmpbuf,20) : thena);
 				/* ----------------------------------- */
 			} else {
 				stage_errmsg(NULL, STG02, "stageqry", "--format", q);
-				FPRINTF(fd,"\n");
+				fprintf(fd,"\n");
 				free(p);
 				if (output_fd_toclean) fclose(output_fd);
 				exit(USERR);
@@ -1090,7 +1137,7 @@ void record_callback(stcp,stpp)
 			dospace = 1;
 			q = qnext;
 		}
-		FPRINTF(fd,"\n");
+		if (! check_format_string) fprintf(fd,"\n");
 		free(p);
 		if (! check_format_string) {
 			if ((! noheader_flag) && (! doneheader)) {
