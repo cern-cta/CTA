@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_reserve.man,v 1.2 1999/09/02 15:03:02 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RESERVE l "%G%"
+.TH CTAPE_RESERVE l "$Date: 1999/09/02 15:03:02 $"
 .SH NAME
 Ctape_reserve \- reserve tape resources
 .SH SYNOPSIS
@@ -52,18 +52,18 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
+.TP 1.2i
+.B ENOMEM
+Could not allocate memory.
 .TP
-.B SYERR
-System error.
-.TP
-.B COMERR
-Communication error.
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.

@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_status.man,v 1.2 1999/09/02 15:14:31 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_STATUS l "%G%"
+.TH CTAPE_STATUS l "$Date: 1999/09/02 15:14:31 $"
 .SH NAME
 Ctape_status \- get the status of all tape drives
 .SH SYNOPSIS
@@ -47,18 +47,15 @@ or -1 if the operation failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
-.TP
-.B SYERR
-System error.
-.TP
-.B COMERR
-Communication error.
+.TP 1.2i
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B SEUBUF2SMALL
 User buffer too small.

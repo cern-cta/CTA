@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_position.man,v 1.2 1999/09/02 14:59:02 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "%G%"
+.TH CTAPE_POSITION l "$Date: 1999/09/02 14:59:02 $"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -187,18 +187,24 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
 .TP
-.B SYERR
-System error.
+.B ENXIO
+Drive not operational. The drive is automatically configured down.
 .TP
-.B COMERR
-Communication error.
+.B EACCES
+File not expired.
+.TP
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
@@ -223,11 +229,6 @@ Unrecoverable media error.
 .TP
 .B ETNOSNS
 No sense data available.
-.br
-5	I/O error.
-.br
-6	Unit not operational.
-.br
-13	Operator cancel, access denied by TMS, wrong label type or file not expired.
-.br
-212	Interrupted by user.
+.TP
+.B ETNRDY
+Drive not ready.

@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_rstatus.man,v 1.2 1999/09/02 15:10:29 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1991-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RSTATUS l "%G%"
+.TH CTAPE_RSTATUS l "$Date: 1999/09/02 15:10:29 $"
 .SH NAME
 Ctape_rstatus \- get resource reservation status
 .SH SYNOPSIS
@@ -51,18 +51,15 @@ or -1 if the operation failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
-.TP
-.B SYERR
-System error.
-.TP
-.B COMERR
-Communication error.
+.TP 1.2i
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B SEUBUF2SMALL
 User buffer too small.
