@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.10 2002/03/04 17:41:02 jdurand Exp $
+ * $Id: stager_castor.c,v 1.11 2002/03/10 05:55:38 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.10 $ $Date: 2002/03/04 17:41:02 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.11 $ $Date: 2002/03/10 05:55:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1478,6 +1478,46 @@ int stagein_castor_hsm_file() {
 		if (new_tape != 0) {
 			break;
 		}
+	}
+
+	if (stcs->t_or_d == 'd') {
+		int correct_exit_code = 0;
+		/* Processing stop here - we have done internal copy using RFIO - nothing to do with RTCOPY */
+		if (hsm_status != NULL) {
+			int ihsm_status;
+			int global_found_error = 0;
+			int have_ignore = 0;
+			for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) {
+				if (hsm_ignore[ihsm_status] != 0) {
+					have_ignore = 1;
+					break;
+				}
+				if (hsm_status[ihsm_status] != 1) {
+					global_found_error = 1;
+					break;
+				}
+			}
+			if ((global_found_error == 0) && (! have_ignore)) {
+				correct_exit_code = 0;
+			} else {
+				int global_userr = 0;
+				int global_syerr = 0;
+				for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) {
+					if (! hsm_ignore[ihsm_status]) continue;
+					switch (hsm_ignore[ihsm_status]) {
+					case SECOMERR:
+						global_syerr++;
+						break;
+					default:
+						global_userr++;
+						break;
+					}
+				}
+				correct_exit_code = (global_syerr ? SYERR : (global_userr ? USERR : SYERR));
+			}
+		}
+		FREEHSM;
+		return(correct_exit_code);
 	}
 
 	if ((new_tape == 0) || (last_vid[0] == '\0') || (last_side < 0)) {
