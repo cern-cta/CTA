@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.28 2002/06/12 08:44:47 jdurand Exp $
+ * $Id: stagestat.c,v 1.29 2002/06/16 04:58:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.28 $ $Date: 2002/06/12 08:44:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.29 $ $Date: 2002/06/16 04:58:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -363,21 +363,25 @@ int main(argc, argv)
 		if (debug) {
 			print_acct(&accthdr, &rp);
 		} else {
-			switch (rp.u2.s.t_or_d) {
-			case 't':
-				if (Tflag && strstr(rp.u2.s.u1.t.vid,Tflag)) print_acct(&accthdr, &rp);
+			if (rflag && rp.reqid == rflag) {
+				print_acct(&accthdr, &rp);
+			} else {
+				switch (rp.u2.s.t_or_d) {
+				case 't':
+					if (Tflag && strstr(rp.u2.s.u1.t.vid,Tflag)) print_acct(&accthdr, &rp);
+					break;
+				case 'd':
+					if (Dflag && strstr(rp.u2.s.u1.d.xfile,Dflag)) print_acct(&accthdr, &rp);
 				break;
-			case 'd':
-				if (Dflag && strstr(rp.u2.s.u1.d.xfile,Dflag)) print_acct(&accthdr, &rp);
-				break;
-			case 'm':
-				if (Mflag && strstr(rp.u2.s.u1.m.xfile,Mflag)) print_acct(&accthdr, &rp);
-				break;
-			case 'h':
-				if (Hflag && strstr(rp.u2.s.u1.h.xfile,Hflag)) print_acct(&accthdr, &rp);
-				break;
-			default:
-				break;
+				case 'm':
+					if (Mflag && strstr(rp.u2.s.u1.m.xfile,Mflag)) print_acct(&accthdr, &rp);
+					break;
+				case 'h':
+					if (Hflag && strstr(rp.u2.s.u1.h.xfile,Hflag)) print_acct(&accthdr, &rp);
+					break;
+				default:
+					break;
+				}
 			}
 		}
 		if (!starttime && nrec == 1) starttime = accthdr.timestamp;
@@ -2015,7 +2019,7 @@ void print_acct(accthdr,rp)
 		break;
 	case 'h':
 		fprintf(stderr,"... Xfile      : %s\n", rp->u2.s.u1.h.xfile);
-		u64tostru((u_signed64) rp->u2.s.u1.h.fileid, tmpbuf, 0);
+		u64tostr((u_signed64) rp->u2.s.u1.h.fileid, tmpbuf, 0);
 		fprintf(stderr,"... Fileid     : %s\n", tmpbuf);
 		break;
 	}
