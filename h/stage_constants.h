@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.31 2002/09/26 08:55:42 jdurand Exp $
+ * $Id: stage_constants.h,v 1.32 2002/09/30 16:53:43 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -479,6 +479,7 @@
 #define STAGE_REQID             CONSTLL(0x0010000000000)  /* --reqid      [stage_clr,stage_qry]  */
 #define STAGE_HSM_ENOENT_OK     CONSTLL(0x0020000000000)  /* --enoent_ok  [stage_wrt]            */
 #define STAGE_NOLINKCHECK       CONSTLL(0x0040000000000)  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
+#define STAGE_MIGLOG            CONSTLL(0x0080000000000)  /* internal flag for the migrator - will log in mig_log */
 #define STAGE_NORETRY           CONSTLL(0x0100000000000)  /* --noretry  [stage_iowc]             */
 #define STAGE_VOLATILE_TPPOOL   CONSTLL(0x0200000000000)  /* --volatile_tppool  [stage_iowc]     */
 #define STAGE_NODISK            CONSTLL(0x0400000000000)  /* --nodisk  [stage_clr]               */
