@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:52:11 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.4 $ $Date: 2005/01/07 09:18:01 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -264,8 +264,11 @@ procreq(magic, req_type, req_data, data_len, clienthost, s)
   switch (req_type) {
 
   case EXP_EXECUTE:
-  case EXP_RQ_STAGER:
+  case EXP_RQ_FILESYSTEM:
   case EXP_RQ_MIGRATOR:
+  case EXP_RQ_RECALLER:
+  case EXP_RQ_GC:
+  case EXP_RQ_REPLICATION:
     c = exp_srv_execute (req_type, magic, req_data, clienthost, s);
     break;
 

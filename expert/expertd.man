@@ -1,9 +1,9 @@
 .lf 1 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.2 $ $Date: 2004/07/06 08:39:30 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.3 $ $Date: 2005/01/07 09:18:01 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 1 "$Date: 2004/07/06 08:39:30 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 1 "$Date: 2005/01/07 09:18:01 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -92,9 +92,15 @@ where
 currently must be one of the following:
 .RS
 .TP
-.B EXP_RQ_STAGER
+.B EXP_RQ_FILESYSTEM
 .TP
 .B EXP_RQ_MIGRATOR
+.TP
+.B EXP_RQ_RECALLER
+.TP
+.B EXP_RQ_GC
+.TP
+.B EXP_RQ_REPLICATION
 .RE
 .TP
 .I sp
@@ -110,9 +116,15 @@ is the last component on the line and is terminated by new line character.
 For example:
 .RS
 .HP
-EXP_RQ_STAGER   /etc/expert/  /usr/bin/clips -f stager.clp
+EXP_RQ_FILESYSTEM   /etc/expert/  /usr/bin/clips -f bestfs.clp
 .HP
 EXP_RQ_MIGRATOR /etc/expert/  /usr/bin/clips -f migrator.clp
+.HP
+EXP_RQ_RECALLER /etc/expert/  /usr/bin/clips -f recaller.clp
+.HP
+EXP_RQ_GC /etc/expert/  /usr/bin/clips -f gc.clp
+.HP
+EXP_RQ_REPLICATION /etc/expert/  /usr/bin/clips -f replication.clp
 .RE
 .LP
 The name of the configuration file can be defined also through the environment

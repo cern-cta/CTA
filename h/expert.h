@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: expert.h,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:53:27 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: expert.h,v $ $Revision: 1.4 $ $Date: 2005/01/07 09:18:01 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _EXPERT_H
@@ -52,10 +52,13 @@ struct exp_api_thread_info
 
 			/* expert facility request types */
 
-#define EXP_SHUTDOWN	 6
-#define EXP_EXECUTE      7
-#define EXP_RQ_STAGER  8
-#define EXP_RQ_MIGRATOR     9
+#define EXP_SHUTDOWN	     6
+#define EXP_EXECUTE          7
+#define EXP_RQ_FILESYSTEM    8
+#define EXP_RQ_MIGRATOR      9
+#define EXP_RQ_RECALLER     10
+#define EXP_RQ_GC           11
+#define EXP_RQ_REPLICATION  12
 
 			/* expert facility messages */
 

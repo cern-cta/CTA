@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:44:16 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.3 $ $Date: 2005/01/07 09:18:00 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -180,8 +180,11 @@ char *args;
   FILE *fp;
   char buf[BUFSIZ];
   struct _exp_req exp_requests[] = {
-    { EXP_RQ_STAGER, "EXP_RQ_STAGER" },
+    { EXP_RQ_FILESYSTEM, "EXP_RQ_FILESYSTEM" },
     { EXP_RQ_MIGRATOR,"EXP_RQ_MIGRATOR" },
+    { EXP_RQ_RECALLER,"EXP_RQ_RECALLER" },
+    { EXP_RQ_GC,"EXP_RQ_GC" },
+    { EXP_RQ_REPLICATION,"EXP_RQ_REPLICATION" },
     { EXP_EXECUTE, "EXP_EXECUTE" },
     { 0,                 "" } /* End of list */
   };
