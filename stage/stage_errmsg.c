@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.2 $ $Date: 2000/03/14 09:55:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.3 $ $Date: 2000/03/14 10:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -99,9 +99,9 @@ int DLL_DECL stage_getoutbuf(buffer, buflen)
   return(0);
 }
 
-/*	stage_setlogbuf - set receiving callback routine for error and output messages */
+/*	stage_setlog - set receiving callback routine for error and output messages */
 
-int DLL_DECL stage_setlogbuf(callbackfunction)
+int DLL_DECL stage_setlog(callbackfunction)
      void (*callbackfunction) _PROTO((int, char *));
 {
   void (**thiscallback) _PROTO((int, char *));
@@ -114,9 +114,9 @@ int DLL_DECL stage_setlogbuf(callbackfunction)
   return(0);
 }
 
-/*	stage_getlogbuf - get receiving callback routine for error and output messages */
+/*	stage_getlog - get receiving callback routine for error and output messages */
 
-int DLL_DECL stage_getlogbuf(callbackfunction)
+int DLL_DECL stage_getlog(callbackfunction)
      void (**callbackfunction) _PROTO((int, char *));
 {
   void (**thiscallback) _PROTO((int, char *));
