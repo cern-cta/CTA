@@ -1,7 +1,11 @@
 /*
- * $Id: socket_timeout.c,v 1.2 1999/07/20 08:49:22 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.3 1999/07/21 13:59:23 jdurand Exp $
  *
  * $Log: socket_timeout.c,v $
+ * Revision 1.3  1999/07/21 13:59:23  jdurand
+ * For old AIX systems, fd_set is now known by including <sys/time.h>. So I put
+ * it as an additional flag in Imakefile, used in Cpool.c and socket_timeout.c
+ *
  * Revision 1.2  1999/07/20 08:49:22  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Added missing Id and Log CVS's directives
@@ -15,6 +19,11 @@
 #include <time.h>
 #else
 #include <sys/time.h>
+#endif
+#ifdef _AIX
+/* Otherwise cc will not know about fd_set on */
+/* old aix versions.                          */
+#include <sys/select.h>
 #endif
 #include <sys/types.h>
 #include <unistd.h>
