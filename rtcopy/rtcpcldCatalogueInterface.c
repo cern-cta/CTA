@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/13 15:05:50 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/13 16:51:15 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/13 15:05:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/13 16:51:15 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1805,6 +1805,11 @@ int rtcpcld_updateVIDStatus(
         Cstager_Tape_setErrMsgTxt(tapeItem,tape->tapereq.err.errmsgtxt);
       if ( tape->tapereq.err.severity != RTCP_OK )
         Cstager_Tape_setSeverity(tapeItem,tape->tapereq.err.severity);
+    }
+    
+    if ( toStatus == TAPE_FAILED || toStatus == TAPE_FINISHED ) {
+      char *vwAddress = "";
+      Cstager_Tape_setVwAddress(tapeItem,vwAddress);
     }
     
     rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
