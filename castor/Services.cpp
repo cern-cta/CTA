@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/30 14:28:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/07 15:59:32 $ $Author: sponcec3 $
  *
  *
  *
@@ -37,6 +37,11 @@
 #include "ObjectCatalog.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+
+//-----------------------------------------------------------------------------
+// Global Services object for global services, like MsgSvcs
+//-----------------------------------------------------------------------------
+castor::Services* g_services = 0;
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -82,6 +87,17 @@ castor::IService* castor::Services::service(const std::string name,
     m_services[name]->addRef();
   }
   return m_services[name];
+}
+
+//-----------------------------------------------------------------------------
+// globalService
+//-----------------------------------------------------------------------------
+castor::IService* castor::Services::globalService
+(const std::string name, const unsigned int id) throw() {
+  if (0 == g_services) {
+    g_services = new Services();
+  }
+  return g_services->service(name, id);
 }
 
 //-----------------------------------------------------------------------------
