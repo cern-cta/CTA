@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.202 2002/05/31 08:03:16 jdurand Exp $
+ * $Id: poolmgr.c,v 1.203 2002/05/31 11:45:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.202 $ $Date: 2002/05/31 08:03:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.203 $ $Date: 2002/05/31 11:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.202 $ $Date: 20
 #include "stgdb_Cdb_ifce.h"
 #endif
 #include "Cns_api.h"
+#include "Cupv_api.h"
 #include "Castor_limits.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -91,6 +92,7 @@ extern int sendrep _PROTO(());
 #endif
 extern struct stgcat_entry *newreq _PROTO((int));
 extern int nextreqid _PROTO(());
+EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -240,7 +242,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 #endif /* _REENTRANT || _THREAD_SAFE */
 	int nbmigrator_real;
 	extern char *stgconfigfile;
-	
+	int nblocal;
+
 	strcpy (func, "getpoolconf");
 	if ((s = fopen (stgconfigfile, "r")) == NULL) {
 		stglogit (func, STG23, stgconfigfile);
@@ -254,6 +257,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	nbmigrator = 0;
 	nbpool = 0;
 	nbhost = 0;
+	nblocal = 0;
 	*defpoolname = '\0';
 	*defpoolname_in = '\0';
 	*defpoolname_out = '\0';
@@ -838,10 +842,43 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 							}
 						}
 					}
+					/* If (elemp->server == localhost) we do not need the permanent rfio connections ! */
+					if (strcmp(elemp->server,localhost) == 0) {
+						nblocal++;
+					}
 				}
 			}
 		}
-		stglogit (func, "... Detected %d different machine name(s) spreaded over %d pool(s)\n", nbhost, nbpool);
+		if (nblocal == 0) {
+			stglogit (func, "==> Detected %d different machine name(s), all remote, spreaded over %d pool(s)\n", nbhost, nbpool);
+		} else {
+			stglogit (func, "==> Detected %d different machine name(s), %d remote, spreaded over %d pool(s)\n", nbhost, nbhost - 1, nbpool);
+			if (--nbhost < 0) {
+				stglogit (func, "### Internal error, nbhost < 0 - Resetted to zero\n");
+				nbhost = 0;
+			}
+		}
+		/* Check the location of garbage collectors : they will issue stageclr and we can detect if they will */
+		/* get Permission Denied (EACCES) with current Cupv database */
+		stglogit (func, "==> Checking garbage collectors and privileges\n");
+		for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+			if (pool_p->gc[0] != '\0') {
+				char save_gc[CA_MAXHOSTNAMELEN+MAXPATH+1];
+				char *gc_host = NULL;
+				char *gc_path = NULL;
+			
+				strcpy(save_gc,pool_p->gc);
+				rfio_parseln (save_gc, &gc_host, &gc_path, NORDLINKS);
+				/* Note : gc_host can be NULL - this is valid in the call to Cupv_check() */
+				if (Cupv_check((uid_t) 0, (gid_t) 0, gc_host, NULL, P_ADMIN) != 0) {
+					stglogit (func, "### Pool %s : GC %s : Rule [uid=0,gid=0,src=%s,tgt=%s] is probably needed in Cupv\n", pool_p->name, pool_p->gc, (gc_host != NULL) ? gc_host : localhost, localhost);
+				} else {
+					stglogit (func, "... Pool %s : GC %s : Cupv check ok\n", pool_p->name, pool_p->gc);
+				}
+			} else {
+				stglogit (func, "... Pool %s have no garbage collector\n", pool_p->name);
+			}
+		}
 		return (0);
 	}
 }
