@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.26 $ $Date: 2000/02/09 15:29:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.27 $ $Date: 2000/02/10 08:40:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -944,11 +944,14 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
  * case of an error.
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
+    save_errno = errno; \
+    save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
     if ( rc == -1 || (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 || \
         (rtcpd_CheckProcError() & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) { \
-         rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
-         if ( (severity & RTCP_FAILED) != 0 ) rtcpd_BroadcastException(); \
+         rtcp_log(LOG_ERR,"tapeIOthread() %s, errno=%d, serrno=%d\n",Z,\
+                  save_errno,save_serrno); \
+         rtcpd_BroadcastException(); \
          if ( mode == WRITE_ENABLE &&  \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
              if ( (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) \
@@ -983,7 +986,7 @@ void *tapeIOthread(void *arg) {
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
-    int rc,BroadcastInfo,mode,severity;
+    int rc,BroadcastInfo,mode,severity,save_errno,save_serrno;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
 
     if ( arg == NULL ) {

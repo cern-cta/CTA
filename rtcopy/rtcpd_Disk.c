@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.33 $ $Date: 2000/02/09 15:29:51 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.34 $ $Date: 2000/02/10 08:45:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1213,11 +1213,14 @@ static int DiskToMemory(int disk_fd, int pool_index,
  * case of an error.
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
+    save_errno = errno; \
+    save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
     if ( rc == -1 || (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 || \
         (rtcpd_CheckProcError() & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) { \
-        if ( (severity & RTCP_FAILED) != 0 ) rtcpd_BroadcastException(); \
-        if ( rc == -1 ) rtcp_log(LOG_ERR,"diskIOthread() %s\n",(Z)); \
+        rtcpd_BroadcastException(); \
+        if (rc==-1) rtcp_log(LOG_ERR,"diskIOthread() %s, errno=%d, serrno=%d\n",\
+        (Z),save_errno,save_serrno); \
         if ( mode == WRITE_DISABLE && \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
             if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) \
@@ -1258,7 +1261,7 @@ void *diskIOthread(void *arg) {
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
-    int rc, mode, severity, save_serrno;
+    int rc, mode, severity, save_errno,save_serrno;
     extern int ENOSPC_occurred;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
     if ( arg == NULL ) {
