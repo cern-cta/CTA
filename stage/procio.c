@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.61 2000/11/26 10:07:10 jdurand Exp $
+ * $Id: procio.c,v 1.62 2000/11/27 17:54:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.61 $ $Date: 2000/11/26 10:07:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.62 $ $Date: 2000/11/27 17:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1674,11 +1674,23 @@ void procputreq(req_data, clienthost)
 			}
 
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-				/* If migration flag is set, then status must have flag CAN_BE_MIGR */
-				/* If not, then status must not have flag CAN_BE_MIGR */
-				if ((migrationflag != 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR) ||
-					(migrationflag == 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR)) {
-					sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles],migrationflag ? "must have CAN_BE_MIGR state (automatic migration)\n" : "is already flagged for the automatic migration\n");
+				/* We accept migration flag (-m) only on specific status */
+				if (migrationflag != 0 && (hsmfilesstcp[ihsmfiles]->status  != (STAGEOUT|CAN_BE_MIGR) &&
+											hsmfilesstcp[ihsmfiles]->status != (STAGEOUT|CAN_BE_MIGR|PUT_FAILED) &&
+											hsmfilesstcp[ihsmfiles]->status != (STAGEOUT|CAN_BE_MIGR|BEING_MIGR) &&
+											hsmfilesstcp[ihsmfiles]->status != (STAGEWRT|CAN_BE_MIGR))) {
+					sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles],"is not eligible for automatic migration\n");
+					c = USERR;
+					goto reply;
+				/* We accept absence of migration flag (-m) only on absence of specific status */
+				} else if (migrationflag == 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR &&
+												(hsmfilesstcp[ihsmfiles]->status & PUT_FAILED) != PUT_FAILED) {
+					if ((hsmfilesstcp[ihsmfiles]->status == (STAGEPUT|CAN_BE_MIGR)) ||
+						((hsmfilesstcp[ihsmfiles]->status & BEING_MIGR) == BEING_MIGR)) {
+						sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles], "is already being migrated");
+					} else {
+						sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles], "is already flagged for the automatic migration");
+					}
 					c = USERR;
 					goto reply;
 				}
