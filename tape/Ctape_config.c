@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.9 $ $Date: 1999/11/12 13:44:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.10 $ $Date: 1999/11/17 10:36:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -34,6 +34,7 @@ int reason;
 	char *host;
 	int msglen;
 	char *p, *q;
+	char repbuf[1];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
@@ -82,6 +83,6 @@ int reason;
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2tpd (host, sendbuf, msglen, NULL, 0);
+	c = send2tpd (host, sendbuf, msglen, repbuf, sizeof(repbuf));
 	return (c);
 }

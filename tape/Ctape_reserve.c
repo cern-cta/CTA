@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.5 $ $Date: 1999/10/13 14:32:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)Ctape_reserve.c,v 1.5 1999-10-13 16:32:37+02 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_reserve - reserve tape resources */
@@ -31,6 +31,7 @@ struct dgn_rsv dgn_rsv[];
 	int jid;
 	int msglen;
 	char *q;
+	char repbuf[1];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	int totrsvd = 0;
@@ -72,7 +73,7 @@ struct dgn_rsv dgn_rsv[];
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
+	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0)
 		c = initlabelroutines (totrsvd);
 	return (c);
