@@ -152,7 +152,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   if (0 == m_connection) {
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    clog() << "Created new Oracle connection : "
+    clog() << DEBUG << "Created new Oracle connection : "
            << std::ios::hex << m_connection
            << std::ios::dec << std::endl;
     //oracle::occi::Statement* stmt = m_connection->createStatement
@@ -323,17 +323,17 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
     }
   }
   try {
-    clog() << "Trying to find new requests" << std::endl;
+    //clog() << VERBOSE << "Trying to find new requests" << std::endl;
     int nb = m_getNRStatement->executeUpdate();
     if (nb > 0) {
-      clog() << "Found a new requests : "
+      clog() << VERBOSE << "Found a new requests : "
              << m_getNRStatement->getInt(1) << std::endl;
       return new DbAddress(m_getNRStatement->getInt(1),
                            "OraCnvSvc", castor::SVC_ORACNV);
     }
   } catch (oracle::occi::SQLException e) {
     if (1403 == e.getErrorCode()) {
-      clog() << "Found no requests." << std::endl;
+      //clog() << VERBOSE << "Found no requests." << std::endl;
       return 0;
     }
     if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
@@ -345,7 +345,7 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
                     << std::endl << e.what();
     throw ex;
   }
-  clog() << "Found no new requests." << std::endl;
+  //clog() << VERBOSE << "Found no new requests." << std::endl;
   return 0;
 }
 
