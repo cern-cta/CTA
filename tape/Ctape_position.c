@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 06:37:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -90,7 +90,7 @@ int flags;
 	}
 
 	if (errflg) {
-		serrno = ETPRM;
+		serrno = EINVAL;
 		return (-1);
 	}
 
@@ -107,7 +107,7 @@ int flags;
  
 	marshall_WORD (sbp, uid);
 	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, jid);
+	marshall_LONG (sbp, jid);
 	marshall_STRING (sbp, path);
 	marshall_WORD (sbp, method);
 	if (method == TPPOSIT_FSEQ) {
