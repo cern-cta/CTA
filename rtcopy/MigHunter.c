@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/03/24 16:44:48 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/03/31 08:59:25 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/03/24 16:44:48 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/03/31 08:59:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -479,6 +479,90 @@ int getStreamsForSvcClass(
   if ( nbStreams != NULL ) *nbStreams = totNbStreams;
   return(0);
 }
+
+/*
+ * Restore the status of all migration candidates that have not been
+ * attached to any streams.
+ */
+void restoreMigrCandidates(
+                           migrCandidates,
+                           nbMigrCandidates
+                           )
+     struct Cstager_TapeCopy_t **migrCandidates;
+     int nbMigrCandidates;
+{
+  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  struct Cstager_TapeCopy_t *tapeCopy;
+  struct Cstager_Stream_t **streamArray;
+  struct C_IObject_t *iObj = NULL;
+  struct C_Services_t *dbSvc;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr = NULL;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  int rc, i, nbStreams;
+  char buf[21];
+  ID_TYPE key;
+  
+  if ( (migrCandidates == NULL) || (nbMigrCandidates <= 0) ) return;
+  if ( runAsDaemon == 0 ) {
+    fprintf(stdout,"Restoring unattached migration candidates. Check %d candidates\n",
+            nbMigrCandidates);
+  }
+
+  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  if ( rc == -1 ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stderr,"restoreMigrCandidates(): prepareForDBAccess(): %s\n",
+              sstrerror(serrno));
+    } else {
+      LOG_SYSCALL_ERR("prepareForDBAccess()");
+    }
+    return;
+  }
+  for ( i=0; i<nbMigrCandidates; i++ ) {
+    tapeCopy = migrCandidates[i];
+    streamArray = NULL;
+    nbStreams = 0;
+    Cstager_TapeCopy_stream(tapeCopy,&streamArray,&nbStreams);
+    if ( (streamArray == NULL) || (nbStreams <= 0) ) {
+      Cstager_TapeCopy_status(tapeCopy,&tapeCopyStatus);
+      if ( tapeCopyStatus == TAPECOPY_WAITINSTREAMS ) {
+        Cstager_TapeCopy_id(tapeCopy,&key);
+        if ( runAsDaemon == 0 ) {
+          fprintf(stdout,
+                  "Restore unassigned tapeCopy %d/%d (id=%s)",
+                  i,nbMigrCandidates,
+                  u64tostr(key,buf,0));
+        }
+        Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_TOBEMIGRATED);
+        iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+        LOG_CALL_TRACE((rc = C_Services_updateRep(
+                                                  dbSvc,
+                                                  iAddr,
+                                                  iObj,
+                                                  1
+                                                  )));
+        if ( rc == -1 ) {
+          if ( runAsDaemon == 0 ) {
+            fprintf(stderr,"C_Services_updateRep(tapeCopy(id=%s)): %s, %s\n",
+                    u64tostr(key,buf,0),
+                    sstrerror(serrno),
+                    C_Services_errorMsg(dbSvc));
+          } else {
+            LOG_DBCALLANDKEY_ERR("C_Services_updateRep(tapeCopy)",
+                                 C_Services_errorMsg(dbSvc),
+                                 key);
+          }
+        }
+      }
+    }
+    if ( streamArray != NULL ) free(streamArray);
+  }
+  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+  if ( runAsDaemon == 0 ) fprintf(stdout,"Restore procedure finished\n");
+  return;
+}
+     
 
 /*
  * Add all old migration candidates from an existing to a new stream
@@ -1277,6 +1361,7 @@ int main(int argc, char *argv[])
           } else {
             LOG_SYSCALL_ERR("tapePoolCreator()");
           }
+          restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
         }
       }
@@ -1299,10 +1384,12 @@ int main(int argc, char *argv[])
         } else {
           LOG_SYSCALL_ERR("getStreamsForSvcClass()");
         }
+        restoreMigrCandidates(migrCandidates,nbMigrCandidates);
         continue;
       }
       
-      if ( nbOldStreams >= 0 ) {
+      if ( (nbOldStreams >= 0) &&
+           ((doCloneStream == 1) || (nbMigrCandidates > 0)) ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Found %d streams for %s. Create new streams if necessary\n",
                   nbOldStreams,argv[i]);
@@ -1316,6 +1403,7 @@ int main(int argc, char *argv[])
             LOG_SYSCALL_ERR("streamCreator()");
           }
           (void)C_Services_rollback(dbSvc,iAddr);
+          restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
         }
         if ( runAsDaemon == 0 ) {
@@ -1353,6 +1441,7 @@ int main(int argc, char *argv[])
             LOG_SYSCALL_ERR("addMigrationCandidatesToStreams()");
           }
           (void)C_Services_rollback(dbSvc,iAddr);
+          restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
         }
         if ( runAsDaemon == 0 ) {
