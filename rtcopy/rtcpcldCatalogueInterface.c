@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.76 $ $Release$ $Date: 2004/11/10 13:44:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.77 $ $Release$ $Date: 2004/11/10 16:43:13 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.76 $ $Release$ $Date: 2004/11/10 13:44:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.77 $ $Release$ $Date: 2004/11/10 16:43:13 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -950,9 +950,13 @@ static int nextSegmentToDo(
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_DiskCopyForRecall_t *recallCandidate = NULL;
   struct Cstager_DiskCopy_t *diskCopy = NULL;
+  struct Cstager_CastorFile_t *castorFile = NULL;
   char *diskServerName = NULL, *mountPointName = NULL, *pathName = NULL;
+  char *nsHost = NULL;
   file_list_t *file = NULL;
   int rc, save_serrno;
+  rtcpFileRequest_t *filereq = NULL;
+  struct Cns_fileid *fileid = NULL;
 
   /*
    * Only recalls, please!
@@ -967,6 +971,8 @@ static int nextSegmentToDo(
     serrno = ENOENT;
     return(-1);
   }
+
+  filereq = &(file->filereq);
 
   if ( file->dbRef == NULL ) {
     rc = updateSegmentFromDB(file);
@@ -1011,6 +1017,10 @@ static int nextSegmentToDo(
                         diskCopy,
                         (CONST char **)&pathName
                         );
+  Cstager_DiskCopy_castorFile(
+                              diskCopy,
+                              &castorFile
+                              );
   Cstager_DiskCopyForRecall_mountPoint(
                                        recallCandidate,
                                        (CONST char **)&mountPointName
@@ -1019,15 +1029,37 @@ static int nextSegmentToDo(
                                        recallCandidate,
                                        (CONST char **)&diskServerName
                                        );
+  if ( castorFile != NULL ) {
+    Cstager_CastorFile_nsHost(
+                              castorFile,
+                              (CONST char **)&nsHost
+                              );
+    if ( nsHost != NULL ) {
+      strncpy(
+              filereq->castorSegAttr.nameServerHostName,
+              nsHost,
+              sizeof(filereq->castorSegAttr.nameServerHostName)
+              );
+    }
+    Cstager_CastorFile_fileId(
+                              castorFile,
+                              &(filereq->castorSegAttr.castorFileId)
+                              );
+    (void)rtcpcld_getFileId(
+                            file,
+                            &fileid
+                            );
+  }
+  
   if ( (pathName == NULL) || (*pathName == '\0') ||
        (mountPointName == NULL) || (*mountPointName == '\0') ||
        (diskServerName == NULL) || (*diskServerName == '\0') ||
        ((strlen(pathName)+
          strlen(mountPointName)+1+
-         strlen(diskServerName)+1) > sizeof(file->filereq.file_path)-1) ) {
+         strlen(diskServerName)+1) > sizeof(filereq->file_path)-1) ) {
     if ( (strlen(pathName)+
           strlen(mountPointName)+1+
-          strlen(diskServerName)+1) > sizeof(file->filereq.file_path)-1 ) {
+          strlen(diskServerName)+1) > sizeof(filereq->file_path)-1 ) {
       save_serrno = E2BIG;
     } else {
       save_serrno = SEINTERNAL;
@@ -1035,7 +1067,7 @@ static int nextSegmentToDo(
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_BADPATH),
-                    (struct Cns_fileid *)NULL,
+                    (struct Cns_fileid *)fileid,
                     RTCPCLD_NB_PARAMS+3,
                     "DISKSRV",
                     DLF_MSG_PARAM_STR,
@@ -1051,9 +1083,9 @@ static int nextSegmentToDo(
     serrno = save_serrno;
     return(-1);
   }
-  
+
   sprintf(
-          file->filereq.file_path,
+          filereq->file_path,
           "%s:%s/%s",
           diskServerName,
           mountPointName,
@@ -1088,10 +1120,8 @@ static int procSegmentsForTape(
   enum Cstager_SegmentStatusCodes_t cmpStatus;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
-  char *nsHost;
   unsigned char *blockid;
-  struct Cns_fileid fileid;
-  int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, newFileReqs = 0;
+  int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
     serrno = EINVAL;
@@ -1157,11 +1187,6 @@ static int procSegmentsForTape(
                            segmArray[i],
                            &fseq
                            );
-      if ( nsHost != NULL ) strncpy(
-                                    fileid.server,
-                                    nsHost,
-                                    sizeof(fileid.server)-1
-                                    );
       rc = rtcp_NewFileList(&tl,&fl,tl->tapereq.mode);
       if ( rc == -1 ) {
         save_serrno = serrno;
@@ -1169,7 +1194,7 @@ static int procSegmentsForTape(
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                        (struct Cns_fileid *)&fileid,
+                        (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+2,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
@@ -1187,7 +1212,7 @@ static int procSegmentsForTape(
       (void)dlf_write(
                       childUuid,
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_FILEREQ),
-                      (struct Cns_fileid *)&fileid,
+                      (struct Cns_fileid *)NULL,
                       1,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
@@ -1200,8 +1225,6 @@ static int procSegmentsForTape(
       fl->filereq.tape_fseq = fseq;
       fl->filereq.def_alloc = 0;
       fl->filereq.disk_fseq = ++(fl->prev->filereq.disk_fseq);
-      fl->filereq.castorSegAttr.castorFileId = fileid.fileid;
-      strcpy(fl->filereq.castorSegAttr.nameServerHostName,fileid.server);
     }
     memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
     if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
