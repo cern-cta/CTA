@@ -1,14 +1,14 @@
 /*
- * $Id: stagestat.c,v 1.40 2002/10/03 09:49:05 jdurand Exp $
+ * $Id: stagestat.c,v 1.41 2002/11/19 09:12:21 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1996-2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.40 $ $Date: 2002/10/03 09:49:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.41 $ $Date: 2002/11/19 09:12:21 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -243,7 +243,7 @@ int main(argc, argv)
 	int aflag = 0;			/* sort on num accesses */	
 	int rflag = 0;            /* Select a reqid */
 	int getacctrec_status;
-	struct stat mystat;
+	struct stat64 mystat;
 #if defined(_WIN32)
 	WSADATA 	wsadata;
 	int 	rcode;
@@ -560,8 +560,8 @@ int main(argc, argv)
 
 			rfio_errno = serrno = 0;
 
-			if ((fd_acct = rfio_open (acctfile2, O_RDONLY)) < 0) {
-				fprintf (stderr, "%s : rfio_open error : %s\n", acctfile2, rfio_serror());
+			if ((fd_acct = rfio_open64 (acctfile2, O_RDONLY)) < 0) {
+				fprintf (stderr, "%s : rfio_open64 error : %s\n", acctfile2, rfio_serror());
 				if (! wflag) {
 #if defined(_WIN32)
 					WSACleanup();
@@ -572,8 +572,8 @@ int main(argc, argv)
 				}
 			}
 
-			if (rfio_stat(acctfile2, &mystat) < 0) {
-				fprintf (stderr, "%s : rfio_stat error : %s\n", acctfile, rfio_serror());
+			if (rfio_stat64(acctfile2, &mystat) < 0) {
+				fprintf (stderr, "%s : rfio_stat64 error : %s\n", acctfile, rfio_serror());
 				if (! wflag) {
 #if defined(_WIN32)
 					WSACleanup();
@@ -1281,8 +1281,8 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	if ((accthdr->package != ACCTSTAGE) && (accthdr->package != ACCTSTAGE2)) {
 		/* Not a STAGE accouting record - we just seek the pointer */
 		rfio_errno = serrno = 0;
-		if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
-			fprintf (stderr, "rfio_lseek error : %s\n", rfio_serror());
+		if (rfio_lseek64(fd_acct, accthdr->len, SEEK_CUR) < 0) {
+			fprintf (stderr, "rfio_lseek64 error : %s\n", rfio_serror());
 			exit (SYERR);
 		}
 		size_read += accthdr->len;
