@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.136 2001/06/08 14:30:16 jdurand Exp $
+ * $Id: poolmgr.c,v 1.137 2001/06/17 07:53:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.136 $ $Date: 2001/06/08 14:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.137 $ $Date: 2001/06/17 07:53:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2768,6 +2768,9 @@ int migpoolfiles(pool_p)
     for (i = 0; i < pool_p->migr->nfileclass; i++) {
       /* Will range from 0 to (pool_p->migr->fileclass[i]->nfree_stream - 1) */
       pool_p->migr->fileclass[i]->ifree_stream = 0;
+      if (pool_p->migr->fileclass[i]->nfree_stream > nideal_minsize) {
+        pool_p->migr->fileclass[i]->nfree_stream = nideal_minsize;
+      }
     }
     /* l variable will loop in range [sav_ntppool_vs_stcp,ntppool_vs_stcp] */
     for (k = 0; k < tppool_vs_stcp[j].nstcp; k++) {
