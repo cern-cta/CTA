@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/17 10:32:25 $ $Author: sponcec3 $
  *
  *
  *
@@ -116,7 +116,7 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
-  "BEGIN isSubRequestToSchedule(:1, :2); END;";
+  "BEGIN isSubRequestToSchedule(:1, :2, :3); END;";
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
@@ -998,7 +998,8 @@ castor::db::ora::OraStagerSvc::requestToDo
 // isSubRequestToSchedule
 // -----------------------------------------------------------------------
 bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
-(castor::stager::SubRequest* subreq)
+(castor::stager::SubRequest* subreq,
+ std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1007,6 +1008,8 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
         createStatement(s_isSubRequestToScheduleStatementString);
       m_isSubRequestToScheduleStatement->registerOutParam
         (2, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_isSubRequestToScheduleStatement->setDouble(1, subreq->id());
@@ -1020,7 +1023,38 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
       throw ex;
     }
     // Get result and return
-    return 0 != m_isSubRequestToScheduleStatement->getInt(2);
+    unsigned int rc =
+      m_isSubRequestToScheduleStatement->getInt(2);
+    if (1 == rc) {
+      // status 1 means diskcopies are available, list them
+      try {
+        oracle::occi::ResultSet *rs =
+          m_isSubRequestToScheduleStatement->getCursor(3);
+        // Run through the cursor
+        oracle::occi::ResultSet::Status status = rs->next();
+        while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+          castor::stager::DiskCopyForRecall* item =
+            new castor::stager::DiskCopyForRecall();
+          item->setId((u_signed64) rs->getDouble(1));
+          item->setPath(rs->getString(2));
+          item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+          item->setDiskcopyId(rs->getString(4));
+          item->setFsWeight(rs->getFloat(5));
+          item->setMountPoint(rs->getString(6));
+          item->setDiskServer(rs->getString(7));
+          sources.push_back(item);
+          status = rs->next();
+        }
+      } catch (oracle::occi::SQLException e) {
+        rollback();
+        if (e.getErrorCode() != 24338) {
+          // if not "statement handle not executed"
+          // it's really wrong, else, it's normal
+          throw e;
+        }
+      }
+    }
+    return 0 != rc;
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;
@@ -1169,8 +1203,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       try {
         oracle::occi::ResultSet *rs =
           m_getUpdateStartStatement->getCursor(6);
-        // We don't fetch the first time since it's done
-        // in the PL/SQL code
+        // Run through the cursor
         oracle::occi::ResultSet::Status status = rs->next();
         while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
           castor::stager::DiskCopyForRecall* item =

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/12/17 10:32:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -252,7 +252,8 @@ castor::stager::RemoteStagerSvc::requestToDo
 // isSubRequestToSchedule
 // -----------------------------------------------------------------------
 bool castor::stager::RemoteStagerSvc::isSubRequestToSchedule
-(castor::stager::SubRequest* subreq)
+(castor::stager::SubRequest* subreq,
+ std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2004/12/17 10:32:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -322,11 +322,27 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_isSubRequestToSchedule
   (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::SubRequest* subreq) {
+   castor::stager::SubRequest* subreq,
+   castor::stager::DiskCopyForRecall*** sources,
+   unsigned int* sourcesNb) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      if (stgSvc->stgSvc->isSubRequestToSchedule(subreq)) {
+      std::list<castor::stager::DiskCopyForRecall*> sourcesList;
+      if (stgSvc->stgSvc->isSubRequestToSchedule(subreq, sourcesList)) {
+        *sourcesNb = sourcesList.size();
+        if (*sourcesNb > 0) {
+          *sources = (castor::stager::DiskCopyForRecall**)
+            malloc((*sourcesNb) * sizeof(struct Cstager_DiskCopyForRecall_t*));
+          std::list<castor::stager::DiskCopyForRecall*>::iterator it =
+            sourcesList.begin();
+          for (unsigned int i = 0; i < *sourcesNb; i++, it++) {
+            (*sources)[i] = *it;
+          }
+        }
         return 1;
+      } else {
+        *sourcesNb = 0;
+        return 0;
       }
     } catch (castor::exception::Exception e) {
       serrno = e.code();

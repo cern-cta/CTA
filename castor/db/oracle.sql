@@ -292,7 +292,9 @@ UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_REST
 END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
-CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(rsubreqId IN INTEGER, result OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
+        (rsubreqId IN INTEGER, result OUT INTEGER,
+         sources OUT castor.DiskCopy_Cur) AS
   stat INTEGER;
   dci INTEGER;
 BEGIN
@@ -303,18 +305,28 @@ BEGIN
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
    AND ROWNUM < 2;
- IF 2 = stat -- DISKCCOPY_WAITTAPERECALL
+ IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
  THEN
   -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
   update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = rsubreqId;
-  result := 0;
+  result := 0;  -- no nschedule
  ELSE
   -- DiskCopies exist that are already recalled, thus schedule for access
-  result := 1;
+  result := 1;  -- schedule and diskcopies available
+  OPEN sources
+    FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+               DiskCopy.diskcopyId, FileSystem.weight,
+               FileSystem.mountPoint, DiskServer.name
+    FROM DiskCopy, SubRequest, FileSystem, DiskServer
+    WHERE SubRequest.id = srId
+      AND SubRequest.castorfile = DiskCopy.castorfile
+      AND DiskCopy.status IN (0, 6) -- STAGED, STAGEOUT
+      AND FileSystem.id = DiskCopy.fileSystem
+      AND DiskServer.id = FileSystem.diskServer;
  END IF;
 EXCEPTION
  WHEN NO_DATA_FOUND -- In this case, schedule for recall
- THEN result := 1;
+ THEN result := 2;  -- schedule and no diskcopies
 END;
 
 /* PL/SQL method implementing castor package */

@@ -320,17 +320,25 @@ int Cstager_IStagerSvc_requestToDo
  * Decides whether a SubRequest should be scheduled.
  * Looks at all diskCopies for the file a SubRequest
  * deals with and depending on them, decides whether
- * to schedule the SubRequest.
- * If no diskCopy is found or some are found and none
- * is in status DISKCOPY_WAITTAPERECALL, we schedule
- * (for tape recall in the first case, for access in
- * the second case).
- * Else (case where a diskCopy is in DISKCOPY_WAITTAPERECALL
- * status), we don't schedule, we link the SubRequest
- * to the recalling SubRequest and we set its status to
- * SUBREQUEST_WAITSUBREQ.
+ * to schedule the SubRequest. In case it can be scheduled,
+ * also returns a list of diskcopies available to the
+ * subrequest.
+ * The scheduling decision is taken this way :
+ *   - if no diskCopy is found, return true (scheduling
+ * for tape recall) and sources stays empty.
+ *   - if some diskcopies are found but all in WAIT*
+ * status, return false (no schedule) and link the SubRequest
+ * to the one we're waiting on + set its status to
+ * SUBREQUEST_WAITSUBREQ. Sources stays empty.
+ *   - if some diskcopies are found in STAGED/STAGEOUT
+ * status, return true and list them in sources.
  * @param stgSvc the IStagerSvc used
  * @param subreq the SubRequest to consider
+ * @param sources this is a list of DiskCopies that
+ * can be used by the subrequest.
+ * Note that the DiskCopies returned in sources must be
+ * deallocated by the caller.
+ * @param sourcesNb the length of the sources list
  * @return whether to schedule it. 1 for YES, 0 for NO,
  * -1 for an error. In the later case serrno is set to
  * the corresponding error code and a detailed error
@@ -339,7 +347,9 @@ int Cstager_IStagerSvc_requestToDo
  */
 int Cstager_IStagerSvc_isSubRequestToSchedule
 (struct Cstager_IStagerSvc_t* stgSvc,
- struct Cstager_SubRequest_t* subreq);
+ struct Cstager_SubRequest_t* subreq,
+ struct Cstager_DiskCopyForRecall_t*** sources,
+ unsigned int* sourcesNb);
 
 /**
  * Handles ths start of a Get or Update job.
@@ -389,6 +399,7 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * DISKCOPY_DISK2DISKCOPY and always empty otherwise.
  * Note that the DiskCopies returned in sources must be
  * deallocated by the caller.
+ * @param sourcesNb the length of the sources list
  * @param emptyFile 1 if the resulting diskCopy
  * deals with the recall of an empty file, 0 in all other cases
  * @param client the IClient object to use for client reply

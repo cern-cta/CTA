@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.34 $ $Release$ $Date: 2004/12/17 09:53:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.35 $ $Release$ $Date: 2004/12/17 10:32:25 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -266,21 +266,29 @@ namespace castor {
        * Decides whether a SubRequest should be scheduled.
        * Looks at all diskCopies for the file a SubRequest
        * deals with and depending on them, decides whether
-       * to schedule the SubRequest.
-       * If no diskCopy is found or some are found and none
-       * is in status DISKCOPY_WAITTAPERECALL, we schedule
-       * (for tape recall in the first case, for access in
-       * the second case).
-       * Else (case where a diskCopy is in DISKCOPY_WAITTAPERECALL
-       * status), we don't schedule, we link the SubRequest
-       * to the recalling SubRequest and we set its status to
-       * SUBREQUEST_WAITSUBREQ.
+       * to schedule the SubRequest. In case it can be scheduled,
+       * also returns a list of diskcopies available to the
+       * subrequest.
+       * The scheduling decision is taken this way :
+       *   - if no diskCopy is found, return true (scheduling
+       * for tape recall) and sources stays empty.
+       *   - if some diskcopies are found but all in WAIT*
+       * status, return false (no schedule) and link the SubRequest
+       * to the one we're waiting on + set its status to
+       * SUBREQUEST_WAITSUBREQ. Sources stays empty.
+       *   - if some diskcopies are found in STAGED/STAGEOUT
+       * status, return true and list them in sources.
        * @param subreq the SubRequest to consider
+       * @param sources this is a list of DiskCopies that
+       * can be used by the subrequest.
+       * Note that the DiskCopies returned in sources must be
+       * deallocated by the caller.
        * @return whether to schedule it
        * @exception Exception in case of error
        */
       virtual bool isSubRequestToSchedule
-      (castor::stager::SubRequest* subreq)
+      (castor::stager::SubRequest* subreq,
+       std::list<castor::stager::DiskCopyForRecall*>& sources)
         throw (castor::exception::Exception) = 0;
 
       /**
