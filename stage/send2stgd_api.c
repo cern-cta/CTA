@@ -67,7 +67,8 @@ EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 		return (-1);                              \
 	}                                             \
     SEND2STGD_API_CLEAN();                        \
-	return(c);                                    \
+    if ((c) == 0) serrno = orig_serrno;           \
+    return(c);                                    \
 }
 
 /* This macro cleans everything that can be cleaned because if it is called there is a error */
@@ -230,7 +231,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	struct stgpath_entry *_stpp_output = NULL;
 	u_signed64 uniqueid = 0;
 	u_signed64 current_uniqueid = 0;
-	int save_serrno;
+	int save_serrno, orig_serrno;
 
 	strcpy (func, "send2stgd");
 
@@ -306,6 +307,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
+	orig_serrno = serrno;
 	serrno = 0;
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
