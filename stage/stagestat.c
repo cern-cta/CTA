@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.10 2000/03/23 01:41:47 jdurand Exp $
+ * $Id: stagestat.c,v 1.11 2000/06/29 09:00:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:41:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.11 $ $Date: 2000/06/29 09:00:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -616,7 +616,11 @@ void print_globstat (starttime, endtime, num_mounts, num_multireqs)
 	char hostname[CA_MAXHOSTNAMELEN + 1];
 	int num_mounts_avoided = 0;
 
+#ifndef _WIN32
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
+#else
+	strcpy(hostname,"localhost");
+#endif
 	printf ("\t%s Stager statistics", hostname);
 	print_time_interval (starttime, endtime);
 	printf ("\nCommand    No Reqs Success Warning Userr Syserr Unerr Conferr ");

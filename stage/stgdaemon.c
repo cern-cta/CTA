@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.52 2000/06/17 08:23:39 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.53 2000/06/29 09:00:11 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.52 $ $Date: 2000/06/17 08:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.53 $ $Date: 2000/06/29 09:00:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1719,12 +1719,30 @@ upd_stageout(req_type, upath, subreqid)
 					goto upd_stageout_return;
 				}
             } else {
-				stcp->status |= CAN_BE_MIGR;
-				/* We update the corresponding poolname structure */
-				update_migpool(stcp,1);
+              if (stcp->t_or_d == 'h') {
+                struct Cns_fileid Cnsfileid;
+                
+                /* This is a CASTOR HSM file */
+                strcpy(Cnsfileid.server,stcp->u1.h.server);
+                Cnsfileid.fileid = stcp->u1.h.fileid;
+                setegid(stcp->gid);
+                seteuid(stcp->uid);
+                if (Cns_setfsize(NULL,&Cnsfileid,(u_signed64) stcp->actual_size) != 0) {
+                  sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
+                           "Cns_setfsize (with invariants only)", sstrerror(serrno));
+                  setegid(0);
+                  seteuid(0);
+                  goto upd_stageout_return;
+				}
+                setegid(0);
+                seteuid(0);
+                stcp->status |= CAN_BE_MIGR;
+                /* We update the corresponding poolname structure */
+                update_migpool(stcp,1);
+              }
             }
         } else {
-			stcp->status |= STAGED;
+          stcp->status |= STAGED;
 		}
     }
 	stcp->a_time = time (0);
@@ -1787,24 +1805,6 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 		}
 		return (USERR);
 	}
-	setegid(gid);
-	seteuid(uid);
-	if (Cns_creatx(stcp->u1.h.xfile, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, &Cnsfileid) != 0) {
-		sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", stcp->u1.h.xfile, sstrerror(serrno));
-		setegid(0);
-		seteuid(0);
-		return(USERR);
-	}
-	setegid(0);
-	seteuid(0);
-    if (strcmp(stcp->u1.h.server,Cnsfileid.server) != 0 ||
-        stcp->u1.h.fileid != Cnsfileid.fileid) {
-      /* Something have changed */
-      sendrep (rpfd, MSG_ERR, "%s : Old entry do not exist anymore (previously deleted, different name server ?)\n",stcp->u1.h.xfile);
-      setegid(0);
-      seteuid(0);
-      return(USERR);
-    }
 	stcp->status = STAGEOUT;
 	stcp->a_time = time (0);
 	stcp->nbaccesses++;

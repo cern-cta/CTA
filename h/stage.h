@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.22 2000/06/16 14:39:15 jdurand Exp $
+ * $Id: stage.h,v 1.23 2000/06/29 08:59:56 jdurand Exp $
  */
 
 /*
@@ -17,10 +17,16 @@
 #include "serrno.h"     /* Contains ESTNACT etc... */
 
 /* This macro returns TRUE is the file is an hpss one */
-#define ISHPSS(xfile)   ( strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
+#define ISHPSS(xfile)   (strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
+
+/* This macro returns TRUE is the host is an hpss one */
+#define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
 
 /* This macro returns TRUE is the file is an castor one */
-#define ISCASTOR(xfile) ( strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
+#define ISCASTOR(xfile) (strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
+
+/* This macro returns TRUE is the host is an castor one */
+#define ISCASTORHOST(xfile) (strstr(xfile,"castor") == xfile || strstr(xfile,"cns") == xfile )
 
 /* This macro returns the hpss file pointer, without hostname */
 #define HPSSFILE(xfile)   strstr(xfile,"/hpss/")
@@ -175,6 +181,7 @@
 #define	STG99	"STG99 - stage returns %d\n"
 #define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
 #define STG101  "STG101 - HSM File %s previously staged under name %s. Catalog updated.\n"
+#define STG102  "STG102 - Mixed %s HSM host with %s HSM filename: %s\n"
 
 			/* stage daemon return codes */
 

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.30 2000/06/16 17:41:14 jdurand Exp $
+ * $Id: procio.c,v 1.31 2000/06/29 09:00:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.30 $ $Date: 2000/06/16 17:41:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.31 $ $Date: 2000/06/29 09:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,12 +65,6 @@ int last_tape_file;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
-
-/* This macro returns TRUE is the file is an hpss one */
-#define ISHPSS(xfile)   ( strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
-
-/* This macro returns TRUE is the file is an castor one */
-#define ISCASTOR(xfile) ( strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
 
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
@@ -491,9 +485,19 @@ void procioreq(req_type, req_data, clienthost)
 		/* We check that user do not mix different hsm types (hpss and castor) */
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 			if (ISHPSS(hsmfiles[ihsmfiles])) {
+				if (ISCASTORHOST(hsmfiles[ihsmfiles])) {
+					sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", hsmfiles[ihsmfiles]);
+					c = USERR;
+					goto reply;
+				}
 				++nhpssfiles;
 			}
 			if (ISCASTOR(hsmfiles[ihsmfiles])) {
+				if (ISHPSSHOST(hsmfiles[ihsmfiles])) {
+					sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", hsmfiles[ihsmfiles]);
+					c = USERR;
+					goto reply;
+				}
 				++ncastorfiles;
 			}
 		}
@@ -542,7 +546,7 @@ void procioreq(req_type, req_data, clienthost)
 				case STAGEOUT:
 					setegid(stgreq.gid);
 					seteuid(stgreq.uid);
-					if (Cns_creatx(hsmfiles[ihsmfiles], S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, &(hsmfileids[ihsmfiles])) != 0) {
+					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &(hsmfileids[ihsmfiles])) != 0) {
 						sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", hsmfiles[ihsmfiles], sstrerror(serrno));
 						c = USERR;
 						setegid(0);
@@ -690,7 +694,7 @@ void procioreq(req_type, req_data, clienthost)
 					 * CASTOR HSM File exists but has a modified time higher than what
 					 * is known to the stager.
 					 */
-					if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0) < 0) {
+					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0) < 0) {
 						sendrep (rpfd, MSG_ERR,
 										 STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());

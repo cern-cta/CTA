@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.10 2000/03/24 10:10:06 jdurand Exp $
+ * $Id: stageget.c,v 1.11 2000/06/29 09:00:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.10 $ $Date: 2000/03/24 10:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.11 $ $Date: 2000/06/29 09:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -19,7 +19,11 @@ static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.10 $ $Date: 20
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#else
+#include <winsock2.h>
+#endif
 #include "marshall.h"
 #include "stage.h"
 extern	char	*getenv();
@@ -145,9 +149,13 @@ int main(argc, argv)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
+#ifndef _WIN32
 	signal (SIGHUP, cleanup);
+#endif
 	signal (SIGINT, cleanup);
+#ifndef _WIN32
 	signal (SIGQUIT, cleanup);
+#endif
 	signal (SIGTERM, cleanup);
 
 	while (1) {

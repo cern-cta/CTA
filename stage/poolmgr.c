@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.31 2000/06/19 14:03:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.32 2000/06/29 09:00:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.31 $ $Date: 2000/06/19 14:03:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.32 $ $Date: 2000/06/29 09:00:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1239,17 +1239,17 @@ void update_migpool(stcp,flag)
 							stcp->poolname);
 					pool_p->migr->nbfiles_canbemig = 0;
 				}
-				if (pool_p->migr->space_canbemig < stcp->size) {
-					sendrep (rpfd, MSG_ERR, "Internal error for pool %s, space_canbemig < stcp->size after migration OK (resetted to 0)\n",
+				if (pool_p->migr->space_canbemig < stcp->actual_size) {
+					sendrep (rpfd, MSG_ERR, "Internal error for pool %s, space_canbemig < stcp->actual_size after migration OK (resetted to 0)\n",
 							stcp->poolname);
 					pool_p->migr->space_canbemig = 0;
 				} else {
-					pool_p->migr->space_canbemig -= stcp->size;
+					pool_p->migr->space_canbemig -= stcp->actual_size;
 				}
 			} else if (flag > 0) {
 				/* This is to add an entry for a next automatic migration */
 				pool_p->migr->nbfiles_canbemig++;
-				pool_p->migr->space_canbemig += stcp->size;
+				pool_p->migr->space_canbemig += stcp->actual_size;
 			}
 		}
 	}
@@ -1534,7 +1534,7 @@ int migpoolfiles(migr_p)
       }
       sleep(1);
     }
-    stglogit("migpoolfiles","waitpid : %s\n",strerror(errno));
+    /* stglogit("migpoolfiles","waitpid : %s\n",strerror(errno)); */
 
     free(files);
 	free (scs);
