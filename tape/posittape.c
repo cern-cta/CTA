@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.6 $ $Date: 2000/01/22 08:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.7 $ $Date: 2000/10/30 06:28:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.6 $ $Date: 20
 #include <sys/types.h>
 #include <time.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
 	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2)
@@ -35,6 +36,7 @@ char *vol1, *hdr1, *hdr2;
 	char buf[7];
 	int c;
 	time_t current_time;
+	struct devinfo *devinfo;
 	extern char *dvrname;
 	char func[16];
 	struct tm *localtime(), *tm;
@@ -52,6 +54,7 @@ char *vol1, *hdr1, *hdr2;
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
 	if (Qfirst && fseq > 0) fseq += Qfirst - 1;
+	devinfo = Ctape_devinfo (devtype);
 	if (strcmp (devtype, "8200") && den != D8200 && den != D8200C)
 		rewritetm = 0;
 	if (lblcode == NL || lblcode == BLP) {
@@ -76,16 +79,8 @@ char *vol1, *hdr1, *hdr2;
 		if (strcmp (dvrname, "Atape") == 0 &&
 		    strcmp (devtype, "3590") == 0 &&
 #endif
-#if defined(__osf__) && defined(__alpha)
-		if ((strncmp (devtype, "DLT", 3) == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-		    strcmp (devtype, "SD3") == 0) &&
-#endif
-#if defined(IRIX64) || defined(linux)
-                if ((strncmp (devtype, "DLT", 3) == 0 ||
-		    strcmp (devtype, "3590") == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-                    strcmp (devtype, "SD3") == 0) &&
+#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
+		if (devinfo->fastpos &&
 #endif
 		    (fseq > 2 || fseq == -1)) {	/* fast positionning */
 			if (fseq > 0)
@@ -269,16 +264,8 @@ char *vol1, *hdr1, *hdr2;
 		if (strcmp (dvrname, "Atape") == 0 &&
 		    strcmp (devtype, "3590") == 0 &&
 #endif
-#if defined(__osf__) && defined(__alpha)
-		if ((strncmp (devtype, "DLT", 3) == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-		    strcmp (devtype, "SD3") == 0) &&
-#endif
-#if defined(IRIX64) || defined(linux)
-                if ((strncmp (devtype, "DLT", 3) == 0 ||
-                    strcmp (devtype, "3590") == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-                    strcmp (devtype, "SD3") == 0) &&
+#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
+		if (devinfo->fastpos &&
 #endif
 		    (fseq > *cfseq + 1 || fseq == -1 ||
 		    (fseq == -2 && Qfirst > *cfseq + 1))) { /* fast positionning */
