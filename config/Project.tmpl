@@ -101,6 +101,12 @@ RTCOPYDIR = rtcopy
 #define BuildSysreq	YES
 #endif
 #endif
+#if UseVmgr
+#if BuildVmgrClient != YES
+#undef BuildVmgrClient
+#define BuildVmgrClient	YES
+#endif
+#endif
 #if BuildVdqmClient != YES
 #undef BuildVdqmClient
 #define BuildVdqmClient	YES
