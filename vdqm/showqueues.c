@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.6 $ $Date: 2000/06/15 17:01:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.7 $ $Date: 2000/06/25 10:30:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             if ( tmp1->drvreq.status == 
-                 VDQM_UNIT_UP|VDQM_UNIT_ASSIGN|VDQM_UNIT_BUSY) {
+                 (VDQM_UNIT_UP|VDQM_UNIT_ASSIGN|VDQM_UNIT_BUSY) ) {
                 fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) user (%d,%d) %d secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
@@ -133,8 +133,26 @@ int main(int argc, char *argv[]) {
                     (tmp1->volreq.mode == 0 ? "read" : "write"),
                     tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                     now - tmp1->drvreq.recvtime);
+            } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY)) { 
+                 fprintf(stdout,"%s@%s (%d MB) START ReqID %d %s(%s) user (%d,%d) %d secs.\n",
+                    tmp1->drvreq.drive,tmp1->drvreq.server,
+                    (int)tmp1->drvreq.TotalMB,
+                    tmp1->drvreq.VolReqID,
+                    tmp1->volreq.volid,
+                    (tmp1->volreq.mode == 0 ? "read" : "write"),
+                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    now - tmp1->drvreq.recvtime);
+            } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN) ) {
+                 fprintf(stdout,"%s@%s (%d MB) RELEASE jid %d %s(%s) user (%d,%d) %d secs.\n",
+                    tmp1->drvreq.drive,tmp1->drvreq.server,
+                    (int)tmp1->drvreq.TotalMB,
+                    (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
+                    tmp1->volreq.volid,
+                    (tmp1->volreq.mode == 0 ? "read" : "write"),
+                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    now - tmp1->drvreq.recvtime);
             } else {
-                 fprintf(stdout,"%s@%s (%d MB) status UNKNOWN jid %d %s(%s) user (%d,%d) %d secs.\n",
+                fprintf(stdout,"%s@%s (%d MB) UNKNOWN jid %d %s(%s) user (%d,%d) %d secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
@@ -148,12 +166,13 @@ int main(int argc, char *argv[]) {
             (void)strftime(timestr,64,strftime_format,tp);
             if ( tmp1->drvreq.status & VDQM_UNIT_DOWN ) 
                 strcpy(drv_status,"DOWN");
-            else if ( (tmp1->drvreq.status & (VDQM_UNIT_UP|VDQM_UNIT_FREE)) ==
-                 VDQM_UNIT_UP|VDQM_UNIT_FREE )
+            else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_FREE) )
                 strcpy(drv_status,"FREE");
-            else strcpy(drv_status,"UNKNOWN"); 
+            else if ( tmp1->drvreq.status == (VDQM_UNIT_UP |VDQM_UNIT_RELEASE |VDQM_UNIT_BUSY |VDQM_UNIT_UNKNOWN) )
+                strcpy(drv_status,"RELEASE");
+            else strcpy(drv_status,"UNKN"); 
 
-            fprintf(stdout,"%s@%s (%d MB) status %s vid: %s last update %s\n",
+            fprintf(stdout,"%s@%s (%d MB) %s vid: %s last update %s\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,drv_status,tmp1->drvreq.volid,
                     timestr);
