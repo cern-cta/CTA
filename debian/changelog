@@ -1,3 +1,9 @@
+castor (2.0.0-21) unstable; urgency=low
+
+  * Fix in rtcopy Imakefile
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri, 11 Mar 2005 10:49:55 +0100
+
 castor (2.0.0-20) unstable; urgency=low
 
   * Fix in PROTO2/h/Castor_limits.h (IBM 3592 densities definition)
