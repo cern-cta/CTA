@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.63 $ $Date: 2000/04/25 13:12:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.64 $ $Date: 2000/04/26 13:26:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1058,6 +1058,12 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
  * the file request status is FAILED. On tape write at the other hand
  * we are behind the disk IO so we can safely interrupt everything in
  * case of an error.
+ * If request has been aborted, we exit the whole process after having
+ * closed (and deleted if WRITE_ENABLE) last tape file and released the drive.
+ * There is no reasons to wait for the diskIO before exit, since it can
+ * be hung in rfio connections (which very well may be the reason for the
+ * abort). Note, that the abort will not work if it is the tape IO which
+ * is stuck. In this case the process has to be killed by a signal. 
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
     save_errno = errno; \
@@ -1067,7 +1073,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
          rtcp_log(LOG_ERR,"tapeIOthread() %s, errno=%d, serrno=%d\n",Z,\
                   save_errno,save_serrno); \
-         rtcpd_BroadcastException(); \
+         if ( AbortFlag == 0 ) rtcpd_BroadcastException(); \
          if ( mode == WRITE_ENABLE &&  \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
              if ( (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) \
@@ -1110,6 +1116,11 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  rtcpd_SetProcError(RTCP_RETRY_OK|severity); \
              else \
                  rtcpd_WaitProcStatus(RTCP_LOCAL_RETRY); \
+         } \
+         if ( AbortFlag != 0 ) { \
+             if ( mode == WRITE_DISABLE ) (void)rtcp_WriteAccountRecord( \
+                 client,nexttape,nextfile,RTCPEMSG); \
+             exit(0); \
          } \
          if ( rc == -1 ) return((void *)&failure); \
          else return((void *)&success); \

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.67 $ $Date: 2000/04/25 13:12:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.68 $ $Date: 2000/04/26 13:26:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1076,17 +1076,10 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 void rtcpd_BroadcastException() {
     int i;
 
-    if ( databufs != NULL ) {
-        for (i=0;i<nb_bufs;i++) {
-            if ( databufs[i] != NULL ) {
-                rtcp_log(LOG_DEBUG,
-                    "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
-                (void)Cthread_mutex_lock_ext(databufs[i]->lock);
-                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-            }
-        }
-    }
+    /*
+     * Broadcast to all control conditions. These are normally not
+     * blocked since they are used as pure semaphores.
+     */
     rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to cntl_lock\n");
     (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
@@ -1107,6 +1100,29 @@ void rtcpd_BroadcastException() {
     (void)Cthread_cond_broadcast_ext(proc_cntl.TpPos_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.TpPos_lock);
 
+    /*
+     * Finally, signal all data buffers. Since those conditions also protects
+     * the memory buffers (in addition to being semaphores), this could 
+     * potentially block if for instance, a diskIO thread is blocked in a
+     * rfio_...() call. Although this is normally correct (condition broadcast
+     * is intended for global thread synchronisation), it could prevent proper
+     * exit of the process in case of a killjid.
+     * However, a killjid triggers a process exit call in the tapeIO thread
+     * (after clean-up) and the only possibility to cause a global hang is
+     * if the tapeIO thread is blocked in a system call.
+     */
+    if ( databufs != NULL ) {
+        for (i=0;i<nb_bufs;i++) {
+            if ( databufs[i] != NULL ) {
+                rtcp_log(LOG_DEBUG,
+                    "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
+                (void)Cthread_mutex_lock_ext(databufs[i]->lock);
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+            }
+        }
+    }
+
     rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() finished\n");
     return; 
 }
@@ -1114,7 +1130,7 @@ void rtcpd_BroadcastException() {
 static int rtcpd_ProcError(int *code) {
     static int global_code, rc;
 
-    if ( AbortFlag != 0 ) {
+    if ( AbortFlag != 0 && code == NULL ) {
         return(proc_cntl.ProcError);
     }
     rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
@@ -1123,11 +1139,13 @@ static int rtcpd_ProcError(int *code) {
             sstrerror(serrno));
         rc = RTCP_FAILED;
     } else {
-        if ( code != NULL && AbortFlag == 0 ) {
+        if ( code != NULL ) {
             /*
              * Never reset FAILED status
              */
-            if ( (proc_cntl.ProcError & RTCP_FAILED) == 0 ) {
+            if ( (proc_cntl.ProcError & RTCP_FAILED) == 0 &&
+                  ((proc_cntl.ProcError & RTCP_RESELECT_SERV) == 0 ||
+                    AbortFlag == 0) ) {
                 proc_cntl.ProcError = *code;
             }
         }
@@ -1159,6 +1177,10 @@ void rtcpd_SetProcError(int code) {
         rtcpd_BroadcastException(); 
 
     return;
+}
+
+int rtcpd_CheckProcError() {
+    return(rtcpd_ProcError(NULL));
 }
 
 int rtcpd_WaitProcStatus(int what) {
@@ -1234,11 +1256,6 @@ int rtcpd_WaitCompletion(tape_list_t *tape, file_list_t *file) {
        }
     } /* while (all_finished == 0)  */
     return(0);
-}
-
-
-int rtcpd_CheckProcError() {
-    return(rtcpd_ProcError(NULL));
 }
 
 void rtcpd_SetReqStatus(tape_list_t *tape,
