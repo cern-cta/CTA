@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.34 2000/05/18 16:59:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.35 2000/05/19 13:09:43 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.34 $ $Date: 2000/05/18 16:59:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.35 $ $Date: 2000/05/19 13:09:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1204,7 +1204,7 @@ void create_link(stcp, upath)
 	stpp->reqid = stcp->reqid;
 	if ((c = rfio_readlink (upath, lpath, sizeof(lpath))) > 0) {
 		lpath[c] = '\0';
-		if (strcmp (lpath, stcp->ipath) == 0) return;
+		if (strcmp (lpath, stcp->ipath) == 0) goto create_link_return;
 	}
 	if (c > 0 || errno == EINVAL || rfio_errno == EINVAL)
 		sendrep (rpfd, RMSYMLINK, upath);
@@ -1212,8 +1212,15 @@ void create_link(stcp, upath)
 	sendrep (rpfd, SYMLINK, stcp->ipath, upath);
 	savepath ();
 #ifdef USECDB
-	if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
-		stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+ create_link_return:
+	if (! found) {
+		if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
+			stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		}
+	} else {
+		if (stgdb_upd_stgpath(&dbfd,stpp) != 0) {
+			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
 	}
 #endif
 }
