@@ -1,8 +1,11 @@
 /*
- * $Id: socket_timeout.c,v 1.6 1999/10/20 18:41:48 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.7 1999/10/26 11:52:19 jdurand Exp $
  *
  * $Log: socket_timeout.c,v $
- * Revision 1.6  1999/10/20 18:41:48  jdurand
+ * Revision 1.7  1999/10/26 11:52:19  jdurand
+ * Removed unused _netalarm(signo) function
+ *
+ * Revision 1.6  1999-10-20 20:41:48+02  jdurand
  * Removed the signal handling if compiled under Windows
  * Changed one errno setting to its serrno equivalent
  *
@@ -243,13 +246,6 @@ Sigfunc *_netsignal(signo, func)
   return(oact.sa_handler);
 }
 #endif
-
-void _netalarm(signo)
-     int signo;
-{
-  /* We just trap the signal and return */
-  return;
-}
 
 int _net_writable(fd, timeout)
      int fd;
