@@ -1,16 +1,3 @@
-/*
- * $Id: getacct.c,v 1.4 1999/07/22 12:31:14 obarring Exp $
- * $Log: getacct.c,v $
- * Revision 1.4  1999/07/22 12:31:14  obarring
- * Add _THREAD_SAFE for strtok_r on AIX
- *
- * Revision 1.3  1999/07/21 20:07:46  jdurand
- * *** empty log message ***
- *
- * Revision 1.2  1999/07/21 16:25:41  obarring
- * Make MT safe
- *
- */
 
 /*
  * Copyright (C) 1990-1999 by CERN IT-PDP/DM
@@ -18,7 +5,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getacct.c,v 1.4 1999/07/22 12:31:14 obarring Exp $";
+static char cvsId[] = "$RCSfile: getacct.c,v $ $Revision: 1.5 $ $Date: 1999/11/23 08:46:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*  getacct() - Getting the current account id  */
@@ -52,6 +39,7 @@ extern uid_t getuid();
 #include <stdlib.h>
 
 #include <Cglobals.h>
+#include <Cpwd.h>
 #include "getacct.h"
 
 extern char *getacctent();
@@ -85,7 +73,7 @@ size_t resbufsiz;
      * Get password entry.
      */
 
-    if ((pwd = getpwuid(getuid())) == NULL) return(NULL);
+    if ((pwd = Cgetpwuid(getuid())) == NULL) return(NULL);
 
     /*
      * Get account file entry
