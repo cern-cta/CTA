@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.22 $ $Date: 2003/09/08 16:07:09 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.23 $ $Date: 2004/03/16 14:50:33 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -466,23 +466,25 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 				dummy += sizeof(struct Cpool_t *);
 				memcpy(dummy,&i,sizeof(int));
 				/* And we don't forget to initialize the state of this thread to be zero... */
+				Cthread_mutex_lock_ext(current->state_cthread_structure[i]);
 				current->state[i] = -1;
 				if ((current->cid[i] = Cthread_create(_Cpool_starter,cpool_arg)) < 0) {
+					Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
 					free(cpool_arg);
-				}
-				/* And we wait for this thread to have really started */
-				Cthread_mutex_lock_ext(current->state_cthread_structure[i]);
-				while (current->state[i] != 0) {
-					Cthread_cond_wait_ext(current->state_cthread_structure[i]);
-				}
-				Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+				} else {
+					/* And we wait for this thread to have really started */
+					while (current->state[i] != 0) {
+						Cthread_cond_wait_ext(current->state_cthread_structure[i]);
+					}
+					Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
 #ifdef CPOOL_DEBUG
-				/* Cthread_mutex_lock(&lock_cpool_debug); */
-				if (Cpool_debug != 0)
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : Thread No %d started\n",
-						_Cpool_self(),_Cthread_self(),i);
-				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0)
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : Thread No %d started\n",
+							_Cpool_self(),_Cthread_self(),i);
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
+				}
 			} else {
 				serrno = SEINTERNAL;
 				current->cid[i] = -1;
