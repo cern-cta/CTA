@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.14 2001/09/30 06:31:32 jdurand Exp $
+ * $Id: procfilchg.c,v 1.15 2001/11/30 11:48:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.14 $ $Date: 2001/09/30 06:31:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:48:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,6 +59,7 @@ extern int stglogit _PROTO(());
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
+extern char *findpoolname _PROTO((char *));
 
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 static int mintime_beforemigr_flag = 0;
@@ -112,6 +113,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	int donereqid = 0;
 	int thisretenp_on_disk = -1;
 	int doneretenp_on_disk = 0;
+	int thisunit_retenp = ONE_SECOND; /* Default is second */
+	int thisunit_mintime = ONE_SECOND; /* Default is second */
 	int thisstatus = -1;
 	int donestatus = 0;
 	char *dp;
@@ -184,6 +187,35 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			break;
 		case 0:
 			if ((mintime_beforemigr_flag != 0) && (! donemintime_beforemigr)) {
+				/* If the latest character is 'S' or 's', 'H' or 'h', 'D' or 'd', 'Y' or 'y' */
+				/* we accept it */
+				if (strlen(Coptarg) > 1) {
+					switch (Coptarg[strlen(Coptarg) - 1]) {
+					case 'S':
+					case 's':
+						/* Second - already the default */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit_mintime = ONE_HOUR; /* Hour */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit_mintime = ONE_DAY; /* Day */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit_mintime = ONE_YEAR; /* Year */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+				}
 				if (stage_strtoi(&thismintime_beforemigr, Coptarg, &dp, 10) != 0) {
 					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
 					errflg++;
@@ -199,18 +231,40 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				donereqid = 1;
 			}
 			if ((retenp_on_disk_flag != 0) && (! doneretenp_on_disk)) {
+				/* If the latest character is 'S' or 's', 'H' or 'h', 'D' or 'd', 'Y' or 'y' */
+				/* we accept it */
+				if (strlen(Coptarg) > 1) {
+					switch (Coptarg[strlen(Coptarg) - 1]) {
+					case 'S':
+					case 's':
+						/* Second - already the default */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit_retenp = ONE_HOUR; /* Hour */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit_retenp = ONE_DAY; /* Day */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit_retenp = ONE_YEAR; /* Year */
+						Coptarg[strlen(Coptarg) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+				}
 				if (stage_strtoi(&thisretenp_on_disk, Coptarg, &dp, 10) != 0) {
 					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
 					errflg++;
 				}
-				/* In the command-line mode, thisretenp_on_disk will furthermore be */
-				/* multiplied by ONE_DAY, and it have to be a positive number */
-				/* so the real limit there is [0, INT_MAX/ONE_DAY], or -1 */
 				if (thisretenp_on_disk < 0) thisretenp_on_disk = -1;
-				if (thisretenp_on_disk > (INT_MAX / ONE_DAY)) {
-					sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
-					errflg++;
-				}
 				doneretenp_on_disk = 1;
 			}
 			if ((status_flag != 0) && (! donestatus)) {
@@ -234,6 +288,26 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			break;
 		}
 		if (errflg != 0) break;
+	}
+
+	if (thisunit_mintime != ONE_SECOND) {
+		/* We check that --mintime_beforemigr is not out of range */
+		if (thismintime_beforemigr > (INT_MAX / thisunit_mintime)) {
+			sendrep (rpfd, MSG_ERR, STG06, "--mintime_beforemigr (out of range)");
+			errflg++;
+		} else {
+			thismintime_beforemigr *= thisunit_mintime;
+		}
+	}
+
+	if (thisunit_retenp != ONE_SECOND) {
+		/* We check that --retenp_on_disk is not out of range */
+		if (thisretenp_on_disk > (INT_MAX / thisunit_retenp)) {
+			sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
+			errflg++;
+		} else {
+			thisretenp_on_disk *= thisunit_retenp;
+		}
 	}
 
 	if (errflg != 0) {
@@ -264,7 +338,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		poolflag = -1;
 	} else if (doneretenp_on_disk) { /* --retenp_on_dik */
 		/* Note: MAX_SETRETENP can be < 0, e.g. allow no retention period set... */
-		if ((max_setretenp(poolname) != 0) && ((thisretenp_on_disk *= ((req_type < STAGE_00) ? ONE_DAY : 1)) > (max_setretenp(poolname) * ONE_DAY))) {
+		if ((max_setretenp(poolname) != 0) && (thisretenp_on_disk > (max_setretenp(poolname) * ONE_DAY))) {
 			sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
 			c = USERR;
 			goto reply;
@@ -333,25 +407,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					c = USERR;
 					goto reply;			
 				}
-				/* It is okay only if current value has not yet exhausted... */
 				if ((currentmintime_beforemigr = thisstcp.u1.h.mintime_beforemigr) < 0)
 					currentmintime_beforemigr = mintime_beforemigr(ifileclass); /* We take the default */
-				if (stcp->a_time + currentmintime_beforemigr < time(NULL)) {
-					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "has already exhausted");
-					c = USERR;
-					goto reply;			
-				}
-				/* ... and if new value does not exceed default */
-				if (((thismintime_beforemigr >= 0) && (thismintime_beforemigr > currentmintime_beforemigr)) ||
-				    ((thismintime_beforemigr <  0) && (mintime_beforemigr(ifileclass) > currentmintime_beforemigr)))
-				{
-					sendrep (rpfd, MSG_OUT, STG151, hsmfile,
-								currentmintime_beforemigr,
-								(currentmintime_beforemigr > 1 ? "s" : ""),
-								(thisstcp.u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"));
-					c = USERR;
-					goto reply;
-				}
 				if ((thisstcp.u1.h.mintime_beforemigr = thismintime_beforemigr) != stcp->u1.h.mintime_beforemigr) {
 					changed++;
 					sendrep (rpfd, MSG_OUT, STG152, hsmfile,
@@ -385,13 +442,14 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					case STAGEOUT|PUT_FAILED:
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 						/* We simulate a stageout followed by a stageupdc */
-						if (rfio_stat (stcp->ipath, &st) == 0) {
+						PRE_RFIO;
+						if (RFIO_STAT(stcp->ipath, &st) == 0) {
 							stcp->actual_size = st.st_size;
 							if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 								actual_size_block = stcp->actual_size;
 							}
 						} else {
-							stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+							stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 							/* No block information - assume mismatch with actual_size will be acceptable */
 							actual_size_block = stcp->actual_size;
 						}
