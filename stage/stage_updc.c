@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.9 2000/06/23 07:21:17 jdurand Exp $
+ * $Id: stage_updc.c,v 1.10 2000/09/01 13:19:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.9 $ $Date: 2000/06/23 07:21:17 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.10 $ $Date: 2000/09/01 13:19:11 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -101,8 +101,8 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-  uid = getuid();
-  gid = getgid();
+  uid = geteuid();
+  gid = getegid();
 #if defined(_WIN32)
   if (uid < 0 || gid < 0) {
     serrno = SENOMAPFND;
@@ -362,8 +362,8 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-  uid = getuid();
-  gid = getgid();
+  uid = geteuid();
+  gid = getegid();
 #if defined(_WIN32)
   if (uid < 0 || gid < 0) {
     serrno = SENOMAPFND;
@@ -569,8 +569,8 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
     return (-1);
   }
   
-  uid = getuid();
-  gid = getgid();
+  uid = geteuid();
+  gid = getegid();
 #if defined(_WIN32)
   if (uid < 0 || gid < 0) {
     serrno = SENOMAPFND;
@@ -678,8 +678,8 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
     return (-1);
   }
   
-  uid = getuid();
-  gid = getgid();
+  uid = geteuid();
+  gid = getegid();
 #if defined(_WIN32)
   if (uid < 0 || gid < 0) {
     serrno = SENOMAPFND;
