@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/09 16:18:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/10 12:28:34 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/09 16:18:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/10 12:28:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -64,7 +64,9 @@ WSADATA wsadata;
 #include <Cuuid.h>
 #include <u64subr.h>
 #include <serrno.h>
+#if defined(VMGR)
 #include <vmgr_api.h>
+#endif /* VMGR */
 #include <Ctape_constants.h>
 #include <castor/stager/Tape.h>
 #include <castor/stager/Segment.h>
@@ -545,8 +547,10 @@ int rtcpcld_getVIDsToDo(
   struct Cstager_Tape_t **tpArray = NULL;
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
   rtcpTapeRequest_t tapereq;
+#if defined(VMGR)
   char vmgr_error_buffer[512];
   struct vmgr_tape_info vmgr_tapeinfo;
+#endif /* VMGR */
   tape_list_t *tape;
   char *vid;
   int createNew, i, rc, nbItems = 0, save_serrno, mode;
@@ -590,7 +594,9 @@ int rtcpcld_getVIDsToDo(
   if ( nbItems <= 0 || tpArray == NULL ) return(0);
   *tapeArray = (tape_list_t **)calloc(nbItems,sizeof(tape_list_t *));
   if ( *tapeArray != NULL ) {
+#if defined(VMGR)
     vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer));
+#endif /* VMGR */
     i=0;
     for (i=0; i<nbItems; i++) {
       tape = NULL;
@@ -606,6 +612,7 @@ int rtcpcld_getVIDsToDo(
       if ( rc == -1 ) return(-1);
       (*tapeArray)[i] = tape;
       strcpy(tape->tapereq.vid,vid);
+#if defined(VMGR)
       memset(&vmgr_tapeinfo,'\0',sizeof(vmgr_tapeinfo));
       rc = vmgr_querytape (
                            tape->tapereq.vid,
@@ -641,6 +648,7 @@ int rtcpcld_getVIDsToDo(
         strcpy(tape->tapereq.label, vmgr_tapeinfo.lbltype);
         tape->tapereq.side = side;
       }
+#endif /* VMGR */
       Cstager_Tape_delete(tpArray[i]);
     };
     rc = 0;
