@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 16:33:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 12:07:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -37,6 +37,7 @@ extern char *geterr();
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <log.h>
+#include <trace.h>
 #include <osdep.h>
 #include <net.h>
 #include <Cthread_api.h>
@@ -101,7 +102,14 @@ static int rtcpd_CheckClient(rtcpClientInfo_t *client) {
  */
 static int rtcpd_AllocBuffers() {
     int i, rc;
+    char *p;
 
+    if ( (p = getconfent("RTCOPYD","NB_BUFS",0)) != NULL ) {
+        nb_bufs = atoi(p);
+    }
+    if ( (p = getconfent("RTCOPYD","BUFSZ",0)) != NULL ) {
+        bufsz = atoi(p);
+    }
     rtcp_log(LOG_INFO,"rtcpd_AllocBuffers() allocate %d x %d buffers\n",
         nb_bufs,bufsz);
 
@@ -131,6 +139,7 @@ static int rtcpd_AllocBuffers() {
         databufs[i]->maxlength = bufsz;
         databufs[i]->end_of_tpfile = FALSE;
         databufs[i]->last_buffer = FALSE;
+        databufs[i]->nb_waiters = 0;
         databufs[i]->nbrecs = 0;
         databufs[i]->lrecl_table = NULL;
         /*
@@ -425,7 +434,6 @@ static int rtcpd_ProcError(int *code) {
         }
         rc = proc_cntl.ProcError;
     }
-    (void) Cthread_cond_broadcast_ext(proc_cntl.ProcError_lock);
     (void) Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
     return(rc);
 }
@@ -446,7 +454,7 @@ void rtcpd_SetProcError(int code) {
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
         proc_cntl.ProcError = RTCP_FAILED;
     }
-    if ( rc & RTCP_FAILED && databufs != NULL ) {
+    if ( (rc & RTCP_FAILED) != 0 && databufs != NULL ) {
         for (i=0;i<nb_bufs;i++) {
             if ( databufs[i] != NULL ) {
                 (void)Cthread_mutex_lock_ext(databufs[i]->lock);
@@ -558,6 +566,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
     rtcpd_SetDebug();
     AbortFlag = 0;
+    NOTRACE;                 /* Switch off tracing */
     signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
     client = (rtcpClientInfo_t *)calloc(1,sizeof(rtcpClientInfo_t));
     if ( client == NULL ) {
@@ -599,9 +608,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * This is an old client
          */
-/*
-        rc = rtcp_RunOld(accept_socket);
- */
+        rc = rtcp_RunOld(accept_socket,&hdr);
+        (void)rtcp_CloseConnection(accept_socket);
         return(rc);
     }
 
@@ -847,9 +855,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,
                 "rtcp_MainCntl() failed to start Tape I/O thread\n");
+            (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartTapeIO(): %s\n",
+                  sstrerror(serrno));
+            (void)tellClient(client_socket,tape,NULL,-1);
             (void)rtcpd_Deassign(client->VolReqID,&tapereq);
-            rtcpd_FreeResources(&client_socket,&client,&tape);
-            return(-1);
+            break;
         }
 
         /*
@@ -860,8 +870,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,"rtcp_MainCntl() failed to start disk I/O thread\n");
             rtcpd_SetProcError(RTCP_FAILED);
-            rtcpd_FreeResources(&client_socket,&client,&tape);
-            return(-1);
         }
 
         /*
