@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 15:16:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.19 $ $Date: 2000/03/02 12:01:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -201,6 +201,22 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     }
 
     /*
+     * Position method. If not set try to default to TPPOSIT_FSEQ.
+     */
+    if ( filereq->position_method != TPPOSIT_FSEQ &&
+         filereq->position_method != TPPOSIT_FID &&
+         filereq->position_method != TPPOSIT_EOI &&
+         filereq->position_method != TPPOSIT_BLKID ) {
+        if ( filereq->tape_fseq > 0 ) filereq->position_method = TPPOSIT_FSEQ;
+        else {
+            serrno = EINVAL;
+            sprintf(errmsgtxt,"INVALID POSITION METHOD SPECIFIED\n");
+            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+    }
+
+    /*
      * Concatenation of files on disk or tape. If not set,
      * try to set it...
      */
@@ -220,7 +236,10 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             /*
              * Tape write
              */
-            if ( file->prev->filereq.tape_fseq == filereq->tape_fseq )
+            if ( (filereq->position_method == TPPOSIT_FSEQ &&
+                  file->prev->filereq.tape_fseq == filereq->tape_fseq )) ||
+                 (filereq->position_method == TPPOSIT_FID &&
+                  strcmp(file->prev->filereq.fid,filereq->fid) == 0) )
                 filereq->concat = CONCAT;
             else
                 filereq->concat = NOCONCAT;
@@ -231,6 +250,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      */
     if ( mode == WRITE_ENABLE && file != tape->file && 
          (filereq->concat & NOCONCAT) != 0 &&
+         (filereq->position_method == TPPOSIT_FSEQ) &&
         (file->prev->filereq.tape_fseq != filereq->tape_fseq - 1) ) {
         serrno = EINVAL;
         sprintf(errmsgtxt,RT151,"CPDSKTP");
@@ -390,8 +410,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
              * Calculate start size if we are concatenating
              */
             if ( filereq->maxsize > 0 ) {
-                if ( file->prev != file && 
-                    file->prev->filereq.tape_fseq == filereq->tape_fseq ) {
+                if ( filereq->concat == CONCAT ) {
                     filereq->startsize = file->prev->filereq.startsize +
                         file->prev->filereq.bytes_in;
                 }
