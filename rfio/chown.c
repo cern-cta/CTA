@@ -1,7 +1,10 @@
 /*
- * $Id: chown.c,v 1.2 1999/07/20 12:47:53 jdurand Exp $
+ * $Id: chown.c,v 1.3 1999/12/09 08:45:21 baran Exp $
  *
  * $Log: chown.c,v $
+ * Revision 1.3  1999/12/09 08:45:21  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:47:53  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -24,13 +27,12 @@ static char sccsid[] = "@(#)chown.c	1.3 5/6/98 CERN CN-PDP Felix Hassine ";
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-static char     buf[256];       /* General input/output buffer          */
-
 int  rfio_chown(file, owner, group)     /* Remote chown	                */
 char		*file;          /* remote file path             */
 int		owner ;		   /* Owner's uid */
 int 		group ;		   /* Owner's gid */
 {
+	static char     buf[256];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote chown() status        */
 	int     	len;

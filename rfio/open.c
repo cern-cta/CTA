@@ -1,7 +1,10 @@
 /*
- * $Id: open.c,v 1.2 1999/07/20 12:48:03 jdurand Exp $
+ * $Id: open.c,v 1.3 1999/12/09 08:47:10 baran Exp $
  *
  * $Log: open.c,v $
+ * Revision 1.3  1999/12/09 08:47:10  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:03  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -50,6 +53,7 @@ static void rfio_setup_ext(iop,uid,gid,passwd)
 	extern char * getenv() ; 	/* External declaration		*/
 	char * cp ; 			/* Character pointer		*/
 	int v ;
+	char     rfio_buf[BUFSIZ] ;
 
 	if ( cp= getenv("RFIO_READOPT") ) {
 		v = atoi(cp) ;

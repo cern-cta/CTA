@@ -1,7 +1,10 @@
 /*
- * $Id: fclose.c,v 1.2 1999/07/20 12:47:56 jdurand Exp $
+ * $Id: fclose.c,v 1.3 1999/12/09 08:47:46 baran Exp $
  *
  * $Log: fclose.c,v $
+ * Revision 1.3  1999/12/09 08:47:46  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:47:56  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -26,51 +29,52 @@ static char sccsid[] = "@(#)fclose.c	3.4 5/6/98  CERN CN-SW/DC F. Hemmer, A. Tra
 #define RFIO_KERNEL     1     
 #include "rfio.h"    
 
-static char     buf[256];       /* General input/output buffer          */
 
 int rfio_fclose(fp)             /* Remote file close                    */
 RFILE *fp;                      /* Remote file pointer                  */
 {
-	char    *p = buf;
-	int     status;
-	int i, remoteio=0 ;
+   static char     buf[256];       /* General input/output buffer          */
+   char    *p = buf;
+   int     status;
+   int i, remoteio=0 ;
 
-	INIT_TRACE("RFIO_TRACE");
-	TRACE(1, "rfio", "rfio_fclose(%x)", fp);
 
-	if ( fp == NULL ) {
-		errno = EBADF;
-		END_TRACE();
-		return -1 ;
-	}
+   INIT_TRACE("RFIO_TRACE");
+   TRACE(1, "rfio", "rfio_fclose(%x)", fp);
 
-        /*
-         * The file is local : this is the only way to detect it !
-         */
-        for ( i=0 ; i< MAXRFD  ; i++ ) {
-                if ( rfilefdt[i] == fp ) {
-                        remoteio ++ ;
-                        break ;
-                }
-        }
-        if ( !remoteio ) {
-		status= fclose((FILE *)fp) ;
-		END_TRACE() ; 
-		rfio_errno = 0;
-		return status ; 
-	}
+   if ( fp == NULL ) {
+      errno = EBADF;
+      END_TRACE();
+      return -1 ;
+   }
 
-	/*
-	 * The file is remote
-	 */
-	if ( fp->magic != RFIO_MAGIC ) {
-		(void) close(fp->s);
-		free((char *)fp);
-		END_TRACE()  ; 
-		return -1 ;
-	}
+   /*
+    * The file is local : this is the only way to detect it !
+    */
+   for ( i=0 ; i< MAXRFD  ; i++ ) {
+      if ( rfilefdt[i] == fp ) {
+	 remoteio ++ ;
+	 break ;
+      }
+   }
+   if ( !remoteio ) {
+      status= fclose((FILE *)fp) ;
+      END_TRACE() ; 
+      rfio_errno = 0;
+      return status ; 
+   }
 
-	status= rfio_close(fp->s) ;
-	END_TRACE() ;
-	return status ;
+   /*
+    * The file is remote
+    */
+   if ( fp->magic != RFIO_MAGIC ) {
+      (void) close(fp->s);
+      free((char *)fp);
+      END_TRACE()  ; 
+      return -1 ;
+   }
+
+   status= rfio_close(fp->s) ;
+   END_TRACE() ;
+   return status ;
 }

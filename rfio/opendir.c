@@ -1,7 +1,10 @@
 /*
- * $Id: opendir.c,v 1.2 1999/07/20 12:48:04 jdurand Exp $
+ * $Id: opendir.c,v 1.3 1999/12/09 08:55:16 baran Exp $
  *
  * $Log: opendir.c,v $
+ * Revision 1.3  1999/12/09 08:55:16  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:04  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -71,7 +74,6 @@ RDIR *rfio_opendir_ext();
  * It is used also in fstat.c, read.c
  * write.c, lseek.c and close.c
  */
-char     rfio_buf[BUFSIZ] ;
 
 static void rfio_dirsetup_ext(iop,uid,gid,passwd)
      RDIR   *iop;
@@ -155,6 +157,7 @@ RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
   int                     tolen;
   struct  hostent *hp;
   extern void rfio_dirsetup_ext();
+  char     rfio_buf[BUFSIZ] ;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1,"rfio","rfio_opendir(%s)",dirpath);

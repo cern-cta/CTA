@@ -1,7 +1,10 @@
 /*
- * $Id: lstat.c,v 1.2 1999/07/20 12:48:02 jdurand Exp $
+ * $Id: lstat.c,v 1.3 1999/12/09 08:48:35 baran Exp $
  *
  * $Log: lstat.c,v $
+ * Revision 1.3  1999/12/09 08:48:35  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:02  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -47,6 +50,7 @@ struct stat *statbuf;           	/* status buffer 		*/
 	unsigned long   unix_st_ino;
 #endif /* vms */
 	int 		rt,rc,reqst,magic ;
+        static char     buf[256];       /* General input/output buffer          */
 
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_lstat(%s, %x)", filepath, statbuf);

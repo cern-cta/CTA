@@ -1,7 +1,10 @@
 /*
- * $Id: lun2fn.c,v 1.2 1999/07/20 12:48:02 jdurand Exp $
+ * $Id: lun2fn.c,v 1.3 1999/12/09 08:54:50 baran Exp $
  *
  * $Log: lun2fn.c,v $
+ * Revision 1.3  1999/12/09 08:54:50  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:02  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -38,8 +41,6 @@ static char sccsid[] = "@(#)lun2fn.c	3.4 10/21/97 CERN CN-SW/DC Frederic Hemmer"
 
 extern char     *getenv();
 
-static char     buf[1024];      /* general purpose buffer               */
-
 char *
 lun2fn(lun)                     /* find file name corresponding to lun  */
 int     lun;
@@ -48,7 +49,7 @@ int     lun;
 	FILE    *fp;            /* a file pointer                       */
 	char    *p, *p1;        /* character pointers                   */
 	int     clun;           /* current lun entry                    */
-
+	static char buf[1024];  /* general purpose buffer     	        */
 /*
  * Open the assign file, get the corresponding entry
  */

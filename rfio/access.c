@@ -1,7 +1,10 @@
 /*
- * $Id: access.c,v 1.2 1999/07/20 12:47:51 jdurand Exp $
+ * $Id: access.c,v 1.3 1999/12/09 08:44:54 baran Exp $
  *
  * $Log: access.c,v $
+ * Revision 1.3  1999/12/09 08:44:54  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:47:51  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -22,12 +25,12 @@ static char sccsid[] = "@(#)access.c	1.4 5/6/98 Felix Hassine CN-PDP";
 #define RFIO_KERNEL	1
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-static char     buf[256];       /* General input/output buffer          */
 
 int  rfio_access(filepath, mode)       /* Remote file access            */
 char    *filepath;              /* remote file path                     */
 int 	mode ;			/* Access mode 				*/
 {
+	static char     buf[256];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote fopen() status        */
 	int     	len;

@@ -1,7 +1,10 @@
 /*
- * $Id: chmod.c,v 1.2 1999/07/20 12:47:53 jdurand Exp $
+ * $Id: chmod.c,v 1.3 1999/12/09 08:44:27 baran Exp $
  *
  * $Log: chmod.c,v $
+ * Revision 1.3  1999/12/09 08:44:27  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:47:53  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -24,12 +27,11 @@ static char sccsid[] = "@(#)chmod.c	1.2 21 Jan 1999  CERN IT-PDP/DM Olof Barring
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-static char     buf[256];       /* General input/output buffer          */
-
 int  rfio_chmod(dirpath, mode)     /* Remote chmod	                */
 char		*dirpath;          /* remote directory path             */
 int		mode;              /* remote directory mode             */
 {
+	static char     buf[256];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote chmod() status        */
 	int     	len;

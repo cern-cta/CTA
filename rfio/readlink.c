@@ -1,7 +1,10 @@
 /*
- * $Id: readlink.c,v 1.2 1999/07/20 12:48:08 jdurand Exp $
+ * $Id: readlink.c,v 1.3 1999/12/09 08:48:10 baran Exp $
  *
  * $Log: readlink.c,v $
+ * Revision 1.3  1999/12/09 08:48:10  baran
+ * Thread-safe version
+ *
  * Revision 1.2  1999/07/20 12:48:08  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
@@ -22,7 +25,6 @@ static char sccsid[] = "@(#)readlink.c	1.6 5/6/98 CERN CN-PDP/CS F. Hassine";
 #define RFIO_KERNEL     1
 #include "rfio.h"
 
-static  char buffer[256];
 #ifndef linux
 extern char *sys_errlist[];     /* system error list */
 #endif
@@ -43,8 +45,9 @@ int length ;
 	int rcode , len;
 	int uid ;
 	int gid ;
+	static  char buffer[256];
 
-        /*
+/*
          * The file is local.
          */
         INIT_TRACE("RFIO_TRACE");
