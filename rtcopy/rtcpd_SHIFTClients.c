@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.4 $ $Date: 1999/12/17 17:26:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.5 $ $Date: 1999/12/20 15:28:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -159,7 +159,7 @@ static int rtcp_GetOldCinfo(shift_client_t *req) {
         return(-1);
     }
 
-    memset(req->info,'\0',sizeof(tpqueue_info_t));
+    memset(&req->info,'\0',sizeof(tpqueue_info_t));
     if ( rtcpd_CheckNoMoreTapes() != 0 ) {
         req->info.status = NOTAVAIL;
         return(0);
