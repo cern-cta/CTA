@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.38 2002/05/30 12:42:58 bcouturi Exp $
+ * $Id: Ctape.h,v 1.39 2002/06/11 10:37:37 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.38 $ $Date: 2002/05/30 12:42:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.39 $ $Date: 2002/06/11 10:37:37 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -191,7 +191,7 @@
 #define	TP029	"TP029 - pathname is mandatory\n"
 #define	TP030	"TP030 - I/O error\n"
 #define	TP031	"TP031 - no vid specified\n"
-#define	TP032	"TP032 - %s: drive name too long\n"
+#define	TP032	"TP032 - config file (line %d): %s\n"
 #define	TP033	"TP033 - drive %s@%s not operational"
 #define	TP034	"TP034 - all entries for a given device group must be grouped together\n"
 #define TP035	"TP035 - configuring %s %s\n"
