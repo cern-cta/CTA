@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.102 $ $Release$ $Date: 2004/12/08 16:32:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.103 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.102 $ $Release$ $Date: 2004/12/08 16:32:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.103 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1448,10 +1448,6 @@ int nextSegmentToMigrate(
     return(-1);
   }
 
-  /*
-   * \todo call getBestTapeCopyForStream() and create the
-   * corresponding segment (in memory only).
-   */
   rc = Cstager_IStagerSvc_bestTapeCopyForStream(
                                                 *stgsvc,
                                                 stream,
@@ -2050,6 +2046,11 @@ int deleteTapeCopyFromDB(
   int rc = 0, nbStreams, save_serrno, i;
   ID_TYPE key;
 
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
@@ -2060,10 +2061,6 @@ int deleteTapeCopyFromDB(
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);  
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  if ( tapeCopy == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
 
   Cstager_TapeCopy_id(tapeCopy,&key);
@@ -2142,6 +2139,7 @@ int deleteTapeCopyFromDB(
     serrno = save_serrno;
     return(-1);
   }
+  C_IAddress_delete(iAddr);
   return(0);
 }
 
@@ -2688,7 +2686,7 @@ int rtcpcld_updcFileMigrated(
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
   rtcpFileRequest_t *filereq;
-  struct Cns_fileid *fileid;
+  struct Cns_fileid *fileid = NULL;
   int rc = 0, nbTapeCopies, nbDiskCopies;
   int save_serrno, i;
 
@@ -2698,21 +2696,27 @@ int rtcpcld_updcFileMigrated(
     return(-1);
   }
 
-  filereq = &(file->filereq);
-
-  fileid = NULL;
-  (void)rtcpcld_getFileId(file,&fileid);
-
   rc = verifyTape(tape);
   if ( rc == -1 ) {
     return(-1);
   }
 
+  filereq = &(file->filereq);
+  fileid = NULL;
+  (void)rtcpcld_getFileId(file,&fileid);
+
   rc = getDbSvc(&svcs);
-  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) {
+    if ( fileid != NULL ) free(fileid);
+    return(-1);
+  }
 
   rc = C_BaseAddress_create(&baseAddr);
-  if ( rc == -1 ) return(-1);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("C_BaseAddress_create()");
+    if ( fileid != NULL ) free(fileid);
+    return(-1);
+  }
 
   C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
@@ -2742,6 +2746,7 @@ int rtcpcld_updcFileMigrated(
                     RTCPCLD_LOG_WHERE
                     );
     C_IAddress_delete(iAddr);
+    if ( fileid != NULL ) free(fileid);
     serrno = SEINTERNAL;
     return(-1);    
   }
@@ -2770,6 +2775,7 @@ int rtcpcld_updcFileMigrated(
     LOG_DBCALL_ERR("C_Services_fillObj()",
                    C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
+    if ( fileid != NULL ) free(fileid);
     serrno = save_serrno;
     return(-1);
   }
@@ -2821,10 +2827,12 @@ int rtcpcld_updcFileMigrated(
         LOG_DBCALL_ERR("C_Services_updateRep()",
                        C_Services_errorMsg(*svcs));
         C_IAddress_delete(iAddr);
+        if ( fileid != NULL ) free(fileid);
         serrno = save_serrno;
         return(-1);
       }
       C_IAddress_delete(iAddr);
+      if ( fileid != NULL ) free(fileid);
       return(0);
     }
   }
@@ -2857,6 +2865,7 @@ int rtcpcld_updcFileMigrated(
         if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_Services_rollback(*svcs,iAddr);
         C_IAddress_delete(iAddr);
+        if ( fileid != NULL ) free(fileid);
         serrno = save_serrno;
         return(-1);
       }
@@ -2871,6 +2880,7 @@ int rtcpcld_updcFileMigrated(
     LOG_DBCALL_ERR("C_Services_commit()",
                    C_Services_errorMsg(*svcs));
     C_IAddress_delete(iAddr);
+    if ( fileid != NULL ) free(fileid);
     serrno = save_serrno;
     return(-1);
   }
@@ -2888,6 +2898,7 @@ int rtcpcld_updcFileMigrated(
     rc = deleteTapeCopyFromDB(tapeCopyArray[i]);
     if ( rc == -1 ) {
       free(tapeCopyArray);
+      if ( fileid != NULL ) free(fileid);
       return(-1);
     }
   }
@@ -2898,6 +2909,7 @@ int rtcpcld_updcFileMigrated(
    * also remove the associated TapeCopy(s) and Segment(s)
    */
   Cstager_CastorFile_delete(castorFile);
+  if ( fileid != NULL ) free(fileid);
 
   return(0);
 }

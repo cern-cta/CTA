@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/07 13:54:05 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/07 13:54:05 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -663,6 +663,7 @@ int rtcpcld_updateTape(
             rc = tapeStatus(tape,&freeSpace,&flags);
             if ( rc == -1 ) {
               LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
+              if ( fileId != NULL ) free(fileId);
               return(-1);
             }
           }
@@ -763,6 +764,7 @@ int rtcpcld_updateTape(
                     statusStr,
                     RTCPCLD_LOG_WHERE
                     );
+    if ( fileId != NULL ) free(fileId);
     serrno = save_serrno;
     return(-1);
   } else {
@@ -789,6 +791,7 @@ int rtcpcld_updateTape(
                     );
   }
   
+  if ( fileId != NULL ) free(fileId);
   return(0);
 }
 

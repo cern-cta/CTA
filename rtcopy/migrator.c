@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/08 15:37:28 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/08 15:37:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -185,6 +185,7 @@ int migratorCallbackFileCopied(
                                    tape,
                                    file
                                    );
+      if ( blkid != NULL ) free(blkid);
       serrno = save_serrno;
       return(-1);
     }
@@ -226,6 +227,7 @@ int migratorCallbackFileCopied(
                                      tape,
                                      file
                                    );
+        if ( blkid != NULL ) free(blkid);
         serrno = save_serrno;
         return(-1);
       }
@@ -235,6 +237,7 @@ int migratorCallbackFileCopied(
                                     );
       if ( rc == -1 ) {
         LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
+        if ( blkid != NULL ) free(blkid);
         return(-1);
       }
       /*
@@ -270,11 +273,13 @@ int migratorCallbackFileCopied(
     }
     if ( rtcpcld_lockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_lockTape()");
+      if ( blkid != NULL ) free(blkid);
       return(-1);
     }
     rtcpcld_cleanupFile(file);
     if ( rtcpcld_unlockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+      if ( blkid != NULL ) free(blkid);
       return(-1);
     }
   } else {
@@ -287,10 +292,12 @@ int migratorCallbackFileCopied(
                                 );
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_updcMigrFailed()");
+      if ( blkid != NULL ) free(blkid);
       return(-1);
     }
   }
-  
+
+  if ( blkid != NULL ) free(blkid);
   return(0);
 }
 

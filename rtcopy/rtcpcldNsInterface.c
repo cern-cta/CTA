@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/12/07 14:41:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/12/07 14:41:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -275,6 +275,7 @@ int rtcpcld_updateNsSegmentAttributes(
                     tapereq->mode,
                     RTCPCLD_LOG_WHERE
                     );
+    if ( nsSegAttrs != NULL ) free(nsSegAttrs);
     serrno = EINVAL;
     return(-1);
   }
@@ -383,6 +384,7 @@ int rtcpcld_updateNsSegmentAttributes(
     serrno = save_serrno;
   }
 
+  if ( nsSegAttrs != NULL ) free(nsSegAttrs);
   return(rc);
 }
 
@@ -681,10 +683,12 @@ int rtcpcld_checkDualCopies(
   
   for ( i=0; i<nbSegs; i++ ) {
     if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {
+      free(fileId);
       serrno = EEXIST;
       return(-1);
     }
   }
+  free(fileId);
   return(0);
 }
 
