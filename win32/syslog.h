@@ -1,5 +1,5 @@
 /*
- * $Id: syslog.h,v 1.3 2001/05/20 06:47:25 baud Exp $
+ * $Id: syslog.h,v 1.4 2001/05/21 10:57:41 baud Exp $
  */
 
 /*
@@ -8,11 +8,11 @@
  */
  
 /*
- * @(#)$RCSfile: syslog.h,v $ $Revision: 1.3 $ $Date: 2001/05/20 06:47:25 $ CERN IT-PDP/IP Christoph von Praun
+ * @(#)$RCSfile: syslog.h,v $ $Revision: 1.4 $ $Date: 2001/05/21 10:57:41 $ CERN IT-PDP/IP Christoph von Praun
  */
 
-#ifndef SysLog_h
-#define SysLog_h 1
+#ifndef _SYSLOG_WIN32_H
+#define _SYSLOG_WIN32_H 1
 
 /*
  * priorities/facilities are encoded into a single 32-bit quantity, where the
