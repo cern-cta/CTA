@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.162 2002/01/25 12:28:09 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.163 2002/01/25 13:32:54 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.162 $ $Date: 2002/01/25 12:28:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.163 $ $Date: 2002/01/25 13:32:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -134,7 +134,7 @@ char defpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
 char currentpool_out[CA_MAXPOOLNAMELEN + 1];
 int force_init = 0;
 int force_shutdown = 0;
-int migr_init;
+int migr_init = 0;
 char func[16];
 int initreq_reqid = 0;
 int initreq_rpfd = 0;
