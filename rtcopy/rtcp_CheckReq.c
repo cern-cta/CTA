@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.48 $ $Date: 2002/01/10 11:38:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.49 $ $Date: 2002/04/08 14:49:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,12 @@ extern char *geterr();
 static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
+#if TMS
+extern int rtcp_CallTMS _PROTO((tape_list_t *, char *));
+#endif
+#if VMGR
+extern int rtcp_CallVMGR _PROTO((tape_list_t *, char *));
+#endif
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
@@ -635,7 +641,24 @@ int rtcp_CheckReq(SOCKET *client_socket,
 
     if ( rtcp_CheckReqStructures(client_socket,client,tape) == -1 ) return(-1);
 
-    rc = rtcp_CallTMS(tape,NULL);
+#if VMGR
+    /* Call VMGR */
+    if ((rc = rtcp_CallVMGR(tape,NULL)) != 0) {
+#endif
+#if TMS
+#if VMGR
+        /* VMGR fails with acceptable serrno and TMS is available */
+        if (serrno == ETVUNKN) {
+#endif
+            /* Call TMS */
+            rc = rtcp_CallTMS(tape,NULL);
+#if VMGR
+        }
+#endif
+#endif
+#if VMGR
+    }
+#endif
 
     if ( (p = getenv("RTCOPYD_MAX_TPRETRY")) != NULL )
         max_tpretry = atoi(p);
