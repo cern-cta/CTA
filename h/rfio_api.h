@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.39 $ $Date: 2002/11/21 13:01:34 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.40 $ $Date: 2002/12/02 06:40:46 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -176,6 +176,7 @@ EXTERN_C int DLL_DECL rfio_fclose _PROTO((RFILE *));
 EXTERN_C int DLL_DECL rfio_feof _PROTO((RFILE *));
 EXTERN_C int DLL_DECL rfio_ferror _PROTO((RFILE *));
 EXTERN_C int DLL_DECL rfio_fflush _PROTO((RFILE *));
+EXTERN_C int DLL_DECL rfio_fileno _PROTO((RFILE *));
 EXTERN_C RFILE DLL_DECL *rfio_fopen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fread _PROTO((void *, int, int, RFILE *));
 EXTERN_C int DLL_DECL rfio_fseek _PROTO((RFILE *, long int, int));
@@ -203,6 +204,7 @@ EXTERN_C int DLL_DECL rfio_fclose _PROTO((FILE *));
 EXTERN_C int DLL_DECL rfio_feof _PROTO((FILE *));
 EXTERN_C int DLL_DECL rfio_ferror _PROTO((FILE *));
 EXTERN_C int DLL_DECL rfio_fflush _PROTO((FILE *));
+EXTERN_C int DLL_DECL rfio_fileno _PROTO((FILE *));
 EXTERN_C FILE DLL_DECL *rfio_fopen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fread _PROTO((void *, int, int, FILE *));
 EXTERN_C int DLL_DECL rfio_fseek _PROTO((FILE *, long int, int));
