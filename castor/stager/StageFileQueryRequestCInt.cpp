@@ -355,6 +355,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_fileName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFileQueryRequest_fileName(castor::stager::StageFileQueryRequest* instance, const char** var) {
+    *var = instance->fileName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_setFileName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFileQueryRequest_setFileName(castor::stager::StageFileQueryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setFileName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StageFileQueryRequest_id
   //----------------------------------------------------------------------------
   int Cstager_StageFileQueryRequest_id(castor::stager::StageFileQueryRequest* instance, u_signed64* var) {

@@ -97,6 +97,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_fileName
+       * Name of the castor file we deal with
+       * @return the value of m_fileName
+       */
+      std::string fileName() const {
+        return m_fileName;
+      }
+
+      /**
+       * Set the value of m_fileName
+       * Name of the castor file we deal with
+       * @param new_var the new value of m_fileName
+       */
+      void setFileName(std::string new_var) {
+        m_fileName = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -115,6 +133,9 @@ namespace castor {
       }
 
     private:
+
+      /// Name of the castor file we deal with
+      std::string m_fileName;
 
       /// The id of this object
       u_signed64 m_id;

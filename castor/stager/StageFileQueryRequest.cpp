@@ -39,6 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StageFileQueryRequest::StageFileQueryRequest() throw() :
   QryRequest(),
+  m_fileName(""),
   m_id(0) {
 };
 
@@ -63,6 +64,7 @@ void castor::stager::StageFileQueryRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->QryRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "fileName : " << m_fileName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

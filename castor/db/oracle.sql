@@ -99,7 +99,7 @@ CREATE TABLE StageUpdateFileStatusRequest (flags INTEGER, userName VARCHAR(2048)
 
 /* SQL statements for type StageFileQueryRequest */
 DROP TABLE StageFileQueryRequest;
-CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), fileName VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageRequestQueryRequest */
 DROP TABLE StageRequestQueryRequest;
@@ -759,7 +759,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
  fs NUMBER;
  dev NUMBER;
  TYPE AnyCursor IS REF CURSOR;
- c1 AnyCursor;
+ c1 castor.AnyCursor;
 BEGIN
  IF fileSystems.COUNT > 0 THEN
   DECLARE

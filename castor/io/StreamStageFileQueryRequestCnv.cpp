@@ -101,6 +101,7 @@ void castor::io::StreamStageFileQueryRequestCnv::createRep(castor::IAddress* add
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
+  ad->stream() << obj->fileName();
   ad->stream() << obj->id();
 }
 
@@ -144,6 +145,9 @@ castor::IObject* castor::io::StreamStageFileQueryRequestCnv::createObj(castor::I
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
+  std::string fileName;
+  ad->stream() >> fileName;
+  object->setFileName(fileName);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

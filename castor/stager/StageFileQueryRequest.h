@@ -271,6 +271,18 @@ int Cstager_StageFileQueryRequest_clone(struct Cstager_StageFileQueryRequest_t* 
                                         struct C_IObject_t* ret);
 
 /**
+ * Get the value of fileName
+ * Name of the castor file we deal with
+ */
+int Cstager_StageFileQueryRequest_fileName(struct Cstager_StageFileQueryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of fileName
+ * Name of the castor file we deal with
+ */
+int Cstager_StageFileQueryRequest_setFileName(struct Cstager_StageFileQueryRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
