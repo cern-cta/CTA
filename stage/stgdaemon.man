@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.18 2002/10/03 14:54:24 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.19 2002/10/21 14:26:37 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.18 $ $Date: 2002/10/03 14:54:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.19 $ $Date: 2002/10/21 14:26:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/03 14:54:24 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/21 14:26:37 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -114,7 +114,6 @@ DEFSIZE	maximum filesize if the
 option is not specified on user commands. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
 .HP
 MAX_SETRETENP sets the maximum retention period a user can give for a CASTOR file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively.
-value the garbage collector is started.
 .HP
 PUT_FAILED_RETENP sets the retention period for a PUT_FAILED file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in PUT_FAILED can be a candidate for garbage collection.
 .HP
