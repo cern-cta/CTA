@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.9 2001/02/04 23:07:07 jdurand Exp $
+ * $Id: stage_api.c,v 1.10 2001/02/04 23:50:04 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -506,7 +506,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if (c == 0) break;
     if ((req_type == STAGE_OUT) && (serrno == ENOSPC)) {
-      if (enospc_ntries++ > enospc_retry) break;
+      if (++enospc_ntries > enospc_retry) break;
       stage_sleep(enospc_retryint);
       continue;
     }
