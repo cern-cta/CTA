@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.20 $ $Date: 2000/02/01 13:17:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.21 $ $Date: 2000/02/01 14:25:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -939,25 +939,21 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
              rtcpd_SetProcError(RTCP_FAILED); \
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
-        if ( rc == -1 || mode == WRITE_ENABLE ) { \
-            (void) tellClient(&client_socket,X,Y,-1); \
-            (void) rtcpd_stageupdc(nexttape,nextfile); \
-        } \
-        if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
-            if ( rc == -1 || mode == WRITE_ENABLE ) { \
-                (void) tellClient(&client_socket,X,Y,-1); \
-                (void) rtcpd_stageupdc(nexttape,nextfile); \
-            } \
-            (void)rtcpd_Release((X),NULL); \
-            if ( mode == WRITE_ENABLE ) rtcpd_SetProcError(severity); \
-        } else { \
-            tape->local_retry++; \
-            if ( mode == WRITE_ENABLE ) (void) tellClient(&client_socket,X,Y,0); \
-        } \
-        (void) tellClient(&client_socket,NULL,NULL,-1); \
-        rtcp_CloseConnection(&client_socket); \
-        if ( rc == -1 ) return((void *)&failure); \
-        else return((void *)&success); \
+         if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
+             if ( rc == -1 || mode == WRITE_ENABLE ) { \
+                 (void) tellClient(&client_socket,X,Y,-1); \
+                 (void) rtcpd_stageupdc(nexttape,nextfile); \
+             } \
+             (void)rtcpd_Release((X),NULL); \
+             if ( mode == WRITE_ENABLE ) rtcpd_SetProcError(severity); \
+         } else { \
+             tape->local_retry++; \
+             if ( mode == WRITE_ENABLE ) (void) tellClient(&client_socket,X,Y,0); \
+         } \
+         (void) tellClient(&client_socket,NULL,NULL,-1); \
+         rtcp_CloseConnection(&client_socket); \
+         if ( rc == -1 ) return((void *)&failure); \
+         else return((void *)&success); \
     }}
 
 void *tapeIOthread(void *arg) {
