@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 17:30:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -349,6 +349,34 @@ castor::stager::FileSystem*
 castor::stager::RemoteStagerSvc::selectFileSystem
 (const std::string mountPoint,
  const std::string diskServer)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// selectDiskPool
+// -----------------------------------------------------------------------
+castor::stager::DiskPool*
+castor::stager::RemoteStagerSvc::selectDiskPool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// selectDiskServer
+// -----------------------------------------------------------------------
+castor::stager::DiskServer*
+castor::stager::RemoteStagerSvc::selectDiskServer
+(const std::string name)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

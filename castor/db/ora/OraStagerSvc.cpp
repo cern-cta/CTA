@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2004/11/25 18:45:20 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -34,6 +34,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
@@ -122,6 +123,14 @@ const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementStri
 const std::string castor::db::ora::OraStagerSvc::s_selectFileSystemStatementString =
   "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id";
 
+/// SQL statement for selectDiskPool
+const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
+  "SELECT id FROM DiskPool WHERE name = :1";
+
+/// SQL statement for selectDiskServer
+const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementString =
+  "SELECT id, status FROM DiskServer WHERE name = :1";
+
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
@@ -139,6 +148,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_requestToDoStatement(0),
   m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0), m_selectFileSystemStatement(0),
+  m_selectDiskPoolStatement(0), m_selectDiskServerStatement(0),
   m_updateAndCheckSubRequestStatement(0) {
 }
 
@@ -183,6 +193,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
     deleteStatement(m_selectCastorFileStatement);
+    deleteStatement(m_selectDiskPoolStatement);
+    deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -199,6 +211,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
   m_selectCastorFileStatement = 0;
+  m_selectDiskPoolStatement = 0;
+  m_selectDiskServerStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
 }
 
@@ -1082,6 +1096,81 @@ castor::db::ora::OraStagerSvc::selectFileSystem
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileSystem by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectDiskPool
+// -----------------------------------------------------------------------
+castor::stager::DiskPool*
+castor::db::ora::OraStagerSvc::selectDiskPool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectDiskPoolStatement) {
+    m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectDiskPoolStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectDiskPoolStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectDiskPoolStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the DiskPool, so create it in memory
+    castor::stager::DiskPool* result =
+      new castor::stager::DiskPool();
+    result->setId((u_signed64)rset->getDouble(1));
+    m_selectDiskPoolStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select DiskPool by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectDiskServer
+// -----------------------------------------------------------------------
+castor::stager::DiskServer*
+castor::db::ora::OraStagerSvc::selectDiskServer
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectDiskServerStatement) {
+    m_selectDiskServerStatement = createStatement(s_selectDiskServerStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectDiskServerStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectDiskServerStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectDiskServerStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the DiskServer, so create it in memory
+    castor::stager::DiskServer* result =
+      new castor::stager::DiskServer();
+    result->setId((u_signed64)rset->getDouble(1));
+    result->setStatus
+      ((enum castor::stager::DiskServerStatusCode)
+       rset->getInt(2));
+    m_selectDiskServerStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select DiskServer by name :"
       << std::endl << e.getMessage();
     throw ex;
   }

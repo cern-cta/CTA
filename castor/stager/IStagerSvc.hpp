@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/26 09:33:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -47,9 +47,11 @@ namespace castor {
     class Segment;
     class TapeCopy;
     class DiskCopy;
+    class DiskPool;
     class SvcClass;
     class FileClass;
     class FileSystem;
+    class DiskServer;
     class SubRequest;
     class CastorFile;
     class TapeCopyForMigration;
@@ -357,6 +359,30 @@ namespace castor {
       virtual castor::stager::FileSystem* selectFileSystem
       (const std::string mountPoint,
        const std::string diskServer)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a DiskPool from the database based on name.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param name the name of the disk pool
+       * @return the DiskPool object or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::DiskPool* selectDiskPool
+      (const std::string name)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a DiskServer from the database based on name.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param name the name of the disk server
+       * @return the DiskServer object or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::DiskServer* selectDiskServer
+      (const std::string name)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -340,7 +340,8 @@ namespace castor {
          * @return the SvcClass, or 0 if none found
          * @exception Exception in case of error
          */
-        virtual castor::stager::SvcClass* selectSvcClass(const std::string name)
+        virtual castor::stager::SvcClass* selectSvcClass
+        (const std::string name)
           throw (castor::exception::Exception);
 
         /**
@@ -350,7 +351,8 @@ namespace castor {
          * @return the FileClass, or 0 if none found
          * @exception Exception in case of error
          */
-        virtual castor::stager::FileClass* selectFileClass(const std::string name)
+        virtual castor::stager::FileClass* selectFileClass
+        (const std::string name)
           throw (castor::exception::Exception);
 
         /**
@@ -371,7 +373,8 @@ namespace castor {
          * Caller is in charge of the deletion of the allocated
          * objects, including the DiskServer Object
          * @param mountPoint the mountPoint of the FileSystem
-         * @param diskServer the name of the disk server hosting this file system
+         * @param diskServer the name of the disk server hosting
+         * this file system
          * @return the FileSystem linked to its DiskServer, or 0 if none found
          * @exception Exception in case of error
          */
@@ -380,6 +383,30 @@ namespace castor {
          const std::string diskServer)
           throw (castor::exception::Exception);
 
+        /**
+         * Retrieves a DiskPool from the database based on name.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param name the name of the disk pool
+         * @return the DiskPool object or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskPool* selectDiskPool
+        (const std::string name)
+          throw (castor::exception::Exception);
+        
+        /**
+         * Retrieves a DiskServer from the database based on name.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param name the name of the disk server
+         * @return the DiskServer object or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskServer* selectDiskServer
+        (const std::string name)
+          throw (castor::exception::Exception);
+        
         /**
          * Updates a SubRequest status in the DB and tells
          * whether the request to which it belongs still
@@ -494,6 +521,18 @@ namespace castor {
 
         /// SQL statement object for function selectFileSystem
         oracle::occi::Statement *m_selectFileSystemStatement;
+
+        /// SQL statement for function selectDiskPool
+        static const std::string s_selectDiskPoolStatementString;
+
+        /// SQL statement object for function selectDiskPool
+        oracle::occi::Statement *m_selectDiskPoolStatement;
+
+        /// SQL statement for function selectDiskServer
+        static const std::string s_selectDiskServerStatementString;
+
+        /// SQL statement object for function selectDiskServer
+        oracle::occi::Statement *m_selectDiskServerStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

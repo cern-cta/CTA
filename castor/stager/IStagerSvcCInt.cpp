@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/25 13:21:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -417,6 +417,40 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *fileSystem = stgSvc->stgSvc->selectFileSystem(mountPoint, diskServer);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectDiskPool
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectDiskPool(struct Cstager_IStagerSvc_t* stgSvc,
+                                        castor::stager::DiskPool** diskPool,
+                                        const char* name) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *diskPool = stgSvc->stgSvc->selectDiskPool(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectDiskServer
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectDiskServer(struct Cstager_IStagerSvc_t* stgSvc,
+                                          castor::stager::DiskServer** diskServer,
+                                          const char* name) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *diskServer = stgSvc->stgSvc->selectDiskServer(name);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
