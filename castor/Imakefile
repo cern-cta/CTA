@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.29 $ $Release$ $Date: 2004/07/21 09:10:42 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Release$ $Date: 2004/07/29 09:33:43 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -208,11 +208,8 @@ STAGEQRY_OBJS = $(STAGEQRY_SRCS:.cpp=.Osuf)
 MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
 CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
 
-PROGS_C = ProgramTargetName(stagein) \
-          ProgramTargetName(stageout) \
-          ProgramTargetName(stageupdc) \
-          ProgramTargetName(stageqry) \
-          ProgramTargetName(mttest)
+PROGS_S = stagein stageout stageupdc stageqry mttest
+PROGS_C = $(patsubst %,ProgramTargetName(%),$(PROGS_S))
 
 COMMONLIB = LibraryTargetName(castorClient)
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
@@ -220,8 +217,6 @@ LDFLAGS = $(MTLDFLAGS)
 LD = g++
 
 all: $(COMMONLIB) $(PROGS_C)
-
-install:
 
 MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
@@ -273,7 +268,26 @@ depend:
 	    fi )\
 	done ;
 
+install: $(patsubst %,FileName($(BIN),%),$(PROGS_C))
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
 #endif
+
+InstallProgram(stagein,$(BIN),root,bin,755)
+InstallProgram(stageout,$(BIN),root,bin,755)
+InstallProgram(stageupdc,$(BIN),root,bin,755)
+InstallProgram(stageqry,$(BIN),root,bin,755)
+InstallProgram(mttest,$(BIN),root,bin,755)
+
+exportman:
 
 clean::
 	@echo cleaning in CurDir
