@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.10 2004/11/29 17:23:44 jdurand Exp $
+ * $Id: stager_macros.h,v 1.11 2004/11/30 09:38:11 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -42,12 +42,12 @@
 #define STAGER_LOG(what,fileid,message,value,message2,value2) { \
   char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
-  extern int optionStagerNoDlf; \
+  extern int stagerNoDlf; \
   extern char stagerLog[CA_MAXLINELEN+1]; \
   extern Cuuid_t stagerUuid; \
   if (message != NULL) { \
     if (message2 != NULL) { \
-      if (! optionStagerNoDlf) dlf_write( \
+      if (! stagerNoDlf) dlf_write( \
 	        stagerUuid, \
 	        stagerMessages[what].defaultSeverity, \
 	        what, \
@@ -74,7 +74,7 @@
 	} \
       }	\
     } else { \
-      if (! optionStagerNoDlf) dlf_write( \
+      if (! stagerNoDlf) dlf_write( \
 	        stagerUuid, \
 	        stagerMessages[what].defaultSeverity, \
 	        what, \
@@ -94,7 +94,7 @@
     } \
   } else { \
     if (message2 != NULL) { \
-      if (! optionStagerNoDlf) dlf_write( \
+      if (! stagerNoDlf) dlf_write( \
 		stagerUuid, \
 		stagerMessages[what].defaultSeverity, \
 		what, \
@@ -112,7 +112,7 @@
 	} \
       } \
     } else { \
-      if (! optionStagerNoDlf) dlf_write( \
+      if (! stagerNoDlf) dlf_write( \
 		stagerUuid, \
 		stagerMessages[what].defaultSeverity, \
 		what, \

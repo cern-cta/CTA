@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.7 2004/11/25 11:02:20 jdurand Exp $
+ * $Id: stager_constants.h,v 1.8 2004/11/30 09:38:11 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -8,6 +8,7 @@
 #include "osdep.h"
 
 #define STAGER_DEFAULT_TIMEOUT      20                   /* Default send/recv timeout */
+#define STAGER_DEFAULT_NODLF         0                   /* Default nodlf option value */
 #define STAGER_DEFAULT_FSUPDATE     30                   /* Default number of seconds between every fs update */
 #define STAGER_DEFAULT_FS_EXP_TIMEOUT 60                 /* Default timeout from expert system */
 #define STAGER_DEFAULT_SECURE_PORT 5515                  /* Default secure port number */
@@ -29,6 +30,7 @@
 #define STAGER_CLASS              "STAGER"               /* Label in config file (1st column) */
 
 #define STAGER_CLASS_TIMEOUT      "TIMEOUT"              /* Sub-label in config file for timeout */
+#define STAGER_CLASS_NODLF        "NODLF"                /* Sub-label in config file for nodlf */
 #define STAGER_CLASS_FSUPDATE     "FSUPDATE"             /* Sub-label in config file for fs update */
 #define STAGER_CLASS_SECURE_PORT  "SPORT"                /* Sub-label in config file for secure port */
 #define STAGER_CLASS_SECURE       "SECURE"               /* Sub-label in config file for secure mode */
@@ -47,6 +49,7 @@
 #define STAGER_CLASS_HOST         "HOST"                 /* Sub-label in config file for host */
 
 #define STAGER_ENV_TIMEOUT        "STAGER_TIMEOUT"       /* Environment variable for timeout */
+#define STAGER_ENV_NODLF          "STAGER_NODLF"         /* Environment variable for nodlf */
 #define STAGER_ENV_FSUPDATE       "STAGER_FSUPDATE"      /* Environment variable for fs update */
 #define STAGER_ENV_SECURE_PORT    "STAGER_SPORT"         /* Environment variable for secure port */
 #define STAGER_ENV_SECURE         "STAGER_SECURE"        /* Environment variable for secure stager */
