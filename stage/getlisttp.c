@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1995 by CERN/CN/PDP/DH
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getlisttp.c	1.2 2/14/95 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.5 $ $Date: 1999/12/08 15:57:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>

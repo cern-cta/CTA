@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.3 1999/12/03 09:53:00 jdurand Exp $
+ * $Id: stgconvert.c,v 1.4 1999/12/08 15:57:38 jdurand Exp $
  */
 
 /*
@@ -32,7 +32,7 @@
 /* =============== */
 /* Local variables */
 /* =============== */
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 09:53:00 $ CERN IT-PDP/DM Jean-Damien Durand / Jean-Philippe Baud";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 15:57:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ====== */
 /* Macros */
@@ -55,12 +55,21 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.3 $ $Date: 19
 #define CDB_USERNAME "Cdb_Stage_User"
 #define CDB_PASSWORD "Cdb_Stage_Password"
 
+#ifdef __STDC__
+#define CONST const
+#else
+#define CONST
+#endif
+
 /* =================== */
 /* Internal prototypes */
 /* =================== */
 void stgconvert_usage _PROTO(());
 int stcpcmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 int stppcmp _PROTO((struct stgpath_entry *, struct stgpath_entry *));
+int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
+int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
+
 
 int main(argc,argv)
      int argc;
@@ -672,6 +681,46 @@ int main(argc,argv)
           printf("--> more info:\n%s",error);
         }
       }
+
+      /* We reload all the entries into memory */
+      {
+        struct stat statbuff;
+
+        if (fstat(stgcat_fd,&statbuff) < 0) {
+          printf("### fstat error on \"%s\" (%s)\n",stgcat,strerror(errno));
+          printf("### No stgcat sorting possible\n");
+        } else {
+          if (statbuff.st_size > 0) {
+            struct stgcat_entry *stcpall;
+
+            if ((stcpall = (struct stgcat_entry *) malloc(statbuff.st_size)) == NULL) {
+              printf("### malloc error (%s)\n",strerror(errno));
+              printf("### No stgcat sorting possible\n");
+            } else {
+              if (lseek(stgcat_fd,0,SEEK_SET) < 0) {
+                printf("### lseek error on \"%s\" (%s)\n",stgcat,strerror(errno));
+                printf("### No stgcat sorting possible\n");
+              } else {
+                if (read(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
+                  printf("### read error on \"%s\" (%s)\n",stgcat,strerror(errno));
+                  printf("### No stgcat sorting possible\n");
+                } else {
+                  qsort(stcpall,statbuff.st_size, sizeof(struct stgcat_entry), &stgdb_stcpcmp);
+                  if (lseek(stgcat_fd,0,SEEK_SET) < 0) {
+                    printf("### lseek error on \"%s\" (%s)\n",stgcat,strerror(errno));
+                    printf("### No stgcat sorted output possible\n");
+                  } else {
+                    if (write(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
+                      printf("### write error on \"%s\" (%s)\n",stgcat,strerror(errno));
+                      printf("### Sorted stgcat output probably corrupted\n");
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
   no_alloced_dump:
@@ -715,6 +764,45 @@ int main(argc,argv)
         printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
+        }
+      }
+      /* We reload all the entries into memory */
+      {
+        struct stat statbuff;
+        
+        if (fstat(stgpath_fd,&statbuff) < 0) {
+          printf("### fstat error on \"%s\" (%s)\n",stgpath,strerror(errno));
+          printf("### No stgpath sorting possible\n");
+        } else {
+          if (statbuff.st_size > 0) {
+            struct stgpath_entry *stppall;
+            
+            if ((stppall = (struct stgpath_entry *) malloc(statbuff.st_size)) == NULL) {
+              printf("### malloc error (%s)\n",strerror(errno));
+              printf("### No stgpath sorting possible\n");
+            } else {
+              if (lseek(stgpath_fd,0,SEEK_SET) < 0) {
+                printf("### lseek error on \"%s\" (%s)\n",stgpath,strerror(errno));
+                printf("### No stgpath sorting possible\n");
+              } else {
+                if (read(stgpath_fd,stppall,statbuff.st_size) != statbuff.st_size) {
+                  printf("### read error on \"%s\" (%s)\n",stgpath,strerror(errno));
+                  printf("### No stgpath sorting possible\n");
+                } else {
+                  qsort(stppall,statbuff.st_size, sizeof(struct stgpath_entry), &stgdb_stppcmp);
+                  if (lseek(stgpath_fd,0,SEEK_SET) < 0) {
+                    printf("### lseek error on \"%s\" (%s)\n",stgpath,strerror(errno));
+                    printf("### No stgpath sorted output possible\n");
+                  } else {
+                    if (write(stgpath_fd,stppall,statbuff.st_size) != statbuff.st_size) {
+                      printf("### write error on \"%s\" (%s)\n",stgpath,strerror(errno));
+                      printf("### Sorted stgpath output probably corrupted\n");
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -1249,5 +1337,46 @@ int stppcmp(stpp1,stpp2)
 
   /* OKAY */
   return(0);
+}
+
+int stgdb_stcpcmp(p1,p2)
+     CONST void *p1;
+     CONST void *p2;
+{
+  struct stgcat_entry *stcp1 = (struct stgcat_entry *) p1;
+  struct stgcat_entry *stcp2 = (struct stgcat_entry *) p2;
+
+  if (stcp1->c_time < stcp2->c_time) {
+    return(-1);
+  } else if (stcp1->c_time > stcp2->c_time) {
+    return(1);
+  } else {
+    if (stcp1->reqid < stcp2->reqid) {
+      return(-1);
+    } else if (stcp1->reqid > stcp2->reqid) {
+      return(1);
+    } else {
+      printf("### Warning : two elements in stgcat have same c_time (%d) and reqid (%d)\n",
+             (int) stcp1->c_time, (int) stcp1->reqid);
+      return(0);
+    }
+  }
+}
+
+int stgdb_stppcmp(p1,p2)
+     CONST void *p1;
+     CONST void *p2;
+{
+  struct stgpath_entry *stpp1 = (struct stgpath_entry *) p1;
+  struct stgpath_entry *stpp2 = (struct stgpath_entry *) p2;
+
+  if (stpp1->reqid < stpp2->reqid) {
+    return(-1);
+  } else if (stpp1->reqid > stpp2->reqid) {
+    return(1);
+  } else {
+    printf("### Warning : two elements in stgpath have same reqid (%d)\n",(int) stpp1->reqid);
+    return(0);
+  }
 }
 

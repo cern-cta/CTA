@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1995 by CERN/CN/PDP/DH
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sendrep.c	1.3 8/3/95 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1994-1995 by CERN/CN/PDP/DS
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stageinit.c	1.4 7/8/96 CERN CN-PDP/DS Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.5 $ $Date: 1999/12/08 15:57:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1997 by CERN/CN/PDP/DH
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)procalloc.c	1.8 09/05/97 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -25,6 +25,8 @@ static char sccsid[] = "@(#)procalloc.c	1.8 09/05/97 CERN CN-PDP/DH Jean-Philipp
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#include "stgdb_Cdb_ifce.h"
+
 extern char *optarg;
 extern int optind;
 extern char defpoolname[MAXPOOLNAMELEN];
@@ -34,6 +36,7 @@ extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 struct waitq *add2wq();
+extern struct stgdb_fd dbfd;
 
 procallocreq(req_data, clienthost)
 char *req_data;
@@ -166,7 +169,7 @@ char *clienthost;
 	} else if (c) {
 		updfreespace (stcp->poolname, stcp->ipath,
 			stcp->size*1024*1024);
-		delreq (stcp);
+		delreq (stcp,1);
 		goto reply;
 	} else {
 		if (Pflag)
@@ -177,6 +180,7 @@ char *clienthost;
 		    strcmp (stcp->ipath, argv[optind+1]))
 			create_link (stcp, argv[optind+1]);
 	}
+	stgdb_ins_stgcat(&dbfd,stcp);
 	savepath ();
 	savereqs ();
 	c = 0;
@@ -199,7 +203,7 @@ reply:
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
 					stcp->size*1024*1024);
-			delreq (stcp);
+			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
 	}
@@ -319,6 +323,7 @@ char *clienthost;
 	}
 	stcp->a_time = time (0);
 	stcp->nbaccesses++;
+	stgdb_upd_stgcat(&dbfd,stcp);
 	if (Pflag)
 		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)procqry.c	1.22 10/27/99 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,6 +34,9 @@ static char sccsid[] = "@(#)procqry.c	1.22 10/27/99 CERN CN-PDP/DH Jean-Philippe
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#include "stgdb_Cdb_ifce.h"
+#include <serrno.h>
+
 extern char *optarg;
 extern int optind;
 #if defined(IRIX64)
@@ -57,6 +60,14 @@ static regex_t preg;
 #else
 static char expbuf[256];
 #endif
+extern struct stgdb_fd dbfd;
+extern char *Default_db_user;
+extern char *Default_db_pwd;
+char db_user[33];
+char db_pwd[33];
+
+struct stgdb_fd dbfd_in_fork;
+struct stgdb_fd *dbfd_query;
 
 procqryreq(req_data, clienthost)
 char *req_data;
@@ -237,7 +248,58 @@ char *clienthost;
 			free (argv);
 			close (rpfd);
 			return;
+		} else {
+			/* We are in the child : we open a new connection to the Database Server so that   */
+			/* it will not clash with current one owned by the main process.                   */
+
+			/* Get stager/database login:password */
+			{
+				FILE *configfd;
+				char cfbuf[80];
+				char *p_p, *p_u;
+
+				if ((configfd = fopen(STGDBCONFIG,"r")) == NULL) {
+					stglogit (func, "Cannot open Db Configuration file %s\n", STGDBCONFIG);
+					stglogit (func, "Using default Db Username/Password = \"%s\"/\"%s\"\n",
+						Default_db_user,Default_db_pwd);
+					p_u = Default_db_user;
+					p_p  = Default_db_pwd;
+				} else {
+					if (fgets (cfbuf, sizeof(cfbuf), configfd) &&
+						strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n")) &&
+						(p_p = strtok (NULL, "@\n"))) {
+					} else {
+						stglogit(func, "Error reading Db Configuration file %s\n",STGDBCONFIG);
+						exit (CONFERR);
+					}
+					fclose(configfd);
+				}
+				strcpy (db_user, p_u);
+				strcpy (db_pwd, p_p);
+			}
+
+			stglogit(func, "Loging with User/Password = \"%s\"/\"<not printed>\"\n",db_user);
+          
+			if (stgdb_login(db_user,db_pwd,&dbfd_in_fork) != 0) {
+				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
+				exit(SYERR);
+			}
+
+			/* Open the database */
+			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
+				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
+				exit(SYERR);
+			}
+
+			/* There is no need to ask for a dump of the catalog : we use the one that is */
+			/* already in memory.                                                         */
+
+			/* We set the pointer to use to the correct dbfd structure */
+			dbfd_query = &dbfd_in_fork;
 		}
+	} else {
+		/* No fork : the dbfd to use is the one of the main process */
+		dbfd_query = &dbfd;
 	}
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
@@ -338,12 +400,23 @@ char *clienthost;
 			strcpy (p_stat, s_stat[stcp->status]);
 		if ((lflag || ((stcp->status & 0xFF0) == 0)) &&
 		    rfio_mstat (stcp->ipath, &st) == 0) {
-			if (st.st_size > stcp->actual_size)
+			int has_been_updated = 0;
+
+			if (st.st_size > stcp->actual_size) {
 				stcp->actual_size = st.st_size;
-			if (st.st_atime > stcp->a_time)
-				stcp->a_time = st.st_atime;
-			if (st.st_mtime > stcp->a_time)
-				stcp->a_time = st.st_mtime;
+                has_been_updated = 1;
+          }
+          if (st.st_atime > stcp->a_time) {
+            stcp->a_time = st.st_atime;
+            has_been_updated = 1;
+          }
+          if (st.st_mtime > stcp->a_time) {
+            stcp->a_time = st.st_mtime;
+            has_been_updated = 1;
+          }
+          if (has_been_updated != 0) {
+            stgdb_upd_stgcat(dbfd_query,stcp);
+          }
 		}
 		if (stcp->t_or_d == 't') {
 		    if (xflag) {
@@ -469,8 +542,11 @@ reply:
 #endif
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
-	if (pid == 0)	/* we are in the child */
-		exit (c);
+	if (pid == 0) {	/* we are in the child */
+      stgdb_close(dbfd_query);
+      stgdb_logout(dbfd_query);
+      exit (c);
+    }
 }
 
 print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
@@ -628,12 +704,23 @@ char *mfile;
 #endif
 		}
 		if (rfio_mstat (stcp->ipath, &st) == 0) {
-			if (st.st_size > stcp->actual_size)
-				stcp->actual_size = st.st_size;
-			if (st.st_atime > stcp->a_time)
-				stcp->a_time = st.st_atime;
-			if (st.st_mtime > stcp->a_time)
-				stcp->a_time = st.st_mtime;
+			int has_been_updated = 0;
+
+          if (st.st_size > stcp->actual_size) {
+            stcp->actual_size = st.st_size;
+            has_been_updated = 1;
+          }
+          if (st.st_atime > stcp->a_time) {
+            stcp->a_time = st.st_atime;
+            has_been_updated = 1;
+          }
+          if (st.st_mtime > stcp->a_time) {
+            stcp->a_time = st.st_mtime;
+            has_been_updated = 1;
+          }
+          if (has_been_updated != 0) {
+            stgdb_upd_stgcat(dbfd_query,stcp);
+          }
 		}
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
