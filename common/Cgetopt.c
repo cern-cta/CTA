@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.4 $ $Date: 2001/02/21 05:59:47 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.5 $ $Date: 2001/09/18 19:49:32 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* lint */
 
 /* ============== */
@@ -66,7 +66,7 @@ static char * _Cgetopt_progname(nargv0)
 #define	EMSG	""
 
 /*
- * getopt --
+ * Cgetopt --
  *	Parse argc/argv argument vector.
  */
 int
@@ -147,7 +147,7 @@ _Cgetopt_internal(nargc, nargv, ostr)
 }
 
 /*
- * getopt --
+ * Cgetopt --
  *	Parse argc/argv argument vector.
  */
 int DLL_DECL 
@@ -166,7 +166,7 @@ Cgetopt(nargc, nargv, ostr)
 }
 
 /*
- * getopt_long --
+ * Cgetopt_long --
  *	Parse argc/argv argument vector.
  */
 int DLL_DECL
@@ -187,6 +187,8 @@ Cgetopt_long(nargc, nargv, options, long_options, index)
   if ((retval = _Cgetopt_internal(nargc, nargv, options)) == -2) {
     char *current_argv = nargv[Coptind++] + 2, *has_equal;
     int i, current_argv_len, match = -1;
+    int exact = 0;
+    int ambig = 0;
 
     if (*current_argv == '\0') {
       return(-1);
@@ -202,11 +204,27 @@ Cgetopt_long(nargc, nargv, options, long_options, index)
         continue;
       }
       if (strlen(long_options[i].name) == (unsigned)current_argv_len) { 
+        /* Exact match found */
         match = i;
+        exact = 1;
         break;
       }
       if (match == -1) {
+        /* First non-exact match found */
         match = i;
+      } else {
+        /* Second or later non-exact match found */
+        ambig = 1;
+      }
+    }
+    if (ambig && ! exact) {
+      if (options != NULL) {
+        if ((Copterr) && (*options != ':'))
+          (void)fprintf(stderr,
+                        "%s: option is ambiguous -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
+        return (BADCH);
+      } else {
+        return (-1);
       }
     }
     if (match != -1) {
