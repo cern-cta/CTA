@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.36 2002/01/15 08:32:13 jdurand Exp $
+ * $Id: procalloc.c,v 1.37 2002/03/04 09:49:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.36 $ $Date: 2002/01/15 08:32:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.37 $ $Date: 2002/03/04 09:49:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -124,6 +124,7 @@ void procallocreq(req_data, clienthost)
 
 	wqp = NULL;
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
 		c = SYERR;
 		goto reply;
@@ -298,6 +299,7 @@ void procgetreq(req_data, clienthost)
 #endif
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
