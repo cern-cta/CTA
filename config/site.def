@@ -187,7 +187,7 @@
 #define BuildStageDaemon	YES
 #define BuildStageLibrary	YES
 #define BuildRmLocal		YES
-#define BuildRmCentral		YES
+#define BuildRmMaster		YES
 #define BuildRmNode		YES
 #define BuildSysreq		YES
 #define BuildTapeClient		YES
@@ -225,6 +225,7 @@
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
+#define UseClips		YES
 #define UseMaui			YES
 
 /* 
