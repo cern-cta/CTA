@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fseek.man,v 1.3 2002/11/19 15:42:26 bcouturi Exp $
+.\" $Id: rfio_fseek.man,v 1.4 2002/11/21 13:06:27 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fseek.man,v $ $Revision: 1.3 $ $Date: 2002/11/19 15:42:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fseek.man,v $ $Revision: 1.4 $ $Date: 2002/11/21 13:06:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FSEEK 3 "$Date: 2002/11/19 15:42:26 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FSEEK 3 "$Date: 2002/11/21 13:06:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fseek \- positions/repositions a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_fseek \- positions/repositions a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_fseek (RFILE *" fp ", long " offset ", int " whence ");"
+.BI "int rfio_fseek (FILE *" fp ", long " offset ", int " whence ");"
 .sp
 Under Linux, for large files:
 .br
@@ -23,7 +23,7 @@ Under Linux, for large files:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_fseeko64 (RFILE *" fp ", off64_t " offset ", int " whence ");"
+.BI "int rfio_fseeko64 (FILE *" fp ", off64_t " offset ", int " whence ");"
 .br
 .sp
 For large files, under other systems:
@@ -32,7 +32,7 @@ For large files, under other systems:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_fseeko64 (RFILE *" fp ", off64_t " offset ", int " whence ");"
+.BI "int rfio_fseeko64 (FILE *" fp ", off64_t " offset ", int " whence ");"
 .SH DESCRIPTION
 .B rfio_fseek
 positions/repositions to

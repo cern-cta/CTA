@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fflush.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_fflush.man,v 1.3 2002/11/21 13:06:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fflush.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fflush.man,v $ $Revision: 1.3 $ $Date: 2002/11/21 13:06:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FFLUSH 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FFLUSH 3 "$Date: 2002/11/21 13:06:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fflush \- flush a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_fflush \- flush a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_fflush (RFILE *" fp ");"
+.BI "int rfio_fflush (FILE *" fp ");"
 .SH DESCRIPTION
 .B rfio_fflush
 forces a write of all buffered data for the file whose descriptor \fBfp\fP is

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_popen.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_popen.man,v 1.3 2002/11/21 13:06:29 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.3 $ $Date: 2002/11/21 13:06:29 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_POPEN 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_POPEN 3 "$Date: 2002/11/21 13:06:29 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_popen, rfio_pclose \- start a process and open a pipe to it
 .SH SYNOPSIS
@@ -13,9 +13,9 @@ rfio_popen, rfio_pclose \- start a process and open a pipe to it
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "RFILE *rfio_popen (const char *" command ", const char *" type ");"
+.BI "FILE *rfio_popen (const char *" command ", const char *" type ");"
 .sp
-.BI "int rfio_pclose (RFILE *" fs ");"
+.BI "int rfio_pclose (FILE *" fs ");"
 .SH DESCRIPTION
 .B rfio_popen
 starts a process and opens a pipe to it.
@@ -30,7 +30,7 @@ is a mode indicator for the pipe. One of the characters "r" or "w".
 waits for the forked process to terminate and returns the exit status of the
 command.
 .SH RETURN VALUE
-This routine returns NULL if the operation failed or a non-NULL pointer to a RFILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
+This routine returns NULL if the operation failed or a non-NULL pointer to a FILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
 .SH ERRORS
 .TP 1.3i
 .B ENOMEM

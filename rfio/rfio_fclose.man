@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fclose.man,v 1.5 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_fclose.man,v 1.6 2002/11/21 13:06:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fclose.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fclose.man,v $ $Revision: 1.6 $ $Date: 2002/11/21 13:06:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FCLOSE 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FCLOSE 3 "$Date: 2002/11/21 13:06:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fclose \- closes a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_fclose \- closes a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_fclose (RFILE *" fd ");"
+.BI "int rfio_fclose (FILE *" fd ");"
 .SH DESCRIPTION
 .B rfio_fclose
 closes the file whose descriptor \fBfd\fP is the one returned by

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_ftell.man,v 1.1 2002/11/19 15:45:57 bcouturi Exp $
+.\" $Id: rfio_ftell.man,v 1.2 2002/11/21 13:06:28 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.1 $ $Date: 2002/11/19 15:45:57 $ CERN IT-DS-HSM Benjamin Couturier
+.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.2 $ $Date: 2002/11/21 13:06:28 $ CERN IT-DS-HSM Benjamin Couturier
 .\" Copyright (C) 2002 by CERN/IT-DS-HSM
 .\" All rights reserved
 .\"
-.TH RFIO_FTELL 3 "$Date: 2002/11/19 15:45:57 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FTELL 3 "$Date: 2002/11/21 13:06:28 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_ftell \- tells the position in a stream
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_ftell \- tells the position in a stream
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "long rfio_ftell (RFILE *" fp ");"
+.BI "long rfio_ftell (FILE *" fp ");"
 .sp
 Under Linux, for large files:
 .br
@@ -23,7 +23,7 @@ Under Linux, for large files:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "off64_t rfio_ftello64 (RFILE *" fp ");"
+.BI "off64_t rfio_ftello64 (FILE *" fp ");"
 .br
 .sp
 For large files, under other systems:
@@ -32,7 +32,7 @@ For large files, under other systems:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "off64_t rfio_ftello64 (RFILE *" fp ");"
+.BI "off64_t rfio_ftello64 (FILE *" fp ");"
 .SH DESCRIPTION
 .B rfio_ftell
 returns the current position in the file stream pointed by 

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_ferror.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_ferror.man,v 1.3 2002/11/21 13:06:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_ferror.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_ferror.man,v $ $Revision: 1.3 $ $Date: 2002/11/21 13:06:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FERROR 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FERROR 3 "$Date: 2002/11/21 13:06:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_ferror, rfio_eof \- checks file status
 .SH SYNOPSIS
@@ -13,9 +13,9 @@ rfio_ferror, rfio_eof \- checks file status
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_ferror (RFILE *" fp ");"
+.BI "int rfio_ferror (FILE *" fp ");"
 .br
-.BI "int rfio_feof (RFILE *" fp ");"
+.BI "int rfio_feof (FILE *" fp ");"
 .SH DESCRIPTION
 .B rfio_ferror
 tests the error indicator for the file whose descriptor \fBfp\fP is the one

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_open.man,v 1.8 2002/11/19 15:42:27 bcouturi Exp $
+.\" $Id: rfio_open.man,v 1.9 2002/11/21 13:06:28 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.8 $ $Date: 2002/11/19 15:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.9 $ $Date: 2002/11/21 13:06:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPEN 3 "$Date: 2002/11/19 15:42:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPEN 3 "$Date: 2002/11/21 13:06:28 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_open \- opens a file
 .SH SYNOPSIS
@@ -37,7 +37,7 @@ For large files, under other systems:
 .B rfio_open
 opens the file whose name is the string pointed to by
 .BR path ,
-a character string containing the filename specification, and associates a RFILE stream with it.
+a character string containing the filename specification, and associates a FILE stream with it.
 .br
 .BI flags
 are formed by ORing the following values:

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fopen.man,v 1.5 2002/11/19 15:42:26 bcouturi Exp $
+.\" $Id: rfio_fopen.man,v 1.6 2002/11/21 13:06:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.5 $ $Date: 2002/11/19 15:42:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.6 $ $Date: 2002/11/21 13:06:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FOPEN 3 "$Date: 2002/11/19 15:42:26 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FOPEN 3 "$Date: 2002/11/21 13:06:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fopen \- opens a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_fopen \- opens a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "RFILE *rfio_fopen (char *" path ", char *" mode ");"
+.BI "FILE *rfio_fopen (char *" path ", char *" mode ");"
 .br
 .sp
 Under Linux, for large files:
@@ -24,7 +24,7 @@ Under Linux, for large files:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "RFILE *rfio_fopen64 (char *" path ", char " *mode ");"
+.BI "FILE *rfio_fopen64 (char *" path ", char " *mode ");"
 .sp
 For large files, under other systems:
 .br
@@ -32,12 +32,12 @@ For large files, under other systems:
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "RFILE *rfio_fopen64 (char *" path ", char " *mode ");"
+.BI "FILE *rfio_fopen64 (char *" path ", char " *mode ");"
 .SH DESCRIPTION
 .B rfio_fopen
 opens the file whose name is the string pointed to by
 .BI path
-, a character string containing the filename specification, and associates a RFILE stream with it.
+, a character string containing the filename specification, and associates a FILE stream with it.
 .P
 .BI mode
 is an access mode indicator. One of the characters "r" or "w".
@@ -45,7 +45,7 @@ is an access mode indicator. One of the characters "r" or "w".
 .B rfio_fopen64
 allows to open large files (see NOTES).
 .SH RETURN VALUE
-This routine returns NULL if the operation failed or a non-NULL pointer to a RFILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
+This routine returns NULL if the operation failed or a non-NULL pointer to a FILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
