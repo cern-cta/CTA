@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.111 2001/03/19 15:13:29 jdurand Exp $
+ * $Id: procio.c,v 1.112 2001/03/20 07:30:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.111 $ $Date: 2001/03/19 15:13:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.112 $ $Date: 2001/03/20 07:30:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3687,18 +3687,24 @@ int stageput_check_hsm(stcp,uid,gid)
 		}
 		*/
 		/* If mtime of disk file is > stcp->a_time : this is a new version */
-		/*
 		if (filemig_stat.st_mtime > stcp->a_time) {
 			setegid(start_passwd.pw_gid);
 			seteuid(start_passwd.pw_uid);
-			sendrep (rpfd, MSG_ERR,
-						"STG98 - %s has mtime > mtime known to stager - renewed\n",
-						stcp->ipath);
+			if (Cnsfilestat.status == 'm') {
+				/* If this file already has some migrated stuff we say to the user that we are going to recreate it */
+				sendrep (rpfd, MSG_ERR,
+							"STG98 - %s has mtime > mtime known to stager - renewed\n",
+							stcp->ipath);
+			} else {
+              /* Otherwise we just log it for our purpose */
+				stglogit (func, 
+							"STG98 - %s has mtime > mtime known to stager - renewed\n",
+							stcp->ipath);
+			}
 			setegid(gid);
 			seteuid(uid);
 			forced_Cns_creatx = 1;
 		} else {
-		*/
 			if ((correct_size > 0) && (correct_size == Cnsfilestat.filesize)) {
 				/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
 				setegid(start_passwd.pw_gid);
@@ -3725,9 +3731,7 @@ int stageput_check_hsm(stcp,uid,gid)
 				}
 				forced_Cns_creatx = 1;
 			}
-		/*
 		}
-		*/
 	} else {
 		/* It is not point to try to migrated something of zero size */
 		if (rfio_stat(stcp->ipath, &filemig_stat) < 0) {
