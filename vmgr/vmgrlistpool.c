@@ -4,10 +4,11 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.2 $ $Date: 2000/03/10 13:12:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.3 $ $Date: 2000/03/20 14:38:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
+#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ char **argv;
 		if (vmgr_querypool (pool_name, &pool_uid, &pool_gid,
 		    &tot_free_space) < 0) {
 			fprintf (stderr, "vmgrlistpool %s: %s\n", pool_name,
-			    sstrerror(serrno));
+			    (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
 			exit (USERR);
 		}
 		listentry (pool_name, pool_uid, pool_gid, tot_free_space);
@@ -93,6 +94,6 @@ u_signed64 tot_free_space;
 		else
 			sprintf (sav_gidstr, "%-6u", sav_gid);
 	}
-	printf ("%s %-8.8s %-6.6s %sB\n", pool_name, sav_uidstr, sav_gidstr,
+	printf ("%-15s %-8.8s %-6.6s %sB\n", pool_name, sav_uidstr, sav_gidstr,
 	    u64tostru (tot_free_space, tmpbuf, 7));
 }
