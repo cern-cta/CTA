@@ -7,6 +7,20 @@
  * @(#)Project.tmpl,v 1.24 2002/12/03 05:50:07 CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
+#if BuildRmMaster
+#if UseMaui != YES && UseLsf != YES
+#undef UseMaui
+#define UseMaui YES
+#endif
+#endif
+
+#if UseMaui || UseLsf
+#if UseScheduler != YES
+#undef UseScheduler
+#define UseScheduler YES
+#endif
+#endif
+
 #if BuildHsmTools
 HSMTOOLSDIR = hsmtools
 #if BuildNameServerClient != YES && BuildNameServerLibrary != YES

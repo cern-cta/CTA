@@ -248,7 +248,9 @@
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
-/* Supported LSF versions are: 5.1, 6.1 */
+#define UseScheduler	YES
+/* Scheduler options: Supported LSF versions are: 5.1, 6.1 */
+/* Default is defined in config files */
 #define UseLsfVersion	6
 #define UseExpert		YES
 #define UseMaui			YES
