@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.3 $ $Date: 2003/01/23 14:59:43 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.4 $ $Date: 2004/02/05 16:06:26 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN IT-PDP/DM
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2003/01/23 14:59:43 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2004/02/05 16:06:26 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
@@ -52,6 +52,12 @@ default amount of physical memory required per RTCOPY request is 128MB
 physical memory required for RTCOPY is 384MB (3 times 128MB). The two
 parameters \fBRTCOPYD_BUFSZ\fP and \fBRTCOPYD_NB_BUFS\fP can be used
 to change the default memory usage.
+.PP
+.B RTCOPY_CKSUMALG
+\- The name of the default checksum algorithm to be used for the segment
+checksums, if it is not specified by the client. The supported values for
+\fBRTCOPYD_CKSUMALG\fP are currently "adler32", "crc32" or "none". If the
+configuration is not specified, the "adler32" is taken as the default.
 .PP
 .B RTCOPY_DEBUG
 \- Turn on printing of debug messages for each I/O operation to/from the
