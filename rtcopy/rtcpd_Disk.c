@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.88 $ $Date: 2000/09/19 16:29:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.89 $ $Date: 2000/09/20 09:22:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -151,18 +151,18 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
         return(-1);
     }
     while ( file->filereq.proc_status == RTCP_WAITING ) {
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
+        if ( ((severity | rtcpd_CheckProcError()) &
+              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) {
+            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+            return(0);
+        }
         rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_cond_broadcast_ext(proc_cntl) : %s\n", 
                 sstrerror(serrno));
             (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             return(-1);
-        }
-        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
-        if ( ((severity | rtcpd_CheckProcError()) & 
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) {
-            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-            return(0);
         }
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -1676,6 +1676,19 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 /* It's not our error */
                 return(0);
             }
+            /*
+             * Did the tape end with previous file ?
+             */
+            if ( tapereq->mode == WRITE_DISABLE && prevfile != NULL &&
+                 (prevfile->filereq.concat & (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) !=0 ) {
+                rtcpd_CheckReqStatus(prevfile->tape,prevfile,NULL,&severity);
+                if ( (severity & RTCP_EOD) != 0 ) {
+                    proc_cntl.diskIOfinished = 1;
+                    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                    return(0);
+                }
+            }
 
             /*
              * Wait while buffers are overallocated. For tape write
@@ -1728,6 +1741,19 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     /* It's not our error */
                     return(0);
+                }
+                /*
+                 * Did the tape end with previous file ?
+                 */
+                if ( tapereq->mode == WRITE_DISABLE && prevfile != NULL &&
+                     (prevfile->filereq.concat & (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) !=0 ) {          
+                    rtcpd_CheckReqStatus(prevfile->tape,prevfile,NULL,&severity);
+                    if ( (severity & RTCP_EOD) != 0 ) {
+                        proc_cntl.diskIOfinished = 1;
+                        (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                        (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                        return(0);
+                    }
                 }
             }
 

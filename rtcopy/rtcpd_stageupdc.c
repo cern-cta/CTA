@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.44 $ $Date: 2000/08/04 10:25:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.45 $ $Date: 2000/09/20 09:22:30 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -136,7 +136,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
         if ( filereq->proc_status == RTCP_POSITIONED && status == 0 ||
-             (filereq->proc_status == RTCP_WAITING && 
+             (filereq->proc_status == RTCP_FINISHED && 
               (filereq->concat & NOCONCAT_TO_EOD) != 0 && status == ETFSQ) ) { 
 
             if ( retry == 0 && filereq->stageSubreqID == -1 &&
