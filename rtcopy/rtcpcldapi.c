@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/07/30 11:56:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.29 $ $Release$ $Date: 2004/07/30 16:58:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.28 $ $Date: 2004/07/30 11:56:30 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.29 $ $Date: 2004/07/30 16:58:28 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1026,10 +1026,13 @@ static int getUpdates(
           if ( file->filereq.proc_status < RTCP_FINISHED ) {
             segmOldStatus = segmIterator->oldStatus;
             Cstager_Segment_status(segmIterator->segment,&segmNewStatus);
-            if ( segmOldStatus != segmNewStatus ) {
-              rtcp_log(LOG_DEBUG,"getUpdates() segment (%d,%s) status updated %d -> %d\n",
-                       file->filereq.tape_fseq,file->filereq.file_path,
-                       segmOldStatus,segmNewStatus);
+            if ( (segmOldStatus != segmNewStatus) || 
+                 (segmNewStatus == SEGMENT_WAITFSEQ) ||
+                 (segmNewStatus == SEGMENT_WAITPATH) ) {
+              if ( segmOldStatus != segmNewStatus)
+                rtcp_log(LOG_DEBUG,"getUpdates() segment (%d,%s) status updated %d -> %d\n",
+                         file->filereq.tape_fseq,file->filereq.file_path,
+                         segmOldStatus,segmNewStatus);
               segmIterator->oldStatus = segmNewStatus;
               switch (segmNewStatus) {
               case SEGMENT_FILECOPIED:
