@@ -1,6 +1,6 @@
-.\"   $Id: Cpwd.man,v 1.2 2000/10/27 13:38:38 jdurand Exp $
+.\"   $Id: Cpwd.man,v 1.3 2000/10/27 13:39:27 jdurand Exp $
 .\"
-.TH CPWD "3" "$Date: 2000/10/27 13:38:38 $" "CASTOR" "Common Library Functions"
+.TH CPWD "3" "$Date: 2000/10/27 13:39:27 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCpwd\fP \- \fBCASTOR\fP \fBP\fPass\fBw\fPor\fBd\fP file Thread-Safe inferface
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ If the \fBCthread\fP interface is chosen and activated, the errors value are in 
 
 .SH DESCRIPTION
 
-\fBCmutex\fP is a common Thread-Safe API interface to get entries in the password file vs.
+\fBCpwd\fP is a common Thread-Safe API interface to get entries in the password file vs.
 .BI name
 or
 .BI uid.
