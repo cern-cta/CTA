@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.13 $ $Date: 2001/08/17 13:52:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.14 $ $Date: 2001/08/21 11:55:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -223,6 +223,15 @@ int Ctape_status(char *a, struct drv_status *b, int c) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"Ctape_rstatus(%s,0x%x,%d)\n",a,b,c));
 }
+
+#if defined(_AIX) && defined(_IBMR2)
+int getdvrnam(char *path, char *drvname) {
+    fprintf(stdout,"getdvrnam(%s,%s) called\n",
+            (path != NULL ? path : "(nil)"),
+            (drvname != NULL ? drvname : "(nil)"));
+    return(0);
+}
+#endif /* _AIX && _IBMR2 */
 
 int gettperror(int fd, char *path, char **msgaddr) {
     int rc = 0;
