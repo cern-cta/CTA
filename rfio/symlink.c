@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.8 2000/05/29 16:42:06 obarring Exp $
+ * $Id: symlink.c,v 1.9 2001/11/07 11:52:07 jdurand Exp $
  */
 
 
@@ -9,11 +9,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:06 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.9 $ $Date: 2001/11/07 11:52:07 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
-#include <pwd.h>
 #include "rfio.h"
 #include <Cpwd.h>
 
@@ -27,7 +26,7 @@ extern char *sys_errlist[];     /* system error list */
  * returns -1 if an error occured or no information is available at the
  * daemon's host. 0 otherwise.
  */
-static int rfio_wlink(n1,n2 )
+int DLL_DECL rfio_symlink(n1,n2 )
 char *n1 ;
 char *n2 ;
 
@@ -43,38 +42,28 @@ char *n2 ;
    int rcode ;
    int uid ;
    int gid ;
-   int un ; 	/* UNlink or SYMlink ? */
    struct passwd *pw ;
    char buf[256];
    /*
     * The file is local.
     */
-   un = (n1[0]=='\0' ? 1:0);
    INIT_TRACE("RFIO_TRACE");
-   TRACE( 1, "rfio", " rfio_%slink (%s,%s)",(un ? "un":"sym"),n1,n2 );
+   TRACE( 1, "rfio", " rfio_symlink (%s,%s)",n1,n2 );
    if ( ! rfio_parseln(n2,&host,&filename,NORDLINKS) ) {
        /* if not a remote file, must be local or HSM  */
        if ( host != NULL ) {
            /*
             * HSM file.
             */
-           TRACE(1,"rfio","rfio_%slink: %s is an HSM path",(un ? "un":"sym"),
+           TRACE(1,"rfio","rfio_symlink: %s is an HSM path",
                  filename);
            END_TRACE();
            rfio_errno = 0;
-           if ( un ) status = rfio_HsmIf_unlink(filename);
-           else {
-               serrno = SEOPNOTSUP;
-               status = -1;
-           }
+           serrno = SEOPNOTSUP;
+           status = -1;
            return(status);
       }
-      TRACE(2,"rfio","rfio_%slink local %s %s %s",(un ? "un":"sym"),filename,
-	    (un? "":"-> "),
-	    (un? "":n1) ) ;
-      if (un)
-	 status = unlink(filename) ;
-      else
+       TRACE(2,"rfio","rfio_symlink local %s -> %s",filename,n1);
 #if ! defined(_WIN32)
 	 status = symlink(n1,filename) ;
 #else
@@ -93,8 +82,7 @@ char *n2 ;
    uid = geteuid() ;
    gid = getegid () ;
    if ( (pw = Cgetpwuid(uid) ) == NULL ) {
-      TRACE(2, "rfio" ,"rfio_%slink: Cgetpwuid() error %s",
-	    (un ? "un":"sym"),
+      TRACE(2, "rfio" ,"rfio_symlink: Cgetpwuid() error %s",
 	    sys_errlist[errno]);
       END_TRACE();
       return -1 ;
@@ -108,8 +96,7 @@ char *n2 ;
    marshall_LONG(p, status) ;
 
    if (netwrite_timeout(s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
-      TRACE(2, "rfio", "%slink: write(): ERROR occured (errno=%d)",
-	    (un ? "un":"sym"),
+      TRACE(2, "rfio", "symlink: write(): ERROR occured (errno=%d)",
 	    errno);
       (void) close(s);
       END_TRACE();
@@ -117,7 +104,7 @@ char *n2 ;
    }
    nbuf = (char *) malloc( status ) ;
    if ( nbuf == NULL ) {
-      TRACE(2, "rfio", "%slink:  malloc () failed",(un ? "un":"sym"));
+      TRACE(2, "rfio", "symlink:  malloc () failed");
       (void) close(s);
       END_TRACE();
       return(-1);
@@ -132,7 +119,7 @@ char *n2 ;
    marshall_STRING( p, pw->pw_name) ;
 	
    if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
-      TRACE(2, "rfio", "%slink: write(): ERROR occured (errno=%d)",(un ? "un":"sym"),errno);
+      TRACE(2, "rfio", "symlink: write(): ERROR occured (errno=%d)",errno);
       (void) close(s);
       END_TRACE();
       return(-1);
@@ -143,11 +130,11 @@ char *n2 ;
     * Getting back status
     */ 
    if ((c=netread_timeout(s, buf, WORDSIZE + 2*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (WORDSIZE+ 2*LONGSIZE))  {
-      if (c == 0 && un == 0) {
+      if (c == 0) {
 	 serrno = SEOPNOTSUP;	/* symbolic links not supported on remote machine */
 	 TRACE(2, "rfio", "rfio_symlink: read(): ERROR occured (serrno=%d)", serrno);
       } else
-	 TRACE(2, "rfio", "rfio_%slink: read(): ERROR occured (errno=%d)", (un ? "un":"sym"), errno);
+	 TRACE(2, "rfio", "rfio_symlink: read(): ERROR occured (errno=%d)", errno);
       (void) close(s);
       END_TRACE();
       return(-1);
@@ -158,33 +145,21 @@ char *n2 ;
    unmarshall_LONG( p, rcode ) ;
 
    if ( ans_req != RQST_SYMLINK ) {
-      TRACE(1,"rfio","rfio_%slink: ERROR: answer does not correspond to request !",(un ? "un":"sym"));
+      TRACE(1,"rfio","rfio_symlink: ERROR: answer does not correspond to request !");
       (void) close(s);
       END_TRACE();
       return(-1);
    }
 
    if ( status < 0 ) {
-      TRACE(1,"rfio","rfio_%slink: failure, error %d",(un ? "un":"sym"),rcode);
+      TRACE(1,"rfio","rfio_symlink: failure, error %d",rcode);
       rfio_errno = rcode ;
       (void) close(s);
       END_TRACE();
       return(status);
    }
-   TRACE (2,"rfio","rfio_%slink succeded",(un ? "un":"sym"));
+   TRACE (2,"rfio","rfio_symlink succeded");
    END_TRACE();
    (void) close (s) ;
    return(status) ;
-}
-
-int DLL_DECL rfio_unlink(path)
-char *path ;
-{
-   return( rfio_wlink("",path)) ;
-}
-
-int DLL_DECL rfio_symlink(name1,name2)
-char *name1, *name2;
-{
-   return( rfio_wlink( name1, name2 ) ) ;
 }
