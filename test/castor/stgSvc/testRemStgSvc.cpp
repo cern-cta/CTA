@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testRemStgSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/25 14:18:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testRemStgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/26 17:39:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -97,12 +97,12 @@ int main (int argc, char** argv) {
   sr->setCastorFile(cf);
   castor::stager::FileSystem *fs =
     new castor::stager::FileSystem();
-  fs->setMountPoint("TestMoutnPoint");
+  fs->setMountPoint("TestMountPoint");
   fs->addCopies(dc);
   dc->setFileSystem(fs);
   castor::stager::DiskServer *ds =
     new castor::stager::DiskServer();
-  ds->setName("testDiskServer");
+  ds->setName("TestDiskServer");
   ds->addFileSystems(fs);
   fs->setDiskserver(ds);
   
