@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.18 $ $Date: 2001/09/19 06:31:41 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.19 $ $Date: 2004/02/12 15:36:42 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -46,6 +46,15 @@ typedef struct rtcpErrMsg {
 } rtcpErrMsg_t;
 #define RTCP_ERRMSGLEN(X) (4*LONGSIZE + strlen(X->err.errmsgtxt) + 1)
 
+typedef struct rtcpCastorSegmentAttributes {
+    char nameServerHostName[CA_MAXHOSTNAMELEN+1];  /* CASTOR name server host name */
+    char segmCksumAlgorithm[CA_MAXCKSUMNAMELEN+1]; /* Checksum algorithm */
+    unsigned long segmCksum;                       /* Checksum value */
+    u_signed64 castorFileId;                       /* CASTOR bitfile id */
+} rtcpCastorSegmentAttributes_t;
+#define RTCP_CSAMSGLEN(X) (LONGSIZE + QUADSIZE  + \
+    strlen((X)->nameServerHostName) + strlen((X)->segmCksumAlgorithm) + 2)
+
 typedef struct rtcpFileRequest {
     char file_path[CA_MAXPATHLEN+1];   /* Disk file path */
     char tape_path[CA_MAXPATHLEN+1];   /* Tape device file */
@@ -53,13 +62,11 @@ typedef struct rtcpFileRequest {
     char fid[CA_MAXFIDLEN+1];          /* Tape file ID */
     char ifce[5];                      /* Network interface name */
     char stageID[CA_MAXSTGRIDLEN+1];   /* Stage request ID */
-    char vmsopt[RTCP_VMSOPTLEN+1];
 
     int VolReqID;                      /* VDQM volume request ID */
     int jobID;                         /* Local RTCOPY server job ID */
     int stageSubreqID;                 /* Stage subrequest ID (-1 for SHIFT) */
     int umask;                         /* Client umask */
-    int rfio_key;                      /* RFIO key for remote client */
     int position_method;               /* TPPOSIT_FSEQ, TPPOSIT_FID, 
                                         * TPPOSIT_EOI and TPPOSIT_BLKID 
                                         */
@@ -131,16 +138,26 @@ typedef struct rtcpFileRequest {
     u_signed64 startsize;              /* Accumulated size */
 
     /*
+     * CASTOR segment attributes
+     */
+    rtcpCastorSegmentAttributes_t castorSegAttr;
+
+    /*
+     * Unique identifier given by the stager
+     */
+    Cuuid_t stgReqId;
+
+    /*
      * Error reporting
      */
     rtcpErrMsg_t err;
 
 } rtcpFileRequest_t;
 
-#define RTCP_FILEREQLEN(X) (25*LONGSIZE + 8*QUADSIZE + 4 + \
+#define RTCP_FILEREQLEN(X) (24*LONGSIZE + 8*QUADSIZE + 4 + \
         strlen(X->file_path) + strlen(X->tape_path) + \
         strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
-        strlen(X->stageID) + strlen(X->vmsopt) + 7)
+        strlen(X->stageID) + 6)
 
 /*
  * Sanity check of that all strings are terminated
@@ -152,8 +169,9 @@ typedef struct rtcpFileRequest {
         memchr((X)->fid,'\0',sizeof((X)->fid)) && \
         memchr((X)->ifce,'\0',sizeof((X)->ifce)) && \
         memchr((X)->stageID,'\0',sizeof((X)->stageID)) && \
-        memchr((X)->vmsopt,'\0',sizeof((X)->vmsopt)) && \
-        memchr((X)->err.errmsgtxt,'\0',sizeof((X)->err.errmsgtxt)) )
+        memchr((X)->err.errmsgtxt,'\0',sizeof((X)->err.errmsgtxt)) && \
+        memchr((X)->castorSegAttr.nameServerHostName,'\0',sizeof((X)->castorSegAttr.nameServerHostName)) && \
+        memchr((X)->castorSegAttr.segmCksumAlgorithm,'\0',sizeof((X)->castorSegAttr.segmCksumAlgorithm)) )
 
 typedef struct rtcpTapeRequest {
     char vid[CA_MAXVIDLEN+1];
@@ -179,6 +197,10 @@ typedef struct rtcpTapeRequest {
     int TStartUnmount;                  /* Time when unmount request is sent to Ctape */
     int TEndUnmount;                    /* Time when unmount request returns */
 
+    /*
+     * Unique request id assigned by RTCOPY
+     */
+    Cuuid_t rtcpReqId;
     /*
      * Error reporting
      */
@@ -268,7 +290,14 @@ typedef struct file_list {
      * Disk file FORTRAN UNIT number (recfm==U only)
      */
     int FortranUnit;
-
+    /*
+     * Checksum routine to be used for this tape segment
+     */
+    unsigned long (*cksumRoutine) _PROTO((
+                                          unsigned long,
+                                          const char *,
+                                          unsigned int
+                                          ));
     rtcpFileRequest_t filereq;
     struct tape_list *tape;          /* Parent tape request */
     struct file_list *next;          /* Next in circular list */
@@ -307,5 +336,6 @@ else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(
  * This extern declaration is needed by both client and server
  */
 EXTERN_C void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...));
+EXTERN_C char DLL_DECL *rtcp_voidToString _PROTO((void *, int));
 
 #endif /* RTCP_H */
