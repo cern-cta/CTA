@@ -94,6 +94,7 @@ char vmgr_error_buffer[512];
 char stager_error_buffer[512];
 char stager_output_buffer[512];
 int Flags = 0;                       /* TAPE flag for vmgr_updatetape */
+int stagewrt_nomoreupdatetape = 0;   /* Flag to tell that the last updatetape from callback already did the job */
 
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
@@ -955,7 +956,7 @@ int stagewrt_castor_hsm_file() {
             RETURN(USERR);
           }
 		}
-        if (Flags != TAPE_FULL) {
+        if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
           /* If Flags is TAPE_FULL then it been set by the callback which already called vms_updatetape */
 #ifdef STAGER_DEBUG
           sendrep (rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(%s,0,0,0,Flags=%d)\n",vid,Flags);
@@ -969,7 +970,7 @@ int stagewrt_castor_hsm_file() {
         sleep(RETRYI);
         goto gettape;
       } else {
-        if (Flags != TAPE_FULL) {
+        if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
           /* If Flags is TAPE_FULL then it has already been set by the callback */
 #ifdef STAGER_DEBUG
           sendrep (rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(%s,0,0,0,0)\n",vid);
@@ -1930,6 +1931,10 @@ int stager_client_callback(tapereq,filereq)
             u64tostr(filereq->host_bytes, tmpbuf3, 0));
 #endif
 
+    if (stager_client_callback_i == nbcat_ent - 1) {
+      stagewrt_nomoreupdatetape = 1;
+    }
+
     hsm_fsegsize[stager_client_callback_i] = filereq->bytes_in;
     {
       /* gcc compiler bug - fixed or forbidden register was spilled. */
@@ -1941,7 +1946,7 @@ int stager_client_callback(tapereq,filereq)
       hsm_transferedsize[stager_client_callback_i] += dummyvalue;
     }
     if (filereq->host_bytes > 0 && filereq->bytes_out > 0) {
-      compression_factor = filereq->host_bytes / filereq->bytes_out;
+      compression_factor = filereq->host_bytes * 100 / filereq->bytes_out;
     }
     Flags = tape_flag;
 #ifdef STAGER_DEBUG
