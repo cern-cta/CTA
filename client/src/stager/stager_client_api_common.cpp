@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.13 2005/02/02 18:09:33 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.14 2005/02/14 17:27:04 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.13 $ $Date: 2005/02/02 18:09:33 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.14 $ $Date: 2005/02/14 17:27:04 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -25,6 +25,10 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include <serrno.h>
+#include <stdarg.h>
+#include "trace.h"
+#include "Cglobals.h"
+#include "stager_client_api_common.h"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
@@ -237,4 +241,45 @@ EXTERN_C int DLL_DECL stage_getClientTimeout() {
     }
   }
   return stager_timeout;
+}
+
+
+
+static int stager_client_api_key = -1;
+
+EXTERN_C int DLL_DECL
+stage_apiInit(struct stager_client_api_thread_info **thip) {
+  Cglobals_get (&stager_client_api_key,
+		(void **) thip, 
+		sizeof(struct stager_client_api_thread_info));
+  if (*thip == NULL) {
+    serrno = ENOMEM;
+    return (-1);
+  }
+  if(! (*thip)->initialized) {
+    init_trace_r(&((*thip)->trace), STAGER_TRACE_NAME); 
+    (*thip)->initialized = 1;
+  }
+  return (0);
+}
+
+
+
+#define STBUFSIZE 200
+EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
+  va_list args;           /* arguments */
+  struct stager_client_api_thread_info *thip;
+  char *label = "stager";
+  char buffer[STBUFSIZE];
+
+  va_start(args, format);
+  if(stage_apiInit(&thip)) {
+    va_end(args);
+    return;
+  }
+  buffer[STBUFSIZE] = '\0';
+  vsnprintf(buffer, STBUFSIZE-1, format, args);
+  va_end(args);
+  print_trace_r(thip->trace, level, label, "%s", buffer);
+
 }
