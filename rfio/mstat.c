@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.34 2004/03/03 11:15:58 obarring Exp $
+ * $Id: mstat.c,v 1.35 2004/10/27 09:52:51 sponcec3 Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.34 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.35 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -170,6 +170,9 @@ int reqst ;
    struct passwd *pw_tmp;
    struct passwd *pw = NULL;
 
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(buf, 0, BUFSIZ);
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_stat(%s, %x)", filename, statbuf);
 
@@ -286,6 +289,9 @@ int DLL_DECL rfio_end()
    char buf[RQSTSIZE];
    char *p=buf ;
    int rc = 0;
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(buf, 0, RQSTSIZE);
    
    INIT_TRACE("RFIO_TRACE");
 
@@ -342,6 +348,9 @@ static int rfio_end_this(s,flag)
   int found = 0;
   char *p=buf ;
   int rc = 0;
+
+  // Avoiding Valgrind error messages about uninitialized data
+  memset(buf, 0, RQSTSIZE);
 
   Cglobals_getTid(&Tid);
 
@@ -658,6 +667,9 @@ int    reqst ;
    long        i32 ;
    struct      passwd *pw_tmp;
    struct      passwd *pw = NULL;
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_smstat64(%s, %x)", filename, statbuf);

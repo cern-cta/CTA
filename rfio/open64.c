@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.6 2004/06/03 13:05:15 obarring Exp $
+ * $Id: open64.c,v 1.7 2004/10/27 09:52:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.6 $ $Date: 2004/06/03 13:05:15 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.7 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* open64.c       Remote File I/O - open file a file                      */
@@ -174,6 +174,9 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    int     n_index;
    off64_t offset;      /* Open offset length           */
    char    rfio_buf[BUFSIZ];
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_open64_ext(%s, 0%o, 0%o, %d, %d, %d, %s)",

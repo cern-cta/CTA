@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.4 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: stream64.c,v 1.5 2004/10/27 09:52:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.4 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.5 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
@@ -173,6 +173,9 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    char  rfio_buf[BUFSIZ];
    int   rfp_index, parserc;
    char  tmpbuf[21];
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_open64_ext(%s, 0%o, 0%o, %d, %d, %d, %s)",
@@ -533,6 +536,9 @@ int     ctrl_sock, size;
    int ctrl_sock_index;
    char      tmpbuf[21];
 
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_read64_v3(%d, %x, %d)", ctrl_sock, ptr, size) ;
    if (size == 0) {
@@ -779,6 +785,9 @@ int     ctrl_sock, size;
    char     rfio_buf[BUFSIZ];
    int ctrl_sock_index;
 
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
+
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_write64_v3(%d, %x, %d)", ctrl_sock, ptr, size) ;
    if (size == 0) {
@@ -887,6 +896,9 @@ int     ctrl_sock, size;
       int n;
       char rqstbuf[BUFSIZ];
 
+      // Avoiding Valgrind error messages about uninitialized data
+      memset(rqstbuf, 0, BUFSIZ);
+
       /* Something received on the control socket */
       TRACE(2,"rfio", "write64_v3: ctrl socket: reading %d bytes",RQSTSIZE) ;
       if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
@@ -958,6 +970,9 @@ int     s;
    int      s_index;
    int      eod = 0;            /* Close received on data socket*/
    int      save_errno;
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_close64_v3(%d)", s);

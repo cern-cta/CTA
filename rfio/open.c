@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.25 2004/06/03 09:14:01 obarring Exp $
+ * $Id: open.c,v 1.26 2004/10/27 09:52:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.25 $ $Date: 2004/06/03 09:14:01 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.26 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -258,6 +258,9 @@ char  	*vmstr ;
    int old,n;
    int n_index, parserc;
    char     rfio_buf[BUFSIZ];
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_open_ext(%s, %d, %d, %d, %d, %d, %s, %s)",filepath,flags,mode,uid,gid,passwd,reqhost,vmstr ) ;

@@ -1,5 +1,5 @@
 /*
- * $Id: fstat.c,v 1.14 2003/10/31 07:20:03 jdurand Exp $
+ * $Id: fstat.c,v 1.15 2004/10/27 09:52:50 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.14 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.15 $ $Date: 2004/10/27 09:52:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -45,6 +45,9 @@ struct stat *statbuf;
    int temp=0 ;
    char     rfio_buf[BUFSIZ];
    int s_index = -1;
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_fstat(%d, %x)", s, statbuf);

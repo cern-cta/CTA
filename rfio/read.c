@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.21 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: read.c,v 1.22 2004/10/27 09:52:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.21 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.22 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -466,6 +466,9 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
    int firstread= 0 ; 	/* The request has just been issued.	*/	
    char     rfio_buf[BUFSIZ];
    int s_index;
+
+   // Avoiding Valgrind error messages about uninitialized data
+   memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1,"rfio","rfio_filbuf(0X%X,%d) entered",buffer,size) ;
