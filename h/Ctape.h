@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:04:32 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.5 $ $Date: 1999/10/20 09:08:10 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -242,7 +242,7 @@ struct tpfil {		/* tape file description */
 	int	blksize;	/* maximum block size */
 	int	cfseq;		/* current file number */
 	char	fid[CA_MAXFIDLEN+1];	/* file id */
-	char	filstat;	/* CHECK_FID, NEW_FID or APPEND */
+	char	filstat;	/* CHECK_FILE, NEW_FILE or APPEND */
 	int	fsec;		/* file section number */
 	int	fseq;		/* file sequence number requested by user */
 	unsigned int blockid;	/* for positionning with locate command */
