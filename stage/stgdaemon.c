@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.49 2000/06/16 15:17:33 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.50 2000/06/16 16:16:16 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.49 $ $Date: 2000/06/16 15:17:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.50 $ $Date: 2000/06/16 16:16:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1778,7 +1778,13 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 		}
 	}
 	if (found == 0 || (stcp->status & 0xF0) != STAGED || stcp->t_or_d != 'h') {
-		sendrep (rpfd, MSG_ERR, STG22);
+		if (found == 0) {
+			sendrep (rpfd, MSG_ERR, STG22);
+		} else if ((stcp->status & 0xF0) != STAGED) {
+			sendrep (rpfd, MSG_ERR, "%s : Request should be in STAGED status\n", stcp->u1.h.xfile);
+		} else if (stcp->t_or_d != 'h') {
+			sendrep (rpfd, MSG_ERR, "%s : Request should be a CASTOR Hsm file\n",stcp->u1.h.xfile);
+		}
 		return (USERR);
 	}
 	setegid(gid);
