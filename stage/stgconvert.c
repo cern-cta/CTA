@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.28 2001/01/31 19:00:09 jdurand Exp $
+ * $Id: stgconvert.c,v 1.29 2001/06/25 10:38:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.28 $ $Date: 2001/01/31 19:00:09 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.29 $ $Date: 2001/06/25 10:38:57 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -1487,7 +1487,38 @@ int main(argc,argv)
 								if (read(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
 									printf("### read error on \"%s\" (%s)\n",stgcat,strerror(errno));
 									printf("### No stgcat sorting possible\n");
-								} else {
+								} else {	
+									struct stgcat_entry *stcp1, *stcp2, *stcpe;
+									int nbcat_ent, ndeleted, ideleted;
+
+									printf("... Removing suplicated [STAGEOUT|STAGEPUT]|STAGED entries\n");
+									nbcat_ent = statbuff.st_size / sizeof(struct stgcat_entry);
+									ndeleted = 0;
+									stcpe = stcpall + nbcat_ent;
+									for (stcp1 = stcpall; stcp1 < stcpe; stcp1++) {
+										ideleted = 0;
+										if (stcp1->t_or_d != 'h') continue;
+										if ((stcp1->status & STAGED) != STAGED) continue;
+										if (! (ISSTAGEOUT(stcp1) || ISSTAGEPUT(stcp1))) continue;
+										for (stcp2 = stcpe - 1; stcp2 > stcp1; stcp2--) {
+											if (stcp2->t_or_d != 'h') continue;
+											if ((stcp2->status & STAGED) != STAGED) continue;
+											if (! (ISSTAGEOUT(stcp2) || ISSTAGEPUT(stcp2))) continue;
+											if (stcp2->u1.h.fileid != stcp1->u1.h.fileid) continue;
+											if (strcmp(stcp2->u1.h.server,stcp1->u1.h.server) != 0) continue;
+											/*
+											 * Remove duplicate entry stcp2
+											*/
+											if (stcp2 < (stcpe - 1)) {
+												char tmpbuf[21];
+												printf("... ... %s (fileid %s@%s)\n", stcp2->u1.h.xfile, u64tostr((u_signed64) stcp2->u1.h.fileid, tmpbuf, 0), stcp2->u1.h.server);
+												memmove(stcp2, stcp2 + 1, (stcpe - stcp2 - 1) * sizeof(struct stgcat_entry));
+											}
+											statbuff.st_size -= sizeof(struct stgcat_entry);
+											ndeleted++;
+										}
+									}
+									printf("... ... %d duplicated removed (if > 0, can happen with version <= 1.3.2.5)\n", ndeleted);
 									printf("... Sorting %s content\n",stgcat);
 									qsort(stcpall,statbuff.st_size/sizeof(struct stgcat_entry),
 												sizeof(struct stgcat_entry), &stgdb_stcpcmp);
