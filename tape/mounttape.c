@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.31 $ $Date: 2001/01/30 06:18:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.32 $ $Date: 2001/06/18 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,7 +55,7 @@ int maxfds;
 int mode;
 char msg[OPRMSGSZ];
 int msg_num;
-char name[CA_MAXUSRNAMELEN+1];
+char *name;
 char orepbuf[OPRMSGSZ];
 char *path;
 fd_set readmask;
@@ -127,21 +127,22 @@ char	**argv;
 	rpfd = atoi(argv[4]);
 	uid = atoi (argv[5]);
 	gid = atoi (argv[6]);
-	acctname = argv[7];
-	jid = atoi (argv[8]);
-	ux = atoi(argv[9]);
-	dgn = argv[10];
-	devtype = argv[11];
-	dvrname = argv[12];
-	loader = argv[13];
-	mode = atoi (argv[14]);
-	lblcode = atoi (argv[15]);
-	vsn = argv[16];
-	path = argv[17];
-	den = atoi (argv[18]);
-	prelabel = atoi (argv[19]);
-	vdqm_reqid = atoi (argv[20]);
-	tpmounted = atoi (argv[21]);
+	name = argv[7];
+	acctname = argv[8];
+	jid = atoi (argv[9]);
+	ux = atoi(argv[10]);
+	dgn = argv[11];
+	devtype = argv[12];
+	dvrname = argv[13];
+	loader = argv[14];
+	mode = atoi (argv[15]);
+	lblcode = atoi (argv[16]);
+	vsn = argv[17];
+	path = argv[18];
+	den = atoi (argv[19]);
+	prelabel = atoi (argv[20]);
+	vdqm_reqid = atoi (argv[21]);
+	tpmounted = atoi (argv[22]);
 
 	if (prelabel > 2) {
 		prelabel -= DOUBLETM;
@@ -176,8 +177,6 @@ char	**argv;
 
 	signal (SIGINT, mountkilled);
 
-	pwd = getpwuid (uid);
-	strcpy (name, pwd->pw_name);
 #if VDQM
 	vdqm_status = VDQM_UNIT_ASSIGN;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_ASSIGN)\n");

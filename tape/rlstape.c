@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.23 $ $Date: 2001/01/26 08:07:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.24 $ $Date: 2001/06/18 05:43:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -66,7 +66,7 @@ char	**argv;
 	int mode;
 	int msglen;
 	int n;
-	char name[CA_MAXUSRNAMELEN+1];
+	char *name;
 	char *p;
 	struct passwd *pwd;
 	char *q;
@@ -89,16 +89,17 @@ char	**argv;
 	rpfd = atoi (argv[4]);
 	uid = atoi (argv[5]);
 	gid = atoi (argv[6]);
-	acctname = argv[7];
-	jid = atoi (argv[8]);
-	ux = atoi (argv[9]);
-	rlsflags = atoi (argv[10]);
-	dgn = argv[11];
-	devtype = argv[12];
-	dvrname = argv[13];
-	loader = argv[14];
-	mode = atoi (argv[15]);
-	den = atoi (argv[16]);
+	name = argv[7];
+	acctname = argv[8];
+	jid = atoi (argv[9]);
+	ux = atoi (argv[10]);
+	rlsflags = atoi (argv[11]);
+	dgn = argv[12];
+	devtype = argv[13];
+	dvrname = argv[14];
+	loader = argv[15];
+	mode = atoi (argv[16]);
+	den = atoi (argv[17]);
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
 #if SONYRAW
@@ -110,8 +111,6 @@ char	**argv;
 
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
-	pwd = getpwuid (uid);
-	strcpy (name, pwd->pw_name);
 
 	/* delay VDQM_UNIT_RELEASE so that a new request for the same volume
 	   has a chance to keep the volume mounted */

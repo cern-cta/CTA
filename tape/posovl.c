@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.23 $ $Date: 2001/02/15 11:27:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.24 $ $Date: 2001/06/18 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -69,7 +69,7 @@ char	**argv;
 	int method;
 	int mode;
 	int msglen;
-	char name[CA_MAXUSRNAMELEN+1];
+	char *name;
 	char *p;
 	struct passwd *pwd;
 	char *q;
@@ -98,36 +98,37 @@ char	**argv;
 	rpfd = atoi(argv[3]);
 	uid = atoi (argv[4]);
 	gid = atoi (argv[5]);
-	jid = atoi (argv[6]);
-	ux = atoi(argv[7]);
-	dgn = argv[8];
-	devtype = argv[9];
-	dvrname = argv[10];
-	mode = atoi (argv[11]);
-	lblcode = atoi (argv[12]);
-	vsn = argv[13];
+	name = argv[6];
+	jid = atoi (argv[7]);
+	ux = atoi(argv[8]);
+	dgn = argv[9];
+	devtype = argv[10];
+	dvrname = argv[11];
+	mode = atoi (argv[12]);
+	lblcode = atoi (argv[13]);
+	vsn = argv[14];
 
-	sscanf (argv[14], "%02x%02x%02x%02x", &blockid_tmp[0], &blockid_tmp[1],
+	sscanf (argv[15], "%02x%02x%02x%02x", &blockid_tmp[0], &blockid_tmp[1],
 	    &blockid_tmp[2], &blockid_tmp[3]);
 	for (i = 0; i < 4; i++)
 	  blockid[i] = blockid_tmp[i];
 
-	cfseq = atoi (argv[15]);
-	strcpy (fid, argv[16]);
-	filstat = atoi (argv[17]);
-	fsec = atoi (argv[18]);
-	fseq = atoi (argv[19]);
-	method = atoi (argv[20]);
-	path = argv[21];
-	Qfirst = atoi (argv[22]);
-	Qlast = atoi (argv[23]);
-	retentd = atoi (argv[24]);
+	cfseq = atoi (argv[16]);
+	strcpy (fid, argv[17]);
+	filstat = atoi (argv[18]);
+	fsec = atoi (argv[19]);
+	fseq = atoi (argv[20]);
+	method = atoi (argv[21]);
+	path = argv[22];
+	Qfirst = atoi (argv[23]);
+	Qlast = atoi (argv[24]);
+	retentd = atoi (argv[25]);
 
-	strcpy (recfm, argv[25]);
-	blksize = atoi (argv[26]);
-	lrecl = atoi (argv[27]);
-	den = atoi (argv[28]);
-	flags = atoi (argv[29]);
+	strcpy (recfm, argv[26]);
+	blksize = atoi (argv[27]);
+	lrecl = atoi (argv[28]);
+	den = atoi (argv[29]);
+	flags = atoi (argv[30]);
  
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
@@ -146,9 +147,6 @@ char	**argv;
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
 	signal (SIGINT, positkilled);
-
-	pwd = getpwuid (uid);
-	strcpy (name, pwd->pw_name);
 
 	/* open device and check drive ready */
 
@@ -208,6 +206,8 @@ char	**argv;
 			goto reply;
 		}
 		if (method == TPPOSIT_BLKID) {
+			tplogit (func, "locating to blockid %02x%02x%02x%02x\n",
+			    blockid[0], blockid[1], blockid[2], blockid[3]);
 			if (c = locate (tapefd, path, blockid)) goto reply;
 			flags |= LOCATE_DONE;
 		}
