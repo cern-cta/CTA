@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.12 $ $Date: 2001/02/05 05:58:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.13 $ $Date: 2001/07/30 12:20:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -571,6 +571,12 @@ u_signed64 *Size;
 		perc = tape_used / 350000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (35GB) *****\n",
 			perc);
+	} else if (den == D40G || den == D40GC) {
+	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
+		perc = tape_used / 400000000;
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (40GB) *****\n",
+			perc);
+	    }
 	} else if (den == D50G || den == D50GC) {
 		perc = tape_used / 500000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (50GB) *****\n",
