@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.25 2002/03/08 13:08:49 jdurand Exp $
+ * $Id: procfilchg.c,v 1.26 2002/04/11 10:07:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.25 $ $Date: 2002/03/08 13:08:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.26 $ $Date: 2002/04/11 10:07:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -168,12 +168,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			hsmfile = Coptarg;
 			if (check_hsm_type_light(Coptarg,&(t_or_d)) != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad HSM filename\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			if (t_or_d != 'h') {
 				sendrep(rpfd, MSG_ERR, "STG02 - Only CASTOR HSM filename supported\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			break;
@@ -320,7 +320,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	}
 
 	if (errflg != 0) {
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
@@ -331,7 +331,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
 	if ((nargs > Coptind) && (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus)) {
 		sendrep(rpfd, MSG_ERR, "STG02 - Options and parameters are exclusive\n");
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
@@ -351,7 +351,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			/* This apply unless user gave special value corresponding to AS_LONG_AS_POSSIBLE */
 			if (thisretenp_on_disk != AS_LONG_AS_POSSIBLE) {
 				sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -360,7 +360,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	if (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus) {
 		if (! (hsmfile || donereqid)) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Supply of -M or --reqid is mandatory\n");
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 		c = 0;
@@ -391,7 +391,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (hsmfile)
 				if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			if ((ifileclass = upd_fileclass(NULL,stcp,ISSTAGED(stcp),0)) < 0) {
-				c = USERR;
+				c = serrno;
 				goto reply;
 			}
 			/* We check if the name of this file in the name server is really the one we have in input */
@@ -432,7 +432,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				seteuid(start_passwd.pw_uid);
 				if (rc != 0) {
 					sendrep (rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
-					c = USERR;
+					c = EINVAL;
 					goto reply;			
 				}
 				/* Thanks to Cns_stat we can also verify the size of the file */
@@ -447,7 +447,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				/* or STAGEOUT */
 				if ((stcp->status != (STAGEOUT|CAN_BE_MIGR)) && (stcp->status != STAGEOUT)) {
 					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "should be in STAGEOUT|CAN_BE_MIGR or STAGEOUT status");
-					c = USERR;
+					c = EINVAL;
 					goto reply;			
 				}
 				if ((currentmintime_beforemigr = thisstcp.u1.h.mintime_beforemigr) < 0)
@@ -517,7 +517,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 								/* This is a consistency problem for us */
 								if (strcmp(stcp->ipath,stcp2->ipath) != 0) {
 									sendrep (rpfd, MSG_ERR, STG169, hsmfile, stcp->ipath, stcp2->ipath);
-									c = USERR;
+									c = EINVAL;
 									goto reply;			
 								}
 								/* We repeat the test on the status */
@@ -527,7 +527,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 									break;
 								default:
 									sendrep(rpfd, MSG_ERR, STG170, hsmfile, stcp->reqid, stcp2->reqid);
-									c = USERR;
+									c = EINVAL;
 									goto reply;			
 								}
 								/* Good - we can delete this entry - it has no indicence on */
@@ -555,7 +555,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						/* We grabbed the size in the name server before. We verify consistency */
 						if (hsmsize != stcp->actual_size) {
 							sendrep(rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr((u_signed64) stcp->actual_size, tmpbuf2, 0));
-							c = USERR;
+							c = EINVAL;
 							goto reply;			
 						}
 						save_stcp_status = stcp->status;
@@ -595,13 +595,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						break;
 					default:
 						sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED status");
-						c = USERR;
+						c = EINVAL;
 						goto reply;			
 					}
 					break;
 				default:
 					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "only --status CAN_BE_MIGR option value supported");
-					c = USERR;
+					c = EINVAL;
 					goto reply;			
 				}
 				/* Either no executions */
@@ -633,21 +633,21 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		}
 		if (! found) {
 			sendrep (rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "file not found", poolname);
-			c = USERR;
+			c = ENOENT;
 			goto reply;
 		} else {
 			c = 0;
 		}
 	} else {
 		sendrep(rpfd, MSG_ERR, "STG02 - Supply of options or parameters is mandatory\n");
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 
 
   reply:
 	free (argv);
-	sendrep (rpfd, STAGERC, STAGEFILCHG, c);
+	sendrep (rpfd, STAGERC, STAGEFILCHG, magic, c);
 }
 
 
