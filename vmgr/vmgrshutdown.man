@@ -1,0 +1,29 @@
+.\" @(#)$RCSfile: vmgrshutdown.man,v $ $Revision: 1.1 $ $Date: 2000/02/01 07:22:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRSHUTDOWN l "$Date: 2000/02/01 07:22:34 $"
+.SH NAME
+vmgrshutdown \- shutdown the volume manager
+.SH SYNOPSIS
+.B vmgrshutdown
+.RB [ -f ]
+.SH DESCRIPTION
+.B vmgrshutdown
+shuts the volume manager down.
+It waits for outstanding requests to complete. New requests will be rejected
+with
+.B serrno
+set to
+.BR EVMGRNACT .
+Connections to the database server are closed one by one when they are not
+used anymore and when all connections are closed, the volume manager exits.
+.LP
+Only super-user is authorized to shut the volume manager down.
+.SH OPTIONS
+.TP
+.B -f
+force shutdown, i.e. long operations like list of tapes can be aborted.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
