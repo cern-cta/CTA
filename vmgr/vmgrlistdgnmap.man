@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistdgnmap.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistdgnmap.man,v $ $Revision: 1.2 $ $Date: 2001/03/09 07:08:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTDGNMAP 1 "$Date: 2001/03/08 15:22:20 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTDGNMAP 1 "$Date: 2001/03/09 07:08:43 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistdgnmap \- list all existing triplets dgn/model/library in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -21,6 +21,11 @@ library		tape library name.
 .nf
 .ft CW
 vmgrlistdgnmap
+9840R  9840   STK_ACS0
+9840R3 9840   STK_ACS3
+9940R3 9940   STK_ACS3
+9940R4 9940   STK_ACS4
+NTRE3  3590E  STK_ACS3
 .ft
 .fi
 .SH EXIT STATUS

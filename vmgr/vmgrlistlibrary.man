@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistlibrary.man,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistlibrary.man,v $ $Revision: 1.2 $ $Date: 2001/03/09 07:08:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTLIBRARY 1 "$Date: 2001/03/08 15:22:16 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTLIBRARY 1 "$Date: 2001/03/09 07:08:43 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistlibrary \- query the CASTOR Volume Manager about a given library or list all existing tape libraries
 .SH SYNOPSIS
@@ -31,6 +31,7 @@ It must be at most CA_MAXTAPELIBLEN characters long.
 .nf
 .ft CW
 vmgrlistlibrary --name STK_ACS0
+STK_ACS0 CAPACITY 24000 FREE 1757 (7.3%)
 .ft
 .fi
 .SH EXIT STATUS
