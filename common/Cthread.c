@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.25 1999/11/30 15:18:38 jdurand Exp $
+ * $Id: Cthread.c,v 1.26 1999/11/30 18:22:03 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -105,7 +105,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.25 $ $Date: 1999/11/30 15:18:38 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.26 $ $Date: 1999/11/30 18:22:03 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -3719,10 +3719,12 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 {
   struct Cid_element_t *current = &Cid;    /* Curr Cid_element */
   int                 current_cid = -1;    /* Curr Cthread ID    */
-  void               *tsd = NULL;         /* Thread-Specific Variable */
+  void               *tsd = NULL;          /* Thread-Specific Variable */
 #ifdef _CTHREAD
   int n;
 #endif
+  Cth_pid_t           ourpid;             /* We will need to identify ourself */
+  int                 ourthID;
 
 #ifdef CTHREAD_DEBUG
   if (Cthread_file != NULL) {
@@ -3856,6 +3858,16 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
   }
 #endif /* CTHREAD */
 
+#ifdef _CTHREAD
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  ourthID = GetCurrentThreadId();
+#  else
+  ourpid = pthread_self();
+#  endif
+#else
+  ourpid = getpid();
+#endif
+
   if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
     return(-1);
 
@@ -3944,6 +3956,23 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
   /* Not found                         */
   
   if (current_cid < 0) {
+#ifdef CTHREAD_DEBUG
+  if (Cthread_file != NULL) {
+    /* To avoid recursion */
+    if (file == NULL) {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : cid not found. Will process a new one.\n",
+            _Cthread_self(),
+            Cthread_file,Cthread_line);
+    } else {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : cid not found. Will process a new one.\n",
+            _Cthread_self(),
+            Cthread_file,Cthread_line,
+            file, line);
+    }
+  }
+#endif
     /* Not found */
     if (startroutine == NULL) {
       /* This is the special case of initialization */
@@ -3980,16 +4009,68 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
     ((struct Cid_element_t *) current->next)->addr     = startroutine;
     ((struct Cid_element_t *) current->next)->detached = detached;
     ((struct Cid_element_t *) current->next)->joined   = 0;
-    ((struct Cid_element_t *) current->next)->next     = NULL;
     ((struct Cid_element_t *) current->next)->cid      = current_cid;
+    ((struct Cid_element_t *) current->next)->next     = NULL;
     
-  } else {
+#ifdef CTHREAD_DEBUG
+    if (Cthread_file != NULL) {
+      /* To avoid recursion */
+      if (file == NULL) {
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : created a new cid element with CthreadID=%d.\n",
+              _Cthread_self(),
+              Cthread_file,Cthread_line,
+              current_cid);
+      } else {
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : created a new cid element with CthreadID=%d.\n",
+              _Cthread_self(),
+              Cthread_file,Cthread_line,
+              file, line,
+              current_cid);
+      }
+    }
+#endif
 
-    /* In any case we overwrite our TSD keyvalue   */
-    /* The fact that current_cid >= 0 says that we */
-    /* are executing in our namespace.             */
-    /* * (int *) tsd = current_cid; */
+    current = current->next;
 
+  }
+
+  if (
+#ifdef _CTHREAD
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+      ourthID == current->thID;
+#  else
+      pthread_equal(ourpid,current->pid)
+#  endif
+#else
+      ourpid == current->pid
+#endif
+      ) {
+    /* We, the calling thread, is the same that is asking for a new cid */
+    /* We update our tsd.                                               */
+    * (int *) tsd = current_cid;
+#    ifdef CTHREAD_DEBUG
+    if (Cthread_file != NULL) {
+      /* To avoid recursion */
+      if (file == NULL) {
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : We are the same thread that own found CthreadID=%d. Now our output of _Cthread_self() should be equal to %d, please verify: _Cthread_self() = %d\n",
+              _Cthread_self(),
+              Cthread_file,Cthread_line,
+              current_cid,
+              current_cid,_Cthread_self());
+      } else {
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : We are the same thread that own found CthreadID=%d. Now our output of _Cthread_self() should be equal to %d, please verify: _Cthread_self() = %d\n",
+              _Cthread_self(),
+              Cthread_file,Cthread_line,
+              file, line,
+              current_cid,
+              current_cid,_Cthread_self());
+      }
+    }
+#    endif
   }
 
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
