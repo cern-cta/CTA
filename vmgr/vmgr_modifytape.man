@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.8 $ $Date: 2001/01/31 12:38:36 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.9 $ $Date: 2001/03/23 08:58:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2001/01/31 12:38:36 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2001/03/23 08:58:41 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -61,8 +61,6 @@ may be
 .B nl
 or
 .BR sl .
-Default is
-.BR al .
 .TP
 .I manufacturer
 is an alphanumeric field CA_MAXMANUFLEN bytes long.
