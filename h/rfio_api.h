@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.1 $ $Date: 2000/05/29 14:16:45 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.2 $ $Date: 2000/05/29 14:28:39 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -107,9 +107,9 @@ EXTERN_C DIR DLL_DECL *rfio_opendir _PROTO((char *));
 EXTERN_C RFILE DLL_DECL *ftnlun[];        /* Fortran lun descriptor table */
 EXTERN_C RFILE DLL_DECL *rfilefdt[];      /* Remote file desciptors table */
 
-EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **, int));
+EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
                                       /* parse file path                  */
-EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **));
+EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
                                       /* parse file path                  */
 EXTERN_C int DLL_DECL rfio_connect _PROTO((char *, int));
                                      /* connect remote rfio server        */
