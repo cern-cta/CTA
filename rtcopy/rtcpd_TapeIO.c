@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.10 $ $Date: 2000/01/13 14:58:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.11 $ $Date: 2000/01/14 08:50:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -449,7 +449,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                     if ( errstr != NULL && *errstr != '\0' ) {
                         (void)rtcpd_AppendClientMsg(NULL, file, errstr);
                         if ( save_serrno > 0 )
-                            rtcpd_SetReqStat(NULL,file,save_serrno,
+                            rtcpd_SetReqStatus(NULL,file,save_serrno,
                                              RTCP_FAILED | RTCP_SYERR);
                         rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): %s\n",
                                  fd,filereq->tape_path,errstr);
