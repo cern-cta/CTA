@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.25 2002/05/23 10:03:31 jdurand Exp $
+ * $Id: mstat.c,v 1.26 2002/05/24 06:46:21 baud Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.25 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.26 $ $Date: 2002/05/24 06:46:21 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -138,7 +138,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
      int reqst ;
 
 {
-  char     buf[256];
+  char     buf[MAXFILENAMSIZE+20];
   int             status;         /* remote fopen() status        */
   int     len;
   int     rc;
