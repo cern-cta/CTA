@@ -71,7 +71,19 @@ namespace castor {
     OBJ_Tape,
     OBJ_TapeCopy,
     OBJ_TapePool,
-    OBJ_StringResponse
+    OBJ_StringResponse,
+    OBJ_StageFileQueryRequest,
+    OBJ_StageFindRequestRequest,
+    OBJ_StageGetRequest,
+    OBJ_StagePrepareToGetRequest,
+    OBJ_StagePrepareToPutRequest,
+    OBJ_StagePrepareToUpdateRequest,
+    OBJ_StagePutDoneRequest,
+    OBJ_StagePutRequest,
+    OBJ_StageRequestQueryRequest,
+    OBJ_StageRmRequest,
+    OBJ_StageUpdateFileStatusRequest,
+    OBJ_StageUpdateRequest
   };
     
   /**

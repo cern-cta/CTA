@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.45 $ $Release$ $Date: 2004/10/29 10:03:46 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.46 $ $Release$ $Date: 2004/11/03 16:30:15 $ $Author: bcouturi $
 #
 # Make Castor libraries and executables
 #
@@ -130,6 +130,19 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamTapeCopyCnv.cpp \
               io/StreamTapePoolCnv.cpp \
+              io/StreamStageFileQueryRequestCnv.cpp \
+              io/StreamStageFindRequestRequestCnv.cpp \
+              io/StreamStageGetNextRequestCnv.cpp \
+              io/StreamStageGetRequestCnv.cpp \
+              io/StreamStagePrepareToGetRequestCnv.cpp \
+              io/StreamStagePrepareToPutRequestCnv.cpp \
+              io/StreamStagePrepareToUpdateRequestCnv.cpp \
+              io/StreamStagePutDoneRequestCnv.cpp \
+              io/StreamStagePutRequestCnv.cpp \
+              io/StreamStageRequestQueryRequestCnv.cpp \
+              io/StreamStageRmRequestCnv.cpp \
+              io/StreamStageUpdateFileStatusRequestCnv.cpp \
+              io/StreamStageUpdateRequestCnv.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
               rh/EndResponse.cpp \
@@ -181,6 +194,32 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/StageQryRequestCInt.cpp \
               stager/StageUpdcRequest.cpp \
               stager/StageUpdcRequestCInt.cpp \
+	      stager/StageFileQueryRequest.cpp \
+	      stager/StageFindRequestRequest.cpp \
+	      stager/StageGetNextRequest.cpp \
+	      stager/StageGetRequest.cpp \
+	      stager/StagePrepareToGetRequest.cpp \
+	      stager/StagePrepareToPutRequest.cpp \
+	      stager/StagePrepareToUpdateRequest.cpp \
+	      stager/StagePutDoneRequest.cpp \
+	      stager/StagePutRequest.cpp \
+	      stager/StageRequestQueryRequest.cpp \
+	      stager/StageRmRequest.cpp \
+	      stager/StageUpdateFileStatusRequest.cpp \
+	      stager/StageUpdateRequest.cpp \
+	      stager/StageFileQueryRequestCInt.cpp \
+	      stager/StageFindRequestRequestCInt.cpp \
+	      stager/StageGetNextRequestCInt.cpp \
+	      stager/StageGetRequestCInt.cpp \
+	      stager/StagePrepareToGetRequestCInt.cpp \
+	      stager/StagePrepareToPutRequestCInt.cpp \
+	      stager/StagePrepareToUpdateRequestCInt.cpp \
+	      stager/StagePutDoneRequestCInt.cpp \
+	      stager/StagePutRequestCInt.cpp \
+	      stager/StageRequestQueryRequestCInt.cpp \
+	      stager/StageRmRequestCInt.cpp \
+	      stager/StageUpdateFileStatusRequestCInt.cpp \
+	      stager/StageUpdateRequestCInt.cpp \
               stager/Stream.cpp \
               stager/StreamCInt.cpp \
               stager/SubRequest.cpp \
