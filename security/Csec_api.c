@@ -106,6 +106,36 @@ int Csec_init_context_ext(Csec_context *ctx, int init_proto, int reinitialize) {
 
 
 /**
+ * Frees the Csec_context !
+ */
+int Csec_clear_context(Csec_context *ctx) {
+
+  if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
+    if (ctx->Csec_delete_context != NULL)
+      (*(ctx->Csec_delete_context))(ctx);
+  }
+  if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
+    if (ctx->Csec_delete_creds != NULL)
+      (*(ctx->Csec_delete_creds))(ctx);
+  }
+  if (ctx->shhandle != NULL)
+    dlclose(ctx->shhandle);
+
+  if (ctx->protocols != NULL) {
+    free(ctx->protocols);
+  }
+
+  if (ctx->peer_protocols != NULL) {
+    free(ctx->peer_protocols);
+  }
+
+  memset(ctx, 0, sizeof(Csec_context));
+
+  return 0;
+    
+}
+
+/**
  * Reinitializes the security context
  */
 int Csec_reinit_context_server(ctx)

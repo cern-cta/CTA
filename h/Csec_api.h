@@ -7,6 +7,7 @@
 int DLL_DECL  Csec_init_context_client _PROTO ((Csec_context *ctx));
 int DLL_DECL  Csec_init_context_server _PROTO ((Csec_context *ctx));
 int DLL_DECL  Csec_reinit_context_server _PROTO ((Csec_context *ctx));
+int DLL_DECL  Csec_clear_context _PROTO((Csec_context *ctx));
 int DLL_DECL  Csec_delete_context _PROTO ((Csec_context *));
 int DLL_DECL  Csec_delete_creds _PROTO ((Csec_context *));
 int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context *ctx,
