@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_tppos.c,v 1.6 2000/03/15 19:26:30 jdurand Exp $
+ * $Id: stage_updc_tppos.c,v 1.7 2000/03/16 10:27:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.6 $ $Date: 2000/03/15 19:26:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.7 $ $Date: 2000/03/16 10:27:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -75,6 +75,9 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     serrno = EFAULT;
     return (-1);
   }
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
 
   /* check stager request id */
 
@@ -185,7 +188,7 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);
   }
-  if (c == 0 && path != NULL) {
+  if (c == 0 && path != NULL && repbuf[0] != '\0') {
     rbp = repbuf;
     unmarshall_STRING (rbp, path);
   }
