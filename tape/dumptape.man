@@ -1,0 +1,148 @@
+.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.1 $ $Date: 1999/11/05 11:03:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH DUMPTAPE l "$Date: 1999/11/05 11:03:04 $"
+.SH NAME
+dumptape \- dump a tape and analyze its contents
+.SH SYNOPSIS
+.B dumptape
+[
+.BI -B " maxbyte"
+] [
+.BI -b " max_block_size"
+] [
+.BI -C " code"
+] [
+.BI -d " density"
+] [
+.B -E ignoreeoi
+] [
+.BI -F " maxfile"
+] [
+.BI -g " device_group_name"
+] [
+.BI -N " blknos"
+] [
+.BI -S " tape_server"
+] {
+.BI -v " volume_serial_number"
+]
+.BI -V " visual_identifier"
+.SH DESCRIPTION
+.B dumptape
+finds out if the tape is labelled or not; if the tape is labelled, it finds out
+if the label is ASCII or EBCDIC.
+It also dumps the blocks content in hexadecimal and in ASCII or EBCDIC.
+.SH OPTIONS
+.TP
+.BI \-B " maxbyte"
+Number of bytes per block to be dumped (0 means all bytes). Default is 320.
+.TP
+.BI \-b " blksize"
+Specifies the maximum block size. Default is 65536.
+.TP
+.BI \-C " code"
+.RB "Character code for data interpretation (" ascii " or " ebcdic ).
+Default is ebcdic.
+.TP
+.BI \-d " density"
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+If this parameter is missing, the value is taken from TMS (if installed) or
+defaults to 6250 for device group TAPE (IBM 3420).
+.TP
+.B \-E ignoreeoi
+Do not take two consecutive tapemarks as End Of Information.
+If the number of files to dump is not limited by the option
+.BR \-F ,
+the dump will terminate only when encountering blank tape or too many parity
+errors (on IBM3420, the reel would wind off).
+.TP
+.BI \-F " maxfile"
+Number of files to be dumped (0 means all files; this the default for 3420/3480/3490).
+The default value for long media (Exabytes, DLTs, IBM3590) is one data file.
+.TP
+.BI \-g " dgn"
+Requests a device from an installation defined set of "device groups".
+It must match the device group specified in TMS (if installed).
+If this parameter is missing, the value is taken from TMS or
+defaults to CART.
+.TP
+.BI \-N " blknos"
+Starting and ending block numbers to be dumped separated by comma.
+Default is 1, i.e. first block of each file).
+.TP
+.BI \-S " server"
+Specifies that the tape should be read on the tape server
+.IR server.
+.TP
+.BI \-V " vid"
+Specifies the tape
+.SM VID.
+.TP
+.BI \-v " vsn"
+Specifies the tape magnetic label
+.SM VSN.
+.LP
+All options can be given in any order.
+The space between option name and option value is optional.
+.SH NOTES
+When the remote version of dumptape is used, i.e. dumptape is not executed on
+the tape server itself, the output is written to stderr.
+.SH EXAMPLES
+
+dumptape -V 12345A
+	will dump a maximum of 320 bytes from the first block of every file.
+
+dumptape -B 0 -F 1 -N 4,5 -V 12345A
+	will dump all bytes in block 4 and 5 from first file.
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
