@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.14 2000/03/15 10:05:58 jdurand Exp $
+ * $Id: stage.h,v 1.15 2000/03/23 08:21:26 jdurand Exp $
  */
 
 /*
@@ -75,7 +75,7 @@
 #define	WAITING_REQ	0x20	/* waiting on an other request */
 #define	STAGED		0x30	/* stage complete */
 #define	KILLED		0x40	/* stage killed */
-#define	FAILED		0x50	/* stage failed */
+#define	STG_FAILED	0x50	/* stage failed */
 #define	PUT_FAILED	0x60	/* stageput failed */
 #define	STAGED_LSZ	0x100	/* stage limited by size */
 #define	STAGED_TPE	0x200	/* blocks with parity error have been skipped */
