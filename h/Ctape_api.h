@@ -4,12 +4,13 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.2 $ $Date: 1999/09/20 12:45:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.3 $ $Date: 1999/10/13 14:43:35 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
 #define _CTAPE_API_H
 #include "Ctape_constants.h"
+#include "osdep.h"
 
 typedef struct {
 	unsigned long from_host;
