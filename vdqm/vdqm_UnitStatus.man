@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.15 $ $Date: 2000/06/16 07:46:50 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.16 $ $Date: 2000/06/26 12:50:09 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS 3 "$Date: 2000/06/16 07:46:50 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_UNITSTATUS 3 "$Date: 2000/06/26 12:50:09 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -287,6 +287,10 @@ VDQM service unknown.
 .TP
 .B SENOSHOST
 VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
 .TP
 .B EINVAL
 A parameter or combination of parameters is invalid. For instance if
