@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.196 2002/09/23 10:59:48 jdurand Exp $
+ * $Id: procio.c,v 1.197 2002/09/25 07:17:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.196 $ $Date: 2002/09/23 10:59:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.197 $ $Date: 2002/09/25 07:17:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1478,7 +1478,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	} else if (concat_off != 0 || api_out == 0) {
 		if ((req_type == STAGEIN &&
 			 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
-			(req_type != STAGEIN && nbtpf > nbdskf) ||
+			((req_type != STAGEIN && req_type != STAGECAT) && nbtpf > nbdskf) ||
 			(Uflag && nbdskf > 2)) {
 			sendrep (&rpfd, MSG_ERR, STG19);
 			c = EINVAL;
