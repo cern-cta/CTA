@@ -1,10 +1,10 @@
-.\" $Id: stage_constants.man,v 1.1 2002/10/03 12:48:17 jdurand Exp $
+.\" $Id: stage_constants.man,v 1.2 2002/10/04 07:50:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_constants.man,v $ $Revision: 1.1 $ $Date: 2002/10/03 12:48:17 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_constants.man,v $ $Revision: 1.2 $ $Date: 2002/10/04 07:50:12 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_CONSTANTS "3" "$Date: 2002/10/03 12:48:17 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_CONSTANTS "3" "$Date: 2002/10/04 07:50:12 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage constants \- Constants for the stage package
 
@@ -446,7 +446,7 @@ Constant describing a stageshutdown request using the API. Value is 115.
 Constant describing a stageping request using the API. Value is 116.
 
 .SH ALSO
-\fBstage\fP(1), \fBstage_limits\fP(3), \fBstage_macros\fP(3)
+\fBstage\fP(1), \fBstage_limits\fP(3), \fBstage_macros\fP(3), \fBstage_struct\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
