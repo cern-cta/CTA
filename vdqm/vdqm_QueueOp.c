@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.57 $ $Date: 2004/06/21 06:45:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.58 $ $Date: 2004/09/14 12:21:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -22,8 +22,11 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.57 $ $Date
 #include <Castor_limits.h>
 #include <Cthread_api.h>
 #include <Csnprintf.h>
+#include <Ctape_api.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
+
+extern char *getconfent _PROTO((char *, char *, int));
 
 #define INVALID_DGN_CONTEXT (dgn_context == NULL)
 
@@ -1383,6 +1386,7 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     dgn_element_t *dgn_context;
     vdqm_volrec_t *volrec, *newvolrec;
     vdqm_drvrec_t *drvrec;
+    char *p;
     int rc;
     
     if ( hdr == NULL || VolReq == NULL ) return(-1);
@@ -1449,6 +1453,18 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
      * We don't allow client to set priority
      */
     volrec->vol.priority = VDQM_PRIORITY_NORMAL;
+    /*
+     * Set priority for tpwrite
+     */
+    if ( (volrec->vol.mode == WRITE_ENABLE) &&
+         ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
+      if ( strcmp(p,"YES") == 0 ) {
+        volrec->vol.priority = VDQM_PRIORITY_MAX;
+      }
+    }
+    log(LOG_INFO,"vdqm_NewVolReq(): request priority set to %d\n",
+        volrec->vol.priority);
+    
     /*
      * Remember the new volume record to assure replica is updated about it.
      */
