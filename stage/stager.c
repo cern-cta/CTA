@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.91 2000/10/03 08:06:21 jdurand Exp $
+ * $Id: stager.c,v 1.92 2000/10/06 09:16:06 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.91 $ $Date: 2000/10/03 08:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.92 $ $Date: 2000/10/06 09:16:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1530,7 +1530,6 @@ int stagewrt_castor_hsm_file() {
 						/* Tape info very probably inconsistency with, for ex., TMS */
 						SAVE_EID;
 						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
-						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
 						RESTORE_EID;
 						Flags = 0;
 						RETURN(USERR);
