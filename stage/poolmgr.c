@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.84 2001/02/12 07:34:49 jdurand Exp $
+ * $Id: poolmgr.c,v 1.85 2001/02/12 07:59:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.84 $ $Date: 2001/02/12 07:34:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.85 $ $Date: 2001/02/12 07:59:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -141,6 +141,7 @@ void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
 void check_retenp_on_disk _PROTO(());
+int tppool_vs_stcp_cmp_vs_size _PROTO((CONST void *, CONST void *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -2034,6 +2035,10 @@ int migpoolfiles(pool_p)
       /* We check within this fileclass what is the stream that is migrating the most data and if it is */
       /* possible, then relevant, to grab some entries from any stcp from the same fileclass using this tape pool */
 
+      /* In order to reduce as much as possible streams of different sizes, we always chose the */
+      /* ones with the highest size first. */
+      qsort((void *) tppool_vs_stcp, ntppool_vs_stcp, sizeof(struct files_per_stream), &tppool_vs_stcp_cmp_vs_size);
+
       for (j = 0; j < ntppool_vs_stcp; j++) {
         if (tppool_vs_stcp[j].size > minsize) {
           virtual_new_size = 0;
@@ -3025,4 +3030,22 @@ void check_retenp_on_disk() {
 			}
 		}
 	}
+}
+
+int tppool_vs_stcp_cmp_vs_size(p1,p2)
+		 CONST void *p1;
+		 CONST void *p2;
+{
+  struct files_per_stream *fp1 = (struct files_per_stream *) p1;
+  struct files_per_stream *fp2 = (struct files_per_stream *) p2;
+  
+  /* We sort with reverse order v.s. size */
+  
+  if (fp1->size < fp2->size) {
+    return(1);
+  } else if (fp1->size > fp2->size) {
+    return(-1);
+  } else {
+    return(0);
+  }
 }
