@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.8 2005/01/30 12:13:08 jdurand Exp $
+# $Id: makedeb.sh,v 1.9 2005/03/11 08:44:22 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -50,7 +50,7 @@ cd castor-${a}.${b}.${c}
 #
 ## Force build rules to YES for a lot of things
 #
-for this in BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildGcDaemon BuildHsmTools BuildMonitorClient BuildMonitorServer BuildMonitorLibrary BuildMsgClient BuildMsgServer BuildMsgLibrary BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRfioClient BuildRfioServer BuildRfioLibrary BuildRmcServer BuildRmcLibrary BuildJob BuildRtcopyClient BuildRtcopyServer BuildRtcopyLibrary BuildRtstat BuildStageClient BuildStageDaemon BuildStageLibrary BuildRmMaster BuildRmNode BuildRmClient BuildRmLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmServer BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildDlfClient BuildDlfDaemon BuildDlfLibrary BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildRHCpp BuildOraCpp BuildCastorClientCPPLibrary Accounting HasNroff HasCDK UseCupv UseOracle UseVmgr UseScheduler UseExpert UseMaui; do
+for this in BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildGcDaemon BuildHsmTools BuildMonitorClient BuildMonitorServer BuildMonitorLibrary BuildMsgClient BuildMsgServer BuildMsgLibrary BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRfioClient BuildRfioServer BuildRfioLibrary BuildRmcServer BuildRmcLibrary BuildJob BuildRtcopyClient BuildRtcopyServer BuildRtcopyLibrary BuildRtcpclientd BuildRtstat BuildStageClient BuildStageDaemon BuildStageLibrary BuildRmMaster BuildRmNode BuildRmClient BuildRmLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmServer BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildDlfClient BuildDlfDaemon BuildDlfLibrary BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildRHCpp BuildOraCpp BuildCastorClientCPPLibrary Accounting HasNroff HasCDK UseCupv UseOracle UseVmgr UseScheduler UseExpert UseMaui; do
     perl -pi -e "s/$this.*(YES|NO)/$this\tYES/g" config/site.def
 done
 #
