@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.145 2001/11/30 11:55:16 jdurand Exp $
+ * $Id: procio.c,v 1.146 2001/12/03 14:18:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.145 $ $Date: 2001/11/30 11:55:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.146 $ $Date: 2001/12/03 14:18:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -244,6 +244,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
 	char **hsmfiles = NULL;
+	int *hsmpoolflags = NULL;
 	int ihsmfiles;
 	int jhsmfiles;
 	char *name;
@@ -457,6 +458,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 			c = (api_out != 0) ? SEINTERNAL : SYERR;
 			goto reply;
 		}
+		if ((hsmpoolflags = (int *) malloc((size_t) (nstcp_input * sizeof(int)))) == NULL) {
+			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
+			c = (api_out != 0) ? SEINTERNAL : SYERR;
+			goto reply;
+		}
 		for (i = 0; i < nstcp_input; i++) {
 			char logit[BUFSIZ + 1];
 
@@ -504,12 +510,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 				default:
 					break;
 				}
+				hsmpoolflags[i] = 0;
 			} else {
-				if (! (strcmp (stcp_input[i].poolname, "NOPOOL") == 0 ||
-						isvalidpool (stcp_input[i].poolname))) {
+				if (! (isvalidpool (stcp_input[i].poolname) || strcmp (stcp_input[i].poolname, "NOPOOL") == 0)) {
 					sendrep (rpfd, MSG_ERR, STG32, stcp_input[i].poolname);
 					c = USERR;
 					goto reply;
+				}
+				if (strcmp (stcp_input[i].poolname, "NOPOOL") == 0) {
+					hsmpoolflags[i] = -1;
+					stcp_input[i].poolname[0] = '\0';
+				} else {
+					hsmpoolflags[i] = 1;
 				}
 			}
 		}
@@ -1108,25 +1120,29 @@ void procioreq(req_type, magic, req_data, clienthost)
 	/* Api checksum for this thing is done before */
 	if (req_type == STAGEIN && stgreq.t_or_d == 'm' && ! size)
 		Aflag = 1;  /* force deferred policy if stagein of an hsm file without -s option */
-	if (*stgreq.poolname == '\0') {
-		poolflag = 0;
-		if (req_type != STAGEWRT && req_type != STAGECAT) {
-			switch (req_type) {
-			case STAGEIN:
-				strcpy(stgreq.poolname,defpoolname_in);
-				break;
-			case STAGEOUT:
-				bestnextpool_out(stgreq.poolname,WRITE_MODE);
-				break;
-			default:
-				break;
+	if (api_out == 0) {
+		/* Not in API mode - check the poolname */
+		if (*stgreq.poolname == '\0') {
+			poolflag = 0;
+			if (req_type != STAGEWRT && req_type != STAGECAT) {
+				switch (req_type) {
+				case STAGEIN:
+					strcpy(stgreq.poolname,defpoolname_in);
+					break;
+				case STAGEOUT:
+					bestnextpool_out(stgreq.poolname,WRITE_MODE);
+					break;
+				default:
+					break;
+				}
 			}
+		} else if (strcmp (stgreq.poolname, "NOPOOL") == 0) {
+			poolflag = -1;
+			stgreq.poolname[0] = '\0';
+		} else {
+			poolflag = 1;
 		}
-	} else if (strcmp (stgreq.poolname, "NOPOOL") == 0) {
-		poolflag = -1;
-		stgreq.poolname[0] = '\0';
-	} else poolflag = 1;
-
+	}
 	if (pool_user == NULL)
 		pool_user = STAGERGENERICUSER;
 
@@ -1178,7 +1194,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 				errflg++;
 			}
 			/* We want to determine which highest fseq is already staged for this vid */
-			if ((maxfseq = maxfseq_per_vid(&stgreq,poolflag,stgreq.poolname,&concat_off_flag)) > 0) {
+			/* In API mode - there is only one stcp in input, so poolflag is hsmpoolflags[0] */
+			/* and then the poolname specified by the user is stcp_input[0].poolname */
+			if ((maxfseq = maxfseq_per_vid(&stgreq,
+											(api_out != 0) ? hsmpoolflags[0] : poolflag,
+											(api_out != 0) ? stcp_input[0].poolname : stgreq.poolname,
+											&concat_off_flag)) > 0) {
 				fseq_elem *newfseq_list = NULL;
 
 				if (maxfseq >= concat_off_fseq) {
@@ -1216,10 +1237,22 @@ void procioreq(req_type, magic, req_data, clienthost)
 	/* compute number of disk files */
 	nbdskf = nargs - Coptind;
 	if (nbdskf == 0) {
-		if (poolflag < 0) {	/* -p NOPOOL */
-			sendrep (rpfd, MSG_ERR, STG07);
-			c = USERR;
-			goto reply;
+		if (api_out == 0) {
+			/* Command-line mode */
+			if (poolflag < 0) {	/* -p NOPOOL */
+				sendrep (rpfd, MSG_ERR, STG07);
+				c = USERR;
+				goto reply;
+			}
+		} else {
+			/* API mode */
+			for (i = 0; i < nstcp_input; i++) {
+				if (hsmpoolflags[i] < 0) {	/* "NOPOOL" in the API structure */
+					sendrep (rpfd, MSG_ERR, STG07);
+					c = USERR;
+					goto reply;
+				}
+			}
 		}
 		nbdskf = nbtpf;
 		no_upath = 1;
@@ -1288,30 +1321,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stgreq.mask = save_mask;
 			strcpy(stgreq.user,save_user);
 			strcpy(stgreq.group,save_group);
-			/* In API mode, some entries might have a pool specified, and others not */
-			/* So we redo the poolflag calculation for each of the entry */
-			if (*stgreq.poolname == '\0') {
-				poolflag = 0;
-				if (req_type != STAGEWRT && req_type != STAGECAT) {
-					switch (req_type) {
-					case STAGEIN:
-						if (((openflags & O_RDWR) == O_RDWR) || ((openflags & O_WRONLY) == O_WRONLY)) {
-							bestnextpool_out(stgreq.poolname,WRITE_MODE);
-						} else {
-							strcpy(stgreq.poolname,defpoolname_in);
-						}
-						break;
-					case STAGEOUT:
-						bestnextpool_out(stgreq.poolname,WRITE_MODE);
-						break;
-					default:
-						break;
-					}
-				}
-			} else if (strcmp (stgreq.poolname, "NOPOOL") == 0) {
-				poolflag = -1;
-				stgreq.poolname[0] = '\0';
-			} else poolflag = 1;
+			poolflag = hsmpoolflags[i < nstcp_input ? i : nstcp_input - 1];
 		}
 
 		forced_Cns_creatx = forced_rfio_stat = 0;
@@ -2466,6 +2476,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		rpfd = -1;
 	}
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmpoolflags != NULL) free(hsmpoolflags);
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
 	return;
@@ -2473,6 +2484,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (fseq_list != NULL) free (fseq_list);
 	if (argv != NULL) free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmpoolflags != NULL) free(hsmpoolflags);
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
 #if SACCT
