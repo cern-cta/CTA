@@ -118,6 +118,17 @@ namespace castor {
                                            castor::ObjectCatalog& newlyCreated)
           throw (castor::exception::Exception);
 
+        /**
+         * Updates C++ object from its foreign representation.
+         * @param object the object to deal with
+         * @param alreadyDone the set of objects already updated.
+         * This is needed to avoid looping in case of circular dependencies
+         * @exception Exception throws an Exception in cas of error
+         */
+        virtual void updateObj(castor::IObject* obj,
+                               castor::ObjectCatalog& alreadyDone)
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for request insertion

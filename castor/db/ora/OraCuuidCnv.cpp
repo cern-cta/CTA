@@ -202,7 +202,8 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
-    }    if (0 == m_deleteTypeStatement) {
+    }
+    if (0 == m_deleteTypeStatement) {
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Mark the current object as done
@@ -280,3 +281,53 @@ castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* addre
   }
 }
 
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCuuidCnv::updateObj(castor::IObject* obj,
+                                             castor::ObjectCatalog& alreadyDone)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_selectStatement) {
+      m_selectStatement = createStatement(s_selectStatementString);
+    }
+    if (0 == m_selectStatement) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Unable to create statement :" << std::endl
+                      << s_selectStatementString;
+      throw ex;
+    }
+    // retrieve the object from the database
+    m_selectStatement->setInt(1, obj->id());
+    oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::exception::NoEntry ex;
+      ex.getMessage() << "No object found for id :" << obj->id();
+      throw ex;
+    }
+    // Now retrieve and set members
+    castor::stager::Cuuid* object = 
+      dynamic_cast<castor::stager::Cuuid*>(obj);
+    Cuuid_t content;
+    content.time_low = rset->getInt(1);
+    content.time_mid = rset->getInt(2);
+    content.time_hi_and_version = rset->getInt(3);
+    content.clock_seq_hi_and_reserved = rset->getInt(4);
+    content.clock_seq_low = rset->getInt(5);
+    memcpy(content.node, rset->getString(6).data(), 6*sizeof(BYTE));
+    object->setContent(content);
+    object->setId(rset->getInt(7));
+    alreadyDone[object->id()] = object;
+    m_selectStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    cnvSvc()->getConnection()->rollback();
+    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
+    ex.getMessage() << "Error in update object :"
+                    << std::endl << e.what() << std::endl
+                    << "Statement was :" << std::endl
+                    << s_selectStatementString << std::endl
+                    << "and id was " << obj->id() << std::endl;;
+    throw ex;
+  }
+}

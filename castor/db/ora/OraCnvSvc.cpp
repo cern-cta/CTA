@@ -196,7 +196,7 @@ void castor::db::ora::OraCnvSvc::deleteConnection
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* address,
-                                                   ObjectCatalog& newlyCreated)
+                                                        ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
@@ -333,7 +333,7 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
     oracle::occi::ResultSet *rset = m_getTypeStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
-      ex.getMessage() << "No type found for id :" << id;
+      ex.getMessage() << "No type found for id : " << id;
       throw ex;
     }
     return rset->getInt(1);
