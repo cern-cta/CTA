@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/10/22 07:42:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/10/22 07:57:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -233,17 +233,17 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->registerOutParam
         (7, oracle::occi::OCCISTRING);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (8, oracle::occi::OCCIDOUBLE, sizeof(u_signed64));
+        (8, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (9, oracle::occi::OCCIDOUBLE, sizeof(u_signed64));
+        (9, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (10, oracle::occi::OCCIDOUBLE, sizeof(u_signed64));
+        (10, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (11, oracle::occi::OCCISTRING);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (12, oracle::occi::OCCIDOUBLE, sizeof(u_signed64));
+        (12, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (13, oracle::occi::OCCIDOUBLE, sizeof(u_signed64));
+        (13, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
     m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
