@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.179 2002/03/06 17:24:18 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.180 2002/03/07 08:42:43 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.179 $ $Date: 2002/03/06 17:24:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.180 $ $Date: 2002/03/07 08:42:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2444,14 +2444,10 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
-			if (wqp->status != REQKILD) {
-				sendrep (wqp->rpfd, STAGERC, wqp->req_type,
-								 wqp->status);
-			} else {
-				/* We close cleanly the connection */
-				sendrep (wqp->rpfd, MSG_ERR, STG98, "request killed");
-				sendrep (wqp->rpfd, STAGERC, 0, ESTKILLED);
-			}
+			sendrep (wqp->rpfd, MSG_ERR, STG98, sstrerror(rc_shift2castor(wqp->status)));
+			/* We close cleanly the connection */
+			sendrep (wqp->rpfd, STAGERC, (wqp->status == REQKILD) ? 0 : wqp->req_type, rc_shift2castor(wqp->status));
+
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid)
