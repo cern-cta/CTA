@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.4 $ $Date: 2002/11/18 06:31:53 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
+.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.5 $ $Date: 2003/09/04 13:40:29 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
 .\" Copyright (C) 1995-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RTSTAT 1 "$Date: 2002/11/18 06:31:53 $" CASTOR "RTCOPY User Commands"
+.TH RTSTAT 1 "$Date: 2003/09/04 13:40:29 $" CASTOR "RTCOPY User Commands"
 
 .SH NAME
 rtstat \- gives local or global statistics on rtcopy requests, the number which are successful 
@@ -26,6 +26,8 @@ details of specifically tape errors are provided
 .BI -S " server_name"
 ] [
 .BI -s " start_time"
+] [
+.BI -V " vid_pattern"
 ] [
 .BI -v
 ] [
@@ -106,6 +108,16 @@ option is negative then information is collated for
 the current time minus the input value. This value should be given in seconds  i.e.
 .B rtstat -s -3600
 information is  collated for the previous hour only
+.TP
+.BI \-V " vid_patter"
+Request list of all requests involving tape volumes matching the patter.
+Two lists are output: first a list of all requests no matter whether they
+caused a physical mount or not. The name and group of the requestor is
+given and the exit status for the request as a whole. The second list
+provides information about the physical mounts: the time the volume was
+mounted; the total drive time (wallclock time); the number of requests
+that re-used the volume while it was mounted; the number of files copied;
+the number of MBytes copied.
 .TP
 .B \-v 
 .br
@@ -300,6 +312,50 @@ TP021 - label type mismatch  ->  0.35 % - 2
 
 .cs R
 .fi
+
+.B rtstat -V '^R' -g 9840R4
+.br
+
+Your results will be displayed in the following format :
+
+.br
+.nf
+.cs R 18
+Volumes search pattern=^R
+R09448 r Mon Sep  1 12:41:26 2003 ujvarib ws 9840R4 984040A1@tpsrv164 55 ok
+R09448 r Mon Sep  1 13:32:33 2003 ujvarib ws 9840R4 984040A1@tpsrv164 69 ok
+R02426 r Mon Sep  1 19:00:33 2003 meurer vp 9840R4 984040A1@tpsrv164 40 ok
+R02426 r Mon Sep  1 19:05:21 2003 meurer vp 9840R4 984040A1@tpsrv164 30 ok
+R02426 r Mon Sep  1 19:10:01 2003 meurer vp 9840R4 984040A1@tpsrv164 30 ok
+R02426 r Mon Sep  1 19:14:36 2003 meurer vp 9840R4 984040A1@tpsrv164 29 ok
+R02426 r Mon Sep  1 19:19:06 2003 meurer vp 9840R4 984040A1@tpsrv164 31 ok
+...
+
+
+****** Volume requests ******
+VID mode drive@server mountTime onDriveTime #reused #files #MBytes
+R09448 r 984040A1@tpsrv164 Mon Sep  1 12:41:47 2003 43 0 1 321
+R09448 r 984040A1@tpsrv164 Mon Sep  1 13:32:55 2003 59 0 1 355
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:01:03 2003 18 0 1 1
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:05:42 2003 18 0 1 1
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:10:22 2003 17 0 1 1
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:14:57 2003 16 0 1 1
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:19:27 2003 19 0 1 0
+R02426 r 984040A1@tpsrv164 Mon Sep  1 19:24:11 2003 16 0 1 0
+...
+
+        *********************************************
+        *           Network statistics              *
+        *********************************************
+
+
+        Total nb MBytes transferred: 20769 (0.019807 TB)
+        Total nb MBytes written to tape: 672 (0.000641 TB)
+        Total nb MBytes read from tape: 20097 (0.019166 TB)
+.cs R
+.fi
+
+
 
 .SH RETURN CODES
 0	Ok.
