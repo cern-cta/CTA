@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.16 $ $Date: 2000/03/02 17:18:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.17 $ $Date: 2000/03/13 08:47:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -73,6 +73,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     FILE *stgupdc_fd;
 #else  /* USE_STAGECMD */
     u_signed64 nb_bytes;
+    int retry = 0;
 #endif /* USE_STAGECMD */
 
     if ( tape == NULL || file == NULL ) {
@@ -95,58 +96,65 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
 
 #if !defined(USE_STAGECMD)
-    status = filereq->err.errorcode;
-    want_reply = 0 ;
-    if ( filereq->proc_status == RTCP_POSITIONED ) {
-        if ( status != ETFSQ && status != ETEOV ) status = 0;
-        if ( strcmp(filereq->file_path,".") == 0 ) want_reply = 1;
-        rc = stage_updc_tppos(filereq->stageID,
-                              status,
-                              filereq->blocksize,
-                              tapereq->unit,
-                              filereq->fid,
-                              filereq->tape_fseq,
-                              filereq->recordlength,
-                              filereq->recfm,
-                              newpath,
-                              want_reply);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
-                     sstrerror(serrno));
-            return(-1);
-        }
-    } else if ( filereq->cprc != 0 || filereq->proc_status == RTCP_FINISHED ) {
-        /*
-         * Always give the return code
-         */
-        retval = 0;
-        rc = rtcp_RetvalSHIFT(tape,file,&retval);
-        if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
-        else nb_bytes = filereq->bytes_out;
-        if ( status == ENOSPC ) want_reply = 1;
-        strcpy(newpath,filereq->file_path);
+    for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
+        status = filereq->err.errorcode;
+        want_reply = 0 ;
+        if ( filereq->proc_status == RTCP_POSITIONED ) {
+            if ( status != ETFSQ && status != ETEOV ) status = 0;
+            if ( strcmp(filereq->file_path,".") == 0 ) want_reply = 1;
+            rc = stage_updc_tppos(filereq->stageID,
+                                  status,
+                                  filereq->blocksize,
+                                  tapereq->unit,
+                                  filereq->fid,
+                                  filereq->tape_fseq,
+                                  filereq->recordlength,
+                                  filereq->recfm,
+                                  newpath,
+                                  want_reply);
+            save_serrno = serrno;
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
+                         sstrerror(serrno));
+                if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
+                    return(-1);
+            }
+        } else if ( filereq->cprc != 0 || 
+                    filereq->proc_status == RTCP_FINISHED ) {
+            /*
+             * Always give the return code
+             */
+            retval = 0;
+            rc = rtcp_RetvalSHIFT(tape,file,&retval);
+            if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
+            else nb_bytes = filereq->bytes_out;
+            if ( status == ENOSPC ) want_reply = 1;
+            strcpy(newpath,filereq->file_path);
 
-        rc = stage_updc_filcp(filereq->stageID,
-                              retval,
-                              filereq->ifce,
-                              nb_bytes,
-                              WaitTime,
-                              TransferTime,
-                              filereq->blocksize,
-                              tapereq->unit,
-                              filereq->fid,
-                              filereq->tape_fseq,
-                              filereq->recordlength,
-                              filereq->recfm,
-                              newpath,
-                              want_reply);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
-                     sstrerror(serrno));
-            return(-1);
-        }
+            rc = stage_updc_filcp(filereq->stageID,
+                                  retval,
+                                  filereq->ifce,
+                                  nb_bytes,
+                                  WaitTime,
+                                  TransferTime,
+                                  filereq->blocksize,
+                                  tapereq->unit,
+                                  filereq->fid,
+                                  filereq->tape_fseq,
+                                  filereq->recordlength,
+                                  filereq->recfm,
+                                  newpath,
+                                  want_reply);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
+                         sstrerror(serrno));
+                if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
+                    return(-1);
+            }
 
-    }
+        }
+    } /* for ( retry=0; retry < RTCP_STGUPDC_RETRIES; retry++ ) */
+    if ( rc == -1 ) serrno = save_serrno;
 #else /* !USE_STAGECMD */
     sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
     if ( filereq->cprc < 0 && 
