@@ -266,7 +266,7 @@
 #define BuildSecurity		YES
 #define UseGSI                  YES
 #define UseKRB5                 YES
-#define UseHeimdalKrb5		YES
+#define UseHeimdalKrb5		NO
 #define UseKRB4                 YES
 
 #if BuildSecurity
