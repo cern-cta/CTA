@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.141 2001/06/24 22:13:42 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.142 2001/07/12 06:37:28 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.141 $ $Date: 2001/06/24 22:13:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.142 $ $Date: 2001/07/12 06:37:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -610,6 +610,7 @@ int main(argc,argv)
 #endif
 
 	/* remove uncompleted requests */
+	/* We optimize real time spent in rfio connection using rfio_mstat() */
 	for (stcp = stcs; stcp < stce; ) {
 		if (stcp->reqid == 0) {
 			break;
@@ -630,7 +631,7 @@ int main(argc,argv)
 		} else if ((stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
 			u_signed64 actual_size_block;
-			if (rfio_stat (stcp->ipath, &st) == 0) {
+			if (rfio_mstat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
@@ -641,7 +642,7 @@ int main(argc,argv)
 				}
 #endif
 			} else {
-				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				actual_size_block = stcp->actual_size;
 			}
@@ -675,6 +676,9 @@ int main(argc,argv)
 			stcp++;
 		} else stcp++;
 	}
+
+	/* We free rfio_mstat() permanent connections */
+	rfio_end();
 
 	/* Get default upd_fileclasses_int from configuration if any (not from getenv because conf is re-checked again) */
 	if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
@@ -731,6 +735,7 @@ int main(argc,argv)
 			reqid = initreq_reqid;
 			rpfd = initreq_rpfd;
 			c = updpoolconf (defpoolname, defpoolname_in, defpoolname_out);
+			/* We optimize real time spent in rfio connection using rfio_mstat() */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if ((stcp->status == STAGEIN) ||
@@ -738,7 +743,7 @@ int main(argc,argv)
 					(stcp->status == STAGEALLOC)) {
 					u_signed64 actual_size_block;
 
-					if (rfio_stat (stcp->ipath, &st) == 0) {
+					if (rfio_mstat (stcp->ipath, &st) == 0) {
 						stcp->actual_size = st.st_size;
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 							actual_size_block = stcp->actual_size;
@@ -749,7 +754,7 @@ int main(argc,argv)
 						}
 #endif
 					} else {
-						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+						stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = stcp->actual_size;
 					}
@@ -757,6 +762,8 @@ int main(argc,argv)
 							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 				}
 			}
+			/* We free rfio_mstat() permanent connections */
+			rfio_end();
 			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
 			sendrep (rpfd, STAGERC, STAGEINIT, c);
 			force_init = migr_init = 0;
@@ -3340,5 +3347,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Sunday 24 June, 2001 at 23:45:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 12 July, 2001 at 08:27:06 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
