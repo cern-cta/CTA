@@ -399,13 +399,14 @@ void castor::client::BaseClient::setRhHost()
       (host = getconfent("RH","HOST",0)) != 0) {
     m_rhHost = host;
   } else {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "Unable to deduce the name of the RH server.\n"
-      << "No -h option was given, RH_HOST is not set and "
-      << "your castor.conf file does not contain a RH/HOST entry."
-      << std::endl;
-    throw e;
+    m_rhHost = RH_HOST;
+//     castor::exception::Exception e(ETPRM);
+//     e.getMessage()
+//       << "Unable to deduce the name of the RH server.\n"
+//       << "No -h option was given, RH_HOST is not set and "
+//       << "your castor.conf file does not contain a RH/HOST entry."
+//       << std::endl;
+//     throw e;
   }
 }
 
