@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.20 $ $Date: 2005/02/11 12:34:58 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.21 $ $Date: 2005/03/23 11:16:36 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -900,6 +900,141 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
 		}
 	}
 	va_end( ap );
+	for (dst = g_dlf_fac_info.dest_list.head; dst != NULL; dst = dst->next) {
+		if (dst->severity_mask & (1 << (severity-1))) {
+			switch (dst->dst_type) {
+			case DLF_DST_FILE:
+				if ((rv = dlf_write_to_file(dst, log_message)) < 0)
+					saved_rv = rv;
+				break;
+			case DLF_DST_TCPHOST:
+				if ((rv = dlf_send_to_host(dst, log_message, 0, 0)) < 0)
+					saved_rv = rv;
+				break;
+			}
+		}
+	}
+	dlf_free_log_message (log_message);
+	return (saved_rv);
+}
+
+int DLL_DECL dlf_writep (Cuuid_t request_id, int severity, int message_no,
+			 struct Cns_fileid *ns_invariant, int numparams,
+			 struct dlf_write_param params[])  {
+	
+	int i;
+	HYPER par_int;
+	double par_double;
+	char *par_name;
+	char *par_string;
+	Cuuid_t par_uuid;
+	int par_type;
+	int rv;
+	int saved_rv;
+	int num_char;
+	dlf_log_message_t *log_message;
+	dlf_log_dst_t *dst;
+	struct timeval cur_time;
+	struct tm tmres;
+#if defined(_WIN32)
+	struct tm *tmptr;
+#endif
+	static char time_fmt[] = "%04d%02d%02d%02d%02d%02d";
+	int n;
+
+	n = 0;
+	for (dst = g_dlf_fac_info.dest_list.head; dst != NULL; dst = dst->next) {
+	        if (dst->severity_mask & (1 << (severity-1))) n++;
+	}
+	if (n == 0) return (1); /* No log destinations have been specified for this severity */
+
+	if ((log_message = (dlf_log_message_t*)dlf_new_log_message()) == NULL)
+		return (-1);
+	
+	memcpy( &(log_message->request_id), &request_id, sizeof(Cuuid_t) );
+	log_message->severity = severity;
+	log_message->message_no = message_no;
+	if (ns_invariant != NULL) {
+	  log_message->ns_fileid.fileid = ns_invariant->fileid;
+	  num_char = strlen(ns_invariant->server);
+	  if (num_char < 0 || num_char > CA_MAXHOSTNAMELEN) {
+	    dlf_free_log_message(log_message);
+	    return (-1);
+	  }
+	  strcpy (log_message->ns_fileid.server, ns_invariant->server);
+	}
+	else {
+	  log_message->ns_fileid.fileid = 0;
+	  strcpy (log_message->ns_fileid.server, "N/A");
+	}
+#if !defined(_WIN32)  
+	gettimeofday (&cur_time, NULL);
+	/* Format time */
+	
+	localtime_r((time_t*)&cur_time.tv_sec, &tmres);
+#else
+	cur_time.tv_sec = time(NULL);
+	cur_time.tv_usec = 0;
+	tmptr = localtime((time_t*)&cur_time.tv_sec);
+	tmres.tm_year = tmptr->tm_year;
+	tmres.tm_mon = tmptr->tm_mon;
+	tmres.tm_mday = tmptr->tm_mday;
+	tmres.tm_hour = tmptr->tm_hour;
+	tmres.tm_min = tmptr->tm_min;
+	tmres.tm_sec = tmptr->tm_sec;
+#endif
+	n = Csnprintf (log_message->time, DLF_TIMESTRLEN + 1, time_fmt, 
+		tmres.tm_year + 1900, tmres.tm_mon + 1, tmres.tm_mday,
+		tmres.tm_hour, tmres.tm_min, tmres.tm_sec);
+	log_message->time_usec = cur_time.tv_usec;
+	
+	log_message->pid = getpid();
+	
+	/*  log_message->cid = Cthread_self();*/
+	Cglobals_getTid(&log_message->cid);
+	log_message->facility_no = g_dlf_fac_info.fac_no;
+	gethostname (log_message->hostname, sizeof(log_message->hostname));
+	
+	rv = 0;
+	saved_rv = 0;
+	for (i = 0; i < numparams; i++) {
+		
+		par_name = params[i].name;
+		par_type = params[i].type;
+		switch (par_type) {
+		case DLF_MSG_PARAM_STR:
+			par_string = params[i].par.par_string;
+			rv = dlf_add_str_parameter ( log_message, par_name, par_string );
+			break;
+		case DLF_MSG_PARAM_INT:
+			par_int = params[i].par.par_int;
+			rv = dlf_add_int_parameter ( log_message, par_name, par_int );
+			break;
+		case DLF_MSG_PARAM_INT64:
+			par_int = params[i].par.par_u64;
+			rv = dlf_add_int_parameter ( log_message, par_name, par_int );
+			break;
+		case DLF_MSG_PARAM_FLOAT:
+		case DLF_MSG_PARAM_DOUBLE:
+			par_double = params[i].par.par_double;
+			rv = dlf_add_double_parameter ( log_message, par_name, par_double );
+			break;
+		case DLF_MSG_PARAM_TPVID:
+			par_string = params[i].par.par_string;
+			rv = dlf_add_tpvid_parameter ( log_message, par_string );
+			break;
+		case DLF_MSG_PARAM_UUID:
+			par_uuid = params[i].par.par_uuid;
+			rv = dlf_add_subreq_id ( log_message, par_uuid );
+			break;
+		default:
+			break;
+		}
+		if (rv < 0) {
+			dlf_free_log_message (log_message);
+			return (rv);
+		}
+	}
 	for (dst = g_dlf_fac_info.dest_list.head; dst != NULL; dst = dst->next) {
 		if (dst->severity_mask & (1 << (severity-1))) {
 			switch (dst->dst_type) {
