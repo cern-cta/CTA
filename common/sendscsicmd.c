@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.10 $ $Date: 2000/12/18 11:26:42 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.11 $ $Date: 2001/07/30 10:17:54 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -568,6 +568,7 @@ char **msgaddr;
 	char pssline[80];
 	int resid = 0;
 	struct stat sbuf;
+	struct stat sbufa;
 	static char *sg_buffer;
 	static int sg_bufsiz = 0;
 	struct sg_header *sg_hd;
@@ -619,18 +620,32 @@ char **msgaddr;
 #endif
 			return (-1);
 		}
-		sg_index = -1;
-		st_index = -1;
-		sgf = fopen ("/proc/scsi/scsi", "r");
-		while (fgets (pssline, sizeof(pssline), sgf)) {
-			if (strncmp (pssline, "  Type:", 7)) continue;
-			sg_index++;
-			if (strncmp (pssline+10, "Sequential-Access", 17)) continue;
-			st_index++;
-			if (st_index == (sbuf.st_rdev & 0xF)) break;
+		if (stat ("/dev/sga", &sbufa) < 0) {
+			serrno = errno;
+#if defined(TAPE)
+			USRMSG (TP042, "/dev/sga", "stat", sys_errlist[errno]);
+#else
+			sprintf (err_msgbuf, "stat error: %s", sys_errlist[errno]);
+			*msgaddr = err_msgbuf;
+#endif
+			return (-1);
 		}
-		fclose (sgf);
-		sprintf (sgpath, "/dev/sg%c", sg_index + 'a');
+		if (major (sbuf.st_rdev) == major (sbufa.st_rdev)) {
+			strcpy (sgpath, path);
+		} else {
+			sg_index = -1;
+			st_index = -1;
+			sgf = fopen ("/proc/scsi/scsi", "r");
+			while (fgets (pssline, sizeof(pssline), sgf)) {
+				if (strncmp (pssline, "  Type:", 7)) continue;
+				sg_index++;
+				if (strncmp (pssline+10, "Sequential-Access", 17)) continue;
+				st_index++;
+				if (st_index == (sbuf.st_rdev & 0x1F)) break;
+			}
+			fclose (sgf);
+			sprintf (sgpath, "/dev/sg%c", sg_index + 'a');
+		}
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
 #if defined(TAPE)
@@ -687,7 +702,7 @@ char **msgaddr;
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
 		*msgaddr = err_msgbuf;
 		serrno = EIO;
-		USRMSG (TP042, sgpath, "read", *msgaddr);
+		USRMSG (TP042, sgpath, "scsi", *msgaddr);
 		return (-4);
 	} else if (sg_hd->result) {
 		*msgaddr = (char *) sys_errlist[sg_hd->result];
