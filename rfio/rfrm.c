@@ -1,15 +1,15 @@
 /*
- * $Id: rfrm.c,v 1.11 2001/03/16 18:19:01 obarring Exp $
+ * $Id: rfrm.c,v 1.12 2001/04/02 12:47:40 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.11 $ $Date: 2001/03/16 18:19:01 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.12 $ $Date: 2001/04/02 12:47:40 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -202,7 +202,7 @@ int *yesno;
   if ( !rfio_lstat(path,&st) ) {
     if ( S_ISDIR(st.st_mode) ) {
       if ( yesno == NULL || *yesno ) {
-        printf("%s: decend into directory `%s'? ",cmd,path);
+        printf("%s: descend into directory `%s'? ",cmd,path);
         if ( read_yesno() != 'y' ) return(-1);
         if ( yesno != NULL ) *yesno = 0;
       }
