@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.4 2001/06/21 11:27:30 jdurand Exp $
+ * $Id: stage_util.c,v 1.5 2001/07/12 11:00:38 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -60,6 +60,41 @@ void DLL_DECL stage_sleep(nsec)
   ts.tv_sec = nsec;
   ts.tv_usec = 0;
   select(0,NULL,NULL,NULL,&ts);
+}
+
+/* This function will return the preferred magic number used by the client */
+/* The default is STGMAGIC3, while STGMAGIC2 can be forced to dial with old */
+/* stager daemons */
+
+#define STGMAGIC_DEFAULT STGMAGIC2
+#define STGMAGIC_DEFAULT_STRING "STGMAGIC2"
+
+int DLL_DECL stage_stgmagic()
+{
+  char *p;
+  char *func = "stage_stgmagic";
+  long int stgmagic;
+  char *dp;
+
+  /* We check existence of an STG STGMAGIC from environment variable or configuration */
+  if (((p = getenv("STAGE_STGMAGIC")) != NULL) || ((p = getconfent("STG","STGMAGIC")) != NULL)) {
+    stgmagic = strtol(p, &dp, 0);
+    if ((*dp != '\0') || (((stgmagic == LONG_MIN) || (stgmagic == LONG_MAX)) && (errno == ERANGE))) {
+      stage_errmsg(func, STG02, "Magic Number", "Configuration", "Using default magic number " STGMAGIC_DEFAULT_STRING);
+      return(STGMAGIC_DEFAULT);
+    }
+    switch (stgmagic) {
+    case STGMAGIC2:
+      return(STGMAGIC2);
+    case STGMAGIC3:
+      return(STGMAGIC3);
+    default:
+      stage_errmsg(func, STG02, "Magic Number", "Configuration", "Using default magic number " STGMAGIC_DEFAULT_STRING);
+      return(STGMAGIC_DEFAULT);
+    }
+  } else {
+    return(STGMAGIC_DEFAULT);
+  }
 }
 
 void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
