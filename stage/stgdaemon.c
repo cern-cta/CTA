@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.172 2002/02/18 09:43:49 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.173 2002/02/20 14:16:47 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.172 $ $Date: 2002/02/18 09:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.173 $ $Date: 2002/02/20 14:16:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -310,6 +310,7 @@ int main(argc,argv)
 	char *clienthost;
 	int errflg = 0;
 	int foreground = 0;
+	int backlog = 5;
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
 	struct hostent *hp;
@@ -341,7 +342,7 @@ int main(argc,argv)
 
 	Coptind = 1;
 	Copterr = 0;
-	while ((c = Cgetopt (argc, argv, "fhv")) != -1) {
+	while ((c = Cgetopt (argc, argv, "fhL:")) != -1) {
 		switch (c) {
 		case 'f':
 			foreground = 1;
@@ -349,9 +350,12 @@ int main(argc,argv)
 		case 'h':
 			stgdaemon_usage();
 			exit(0);
-		case 'v':
-			printf("%s\n",sccsid);
-			exit(0);
+		case 'L':
+			if ((backlog = atoi(Coptarg)) <= 0) {
+				fprintf(stderr,"Listen queue -L option value '%s' : must be > 0\n",Coptarg);
+				++errflg;
+			}
+			break;
 		case '?':
 			++errflg;
 			break;
@@ -538,7 +542,8 @@ int main(argc,argv)
 		stglogit (func, STG02, "", "bind", sys_errlist[errno]);
 		exit (CONFERR);
 	}
-	listen (stg_s, 5) ;
+	stglogit (func, "Listen backlog set to %d on port %d\n", backlog, stgdaemon_port);
+	listen (stg_s, backlog) ;
 	
 	FD_SET (stg_s, &readmask);
 
@@ -3671,7 +3676,7 @@ void stgdaemon_usage() {
 				 "  where options can be\n"
 				 "  -f      Foreground\n"
 				 "  -h      This help\n"
-				 "  -v      Print version\n"
+				 "  -L <%d> Listen backlog\n"
 				 "\n"
 				 );
 }
