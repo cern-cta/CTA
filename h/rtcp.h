@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.11 $ $Date: 2000/03/02 14:32:45 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.12 $ $Date: 2000/03/10 14:40:07 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -25,6 +25,7 @@ typedef struct rtcpHdr {
  */
 typedef struct rtcpClientInfo {
     char clienthost[CA_MAXHOSTNAMELEN+1]; /* Client host name */
+    char name[CA_MAXUSRNAMELEN+1];        /* Client user name */
     int clientport;                       /* Client listen port */
     int VolReqID;                         /* VDQM volume request ID */
     int jobID;                            /* Local RTCOPY server job ID */
@@ -142,7 +143,7 @@ typedef struct rtcpFileRequest {
 
 typedef struct rtcpTapeRequest {
     char vid[CA_MAXVIDLEN+1];
-    char vsn[CA_MAXVIDLEN+1];
+    char vsn[CA_MAXVSNLEN+1];
     char label[4];
     char dgn[CA_MAXDGNLEN+1];
     char devtype[CA_MAXDVTLEN+1];
