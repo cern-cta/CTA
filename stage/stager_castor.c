@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.48 2004/03/22 13:20:35 jdurand Exp $
+ * $Id: stager_castor.c,v 1.49 2004/03/22 13:34:55 jdurand Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.48 $ $Date: 2004/03/22 13:20:35 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.49 $ $Date: 2004/03/22 13:34:55 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -719,7 +719,7 @@ int main(argc,argv,envp)
 		}
 		if (stcp->t_or_d != 'h') {
 			SAVE_EID;
-			sendrep(&rpfd, MSG_ERR, "### HSM file is of unvalid type ('%c')\n",stcp->t_or_d);
+			sendrep(&rpfd, MSG_ERR, "### HSM file is of invalid type ('%c')\n",stcp->t_or_d);
 			RESTORE_EID;
 			free(stcs);
 			exit(USERR);
