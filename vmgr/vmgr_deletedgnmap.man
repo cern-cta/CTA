@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletedgnmap.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_deletedgnmap.man,v $ $Revision: 1.3 $ $Date: 2002/02/07 06:38:48 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETEDGNMAP 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_DELETEDGNMAP 3 "$Date: 2002/02/07 06:38:48 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletedgnmap \- delete a triplet dgn/model/library in the CASTOR
 Volume Manager
@@ -11,14 +11,19 @@ Volume Manager
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "int vmgr_deletedgnmap (const char *" dgn )
+.BI "int vmgr_deletedgnmap (const char *" model ,
+.BI "char *" library )
 .SH DESCRIPTION
 .B vmgr_deletedgnmap
 deletes a triplet dgn/model/library in the CASTOR Volume Manager.
 .TP
-.I dgn
-is the device group name associated with a pair model/library.
-It must be at most CA_MAXDGNLEN characters long.
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -30,14 +35,20 @@ is set appropriately.
 The named dgn does not exist.
 .TP
 .B EFAULT
-.I dgn
+.I model
+or
+.I library
 is a NULL pointer.
 .TP
 .B EINVAL
 The length of
-.I dgn
+.I model
 exceeds
-.BR CA_MAXDGNLEN .
+.B CA_MAXMODELLEN
+or the length of
+.I library
+exceeds
+.BR CA_MAXTAPELIBLEN .
 .TP
 .B SENOSHOST
 Host unknown.
