@@ -1507,6 +1507,18 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         }
         drvrec->drv = *DrvReq;
         /*
+         * Make sure it is either up or down. If neither, we put it in
+         * UNKNOWN status until further status information is received.
+         */
+        if ( (drvrec->drv.status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 )
+            drvrec->drv.status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
+        /*
+         * Make sure it doesn't come up with some non-persistent status
+         * becasue of a previous VDQM server crash.
+         */
+        drvrec->drv.status = drvrec->drv.status & ( ~VDQM_VOL_MOUNT &
+            ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
+        /*
          * Add drive record to drive queue
          */
         rc = AddDrvRecord(dgn_context,drvrec);
@@ -1551,6 +1563,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         if ( strcmp(DrvReq->reqhost,drvrec->drv.server) != 0 ) {
             log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s DOWN from %s\n",
                 DrvReq->drive,DrvReq->server,DrvReq->reqhost);
+            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
             FreeDgnContext(&dgn_context);
             vdqm_SetError(EPERM);
             return(-1);
@@ -1626,6 +1639,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              * Unit must be up before anything else is allowed
              */
             log(LOG_ERR,"vdqm_NewDrvReq(): unit is not UP\n");
+            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
             FreeDgnContext(&dgn_context);
             vdqm_SetError(EVQUNNOTUP);
             return(-1);
@@ -1640,6 +1654,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              * Consistency check
              */
             if ( DrvReq->status & VDQM_UNIT_FREE ) {
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADSTAT);
                 return(-1);
@@ -1657,6 +1672,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 (drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=%d\n",
                     drvrec->drv.drive,drvrec->drv.server,drvrec->drv.jobID);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADSTAT);
                 return(-1);
@@ -1668,6 +1684,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 (*drvrec->drv.volid != '\0') ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): cannot free unit with tape mounted, volid=%s\n",
                     drvrec->drv.volid);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADSTAT);
                 return(-1);
@@ -1683,6 +1700,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 if (drvrec->drv.VolReqID != DrvReq->VolReqID){
                     log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent VolReqIDs (%d,%d) on ASSIGN\n",
                         DrvReq->VolReqID,drvrec->drv.VolReqID);
+                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                     FreeDgnContext(&dgn_context);
                     vdqm_SetError(EVQBADID);
                     return(-1);
@@ -1702,6 +1720,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 (drvrec->drv.jobID != DrvReq->jobID) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (%d,%d)\n",
                     DrvReq->jobID,drvrec->drv.jobID);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADID);
                 return(-1);
@@ -1721,6 +1740,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): status 0x%x requested on FREE drive\n",
                     DrvReq->status);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADSTAT);
                 return(-1);
@@ -1734,6 +1754,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     (drvrec->drv.jobID != DrvReq->jobID) ) {
                     log(LOG_ERR,"vdqm_NewDrvReq(): attempt to re-assign ID=%d to an unit assigned to ID=%d\n",
                         drvrec->drv.jobID,DrvReq->jobID);
+                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                     FreeDgnContext(&dgn_context);
                     vdqm_SetError(EVQBADID);
                     return(-1);
@@ -1750,6 +1771,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     if ( strcmp(DrvReq->reqhost,drvrec->drv.server) != 0 ) {
                         log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s local assign from %s\n",
                         DrvReq->drive,DrvReq->server,DrvReq->reqhost);
+                        if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                         FreeDgnContext(&dgn_context);
                         vdqm_SetError(EPERM);
                         return(-1);
@@ -1809,6 +1831,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             if ( !(drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): mount request of %s for jobID %d on non-ASSIGNED unit\n",
                     DrvReq->volid,DrvReq->jobID);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQNOTASS);
                 return(-1);
@@ -1816,6 +1839,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             if ( *DrvReq->volid == '\0' ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): mount request with empty VOLID for jobID %d\n",
                     drvrec->drv.jobID);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADVOLID);
                 return(-1);
@@ -1826,6 +1850,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             if ( drvrec->vol != NULL && strcmp(drvrec->vol->vol.volid,DrvReq->volid) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID %d\n",
                     DrvReq->volid,drvrec->vol->vol.volid,DrvReq->jobID);
+                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADVOLID);
                 return(-1);
@@ -1837,12 +1862,14 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              */
             if ( drvrec->vol == NULL ) {
                 if ( strcmp(drvrec->drv.server,DrvReq->reqhost) != 0 ) {
+                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                     FreeDgnContext(&dgn_context);
                     vdqm_SetError(EPERM);
                     return(-1);
                  }
                  if ( VolInUse(dgn_context,DrvReq->volid) ||
                       VolMounted(dgn_context,DrvReq->volid) ) {
+                     if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
                      FreeDgnContext(&dgn_context);
                      vdqm_SetError(EBUSY);
                      return(-1);
