@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.25 2000/09/20 11:38:50 jdurand Exp $
+ * $Id: stage.h,v 1.26 2000/09/21 07:29:29 jdurand Exp $
  */
 
 /*
@@ -365,7 +365,6 @@ struct migrator {
 	int	mig_pid;
 	time_t	migreqtime;
 	int	nbfiles_canbemig;	/* number of files that can be migrated */
-	int	nbfiles_beingmig;	/* number of files being migrated */
 	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
 	/* Predefined policy parameters that decide if the migrator have to be launched */
 	char	migp_name[CA_MAXMIGPNAMELEN+1];
