@@ -1,17 +1,36 @@
-.\" @(#)getconfent.man	1.1     CERN CN-SW/DC Frederic Hemmer   08/10/91
+.\" $Id: getconfent.man,v 1.2 1999/07/20 15:47:46 obarring Exp $
+.\" $Log: getconfent.man,v $
+.\" Revision 1.2  1999/07/20 15:47:46  obarring
+.\" Update information. Add paragraph about getconfent_r()
+.\" 
 .\" Copyright (C) 1990,1991 by CERN/CN/SW/DC
 .\" All rights reserved
 .\"
 .TH GETCONFENT l "08/10/91"
 .SH NAME
-getconfent \- Get configuration entry
+getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
 .nf
 .LP
-.B char * getconfent(category, name, flags)
-.B char \(**category;
-.B char \(**name;
-.B int flags;
+.BI "char * getconfent ("
+.br
+.BI "               const char *" category , 
+.br
+.BI "               const char *" name , 
+.br
+.BI "               int " flags );
+.PP
+.BI "char * getconfent_r ("
+.br
+.BI "               const char *" category ,
+.br
+.BI "               const char *" name ,
+.br
+.BI "               int " flags , 
+.br
+.BI "               char *" buffer ,
+.br
+.BI "               int " bufsiz );
 .fi
 .IX  "getconfent function"  ""  "\fLget\fP \(em configuration entry"
 .SH DESCRIPTION
@@ -22,9 +41,26 @@ get the
 entry from the  configuration file.
 Every entry in the configuration file is categorized. The
 .I category
-parameter is its specifier.
+parameter is its specifier. The
+.B getconfent_r(\|)
+function is a re-entrant version of 
+.B getconfent(\|)
+using the passed
+.I buffer
+parameter instead of an internal static buffer. 
+.PP
+If threads are created usint the
+.B Cthread_crate(\|)
+interface, it is not mandatory to call 
+.B getconfent_r(\|)
+in order to assure thread-safe code. In that case
+.B getconfent(\|)
+calls the re-entrant version internally using a buffer allocated
+in thread local storage. 
 .SH "RETURN VALUE"
 .B getconfent(\|)
+and
+.B getconfent_r(\|)
 return NULL if the entry is not found. Otherwise,
 it returns the matched entry.
 If
@@ -32,5 +68,16 @@ If
 is not null, the return value is a pointer to the full string matched
 in the configuration file. Otherwise, only the pointer to the first
 blank separated token is returned.
+.SH "ERRORS"
+.PP
+If the
+.B getconfent(\|), getconfent_r(\|)
+function fail, 
+.B serrno
+may be set to one of the following values:
+.TP
+.B SENOCONFIG
+configuration file not found.
 .SH "SEE ALSO"
-.BR shift.conf
+.BR shift.conf,
+.BR Cthread_create(l)
