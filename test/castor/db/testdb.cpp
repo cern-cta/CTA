@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:47:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 15:31:35 $ $Author: sponcec3 $
  *
  * 
  *
@@ -97,6 +97,49 @@ int main (int argc, char** argv) {
   castor::ObjectSet alreadyPrinted2;
   std::cout << "Finally :" << std::endl;
   fr2->print(std::cout, "", alreadyPrinted2);
+
+  // Now modify the first object
+  fr->removeFiles(f2);
+  castor::rh::File* f3 = new castor::rh::File();
+  f3->setName("3rd test File");
+  fr->addFiles(f3);
+  f3->setRequest(fr);
+
+  // update the database
+  try {
+    svcs->updateRep(&ad, fr);
+  } catch (castor::exception::Exception e) {
+    std::cout << "Error caught in updateRep : "
+              << sstrerror(e.code()) << std::endl
+              << e.getMessage().str() << std::endl;
+    delete svcs;
+    delete fr;
+    delete fr2;
+    return 1;
+  }
+
+  std::cout << "UpdateRep ok" << std::endl;
+
+  // And update the second representation of the object
+  try {
+    svcs->updateObj(&ad, fr2);
+  } catch (castor::exception::Exception e) {
+    std::cout << "Error caught in updateObj : "
+              << sstrerror(e.code()) << std::endl
+              << e.getMessage().str() << std::endl;
+    delete svcs;
+    delete fr;
+    delete fr2;
+    return 1;
+  }
+  
+  // Finally display the two modified objects to check
+  std::cout << "Originally modified :" << std::endl;
+  castor::ObjectSet alreadyPrinted3;
+  fr->print(std::cout, "", alreadyPrinted3);
+  castor::ObjectSet alreadyPrinted4;
+  std::cout << "Finally modified :" << std::endl;
+  fr2->print(std::cout, "", alreadyPrinted4);
 
   delete svcs;
   delete fr;
