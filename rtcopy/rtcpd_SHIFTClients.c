@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:14:51 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.7 $ $Date: 2000/01/03 13:09:30 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,9 +34,11 @@ extern char *geterr();
 #include <signal.h>
 
 #include <pwd.h>
+#include <grp.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <Cnetdb.h>
+#include <Cpwd.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
@@ -56,6 +58,162 @@ extern char *geterr();
 #define unmarshall_STRING_nc(ptr,str) { str=ptr; INC_PTR(ptr,strlen(str)+1);}
 
 
+static int rtcp_CheckClientHost(SOCKET *s, 
+                                shift_client_t *req) {
+    char local_host[CA_MAXHOSTNAMELEN+1];
+    struct sockaddr_in from;
+    struct hostent *hp;
+    int fromlen,rc;
+
+    if ( s == NULL || *s == INVALID_SOCKET || req == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    fromlen = sizeof(from);
+    rc = getpeername(*s,(struct sockaddr *)&from,&fromlen);
+    if ( rc == SOCKET_ERROR ) {
+        rtcp_log(LOG_ERR,"rtcp_CheckClientHost() getpeername(): %s\n",
+                neterror());
+        return(-1);
+    }
+    hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
+                        from.sin_family);
+    if ( hp == NULL ) {
+        rtcp_log(LOG_ERR,"rtcp_CheckClientHost() Cgethostbyaddr(): h_errno=%d, %s\n",
+                     h_errno, neterror());
+        return(-1);
+    }
+    strcpy(req->clienthost,hp->h_name);
+
+    rc = gethostname(local_host,CA_MAXHOSTNAMELEN);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcp_CheckClientHost() gethostname(): %s\n",
+                 neterror());
+        return(-1);
+    }
+
+    if ( strcmp(local_host,req->clienthost) == 0 ||
+         (strncmp(local_host,req->clienthost,strlen(local_host)) == 0 &&
+          req->clienthost[strlen(local_host)] == '.') ) {
+        req->islocal = 1;
+    }
+    req->isoutofsite = isremote(from.sin_addr,req->clienthost);
+    if ( req->isoutofsite == -1 ) return(-1);
+    return(0);
+}
+
+/*
+ * Check if newacct has been executed by the client
+ */
+static int rtcpd_ChkNewAcct(shift_client_t *req,struct passwd *pwd,gid_t gid) {
+    char buf[BUFSIZ] ;
+    char * def_acct ;
+    struct group * gr ;
+    char * getacctent() ;
+
+    if ( req == NULL || pwd == NULL ) return(-1);
+    req->acctstr[0]= '\0' ;
+    /* get default account */
+    if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL ) return(-1);
+    if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL ) return(-1);
+    if ( strlen(def_acct) == 6 && *(def_acct+3) == '$' &&   /* uuu$gg */
+         (gr= getgrgid((gid_t)gid)) ) {
+        strncpy(req->acctstr,def_acct,4) ;
+        strcpy(req->acctstr+4,gr->gr_name) ; /* new uuu$gg */
+        if ( getacctent(pwd,req->acctstr,buf,sizeof(buf)) )
+            return(0);      /* newacct was executed */
+    }
+    req->acctstr[0]= '\0' ;
+    return(-1);
+}
+
+
+static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
+    struct passwd *pw;
+    struct group *gr;
+    char **gr_mem;
+    FILE *fs;
+    char buf[CA_MAXHOSTNAMELEN+1];
+    int authorized;
+
+    if ( req->uid < 100 ) {
+        rtcp_log(LOG_ERR,"request from uid smaller than 100 are rejected\n");
+        if ( hdr->reqtype == RQST_INFO ) return(PERMDENIED);
+        else return(SYERR);
+    }
+
+    if ( (pw = Cgetpwuid(req->uid)) == NULL ) {
+        rtcp_log(LOG_ERR,"your uid is not defined on this server\n");
+        if ( hdr->reqtype == RQST_INFO ) return(UNKNOWNUID);
+        else return(SYERR);
+    }
+    if ( strcmp(pw->pw_name,req->name) != 0 ) {
+        rtcp_log(LOG_ERR,"your uid does not match your login name\n");
+        if ( hdr->reqtype == RQST_INFO ) return(UIDMISMATCH);
+        else return(SYERR);
+    }
+
+    if ( pw->pw_gid != req->gid ) {
+        setgrent();
+        while ( (gr = getgrent()) ) {
+            if ( pw->pw_gid == gr->gr_gid ) continue;
+            for ( gr_mem = gr->gr_mem; gr_mem != NULL && *gr_mem != NULL; gr_mem++ ) 
+                if ( !strcmp(*gr_mem,req->name) ) break;
+            if ( gr_mem != NULL && *gr_mem != NULL && !strcmp(*gr_mem,req->name) ) break;
+        }
+        endgrent();
+        if ( (gr_mem == NULL || *gr_mem == NULL || strcmp(*gr_mem,req->name)) &&
+             (rtcpd_ChkNewAcct(req,pw,req->gid) < 0) ) {
+            rtcp_log(LOG_ERR,"your gid does not match your uid\n") ;
+            if ( hdr->reqtype == RQST_INFO ) return(UNKNOWNGID);
+            else return(SYERR);
+        }
+    }
+
+    authorized = 0;
+    if ( req->islocal != 0 ) {
+        rtcp_log(LOG_DEBUG,"Local access authorized\n");
+        authorized = 1;
+    } else {
+        rtcp_log(LOG_DEBUG,"Check %s authorization in %s\n",
+                 req->clienthost,AUTH_HOSTS);
+        if ( (fs = fopen(AUTH_HOSTS,"r")) == NULL ) {
+            rtcp_log(LOG_DEBUG,"File %s does not exist. Any host is authorized\n");
+            authorized = 1;
+        } else {
+            while( fscanf(fs, "%s%*[^\n]\n", buf) != EOF ) {
+                if ( buf[0] != '#' ) { 
+                    if ( strcmp(buf,"any") == 0 ) {
+                        authorized = 1;
+                        break;
+                    }
+                    if ( strcmp(buf, req->clienthost) == 0 ) {
+                        authorized = 1;
+                        break;
+                    }
+                    strcat(buf,".");
+                    strcat(buf, DOMAINNAME);
+                    if ( strcmp(buf, req->clienthost) == 0 ) {
+                        authorized = 1;
+                        break;
+                    }
+                }
+            }
+            fclose(fs);
+        }
+        rtcp_log(LOG_DEBUG,"Host %s %s authorized\n",req->clienthost,
+                 (authorized == 0 ? "not" : ""));
+    }
+    if ( authorized == 0 ) {
+        if ( hdr->reqtype == RQST_INFO ) return(HOSTNOTAUTH);
+        else return(SYERR);
+    } else {
+        if ( hdr->reqtype == RQST_INFO ) return(AVAILABLE);
+        else return(0);
+    }
+}
+
 static int rtcp_GetOldCMsg(SOCKET *s, 
                            rtcpHdr_t *hdr,
                            shift_client_t **req) {
@@ -65,9 +223,6 @@ static int rtcp_GetOldCMsg(SOCKET *s,
     char **argv = NULL;
     char *p;
     char *msgbuf = NULL;
-    struct sockaddr_in from;
-    struct hostent *hp;
-    int fromlen; 
     static char commands[][20]={"tpread","tpwrite","dumptape"};
 
     if ( s == NULL || *s == INVALID_SOCKET || 
@@ -95,22 +250,6 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             *req = NULL;
             return(-1);
         }
-
-        fromlen = sizeof(from);
-        rc = getpeername(*s,(struct sockaddr *)&from,&fromlen);
-        if ( rc == SOCKET_ERROR ) {
-            rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() getpeername(): %s\n",
-                     neterror());
-            return(-1);
-        }
-        hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
-                            from.sin_family);
-        if ( hp == NULL ) {
-            rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() Cgethostbyaddr(): h_errno=%d, %s\n",
-                     h_errno,neterror());
-            return(-1);
-        }
-        strcpy((*req)->clienthost,hp->h_name);
 
         rc = netread(*s,msgbuf,hdr->len);
         switch (rc) {
@@ -165,23 +304,31 @@ static int rtcp_GetOldCMsg(SOCKET *s,
 }
 
 
-static int rtcp_GetOldCinfo(shift_client_t *req) {
+static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
     vdqmVolReq_t VolReq;
     vdqmDrvReq_t DrvReq;
     vdqmnw_t *nw = NULL;
     char server[CA_MAXHOSTNAMELEN+1];
     int namelen = CA_MAXHOSTNAMELEN;
     int nb_queued, nb_used, nb_units, rc;
+    char *p;
+    extern char *getconfent _PROTO((const char *, const char *, int));
 
 
     if ( req == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
+    nb_queued = nb_used = nb_units = 0;
 
     memset(&req->info,'\0',sizeof(tpqueue_info_t));
     if ( rtcpd_CheckNoMoreTapes() != 0 ) {
         req->info.status = NOTAVAIL;
+        return(0);
+    }
+    rc = rtcp_CheckClientAuth(hdr,req);
+    if ( rc != AVAILABLE ) {
+        req->info.status = rc;
         return(0);
     }
     gethostname(server,namelen);
@@ -193,8 +340,6 @@ static int rtcp_GetOldCinfo(shift_client_t *req) {
     strcpy(DrvReq.server,server);
     strcpy(VolReq.dgn,req->dgn);
     strcpy(DrvReq.dgn,req->dgn);
-
-    nb_queued = nb_used = nb_units = 0;
 
     while ( (rc = vdqm_NextVol(&nw,&VolReq)) != -1 ) {
         if ( *VolReq.volid == '\0' ) continue;
@@ -232,38 +377,39 @@ static int rtcp_SendRC(SOCKET *s,
     }
 
     err = NULL;
-    CLIST_ITERATE_BEGIN(req->tape,tl) {
-        if ( tl->tapereq.tprc != 0 ) {
-            err = &(tl->tapereq.err);
-            break;
-        }
-        CLIST_ITERATE_BEGIN(tl->file,fl) {
-            if ( fl->filereq.cprc != 0 ) {
-                err = &(fl->filereq.err);
+    if ( req->tape != NULL ) {
+        CLIST_ITERATE_BEGIN(req->tape,tl) {
+            if ( tl->tapereq.tprc != 0 ) {
+                err = &(tl->tapereq.err);
                 break;
             }
-        } CLIST_ITERATE_END(tl->file,fl);
-        if ( fl->filereq.cprc != 0 ) break;
-    } CLIST_ITERATE_END(req->tape,tl);
+            CLIST_ITERATE_BEGIN(tl->file,fl) {
+                if ( fl->filereq.cprc != 0 ) {
+                    err = &(fl->filereq.err);
+                    break;
+                }
+            } CLIST_ITERATE_END(tl->file,fl);
+            if ( fl->filereq.cprc != 0 ) break;
+        } CLIST_ITERATE_END(req->tape,tl);
 
-    if ( err != NULL ) {
-        if ( (err->severity & RTCP_FAILED) != 0 ) {
-            if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval == RSLCT;
-            else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
-            else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
-            else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
-            else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
-            else retval = UNERR;
-        } else {
-            if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
-            else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
-            else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
-            else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
-            else retval = 0;
-        } 
-    } else retval = 0;
-
-    *status = retval;
+        if ( err != NULL ) {
+            if ( (err->severity & RTCP_FAILED) != 0 ) {
+                if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval == RSLCT;
+                else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
+                else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
+                else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
+                else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;
+                else retval = UNERR;
+            } else {
+                if ( (err->severity & RTCP_BLKSKPD) != 0 ) retval = BLKSKPD;
+                else if ( (err->severity & RTCP_TPE_LSZ) != 0 ) retval = TPE_LSZ;
+                else if ( (err->severity & RTCP_MNYPARY) != 0 ) retval = MNYPARY;
+                else if ( (err->severity & RTCP_LIMBYSZ) != 0 ) retval = LIMBYSZ;
+                else retval = 0;
+            } 
+        } else retval = 0;
+        *status = retval;
+    } else retval = *status;
     p = msgbuf;
     marshall_LONG(p,hdr->magic);
     marshall_LONG(p,GIVE_RESU);
@@ -283,13 +429,13 @@ static int rtcp_SendRC(SOCKET *s,
     
 
 int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
-    int rc, CLThId;
+    int rc, retval, CLThId;
     shift_client_t *req = NULL;
     tape_list_t *tl;
     file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
-    char client_msg_buf[256];
+    char client_msg_buf[256],envacct[20];
 
     if ( s == NULL || hdr == NULL ) {
         serrno = EINVAL;
@@ -302,12 +448,18 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     rc = rtcp_SendOldCAckn(s,hdr);
     if ( rc == -1 ) return(-1);
 
+    rc = rtcp_CheckClientHost(s,req);
+    if ( rc == -1 ) return(-1);
+
     if ( hdr->reqtype == RQST_INFO ) {
         rtcp_log(LOG_INFO,"info request by user %s (%d,%d) from %s\n",
                  req->name,req->uid,req->gid,req->clienthost);
 
-        rc = rtcp_GetOldCinfo(req);
-        if ( rc == -1 ) return(-1);
+        rc = rtcp_GetOldCinfo(hdr,req);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_INFO,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
+            return(-1);
+        }
         rtcp_log(LOG_INFO,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
@@ -324,25 +476,36 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     /*
      * Start the request
      */
-
-#if !defined(_WIN32)
-    if ( setgid(req->gid) == -1 ) {
-        rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
-        return(-1);
-    }
-    if ( setuid(req->uid) == -1 ) {
-        rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
-        return(-1);
-    }
-#endif /* !_WIN32 */
-
     /*
      * Redirect logging to client socket
      */
     rtcp_InitLog(client_msg_buf,NULL,NULL,s);
-
-    rc = rtcpc(req->tape);
-    (void) rtcp_SendRC(s,hdr,&rc,req); 
+    /*
+     * Check access
+     */
+    retval = rtcp_CheckClientAuth(hdr,req);
+    if ( retval == 0 ) { 
+#if !defined(_WIN32)
+        if ( setgid(req->gid) == -1 ) {
+            rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
+            return(-1);
+        }
+        if ( setuid(req->uid) == -1 ) {
+            rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
+            return(-1);
+        }
+        if ( *req->acctstr != '\0' ) {
+            (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
+            if ( putenv(envacct) != 0 ) {
+                rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
+                return(-1);
+            }
+        }
+#endif /* !_WIN32 */
+ 
+        rc = rtcpc(req->tape);
+    }
+    (void) rtcp_SendRC(s,hdr,&retval,req); 
 
     return(rc);
 }
