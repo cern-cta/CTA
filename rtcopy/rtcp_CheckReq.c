@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.28 $ $Date: 2000/03/20 13:09:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.29 $ $Date: 2000/03/20 19:42:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -298,6 +298,16 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         tmpfile->tape = tape;
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq() create temporary file element for tape fseq %d\n",tmpfile->filereq.tape_fseq);
         CLIST_INSERT(tape->file,tmpfile);
+    }
+
+    /*
+     * Cannot concatenate in single file requests
+     */
+    if ( (filereq->concat & CONCAT) != 0 && file == file->next ) {
+        serrno = EINVAL;
+        sprintf(errmsgtxt,"INVALID SETTING FOR CONCATENATION\n");
+        SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
     }
 
     if ( !VALID_CONCAT(filereq) ) {
