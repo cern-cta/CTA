@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.247 2003/06/30 10:51:25 jdurand Exp $
+ * $Id: poolmgr.c,v 1.248 2003/09/08 15:50:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.247 $ $Date: 2003/06/30 10:51:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.248 $ $Date: 2003/09/08 15:50:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -87,14 +87,10 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern int maxfds;
 extern int reqid;
-extern int stglogit _PROTO(());
-extern int stgmiglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
+extern int stgmiglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 extern struct stgcat_entry *newreq _PROTO((int));
 extern int nextreqid _PROTO(());
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
