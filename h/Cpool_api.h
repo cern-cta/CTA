@@ -1,5 +1,11 @@
 /*
- * $Id: Cpool_api.h,v 1.1.1.1 1999/07/20 08:03:12 jdurand Exp $
+ * $Id: Cpool_api.h,v 1.2 1999/07/20 08:51:11 jdurand Exp $
+ *
+ * $Log: Cpool_api.h,v $
+ * Revision 1.2  1999/07/20 08:51:11  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Added missing Id and Log CVS's directives
+ *
  */
 
 #ifndef __cpool_api_h

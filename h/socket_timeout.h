@@ -1,6 +1,11 @@
 /*
- * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
- * All rights reserved
+ * $Id: socket_timeout.h,v 1.2 1999/07/20 08:51:14 jdurand Exp $
+ *
+ * $Log: socket_timeout.h,v $
+ * Revision 1.2  1999/07/20 08:51:14  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Added missing Id and Log CVS's directives
+ *
  */
 
 #ifndef __stgtimeout_h

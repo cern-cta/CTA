@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 1993-1999 by CERN/CN/PDP/DH
- * All rights reserved
+ * $Id: socket_timeout.c,v 1.2 1999/07/20 08:49:22 jdurand Exp $
+ *
+ * $Log: socket_timeout.c,v $
+ * Revision 1.2  1999/07/20 08:49:22  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Added missing Id and Log CVS's directives
+ *
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)stgtimeout.c	1.00 06/07/99 CERN IT-PDP/DM Jean-Damien Durand";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <errno.h>

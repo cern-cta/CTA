@@ -1,3 +1,13 @@
+/*
+ * $Id: Cthread.c,v 1.2 1999/07/20 08:49:20 jdurand Exp $
+ *
+ * $Log: Cthread.c,v $
+ * Revision 1.2  1999/07/20 08:49:20  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Added missing Id and Log CVS's directives
+ *
+ */
+
 #include <Cthread_api.h>
 
 #ifdef DEBUG

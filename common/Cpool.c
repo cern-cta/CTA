@@ -1,3 +1,13 @@
+/*
+ * $Id: Cpool.c,v 1.2 1999/07/20 08:49:18 jdurand Exp $
+ *
+ * $Log: Cpool.c,v $
+ * Revision 1.2  1999/07/20 08:49:18  jdurand
+ * 20-JUL-1999 Jean-Damien Durand
+ *   Added missing Id and Log CVS's directives
+ *
+ */
+
 #include <Cpool_api.h>
 #ifndef _WIN32
 /* All that stuff is for CTHREAD_MULTI_PROCESS support on */
