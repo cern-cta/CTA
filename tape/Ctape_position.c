@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.17 $ $Date: 2000/11/07 15:33:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.18 $ $Date: 2002/04/08 09:01:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -23,7 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.17 $ $Da
 #include "serrno.h"
 extern char *sys_errlist[];
 
-Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, recfm, blksize, lrecl, retentd, flags)
+Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, fsid, recfm, blksize, lrecl, retentd, flags)
 char *path;
 int method;
 int fseq;
@@ -33,6 +33,7 @@ int Qfirst;
 int Qlast;
 int filstat;
 char *fid;
+char *fsid;
 char *recfm;
 int blksize;
 int lrecl;
@@ -41,6 +42,7 @@ int flags;
 {
 	char actual_fid[CA_MAXFIDLEN+1];
 	int actual_fseq;
+	char actual_fsid[CA_MAXVSNLEN+1];
 	int c;
 	int errflg = 0;
 	char func[16];
@@ -54,9 +56,10 @@ int flags;
 	char *p;
 	char *q;
 	char *rbp;
-	char repbuf[251];
+	char repbuf[328];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
+	char uhl1[81];
 	uid_t uid;
 	char vol1[81];
 
@@ -134,6 +137,13 @@ int flags;
 	} else {
 		marshall_STRING (sbp, "");
 	}
+	if (fsid) {
+		strcpy (actual_fsid, fsid);
+		UPPER (actual_fsid);
+		marshall_STRING (sbp, actual_fsid);
+	} else {
+		marshall_STRING (sbp, "");
+	}
 	if (recfm) {
 		marshall_STRING (sbp, recfm);
 	} else {
@@ -154,7 +164,8 @@ int flags;
 		unmarshall_STRING (rbp, vol1);
 		unmarshall_STRING (rbp, hdr1);
 		unmarshall_STRING (rbp, hdr2);
-		setlabelinfo (path, flags, actual_fseq, vol1, hdr1, hdr2);
+		unmarshall_STRING (rbp, uhl1);
+		setlabelinfo (path, flags, actual_fseq, vol1, hdr1, hdr2, uhl1);
 	}
 	return (c);
 }
