@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.16 2005/01/27 12:48:22 jdurand Exp $
+ * $Id: stager_macros.h,v 1.17 2005/01/27 12:50:14 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -48,8 +48,8 @@
 #define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, NULL, NULL)
 #define STAGER_LOG_ENTER() {}
 #define STAGER_LOG_LEAVE() {return;}
-#define STAGER_LOG_RETURN(value) {return(value)}
-#define STAGER_LOG_RETURN_NULL(return(NULL)) {}
+#define STAGER_LOG_RETURN(value) {return(value);}
+#define STAGER_LOG_RETURN_NULL() {return(NULL);}
 #define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_STARTUP() { \
   int _save_serrno = serrno; \
