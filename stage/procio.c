@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.23 2000/05/12 13:17:54 jdurand Exp $
+ * $Id: procio.c,v 1.24 2000/05/12 13:18:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.23 $ $Date: 2000/05/12 13:17:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.24 $ $Date: 2000/05/12 13:18:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1248,7 +1248,7 @@ void procputreq(req_data, clienthost)
 				if ((hsmfilesstcp[ihsmfiles]->status & 0xF)  == STAGEOUT) {
 					if (rfio_stat (hsmfilesstcp[ihsmfiles]->ipath, &st) == 0)
 						stcp->actual_size = st.st_size;
-					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
+					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR)
 						updfreespace (hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath,
 													hsmfilesstcp[ihsmfiles]->size*1024*1024 - (int) hsmfilesstcp[ihsmfiles]->actual_size);
 				}
