@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.10 $ $Date: 2001/05/21 11:07:18 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.11 $ $Date: 2003/04/22 09:50:00 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */
@@ -21,6 +21,7 @@ EXTERN_C void DLL_DECL (*logfunc) _PROTO((int, char *, ...));
                                 /* logging function to use */
 EXTERN_C void DLL_DECL initlog _PROTO((char *, int, char *));
 EXTERN_C void DLL_DECL logit _PROTO((int, char *, ...));
+EXTERN_C void DLL_DECL setlogbits _PROTO((int));
 EXTERN_C int DLL_DECL getloglv _PROTO((void));
 
 #ifdef log

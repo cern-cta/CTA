@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.12 $ $Date: 2003/03/11 12:26:38 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.13 $ $Date: 2003/04/22 09:50:06 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -12,9 +12,13 @@ static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.12 $ $Date: 2003/03
 #if defined(_WIN32)
 #include <io.h>
 #include <pwd.h>
+#else
+#include <unistd.h>
 #endif /* _WIN32 */
 
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <stdio.h>              /* standard input/output definitions    */
 #include <string.h>
@@ -31,6 +35,7 @@ static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.12 $ $Date: 2003/03
 #include <Cglobals.h>           /* Thread globals. Get Thread ID.       */
 
 
+static mode_t logbits=0664;
 static int loglevel=LOG_NOLOG;  /* logging level                        */
 static char logname[64];        /* logging facility name                */
 static char logfilename[64]=""; /* log file name                        */
@@ -55,6 +60,7 @@ uid_t getpid();
 #endif /* _WIN32 */
 
 void DLL_DECL (*logfunc) _PROTO((int, char *, ...))=(void (*) _PROTO((int, char *, ...)))logit;
+void DLL_DECL setlogbits _PROTO((int));
 
 /*
  * Opening log file.
@@ -95,6 +101,15 @@ char    *output;                /* output specifier                     */
             strcpy(logfilename,output);        
         }    
     }
+}
+
+/*
+ * Mode bits for log file.
+ */
+void DLL_DECL setlogbits(bits)
+	int bits;                  /* logfile mode bits */
+{
+    logbits=(mode_t) bits;
 }
 
 /*
@@ -155,7 +170,7 @@ void DLL_DECL logit(int level, char *format, ...)
         (void) vsprintf(line+strlen(line),format,args);
         if (strlen(logfilename)!=0) {
             if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
-                O_APPEND,0664)) == -1 ) {
+                O_APPEND,logbits)) == -1 ) {
                 syslog(LOG_ERR,"open: %s: %m", logfilename);
                 /* FH we probably should retry */
                 return;
@@ -164,7 +179,7 @@ void DLL_DECL logit(int level, char *format, ...)
                  * To be sure that file access is enables
                  * even if root umask is not 0 
                  */
-                 (void) chmod( logfilename, 0664 );           
+                 (void) chmod( logfilename, logbits );           
         } else {
             if  (strlen(logfilename)==0)
                 fd= fileno (stderr); /* standard error */
