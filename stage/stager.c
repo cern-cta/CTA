@@ -742,6 +742,8 @@ int stagewrt_castor_hsm_file() {
 				if (statbuf_check.filesize > 0) {
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_stat",
 									 "file already exists and is non-zero size");
+                    /* Makes absolutely sure this already existing file will not be unlinked */
+					castor_hsm_tokill[0] = '\0';
 					RETURN (USERR);
 				}
 			} else {
