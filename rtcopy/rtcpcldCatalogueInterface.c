@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/30 14:00:34 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/07/29 08:12:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/30 14:00:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/07/29 08:12:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1164,8 +1164,6 @@ static int compareSegments(
   if ( fseq1 < fseq2 ) rc = -1;
   if ( fseq1 > fseq2 ) rc = 1;
 
-  rtcp_log(LOG_DEBUG,"compareSegments(): fseq1=%d, fseq2=%d, rc=%d\n",
-           fseq1,fseq2,rc);
   return(rc);
 }
 
@@ -1534,6 +1532,9 @@ int rtcpcld_updateVIDStatus(
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
     rc = findTape(&(tape->tapereq),&tapeItem,NULL);
+  } else if ( rc == 1 ) {
+    rc = updateTapeFromDB(tapeItem);
+    if ( rc == -1 ) return(-1);
   }
 
   if ( rc != 1 || tapeItem == NULL ) {
@@ -1554,37 +1555,6 @@ int rtcpcld_updateVIDStatus(
     return(-1);
   }
   
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) return(-1);
-
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
-  iObj = Cstager_Tape_getIObject(tapeItem);
-  rc = C_Services_updateObj(*svcs,iAddr,iObj);
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_updateObj()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      C_Services_errorMsg(*svcs),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
-    serrno = save_serrno;
-    return(-1);
-  }
   Cstager_Tape_status(tapeItem,&cmpStatus);
   if ( fromStatus == cmpStatus ) {
     Cstager_Tape_setStatus(tapeItem,toStatus);
@@ -1801,39 +1771,6 @@ int rtcpcld_updateVIDFileStatus(
   rc = updateTapeFromDB(tapeItem);
   if ( rc == -1 ) return(-1);
 
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
-  iObj = Cstager_Tape_getIObject(tapeItem);
-  rc = C_Services_updateObj(*svcs,iAddr,iObj);
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    C_IAddress_delete(iAddr);
-    if ( dontLog == 0 ) {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "C_Services_updateObj()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      C_Services_errorMsg(*svcs),
-                      RTCPCLD_LOG_WHERE
-                      );
-    }
-    serrno = save_serrno;
-    return(-1);
-  }
-
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
 
@@ -1865,23 +1802,37 @@ int rtcpcld_updateVIDFileStatus(
       rc = findFileFromSegment(segmItem,tape,&fl);
       if ( (rc != 1) || (fl == NULL) ) {
         if ( dontLog == 0 ) {
-          (void)dlf_write(
-                          (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_SYSCALL,
-                          (struct Cns_fileid *)&fileid,
-                          RTCPCLD_NB_PARAMS+3,
-                          "SYSCALL",
-                          DLF_MSG_PARAM_STR,
-                          "findFileFromSegment",
-                          "ERROR_STR",
-                          DLF_MSG_PARAM_STR,
-                          sstrerror(serrno),
-                          "",
-                          DLF_MSG_PARAM_UUID,
-                          stgUuid,
-                          RTCPCLD_LOG_WHERE
-                          );
+          if ( rc == -1 ) {
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            DLF_LVL_ERROR,
+                            RTCPCLD_MSG_SYSCALL,
+                            (struct Cns_fileid *)&fileid,
+                            RTCPCLD_NB_PARAMS+3,
+                            "SYSCALL",
+                            DLF_MSG_PARAM_STR,
+                            "findFileFromSegment",
+                            "ERROR_STR",
+                            DLF_MSG_PARAM_STR,
+                            sstrerror(serrno),
+                            "",
+                            DLF_MSG_PARAM_UUID,
+                            stgUuid,
+                            RTCPCLD_LOG_WHERE
+                            );
+          } else {
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            DLF_LVL_ERROR,
+                            RTCPCLD_MSG_UNEXPECTED_NEWSEGM,
+                            (struct Cns_fileid *)&fileid,
+                            RTCPCLD_NB_PARAMS+1,
+                            "",
+                            DLF_MSG_PARAM_UUID,
+                            stgUuid,
+                            RTCPCLD_LOG_WHERE
+                            );
+          }
         }
       } else {
         filereq = &(fl->filereq);
