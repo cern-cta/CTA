@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.13 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.14 $ $Date: 2002/04/08 09:02:35 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_POSITION 3 "$Date: 2002/04/08 09:02:35 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -20,6 +20,7 @@ positionned to a given file and the HDR labels checked
 .BI "int " Qlast,
 .BI "int " filstat,
 .BI "char *" fid,
+.BI "char *" fsid,
 .BI "char *" recfm,
 .BI "int " blksize,
 .BI "int " lrecl,
@@ -106,6 +107,10 @@ but
 is NULL,
 .I path
 is used instead.
+.TP
+.I fsid
+specifies the file set identifier in HDR1. It is the vsn of the first volume of
+a volume set.
 .TP
 .I recfm
 .BR F ,
