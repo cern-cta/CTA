@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.76 $ $Date: 2000/08/25 08:38:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.77 $ $Date: 2000/11/03 17:20:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -489,10 +489,15 @@ static int rtcpd_AllocBuffers() {
     int i, rc;
     char *p;
 
-    if ( (p = getconfent("RTCOPYD","NB_BUFS",0)) != NULL ) {
+    if ( (p = getenv("RTCOPYD_NB_BUFS")) != NULL ) {
         nb_bufs = atoi(p);
-    }
-    if ( (p = getconfent("RTCOPYD","BUFSZ",0)) != NULL ) {
+    } else if ( (p = getconfent("RTCOPYD","NB_BUFS",0)) != NULL ) {
+        nb_bufs = atoi(p);
+    } 
+
+    if ( (p = getenv("RTCOPYD_BUFSZ")) != NULL ) {
+        bufsz = atoi(p);
+    } else if ( (p = getconfent("RTCOPYD","BUFSZ",0)) != NULL ) {
         bufsz = atoi(p);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_AllocBuffers() allocate %d x %d buffers\n",

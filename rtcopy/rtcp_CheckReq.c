@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.43 $ $Date: 2000/09/15 11:55:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.44 $ $Date: 2000/11/03 17:20:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -630,10 +630,14 @@ int rtcp_CheckReq(SOCKET *client_socket,
 
     rc = rtcp_CallTMS(tape,NULL);
 
-    if ( (p = getconfent("RTCOPYD","MAX_TPRETRY",0)) != NULL )
+    if ( (p = getenv("RTCOPYD_MAX_TPRETRY")) != NULL )
+        max_tpretry = atoi(p);
+    else if ( (p = getconfent("RTCOPYD","MAX_TPRETRY",0)) != NULL )
         max_tpretry = atoi(p);
 
-    if ( (p = getconfent("RTCOPYD","MAX_CPRETRY",0)) != NULL )
+    if ( (p = getenv("RTCOPYD_MAX_CPRETRY")) != NULL )
+        max_cpretry = atoi(p);
+    else if ( (p = getconfent("RTCOPYD","MAX_CPRETRY",0)) != NULL )
         max_cpretry = atoi(p);
 
     CLIST_ITERATE_BEGIN(tape,tl) {
