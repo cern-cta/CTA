@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.36 2001/09/21 05:43:54 jdurand Exp $
+ * $Id: procclr.c,v 1.37 2001/11/30 11:47:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.36 $ $Date: 2001/09/21 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.37 $ $Date: 2001/11/30 11:47:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.36 $ $Date: 200
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "rfio_api.h"
+#include "serrno.h"
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -74,6 +75,7 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int stglogflags _PROTO(());
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
+extern char *findpoolname _PROTO((char *));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 
@@ -529,6 +531,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						}
 					}
 				} else {
+					PRE_RFIO;
 					if (rfio_unlink (mfile) == 0) {
 						stglogit (func, STG95, mfile, user);
 					} else {
@@ -590,7 +593,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	if ((stcp->status & 0xF0) == STAGED ||
 		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 							 rfio_serror());
 			return (USERR);
 		}
@@ -599,7 +602,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 							 rfio_serror());
 			return (USERR);
 		}
@@ -638,7 +641,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 				}
 			}
 			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
-				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 						 rfio_serror());
 				return (USERR);
 			}
@@ -652,5 +655,5 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 }
 
 /*
- * Last Update: "Friday 21 September, 2001 at 07:41:58 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 11 November, 2001 at 09:04:23 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
