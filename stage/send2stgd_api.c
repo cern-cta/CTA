@@ -376,10 +376,19 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 
 		if ((n = netread_timeout(stg_s, repbuf, 3 * LONGSIZE, stage_timeout)) != (3 * LONGSIZE)) {
 			save_serrno = serrno;
-			if (n == 0)
-				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
-			else
-				stage_errmsg (func, STG02, "", "recv", neterror());
+			if (! (
+#if !defined(_WIN32)
+				(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+				(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+				)) {
+				if (n == 0) {
+					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				} else {
+					stage_errmsg (func, STG02, "", "recv", neterror());
+				}
+			}
 			(void) netclose (stg_s);
 			serrno = save_serrno;
 			SEND2STGD_API_ERROR(-1);

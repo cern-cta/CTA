@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.48 2002/05/15 06:43:07 jdurand Exp $
+ * $Id: stage_api.c,v 1.49 2002/05/25 09:15:24 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -32,6 +32,10 @@
 #if VMGR
 #include "vmgr_api.h"          /* For vmgrcheck() */
 #endif
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.49 $ $Date: 2002/05/25 09:15:24 $ CERN IT/DS/HSM Jean-Damien Durand";
+#endif /* not lint */
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
@@ -196,8 +200,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries = 0;               /* Number of retries */
-  int nstg161 = 0;              /* Number of STG161 messages */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -219,18 +223,27 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int build_linkname_status;    /* Status of build_linkname() call */
   char user_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
   int c;                        /* Output of build_linkname() */
-  static char cmdnames_api[4][9] = {"stage_cat", "stage_in", "stage_out", "stage_wrt"};
+  static char cmdnames_api[4][10] = {"stage_cat", "stage_in", "stage_out", "stage_wrt"};
   char *func;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
-  int Tid = 0;
-  u_signed64 uniqueid = 0;
+  int Tid;
+  u_signed64 uniqueid;
   int maxretry = MAXRETRY;
-  int magic = stage_stgmagic();
-  int nm = 0;
-  int nh = 0;
+  int magic_client;
+  int magic_server;
+  int nm;
+  int nh;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  _stage_iowc_retry:
+  ntries = nstg161 = Tid = 0;
+  uniqueid = 0;
+  nm = nh = 0;
 
   /* It is not allowed to have no input */
   if (nstcp_input <= 0) {
@@ -627,7 +640,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, magic);
+  marshall_LONG (sbp, magic_server);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -657,7 +670,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -669,7 +682,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -686,6 +699,37 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
+	if ((c != 0) &&
+#if !defined(_WIN32)
+		(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		) {
+		/* Server do not support this protocol */
+		/* We keep client magic number as it is now but we downgrade magic server */
+		switch (magic_server) {
+		case STGMAGIC4:
+			magic_server = STGMAGIC3;
+			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_iowc_retry;
+		case STGMAGIC3:
+			magic_server = STGMAGIC2;
+			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_iowc_retry;
+		default:
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			serrno = SEINTERNAL;
+			break;
+		}
+		break;
+	}
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) ||
 		(serrno == EISDIR) ||
@@ -977,7 +1021,7 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
   struct passwd *pw;            /* Password entry */
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
-  int magic = stage_stgmagic();
+  int magic = STGMAGIC3;        /* Force a level that all stagers understand - no need for STGMAGIC >= 3 here */
 
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
@@ -1031,8 +1075,8 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   struct stgcat_entry *thiscat; /* Catalog current pointer */
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries = 0;               /* Number of retries */
-  int nstg161 = 0;              /* Number of STG161 messages */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
@@ -1041,24 +1085,36 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   gid_t egid;                   /* Current effective gid */
   int status;                   /* Variable overwritten by macros in header */
   int c;                        /* Output of send2stgd() */
-  int nstcp_output_internal = 0;
-  struct stgcat_entry *stcp_output_internal = NULL;
-  int nstpp_output_internal = 0;
-  struct stgpath_entry *stpp_output_internal = NULL;
+  int nstcp_output_internal;
+  struct stgcat_entry *stcp_output_internal;
+  int nstpp_output_internal;
+  struct stgpath_entry *stpp_output_internal;
   int rc;
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
-  int pid = 0;
-  int Tid = 0;
-  u_signed64 uniqueid = 0;
+  int pid;
+  int Tid;
+  u_signed64 uniqueid;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
   char *func = "stage_qry";
   int maxretry = MAXRETRY;
   struct stgcat_entry stcp_dummy;
-  int magic = stage_stgmagic();
-  int nm = 0;
-  int nh = 0;
+  int magic_client;
+  int magic_server;
+  int nm;
+  int nh;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  _stage_qry_retry:
+  ntries = nstg161 = Tid = 0;
+  nstcp_output_internal = nstpp_output_internal = 0;
+  stcp_output_internal = NULL;
+  stpp_output_internal = NULL;
+  uniqueid = 0;
+  nm = nh = 0;
 
   /* It is not allowed to have anything else but one single entry in input, or none only if t_or_d == '\0' */
   if (nstcp_input > 1) {
@@ -1242,7 +1298,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, magic);
+  marshall_LONG (sbp, magic_server);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1258,7 +1314,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -1274,6 +1330,37 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
+	if ((c != 0) &&
+#if !defined(_WIN32)
+		(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		) {
+		/* Server do not support this protocol */
+		/* We keep client magic number as it is now but we downgrade magic server */
+		switch (magic_server) {
+		case STGMAGIC4:
+			magic_server = STGMAGIC3;
+			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_qry_retry;
+		case STGMAGIC3:
+			magic_server = STGMAGIC2;
+			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_qry_retry;
+		default:
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			serrno = SEINTERNAL;
+			break;
+		}
+		break;
+	}
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
@@ -1433,8 +1520,8 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   struct stgpath_entry *thispath; /* Path current pointer */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries = 0;               /* Number of retries */
-  int nstg161 = 0;              /* Number of STG161 messages */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -1460,11 +1547,19 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-  int Tid = 0;
-  u_signed64 uniqueid = 0;
+  int Tid;
+  u_signed64 uniqueid;
   char tmpbuf[21];
   int maxretry = MAXRETRY;
-  int magic = stage_stgmagic();
+  int magic_client;
+  int magic_server;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  _stageupdc_retry:
+  ntries = nstg161 = Tid = 0;
+  uniqueid = 0;
 
   /* It is not allowed to have no input */
   if (nstpp_input <= 0) {
@@ -1650,7 +1745,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, magic);
+  marshall_LONG (sbp, magic_server);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1683,7 +1778,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -1700,6 +1795,37 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
+	if ((c != 0) &&
+#if !defined(_WIN32)
+		(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		) {
+		/* Server do not support this protocol */
+		/* We keep client magic number as it is now but we downgrade magic server */
+		switch (magic_server) {
+		case STGMAGIC4:
+			magic_server = STGMAGIC3;
+			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stageupdc_retry;
+		case STGMAGIC3:
+			magic_server = STGMAGIC2;
+			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stageupdc_retry;
+		default:
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			serrno = SEINTERNAL;
+			break;
+		}
+		break;
+	}
     if ((c == 0) ||
         (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
@@ -1730,8 +1856,8 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries = 0;               /* Number of retries */
-  int nstg161 = 0;              /* Number of STG161 messages */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -1751,13 +1877,23 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-  int Tid = 0;
-  u_signed64 uniqueid = 0;
-  u_signed64 flagsok = flags;
+  int Tid;
+  u_signed64 uniqueid;
+  u_signed64 flagsok;
   int maxretry = MAXRETRY;
-  int magic = stage_stgmagic();
-  int nm = 0;
-  int nh = 0;
+  int magic_client;
+  int magic_server;
+  int nm;
+  int nh;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  _stage_clr_retry:
+  ntries = nstg161 = Tid = 0;
+  uniqueid = 0;
+  flagsok = flags;
+  nm = nh = 0;
 
   /* It is not allowed to have no input */
   if ((nstcp_input <= 0) && (nstpp_input <= 0)) {
@@ -2040,7 +2176,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, magic);
+  marshall_LONG (sbp, magic_server);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -2062,7 +2198,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -2074,7 +2210,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic_client,magic_server,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -2091,6 +2227,40 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
+	if ((c != 0) &&
+#if !defined(_WIN32)
+		(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		) {
+		/* Server do not support this protocol */
+		/* We keep client magic number as it is now but we downgrade magic server */
+		switch (magic_server) {
+		case STGMAGIC4:
+			magic_server = STGMAGIC3;
+			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_clr_retry;
+		case STGMAGIC3:
+			magic_server = STGMAGIC2;
+			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_clr_retry;
+		default:
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			serrno = SEINTERNAL;
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			break;
+		}
+		break;
+	}
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
@@ -2236,8 +2406,8 @@ int DLL_DECL stage_ping(flags,hostname)
 {
   int req_type = STAGE_PING;
   int msglen;                   /* Buffer length (incremental) */
-  int ntries = 0;               /* Number of retries */
-  int nstg161 = 0;              /* Number of STG161 messages */
+  int ntries;                   /* Number of retries */
+  int nstg161;                  /* Number of STG161 messages */
   struct passwd *pw;            /* Password entry */
   char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
@@ -2245,15 +2415,23 @@ int DLL_DECL stage_ping(flags,hostname)
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
   int c;                        /* Output of send2stgd() */
-  int pid = 0;
-  int Tid = 0;
-  u_signed64 uniqueid = 0;
+  int pid;
+  int Tid;
+  u_signed64 uniqueid;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
   char *func = "stage_ping";
   int maxretry = MAXRETRY;
-  int magic = stage_stgmagic();
+  int magic_client;
+  int magic_server;
+
+  /* We suppose first that server is at the same level as the client from protocol point of view */
+  magic_client = magic_server = stage_stgmagic();
+  
+  _stage_ping_retry:
+  ntries = nstg161 = Tid = 0;
+  uniqueid = 0;
 
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
@@ -2331,7 +2509,7 @@ int DLL_DECL stage_ping(flags,hostname)
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, magic);
+  marshall_LONG (sbp, magic_server);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -2348,6 +2526,37 @@ int DLL_DECL stage_ping(flags,hostname)
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
+	if ((c != 0) &&
+#if !defined(_WIN32)
+		(serrno == SECONNDROP || errno == ECONNRESET)
+#else
+		(serrno == SECONNDROP || serrno == SETIMEDOUT)
+#endif
+		) {
+		/* Server do not support this protocol */
+		/* We keep client magic number as it is now but we downgrade magic server */
+		switch (magic_server) {
+		case STGMAGIC4:
+			magic_server = STGMAGIC3;
+			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_ping_retry;
+		case STGMAGIC3:
+			magic_server = STGMAGIC2;
+			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			goto _stage_ping_retry;
+		default:
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			serrno = SEINTERNAL;
+			break;
+		}
+		break;
+	}
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
