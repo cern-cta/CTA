@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.91 2002/01/17 08:10:02 jdurand Exp $
+ * $Id: procupd.c,v 1.92 2002/01/25 11:46:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.91 $ $Date: 2002/01/17 08:10:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.92 $ $Date: 2002/01/25 11:46:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -66,7 +66,7 @@ extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO((int));
-extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry **, int, int, struct Cns_filestat *));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -86,7 +86,7 @@ extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_fileclass *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
@@ -1191,7 +1191,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				int ifileclass;
 
 				if (stcp->t_or_d == 'h')
-					ifileclass = upd_fileclass(NULL,stcp);
+					ifileclass = upd_fileclass(NULL,stcp,NULL);
 				else
 					ifileclass = -1;
 				/*
@@ -1209,7 +1209,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					if (ISSTAGEWRT(stcp) &&
 						(stcp->poolname[0] == '\0')) {
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpool(&stcp,-1,0);
+							update_migpool(&stcp,-1,0,NULL);
 						}
 						delreq (stcp,0);
 					} else {
@@ -1311,7 +1311,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								stcp_found = stcp;
 							}
 							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-								update_migpool(&stcp_found,-1,0);
+								update_migpool(&stcp_found,-1,0,NULL);
 								stcp_found->status &= ~CAN_BE_MIGR;
 							}
 							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
@@ -1363,7 +1363,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 									/* save_stcp is not a real valid pointer but we don't care because */
 									/* this can change only if update_migpool() calls newreq(), e.g. when */
 									/* the second argument is 1 */
-									update_migpool(&save_stcp,-1,0);
+									update_migpool(&save_stcp,-1,0,NULL);
 								}
 								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT))
 									delreq(save_stcp,0);      /* Deletes the STAGEWRT */
@@ -1452,7 +1452,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					struct stgcat_entry *stcp_search, *stcp_found, *stcp_other_migration_found, *stcp_other_migrated_found;
 
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						update_migpool(&stcp,-1,0);
+						update_migpool(&stcp,-1,0,NULL);
 						stcp->status &= ~CAN_BE_MIGR;
 					}
 					stcp->status |= STAGED;

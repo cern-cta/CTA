@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.18 2002/01/24 17:46:03 jdurand Exp $
+ * $Id: procfilchg.c,v 1.19 2002/01/25 11:46:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.18 $ $Date: 2002/01/24 17:46:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.19 $ $Date: 2002/01/25 11:46:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -76,12 +76,11 @@ extern int retenp_on_disk _PROTO((int));
 extern int max_setretenp _PROTO((char *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 extern int savereqs _PROTO(());
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_filestat *));
 extern void redomigpool _PROTO(());
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
-extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -385,7 +384,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (poolflag < 0) { /* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
-			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) {
 				c = USERR;
 				goto reply;
 			}

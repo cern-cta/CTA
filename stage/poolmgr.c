@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.173 2002/01/24 17:44:54 jdurand Exp $
+ * $Id: poolmgr.c,v 1.174 2002/01/25 11:46:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.173 $ $Date: 2002/01/24 17:44:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.174 $ $Date: 2002/01/25 11:46:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -140,7 +140,7 @@ struct pool_element_ext {
 };
 
 void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
-int update_migpool _PROTO((struct stgcat_entry **, int, int));
+int update_migpool _PROTO((struct stgcat_entry **, int, int, struct Cns_filestat *));
 void incr_migpool_counters _PROTO((struct stgcat_entry *, struct pool *, int, int, time_t));
 int insert_in_migpool _PROTO((struct stgcat_entry *));
 void checkfile2mig _PROTO(());
@@ -171,7 +171,7 @@ int have_another_pool_with_export_hsm_option _PROTO((char *));
 int poolalloc _PROTO((struct pool *, int));
 int checklastaccess _PROTO((char *, time_t));
 int enoughfreespace _PROTO((char *, int));
-int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_filestat *));
 int upd_fileclasses _PROTO(());
 void upd_last_tppool_used _PROTO((struct fileclass *));
 char *next_tppool _PROTO((struct fileclass *));
@@ -1142,7 +1142,7 @@ int ismigovl(pid, status)
       stcp->status &= ~WAITING_MIGR;
       /* The following will force update_migpool() to correctly update the being_migr counters */
       stcp->status |= BEING_MIGR;
-      update_migpool(&stcp,-1,0);
+      update_migpool(&stcp,-1,0,NULL);
       stcp->status |= PUT_FAILED;
 #ifdef USECDB
       if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -2145,10 +2145,11 @@ void incr_migpool_counters(stcp,pool_p,immediate,ifileclass,thistime)
 /* If 3           move from delaymigr to canbemigr             */
 /* If 4           conditional move from delaymigr to canbemigr */
 /* Returns: 0 (OK) or -1 (NOT OK)                              */
-int update_migpool(stcp,flag,immediate)
+int update_migpool(stcp,flag,immediate,Cnsfilestat)
      struct stgcat_entry **stcp;
      int flag;
      int immediate;
+	 struct Cns_filestat *Cnsfilestat;
 {
   int i, ipool;
   struct pool *pool_p;
@@ -2188,7 +2189,7 @@ int update_migpool(stcp,flag,immediate)
     goto update_migpool_return;
   }
   /* We check that this stcp have a known fileclass v.s. its pool migrator */
-  if ((ifileclass = upd_fileclass(pool_p,*stcp)) < 0) {
+  if ((ifileclass = upd_fileclass(pool_p,*stcp,Cnsfilestat)) < 0) {
     rc = -1;
     goto update_migpool_return;
   }
@@ -2572,7 +2573,7 @@ int insert_in_migpool(stcp)
     stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
     return(0);
   }
-  if ((ifileclass = upd_fileclass(pool_p,stcp)) < 0) {
+  if ((ifileclass = upd_fileclass(pool_p,stcp,NULL)) < 0) {
     return(-1);
   }
 
@@ -2597,7 +2598,7 @@ int insert_in_migpool(stcp)
     pool_p->migr->global_predicates.nbfiles_beingmig++;
     pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
   }
-  if ((ifileclass = upd_fileclass(pool_p,stcp)) >= 0) {
+  if ((ifileclass = upd_fileclass(pool_p,stcp,NULL)) >= 0) {
     if ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime) {
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += stcp->actual_size;
@@ -2788,7 +2789,7 @@ int migrate_files(pool_p)
         break;
       }
       if (okpoolname == 0) continue;    /* This stcp is not a candidate for migration */
-      if ((ifileclass = upd_fileclass(pool_p,stcp)) < 0) continue;
+      if ((ifileclass = upd_fileclass(pool_p,stcp,NULL)) < 0) continue;
       /* We update the fileclass within this migrator watch variables */
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_to_mig++;
@@ -3103,7 +3104,7 @@ int migpoolfiles(pool_p)
 
         /* And we count how of them we got */
         ++nfiles_per_tppool;
-        if ((ifileclass = upd_fileclass(pool_p,scc->stcp)) >= 0) {
+        if ((ifileclass = upd_fileclass(pool_p,scc->stcp,NULL)) >= 0) {
           if (pool_p->migr->fileclass[ifileclass]->flag == 0) {
             /* This fileclass [ifileclass] was not yet counted for this tape pool [scc_found->stcp->u1.h.tpool] */
             pool_p->migr->fileclass[ifileclass]->streams++;
@@ -3364,7 +3365,7 @@ int migpoolfiles(pool_p)
       struct stgpath_entry *stpp;
       int ifileclass;
 
-      if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) < 0) {
+      if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),NULL)) < 0) {
         stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
         /* Should never happen - by convention we put this stcp in first stream */
         l = 0;
@@ -3380,7 +3381,7 @@ int migpoolfiles(pool_p)
         /* We look if there is another stream that have enough room for us */
 
         while (1) {
-          if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) < 0) {
+          if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),NULL)) < 0) {
             stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
             /* Should never happen - by convention we put this stcp in first stream */
             l = 0;
@@ -3672,9 +3673,10 @@ void poolmgr_wait4child(signo)
 #endif
 
 /* This routine created if necessary a new fileclass element in the fileclasses array */
-int upd_fileclass(pool_p,stcp)
+int upd_fileclass(pool_p,stcp,yetdone_Cnsfilestat)
      struct pool *pool_p;
      struct stgcat_entry *stcp;
+	 struct Cns_filestat *yetdone_Cnsfilestat;
 {
   struct Cns_fileid Cnsfileid;
   struct Cns_filestat Cnsfilestat;
@@ -3682,24 +3684,38 @@ int upd_fileclass(pool_p,stcp)
   int ifileclass = -1;
   int ifileclass_vs_migrator = -1;
   int i;
-
+  extern int no_upd_fileclass;
+  
   if ((stcp == NULL) || (stcp->t_or_d != 'h')) {
     serrno = SEINTERNAL;
     return(-1);
   }
 
   /* We grab fileclass - this also permits to check that file still is in exist in the nameserver */
-  if (stcp->u1.h.fileclass <= 0) {
+  /* Fileclass is always checked if stcp->u1.h.fileclass is <= 0 or if there is yet done Cns_stat() result */
+  /* sent to us - in the later case, caller can anyway prevent call Cns_statx() even if there was not previous */
+  /* call to Cns_statx() sent to us if original record neverthless contains a fileclass - this mean that setting */
+  /* external value no_upd_fileclass to anything != 0, we guarantee that there will never be a Cns_statx() call if */
+  /* the original record contains already a fileclass */
+  if ((stcp->u1.h.fileclass <= 0) || ((! no_upd_fileclass) && (! yetdone_Cnsfilestat))) {
     strcpy(Cnsfileid.server,stcp->u1.h.server);
     Cnsfileid.fileid = stcp->u1.h.fileid;
-    if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
-      int save_serrno = serrno;
-      sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
-      serrno = save_serrno;
-      return(-1);
-    }
+	if (! yetdone_Cnsfilestat) {
+		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
+			int save_serrno = serrno;
+			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+			serrno = save_serrno;
+			return(-1);
+		}
+	} else {
+		memcpy(&Cnsfilestat,yetdone_Cnsfilestat,sizeof(struct Cns_filestat));
+	}
     if (stcp->u1.h.fileclass != Cnsfilestat.fileclass) {
-      stcp->u1.h.fileclass = Cnsfilestat.fileclass;
+		if (stcp->u1.h.fileclass > 0) {
+			char tmpbuf[21];
+			stglogit ("upd_fileclass", STG173, stcp->u1.h.xfile, stcp->u1.h.fileclass, Cnsfilestat.fileclass, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server);
+		}
+		stcp->u1.h.fileclass = Cnsfilestat.fileclass;
 #ifdef USECDB
       if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
         stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -4064,7 +4080,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
       return(-1);
     }
     /* We need to know what is the fileclass for this stcp */
-    if ((i = upd_fileclass(NULL,stcp)) < 0) {
+    if ((i = upd_fileclass(NULL,stcp,NULL)) < 0) {
       return(-1);
     }
     p = fileclasses[i].Cnsfileclass.tppools;
@@ -4460,7 +4476,7 @@ void check_delaymig() {
       if (stcp->reqid == 0) break;
       if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 
-      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
+      if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) continue; /* Unknown fileclass */
 
       /* There is NO automatic deletion for any record that is waiting on something else */
       if (ISWAITING(stcp)) continue;
@@ -4476,7 +4492,7 @@ void check_delaymig() {
         /* That's why I typecase everything to u_signed64 */
         if ((stcp->filler[0] != 'm') && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) <= (u_signed64) thistime)) {
           /* This entry had a mintime_beforemigr and we have reached its latency value */
-          update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
+          update_migpool(&stcp, 1, 3, NULL);   /* immediate flag is 3 */
         }
       }
 	}
