@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.20 $ $Date: 2000/03/28 10:18:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.21 $ $Date: 2000/04/06 12:08:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -305,7 +305,8 @@ static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
     while ( (rc = vdqm_NextDrive(&nw,&DrvReq)) != -1 ) {
         if ( *DrvReq.drive == '\0' ) continue;
         if ( DrvReq.VolReqID > 0 ) nb_used++;
-        if ( (DrvReq.status & VDQM_UNIT_UP) != 0 ) nb_units++;
+        if ( (DrvReq.status & VDQM_UNIT_UP) != 0 &&
+             *DrvReq.dedicate == '\0' ) nb_units++;
     }
 
     req->info.status = AVAILABLE;
