@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.3 2001/02/01 08:32:11 jdurand Exp $
+ * $Id: stage_api.c,v 1.4 2001/02/01 08:36:12 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1129,6 +1129,37 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
   return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
+int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_output,nstpp_output,stpp_output)
+     u_signed64 flags;
+     char *hostname;
+     char *poolname;
+     char *tape;
+     char *fseq;
+     int *nstcp_output;
+     struct stgcat_entry **stcp_output;
+     int *nstpp_output;
+     struct stgpath_entry **stpp_output;
+{
+  struct stgcat_entry stcp_input;
 
+  /* Check tape in input */
+  if (tape == NULL) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  /* Check tape length and poolname validity */
+  if (((*tape == '\0') || (strlen(tape)        > CA_MAXVIDLEN      )) ||
+      ((fseq  != NULL) && (strlen(fseq)        > CA_MAXFSEQLEN     )) ||
+      ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
+    serrno = ENAMETOOLONG;
+    return(-1);
+  }
 
+  /* We build the full stageqry API request */
+  memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  strcpy(stcp_input.u1.t.vid[0],tape); /* Cannot be zero-length */
+  strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
+  return(stage_qry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+}
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.20 2001/02/01 08:32:08 jdurand Exp $
+ * $Id: stage_api.h,v 1.21 2001/02/01 08:36:09 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -325,6 +325,15 @@ EXTERN_C int DLL_DECL stageqry_Hsm _PROTO((u_signed64,                /* flags *
                                            struct stgcat_entry **,    /* stcp_output */
                                            int *,                     /* nstpp_output */
                                            struct stgpath_entry **)); /* stpp_output */
+EXTERN_C int DLL_DECL stageqry_Tape _PROTO((u_signed64,                /* flags */
+                                            char *,                    /* hostname */
+                                            char *,                    /* poolname */
+                                            char *,                    /* tape */
+                                            char *,                    /* fseq */
+                                            int *,                     /* nstcp_output */
+                                            struct stgcat_entry **,    /* stcp_output */
+                                            int *,                     /* nstpp_output */
+                                            struct stgpath_entry **)); /* stpp_output */
 
 /* ----------------------------- */
 /* Shorthand STAGE_QRY interface */
