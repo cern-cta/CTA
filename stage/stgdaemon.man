@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.5 $ $Date: 2000/09/11 07:48:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON l "$Date: 1999/12/04 09:47:18 $"
+.TH STGDAEMON l "$Date: 2000/09/11 07:48:23 $"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -217,7 +217,7 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 .TP
 Here is a simple example of a stage_clean script:
 
-stageqry -a -p $1 -S  |  cut -c31-  |  cut -d" " -f1  |  stageclr -c -i -p $1
+stageqry -a -p $1 -S  |  cut -c33-  |  cut -d" " -f1  |  stageclr -c -i -p $1
 .br
 
 .TP
