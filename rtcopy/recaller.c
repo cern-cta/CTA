@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:57:57 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/08 14:40:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:57:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/08 14:40:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -582,10 +582,10 @@ int recallerCallback(
                       "TPDRIVE",
                       DLF_MSG_PARAM_STR,
                       tapereq->unit,
-                      "",
+                      "RTCPD",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
+                      "DISKCP",
                       DLF_MSG_PARAM_UUID,
                       filereq->stgReqId,
                       "FSEQ",
@@ -625,10 +625,10 @@ int recallerCallback(
                       "TPDRIVE",
                       DLF_MSG_PARAM_STR,
                       tapereq->unit,
-                      "",
+                      "RTCPD",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
+                      "DISKCP",
                       DLF_MSG_PARAM_UUID,
                       filereq->stgReqId,
                       "FSEQ",

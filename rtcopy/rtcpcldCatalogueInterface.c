@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.100 $ $Release$ $Date: 2004/12/08 10:53:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.101 $ $Release$ $Date: 2004/12/08 14:40:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.100 $ $Release$ $Date: 2004/12/08 10:53:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.101 $ $Release$ $Date: 2004/12/08 14:40:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1204,7 +1204,7 @@ static int nextSegmentToRecall(
   struct Cstager_DiskCopy_t *diskCopy = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
   char *diskServerName = NULL, *mountPointName = NULL, *pathName = NULL;
-  char *nsHost = NULL;
+  char *nsHost = NULL, *diskCopyId = NULL;
   file_list_t *fl = NULL;
   int rc, save_serrno;
   rtcpFileRequest_t *filereq = NULL;
@@ -1293,6 +1293,13 @@ static int nextSegmentToRecall(
                               diskCopy,
                               &castorFile
                               );
+  Cstager_DiskCopy_diskcopyId(
+                              diskCopy,
+                             (CONST char **)&diskCopyId
+                              );
+  if ( diskCopyId != NULL ) {
+    (void)string2Cuuid(&(filereq->stgReqId),diskCopyId);
+  }
   Cstager_DiskCopyForRecall_mountPoint(
                                        recallCandidate,
                                        (CONST char **)&mountPointName
@@ -1322,7 +1329,7 @@ static int nextSegmentToRecall(
                             &fileid
                             );
   }
-  
+
   if ( (pathName == NULL) || (*pathName == '\0') ||
        (mountPointName == NULL) || (*mountPointName == '\0') ||
        (diskServerName == NULL) || (*diskServerName == '\0') ||
@@ -1380,13 +1387,13 @@ int nextSegmentToMigrate(
      file_list_t **file;
 {
   struct Cstager_Tape_t *tp = NULL;
-  struct Cstager_TapeCopy_t *tpCp = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
   struct Cstager_Stream_t *stream = NULL;
   struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
   struct Cstager_TapeCopyForMigration_t *nextMigrCandidate = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
-  struct Cstager_DiskCopy_t **dskCps = NULL, *dkCp = NULL;
+  struct Cstager_DiskCopy_t **diskCopies = NULL, *diskCopy = NULL;
   struct Cstager_Segment_t *segment = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -1397,6 +1404,7 @@ int nextSegmentToMigrate(
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
   char *diskServer = NULL, *mountPoint = NULL, *relPath = NULL, *nsHost = NULL;
+  char *diskCopyId = NULL;
   int rc, save_serrno, nbDskCps = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ) {
@@ -1469,14 +1477,14 @@ int nextSegmentToMigrate(
    * associated with it. We never commit the Segment in the
    * DB unless there was an error when writing it to tape.
    */
-  tpCp = Cstager_TapeCopyForMigration_getTapeCopy(nextMigrCandidate);
+  tapeCopy = Cstager_TapeCopyForMigration_getTapeCopy(nextMigrCandidate);
 
   /*
    * If there was previous retries there are already Segments
    * associated with this TapeCopy. Let's get them so that
    * we don't risk to remove them at next updc.
    */
-  iObj = Cstager_TapeCopy_getIObject(tpCp);
+  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
   rc = C_Services_fillObj(
                           *svcs,
                           iAddr,
@@ -1504,8 +1512,8 @@ int nextSegmentToMigrate(
   }
   Cstager_Segment_setTape(segment,tp);
   Cstager_Tape_addSegments(tp,segment);
-  Cstager_Segment_setCopy(segment,tpCp);
-  Cstager_TapeCopy_addSegments(tpCp,segment);
+  Cstager_Segment_setCopy(segment,tapeCopy);
+  Cstager_TapeCopy_addSegments(tapeCopy,segment);
 
   Cstager_TapeCopyForMigration_diskServer(
                                           nextMigrCandidate,
@@ -1531,16 +1539,16 @@ int nextSegmentToMigrate(
     serrno = SEINTERNAL;
     return(-1);
   }
-  Cstager_TapeCopy_castorFile(tpCp,&castorFile);
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
 
   Cstager_CastorFile_diskCopies(
                                 castorFile,
-                                &dskCps,
+                                &diskCopies,
                                 &nbDskCps
                                 );
-  if ( dskCps != NULL ) {
-    dkCp = dskCps[0];
-    free(dskCps);
+  if ( diskCopies != NULL ) {
+    diskCopy = diskCopies[0];
+    free(diskCopies);
   } else {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1558,10 +1566,14 @@ int nextSegmentToMigrate(
   }
 
   Cstager_DiskCopy_path(
-                        dkCp,
+                        diskCopy,
                         (CONST char **)&relPath
                         );
   
+  Cstager_DiskCopy_diskcopyId(
+                              diskCopy,
+                             (CONST char **)&diskCopyId
+                              );
   if ( relPath == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1622,6 +1634,9 @@ int nextSegmentToMigrate(
   strcpy(filereq->recfm,"F");
   filereq->def_alloc = 0;
   filereq->proc_status = RTCP_WAITING;
+  if ( diskCopyId != NULL ) {
+    (void)string2Cuuid(&(filereq->stgReqId),diskCopyId);
+  }
 
   if ( diskServer != NULL ) {
     sprintf(filereq->file_path,"%s:%s/%s",diskServer,mountPoint,relPath);
