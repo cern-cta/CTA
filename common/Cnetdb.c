@@ -1,12 +1,12 @@
 
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.9 $ $Date: 2003/03/07 10:28:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.10 $ $Date: 2003/04/24 07:32:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -315,7 +315,7 @@ CONST char *name;
 
     return(result);
 #else /* ADNS */
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32) || defined(HPUX11)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows and Digital UNIX v4 and higher already
@@ -442,7 +442,7 @@ int type;
 
     return(result);
 #else /* ADNS */
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32) || defined(HPUX11)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows and Digital UNIX v4 and higher already
@@ -521,7 +521,7 @@ struct servent DLL_DECL *Cgetservbyname(name,proto)
 CONST char *name;
 CONST char *proto;
 {
-#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32) || defined(HPUX11)
     /*
      * If single-thread compilation we don't do anything.
      * Also: Windows and Digital UNIX v4 and higher already
