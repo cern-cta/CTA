@@ -115,13 +115,13 @@ int Cstager_DiskCopyForRecall_setDiskcopyId(struct Cstager_DiskCopyForRecall_t* 
  * Get the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */
-int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* instance, double* var);
+int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* instance, float* var);
 
 /**
  * Set the value of gcWeight
  * Weight possibly used by the garbage collector to decide who should be removed.
  */
-int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, double new_var);
+int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
 
 /**
  * Get the value of id

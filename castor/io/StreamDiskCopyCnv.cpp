@@ -115,7 +115,7 @@ castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* addr
   std::string diskcopyId;
   ad->stream() >> diskcopyId;
   object->setDiskcopyId(diskcopyId);
-  double gcWeight;
+  float gcWeight;
   ad->stream() >> gcWeight;
   object->setGcWeight(gcWeight);
   u_signed64 id;

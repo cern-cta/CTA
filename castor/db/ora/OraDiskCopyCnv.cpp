@@ -521,7 +521,7 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setString(1, obj->path());
     m_insertStatement->setString(2, obj->diskcopyId());
-    m_insertStatement->setDouble(3, obj->gcWeight());
+    m_insertStatement->setFloat(3, obj->gcWeight());
     m_insertStatement->setDouble(4, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
     m_insertStatement->setDouble(5, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setInt(6, (int)obj->status());
@@ -581,7 +581,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setString(1, obj->path());
     m_updateStatement->setString(2, obj->diskcopyId());
-    m_updateStatement->setDouble(3, obj->gcWeight());
+    m_updateStatement->setFloat(3, obj->gcWeight());
     m_updateStatement->setInt(4, (int)obj->status());
     m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
@@ -684,7 +684,7 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setPath(rset->getString(1));
     object->setDiskcopyId(rset->getString(2));
-    object->setGcWeight(rset->getDouble(3));
+    object->setGcWeight(rset->getFloat(3));
     object->setId((u_signed64)rset->getDouble(4));
     object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(7));
     m_selectStatement->closeResultSet(rset);
@@ -734,7 +734,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
     object->setDiskcopyId(rset->getString(2));
-    object->setGcWeight(rset->getDouble(3));
+    object->setGcWeight(rset->getFloat(3));
     object->setId((u_signed64)rset->getDouble(4));
     object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(7));
     m_selectStatement->closeResultSet(rset);
