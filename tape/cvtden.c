@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.5 $ $Date: 2002/05/17 12:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.6 $ $Date: 2002/07/22 09:28:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
@@ -23,9 +23,9 @@ char	*aden;
 {
 	int i;
 
-	for (i = 0; i < 21; i++)
+	for (i = 0; i < 22; i++)
 		if (strcmp (aden, adens[i]) == 0) return (i);
-	for (i = 0; i < 21; i++)
+	for (i = 0; i < 22; i++)
 		if (strcmp (aden, adensc[i]) == 0) return (i | IDRC);
 	if (!strcmp (aden, "38K")) return (D38000);
 	if (!strcmp (aden, "43200")) return (D8200);
