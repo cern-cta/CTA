@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/09 15:33:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/09 15:33:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1409,11 +1409,15 @@ static void setErrorInfo(
 
 int rtcpcld_workerFinished(
                            tape,
+                           filesCopied,
+                           bytesCopied,
+                           runTime,
                            workerRC,
                            workerErrorCode
                            )
      tape_list_t *tape;
-     int workerRC, workerErrorCode;
+     u_signed64 bytesCopied;
+     int runTime, filesCopied, workerRC, workerErrorCode;
 {
   char *shiftMsg = NULL;
   int retval = 0, rc;
@@ -1461,16 +1465,22 @@ int rtcpcld_workerFinished(
                                  RTCPCLD_MSG_MIGRATOR_ENDED :
                                  RTCPCLD_MSG_RECALLER_ENDED)),
                   (struct Cns_fileid *)NULL,
-                  6,
+                  8,
                   "",
                   DLF_MSG_PARAM_TPVID,
                   tape->tapereq.vid,
-                  "MODE",
-                  DLF_MSG_PARAM_INT,
-                  tape->tapereq.mode,
                   "VDQMID",
                   DLF_MSG_PARAM_INT,
                   tape->tapereq.VolReqID,
+                  "FILESCP",
+                  DLF_MSG_PARAM_INT,
+                  filesCopied,
+                  "BYTESCP",
+                  DLF_MSG_PARAM_INT64,
+                  bytesCopied,
+                  "RUNTIME",
+                  DLF_MSG_PARAM_INT,
+                  runTime,
                   "rtcpRC",
                   DLF_MSG_PARAM_INT,
                   workerRC,

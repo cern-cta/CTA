@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/17 13:58:54 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/17 13:58:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -705,8 +705,10 @@ int main(
      char **argv;
 {  
   char *recallerFacility = RECALLER_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
-  int rc, c, i, save_serrno = 0;
+  int rc, c, i, save_serrno = 0, failed = 0, runTime;
+  time_t startTime, endTime;
 
+  startTime = time(NULL);
   /*
    * If we are started by the rtcpclientd, the main accept socket has been
    * duplicated to file descriptor 0
@@ -796,10 +798,34 @@ int main(
                              );
     }
   }
-  if ( rc == -1 ) save_serrno = serrno;
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    if ( (checkAborted(&failed) == 0) && (failed == 0) ) {
+      /*
+       * This is an error not seen by callback. Depending on the
+       * tape mover version this can happen if there is an error on the
+       * first file. If so, force a callback.
+       */
+      if ( (tape->file != NULL) && 
+           ((tape->file->filereq.cprc == -1) ||
+            (tape->file->filereq.err.errorcode > 0) ||
+            (*tape->file->filereq.err.errmsgtxt != '\0') ||
+            ((tape->file->filereq.err.severity & RTCP_FAILED) != 0)) ) {
+        (void)recallerCallbackFileCopies(
+                                         &(tape->tapereq),
+                                         &(tape->file->filereq)
+                                         );
+      }
+    }
+  }
 
+  endTime = time(NULL);
+  runTime = (int)endTime-startTime;
   rc = rtcpcld_workerFinished(
                               tape,
+                              filesCopied,
+                              bytesCopied,
+                              runTime,
                               rc,
                               save_serrno
                               );

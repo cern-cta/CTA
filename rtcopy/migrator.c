@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/20 16:29:00 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/20 16:29:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -93,7 +93,6 @@ extern int checkFile;
 static int diskFseq = 0;
 static int filesCopied = 0;
 static u_signed64 bytesCopied = 0;
-
 static tape_list_t *tape = NULL;
 
 int migratorCallbackFileCopied(
@@ -637,8 +636,10 @@ int main(
      char **argv;
 {
   char *migratorFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
-  int rc, c, i, save_serrno = 0;
+  int rc, c, i, save_serrno = 0, runTime;
+  time_t startTime, endTime;
 
+  startTime = time(NULL);
   /*
    * If we are started by the rtcpclientd, the main accept socket has been
    * duplicated to file descriptor 0
@@ -740,8 +741,13 @@ int main(
     LOG_SYSCALL_ERR("rtcpcld_restoreSelectedTapeCopies()");
   }
 
+  endTime = time(NULL);
+  runTime = (int)endTime-startTime;
   rc = rtcpcld_workerFinished(
                               tape,
+                              filesCopied,
+                              bytesCopied,
+                              runTime,
                               rc,
                               save_serrno
                               );
