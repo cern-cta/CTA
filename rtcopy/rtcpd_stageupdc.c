@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.23 $ $Date: 2000/03/14 12:01:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.24 $ $Date: 2000/03/14 16:50:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -149,9 +149,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 serrno = save_serrno;
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )  
                     return(-1);
-            } else break;
-        } else if ( filereq->cprc != 0 || 
-                    filereq->proc_status == RTCP_FINISHED ) {
+                continue;
+            } 
+        } 
+        if ( filereq->cprc != 0 || filereq->proc_status == RTCP_FINISHED ) {
             /*
              * Always give the return code
              */
@@ -196,8 +197,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 if ( save_serrno != SECOMERR && save_serrno != SESYSERR )
                     return(-1);
             } else break;
-
         }
+        if ( rc == 0 ) break;
     } /* for ( retry=0; retry < RTCP_STGUPDC_RETRIES; retry++ ) */
     if ( rc == -1 ) serrno = save_serrno;
 #else /* !USE_STAGECMD */

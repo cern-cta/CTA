@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.38 $ $Date: 2000/03/14 11:10:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.39 $ $Date: 2000/03/14 16:50:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -876,8 +876,10 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
         return;
     }
     if ( tapereq != NULL ) {
+        if ( severity != 0 && (severity & RTCP_OK) == 0 ) 
+            tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
         /*
-         * Don't reset a FAILED status
+         * Don't reset failed status
          */
         if ( (tapereq->err.severity & RTCP_FAILED) == 0 ) {
             tapereq->err.errorcode = status;
@@ -935,11 +937,12 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
     _status = 0;
     if ( tapereq != NULL ) {
         _status = tapereq->err.errorcode;
-        _severity |= tapereq->err.severity;
+        _severity = tapereq->err.severity;
     }
     if ( filereq != NULL ) {
         if ( _status == 0 ) _status = filereq->err.errorcode;
-        _severity |= filereq->err.severity;
+        if ( _severity == 0 || (_severity & RTCP_OK) != 0 ) 
+            _severity = filereq->err.severity;
     }
     (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
     if ( status != NULL ) *status = _status;

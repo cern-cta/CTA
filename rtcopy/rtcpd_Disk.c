@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.48 $ $Date: 2000/03/14 11:08:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.49 $ $Date: 2000/03/14 16:50:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1252,7 +1252,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( disk_fd != -1 ) \
             (void)DiskFileClose(disk_fd,pool_index,tape,file); \
         if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
-            if ( rc == -1 || mode == WRITE_DISABLE ) { \
+            if ( mode == WRITE_DISABLE ) { \
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
             } else { \
                 (void) rtcpd_stageupdc(tape,file); \
@@ -1341,6 +1341,7 @@ void *diskIOthread(void *arg) {
     do {
         rc = DiskFileOpen(pool_index,tape,file);
         save_serrno = serrno;
+        disk_fd = rc;
         if ( rc != -1 ) break;
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 && 
@@ -1356,7 +1357,6 @@ void *diskIOthread(void *arg) {
     } while ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
     CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
         if ( mode == WRITE_DISABLE ) {
-    disk_fd = rc;
     if ( (severity & RTCP_EOD) == 0 ) {
             rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);

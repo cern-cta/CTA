@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.45 $ $Date: 2000/03/14 11:08:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.46 $ $Date: 2000/03/14 16:50:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1005,7 +1005,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          } \
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
          if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
-             if ( rc == -1 || mode == WRITE_ENABLE ) { \
+             if ( mode == WRITE_ENABLE ) { \
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
                  (void) tellClient(&client_socket,X,Y,-1); \
                  (void) rtcpd_stageupdc(nexttape,nextfile); \
