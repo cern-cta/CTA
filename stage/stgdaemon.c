@@ -242,7 +242,7 @@ void checkwaitingspc _PROTO(());
 void check_child_exit _PROTO(());
 void checkwaitq _PROTO(());
 void create_link _PROTO((int *, struct stgcat_entry *, char *));
-void dellink _PROTO((struct stgpath_entry *));
+void dellink _PROTO((struct stgpath_entry *, int));
 void delreq _PROTO((struct stgcat_entry *, int));
 void stgcat_shrunk_pages _PROTO(());
 void stgpath_shrunk_pages _PROTO(());
@@ -3454,7 +3454,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		for (stpp = stps; stpp < stpe; ) {
 			if (stpp->reqid == 0) break;
 			if (stcp->reqid == stpp->reqid)
-				dellink (stpp);
+				dellink (stpp, nodisk_flag);
 			else
 				stpp++;
 		}
@@ -3486,8 +3486,9 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 	return (0);
 }
 
-void dellink(stpp)
+void dellink(stpp, nodisk_flag)
 		 struct stgpath_entry *stpp;
+		 int nodisk_flag;
 {
 	int n;
 	char *p1, *p2;
@@ -3497,11 +3498,13 @@ void dellink(stpp)
 		stglogit(func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
-	if (rpfd >= 0) {
+	if (nodisk_flag) {
+		stglogit (func, "STG93 - removing silently link %s (--nodisk option) \n", stpp->upath);
+	} else if (rpfd >= 0) {
 		stglogit (func, STG93, stpp->upath);
 		sendrep (&rpfd, RMSYMLINK, stpp->upath);
 	} else {
-		stglogit (func, "STG93 - removing silently link %s\n", stpp->upath);
+		stglogit (func, "STG93 - removing silently link %s (no client to do it)\n", stpp->upath);
 	}
 	nbpath_ent--;
 	p2 = (char *)stps + (nbpath_ent * sizeof(struct stgpath_entry));

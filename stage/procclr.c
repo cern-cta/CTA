@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.68 2003/05/12 12:36:00 jdurand Exp $
+ * $Id: procclr.c,v 1.69 2003/06/30 11:27:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.68 $ $Date: 2003/05/12 12:36:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.69 $ $Date: 2003/06/30 11:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -104,7 +104,7 @@ extern int sendrep _PROTO(());
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int ismetapoolpool _PROTO((char *));
-extern void dellink _PROTO((struct stgpath_entry *));
+extern void dellink _PROTO((struct stgpath_entry *, int));
 extern int enoughfreespace _PROTO((char *, int));
 extern int checklastaccess _PROTO((char *, time_t));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
@@ -504,7 +504,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if (found) {
-			dellink (stpp);
+			dellink (stpp, nodisk_flag);
 			savepath ();
 		} else {
 			sendrep (&rpfd, MSG_ERR, STG33, linkname, "file not found");
