@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.13 $ $Date: 2001/06/21 10:33:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.14 $ $Date: 2001/09/18 21:17:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2001/06/21 10:33:21 $"
+.TH STAGEIN l "$Date: 2001/09/18 21:17:03 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -518,6 +518,8 @@ stagein -v CIN111 inp
 16	EBUSY: Device or resource busy.
 .br
 28	ENOSPC: No space left on device.
+.br
+188	Tape hosting the data is held
 .br
 192	Request cancelled by stageclr.
 .br
