@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.214 2002/07/27 07:31:54 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.215 2002/08/16 06:41:21 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.214 $ $Date: 2002/07/27 07:31:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.215 $ $Date: 2002/08/16 06:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -402,6 +402,7 @@ int main(argc,argv)
 	size_t read_size;
 	static int rlimit_nproc_flag;
 	static int rlimit_nofile_flag;
+	char *stgdaemon_port_p = NULL;
 	int done_rlimit_nproc;
 	int done_rlimit_nofile;
 	int doit_rlimit_nproc;
@@ -412,8 +413,9 @@ int main(argc,argv)
 		{"foreground",         NO_ARGUMENT,        NULL,      'f'},
 		{"help",               NO_ARGUMENT,        NULL,      'h'},
 		{"backlog",            REQUIRED_ARGUMENT,  NULL,      'L'},
-		{"rlimit_nofile",     REQUIRED_ARGUMENT,  &rlimit_nofile_flag,     'F'},
-		{"rlimit_nproc",      REQUIRED_ARGUMENT,  &rlimit_nproc_flag,      'P'},
+		{"rlimit_nofile",      REQUIRED_ARGUMENT,  &rlimit_nofile_flag,     'F'},
+		{"rlimit_nproc",       REQUIRED_ARGUMENT,  &rlimit_nproc_flag,      'P'},
+		{"port",               REQUIRED_ARGUMENT,  NULL,      'p'},
  		{NULL,                 0,                  NULL,        0},
 	};
 
@@ -426,7 +428,7 @@ int main(argc,argv)
 	doit_rlimit_nproc = 0;
 	doit_rlimit_nofile = 0;
 
-	while ((c = Cgetopt_long (argc, argv, "fhI:L:F:P:", longopts, NULL)) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "fhI:L:F:P:p:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			foreground = 1;
@@ -458,6 +460,9 @@ int main(argc,argv)
 			} else {
 				doit_rlimit_nproc = 1;
 			}
+			break;
+		case 'p':
+			stgdaemon_port_p = Coptarg;
 			break;
 		case 0:
 			if ((rlimit_nproc_flag != 0) && (! done_rlimit_nproc)) {
@@ -777,7 +782,22 @@ int main(argc,argv)
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
-	if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
+	if ((stgdaemon_port_p != NULL) ||            /* From command-line */
+		((stgdaemon_port_p = getenv("STAGE_PORT")) != NULL) ||        /* From environment */
+		((stgdaemon_port_p = getconfent("STG", "PORT", 0)) != NULL)   /* From configuration */
+		) {
+		int thisport = atoi(stgdaemon_port_p);
+		if (thisport <= 0) {
+			stglogit (func, STG09, STAGE_NAME, "service (port number) is <= 0");
+			stglogit (func, "Exit.\n");
+			exit (CONFERR);
+		}
+		if (thisport != STAGE_PORT) {
+			stglogit (func, STG148, "stgdaemon port", "different than default value - Using", thisport);
+		}
+		sin.sin_port = htons((u_short) thisport);
+		stgdaemon_port = thisport;
+	} else if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
 		stglogit (func, STG148, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
 		sin.sin_port = htons((u_short) STAGE_PORT);
 		stgdaemon_port = STAGE_PORT;
@@ -4247,10 +4267,10 @@ void stgdaemon_usage() {
 		   "  where options can be\n"
 		   "  -f                   Foreground\n"
 		   "  -h                   This help\n"
-		   "  -I <%%s>              Configuration file\n"
 		   "  -L <%%d>              Listen backlog\n"
-		   "  --rlimit_nproc  <%%d> Max number of processes (or -P <%%d>)\n"
 		   "  --rlimit_nofile <%%d> Max number of open file (or -F <%%d>)\n"
+		   "  --rlimit_nproc  <%%d> Max number of processes (or -P <%%d>)\n"
+		   "  -p <%%d>              Port number\n"
  		   "\n"
 		);
 }
