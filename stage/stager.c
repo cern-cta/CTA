@@ -813,7 +813,7 @@ int stagewrt_castor_hsm_file() {
       Flags = 0;
       
       while (1) {
-        stagewrt_nomoreupdatetape == 0;
+        stagewrt_nomoreupdatetape = 0;
 
         /* Wait for a free tape */
 #ifdef STAGER_DEBUG
@@ -1068,11 +1068,9 @@ int stage_tape() {
       case ETLBL:
         sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
         RETURN (SYERR);
-        break;
       case ETVBSY:
         sendrep(rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
         RETURN (SYERR);
-        break;
       default:
         break;
       }
@@ -1083,7 +1081,6 @@ int stage_tape() {
             rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL) {
           sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
           RETURN (SYERR);
-          break;
         } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
                    (rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
           stage_tape_retry_flag = 1;
