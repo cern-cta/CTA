@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.30 2000/10/03 12:03:24 jdurand Exp $
+ * $Id: procupd.c,v 1.31 2000/10/03 15:26:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.30 $ $Date: 2000/10/03 12:03:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.31 $ $Date: 2000/10/03 15:26:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -266,8 +266,6 @@ procupdreq(req_data, clienthost)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
-	/* If it has the filler[0] == 'c' and is a "-c off" request, we remove this hidden flag */
-	if (wqp->concat_off_fseq > 0 && stcp->filler[0] != '\0') stcp->filler[0] = '\0';
 
 	if (rc == 0 && wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
 		struct stgcat_entry *stcp_ok;
@@ -290,11 +288,11 @@ procupdreq(req_data, clienthost)
 			c = SYERR;
 			goto reply;
 		}
-		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem has been realloced) */
+		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem might have been realloced) */
 		stcp_ok = newreq();
-        /* The memory may have been realloced, so we follow this eventual reallocation */
-        /* by reassigning stcp pointer using the found index */
-        stcp = &(stcs[index_found]);
+		/* The memory may have been realloced, so we follow this eventual reallocation */
+		/* by reassigning stcp pointer using the found index */
+		stcp = &(stcs[index_found]);
 		save_nextreqid = nextreqid();
 		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
 		stcp_ok->reqid = save_nextreqid;
@@ -309,6 +307,8 @@ procupdreq(req_data, clienthost)
 		wfp_ok->subreqid = stcp_ok->reqid;
 		/* Current stcp become "<X>" */
 		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq));
+		/* If it has the filler[0] == 'c' (it has to have it!), we remove this hidden flag */
+		if (stcp->filler[0] != '\0') stcp->filler[0] = '\0';
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -325,6 +325,9 @@ procupdreq(req_data, clienthost)
 			c = SYERR;
 			goto reply;
 		}
+		/* The memory may have been realloced, so we follow this eventual reallocation */
+		/* by reassigning stcp pointer using the found index */
+		stcp = &(stcs[index_found]);
 	}
 	if ( rc < 0) {	/* -R not specified, i.e. tape mounted and positionned */
 		int has_been_modified = 0;
