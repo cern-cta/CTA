@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.3 $ $Date: 2000/06/11 06:54:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.4 $ $Date: 2000/06/11 07:05:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -747,10 +747,11 @@ char *devtype;
 {
 	COMPRESSION_STATS compstats;
 
+	memset (&compstats, 0, sizeof(compstats));
 	if (get_compression_stats (infd, path, devtype, &compstats) == 0) {
 		if (compstats.from_tape)
 			dmp_usrmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
-			    compstats.to_host / compstats.from_tape);
+			    (float)compstats.to_host / (float)compstats.from_tape);
 	}
 	return (0);
 }
