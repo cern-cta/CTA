@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.13 $ $Date: 2001/06/21 10:38:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.14 $ $Date: 2001/07/12 10:59:31 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2001/06/21 10:38:31 $"
+.TH STAGEQRY l "$Date: 2001/07/12 10:59:31 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -36,7 +36,11 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --dump
 ] [
+.BI --mintime
+] [
 .BI --reqid " reqid "
+] [
+.BI --retenp
 ]
 .LP
 .B stageqry
@@ -65,7 +69,11 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --dump
 ] [
+.BI --mintime
+] [
 .BI --reqid " reqid "
+] [
+.BI --retenp
 ]
 .LP
 .B stageqry
@@ -94,9 +102,13 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --dump
 ] [
+.BI --mintime
+] [
 .BI --noregexp
 ] [
 .BI --reqid " reqid "
+] [
+.BI --retenp
 ]
 .LP
 .B stageqry
@@ -125,9 +137,13 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --dump
 ] [
+.BI --mintime
+] [
 .BI --noregexp
 ] [
 .BI --reqid " reqid "
+] [
+.BI --retenp
 ]
 .LP
 .B stageqry
@@ -142,9 +158,13 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --counters
 ] [
+.BI --mintime
+] [
 .BI --migrator
 ] [
 .BI --queue
+] [
+.BI --retenp
 ]
 .SH DESCRIPTION
 .B stageqry
@@ -303,6 +323,9 @@ dumps the content of the found entry(ies) in the main catalog, or in the path ca
 .BI \--migrator
 gives statistics on migration rules. Used only if -s option is set.
 .TP
+.BI \--mintime
+gives current minimum time before migration. This concerns only entries that are in the CAN_BE_MIGR state.
+.TP
 .BI \--noregexp
 prevents regular expression to be applied in case of -A of -M options. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
 .TP
@@ -311,6 +334,9 @@ gives CASTOR's waiting queue content.
 .TP
 .BI \--reqid " reqid "
 outputs only entries that have this given reqid.
+.TP
+.BI \--retenp
+gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Exhausted. The CASTOR files lifetime can be changed using the \fBstagesetretenp\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Exhausted.
 .SH EXAMPLES
 .TP
 stageqry

@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.20 2001/06/21 10:36:35 jdurand Exp $
+ * $Id: stageqry.c,v 1.21 2001/07/12 10:59:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.20 $ $Date: 2001/06/21 10:36:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.21 $ $Date: 2001/07/12 10:59:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,6 +45,8 @@ int migrator_flag = 0;
 int class_flag = 0;
 int queue_flag = 0;
 int counters_flag = 0;
+int retenp_flag = 0;
+int mintime_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -100,6 +102,8 @@ int main(argc, argv)
 		{"class",              NO_ARGUMENT,  &class_flag,       1},
 		{"queue",              NO_ARGUMENT,  &queue_flag,       1},
 		{"counters",           NO_ARGUMENT,  &counters_flag,    1},
+		{"retenp",             NO_ARGUMENT,  &retenp_flag,      1},
+		{"mintime",            NO_ARGUMENT,  &mintime_flag,     1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -271,6 +275,6 @@ void usage(cmd)
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n"
 					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range]\n"
 					 "[-S] [-s] [-T] [-u] [-V visual_identifier(s)] [-x]\n"
-					 "[--class] [--counters] [--dump] [--migrator] [--noregexp]\n"
+					 "[--class] [--counters] [--dump] [--retenp] [--migrator] [--mintime] [--noregexp]\n"
 					 "[--queue] [--reqid reqid]\n");
 }
