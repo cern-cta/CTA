@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.179 2002/05/15 06:49:12 jdurand Exp $
+ * $Id: procio.c,v 1.180 2002/05/23 10:22:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.179 $ $Date: 2002/05/15 06:49:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.180 $ $Date: 2002/05/23 10:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -216,7 +216,7 @@ extern int sendrep _PROTO(());
 #endif
 extern int isvalidpool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
@@ -1779,7 +1779,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  PRE_RFIO;
 			  if (RFIO_STAT(stcp->ipath, &st) < 0) {
 				  stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
-				  if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
+				  if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1, 0) < 0) {
 					  int save_serrno = rfio_serrno();
 					  sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 							   RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
@@ -1795,7 +1795,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				   */
 				  if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
 					  (stgreq.size > stcp->size)) {
-					  if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					  if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1, 0) < 0) {
 						  int save_serrno = rfio_serrno();
 						  sendrep (rpfd, MSG_ERR,
 								   STG02, stcp->ipath,
@@ -2145,7 +2145,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					/* Here the logic is the same as if it was a STAGED file */
 				case STAGED:
-					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1, 0) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
@@ -2164,7 +2164,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We decrement the r/w counter on this file system */
 						rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 					}
-					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1, 0) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
@@ -2185,7 +2185,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We decrement the r/w counter on this file system */
 						rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 					}
-					if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1, 0) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
@@ -2347,7 +2347,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case STAGED:
 				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
-					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1, 0) < 0) {
  						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
@@ -4361,7 +4361,7 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				if (delfile (stcp_castor_name, ((stcp_castor_name->status & 0xF0) == STAGED ||
 												(stcp_castor_name->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) ?
 							 0 : 1,
-							 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 1) < 0) {
+							 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 1, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp_castor_name->ipath, RFIO_UNLINK_FUNC(stcp_castor_name->ipath), rfio_serror());
 					return(ISSTAGEDSYERR);
 				}
@@ -4817,7 +4817,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 		seteuid(start_passwd.pw_uid);
 		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
 		if (immediate_delete != 0) {
-			if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1) < 0) {
+			if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1, 0) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 			}
 		}

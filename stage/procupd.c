@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.104 2002/05/06 17:17:16 jdurand Exp $
+ * $Id: procupd.c,v 1.105 2002/05/23 10:22:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.104 $ $Date: 2002/05/06 17:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.105 $ $Date: 2002/05/23 10:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,7 +81,7 @@ extern int savereqs _PROTO(());
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
@@ -468,7 +468,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					c = EINVAL;
 					goto reply;
 				}
-				if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
+				if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 					c = SESYSERR;
 					goto reply;
@@ -536,7 +536,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						(new_server == NULL) || (new_dirpath == NULL)) {
 						/* Strange - seems to not be in a known fs or a known pool - this is impossible */
 						sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
-						if (delfile (stcp, 1, 1, 1, "unknown filesystem", uid, gid, 0, 0) < 0) {
+						if (delfile (stcp, 1, 1, 1, "unknown filesystem", uid, gid, 0, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						}
 						c = SESYSERR;
@@ -553,7 +553,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
 						/* Same server - same filesystem */
 						/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
-						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 							c = SESYSERR;
 							goto reply;
@@ -1010,7 +1010,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				delreq (stcp,0);
 				continue;
 			}
-			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0, 0) < 0)
+			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0, 0, 0) < 0)
 				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 			check_coff_waiting_on_req (wfp->subreqid, LAST_TPFILE);
@@ -1067,7 +1067,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 
-		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0) < 0)
+		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 							 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 		c = 0;
@@ -1108,7 +1108,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				(new_server == NULL) || (new_dirpath == NULL)) {
 				/* Strange - seems to not be in a known fs or a known pool - this is impossible */
 				sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
-				if (delfile (stcp, 1, 0, 0, "unknown filesystem", uid, gid, 0, 0) < 0) {
+				if (delfile (stcp, 1, 0, 0, "unknown filesystem", uid, gid, 0, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				c = SESYSERR;
@@ -1125,7 +1125,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
 				/* Same server - same filesystem */
 				/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
-				if (delfile (stcp, 1, 0, 0, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+				if (delfile (stcp, 1, 0, 0, "same [server,fs] selected", uid, gid, 0, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				c = -1;
@@ -1412,7 +1412,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 									delreq(stcp_found,0);
 								} else {
 									/* We can delete this entry */
-									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0) < 0) {
+									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0, 0) < 0) {
 										sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
 													 RFIO_UNLINK_FUNC(stcp_found->ipath), rfio_serror());
 									}
