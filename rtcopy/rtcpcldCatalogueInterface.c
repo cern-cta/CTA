@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.78 $ $Release$ $Date: 2004/11/15 07:36:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.79 $ $Release$ $Date: 2004/11/23 18:11:12 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.78 $ $Release$ $Date: 2004/11/15 07:36:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.79 $ $Release$ $Date: 2004/11/23 18:11:12 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -553,7 +553,7 @@ int rtcpcld_getTapesToDo(
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
   struct C_Services_t **dbSvc;
   struct Cstager_TapePool_t *tapePool;
-  rtcpTapeRequest_t tapereq;
+  rtcpTapeRequest_t *tapereq;
   tape_list_t *tmpTapeArray, *tape = NULL, *tl;
   char *vid, *tapePoolName;
   int i, rc = 0, nbTpItems = 0, nbStreamItems = 0, nbItems = 0;
@@ -587,9 +587,7 @@ int rtcpcld_getTapesToDo(
       Cstager_Tape_vid(tpArray[i],(CONST char **)&vid);
       if ( vid == NULL ) continue;
       Cstager_Tape_tpmode(tpArray[i],&mode);
-      tapereq.mode = mode;
-      tapereq.side = 0;
-      strncpy(tapereq.vid,vid,sizeof(tapereq.vid)-1);
+      Cstager_Tape_side(tpArray[i],&side);
       rc = rtcp_NewTapeList(&tape,&tl,mode);
       if ( rc == -1 ) break;
       tl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t *));
@@ -602,7 +600,10 @@ int rtcpcld_getTapesToDo(
       }
       Cstager_Tape_id(tpArray[i],&(tl->dbRef->key));
       tl->dbRef->row = (void *)tpArray[i];
-      tl->tapereq = tapereq;
+      tapereq = &(tl->tapereq);
+      strncpy(tapereq->vid,vid,sizeof(tapereq->vid)-1);
+      tapereq->mode = mode;
+      tapereq->side = side;
       rc = rtcpcld_tapeOK(tl);
       if ( rc == -1 ) {
         save_serrno = errno;
