@@ -8,12 +8,15 @@ my $replicaNb = 1;
 
 END {print "$replicaNb\n";}
 
-if ($#ARGV != 1) {
-    print STDERR "Usage: $0 <policyName> <fileName>\n";
+my @input = split(" ",<>);
+
+if ($#input != 1) {
+    # print STDERR "Usage: echo policyName fileName | $0\n";
     exit(EXIT_FAILURE);
 }
 
-my ($policyName,$fileName) = (shift,shift);
+my $policyName = shift @input;
+my $fileName = shift @input;
 
 if (index($fileName,"/castor/cern.ch/cms/") == 0) {
     #
