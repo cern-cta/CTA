@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.16 2000/05/16 09:58:29 jdurand Exp $
+ * $Id: poolmgr.c,v 1.17 2000/05/16 12:29:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.16 $ $Date: 2000/05/16 09:58:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.17 $ $Date: 2000/05/16 12:29:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -341,7 +341,7 @@ getpoolconf(defpoolname)
 						}
 						nbtape_pools++;
 						if (q == NULL) break;
-						*q = '/';
+						*q = ':';
 						p = q + 1;
 					}
 					mig_p->tape_pool = (char **)
