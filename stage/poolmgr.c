@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.165 2001/12/10 15:36:49 jdurand Exp $
+ * $Id: poolmgr.c,v 1.166 2001/12/19 17:23:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.165 $ $Date: 2001/12/10 15:36:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.166 $ $Date: 2001/12/19 17:23:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -169,6 +169,8 @@ int checkpoolcleaned _PROTO((char ***));
 void checkpoolspace _PROTO(());
 int cleanpool _PROTO((char *));
 int get_create_file_option _PROTO((char *));
+int export_hsm_option _PROTO((char *));
+int have_another_pool_with_export_hsm_option _PROTO((char *));
 int poolalloc _PROTO((struct pool *, int));
 int checklastaccess _PROTO((char *, time_t));
 int enoughfreespace _PROTO((char *, int));
@@ -421,6 +423,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           strcpy (pool_p->gc, p);
         } else if (strcmp(p, "NO_FILE_CREATION") == 0) {
           pool_p->no_file_creation = 1;
+        } else if (strcmp(p, "EXPORT_HSM") == 0) {
+          pool_p->export_hsm = 1;
         } else if (strcmp (p, "MIGRATOR") == 0) {
           if ((p = strtok (NULL, " \t\n")) == NULL) {
             stglogit (func, STG25, "migrator");	/* name missing */
@@ -679,6 +683,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				*(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
       stglogit (func,".... NO_FILE_CREATION %s\n",
 				(pool_p->no_file_creation ? "YES (!= 0)" : "NO (== 0)"));
+      stglogit (func,".... EXPORT_HSM %s\n",
+				(pool_p->export_hsm ? "YES (!= 0)" : "NO (== 0)"));
       if (pool_p->max_setretenp < 0) {
         stglogit (func,".... MAX_SETRETENP <none>\n");
       } else {
@@ -1188,9 +1194,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
     if (*poolname && strcmp (poolname, pool_p->name)) continue;
     if (*poolname) pool_p_migr = pool_p->migr;
-    sendrep (rpfd, MSG_OUT, "POOL %s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
+    sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
              pool_p->name,
              pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
+             pool_p->export_hsm ? " EXPORT_HSM" : "",
              pool_p->defsize,
              pool_p->gc_start_thresh,
              pool_p->gc_stop_thresh,
@@ -1351,107 +1358,34 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
           if (wfp->subreqid == stcp->reqid) {
             char tmpbuf1[21];
             char tmpbuf2[22];
+
+            sendrep(rpfd, MSG_OUT, "\tWaiting File No %3d\n", i);
+            sendrep(rpfd, MSG_OUT, "\t\tsubreqid=%d\n", wfp->subreqid);
+            sendrep(rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
+            sendrep(rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
+            sendrep(rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
+            sendrep(rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
+            sendrep(rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
+
             switch (stcp->t_or_d) {
             case 't':
-              sendrep(rpfd, MSG_OUT,
-                      "\tWaiting File No %3d\n"
-                      "\t\tVID.FSEQ=%s.%s\n"
-                      "\t\tsubreqid=%d\n"
-                      "\t\twaiting_on_req=%d\n"
-                      "\t\tupath=%s\n"
-                      "\t\tsize_to_recall=%s\n"
-                      "\t\tnb_segments=%d\n"
-                      "\t\tsize_yet_recalled=%s\n",
-                      i,
-                      stcp->u1.t.vid[0],
-                      stcp->u1.t.fseq,
-                      wfp->subreqid,
-                      wfp->waiting_on_req,
-                      wfp->upath,
-                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
-                      wfp->nb_segments,
-                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
-                      );
+              sendrep(rpfd, MSG_OUT, "\t\tVID.FSEQ=%s.%s\n", stcp->u1.t.vid[0], stcp->u1.t.fseq);
               break;
             case 'd':
             case 'a':
-              sendrep(rpfd, MSG_OUT,
-                      "\tWaiting File No %3d\n"
-                      "\t\tu1.d.xfile=%s\n"
-                      "\t\tsubreqid=%d\n"
-                      "\t\twaiting_on_req=%d\n"
-                      "\t\tupath=%s\n"
-                      "\t\tsize_to_recall=%s\n"
-                      "\t\tnb_segments=%d\n"
-                      "\t\tsize_yet_recalled=%s\n",
-                      i,
-                      stcp->u1.d.xfile,
-                      wfp->subreqid,
-                      wfp->waiting_on_req,
-                      wfp->upath,
-                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
-                      wfp->nb_segments,
-                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
-                      );
+              sendrep(rpfd, MSG_OUT, "\t\tu1.d.xfile=%s\n", stcp->u1.d.xfile);
               break;
             case 'm':
-              sendrep(rpfd, MSG_OUT,
-                      "\tWaiting File No %3d\n"
-                      "\t\tu1.m.xfile=%s\n"
-                      "\t\tsubreqid=%d\n"
-                      "\t\twaiting_on_req=%d\n"
-                      "\t\tupath=%s\n"
-                      "\t\tsize_to_recall=%s\n"
-                      "\t\tnb_segments=%d\n"
-                      "\t\tsize_yet_recalled=%s\n",
-                      i,
-                      stcp->u1.m.xfile,
-                      wfp->subreqid,
-                      wfp->waiting_on_req,
-                      wfp->upath,
-                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
-                      wfp->nb_segments,
-                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
-                      );
+              sendrep(rpfd, MSG_OUT, "\t\tu1.m.xfile=%s\n", stcp->u1.m.xfile);
               break;
             case 'h':
-              sendrep(rpfd, MSG_OUT,
-                      "\tWaiting File No %3d\n"
-                      "\t\tu1.h.xfile=%s\n"
-                      "\t\tsubreqid=%d\n"
-                      "\t\twaiting_on_req=%d\n"
-                      "\t\tupath=%s\n"
-                      "\t\tsize_to_recall=%s\n"
-                      "\t\tnb_segments=%d\n"
-                      "\t\tsize_yet_recalled=%s\n",
-                      i,
-                      stcp->u1.h.xfile,
-                      wfp->subreqid,
-                      wfp->waiting_on_req,
-                      wfp->upath,
-                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
-                      wfp->nb_segments,
-                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
-                      );
+              sendrep(rpfd, MSG_OUT, "\t\tu1.h.xfile=%s\n", stcp->u1.h.xfile);
+              if (wfp->ipath[0] != '\0') {
+                sendrep(rpfd, MSG_OUT, "\t\tipath=%s (copy between pools)\n", wfp->ipath);
+              }
               break;
             default:
-              sendrep(rpfd, MSG_OUT,
-                      "\tWaiting File No %3d\n"
-                      "\t\t<unknown_type>\n"
-                      "\t\tsubreqid=%d\n"
-                      "\t\twaiting_on_req=%d\n"
-                      "\t\tupath=%s\n"
-                      "\t\tsize_to_recall=%s\n"
-                      "\t\tnb_segments=%d\n"
-                      "\t\tsize_yet_recalled=%s\n",
-                      i,
-                      wfp->subreqid,
-                      wfp->waiting_on_req,
-                      wfp->upath,
-                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
-                      wfp->nb_segments,
-                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
-                      );
+              sendrep(rpfd, MSG_OUT, "\t\t<unknown_type>\n");
               break;
             }
             break;
@@ -1971,6 +1905,34 @@ int get_create_file_option(poolname)
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
     if (strcmp (poolname, pool_p->name) == 0) 
       return(pool_p->no_file_creation);
+  return (0);
+}
+
+
+int export_hsm_option(poolname)
+     char *poolname;
+{
+  int i;
+  struct pool *pool_p;
+
+  if (nbpool == 0) return (0);
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) 
+      return(pool_p->export_hsm);
+  return (0);
+}
+
+int have_another_pool_with_export_hsm_option(poolname)
+     char *poolname;
+{
+  int i;
+  struct pool *pool_p;
+
+  if (nbpool == 0) return (0);
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    if (strcmp (poolname, pool_p->name) == 0) continue;
+    if (pool_p->export_hsm) return(pool_p->export_hsm);
+  }
   return (0);
 }
 
