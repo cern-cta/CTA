@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.10 $ $Date: 2005/01/23 10:21:41 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.11 $ $Date: 2005/01/23 14:10:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -13,7 +13,7 @@
 #if defined(__STDC__)
 #define ManPageTargetName(name,dir,suffix)dir/name.suffix##castor
 #else
-#define ManPageTargetName(name,dir,suffix)$(DESTDIR)dir/name.suffix/**/castor
+#define ManPageTargetName(name,dir,suffix)dir/name.suffix/**/castor
 #endif
 #endif
 
