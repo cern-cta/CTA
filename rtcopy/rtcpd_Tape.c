@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.7 $ $Date: 1999/12/28 15:51:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:04:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -79,7 +79,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         tape_list_t *tape, 
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, lrecl;
-    int end_of_tpfile, buf_done, nb_truncated, spill;
+    int end_of_tpfile, buf_done, nb_truncated, spill, proc_err;
     char *convert_buffer = NULL;
     void *convert_context = NULL;
     register int Uformat;
@@ -113,6 +113,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
      * Write loop to break out of
      */
     end_of_tpfile = FALSE;
+    proc_err = 0;
     for (;;) {
         i = *indxp;
         buf_done = FALSE;
@@ -149,16 +150,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
             databufs[i]->nb_waiters--;
-            if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
+            if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
                 }
-                return(-1);
+                break;
             }
-        }
+        } /*  while (databufs[i]->flag == BUFFER_EMPTY) */
+        if ( proc_err != 0 ) break;
         DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() buffer %d full\n",i));
 
         /*
@@ -445,12 +447,12 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * Has something fatal happened while we were occupied
          * writing to the tape?
          */
-        if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
+        if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
             if ( (convert & FIXVAR) != 0 ) {
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( convert_context != NULL ) free(convert_context);
             }
-            return(-1);
+            break;
         }
     } /* End of for (;;) */
 
@@ -458,7 +460,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         /*
          * Write out spill from VarToFix conversion
          */
-        if ( spill > 0 ) {
+        if ( proc_err == 0  && spill > 0 ) {
             rc = twrite(tape_fd,
                         convert_buffer,
                         spill,
@@ -474,7 +476,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
     }
 
     TP_STATUS(RTCP_PS_CLOSE);
-    rc = tclose(tape_fd,tape,file);
+    if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file);
     TP_STATUS(RTCP_PS_NOBLOCKING);
     return(rc);
 }
@@ -483,7 +485,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                         tape_list_t *tape, 
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
-    int lrecl, end_of_tpfile, break_and_return, severity;
+    int lrecl, end_of_tpfile, break_and_return, severity, proc_err;
     int nb_skipped_blks = 0;
     register int Uformat;
     register int debug = Debug;
@@ -535,6 +537,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
      */
     end_of_tpfile = FALSE;
     break_and_return = FALSE;
+    proc_err = 0;
     for (;;) {
         i = *indxp;
         /*
@@ -564,12 +567,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
             databufs[i]->nb_waiters--;
-            if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
+            if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                return(-1);
+                break;
             }
-        }
+        } /* while (databufs[i]->flag == BUFFER_FULL) */
+        if ( proc_err != 0 ) break;
         DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() buffer %d empty\n",i));
         if ( end_of_tpfile == FALSE ) {
             /*
@@ -853,9 +857,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * Has something fatal happened while we were occupied
          * reading from the tape?
          */
-        if ( rtcpd_CheckProcError() & RTCP_FAILED ) return(-1);
+        if ( (proc_err = (rtcpd_CheckProcError() & RTCP_FAILED)) != 0 ) break;
     } /* for (;;) */
-    if ( tape_fd >= 0 ) {
+    if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
         rc = tclose(tape_fd,tape,file);
         TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -874,11 +878,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         if ( rc == -1 ) {\
             (void) tellClient(&client_socket,X,Y,rc); \
             rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
-            rtcpd_SetProcError(RTCP_FAILED); \
+            if ( rc == -1 && (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
+                rtcpd_SetProcError(RTCP_FAILED); \
         }\
         if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
         if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) \
             (void)rtcpd_Release((X),NULL); \
+        (void) tellClient(&client_socket,NULL,NULL,-1); \
         rtcp_CloseConnection(&client_socket); \
         (void) rtcpd_CtapeFree(); \
         return((void *)&failure); \
@@ -892,7 +898,7 @@ void *tapeIOthread(void *arg) {
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
-    int rc,BroadcastInfo;
+    int rc,BroadcastInfo,severity;
 
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");
@@ -1004,6 +1010,44 @@ void *tapeIOthread(void *arg) {
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_Position() error");
 
                 /*
+                 * Check for tape EOD if we are concatenating rest of 
+                 * tape to last disk file. If so, we must wake up the
+                 * disk IO thread from waiting for next data buffer.
+                 */ 
+                if ( (nexttape->tapereq.mode == WRITE_DISABLE) &&
+                     ((nextfile->filereq.concat & CONCAT_TO_EOD) != 0) ) {
+                    rtcpd_CheckReqStatus(NULL,nextfile,NULL,&severity); 
+                    if ( severity == (RTCP_OK | RTCP_EOD) ) {
+                        (void)Cthread_mutex_lock_ext(databufs[indxp]->lock);
+                        databufs[indxp]->flag = BUFFER_FULL;
+                        (void)Cthread_cond_broadcast_ext(databufs[indxp]->lock);
+                        (void)Cthread_mutex_unlock_ext(databufs[indxp]->lock);
+                        (void)rtcpd_SetProcError(severity);
+                        break;
+                    } else if ( nextfile->next->next == nexttape->file ) {
+                        /* 
+                         * We will reach end of current tape request in
+                         * the next iteration. If we are reading tape to EOD
+                         * we must make sure that the disk IO thread starter
+                         * does not run out of file requests before us ( = the
+                         * tape IO thread). Note that the disk IO thread for
+                         * for current tape file normally starts before we
+                         * finished positioning. Thus we must look two steps
+                         * ahead.  
+                         */
+                        rc = 0;
+                        tmpfile = (file_list_t *)calloc(1,sizeof(file_list_t));
+                        if ( tmpfile == NULL ) rc = -1;
+                        CHECK_PROC_ERR(NULL,nextfile,"calloc() failed");
+                        tmpfile->filereq = nextfile->next->filereq;
+                        tmpfile->filereq.tape_fseq++;
+                        tmpfile->filereq.proc_status = RTCP_WAITING;
+                        tmpfile->tape = nexttape;
+                        CLIST_INSERT(nexttape->file,tmpfile);
+                        rtcp_log(LOG_INFO,"tapeIOthread() create temporary file element for tape fseq=%d\n",tmpfile->filereq.tape_fseq);
+                    }
+                }
+                /*
                  * Fill in missing information (if any). In case
                  * we are writing and the blocksize info is not
                  * specified by user (i.e. we need to take it from
@@ -1076,7 +1120,7 @@ void *tapeIOthread(void *arg) {
                     CHECK_PROC_ERR(NULL,nextfile,"TapeToMemory() error");
                 }
                 /*
-                 * Tape file is closed in MemoryToTape() or TapeToMemor()
+                 * Tape file is closed in MemoryToTape() or TapeToMemory()
                  */
                 tape_fd = -1;
 
@@ -1137,8 +1181,7 @@ void *tapeIOthread(void *arg) {
                  * specified value.
                  */
                 if ((nexttape->tapereq.mode == WRITE_DISABLE) &&
-                    (nextfile->filereq.disk_fseq ==
-                     nextfile->next->filereq.disk_fseq) ) {
+                    (nextfile->filereq.concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) { 
                     if ( nextfile->filereq.maxsize > 0 ) {
                         if ( nextfile->filereq.maxsize !=
                             nextfile->next->filereq.maxsize ) {

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.8 $ $Date: 2000/01/04 08:44:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.9 $ $Date: 2000/01/09 10:04:10 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -80,6 +80,7 @@ static void rtcpd_SetDebug() {
     Debug = FALSE;
     if ( getenv("RTCOPY_DEBUG") != NULL ||
          getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
+    else NOTRACE;                 /* Switch off tracing */
     return;
 }
 
@@ -262,9 +263,38 @@ static int rtcpd_AllocBuffers() {
      * low overhead locks
      */
     proc_cntl.ReqStatus_lock = Cthread_mutex_lock_addr(&proc_cntl.ReqStatus);
-    if ( proc_cntl.ProcError_lock == NULL ) {
+    if ( proc_cntl.ReqStatus_lock == NULL ) {
         rtcp_log(LOG_ERR,
             "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(ReqStatus): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+
+    /*
+     * Initialize exclusive lock for disk file append access.
+     */ 
+    rc = Cthread_mutex_lock(&proc_cntl.DiskFileAppend); 
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_AllocBuffers() Cthread_mutex_lock(DiskFileAppend): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock(&proc_cntl.DiskFileAppend);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_AllocBuffers() Cthread_mutex_unlock(DiskFileAppend): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    /*
+     * Get direct pointer to Cthread structure to allow for
+     * low overhead locks
+     */
+    proc_cntl.DiskFileAppend_lock = Cthread_mutex_lock_addr(&proc_cntl.DiskFileAppend);
+    if ( proc_cntl.DiskFileAppend_lock == NULL ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(DiskFileAppend_lock): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -406,7 +436,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         }
     }
 
-    if ( rtcpd_CheckProcError() & RTCP_OK ) {
+    if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
         rtcp_log(LOG_INFO,"request successful\n");
     } else {
         rtcp_log(LOG_INFO,"request failed\n");
@@ -436,7 +466,7 @@ static int rtcpd_ProcError(int *code) {
     } else {
         if ( code != NULL && AbortFlag == 0 ) {
             /*
-             * Don't reset FAILED status
+             * Never reset FAILED status
              */
             if ( (proc_cntl.ProcError & RTCP_FAILED) == 0 ) {
                 proc_cntl.ProcError = *code;
@@ -464,7 +494,7 @@ void rtcpd_SetProcError(int code) {
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
         proc_cntl.ProcError = RTCP_FAILED;
     }
-    if ( (rc & RTCP_FAILED) != 0 && databufs != NULL ) {
+    if ( (rc & (RTCP_FAILED | RTCP_EOD)) != 0 && databufs != NULL ) {
         for (i=0;i<nb_bufs;i++) {
             if ( databufs[i] != NULL ) {
                 (void)Cthread_mutex_lock_ext(databufs[i]->lock);
@@ -475,6 +505,14 @@ void rtcpd_SetProcError(int code) {
         (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
         (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+
+        (void)Cthread_mutex_lock_ext(proc_cntl.ReqStatus_lock);
+        (void)Cthread_cond_broadcast_ext(proc_cntl.ReqStatus_lock);
+        (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
+
+        (void)Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
+        (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
+        (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
     }
 
     return;
@@ -492,6 +530,8 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
     rtcpFileRequest_t *filereq = NULL;
     int rc;
 
+    rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() called from status=%d, severity=%d\n",
+             status,severity);
     if ( tape == NULL && file == NULL ) return;
     if ( tape != NULL ) tapereq = &tape->tapereq;
     if ( file != NULL ) filereq = &file->filereq;
@@ -575,10 +615,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char *cmd = NULL;
 
     (void)setpgrp();
+    signal(SIGPIPE,SIG_IGN);
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
     AbortFlag = 0;
-    NOTRACE;                 /* Switch off tracing */
     signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
     client = (rtcpClientInfo_t *)calloc(1,sizeof(rtcpClientInfo_t));
     if ( client == NULL ) {
@@ -734,8 +774,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             }
             nexttape->tapereq = tapereq;
             CLIST_INSERT(tape,nexttape);
-            rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, VolReqID=%d,mode=%d\n",
-                tapereq.vid,tapereq.dgn,tapereq.VolReqID,tapereq.mode);
+            rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, unit %s, VolReqID=%d,mode=%d\n",
+                tapereq.vid,tapereq.dgn,tapereq.unit,tapereq.VolReqID,
+                tapereq.mode);
         }
         if ( reqtype == RTCP_FILE_REQ || reqtype == RTCP_FILEERR_REQ ) {
             /*

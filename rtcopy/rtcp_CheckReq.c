@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.5 $ $Date: 1999/12/29 10:44:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.6 $ $Date: 2000/01/09 10:04:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -102,6 +102,7 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
 
 static int rtcp_CheckFileReq(file_list_t *file) {
     tape_list_t *tape = NULL;
+    file_list_t *tmpfile;
     int rc = 0;
     int mode;
     const u_signed64 defmaxsize = (u_signed64)2 * (u_signed64)(1024*1024*1024) - 1;
@@ -116,8 +117,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         serrno = SEINTERNAL;
         return(-1);
     }
+    tape = file->tape;
     filereq = &file->filereq;
-    mode = file->tape->tapereq.mode;
+    mode = tape->tapereq.mode;
 
     /*
      * Retry limits
@@ -197,6 +199,28 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 filereq->concat = NOCONCAT;
         }
     }
+    /*
+     * If concatenate to EOD: insert a dummy file list element
+     * so that the diskIOthread waits for the tapeIOthread to
+     * signal EOD.
+     */
+    if ( (mode == WRITE_DISABLE) && ((filereq->concat & CONCAT_TO_EOD) != 0) &&
+         ((file->prev == file) || 
+          (file->prev->filereq.concat & CONCAT_TO_EOD) == 0) ) {
+        tmpfile = (file_list_t *)calloc(1,sizeof(file_list_t));
+        if ( tmpfile == NULL ) {
+            serrno = errno;
+            strcpy(errmsgtxt,"calloc() failed");
+            SET_REQUEST_ERR(filereq,RTCP_SYERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+        tmpfile->filereq = file->filereq;
+        tmpfile->filereq.tape_fseq++;
+        tmpfile->tape = tape;
+        rtcp_log(LOG_INFO,"rtcp_CheckFileReq() create temporary file element for tape fseq %d\n",tmpfile->filereq.tape_fseq);
+        CLIST_INSERT(tape->file,tmpfile);
+    }
+
     if ( !VALID_CONCAT(filereq) ) {
         serrno = EINVAL;
         strcpy(errmsgtxt,"INVALID SETTING FOR CONCATENATION");
