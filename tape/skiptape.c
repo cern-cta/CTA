@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.7 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.8 $ $Date: 2002/04/09 05:07:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,32 +38,39 @@ int tapefd;
 char *path;
 int n;
 {
+	int count;
 	int errcat;
 	char func[16];
 	char *msgaddr;
 	struct mtop mtop;
+	int tobeskipped;
 
 	ENTRY (skiptpfff);
 	mtop.mt_op = MTFSF;	/* skip n files forward */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	tobeskipped = n;
+	while (tobeskipped > 0) {
+		count = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+		mtop.mt_count = count;
+		if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
 #if defined(IRIX64)
-                if ((errno == ENOSPC) || (errno == EIO)) {
+			if ((errno == ENOSPC) || (errno == EIO)) {
 #else
-		if (errno == EIO) {
+			if (errno == EIO) {
 #endif
-			errcat = gettperror (tapefd, path, &msgaddr);
+				errcat = gettperror (tapefd, path, &msgaddr);
 #if defined(__alpha) && defined(__osf__) && ! defined(DUXV4)
-			if (errcat == ETNOSNS)
+				if (errcat == ETNOSNS)
 #else
-			if (errcat == ETBLANK)
+				if (errcat == ETBLANK)
 #endif
-				RETURN (mt_rescnt);
-		} else
-			msgaddr = sys_errlist[errno];
-		serrno = errno;
-		usrmsg (func, TP042, path, "ioctl", msgaddr);
-		RETURN (-1);
+					RETURN (tobeskipped - count + mt_rescnt);
+			} else
+				msgaddr = sys_errlist[errno];
+			serrno = errno;
+			usrmsg (func, TP042, path, "ioctl", msgaddr);
+			RETURN (-1);
+		}
+		tobeskipped -= count;
 	}
 	RETURN (0);
 }
@@ -77,22 +84,32 @@ int tapefd;
 char *path;
 int n;
 {
+	int count;
 	char func[16];
 #if !defined(_WIN32)
 	struct mtop mtop;
+	int tobeskipped;
 #endif
 
 	ENTRY (skiptpff);
 #if !defined(_WIN32)
 	mtop.mt_op = MTFSF;	/* skip n files forward */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	tobeskipped = n;
+	while (tobeskipped > 0) {
+		count = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+		mtop.mt_count = count;
+		if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+			serrno = rpttperror (func, tapefd, path, "ioctl");
+			RETURN (-1);
+		}
+		tobeskipped -= count;
+	}
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_FILEMARKS, 0, n, 0, (BOOL)1)) {
-#endif
 		serrno = rpttperror (func, tapefd, path, "ioctl");
 		RETURN (-1);
 	}
+#endif
 	RETURN (0);
 }
 skiptpfb(tapefd, path, n)
@@ -104,22 +121,32 @@ int tapefd;
 char *path;
 int n;
 {
+	int count;
 	char func[16];
 #if !defined(_WIN32)
 	struct mtop mtop;
 #endif
+	int tobeskipped;
 
 	ENTRY (skiptpfb);
 #if !defined(_WIN32)
 	mtop.mt_op = MTBSF;	/* skip n files backward */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	tobeskipped = n;
+	while (tobeskipped > 0) {
+		count = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+		mtop.mt_count = count;
+		if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+			serrno = rpttperror (func, tapefd, path, "ioctl");
+			RETURN (-1);
+		}
+		tobeskipped -= count;
+	}
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_FILEMARKS, 0, -n, 0, (BOOL)1)) {
-#endif
 		serrno = rpttperror (func, tapefd, path, "ioctl");
 		RETURN (-1);
 	}
+#endif
 	RETURN (0);
 }
 skiptprf(tapefd, path, n)
@@ -131,22 +158,32 @@ int tapefd;
 char *path;
 int n;
 {
+	int count;
 	char func[16];
 #if !defined(_WIN32)
 	struct mtop mtop;
 #endif
+	int tobeskipped;
 
 	ENTRY (skiptprf);
 #if !defined(_WIN32)
 	mtop.mt_op = MTFSR;	/* skip n blocks forward */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	tobeskipped = n;
+	while (tobeskipped > 0) {
+		count = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+		mtop.mt_count = count;
+		if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+			serrno = rpttperror (func, tapefd, path, "ioctl");
+			RETURN (-1);
+		}
+		tobeskipped -= count;
+	}
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_RELATIVE_BLOCKS, 0, n, 0, (BOOL)1)) {
-#endif
 		serrno = rpttperror (func, tapefd, path, "ioctl");
 		RETURN (-1);
 	}
+#endif
 	RETURN (0);
 }
 skiptprb(tapefd, path, n)
@@ -158,21 +195,31 @@ int tapefd;
 char *path;
 int n;
 {
+	int count;
 	char func[16];
 #if !defined(_WIN32)
 	struct mtop mtop;
 #endif
+	int tobeskipped;
 
 	ENTRY (skiptprb);
 #if !defined(_WIN32)
 	mtop.mt_op = MTBSR;	/* skip n blocks backward */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	tobeskipped = n;
+	while (tobeskipped > 0) {
+		count = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+		mtop.mt_count = count;
+		if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+			serrno = rpttperror (func, tapefd, path, "ioctl");
+			RETURN (-1);
+		}
+		tobeskipped -= count;
+	}
 #else
 	if (SetTapePosition (tapefd, TAPE_SPACE_RELATIVE_BLOCKS, 0, -n, 0, (BOOL)1)) {
-#endif
 		serrno = rpttperror (func, tapefd, path, "ioctl");
 		RETURN (-1);
 	}
+#endif
 	RETURN (0);
 }
