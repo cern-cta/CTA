@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.12 $ $Date: 2000/01/20 14:25:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.13 $ $Date: 2000/01/20 15:23:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -490,7 +490,6 @@ int rtcp_CheckReq(SOCKET *client_socket, tape_list_t *tape) {
 
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
-    if ( rc == -1 ) tellClient(client_socket,NULL,NULL,rc);
     return(rc);
 }
 
