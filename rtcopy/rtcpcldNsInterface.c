@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/12/09 12:27:53 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/12/09 12:27:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -660,9 +660,12 @@ int rtcpcld_checkDualCopies(
      file_list_t *file;
 {
   tape_list_t *tape;
-  int rc, i, nbSegs = 0;
+  int rc, i, nbSegs = 0, dualCopyFound = 0;
   struct Cns_segattrs *segArray = NULL;
   struct Cns_fileid *fileId = NULL;
+  struct Cns_filestat statbuf;
+  struct Cns_fileclass fileClass;
+  char castorFileName[CA_MAXPATHLEN+1];
   
   if ( (file == NULL) || ((tape = file->tape) == NULL) ) {
     serrno = EINVAL;
@@ -683,12 +686,36 @@ int rtcpcld_checkDualCopies(
   
   for ( i=0; i<nbSegs; i++ ) {
     if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {
-      free(fileId);
-      serrno = EEXIST;
-      return(-1);
+      dualCopyFound = 1;
+      break;
     }
   }
-  free(fileId);
+  if ( dualCopyFound == 1 ) {
+    /*
+     * We ignore dual copies if it is a single copy file class
+     */
+    *castorFileName = '\0';
+    rc = Cns_statx(castorFileName,fileId,&statbuf);
+    if ( rc == -1 ) {
+      free(fileId);
+      return(-1);
+    }
+    memset(&fileClass,'\0',sizeof(fileClass));
+    rc = Cns_queryclass(
+                        fileId->server,
+                        statbuf.fileclass,
+                        NULL,
+                        &fileClass
+                        );
+    free(fileId);
+    if ( rc == -1 ) return(-1);
+    if ( fileClass.tppools != NULL ) free(fileClass.tppools);
+    if ( fileClass.nbcopies == 1 ) return(0);
+    serrno = EEXIST;
+    return(-1);
+  } else {
+    free(fileId);
+  }
   return(0);
 }
 

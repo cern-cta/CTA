@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.103 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.104 $ $Release$ $Date: 2004/12/09 12:27:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.103 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.104 $ $Release$ $Date: 2004/12/09 12:27:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1726,7 +1726,7 @@ int nextSegmentToMigrate(
   rc = rtcpcld_checkDualCopies(fl);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    if ( serrno == EEXIST ) {
+    if ( save_serrno == EEXIST ) {
       struct Cns_fileid *fileid = NULL;
       (void)rtcpcld_getFileId(fl,&fileid);
       (void)dlf_write(
@@ -1738,6 +1738,22 @@ int nextSegmentToMigrate(
                       DLF_MSG_PARAM_TPVID,
                       tape->tapereq.vid
                       );
+      rc = detachTapeCopyFromStream(
+                                    tapeCopy,
+                                    stream
+                                    );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+      } else {
+        save_serrno = EAGAIN;
+      }
+      /*
+       * This will also free the TapeCopy + all Segments attached to
+       * the TapeCopy.
+       */
+      Cstager_CastorFile_delete(castorFile);
+      CLIST_DELETE(tape->file,fl);
+      free(fl);
     } else  if ( save_serrno == ENOENT ) {
       /*
        * CASTOR file removed. Not fatal but we can mark the
@@ -1770,8 +1786,7 @@ int nextSegmentToMigrate(
       /*
        * Skip to next file
        */
-      serrno = EAGAIN;
-      return(-1);
+      save_serrno = EAGAIN;
     } else {
       LOG_SYSCALL_ERR("rtcpcld_checkDualCopy()");
     }
@@ -2030,6 +2045,114 @@ int deleteSegmentFromDB(
   }
 
   C_IAddress_delete(iAddr);
+  return(0);
+}
+
+int detachTapeCopyFromStream(
+                             tapeCopy,
+                             stream
+                             )
+     struct Cstager_TapeCopy_t *tapeCopy;
+     struct Cstager_Stream_t *stream;
+{
+  struct Cstager_Stream_t **streamArray = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  struct C_Services_t **svcs = NULL;
+  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  int rc = 0, nbStreams, save_serrno, i;
+  ID_TYPE key;
+
+  if ( (tapeCopy == NULL) || (stream == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);  
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+
+  Cstager_TapeCopy_id(tapeCopy,&key);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Stream
+                          );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_DBCALL_ERR("C_Services_fillObj()",
+                   C_Services_errorMsg(*svcs));
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+  
+  Cstager_TapeCopy_stream(tapeCopy,&streamArray,&nbStreams);
+  /*
+   * If there are more than one stream we will detach it from
+   * the current one only and leave it in status WAITINSTREAMS
+   * to allow another stream to pick it up. Otherwise we'll
+   * obliged to set TOBEMIGRATED and let the MigHunter pick it
+   * up and attach it to a new stream (or current stream) at
+   * its next run.
+   */
+  if ( nbStreams > 1 ) {
+    tapeCopyStatus = TAPECOPY_WAITINSTREAMS;
+  } else {
+    tapeCopyStatus = TAPECOPY_TOBEMIGRATED;
+  }
+
+  Cstager_TapeCopy_removeStream(
+                                tapeCopy,
+                                stream
+                                );
+  Cstager_Stream_removeTapeCopy(
+                                stream,
+                                tapeCopy
+                                );
+  rc = C_Services_fillRep(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Stream,
+                          0
+                          );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_DBCALL_ERR("C_Services_fillRep()",
+                   C_Services_errorMsg(*svcs));
+    C_IAddress_delete(iAddr);
+    free(streamArray);
+    serrno = save_serrno;
+    return(-1);
+  }
+  if ( streamArray != NULL ) free(streamArray);
+  
+  rc = C_Services_updateRep(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            1
+                            );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_DBCALL_ERR("C_Services_updateRep()",
+                   C_Services_errorMsg(*svcs));
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+
   return(0);
 }
 
