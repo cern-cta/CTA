@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 13:11:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.5 $ $Date: 2000/06/19 07:54:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_devinfo - table of device characteristics */
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_devinfo.c,v $ $Revision: 1.4 $ $Date
 static struct devinfo devinfo[] = {
 	"3480", 1, 2, 0, 1, 1,   262144,  32760, 0x10, D38000, 0, 0, 0, D38KC, 0, 0, 0, 0, 0, 0, 0,
 	"3490", 1, 2, 0, 1, 1,   262144,  32760, 0x10, D38000, 0, D38KD, 0, D38KC, 0, D38KDC, 0, 0, 0, 0, 0,
-	"3590", 1, 1, 1, 1, 1,  2097152,  32760, 0x10, D10G, 0, D10GC, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	"3590", 1, 1, 1, 1, 1,  2097152, 131072, 0x10, D10G, 0, D10GC, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"4280", 1, 2, 0, 0, 1,   262144,  32760, 0x10, D38000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"8200", 1, 2, 0,-1, 1,   245760,  32760, 0x00, D8200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"8500", 1, 2, 0,-1, 1,   245760,  32760, 0x00, D8200, 0x14, D8500, 0x15, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -26,6 +26,7 @@ static struct devinfo devinfo[] = {
 	"DAT",  1, 2, 0,-1, 1, 16777215,  32760, 0x0F, DDS, 0x24, DDSC, 0x24, 0, 0, 0, 0, 0, 0, 0, 0,
 	"DLT",  1, 1, 1,-1, 1, 16777215,  32760, 0x10, D10G, 0x19, D20G, 0x1A, D35G, 0x1B, D10GC, 0x19, D20GC, 0x1A, D35GC, 0x1B,
 	"QIC",  0, 2, 0,-1, 512,    512,    512, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	"SD1",  0, 0, 1,-1, 144432, 144432, 144432, 0x00, SRAW, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	"SD3",  1, 1, 1, 0, 1,   262144, 262144, 0x10, D10G, 0, D25G, 0, D50G, 0, D10GC, 0, D25GC, 0, D50GC, 0,
 
 	/* new devices should be added here */
@@ -47,6 +48,6 @@ char *devtype;
 	if (p = strstr (devtype_local, "/VB"))
 		*p = '\0';
 	for (i = 0; *devinfo[i].devtype; i++)
-		if (strcmp (devtype_local, devinfo[i].devtype) == 0) break;
+		if (strstr (devtype_local, devinfo[i].devtype) == devtype_local) break;
 	return (&devinfo[i]);
 }
