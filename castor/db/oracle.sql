@@ -36,6 +36,10 @@ BEGIN
   UPDATE requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;
 END;
 
+/* SQL statements for type BaseAddress */
+DROP TABLE BaseAddress;
+CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR(2048), cnvSvcType NUMBER, id INTEGER PRIMARY KEY);
+
 /* SQL statements for type Client */
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
@@ -296,14 +300,14 @@ UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_REST
 END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
-CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(subreqId IN INTEGER, result OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(rsubreqId IN INTEGER, result OUT INTEGER) AS
   stat INTEGER;
   dci INTEGER;
 BEGIN
  SELECT DiskCopy.status, DiskCopy.id
   INTO stat, dci
   FROM DiskCopy, SubRequest
-  WHERE SubRequest.id = subreqId
+  WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status != 3 -- DISKCCOPY_DELETED
    AND DiskCopy.status != 4 -- DISKCCOPY_FAILED
@@ -312,7 +316,7 @@ BEGIN
  IF 2 = stat -- DISKCCOPY_WAITTAPERECALL
  THEN
   -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
-  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = subreqId;
+  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = rsubreqId;
   result := 0;
  ELSE
   -- DiskCopies exist that are already recalled, thus schedule for access
@@ -324,11 +328,6 @@ EXCEPTION
 END;
 
 /* PL/SQL method implementing castor package */
-DECLARE
-  TYPE DiskCopy_Cur IS REF CURSOR RETURN SubRequest%ROWTYPE;
-BEGIN
-  NULL;
-END;
 CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER);
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
@@ -380,49 +379,56 @@ BEGIN
    rDiskCopyId := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
- -- Try to find remote DiskCopies
- OPEN sources
- FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-            DiskCopy.diskcopyId, FileSystem.weight
- FROM DiskCopy, SubRequest, FileSystem
- WHERE SubRequest.id = srId
-   AND SubRequest.castorfile = DiskCopy.castorfile
-   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
-   AND FileSystem.id = DiskCopy.fileSystem;
- FETCH sources INTO dci, rpath, rstatus, rDiskCopyId, rFsWeight;
- IF sources%NOTFOUND THEN
-   -- No DiskCopy, create one for recall
-   getId(1, dci);
-   dci := dci - 1;
-   UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
-    WHERE id = srId RETURNING castorFile INTO cfid;
-   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
-   buildPathFromFileId(fid, nh, rpath);
-   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-    VALUES (rpath, dci, 0, cfid, 2); -- status WAITTAPERECALL
-   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
-   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
-   close sources;
- ELSE
-   -- Found a DiskCopy, Check whether to wait on it
-   IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
-     makeSubRequestWait(srId, dci);
-     dci := 0;
-     rpath := '';
-     rDiskCopyId := '';
-     close sources;
-   ELSE
-     -- create DiskCopy for Disk to Disk copy
-     getId(1, dci);
-     dci := dci - 1;
-     UPDATE SubRequest SET diskCopy = dci WHERE id = srId
-      RETURNING castorFile INTO cfid;
-     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-      VALUES (rpath, dci, 0, cfid, 1); -- status WAITDISK2DISKCOPY
-     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
-     rstatus := 1; -- status WAITDISK2DISKCOPY
-   END IF;
- END IF;
+ BEGIN
+  -- Try to find remote DiskCopies
+  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+         DiskCopy.diskcopyId, FileSystem.weight
+  INTO dci, rpath, rstatus, rDiskCopyId, rFsWeight
+  FROM DiskCopy, SubRequest, FileSystem
+  WHERE SubRequest.id = srId
+    AND SubRequest.castorfile = DiskCopy.castorfile
+    AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+    AND FileSystem.id = DiskCopy.fileSystem
+    AND ROWNUM < 2;
+  -- Found a DiskCopy, Check whether to wait on it
+  IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
+    makeSubRequestWait(srId, dci);
+    dci := 0;
+    rpath := '';
+    rDiskCopyId := '';
+    close sources;
+  ELSE
+    OPEN sources
+    FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+               DiskCopy.diskcopyId, FileSystem.weight
+    FROM DiskCopy, SubRequest, FileSystem
+    WHERE SubRequest.id = srId
+      AND SubRequest.castorfile = DiskCopy.castorfile
+      AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
+      AND FileSystem.id = DiskCopy.fileSystem;
+    -- create DiskCopy for Disk to Disk copy
+    getId(1, dci);
+    dci := dci - 1;
+    UPDATE SubRequest SET diskCopy = dci WHERE id = srId
+     RETURNING castorFile INTO cfid;
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
+     VALUES (rpath, dci, 0, cfid, 1); -- status WAITDISK2DISKCOPY
+    INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
+    rstatus := 1; -- status WAITDISK2DISKCOPY
+  END IF;
+ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on any FileSystem
+  -- create one for recall
+  getId(1, dci);
+  dci := dci - 1;
+  UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
+   WHERE id = srId RETURNING castorFile INTO cfid;
+  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
+  buildPathFromFileId(fid, nh, rpath);
+  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
+   VALUES (rpath, dci, 0, cfid, 2); -- status WAITTAPERECALL
+  INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
+  rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
+ END;
 END;
 
 /* PL/SQL method implementing putStart */
