@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.6 2004/11/02 11:13:40 jdurand Exp $
+ * $Id: Cuuid.c,v 1.7 2004/11/24 19:05:28 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,26 +9,29 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.6 $ $Date: 2004/11/02 11:13:40 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.7 $ $Date: 2004/11/24 19:05:28 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
  * Cuuid.c - CASTOR MT-safe uuid routines.
  */ 
 
+#include <errno.h>
 #include <string.h>
 #ifdef _WIN32
 #include <time.h>
 #else
 #include <unistd.h>
+#include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 #endif
-#include <serrno.h>
-#include <osdep.h>
-#include <Cuuid.h>
-#include <marshall.h>
-#include <Cglobals.h>
+#include "serrno.h"
+#include "osdep.h"
+#include "Cuuid.h"
+#include "marshall.h"
+#include "Cglobals.h"
+#include "Csnprintf.h"
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -829,3 +832,78 @@ static void _Cuuid_get_system_time(uuid_time)
 }
 #endif /* _WIN32 */
 
+/* Conversion from/to Cuuid/string */
+int DLL_DECL Cuuid2string(output,maxlen,uuid)
+     char *output;
+     size_t maxlen;
+     Cuuid_t *uuid;
+{
+  if ((output == NULL) || (uuid == NULL)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+
+  Csnprintf(output,
+	    maxlen,
+	    "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	    uuid->time_low,
+	    uuid->time_mid,
+	    uuid->time_hi_and_version,
+	    uuid->clock_seq_hi_and_reserved,
+	    uuid->clock_seq_low,
+	    uuid->node[0],
+	    uuid->node[1],
+	    uuid->node[2],
+	    uuid->node[3],
+	    uuid->node[4],
+	    uuid->node[5]
+	    );
+
+  return(0);
+}
+
+int string2Cuuid(uuid,input)
+     Cuuid_t *uuid;
+     char *input;
+{
+  int items;
+  U_LONG dummy[11];
+
+  if ((uuid == NULL) || (input == NULL)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+
+  items = sscanf(input,
+		 "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x",
+		 &(dummy[0]),
+		 &(dummy[1]),
+		 &(dummy[2]),
+		 &(dummy[3]),
+		 &(dummy[4]),
+		 &(dummy[5]),
+		 &(dummy[6]),
+		 &(dummy[7]),
+		 &(dummy[8]),
+		 &(dummy[9]),
+		 &(dummy[10]));
+  if (items != 11) {
+    /* We did not matched all the items !? */
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  uuid->time_low                  = (U_LONG)  dummy[0];
+  uuid->time_mid                  = (U_SHORT) dummy[1];
+  uuid->time_hi_and_version       = (U_SHORT) dummy[2];
+  uuid->clock_seq_hi_and_reserved = (U_BYTE)  dummy[3];
+  uuid->clock_seq_low             = (U_BYTE)  dummy[4];
+  uuid->node[0]                   = (BYTE)    dummy[5];
+  uuid->node[1]                   = (BYTE)    dummy[6];
+  uuid->node[2]                   = (BYTE)    dummy[7];
+  uuid->node[3]                   = (BYTE)    dummy[8];
+  uuid->node[4]                   = (BYTE)    dummy[9];
+  uuid->node[5]                   = (BYTE)    dummy[10];
+
+  return(0);
+}
