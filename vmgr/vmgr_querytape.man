@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.10 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.11 $ $Date: 2002/02/07 06:45:32 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE 3 "$Date: 2002/02/07 06:45:32 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -11,22 +11,8 @@ vmgr_querytape \- query the CASTOR Volume Manager about a tape
 \fB#include "vmgr_api.h"\fR
 .sp
 .BI "int vmgr_querytape (const char *" vid ,
-.BI "char *" vsn ,
-.BI "char *" dgn ,
-.BI "char *" density ,
-.BI "char *" lbltype ,
-.BI "char *" model ,
-.BI "char *" media_letter ,
-.BI "char *" manufacturer ,
-.BI "char *" sn ,
-.BI "char *" poolname ,
-.BI "int *" free_space ,
-.BI "int *" nbfiles ,
-.BI "int *" rcount ,
-.BI "int *" wcount ,
-.BI "time_t *" rtime ,
-.BI "time_t *" wtime ,
-.BI "int *" status )
+.BI "struct vmgr_tape_info *" tape_info ,
+.BI "char *" dgn )
 .SH DESCRIPTION
 .B vmgr_querytape
 queries the CASTOR Volume Manager about a tape.
@@ -35,43 +21,13 @@ queries the CASTOR Volume Manager about a tape.
 is the volume visual identifier.
 It must be at most CA_MAXVIDLEN characters long.
 .TP
-.I vsn
-points at a buffer to receive the magnetically recorded volume serial number of
-the tape.
-The buffer must be at least CA_MAXVSNLEN+1 characters long.
-.TP
 .I dgn
 points at a buffer to receive the device group name corresponding to
 the tape.
 The buffer must be at least CA_MAXDGNLEN+1 characters long.
 .TP
-.I density
-points at a buffer to receive the alphanumeric density corresponding to
-the tape.
-The buffer must be at least CA_MAXDENLEN+1 characters long.
-.TP
-.I lbltype
-points at a buffer to receive the label type corresponding to the tape.
-The buffer must be at least 3 characters long.
-.TP
-.I model
-points at a buffer to receive the model of cartridge.
-It should be at least CA_MAXMODELLEN+1 characters long.
-.TP
-.I media_letter
-points at a buffer to receive the media identification letter. For example "A",
-"B" or "C" for SD3 (Redwood), "J" for IBM 3590, "R" for STK 9840.
-It should be 2 characters long.
-.TP
-.I manufacturer
-The buffer should be at least CA_MAXMANUFLEN+1 characters long.
-.TP
-.I sn
-points at a buffer to receive the cartridge serial number.
-The buffer should be at least CA_MAXSNLEN+1 characters long.
-.TP
-.I poolname
-The buffer should be at least CA_MAXPOOLNAMELEN+1 characters long.
+.I etime
+indicates the time the volume was entered in the Volume Manager.
 .TP
 .I free_space
 in kbytes.
@@ -84,6 +40,18 @@ number of times the volume has been mounted for read.
 .TP
 .I wcount
 number of times the volume has been mounted for write.
+.TP
+.I rhost
+indicates the last tape server where the tape was mounted for read.
+.TP
+.I whost
+indicates the last tape server where the tape was mounted for write.
+.TP
+.I rjid
+is the job id of the last read request.
+.TP
+.I wjid
+is the job id of the last write request.
 .TP
 .I rtime
 indicates the last time the volume was mounted for read.
@@ -103,7 +71,9 @@ and
 .LP
 Only
 .I vid
-is mandatory. When a pointer to a field is NULL, the field value is not returned.
+or
+.I tape_info
+are mandatory. When a pointer to a field is NULL, the field value is not returned.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -116,6 +86,8 @@ The named volume does not exist.
 .TP
 .B EFAULT
 .I vid
+or
+.I tape_info
 is a NULL pointer.
 .TP
 .B EINVAL
