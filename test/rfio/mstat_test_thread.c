@@ -7,10 +7,10 @@
 
 void *doit _PROTO((void *));
 
-#define NTHREAD 3
+#define NTHREAD 2
 
-#define FILE1 "tpsrv021:/tmp"
-#define FILE2 "tpsrv022:/tmp"
+#define FILE1 "castor5:/tmp/file1"
+#define FILE2 "castor5:/tmp/file2"
 
 int main()
 {
@@ -20,6 +20,7 @@ int main()
 
   for (i = 0; i < NTHREAD; i++) {
     Cthread_create(&doit, NULL);
+    sleep(1);
   }
   sleep(10);
   exit(0);
@@ -32,6 +33,8 @@ void *doit(arg)
   struct stat statbuf;
 
   fprintf(stdout, "[%d] Thread started\n", Cthread_self());
+  fflush(stdout);
+  fprintf(stdout,"We are pid=%d, ppid=%d\n", getpid(), getppid());
   fflush(stdout);
   if ((Cthread_self() % 2) == 0) {
     fprintf(stdout, "[%d] Will use FILE1 and FILE2\n", Cthread_self());

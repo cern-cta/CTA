@@ -10,16 +10,27 @@
 
 void *doit _PROTO((void *));
 
-#define NFORK 3
+#define NFORK 2
 
-#define FILE1 "tpsrv021:/tmp"
-#define FILE2 "tpsrv022:/tmp"
+#define FILE1 "castor5:/tmp/file1"
+#define FILE2 "castor5:/tmp/file2"
 
 int main()
 {
   int i;
+  struct stat statbuf;
 
   putenv("RFIO_TRACE=3");
+
+  fprintf(stdout, "[%d] Pre-fill multiple connection tab in parent started\n", getpid());
+  fprintf(stdout, "[%d] rfio_mstat(\"%s\")\n", getpid(), FILE1);
+  fflush(stdout);
+  rfio_mstat(FILE1,&statbuf);
+  sleep(1);
+  fprintf(stdout, "[%d] rfio_mstat(\"%s\")\n", getpid(), FILE2);
+  fflush(stdout);
+  rfio_mstat(FILE2,&statbuf);
+  sleep(1);
 
   for (i = 0; i < NFORK; i++) {
     if (fork() == 0) {
@@ -28,6 +39,7 @@ int main()
     }
   }
   sleep(10);
+  rfio_end();
   exit(0);
 }
 
