@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.132 2001/03/14 11:46:17 jdurand Exp $
+ * $Id: stager.c,v 1.133 2001/03/16 15:47:07 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.132 $ $Date: 2001/03/14 11:46:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.133 $ $Date: 2001/03/16 15:47:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2761,12 +2761,14 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				RESTORE_EID;
 				return(-1);
 			}
-			if (((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) || ((ihsm = hsmidx(stcp)) < 0)) {
-				serrno = SEINTERNAL;
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
-				RESTORE_EID;
-				return(-1);
+			if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
+				if ((ihsm = hsmidx(stcp)) < 0) {
+					serrno = SEINTERNAL;
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
+					RESTORE_EID;
+					return(-1);
+				}
 			}
 			if (hsm_totalsize[ihsm] == 0) {
 				serrno = SEINTERNAL;
@@ -3212,7 +3214,7 @@ int stager_hsm_callback(tapereq,filereq)
 			(
 				((filereq->err.errorcode == ENOSPC) && (ISSTAGEWRT(stcs) ||
 														ISSTAGEPUT(stcs))) ||
-				((stcs->status & STAGEIN) == STAGEIN)
+				ISSTAGEIN(stcs)
 			)
 		)
 	) {
@@ -3642,6 +3644,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 14 March, 2001 at 12:43:52 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 16 March, 2001 at 16:44:06 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
