@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.123 2001/04/11 06:20:50 jdurand Exp $
+ * $Id: procio.c,v 1.124 2001/05/31 12:39:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.123 $ $Date: 2001/04/11 06:20:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.124 $ $Date: 2001/05/31 12:39:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3831,6 +3831,7 @@ int stageput_check_hsm(stcp,uid,gid)
 
 		stgreq.uid = uid;
 		stgreq.gid = gid;
+		memset(&save_stcp_for_Cns_creatx, 0, sizeof(struct stgcat_entry));
 		SET_CORRECT_OKMODE;
 		if (have_okmode_before) okmode = this_okmode_before;
 
