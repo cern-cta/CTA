@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:44:25 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/30 14:01:21 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/24 14:44:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/30 14:01:21 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -526,13 +526,16 @@ static int startVidWorker(
   int rc, c, i, argc, maxfds;
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
   char usePipeStr[16];
-  char *cmd = RTCPCLD_VIDWORKER_CMD, cmdline[CA_MAXLINELEN+1];
+  char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
   
   if ( s == NULL || *s == INVALID_SOCKET || 
        tape == NULL || *tape->tapereq.vid == '\0' ) {
     serrno = EINVAL;
     return(-1);
   }
+
+  sprintf(cmd,"%s/%s",BIN,RTCPCLD_VIDWORKER_CMD);
+  
   rc = rtcpcld_findTapeKey(tape,&key);
   if ( rc == -1 ) {
     (void)dlf_write(
