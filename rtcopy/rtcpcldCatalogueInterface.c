@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:01 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 15:29:16 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 11:00:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 15:29:16 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,8 +86,8 @@ WSADATA wsadata;
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
 
-extern int inChild;
-extern Cuuid_t childUuid, mainUuid;
+int inChild;
+Cuuid_t childUuid, mainUuid;
 
 static int dbSvcKey = -1;
 static int iSvcKey = -1;
@@ -221,7 +221,7 @@ static int getStgSvc(
                     );
     return(-1);
   }
-  rc = C_IServices_service(svcs,"OraStagerSvc",SVC_ORASTAGERSVC, iSvc);
+  rc = C_Services_service(svcs,"OraStagerSvc",SVC_ORASTAGERSVC, iSvc);
   if ( rc == -1 || *iSvc == NULL ) {
     serrno = save_serrno;
     (void)dlf_write(
@@ -463,7 +463,7 @@ static int lockTpList(
                       sstrerror(save_serrno),
                       "DB_ERROR",
                       DLF_MSG_PARAM_STR,
-                      C_Service_errorMsg(svcs),
+                      C_Services_errorMsg(svcs),
                       RTCPCLD_LOG_WHERE
                       );
       serrno = save_serrno;
@@ -499,7 +499,7 @@ static int lockTpList(
      * Cross check that we really got hold of the correct request
      */
     Cstager_Tape_vid(tp,(CONST char **)&vid);
-    Cstager_Tape_mode(tp,&mode);
+    Cstager_Tape_tpmode(tp,&mode);
     Cstager_Tape_side(tp,&side);
     if ( (tape->tapereq.mode != mode) ||
          (tape->tapereq.side != side) ||
@@ -557,8 +557,11 @@ int rtcpcld_getVIDsToDo(
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
-  
-  rc = Cstager_tapesTodo(stgsvc, &tpArray, &nbItems);
+  rc = Cstager_IStagerSvc_tapesToDo(
+                                    stgsvc,
+                                    &tpArray,
+                                    &nbItems
+                                    );
   if ( rc == -1 ) {
     serrno = save_serrno;
     (void)dlf_write(
@@ -569,7 +572,7 @@ int rtcpcld_getVIDsToDo(
                     RTCPCLD_NB_PARAMS+3,
                     "DBSVCCALL",
                     DLF_MSG_PARAM_STR,
-                    "Cstager_tapesTodo()",
+                    "Cstager_IStagerSvc_tapesTodo()",
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
@@ -591,7 +594,7 @@ int rtcpcld_getVIDsToDo(
       tape = NULL;
       Cstager_Tape_vid(tpArray[i],(CONST char **)&vid);
       if ( vid == NULL ) continue;
-      Cstager_Tape_mode(tpArray[i],&mode);
+      Cstager_Tape_tpmode(tpArray[i],&mode);
       tapereq.mode = mode;
       tapereq.side = 0;
       strncpy(tapereq.vid,vid,sizeof(tapereq.vid)-1);
@@ -699,7 +702,12 @@ int rtcpcld_procReqsForVID(
     return(-1);
   }
 
-  rc = Cstager_segmentsForTape(stgsvc,tpIterator,&segmArray,&nbItems);
+  rc = Cstager_IStagerSvc_segmentsForTape(
+                                          stgsvc,
+                                          tpIterator->tp,
+                                          &segmArray,
+                                          &nbItems
+                                          );
   if ( rc == -1 ) {
     serrno = save_serrno;
     (void)unlockTpList();
@@ -893,12 +901,12 @@ int rtcpcld_procReqsForVID(
   return(0);
 }
 
-int rtcpcld_getReqsForVid(
+int rtcpcld_getReqsForVID(
                           tape
                           )
      tape_list_t *tape;
 {
-  return(rtcpcld_procReqsForVid(tape,0));
+  return(rtcpcld_procReqsForVID(tape,0));
 }
 
 
@@ -908,6 +916,7 @@ int rtcpcld_anyReqsForVID(
      tape_list_t *tape;
 {
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
+  RtcpcldTapeList_t *tpItem = NULL;
   int rc, nbItems, save_serrno;
   tape_list_t *tl;
   file_list_t *fl;
@@ -922,7 +931,25 @@ int rtcpcld_anyReqsForVID(
   rc = lockTpList(tape);
   if ( rc == -1 ) return(-1);
 
-  rc = Cstager_anySegmentsForTape(stgsvc,tpList);
+  rc = findTape(tape->tapereq,&tpItem);
+  if ( rc != 1 || tpItem == NULL ) {
+    (void)unlockTpList();
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_INTERNAL,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Tape request could not be found in internal list",
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  rc = Cstager_IStagerSvc_anySegmentsForTape(stgsvc,tpItem->tp);
   if ( rc == -1 ) {
     serrno = save_serrno;
     (void)unlockTpList();
@@ -1338,7 +1365,7 @@ int rtcpcld_getPhysicalPath(
   if ( rc == -1 || svcs == NULL ) return(-1);
 
   tape.tapereq = *tapereq;
-  rc = rtcpcld_checkReqsForVID(&tape,1);
+  rc = rtcpcld_procReqsForVID(&tape,1);
   if ( rc == -1 ) {
     save_serrno = serrno;
     (void)dlf_write(
