@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.96 2000/11/07 15:30:58 jdurand Exp $
+ * $Id: stager.c,v 1.97 2000/11/24 14:08:05 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.96 $ $Date: 2000/11/07 15:30:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.97 $ $Date: 2000/11/24 14:08:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1247,20 +1247,20 @@ int stagewrt_castor_hsm_file() {
 		}
 
 		hsm_totalsize[i] = (u_signed64) statbuf.st_size;
-#ifdef U1H_WRT_WITH_MAXSIZE
-		/* Here we support limitation of number of bytes in write-to-tape */
-		if (stcp->size > 0) {
-			u_signed64 new_totalsize;
+		if ((stcs->status & STAGEWRT) == STAGEWRT) {
+			/* Here we support limitation of number of bytes in write-to-tape */
+			if (stcp->size > 0) {
+				u_signed64 new_totalsize;
 
-			new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+				new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
 
-			/* If the amount of bytes to transfer is asked to be lower than the physical */
-			/* size of the file, we reflect this in the corresponding field.             */
-			if (new_totalsize < hsm_totalsize[i]) {
-				hsm_totalsize[i] = new_totalsize;
+				/* If the amount of bytes to transfer is asked to be lower than the physical */
+				/* size of the file, we reflect this in the corresponding field.             */
+				if (new_totalsize < hsm_totalsize[i]) {
+					hsm_totalsize[i] = new_totalsize;
+				}
 			}
 		}
-#endif
 		hsm_transferedsize[i] = 0;
 		hsm_fseq[i] = -1;
 		hsm_vid[i] = NULL;
@@ -1825,6 +1825,9 @@ int filecopy(stcp, key, hostname)
 	}
 
 	c = rfio_pclose (rf);
+	if (c != 0) {
+		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", "rfio_pclose", rfio_serror());
+	}
 	RETURN (c);
 }
 
@@ -2475,31 +2478,30 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			/* We set the hsm_flag[ihsm] so that this entry cannot be returned twice */
 			hsm_flag[ihsm] = 1;
 #ifndef SKIP_FILEREQ_MAXSIZE
-			/* Here we support maxsize in the rtcpy structure */
-#ifdef U1H_WRT_WITH_MAXSIZE
-			/* Here we support limitation of number of bytes in write-to-tape */
-			if (stcp->size > 0) {
-				u_signed64 dummysize;
+			/* Here we support maxsize in the rtcopy structure only if explicit STAGEWRT */
+			if ((stcs->status & STAGEWRT) == STAGEWRT) {
+				/* Here we support limitation of number of bytes in write-to-tape */
+				if (stcp->size > 0) {
+					u_signed64 dummysize;
+					dummysize = (u_signed64) stcp->size;
+					dummysize *= (u_signed64) ONE_MB;
+					dummysize -= (u_signed64) hsm_transferedsize[ihsm];
+					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
+				}
+            } else {
+				/* Here we do NOT support limitation of number of bytes */
+				if (stcp->size > 0) {
+    	          /* But user (unfortunately) specified such a number... We overwrite it if necessasry */
+					u_signed64 dummysize;
 
-				dummysize = (u_signed64) stcp->size;
-				dummysize *= (u_signed64) ONE_MB;
-				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
+					dummysize = (u_signed64) stcp->size;
+					dummysize *= (u_signed64) ONE_MB;
+					/* If stcp->size (in MB) in lower than totalsize, we change maxsize value */
+					if (dummysize < hsm_totalsize[ihsm]) dummysize = hsm_totalsize[ihsm];
+					dummysize -= (u_signed64) hsm_transferedsize[ihsm];
+					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
+				}
 			}
-#else /* U1H_WRT_WITH_MAXSIZE */
-			/* Here we do NOT support limitation of number of bytes in write-to-tape */
-			if (stcp->size > 0) {
-              /* But user (unfortunately) specified such a number... We overwrite it if necessasry */
-				u_signed64 dummysize;
-
-				dummysize = (u_signed64) stcp->size;
-				dummysize *= (u_signed64) ONE_MB;
-				/* If stcp->size (in MB) in lower than totalsize, we change maxsize value */
-				if (dummysize < hsm_totalsize[ihsm]) dummysize = hsm_totalsize[ihsm];
-				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
-			}
-#endif /* U1H_WRT_WITH_MAXSIZE */
 #endif /* SKIP_FILEREQ_MAXSIZE */
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.offset = hsm_transferedsize[ihsm];
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.def_alloc = Aflag;
@@ -3309,5 +3311,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Tuesday 07 November, 2000 at 14:51:49 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 24 November, 2000 at 15:01:47 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
