@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.63 2001/03/14 12:01:23 jdurand Exp $
+ * $Id: procupd.c,v 1.64 2001/03/16 09:07:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.63 $ $Date: 2001/03/14 12:01:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.64 $ $Date: 2001/03/16 09:07:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -634,7 +634,6 @@ procupdreq(req_data, clienthost)
 			((rc == MNYPARI) && ((stcp->u1.t.E_Tflags & KEEPFILE) == 0))) {
 		wqp->status = rc;
 		if (rc != ENOSPC) {
-			c = rc;
 			goto reply;
 		}
 		if ((*stcp->poolname == '\0') ||
@@ -843,6 +842,7 @@ procupdreq(req_data, clienthost)
 				stcp->status |= STAGED_TPE;
 			if (rc == LIMBYSZ || rc == TPE_LSZ)
 				stcp->status |= STAGED_LSZ;
+			stcp->a_time = time(NULL);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
