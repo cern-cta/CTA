@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.79 $ $Date: 2000/12/20 16:25:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.80 $ $Date: 2001/02/05 09:20:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1437,6 +1437,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char *cmd = NULL;
     char acctstr[7] = "";
     char envacct[20];
+    extern int client_magic;
 
 #if !defined(_WIN32)
     (void)setpgrp();
@@ -1495,6 +1496,16 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         }
         return(rc);
     }
+    /*
+     * Not SHIFT request. We only allow connections from VDQM or 
+     * authorised hosts.
+     */
+    if ( rtcp_CheckConnect(accept_socket,NULL) != 1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() connection from unauthorised host\n");
+        (void)rtcp_CloseConnection(accept_socket);
+        rtcpd_FreeResources(NULL,&client,NULL);
+        return(-1);
+    } 
 
     /*
      * If local nomoretapes is set, we don't acknowledge VDQM message.
@@ -1593,6 +1604,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             break;
         }
         reqtype = hdr.reqtype;
+        if ( client_magic == 0 ) client_magic = hdr.magic;
         if ( reqtype == RTCP_DUMPTAPE_REQ ) {
             rc = rtcp_RecvTpDump(client_socket,&dumpreq);
             if ( rc == -1 ) {
