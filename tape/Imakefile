@@ -1,0 +1,549 @@
+COMM
+COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/07/28 12:16:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+ 
+COMM 	Make tape daemon programs. 
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(..,h)
+#if BuildRtcopyClient != YES && BuildTapeDaemon == YES
+DUMPTAPE = ProgramTargetName(dumptape)
+IDUMPTAPE = FileName($(BIN),ProgramTargetName(dumptape))
+MANDUMP = $(MANDIR)/dumptape.$(MANSUFFIX)
+#endif
+#if UseTms
+TMS = TMS
+#else
+TMS = NOTMS
+#endif
+#if UseVmgr
+VMGRFLG = -DVMGR
+#endif
+#if BuildVdqmClient
+VDQMFLG = -DVDQM
+#endif
+#if linux
+LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+#else
+#if SOLARIS
+LIBS = -L../lib -lshift -lsocket -lnsl
+#else
+#if defined(_AIX) && defined(_IBMR2)
+LIBS = -L../lib -lshift -lodm
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../lib -lshift -so_archive
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+#else
+LIBS = -L../lib -lshift
+#endif
+#endif
+#endif
+#endif
+#endif
+NOMORETAPES = FileName(OperatorDir,nomoretapes)
+OPSGRP = OperatorGid
+SPOOL = TapeSpool
+#if Accounting
+SACCTDIR = SacctDir
+SACCTFILE = SacctDir/sacct
+ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
+SCONFIGFILE = ShiftConfigFile
+CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
+TAPEACCT = tapeacct.Osuf
+#endif
+STAGERSUPERUSER = StagerSuperUser
+TPCONFIG = TapeConfigFile
+#if defined(_AIX) && defined(_IBMR2)
+IBMR2_OBJS = getdvrnam.o CuDv.o CuDvDr.o
+#if defined(RS6000PCTA)
+PCTAFLAG = -DRS6000PCTA
+#endif
+#if defined(ADSTAR)
+ADSTARFLG = -DADSTAR
+#endif
+#endif
+#if defined(SONYRAW)
+SONYRFLG = -DSONYRAW
+SONYR_OBJ = sonysubr.o
+#endif
+#if UseDMSCapi
+DMSC = DMSCDir
+DMSCFLG = -DDMSCAPI
+DMSCINC = -I$(DMSC)/include
+DMSCLIB = $(DMSC)/lib/libfbs.a
+LIBDMSC = -L$(DMSC)/lib -lfbs
+#endif
+#if HasCDK
+CDK = CDKDir
+CDKFLG = -DCDK
+CDKINC = -I$(CDK)/src/h
+CDKLIB = $(CDK)/lib/libapi.a $(CDK)/lib/libutl.a $(CDK)/lib/libipc.a $(CDK)/lib/libcl.a
+LIBCDK = -L$(CDK)/lib -lapi -lutl -lapi -lipc -lcl
+#endif
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+LIBS+= -ldl
+#endif  
+
+COMM######################### FLAGS ##############################
+
+#if BuildMonitorClient
+MONITORFLAG=-DMONITOR
+#else
+MONITORFLAG=
+#endif
+ 
+DFLAGS = -DBIN=\"$(BIN)\" \
+	 -DLOGFILE=\"$(SPOOL)/log\" \
+	 -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
+	 -DTPCONFIG=\"$(TPCONFIG)\" \
+	 -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) $(ACCTFILE) \
+	 $(CONFIGFILE) $(SONYRFLG) $(CDKFLG) $(DMSCFLG) $(VDQMFLG) $(VMGRFLG) $(MONITORFLAG)
+
+CFLAGS =	-I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(CDKINC) $(DMSCINC) $(SECURITYFLAG)
+
+COMM######################### DEPENDENCY LIBRARIES ###############
+
+GLOBLIB = DepLibraryTargetName(lib,shift)
+
+COMM######################### RULES ##############################
+
+MANPAGES = $(LIBMANDIR)/Ctape_dmpfil.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_info.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_kill.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_label.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_mount.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_position.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_reserve.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_rls.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_rstatus.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/Ctape_status.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/getcompstat.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/readlbl.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rwndtape.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/skiptape.$(LIBMANSUFFIX) \
+	   $(MANDIR)/smc.$(MANSUFFIX) \
+	   $(MANDIR)/tape_oper.$(MANSUFFIX) \
+	   $(MANDIR)/tpconfig.$(MANSUFFIX) \
+	   $(MANDIR)/tpdaemon.$(MANSUFFIX) \
+	   $(MANDIR)/tplabel.$(MANSUFFIX) \
+	   $(MANDIR)/tprstat.$(MANSUFFIX) \
+	   $(MANDIR)/tpstat.$(MANSUFFIX) \
+	   $(LIBMANDIR)/usrlbl.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/wrttpmrk.$(LIBMANSUFFIX)
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_dmpfil.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_info.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_kill.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_label.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_mount.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_position.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_reserve.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_rls.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_rstatus.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),Ctape_status.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),getcompstat.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),readlbl.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rwndtape.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),skiptape.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),smc.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tape_oper.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpconfig.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpdaemon.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tplabel.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tprstat.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpstat.$(MANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),usrlbl.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),wrttpmrk.$(LIBMANSUFFIX)))
+#if Accounting && BuildTpusage
+MANSSTAT = $(MANDIR)/tpusage.$(MANSUFFIX)
+EMANSSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpusage.$(MANSUFFIX)))
+#endif
+#if BuildTapeClient
+PROGS_C = ProgramTargetName(tpconfig) \
+	  ProgramTargetName(tprstat) \
+	  ProgramTargetName(tpstat)
+IPROGS_C = FileName($(BIN),ProgramTargetName(tpconfig)) \
+	   FileName($(BIN),ProgramTargetName(tprstat)) \
+	   FileName($(BIN),ProgramTargetName(tpstat))
+#endif
+#if BuildTapeDaemon
+PROGS_D = ProgramTargetName(tpdaemon) \
+	  ProgramTargetName(confdrive) \
+	  ProgramTargetName(mounttape) \
+	  ProgramTargetName(posovl) \
+	  ProgramTargetName(rlstape) \
+	  ProgramTargetName(smc) \
+	  ProgramTargetName(tpdump) \
+	  ProgramTargetName(tplabel)
+IPROGS_D = FileName($(BIN),ProgramTargetName(tpdaemon)) \
+	   FileName($(BIN),ProgramTargetName(confdrive)) \
+	   FileName($(BIN),ProgramTargetName(mounttape)) \
+	   FileName($(BIN),ProgramTargetName(posovl)) \
+	   FileName($(BIN),ProgramTargetName(rlstape)) \
+	   FileName($(BIN),ProgramTargetName(smc)) \
+	   FileName($(BIN),ProgramTargetName(tpdump)) \
+	   FileName($(BIN),ProgramTargetName(tplabel))
+#endif
+#if Accounting && BuildTpusage
+PROGS_Z = ProgramTargetName(tpusage)
+IPROGS_Z = FileName($(BIN),ProgramTargetName(tpusage))
+EPROGS_Z = $(EXPORTBIN)/tpusage
+#endif
+#if BuildMonitorClient
+TAPE_MONITORCLIENT = Cmonit_tapeclient.Osuf
+#endif
+
+
+CONFDRIVE_OBJS	=	confdrive.Osuf \
+			sendrep.Osuf \
+			tplogit.Osuf
+MOUNTTAPE_OBJS	=	mounttape.Osuf \
+			asc2ebc.Osuf \
+			buildhdrlbl.Osuf \
+			buildvollbl.Osuf \
+			ebc2asc.Osuf \
+			getdrvstatus.Osuf \
+			inquiry.Osuf \
+			lddisplay.Osuf \
+			omsg.Osuf \
+			rbtsubr.Osuf \
+			readlbl.Osuf \
+			rwndtape.Osuf \
+			send2tpd.Osuf \
+			sendrep.Osuf \
+			sendtmsmount.Osuf \
+			sendscsicmd.Osuf \
+			setdens.Osuf \
+			skiptape.Osuf \
+			smcsubr.Osuf \
+			$(SONYR_OBJ) \
+			tperror.Osuf \
+			tplogit.Osuf \
+			unldtape.Osuf \
+			usrmsg.Osuf \
+			writelbl.Osuf \
+			wrttpmrk.Osuf \
+			mircheck.Osuf
+POSOVL_OBJS	=	posovl.Osuf \
+			buildhdrlbl.Osuf \
+			builduhl.Osuf \
+			buildvollbl.Osuf \
+			ebc2asc.Osuf \
+			getdrvstatus.Osuf \
+			inquiry.Osuf \
+			locate.Osuf \
+			omsg.Osuf \
+			posittape.Osuf \
+			readlbl.Osuf \
+			rwndtape.Osuf \
+			send2tpd.Osuf \
+			sendrep.Osuf \
+			sendscsicmd.Osuf \
+			skiptape.Osuf \
+			$(SONYR_OBJ) \
+			tperror.Osuf \
+			tplogit.Osuf \
+			usrmsg.Osuf
+RLSTAPE_OBJS	=	rlstape.Osuf \
+			getdrvstatus.Osuf \
+			lddisplay.Osuf \
+			omsg.Osuf \
+			rbtsubr.Osuf \
+			send2tpd.Osuf \
+			sendscsicmd.Osuf \
+			smcsubr.Osuf \
+			sendrep.Osuf \
+			sendtmsmount.Osuf \
+			$(SONYR_OBJ) \
+			tperror.Osuf \
+			tplogit.Osuf \
+			usrmsg.Osuf \
+			unldtape.Osuf
+TPDAEMON_OBJS	=	tpdaemon.Osuf \
+			checkjobdied.Osuf \
+			cvtden.Osuf \
+			sendrep.Osuf \
+			tplogit.Osuf \
+			$(TAPE_MONITORCLIENT) \
+			usrmsg.Osuf
+TPLIB_OBJS	=	Ctape_config.Osuf \
+			Ctape_devinfo.Osuf \
+			Ctape_dmpfil.Osuf \
+			Ctape_drvinfo.Osuf \
+			Ctape_errmsg.Osuf \
+			Ctape_info.Osuf \
+			Ctape_kill.Osuf \
+			Ctape_label.Osuf \
+			Ctape_mount.Osuf \
+			Ctape_position.Osuf \
+			Ctape_reserve.Osuf \
+			Ctape_rls.Osuf \
+			Ctape_rstatus.Osuf \
+			Ctape_status.Osuf \
+			asc2ebc.Osuf \
+			chkdirw.Osuf \
+			cvtden.Osuf \
+			ebc2asc.Osuf \
+			findpgrp.Osuf \
+			getcompstat.Osuf \
+			initlabel.Osuf \
+			send2tpd.Osuf \
+			tmscheck.Osuf \
+			usrlbl.Osuf \
+			usrlocate.Osuf \
+			usrreadlbl.Osuf \
+			usrrwndtape.Osuf \
+			usrskiptape.Osuf \
+			usrsmcsubr.Osuf \
+			usrsmcsubr2.Osuf \
+			usrtperror.Osuf \
+			usrusrmsg.Osuf \
+			usrwritelbl.Osuf \
+			usrwrttpmrk.Osuf
+
+#if BuildTapeClient || BuildTapeDaemon
+all: LibraryTargetName(tape) $(PROGS_C) $(PROGS_D) $(DUMPTAPE) $(PROGS_Z)
+#else
+all: $(PROGS_Z)
+#endif
+
+sendscsicmd.c:	DepSourceName(common,sendscsicmd.c)
+	RemoveFile(sendscsicmd.c)
+	$(CP) DepSourceName(common,sendscsicmd.c) sendscsicmd.c
+usrlocate.c:	locate.c
+	RemoveFile(usrlocate.c)
+	$(CP) locate.c usrlocate.c
+usrreadlbl.c:	readlbl.c
+	RemoveFile(usrreadlbl.c)
+	$(CP) readlbl.c usrreadlbl.c
+usrrwndtape.c:	rwndtape.c
+	RemoveFile(usrrwndtape.c)
+	$(CP) rwndtape.c usrrwndtape.c
+usrskiptape.c:	skiptape.c
+	RemoveFile(usrskiptape.c)
+	$(CP) skiptape.c usrskiptape.c
+usrsmcsubr.c:	smcsubr.c
+	RemoveFile(usrsmcsubr.c)
+	$(CP) smcsubr.c usrsmcsubr.c
+usrsmcsubr2.c:	smcsubr2.c
+	RemoveFile(usrsmcsubr2.c)
+	$(CP) smcsubr2.c usrsmcsubr2.c
+usrtperror.c:	tperror.c
+	RemoveFile(usrtperror.c)
+	$(CP) tperror.c usrtperror.c
+usrusrmsg.c:	usrmsg.c
+	RemoveFile(usrusrmsg.c)
+	$(CP) usrmsg.c usrusrmsg.c
+usrwritelbl.c:	writelbl.c
+	RemoveFile(usrwritelbl.c)
+	$(CP) writelbl.c usrwritelbl.c
+usrwrttpmrk.c:	wrttpmrk.c
+	RemoveFile(usrwrttpmrk.c)
+	$(CP) wrttpmrk.c usrwrttpmrk.c
+
+#if linux
+sendscsicmd.Osuf:	sendscsicmd.c ../h/Ctape.h ../h/scsictl.h
+	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
+	then \
+		echo $(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" sendscsicmd.c ;\
+		$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" sendscsicmd.c ;\
+	else \
+		echo $(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" sendscsicmd.c ;\
+		$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" sendscsicmd.c ;\
+	fi
+#else
+sendscsicmd.Osuf:	sendscsicmd.c ../h/Ctape.h ../h/scsictl.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE sendscsicmd.c
+#endif
+usrlocate.Osuf:	usrlocate.c ../h/Ctape.h ../h/serrno.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrlocate.c
+usrreadlbl.Osuf:	usrreadlbl.c ../h/Ctape.h ../h/serrno.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE $(PCTAFLAG) $(ADSTARFLG) usrreadlbl.c
+usrrwndtape.Osuf:	usrrwndtape.c ../h/Ctape.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrrwndtape.c
+usrskiptape.Osuf:	usrskiptape.c ../h/Ctape.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrskiptape.c
+usrsmcsubr.Osuf:	usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrsmcsubr.c
+usrsmcsubr2.Osuf:	usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrsmcsubr2.c
+usrtperror.Osuf:	usrtperror.c ../h/Ctape.h ../h/serrno.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrtperror.c
+usrusrmsg.Osuf:	usrusrmsg.c ../h/Ctape.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrusrmsg.c
+usrwritelbl.Osuf:	usrwritelbl.c ../h/Ctape.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrwritelbl.c
+usrwrttpmrk.Osuf:	usrwrttpmrk.c ../h/Ctape.h
+	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrwrttpmrk.c
+
+LinkFile(ProgramTargetName(dumptape),ProgramTargetName(tpdump))
+
+NormalProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT), \
+ $(GLOBLIB) $(CDKLIB) $(DMSCLIB),$(LIBS) $(LIBCDK) $(LIBDMSC))
+
+NormalProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT), \
+ $(GLOBLIB) $(CDKLIB) $(DMSCLIB),$(LIBS) $(LIBCDK) $(LIBDMSC))
+
+NormalProgramTarget(smc,smc.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tpconfig,tpconfig.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tpdaemon,$(TPDAEMON_OBJS) $(IBMR2_OBJS) $(TAPEACCT), \
+ $(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tpdump,tpdump.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tplabel,tplabel.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tprstat,tprstat.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tpstat,tpstat.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalProgramTarget(tpusage,tpusage.Osuf,$(GLOBLIB),$(LIBS))
+
+NormalLibraryTarget(tape,$(TPLIB_OBJS) $(IBMR2_OBJS))
+
+MakeDepLibrary(lib,shift)
+
+#if BuildTapeDaemon
+install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(IDUMPTAPE) $(IPROGS_Z) $(SPOOL) $(SACCTDIR)
+#else
+install: $(BIN) $(IPROGS_C) $(IDUMPTAPE) $(IPROGS_Z)
+#endif
+
+InstallProgram(dumptape,$(BIN),root,bin,755)
+InstallProgram(confdrive,$(BIN),root,$(OPSGRP),750)
+InstallProgram(mounttape,$(BIN),root,$(OPSGRP),750)
+InstallProgram(posovl,$(BIN),root,$(OPSGRP),750)
+InstallProgram(rlstape,$(BIN),root,$(OPSGRP),750)
+InstallProgram(smc,$(BIN),root,bin,6755)
+InstallProgram(tpconfig,$(BIN),root,$(OPSGRP),750)
+InstallProgram(tpdaemon,$(BIN),root,$(OPSGRP),750)
+InstallProgram(tpdump,$(BIN),root,bin,755)
+InstallProgram(tplabel,$(BIN),root,bin,755)
+InstallProgram(tprstat,$(BIN),root,bin,755)
+InstallProgram(tpstat,$(BIN),root,bin,755)
+InstallProgram(tpusage,$(BIN),root,bin,755)
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+
+#if Accounting
+MakeDir($(SACCTDIR),root,bin,0777)
+#endif
+
+#if BuildTapeClient || BuildTapeDaemon
+install.man: $(MANDIR) $(MANPAGES) $(MANDUMP) $(MANSSTAT)
+#else
+install.man: $(MANDIR) $(MANSSTAT)
+#endif
+
+MakeDir($(MANDIR),root,bin,0755)
+
+IMANPAGE(Ctape_dmpfil,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_info,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_kill,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_label,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_mount,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_position,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_reserve,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_rls,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_rstatus,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Ctape_status,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(dumptape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(getcompstat,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(readlbl,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rwndtape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(skiptape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(smc,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tape_oper,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpconfig,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpdaemon,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tplabel,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tprstat,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpstat,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpusage,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(usrlbl,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(wrttpmrk,$(LIBMANDIR),$(LIBMANSUFFIX))
+
+export: $(EPROGS_Z)
+IEXPORT(tpusage,$(EXPORTBIN),755)
+
+exportman: $(EXPORTMANPAGES) $(EMANSSTAT)
+EMANPAGE(Ctape_dmpfil,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_info,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_kill,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_label,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_mount,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_position,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_reserve,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_rls,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_rstatus,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(Ctape_status,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(dumptape,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(getcompstat,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(readlbl,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rwndtape,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(skiptape,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(smc,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tape_oper,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpconfig,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpdaemon,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tplabel,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tprstat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpstat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpusage,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(usrlbl,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(wrttpmrk,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+
+exportshr:
+
+COMM###################### CLEANING RULES #######################
+
+clean:
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_Z) $(DUMPTAPE) LibraryTargetName(tape))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(DFLAGS) -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+
+FORCE:
+
+COMM####################### DEPENDENCIES ##########################
+
+#if defined(_AIX) && defined(_IBMR2)
+getdvrnam.o:	CuDv.h CuDvDr.h
+CuDv.o:		CuDv.h
+CuDvDr.o:	CuDvDr.h
+
+CuDv.c CuDv.h:	CuDv.cre
+	odmcreate -h CuDv
+CuDvDr.c CuDvDr.h:	CuDvDr.cre
+	odmcreate -h CuDvDr
+
+CuDv.cre:
+	odmshow PdDv CuDv > CuDv.cre
+CuDvDr.cre:
+	odmshow CuDvDr > CuDvDr.cre
+#endif
+ 
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
