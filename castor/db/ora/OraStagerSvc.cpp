@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.90 $ $Release$ $Date: 2004/12/14 10:57:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.91 $ $Release$ $Date: 2004/12/15 11:30:23 $ $Author: jdurand $
  *
  *
  *
@@ -1541,6 +1541,7 @@ castor::db::ora::OraStagerSvc::selectDiskServer
     result->setStatus
       ((enum castor::stager::DiskServerStatusCode)
        rset->getInt(2));
+    result->setName(name);
     m_selectDiskServerStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
