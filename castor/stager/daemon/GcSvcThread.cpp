@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.1 2005/02/09 17:05:36 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.2 2005/03/31 15:10:49 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.1 $ $Date: 2005/02/09 17:05:36 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/03/31 15:10:49 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -221,7 +221,7 @@ namespace castor {
       char *func =  "castor::stager::Files2Delete";
       std::string error;
       castor::stager::Files2Delete *uReq;
-      std::vector<castor::stager::GCLocalFile>* result = 0;
+      std::vector<castor::stager::GCLocalFile*>* result = 0;
 
       try {
 
@@ -254,7 +254,10 @@ namespace castor {
               result->begin();
             it != result->end();
             it++) {
-          res.addFiles(&(*it));
+          // Here we transfer the ownership of the GCLocalFiles
+          // to res. Result can thus be deleted with no risk
+          // of memory leak
+          res.addFiles(*it);
         }
       }
 

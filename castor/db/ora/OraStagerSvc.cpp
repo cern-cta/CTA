@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.145 $ $Release$ $Date: 2005/03/31 13:41:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.146 $ $Release$ $Date: 2005/03/31 15:06:13 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2296,7 +2296,7 @@ void castor::db::ora::OraStagerSvc::updateFileSystemForJob
 // -----------------------------------------------------------------------
 // selectFiles2Delete
 // -----------------------------------------------------------------------
-std::vector<castor::stager::GCLocalFile>*
+std::vector<castor::stager::GCLocalFile*>*
 castor::db::ora::OraStagerSvc::selectFiles2Delete
 (std::string diskServer)
   throw (castor::exception::Exception) {
@@ -2321,17 +2321,17 @@ castor::db::ora::OraStagerSvc::selectFiles2Delete
       throw ex;
     }
     // create result
-    std::vector<castor::stager::GCLocalFile>* result =
-      new std::vector<castor::stager::GCLocalFile>;
+    std::vector<castor::stager::GCLocalFile*>* result =
+      new std::vector<castor::stager::GCLocalFile*>;
     // Run through the cursor
     oracle::occi::ResultSet *rs =
       m_selectFiles2DeleteStatement->getCursor(2);
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       // Fill result
-      castor::stager::GCLocalFile f;
-      f.setFileName(rs->getString(1));
-      f.setDiskCopyId((u_signed64)rs->getDouble(2));
+      castor::stager::GCLocalFile* f = new castor::stager::GCLocalFile();
+      f->setFileName(rs->getString(1));
+      f->setDiskCopyId((u_signed64)rs->getDouble(2));
       result->push_back(f);
       status = rs->next();
     }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/31 15:06:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -625,9 +625,9 @@ namespace castor {
        * @return a list of files. The id of the DiskCopy
        * is given as well as the local path on the server.
        * Note that the returned vector should be deallocated
-       * by the caller
+       * by the caller as well as its content
        */
-      virtual std::vector<castor::stager::GCLocalFile>*
+      virtual std::vector<castor::stager::GCLocalFile*>*
       selectFiles2Delete(std::string diskServer)
         throw (castor::exception::Exception);
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/31 15:06:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -679,7 +679,7 @@ int castor::stager::RemoteStagerSvc::getRemoteStagerClientTimeout() {
 class Files2DeleteResponseHandler : public castor::client::IResponseHandler {
 public:
   Files2DeleteResponseHandler
-  (std::vector<castor::stager::GCLocalFile>* result) :
+  (std::vector<castor::stager::GCLocalFile*>* result) :
     m_result(result) {}
 
   virtual void handleResponse(castor::rh::Response& r)
@@ -695,20 +695,25 @@ public:
            it = resp->files().begin();
          it != resp->files().end();
          it++) {
-      m_result->push_back(**it);
+      // Here we transfer the ownership of the GCLocalFile
+      // from resp to m_result. So the resp can be cleared
+      // without any memory leak. It is even mandatory.
+      m_result->push_back(*it);
     }
+    // we clear the response as explained above
+    resp->files().clear();
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
   // where to store the diskCopy
-  std::vector<castor::stager::GCLocalFile>* m_result;
+  std::vector<castor::stager::GCLocalFile*>* m_result;
 };
 
 // -----------------------------------------------------------------------
 // selectFiles2Delete
 // -----------------------------------------------------------------------
-std::vector<castor::stager::GCLocalFile>*
+std::vector<castor::stager::GCLocalFile*>*
 castor::stager::RemoteStagerSvc::selectFiles2Delete
 (std::string diskServer)
   throw (castor::exception::Exception) {
@@ -716,8 +721,8 @@ castor::stager::RemoteStagerSvc::selectFiles2Delete
   castor::stager::Files2Delete req;
   req.setDiskServer(diskServer);
   // Prepare a result vector
-  std::vector<castor::stager::GCLocalFile>* result =
-      new std::vector<castor::stager::GCLocalFile>;
+  std::vector<castor::stager::GCLocalFile*>* result =
+      new std::vector<castor::stager::GCLocalFile*>;
   // Build a response Handler
   Files2DeleteResponseHandler rh(result);
   // Uses a BaseClient to handle the request

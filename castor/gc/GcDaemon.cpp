@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/03/30 14:52:08 $ $Author: jiltsov $
+ * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/03/31 15:06:13 $ $Author: sponcec3 $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -53,7 +53,7 @@
 /*** for test only
 #define  GCDATAFILE "/tmp/gcdata.lst"
 
- std::vector<castor::stager::GCLocalFile>*
+ std::vector<castor::stager::GCLocalFile*>*
    ZselectFiles2Delete( std::string diskServer);
 ***/
 
@@ -180,7 +180,7 @@ int castor::gc::GcDaemon::start()
     }
 
     // Retrieve list of files to delete
-    std::vector<castor::stager::GCLocalFile>* files2Delete = 0;
+    std::vector<castor::stager::GCLocalFile*>* files2Delete = 0;
     try {
           files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
@@ -220,20 +220,20 @@ int castor::gc::GcDaemon::start()
            it++) 
        {
          // delete  file it->fileName()
-         std::string gcfilename = it->fileName();
+         std::string gcfilename = (*it)->fileName();
          if(0 < strlen(&gcfilename[0]) ) {
             gcfilestotal++;
-            if ( (gcfilesize = GCremoveFilePath(it->fileName())) < 0 ) {
+            if ( (gcfilesize = GCremoveFilePath((*it)->fileName())) < 0 ) {
                gcfilesfailed++;
-               clog() << DEBUG << "-Failed: " << it->fileName() << std::endl;
+               clog() << DEBUG << "-Failed: " << (*it)->fileName() << std::endl;
             } else {
                gcfilesremoved++;
                gcremovedsize =+ gcfilesize;
-               clog() << DEBUG << "Removed " << it->fileName() << ": " 
+               clog() << DEBUG << "Removed " << (*it)->fileName() << ": " 
                                << gcfilesize << " KB" 
                                << std::endl;
                // Add the file to the list of deleted ones
-               u_signed64 gcfileid = it->diskCopyId();
+               u_signed64 gcfileid = (*it)->diskCopyId();
                deletedFiles.push_back(&gcfileid);
             }
          }
@@ -275,7 +275,7 @@ int castor::gc::GcDaemon::start()
 // -----------------------------------------------------------------------
 // ZselectFiles2Delete - for test only - stager response emulator
 // -----------------------------------------------------------------------
-std::vector<castor::stager::GCLocalFile>*
+std::vector<castor::stager::GCLocalFile*>*
    ZselectFiles2Delete (std::string diskServer)
 {
    char gcdatafile[1024];
@@ -283,8 +283,8 @@ std::vector<castor::stager::GCLocalFile>*
 
    strcpy(gcdatafile, GCDATAFILE);
    std::ifstream gcfilelist( gcdatafile);
-   std::vector<castor::stager::GCLocalFile>* result =
-          new std::vector<castor::stager::GCLocalFile>;
+   std::vector<castor::stager::GCLocalFile*>* result =
+          new std::vector<castor::stager::GCLocalFile*>;
 
    if ( !gcfilelist.is_open() ) {
        result = 0;
@@ -294,8 +294,8 @@ std::vector<castor::stager::GCLocalFile>*
    long i = -1;
    while (! gcfilelist.eof() ) { 
      gcfilelist.getline (gcfilename, 1024,'\n'); 
-     castor::stager::GCLocalFile res;
-     res.setFileName((std::string)gcfilename);
+     castor::stager::GCLocalFile res = new castor::stager::GCLocalFile();
+     res->setFileName((std::string)gcfilename);
      result->push_back(res);
      i++;
    }

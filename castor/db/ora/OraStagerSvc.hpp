@@ -633,9 +633,9 @@ namespace castor {
          * @return a list of files. The id of the DiskCopy
          * is given as well as the local path on the server.
          * Note that the returned vector should be deallocated
-         * by the caller
+         * by the caller as well as its content
          */
-        virtual std::vector<castor::stager::GCLocalFile>*
+        virtual std::vector<castor::stager::GCLocalFile*>*
         selectFiles2Delete(std::string diskServer)
           throw (castor::exception::Exception);
 
