@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.32 2003/11/04 13:25:17 jdurand Exp $
+ * $Id: stage_util.c,v 1.33 2003/11/17 09:56:07 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.32 $ $Date: 2003/11/04 13:25:17 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.33 $ $Date: 2003/11/17 09:56:07 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -26,6 +26,10 @@ static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.32 $ $Date: 
 #include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
 #include "Ctape_constants.h"   /* For NOTRLCHK */
 #include "Csnprintf.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "Cmutex.h"
+#include "getacctent.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -118,15 +122,23 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define DUMP_STRING(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) , st->member)
 #define PRINT_STRING(st,member) fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) , st->member)
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
 
 char *forced_endptr_error = "Z";
 
+static int stage_util_validuser_mutex = -1;
+
 struct flag2name {
 	u_signed64 flag;
 	char *name;
 };
+
+static int stage_util_newacct _PROTO((struct passwd *, gid_t));
 
 void DLL_DECL stage_sleep(nsec)
      int nsec;
@@ -726,3 +738,110 @@ int DLL_DECL stage_util_E_Tflags2string(output, maxsize, E_Tflags)
 	return(*thisp != '\0' ? 0 : -1);
 }
 
+/* Sort of cut/paste from CASTOR/rtcopy/rtcpd_MainCntl.c */
+/* Same remark as for that routine: this is thread unsafe because of getgrent() on UNIX */
+/* That's why there is a call to Cmutex */
+int DLL_DECL stage_util_validuser(username,uid,gid)
+	char *username;
+	uid_t uid;
+	gid_t gid;
+{
+	struct passwd *pwd;
+	struct group  *grp;
+	int rc = -1;
+#ifndef _WIN32
+    char **gr_mem;
+#endif
+
+	if (Cmutex_lock(&stage_util_validuser_mutex,10) < 0) {
+		return(-1);
+	}
+
+	if (username != NULL) {
+		if ((pwd = Cgetpwnam(username)) == NULL) {
+			serrno = SEUSERUNKN; /* Unknown user */
+			goto stage_util_validuser_return;
+		}
+		/* Check that uid matches username */
+		if (pwd->pw_uid != uid) {
+			/* Either unknown entry either invalid entry */
+			if ((pwd = Cgetpwuid(uid)) == NULL) {
+				serrno = SEUSERUNKN; /* Unknown user */
+			} else {
+				serrno = ESTUSER; /* Invalid user */
+			}
+			goto stage_util_validuser_return;
+		}
+	} else {
+		if ((pwd = Cgetpwuid(uid)) == NULL) {
+			serrno = SEUSERUNKN; /* Unknown user */
+			goto stage_util_validuser_return;
+		}
+	}
+
+	/* Check that gid matches uid */
+	if (pwd->pw_gid == gid) {
+		/* Yes: gid is the primary group of username(uid) */
+		rc = 0;
+		goto stage_util_validuser_return;
+	}
+#ifndef _WIN32
+	if (username != NULL) {
+		setgrent();
+		while ((grp = getgrent()) != NULL) {
+			if (pwd->pw_gid == grp->gr_gid) continue;
+			for (gr_mem = grp->gr_mem; gr_mem != NULL && *gr_mem != NULL; gr_mem++) {
+				if (strcmp(*gr_mem,username) == 0) {
+					rc = 0;
+					goto stage_util_validuser_return;
+				}
+			}
+		}
+		endgrent();
+	}
+	/* Not found in secondary groups - perhaps in our group extension? */
+	if (stage_util_newacct(pwd,gid) == 0) {
+		rc = 0;
+		goto stage_util_validuser_return;
+	}
+	/* Nope */
+	serrno = ESTGROUP;
+#else
+	/* Cannot do that on Windows */
+	serrno = ESTGROUP;
+#endif
+	
+  stage_util_validuser_return:
+	Cmutex_unlock(&stage_util_validuser_mutex);
+	return(rc);
+}
+
+static int stage_util_newacct(pwd,gid)
+	struct passwd *pwd;
+	gid_t gid;
+{
+    char buf[BUFSIZ] ;
+    char *def_acct ;
+    struct group *gr ;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+    char acctstr[7];
+
+	acctstr[0] = '\0';
+    /* get default account */
+    if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL ) {
+		return(-1);
+	}
+    if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL ) {
+		return(-1);
+	}
+    if ( (strlen(def_acct) == 6) && (*(def_acct+3) == '$') &&   /* uuu$gg */
+         ((gr = Cgetgrgid(gid)) != NULL)) {
+        strncpy(acctstr,def_acct,4);
+        strncpy(acctstr+4,gr->gr_name,2); /* new uuu$gg */
+        if ( getacctent(pwd,acctstr,buf,sizeof(buf)) )
+            return(0);      /* newacct was executed */
+    }
+    return(-1);
+}

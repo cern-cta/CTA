@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.65 2003/09/08 17:01:51 jdurand Exp $
+ * $Id: stage_api.h,v 1.66 2003/11/17 09:56:03 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -316,6 +316,7 @@ EXTERN_C int  DLL_DECL stage_util_check_for_strutou64 _PROTO((char*));
 /* ------------------------------------------- */
 EXTERN_C int  DLL_DECL  stage_seterrbuf _PROTO((char *, int));
 EXTERN_C int  DLL_DECL  stage_setoutbuf _PROTO((char *, int));
+EXTERN_C int  DLL_DECL  stage_util_validuser _PROTO((char *, uid_t, gid_t));
 #ifndef SWIG
 EXTERN_C int  DLL_DECL  stage_setlog    _PROTO((void (*)(int, char*)));
 #endif
