@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.80 $ $Release$ $Date: 2004/12/07 14:33:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.81 $ $Release$ $Date: 2004/12/07 14:36:52 $ $Author: jdurand $
  *
  *
  *
@@ -1744,7 +1744,7 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     }
     // execute the statement and see whether we found something
     m_recreateCastorFileStatement->setDouble(1, castorFile->id());
-    m_recreateCastorFileStatement->setDouble(1, subreq->id());
+    m_recreateCastorFileStatement->setDouble(2, subreq->id());
     unsigned int nb = m_recreateCastorFileStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -1754,7 +1754,7 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     }
     // return
     u_signed64 id =
-      (u_signed64)m_recreateCastorFileStatement->getDouble(2);
+      (u_signed64)m_recreateCastorFileStatement->getDouble(3);
     if (0 == id) return 0;
     castor::stager::DiskCopy *result =
       new castor::stager::DiskCopy();
