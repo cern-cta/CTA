@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.80 2001/07/12 11:04:40 jdurand Exp $
+ * $Id: procupd.c,v 1.81 2001/07/23 10:53:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.80 $ $Date: 2001/07/12 11:04:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.81 $ $Date: 2001/07/23 10:53:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1216,6 +1216,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* We send the reply right now */
 					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
+					if (stcp->t_or_d != 'h') goto not_an_HSM_castor_callback;
 					stcp_found = stcp_other_migration_found = stcp_other_migrated_found = NULL;
 					for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 						if ((stcp_found != NULL) &&
@@ -1318,6 +1319,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* it has to be done at the very end of current processing */
 						delreq(stcp,0);
 					} else {
+					not_an_HSM_castor_callback:
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1460,5 +1462,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Monday 25 June, 2001 at 20:31:06 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 23 July, 2001 at 12:49:00 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
