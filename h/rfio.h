@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.10 $ $Date: 2000/05/29 15:55:24 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.11 $ $Date: 2000/05/29 16:06:59 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -24,6 +24,10 @@
 #include <dirent.h>             /* standard directory definitions       */
 #endif /* _WIN32 */
 #include <sys/stat.h>           /* file status definitions              */
+
+#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(HPUX1010) || defined(IRIX6) || defined(linux) || defined(AIX42) || defined(IRIX5)
+#include <sys/uio.h>
+#endif /* SOLARIS || (__osf__ && __alpha) || HPUX1010 || IRIX6 || linux || AIX42|| IRIX5 */
 
 /*
  * Common includes needed by internal (kernel) routines.
