@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.12 $ $Date: 2000/08/25 08:03:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.13 $ $Date: 2001/08/31 14:29:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,13 +34,14 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.12 $ $Date: 20
 #include <vdqm.h>
 
 void initlog(char *, int, char *);
-int vdqm_shutdown, vdqm_restart;
+int vdqm_shutdown;
 
 int vdqm_main(struct main_args *main_args) {
     vdqmnw_t *nw, *nwtable;
     int rc, poolID;
 
-    vdqm_shutdown = vdqm_restart = 0;
+    vdqm_shutdown = 0;
+	nw = nwtable = NULL;
 
 #if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
@@ -51,14 +52,27 @@ int vdqm_main(struct main_args *main_args) {
     log(LOG_INFO,"******* VDQM server generated at %s %s.\n",
              __DATE__,__TIME__);
 #endif /* __DATE__ && __TIME__ */
-    rc = vdqm_InitNW(&nw);
+    (void)vdqm_InitNW(NULL);
+	rc = vdqm_InitProcReq();
+	if ( rc == -1 ) {
+		log(LOG_ERR,"vdqm_InitProcreq(): %s\n",sstrerror(serrno));
+		return(vdqm_CleanUp(nw,1));
+	}
+
+    rc = vdqm_InitQueueOp();
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_InitNw(): %s\n",neterror());
+        log(LOG_ERR,"vdqm_InitQueueOp(): %s\n",sstrerror(serrno));
         return(vdqm_CleanUp(nw,1));
     }
+
     rc = vdqm_StartReplicaThread();
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_StartReplicaThread(): %s\n",sstrerror(serrno));
+        return(vdqm_CleanUp(nw,1));
+    }
+    rc = vdqm_InitNW(&nw);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_InitNw(): %s\n",neterror());
         return(vdqm_CleanUp(nw,1));
     }
     rc = vdqm_StartRollbackThread();
@@ -69,11 +83,6 @@ int vdqm_main(struct main_args *main_args) {
     rc = vdqm_InitPool(&nwtable);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_InitPool(): %s\n",sstrerror(serrno));
-        return(vdqm_CleanUp(nw,1));
-    }
-    rc = vdqm_InitQueueLock();
-    if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_InitQueueLock(): %s\n",sstrerror(serrno));
         return(vdqm_CleanUp(nw,1));
     }
     poolID = rc;
@@ -91,15 +100,9 @@ int vdqm_main(struct main_args *main_args) {
             log(LOG_ERR,"vdqm_GetPool(): %s\n",sstrerror(serrno));
             break;
         }
-        if ( vdqm_restart == 1 ) {
-            vdqm_restart = 0;
-            rc = vdqm_StartReplicaThread();
-            if ( rc == -1 ) {
-                log(LOG_ERR,"vdqm_StartReplicaThread(): %s\n",sstrerror(serrno));
-                return(vdqm_CleanUp(nw,1));
-            }
-        }
     }
+    log(LOG_INFO,"main: shutting down. Waiting for all requests to finish\n");
+    (void)vdqm_WaitForReqs(0);
     log(LOG_INFO,"main:\n\n ******* VDQM SERVER EXIT ******\n\n");
     return(vdqm_CleanUp(nw,1));
 }

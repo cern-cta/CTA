@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.15 $ $Date: 2000/08/14 13:06:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.16 $ $Date: 2001/08/31 14:29:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,6 +34,103 @@ extern char *geterr();
 const int return_status = 0;
 static int error_key;
 int hold = 0;
+void *hold_lock = NULL;
+int nbReqs = 0;
+void *nbReqs_lock = NULL;
+
+
+int vdqm_InitProcReq() {
+
+    if ( Cthread_mutex_lock(&hold)==-1 ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_lock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( Cthread_mutex_unlock(&hold)==-1 ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_unlock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( (hold_lock=Cthread_mutex_lock_addr(&hold))==NULL ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_lock_addr(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( Cthread_mutex_lock(&nbReqs)==-1 ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_lock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( Cthread_mutex_unlock(&nbReqs)==-1 ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_unlock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    if ( (nbReqs_lock=Cthread_mutex_lock_addr(&nbReqs))==NULL ) {
+        log(LOG_ERR,"vdqm_InitProcReq() Cthread_mutex_lock_addr(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+
+    return(0);
+}
+
+int vdqm_ReqStarted() {
+    if ( Cthread_mutex_lock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_ReqStarted() Cthread_mutex_lock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    nbReqs++;
+    if ( Cthread_mutex_unlock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_ReqStarted() Cthread_mutex_unlock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(0);
+}
+
+int vdqm_ReqEnded() {
+    int rc = 0;
+    if ( Cthread_mutex_lock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_ReqEnded() Cthread_mutex_lock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    nbReqs--;
+    if ( Cthread_cond_broadcast_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_ReqEnded() Cthread_cond_broadcast_ext(): %s\n",
+            sstrerror(serrno));
+        rc = -1;
+    }
+    if ( Cthread_mutex_unlock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_ReqEnded() Cthread_mutex_unlock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(rc);
+}
+
+int vdqm_WaitForReqs(int howmany) {
+    int rc = 0;
+    if ( Cthread_mutex_lock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_WaitForReqs() Cthread_mutex_lock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    while ( rc == 0 && nbReqs > howmany ) {
+        if ( (rc = Cthread_cond_wait_ext(nbReqs_lock)) == -1 ) {
+            log(LOG_ERR,"vdqm_WaitForReqs() Cthread_cond_wait_ext(): %s\n",
+                sstrerror(serrno));
+        }
+    }
+    if ( Cthread_mutex_unlock_ext(nbReqs_lock)==-1 ) {
+        log(LOG_ERR,"vdqm_WaitForReqs() Cthread_mutex_unlock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(rc);
+}
 
 void *vdqm_ProcReq(void *arg) {
     vdqmVolReq_t volumeRequest;
@@ -47,7 +144,8 @@ void *vdqm_ProcReq(void *arg) {
     char req_strings[][20] = VDQM_REQ_STRINGS;
     char *req_string;
     int req_values[] = VDQM_REQ_VALUES;
-    extern int vdqm_shutdown, vdqm_restart;
+    extern int vdqm_shutdown;
+    int queues_locked = 0;
     
     log(LOG_DEBUG,"vdqm_ProcReq() called with arg=0x%lx\n",arg);
     client_connection = (vdqmnw_t *)arg;
@@ -66,29 +164,39 @@ void *vdqm_ProcReq(void *arg) {
             reqtype);
     } else {
         rc = 0;
-        Cthread_mutex_lock(&hold);
+        if ( Cthread_mutex_lock_ext(hold_lock)==-1 ) {
+            log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_lock_ext(): %s\n",
+                sstrerror(serrno));
+            return((void *)&return_status);
+        }
         if ( reqtype == VDQM_SHUTDOWN ) {
             log(LOG_INFO,"vdqm_ProcReq(): shutdown server requested\n");
             hold = vdqm_shutdown = 1;
+            vdqm_PipeHangup();
             rc = 1;
         }
         if ( reqtype == VDQM_HOLD ) {
-            if ( !hold ) log(LOG_INFO,"vdqm_ProcReq(): server RELEASE\n");
+            if ( !hold ) log(LOG_INFO,"vdqm_ProcReq(): set server HOLD status\n");
             hold = 1;
             rc = 1;
         }
         if ( reqtype == VDQM_RELEASE ) {
-            if ( hold ) log(LOG_INFO,"vdqm_ProcReq(): server RELEASE\n");
+            if ( hold ) log(LOG_INFO,"vdqm_ProcReq(): set server RELEASE status\n");
             hold = 0;
             rc = 1;
         }
         if ( hold && reqtype != VDQM_REPLICA ) {
-            log(LOG_INFO,"vdqm_ProcReq(): server in HOLD\n");
+            log(LOG_INFO,"vdqm_ProcReq(): server in HOLD status\n");
             vdqm_SetError(EVQHOLD);
             rc = -1;
         }
-        Cthread_mutex_unlock(&hold);
+        if ( Cthread_mutex_unlock_ext(hold_lock)==-1 ) {
+            log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_unlock_ext(): %s\n",
+                sstrerror(serrno));
+            return((void *)&return_status);
+        }
 
+        vdqm_ReqStarted();
         if ( !rc ) {
             switch (reqtype) {
             case VDQM_VOL_REQ:
@@ -107,24 +215,68 @@ void *vdqm_ProcReq(void *arg) {
                 rc = vdqm_DedicateDrv(&driveRequest);
                 break;
             case VDQM_REPLICA:
+                /*
+                 * Make sure new requests will wait
+                 */
+                if ( Cthread_mutex_lock_ext(hold_lock)==-1 ) {
+                    log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_lock_ext(): %s\n",
+                        sstrerror(serrno));
+                    return((void *)&return_status);
+                }
                 rc = vdqm_CheckReplicaHost(client_connection);
-                if ( rc == 0 ) rc = vdqm_LockAllQueues();
+                if ( rc == 0 ) {
+                    /*
+                     * Wait for all threads except ourselves before
+                     * locking the queues. Otherwise we risk a deadlock.
+                     */
+                    if ( !hold) (void)vdqm_WaitForReqs(1);
+                    rc = vdqm_LockAllQueues();
+                    if ( rc == 0 ) queues_locked = 1;
+                }
                 if ( rc == 0 && !hold ) rc = vdqm_DumpQueues(client_connection);
+
                 if ( rc == 0 )
                     rc = vdqm_AddReplica(client_connection,&hdr);
                 save_serrno = serrno;
                 if ( rc == 0 ) 
                     log(LOG_INFO,"vdqm_ProcReq(): replica client added\n");
                 else {
-                    log(LOG_ERR,"vdqm_ProcReq(): failed to add replica\n");
-                    if ( rc == 1 ) {
+                    if ( rc == -1 ) {
+                        log(LOG_ERR,"vdqm_ProcReq(): failed to add replica\n");
+                    } else if ( rc == 1 ) {
                         log(LOG_INFO,"vdqm_ProcReq() re-enter replication mode\n");
                         hold = 1;
-                        vdqm_restart = 1;
+                        /*
+                         * Inform main server that we are back in
+                         * replication mode
+                         */
+                        (void)vdqm_Hangup(client_connection);
+                        (void)vdqm_RecvAckn(client_connection);
+                        log(LOG_INFO,"vdqm_ProcReq() replication mode entered\n");
+                        rc = vdqm_StartReplicaThread();
+                        if ( rc == -1 ) {
+                            log(LOG_ERR,"vdqm_ProcReq() vdqm_StartReplicaThread(): %s\n",sstrerror(serrno));
+                            /*
+                             * If a secondary replica server can't start
+                             * its replication thread, there is not much else
+                             * for it to do than exit.
+                             */
+                            log(LOG_ERR,"**** VDQM replica failed to start ****\n");
+                            exit(1);
+                        }
                     }
                     (void)vdqm_CloseConn(client_connection);
                 }
-                if ( !hold ) (void)vdqm_UnlockAllQueues();
+                if ( queues_locked == 1 ) {
+                    queues_locked = 0;
+                    (void)vdqm_UnlockAllQueues();
+                }
+                if ( Cthread_mutex_unlock_ext(hold_lock)==-1 ) {
+                    log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_unlock_ext(): %s\n",
+                        sstrerror(serrno));
+                    return((void *)&return_status);
+                }
+                vdqm_ReqEnded();
                 (void)vdqm_ReturnPool(client_connection);
                 return((void *)&return_status);
                 break;
@@ -175,6 +327,15 @@ void *vdqm_ProcReq(void *arg) {
                 (void) vdqm_AcknPing(client_connection,rc);
                 (void) vdqm_CloseConn(client_connection);
                 log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+                vdqm_ReqEnded();
+                vdqm_ReturnPool(client_connection);
+                return((void *)&return_status);
+                break;
+            case VDQM_HANGUP:
+                (void) vdqm_RecvAckn(client_connection);
+                log(LOG_INFO,"vdqm_ProcReq(): hangup request acknowledged\n");
+                (void)vdqm_CloseConn(client_connection);
+                vdqm_ReqEnded();
                 vdqm_ReturnPool(client_connection);
                 return((void *)&return_status);
                 break;
@@ -221,6 +382,7 @@ void *vdqm_ProcReq(void *arg) {
     }
     (void) vdqm_CloseConn(client_connection);
     log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+    vdqm_ReqEnded();
     vdqm_ReturnPool(client_connection);
     return((void *)&return_status);
 }
@@ -230,7 +392,7 @@ void *vdqm_OnRollbackThread(void *arg) {
     log(LOG_INFO,"vdqm_OnRollbackThread() started\n");
     rc = vdqm_OnRollback();
     log(LOG_ERR,"vdqm_OnRollbackThread() unexpected return from vdqm_OnRollback(), rc = %d\n",rc);
-    return;
+    return((void *)return_status);
 }
 int vdqm_StartRollbackThread() {
     int rc;

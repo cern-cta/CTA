@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.15 $ $Date: 2001/02/05 10:46:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.16 $ $Date: 2001/08/31 14:29:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -40,7 +40,7 @@ static int retry_replication = VDQM_REPLICA_RETRIES;
 
 extern dgn_element_t *dgn_queues;
 extern int nb_dgn;
-extern int hold;
+extern int hold, vdqm_shutdown;
 extern char *getconfent _PROTO((char *, char *, int));
 /*
  * Function pointer set in vdqm_Broadcast for special replication
@@ -59,7 +59,7 @@ int DLL_DECL (*vdqm_broadcast_upd) _PROTO((vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvR
 #define INVALID_DGN_CONTEXT (dgn_context == NULL && hold == 1)
 
 static vdqmReplicaList_t *ReplicaList = NULL;
-static int nb_Replicas = 0;
+static int nb_Replicas = -1;
 void *ReplicaList_lock = NULL;
 
 typedef struct ReqPipe {
@@ -226,6 +226,30 @@ static int R_GetDrvRecord(const dgn_element_t *dgn_context,
     } else {
         *drvrec = NULL;
     }
+    return(0);
+}
+
+static int R_FreeAllQueues() {
+    int id = 0;
+    dgn_element_t *dgn_context = NULL;
+    vdqm_volrec_t *vol = NULL;
+    vdqm_drvrec_t *drv = NULL;
+
+    CLIST_ITERATE_BEGIN(dgn_queues,dgn_context) {
+        while ( dgn_context->vol_queue != NULL ) {
+            vol = dgn_context->vol_queue->next;
+            CLIST_DELETE(dgn_context->vol_queue,vol);
+            free(vol);
+        }
+        while ( dgn_context->drv_queue != NULL ) {
+            drv = dgn_context->drv_queue->next;
+            CLIST_DELETE(dgn_context->drv_queue,drv);
+            free(drv);
+        }
+    } CLIST_ITERATE_END(dgn_queues,dgn_context);
+    (void)vdqm_NewVolReqID(&id);
+    (void)vdqm_NewDrvReqID(&id);
+    log(LOG_DEBUG,"vdqm_DumpQueues() finished\n");
     return(0);
 }
 
@@ -428,6 +452,16 @@ static int InitReplicaList() {
     return(0);
 }
 
+static int ReplicaListInitialized() {
+    int rc = 0;
+    (void) Cthread_mutex_lock(&nb_Replicas);
+    if ( nb_Replicas >= 0 ) rc = 1;
+    (void) Cthread_mutex_unlock(&nb_Replicas);
+    return(rc);
+}
+
+
+
 static int LockReplicaList() {
     return(Cthread_mutex_lock_ext(ReplicaList_lock));
 }
@@ -473,7 +507,6 @@ static int NewReplicaRecord(vdqmReplicaList_t **rpl) {
 }
 
 static int CheckReplica(vdqmReplica_t *Replica) {
-    int rc;
     char *p, *q;
     char *last = NULL;
 
@@ -510,7 +543,7 @@ int vdqm_CheckReplicaHost(vdqmnw_t *nw) {
 }
 
 static int DeleteReplica(vdqmReplica_t *Replica) {
-    int rc, save_serrno;
+    int rc;
     vdqmReplicaList_t *rpl = NULL;
 
     /*
@@ -523,6 +556,7 @@ static int DeleteReplica(vdqmReplica_t *Replica) {
         return(-1);
     }
     CLIST_DELETE(ReplicaList,rpl);
+    nb_Replicas--;
     return(0);
 }
 
@@ -536,7 +570,12 @@ int vdqm_AddReplica(vdqmnw_t *nw, vdqmHdr_t *hdr) {
         vdqm_SetError(SEINTERNAL);
         return(-1);
     }
-    if ( replication_ON == 0 ) {
+    if ( !ReplicaListInitialized() ) {
+        /*
+         * Replication list is not initialized. We are probably
+         * a secondary replica. Just report and return 1 to signal
+         * that the primary server has taken over.
+         */
         log(LOG_ERR,"vdqm_AddReplica() replication not started\n");
         return(1);
     }
@@ -587,14 +626,13 @@ int vdqm_AddReplica(vdqmnw_t *nw, vdqmHdr_t *hdr) {
         (void)UnlockReplicaList();
         return(-1);
     }
-/*
-    memcpy(&rpl->Replica,Replica,sizeof(vdqmReplica_t));
-*/
+
     rpl->Replica = _Replica;
     if ( hdr != NULL ) rpl->magic = hdr->magic;
     else rpl->magic = VDQM_MAGIC;
 
     CLIST_INSERT(ReplicaList,rpl);
+    nb_Replicas++;
     rc = UnlockReplicaList();
     if ( rc == -1 ) {
         save_serrno = serrno;
@@ -623,10 +661,10 @@ static int UnlockReplicaPipe() {
 
 static int PipeRequest(int vol_action, vdqm_volrec_t *vol, 
                        int drv_action, vdqm_drvrec_t *drv) {
-    int i,rc, save_serrno;
+    int i;
 
     log(LOG_DEBUG,"PipeRequest() called\n");
-    if ( vol == NULL && drv == NULL ) return(-1);
+    if ( vol == NULL && drv == NULL && vdqm_shutdown == 0 ) return(-1);
 
     if ( ReplicationPipe.nb_piped  >= VDQM_REPLICA_PIPELEN ) {
         log(LOG_ERR,"PipeRequest() Replication failure! pipe is full\n");
@@ -645,6 +683,8 @@ static int PipeRequest(int vol_action, vdqm_volrec_t *vol,
     ReplicationPipe.pipe[i].update = 0;
     if ( vol != NULL ) ReplicationPipe.pipe[i].update = 1; 
     if ( vol != NULL && drv != NULL ) ReplicationPipe.pipe[i].update = 2;
+    if ( vol == NULL && drv == NULL && vdqm_shutdown != 0 )
+        ReplicationPipe.pipe[i].update = 3;
     ReplicationPipe.nb_piped++;
 
     log(LOG_DEBUG,"PipeRequest() returns with nb_piped=%d\n",
@@ -655,7 +695,7 @@ static int PipeRequest(int vol_action, vdqm_volrec_t *vol,
     
 
 void *vdqm_ReplicationThread(void *arg) {
-    int i, rc, failed, save_serrno;
+    int i, rc, failed;
     struct vdqmReplicationPipe l_ReplicationPipe;
     vdqmReplicaList_t *rpl = NULL;
 
@@ -709,6 +749,12 @@ void *vdqm_ReplicationThread(void *arg) {
         for (i=0; i<l_ReplicationPipe.nb_piped; i++) {
             failed = 0;
             CLIST_ITERATE_BEGIN(ReplicaList,rpl) {
+                if ( l_ReplicationPipe.pipe[i].update == 3 ) {
+                    log(LOG_INFO,"vdqm_ReplicationThread() send hangup to replica at %s\n",
+                        rpl->Replica.host);
+                    (void)vdqm_Hangup(&rpl->Replica.nw);
+                    (void)vdqm_RecvAckn(&rpl->Replica.nw);
+                }
                 if ( l_ReplicationPipe.pipe[i].update == 0 ||
                      l_ReplicationPipe.pipe[i].update == 2 ) {
                     l_ReplicationPipe.pipe[i].drvhdr.magic = rpl->magic;
@@ -739,6 +785,15 @@ void *vdqm_ReplicationThread(void *arg) {
                 }
                 if ( rpl->Replica.failed > 0 ) failed++;
             } CLIST_ITERATE_END(ReplicaList,rpl);
+
+            if ( l_ReplicationPipe.pipe[i].update == 3 ) {
+                /*
+                 * This means a shutdown is in progress. The main
+                 * thread will not exit until we have assured that
+                 * the hangup has been sent to all replicas
+                 */
+                (void)vdqm_ReqEnded();
+            }
             /*
              * If some replicas failed their connection probably failed.
              * Close the connection and remove them from the list.
@@ -765,7 +820,8 @@ void *vdqm_ReplicationThread(void *arg) {
 }
 
 void *vdqm_ReplicaListenThread(void *arg) {
-    int rc, retry_time;
+    int rc, retry_time, local_running;
+    static int running = 0;
     int *rc_p = NULL;
     vdqmHdr_t hdr;
     vdqmVolReq_t volreq;
@@ -777,10 +833,33 @@ void *vdqm_ReplicaListenThread(void *arg) {
         log(LOG_ERR,"vdqm_ReplicaListenThread() called without arguments\n");
         return((void *)&failure);
     }
+    rc_p = &success;
+    /*
+     * At startup it can sometimes happen that two instances of this
+     * thread may be launched. This is, for instance, the case when
+     * the replica and primary server is started at the same time.
+     * Make sure that only one of them is allowed to run.
+     */
     log(LOG_INFO,"vdqm_ReplicaListenThread() started\n");
+    if ( Cthread_mutex_lock(&running) == -1 ) {
+        log(LOG_ERR,"vdqm_ReplicaListenThread() Cthread_mutex_lock(): %s\n",
+            sstrerror(serrno));
+        return(rc_p);
+    }
+    local_running = running;
+    if ( running == 0 ) running=1;
+    if ( Cthread_mutex_unlock(&running) == -1 ) {
+        log(LOG_ERR,"vdqm_ReplicaListenThread() Cthread_mutex_unlock(): %s\n",
+            sstrerror(serrno));
+        return(rc_p);
+    }
+    if ( local_running == 1 ) {
+        log(LOG_ERR,"vdqm_ReplicaListenThread() another instance already started\n");
+        return(rc_p);
+    }
+
     replication_ON = 1;
     retry_time = 5;
-    rc_p = &success;
 
     strcpy(primary_host,(char *)arg);
     log(LOG_INFO,"vdqm_ReplicaListenThread() using primary host %s\n",
@@ -811,7 +890,8 @@ void *vdqm_ReplicaListenThread(void *arg) {
             continue;
         }
 
-        for (;;) { 
+        for (;;) {
+            log(LOG_DEBUG,"vdqm_ReplicaListenThread() listen: nw=0x%x\n",nw);
             rc = vdqm_Listen(nw);
             if ( rc == -1 ) {
                 log(LOG_ERR,"vdqm_ReplicaListenThread() vdqm_Listen(): %s\n",
@@ -823,6 +903,13 @@ void *vdqm_ReplicaListenThread(void *arg) {
             if ( rc == -1 ) {
                 log(LOG_ERR,"vdqm_ReplicaListenThread() vdqm_RecvReq(): %s\n",
                     sstrerror(serrno));
+                (void)vdqm_CloseConn(nw);
+                break;
+            }
+            if ( hdr.reqtype == VDQM_HANGUP ) {
+                (void)vdqm_AcknHangup(nw);
+                retry_replication = 0;
+                log(LOG_INFO,"vdqm_ReplicaListenThread() hangup received\n");
                 (void)vdqm_CloseConn(nw);
                 break;
             }
@@ -856,13 +943,18 @@ void *vdqm_ReplicaListenThread(void *arg) {
             }
         } /* for (;;) */
         retry_replication--;
-        if ( retry_replication > 0 ) sleep(retry_time);
-        log(LOG_INFO,"vdqm_ReplicaListenThread() retry nb %d\n",
-            VDQM_REPLICA_RETRIES-retry_replication);
+        if ( retry_replication > 0 ) {
+            sleep(retry_time);
+            log(LOG_INFO,"vdqm_ReplicaListenThread() retry nb %d\n",
+                VDQM_REPLICA_RETRIES-retry_replication);
+        }
     } /* while ( retry_replication > 0 ) */
     if ( nw != NULL ) free(nw);
     replication_ON = 0;
     hold = 0;
+    (void)Cthread_mutex_lock(&running);
+    running = 0;
+    (void)Cthread_mutex_unlock(&running);
     log(LOG_INFO,"vdqm_ReplicaListenThread() exits because retry limit exhausted\n");
     return((void *)rc_p);
 }
@@ -923,6 +1015,11 @@ int vdqm_StartReplicaThread() {
             log(LOG_INFO,"vdqm_StartReplicaThread() server in replica mode. Hold status set!\n");
             hold = 1;
             retry_replication = VDQM_REPLICA_RETRIES;
+            /*
+             * Remove all queues from memory. The Replica listen thread
+             * receives a new up-to-date dump from the primary server
+             */
+            (void)R_FreeAllQueues();
             rc = Cthread_create_detached(
                                  (void *(*)(void *))vdqm_ReplicaListenThread,
                                  (void *)primary_host);
@@ -948,13 +1045,6 @@ int vdqm_StartReplicaThread() {
         retry_replication = hold = 1;
         rc_p = (int *)vdqm_ReplicaListenThread((void *)secondary_host);
         if ( rc_p == NULL || *rc_p == failure ) continue;
-        /*
-         * Repeat request to force secondary server to re-enter replication mode
-         */
-        retry_replication = hold = 1;
-        log(LOG_INFO,"vdqm_ReplicaListenThread() force %s to re-enter replica mode\n",
-            secondary_host);
-        (void)vdqm_ReplicaListenThread(secondary_host);
         break;
     }
     hold = 0;
@@ -975,6 +1065,16 @@ int vdqm_StartReplicaThread() {
         return(-1);
     }
     log(LOG_INFO,"vdqm_StartReplicaThread() Replication thread started\n");
+    return(0);
+}
+
+int vdqm_PipeHangup() {
+    if ( replication_ON == 1 ) {
+        (void)vdqm_ReqStarted();
+        (void)LockReplicaPipe();
+        (void)PipeRequest(VDQM_VOL_REQ,NULL,VDQM_DRV_REQ,NULL);
+        (void)UnlockReplicaPipe();
+    }
     return(0);
 }
 
