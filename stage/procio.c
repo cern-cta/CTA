@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.38 2000/09/20 11:25:27 jdurand Exp $
+ * $Id: procio.c,v 1.39 2000/09/27 08:08:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.38 $ $Date: 2000/09/20 11:25:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.39 $ $Date: 2000/09/27 08:08:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -71,11 +71,13 @@ void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
 extern int isuserlevel _PROTO((char *));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
-extern int upd_stageout _PROTO((int, char *, int *, int));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
+extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
+extern void update_migpool _PROTO((struct stgcat_entry *, int));
 
 #ifdef MIN
 #undef MIN
@@ -1140,8 +1142,8 @@ void procioreq(req_type, req_data, clienthost)
 			if (i < nbtpf || nhsmfiles > 0)
 				wqp->nb_subreqs++;
 			/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
-			/* -> Migrationflag set to 1 */
-			if (nhsmfiles > 0) wqp->Migrationflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
+			/* -> StageIDflag set to 1 */
+			if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? -1 : 0;
 			wfp++;
 			break;
 		case STAGECAT:
@@ -1250,6 +1252,7 @@ void procputreq(req_data, clienthost)
 	gid_t gid;
 	struct group *gr;
 	int Iflag = 0;
+	int migrationflag = 0;
 	int Mflag = 0;
 	char *name;
 	int nargs;
@@ -1276,6 +1279,8 @@ void procputreq(req_data, clienthost)
 	int jhsmfiles;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
+	int ntapefiles = 0;
+	int ndiskfiles = 0;
 	int nuserlevel = 0;
 	int nexplevel = 0;
 	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
@@ -1315,6 +1320,9 @@ void procputreq(req_data, clienthost)
 		case 'I':
 			externfile = optarg;
 			Iflag = 1;
+			break;
+		case 'm':
+			migrationflag = 1;
 			break;
 		case 'M':
 			Mflag = 1;
@@ -1379,6 +1387,12 @@ void procputreq(req_data, clienthost)
 	if ((Iflag || Mflag) && (optind != nargs))
 		errflg++;
 
+	if (migrationflag && ! Mflag) {
+		/* -m option can be used only with -M option */
+		sendrep (rpfd, MSG_ERR, "STG35 - option -m requires option -M\n");
+		errflg++;
+	}
+
 	if (errflg) {
 		c = USERR;
 		goto reply;
@@ -1429,10 +1443,6 @@ void procputreq(req_data, clienthost)
 			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
-		}
-		/* It it is CASTOR's user-level files, we change requester (uid,gid) to be stage:st */
-		if (ncastorfiles > 0 && nuserlevel > 0) {
-			stglogit(func, "STG33 - %s\n", "stageput on CASTOR user-level files : uid:gid forced to stage:st in waitq");
 		}
 	}
 
@@ -1558,21 +1568,29 @@ void procputreq(req_data, clienthost)
 					c = USERR;
 					goto reply;
 				}
+				/* If migration flag is set, then status must have flag CAN_BE_MIGR */
+				/* If not, then status must not have flag CAN_BE_MIGR */
+				if ((migrationflag != 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR) ||
+					(migrationflag == 0 && (hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR)) {
+					sendrep(rpfd, MSG_ERR, STG33, hsmfiles[ihsmfiles],migrationflag ? "must have CAN_BE_MIGR state (automatic migration)\n" : "is already flagged for the automatic migration\n");
+					c = USERR;
+					goto reply;
+				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT | CAN_BE_MIGR;
+					hsmfilesstcp[ihsmfiles]->a_time = time (0);
 				} else {
 					int save_status;
 
-					/* We make upd_stageout that is a normal stageput following a stageout */
+					/* We make upd_stageout believe that it is a normal stageput following a stageout */
 					save_status = hsmfilesstcp[ihsmfiles]->status;
 					hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
-					if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0)) {
+					if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, NULL)) {
 						hsmfilesstcp[ihsmfiles]->status = save_status;
 						goto reply;
 					}
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT;
 				}
-				hsmfilesstcp[ihsmfiles]->a_time = time (0);
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1584,24 +1602,142 @@ void procputreq(req_data, clienthost)
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
 				/* If it is CASTOR user files, then migration (explicit or not) is done under stage:st */
-				/* -> Migrationflag set to 1 */
-				if (nhsmfiles > 0) wqp->Migrationflag = (ncastorfiles > 0 && nuserlevel > 0) ? 1 : 0;
+				/* -> StageIDflag set to 1 */
+				if (nhsmfiles > 0) wqp->StageIDflag = (ncastorfiles > 0 && nuserlevel > 0) ? (migrationflag != 0 ? 1 : -1) : 0;
 				wfp++;
 			}
 		}
 	} else {
+		struct stgcat_entry *found_stcp;
+
 		/* compute number of disk files */
 		nbdskf = nargs - optind;
 
+		/* We verify that, if there is CASTOR HSM files, there is NO mixing between userlevel and explevel ones */
+		/* and, if there are also other types of files, there is NO userlevel CASTOR's ones. */
 		for (i = 0; i < nbdskf; i++) {
 			strcpy (upath, argv[optind+i]);
-			if (c = upd_stageout (STAGEPUT, upath, &subreqid, 0))
+			if (c = ask_stageout (STAGEPUT, upath, &found_stcp))
 				goto reply;
+			switch (found_stcp->t_or_d) {
+			case 'm':
+			case 'h':
+				switch (found_stcp->t_or_d) {
+				case 'm':
+					++nhpssfiles;
+					break;
+				case 'h':
+					++ncastorfiles;
+					if ((found_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+						sendrep(rpfd, MSG_ERR, STG33, upath, "is already flagged for the automatic migration\n");
+						c = USERR;
+						goto reply;
+					}
+	                /* We take the opportunity to decide which level of migration (user/exp) */
+					if (isuserlevel(found_stcp->u1.h.xfile)) {
+						nuserlevel++;
+        			} else {
+          				nexplevel++;
+	        		}
+					break;
+				}
+                /* We will later remind the corresponding stcp */
+				if (nhsmfiles == 0) {
+					if ((hsmfilesstcp = (struct stgcat_entry **) malloc(sizeof(struct stgcat_entry *))) == NULL) {
+						c = SYERR;
+						goto reply;
+					}
+				} else {
+					struct stgcat_entry **dummy2 = hsmfilesstcp;
+					if ((dummy2 = (struct stgcat_entry **) realloc(hsmfilesstcp,(nhsmfiles+1) * sizeof(struct stgcat_entry *))) == NULL) {
+						c = SYERR;
+						goto reply;
+					}
+					hsmfilesstcp = dummy2;
+				}
+				hsmfilesstcp[nhsmfiles++] = found_stcp;
+				break;
+			case 't':
+				++ntapefiles;
+				break;
+			case 'd':
+				++ndiskfiles;
+				break;
+			default:
+				sendrep (rpfd, MSG_ERR, STG33, upath, "unknown type");
+				c = USERR;
+				goto reply;
+			}
+		}
+		/* The stager branch is the following : */
+		/* if ('d' or 'm') then                 */
+		/*   filecopy (through rfio)            */
+		/* else                                 */
+		/*   if ('t') then                      */
+		/*     tape_to_tape                     */
+		/*   else             -- then it is 'm' */
+		/*     castor_migration                 */
+		/*   endif                              */
+		/* endif                                */
+
+		/* In the following we make sure that   */
+		/* those conditions are fullfilled at   */
+		/* fork_exec time.                      */
+
+		/* It is not allowed to mix ('d' or 'm') with other types */
+		if ((ndiskfiles > 0 || nhpssfiles > 0) && (ntapefiles > 0 || ncastorfiles > 0)) {
+			sendrep (rpfd, MSG_ERR, "STG02 - Mixing ('tape' or 'non-CASTOR') files with other types is not allowed\n");
+			c = USERR;
+			goto reply;
+		}
+		/* It is not allowed to mix 't' with 'h' type */
+		if (ntapefiles > 0 && ncastorfiles > 0) {
+			sendrep (rpfd, MSG_ERR, "STG02 - Mixing 'tape' files with 'CASTOR' files is not allowed\n");
+			c = USERR;
+			goto reply;
+		}
+		/* CASTOR files ? */
+		if (ncastorfiles > 0) {
+			/* Mixed CASTOR types */
+			if (nuserlevel > 0 && nexplevel > 0) {
+				sendrep (rpfd, MSG_ERR, "STG02 - Mixing user-level and experiment-level CASTOR files is not allowed\n");
+				c = USERR;
+				goto reply;
+			}
+			/* Simulate a STAGEUPDC call on all CASTOR HSM files */
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				int save_status;
+
+				/* We make upd_stageout believe that it is a normal stageput following a stageupdc followinga stageout */
+				/* This will force Cns_setfsize to be called. */
+				save_status = hsmfilesstcp[ihsmfiles]->status;
+				hsmfilesstcp[ihsmfiles]->status = STAGEOUT;
+				if (c = upd_stageout (STAGEUPDC, hsmfilesstcp[ihsmfiles]->ipath, &subreqid, 0, hsmfilesstcp[ihsmfiles])) {
+					hsmfilesstcp[ihsmfiles]->status = save_status;
+					goto reply;
+				}
+				hsmfilesstcp[ihsmfiles]->status = STAGEPUT;
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+			}
+		}
+
+		for (i = 0; i < nbdskf; i++) {
+			strcpy (upath, argv[optind+i]);
+			if (ncastorfiles <= 0) {
+				/* We call upd_stageout as normal for all files except CASTOR HSM ones */
+				if (c = upd_stageout (STAGEPUT, upath, &subreqid, 0, NULL))
+					goto reply;
+			}
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
 									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp, NULL, NULL);
 			wfp->subreqid = subreqid;
 			wqp->nbdskf++;
 			wqp->nb_subreqs++;
+			if (nuserlevel > 0) wqp->StageIDflag = (migrationflag != 0 ? 1 : -1);
 			wfp++;
 		}
 	}
@@ -1630,7 +1766,7 @@ void procputreq(req_data, clienthost)
 			}
 			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-				update_migpool(stcp,-1,0);
+				update_migpool(stcp,-1);
 			} else {
 				stcp->status = STAGEOUT|PUT_FAILED;
 			}
