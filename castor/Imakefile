@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Release$ $Date: 2004/07/29 09:33:43 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Release$ $Date: 2004/07/29 17:00:21 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -198,7 +198,7 @@ STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 STAGEIN_SRCS = client/StageIn.cpp client/StageInMain.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 STAGEOUT_SRCS = client/StageOut.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 STAGEUPDC_SRCS = client/StageUpdc.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-STAGEQRY_SRCS = client/StageQry.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
+STAGEQRY_SRCS = client/StageQry.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp client/StageQryResponseHandler.cpp
 MTTEST_SRCS = client/Mttest.cpp client/StageIn.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(STAGEQRY_SRCS) $(MTTEST_SRCS)
 STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
