@@ -33,11 +33,12 @@ static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-P
 #include "net.h"
 #include "serrno.h"
 #include "osdep.h"
-#include "stage.h"
-#include "stage_api.h"
 #include "Cnetdb.h"
 #include "Cglobals.h"
-#include "stage_api.h"
+#include "Castor_limits.h"
+#include "stage_struct.h"
+#include "stage_messages.h"
+#include "stage_protocol.h"
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
@@ -515,7 +516,7 @@ int dosymlink (file1, file2)
 	
 	strcpy (func, "send2stgd");
 	remote = rfio_parseln (file2, &host, &filename, NORDLINKS);
-	serrno = 0;
+	PRE_RFIO;
 	if (rfio_symlink (file1, file2) &&
 			((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
 		stage_errmsg (func, STG02, file1, "symlink", rfio_serror());
@@ -549,6 +550,7 @@ void dounlink (path)
 	
 	strcpy (func, "send2stgd");
 	remote = rfio_parseln (path, &host, &filename, NORDLINKS);
+	PRE_RFIO;
 	if (rfio_unlink (path)) {
 		if ((remote && rfio_errno == ENOENT) ||
 				(remote == 0 && errno == ENOENT)) return;
@@ -561,12 +563,14 @@ void dounlink (path)
 			return;
 		}
 #if !defined(_WIN32)
+		PRE_RFIO;
 		if (rfio_lstat (path, &st) != 0) {
 			stage_errmsg (func, STG02, path, "unlink(lstat)", rfio_serror());
 			return;
 		}
 		setgid (st.st_gid);
 		setuid (st.st_uid);
+		PRE_RFIO;
 		if (rfio_unlink (path)) {
 			stage_errmsg (func, STG02, path, "unlink", rfio_serror());
 			return;
