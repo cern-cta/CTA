@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.2 2001/12/10 16:19:41 jdurand Exp $
+ * $Id: procping.c,v 1.3 2002/02/05 15:26:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.2 $ $Date: 2001/12/10 16:19:41 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.3 $ $Date: 2002/02/05 15:26:27 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -21,6 +21,9 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.2 $ $Date: 200
 #include "stage_api.h"
 #include "Cgetopt.h"
 #include "marshall.h"
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #define local_unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #if SACCT
 #include "../h/sacct.h"
@@ -31,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.2 $ $Date: 200
 
 void procpingreq _PROTO((int, int, char *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 
 extern char func[16];
 extern int rpfd;
@@ -95,7 +99,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 			verbose_flag++;
 		}
 		/* Print the flags */
-		stglogflags("stage_ping",flags);
+		stglogflags("stage_ping",LOGFILE,(u_signed64) flags);
 	} else {
 		Coptind = 1;
 		Copterr = 0;
@@ -130,7 +134,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 		stage_util_time(started_time,timestr);
 		sendrep (rpfd, MSG_OUT, "Stager daemon - CASTOR %s.%d%c\n", BASEVERSION, PATCHLEVEL, hpss_aware);
 		sendrep (rpfd, MSG_OUT, "Generated %s around %s\n", __DATE__, __TIME__);
-		sendrep (rpfd, MSG_OUT, "Running since %s\n", timestr);
+		sendrep (rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
 	}
 	reply:
 	sendrep (rpfd, STAGERC, STAGEPING, rc);
