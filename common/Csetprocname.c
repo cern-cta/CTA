@@ -1,5 +1,5 @@
 /*
- * $Id: Csetprocname.c,v 1.2 2003/04/17 07:39:36 jdurand Exp $
+ * $Id: Csetprocname.c,v 1.3 2003/09/09 15:59:41 jdurand Exp $
  */
 
 /*
@@ -19,11 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <serrno.h>
-#if defined(__STDC__) || defined(__cplusplus)
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /* Possible modes of changing ps output */
 #define SPT_NONE	0	/* don't use it at all */
@@ -56,13 +52,7 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
 }
 
 int DLL_DECL 
-#if defined(__STDC__) || defined(__cplusplus)
 Csetprocname(CONST char *fmt, ...)
-#else /* __STDC__ */
-     Csetprocname(fmt, va_alist)
-     CONST char *fmt;
-     va_dcl
-#endif /* __STDC__ */
 {
   return(0);
 }
@@ -96,13 +86,8 @@ Csetprocname(CONST char *fmt, ...)
 **  libsm variable argument lists
 */
 
-#if defined(__STDC__) || defined(__cplusplus)
 # define SM_VA_STD 1
 # define SM_VA_START(ap, f)    va_start(ap, f)
-#else /* defined(__STDC__) || defined(__cplusplus) */
-# define SM_VA_STD 0
-# define SM_VA_START(ap, f)    va_start(ap)
-#endif /* defined(__STDC__) || defined(__cplusplus) */
 
 #if defined(va_copy)
 # define SM_VA_COPY(dst, src)  va_copy((dst), (src))
@@ -277,13 +262,7 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
 
 /*VARARGS1*/
 static int
-# ifdef __STDC__
 __Csetprocname(CONST char *fmt, ...)
-# else /* __STDC__ */
-     __Csetprocname(fmt, va_alist)
-     CONST char *fmt;
-     va_dcl
-# endif /* __STDC__ */
 {
 # if SPT_TYPE != SPT_NONE
   register int i;
@@ -455,13 +434,7 @@ static size_t __sm_strlcpy(dst, src, size)
 
 /*VARARGS2*/
 int DLL_DECL 
-#if defined(__STDC__) || defined(__cplusplus)
 Csetprocname(CONST char *fmt, ...)
-#else /* __STDC__ */
-     Csetprocname(fmt, va_alist)
-     CONST char *fmt;
-     va_dcl
-#endif /* __STDC__ */
 {
   char buf[SPT_BUFSIZE];
   SM_VA_LOCAL_DECL;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.14 $ $Date: 2003/04/28 12:36:53 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.15 $ $Date: 2003/09/09 15:59:41 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -24,13 +24,8 @@ static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.14 $ $Date: 2003/04
 #include <string.h>
 #include <fcntl.h>              /* file control                         */
 #include <time.h>               /* time related definitions             */
-
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
-#include <varargs.h>            /* variable argument list definitions   */
-#else
 #include <stdarg.h>             /* variable argument list definitions   */
 #include <errno.h>              /* standard error numbers & codes       */
-#endif /* IRIX5 || __Lynx__ || _WIN32 || hpux || SOLARIS || linux */
 #include <log.h>                /* logging options and definitions      */
 #include <Cglobals.h>           /* Thread globals. Get Thread ID.       */
 
@@ -116,11 +111,7 @@ void DLL_DECL setlogbits(bits)
  * logit should be called with the following syntax
  * logit(LOG_LEVEL,format[,value,...]) ;
  */
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
-void DLL_DECL logit(va_alist)     va_dcl
-#else
 void DLL_DECL logit(int level, char *format, ...)
-#endif
 {
     va_list args ;          /* Variable argument list               */
     time_t  clock;
@@ -132,17 +123,8 @@ void DLL_DECL logit(int level, char *format, ...)
     char    line[BUFSIZ] ;  /* Formatted log message                */
     int     fd;             /* log file descriptor                  */
     int     Tid = 0;        /* Thread ID if MT                      */
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32) && !defined(hpux) && !defined(SOLARIS) && !defined(linux)
-    int     level;          /* Level of the message                 */
-    char   *format;         /* Level of the message                 */
-
-    va_start(args);         /* initialize to beginning of list      */
-    level = va_arg(args, int);
-    format = va_arg(args, char *);
-#else
 
     va_start(args, format);
-#endif /* IRIX5 || __Lynx__ || _WIN32 || hpux || SOLARIS || linux */
     if (loglevel >= level)  {
         (void) time(&clock);
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
