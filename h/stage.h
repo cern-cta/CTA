@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.57 2001/05/31 12:08:36 jdurand Exp $
+ * $Id: stage.h,v 1.58 2001/06/20 13:18:59 jdurand Exp $
  */
 
 /*
@@ -23,6 +23,17 @@
 #include "Cns_api.h"
 #include "osdep.h"
 #include "serrno.h"     /* Contains ESTNACT etc... */
+
+/* Limit under which we consider requestor is root */
+#define ROOTUIDLIMIT 100
+#define ROOTGIDLIMIT 100
+#define ISROOT(uid,gid) (((uid) < ROOTUIDLIMIT) || ((gid) < ROOTGIDLIMIT))
+
+/* Number of seconds in a day */
+#ifdef ONE_DAY
+#undef ONE_DAY
+#endif
+#define ONE_DAY (3600 * 24)
 
 /* This macro returns TRUE is the file is an hpss one */
 #define ISHPSS(xfile)   (strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
@@ -65,7 +76,7 @@
 
 /* This macro returns TRUE is the host is a castor one */
 #if (defined(NSHOST) && defined(NSHOSTPFX))
-#define ISCASTORHOST(xfile) (strstr(xfile,NSHOST) == xfile || strstr(xfile,NSHOSTPFX) == xfile)
+#define ISCASTORHOST(xfile) ((strstr(xfile,NSHOST) == xfile) || (strstr(xfile,NSHOSTPFX) == xfile))
 #else
 #ifdef NSHOST
 #define ISCASTORHOST(xfile) (strstr(xfile,NSHOST) == xfile)
@@ -175,7 +186,7 @@
 #define	STG30	"STG30 - a default pool must be defined\n"
 #define	STG31	"STG31 - staging host must be defined in configuration file\n"
 #define	STG32	"STG32 - %s is not in the list of pools\n"
-#define	STG33	"STG33 - %s: %s\n"
+#define	STG33	"STG33 - %s : %s\n"
 #define	STG34	"STG34 - program name must be stagein, stageout, stagewrt or stagecat\n"
 #define	STG35	"STG35 - option(s) %s and %s are mutually exclusive\n"
 #define	STG36	"STG36 - invalid group: %d\n"
@@ -187,7 +198,7 @@
 #define	STG42	"STG42 - %s %s for file %s, return code %d\n\n"
 #define	STG43	"STG43 - Retrying command, retry number %d\n\n"
 #define	STG44	"STG44 - staging in afs directory is not supported\n"
-#define	STG45	"STG45 - unable to allocate requested space\n"
+#define	STG45	"STG45 - unable to allocate requested space (pool %s)\n"
 #define	STG46	"STG46 - vid, linkname, internal or external filename must be specified\n"
 #define	STG47	"STG47 - %s\n"
 #define	STG48	"STG48 - the catalog %s seems to be corrupted\n"
@@ -228,7 +239,7 @@
 #define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
 #define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
 #define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
-#define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s). Not migrated.\n"
+#define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s), not migrated.\n"
 #define STG113  "STG113 - Cannot find next tape pool - use the first in the list\n"
 #define STG114  "STG114 - Found more files to migrate (%d) that what is known in advance (%d)\n"
 #define STG115  "STG115 - Reqid %d (%s) have no tape pool associated yet\n"
@@ -261,6 +272,7 @@
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
 #define STG143  "STG143 - %s : stageout lifetime on disk exceeds %d seconds\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
+#define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 
 			/* stage daemon stream modes */
 
@@ -393,6 +405,7 @@ struct pool_element {
 	int nbreadaccess;       /* Number of known accesses in read mode */
 	int nbwriteaccess;      /* Number of known accesses in write mode */
 	time_t last_allocation; /* last known allocation timestamp */
+	u_signed64	bsize;		/* filesystem block size in bytes */
 };
 
 struct sorted_ent {
