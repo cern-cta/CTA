@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.3 $ $Date: 1999/11/05 08:31:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.4 $ $Date: 1999/11/12 09:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,7 +37,7 @@ sendrep(va_alist) va_dcl
 	int repsize;
 	int rpfd;
 
-	ENTRY (sendrep);
+	strcpy (func, "sendrep");
 	rbp = repbuf;
 	marshall_LONG (rbp, TPMAGIC);
 	va_start (args);
@@ -69,9 +69,9 @@ sendrep(va_alist) va_dcl
 		tplogit (func, TP002, "write", sys_errlist[errno]);
 		if (rep_type == TAPERC)
 			close (rpfd);
-		RETURN (-1);
+		return (-1);
 	}
 	if (rep_type == TAPERC)
 		close (rpfd);
-	RETURN (0);
+	return (0);
 }
