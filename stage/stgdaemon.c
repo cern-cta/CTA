@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.245 $ $Date: 2003/09/25 07:41:01 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.246 $ $Date: 2003/10/14 09:19:42 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3674,7 +3674,7 @@ int fork_exec_stager(wqp)
 			/* We are at the limit - Sorry we have to reject */
 			/* We count on the client retry some time later saying him we are not */
 			/* available for the moment - with ESTNACT */
-			sendrep (&rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
+			sendrep (&(wqp->rpfd), MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
 			return(SHIFT_ESTNACT);
 		}
 	}
