@@ -1,14 +1,14 @@
 /*
- * $Id: stream64.c,v 1.1 2002/11/19 10:51:23 baud Exp $
+ * $Id: stream64.c,v 1.2 2003/06/27 05:18:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:23 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.2 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
@@ -324,7 +324,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    /*
 	 * Building and sending request.
 	 */
-   if ((account = getacct()) == NULL) account = "";
+   /* if ((account = getacct()) == NULL) */ account = "";
    TRACE(2,"rfio","rfio_open64_ext_v3: uid %d gid %d umask %o ftype %d, mode 0%o, flags 0%o",
 	 rfp->uid,rfp->gid,rfp->umask,rfp->ftype,mode,flags) ;
    TRACE(2,"rfio","rfio_open64_ext_v3: account: %s",account) ;

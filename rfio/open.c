@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.19 2003/04/22 11:07:50 baud Exp $
+ * $Id: open.c,v 1.20 2003/06/27 05:18:49 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.19 $ $Date: 2003/04/22 11:07:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.20 $ $Date: 2003/06/27 05:18:49 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -419,7 +419,7 @@ char  	*vmstr ;
         /*
 	 * Building and sending request.
 	 */
-   if ((account = getacct()) == NULL) account = "";
+   /* if ((account = getacct()) == NULL) */ account = "";
    TRACE(2,"rfio","rfio_open: uid %d gid %d umask %o ftype %d, mode %d, flags %d",
 	 rfp->uid,rfp->gid,rfp->umask,rfp->ftype,mode,flags) ;
    TRACE(2,"rfio","rfio_open: account: %s",account) ;

@@ -1,14 +1,14 @@
 /*
- * $Id: xyopen.c,v 1.7 2001/06/17 14:35:17 baud Exp $
+ * $Id: xyopen.c,v 1.8 2003/06/27 05:18:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.7 $ $Date: 2001/06/17 14:35:17 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.8 $ $Date: 2003/06/27 05:18:50 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -278,7 +278,7 @@ char *reqhost;
       return(errno);
    }
 
-   if ((account = getacct()) == NULL) account = "";
+   /* if ((account = getacct()) == NULL) */ account = "";
 
    TRACE(3, "rfio", "rfio_xyopen: uid %d gid %d umask %o ftype %d user %s",
 	 fd->uid, fd->gid, fd->umask, fd->ftype,pw->pw_name);
