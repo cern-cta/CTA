@@ -1,32 +1,15 @@
 /*
- * $Id: vdqmserv.c,v 1.4 1999/09/02 15:21:53 obarring Exp $
- * $Log: vdqmserv.c,v $
- * Revision 1.4  1999/09/02 15:21:53  obarring
- * Add osdep.h because of new u_signed64 decl. in vdqm.h
- *
- * Revision 1.3  1999/09/01 15:14:36  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/29 09:14:41  obarring
- * Replace TABs with 4 SPACE
- *
- * Revision 1.1  1999/07/27 09:22:26  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:46:01 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqmserv.c - VDQM server main routine (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqmserv.c,v 1.4 1999/09/02 15:21:53 obarring Exp $";
-#endif /* not lint */
 
 #if defined(_WIN32)
 #include <winsock2.h>    /* Needed for SOCKET definition */
@@ -34,18 +17,12 @@ static char sccsid[] = "@(#)$Id: vdqmserv.c,v 1.4 1999/09/02 15:21:53 obarring E
 #include <stdlib.h>
 #include <errno.h>
 #include <Castor_limits.h>
+#include <serrno.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
-extern char *geterr();
 #include <vdqm_constants.h>
 #include <vdqm.h>
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#else /* linux */
-#include <stdio.h> /* Contains def. of sys_errlist[] */
-#endif /* linux */
 
 void initlog(char *, int, char *);
 int vdqm_shutdown;
@@ -59,12 +36,12 @@ int main() {
     log(LOG_INFO,"main:\n\n ******* VDQM SERVER START ******\n\n");
     rc = vdqm_InitNW(&nw);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_InitNw(): %s\n",NWERRTXT);
+        log(LOG_ERR,"vdqm_InitNw(): %s\n",neterror());
         return(vdqm_CleanUp(nw,1));
     }
     rc = vdqm_InitPool(&nwtable);
     if ( rc == -1 ) {
-        log(LOG_ERR,"vdqm_InitPool(): %s\n",ERRTXT);
+        log(LOG_ERR,"vdqm_InitPool(): %s\n",sstrerror(serrno));
         return(vdqm_CleanUp(nw,1));
     }
     poolID = rc;
@@ -74,12 +51,12 @@ int main() {
         rc = vdqm_Listen(nw);
         if ( vdqm_shutdown ) break;
         if ( rc == -1 ) {
-            log(LOG_ERR,"vdqm_Listen(): %s\n",NWERRTXT);
+            log(LOG_ERR,"vdqm_Listen(): %s\n",neterror());
             continue;
         }
         rc = vdqm_GetPool(poolID,nw,nwtable);
         if ( rc == -1 ) {
-            log(LOG_ERR,"vdqm_GetPool(): %s\n",ERRTXT);
+            log(LOG_ERR,"vdqm_GetPool(): %s\n",sstrerror(serrno));
             break;
         }
     }
