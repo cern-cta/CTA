@@ -7,23 +7,36 @@
 
 #include <Csec_constants.h>
 
-#if defined(KRB5) && defined(linux) 
-#include <gssapi/gssapi_generic.h>
-#define GSS_C_NT_USER_NAME (gss_OID)gss_nt_user_name
-#else
-#if defined(KRB5) && !defined(linux)
-#include <gssapi/gssapi.h>
-#else
+#if defined KRB5
+
+#if defined HEIMDAL
+#include <gssapi.h>
+
+#else /* HEIMDAL */
+
+#if defined(linux)  
+
+#include <gssapi/gssapi_generic.h> 
+#define GSS_C_NT_USER_NAME (gss_OID)gss_nt_user_name 
+
+#else /* linux */ 
+
+#include <gssapi/gssapi.h> 
+
+#endif /* linux */
+
+#endif /* HEIMDAL */
+
+#else /* KRB5 */
 #if defined(GSI)
 #include <globus_gss_assist.h>
-#else
+#else /* GSI */
 /* In all cases, we use the gss_buffer_t as the structure to hold the tokens */
 typedef struct gss_buffer_desc_struct
 {
   size_t length;
   void *value;
 } gss_buffer_desc, *gss_buffer_t;
-#endif
 #endif
 #endif
 
