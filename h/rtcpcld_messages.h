@@ -41,7 +41,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_FILEREQ,
     RTCPCLD_MSG_SEGMFAILED,
     RTCPCLD_MSG_EXECCMD,
-    RTCPCLD_MSG_RESERVED24,
+    RTCPCLD_MSG_NEWCONNECT,
     RTCPCLD_MSG_RESERVED25
 };
 
@@ -77,7 +77,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_FILEREQ, DLF_LVL_SYSTEM, "New file request"},
     { RTCPCLD_MSG_SEGMFAILED, DLF_LVL_ERROR, "Attempt to update segment with SEGMENT_FAILED status "},
     { RTCPCLD_MSG_EXECCMD, DLF_LVL_SYSTEM, "Execute command"},
-    { RTCPCLD_MSG_RESERVED24, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_NEWCONNECT, DLF_LVL_SYSTEM, "New connection"},
     { RTCPCLD_MSG_RESERVED25, DLF_LVL_DEBUG, ""}
 };
 #else /* RTCPCLD_COMMON */
