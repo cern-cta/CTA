@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.147 $ $Release$ $Date: 2005/04/05 08:19:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.148 $ $Release$ $Date: 2005/04/05 09:02:55 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2219,9 +2219,14 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       lensM[i] = strlen(machines[i]);
       if (lensM[i] > maxM) maxM = lensM[i];
     }
+    // Compute actual length of the buffers : this
+    // may be different from the needed one, since
+    // Oracle does not like 0 length arrays....
+    unsigned int fileSystemsLa = fileSystemsL == 0 ? 1 : fileSystemsL;
+    unsigned int machinesLa = machinesL == 0 ? 1 : machinesL;
     // Allocate buffer for giving the parameters to ORACLE
-    char bufferFS[fileSystemsL][maxFS];
-    char bufferM[machinesL][maxM];
+    char bufferFS[fileSystemsLa][maxFS];
+    char bufferM[machinesLa][maxM];
     // Copy inputs into the buffer
     for (int i = 0; i < fileSystemsL; i++) {
       strncpy(bufferFS[i], fileSystems[i], lensFS[i]);
@@ -2246,10 +2251,10 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     ub4 unusedMF = fsNbFree;
     m_bestFileSystemForJobStatement->setDataBufferArray
       (1, bufferFS, oracle::occi::OCCI_SQLT_CHR,
-       fileSystemsL, &unusedFS, maxFS, lensFS);
+       fileSystemsLa, &unusedFS, maxFS, lensFS);
     m_bestFileSystemForJobStatement->setDataBufferArray
       (2, bufferM, oracle::occi::OCCI_SQLT_CHR,
-       machinesL, &unusedM, maxM, lensM);
+       machinesLa, &unusedM, maxM, lensM);
     m_bestFileSystemForJobStatement->setDataBufferArray
       (3, bufferMF, oracle::occi::OCCI_SQLT_NUM,
        fsNbFree, &unusedMF, 21, lensMF);
