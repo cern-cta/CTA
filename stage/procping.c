@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.7 2002/03/11 08:27:09 baud Exp $
+ * $Id: procping.c,v 1.8 2002/03/27 08:14:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.7 $ $Date: 2002/03/11 08:27:09 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.8 $ $Date: 2002/03/27 08:14:21 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 
 	if (verbose_flag) {
 		stage_util_time(started_time,timestr);
-		sendrep (rpfd, MSG_OUT, "Stager daemon - CASTOR %s.%d%c\n", BASEVERSION, PATCHLEVEL, hpss_aware);
+		sendrep (rpfd, MSG_OUT, "Stager daemon on %s - CASTOR %s.%d%c\n", localhost, BASEVERSION, PATCHLEVEL, hpss_aware);
 		sendrep (rpfd, MSG_OUT, "Generated %s around %s\n", __DATE__, __TIME__);
 		sendrep (rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
 	}
