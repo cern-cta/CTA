@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.136 $ $Release$ $Date: 2005/03/04 18:20:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.137 $ $Release$ $Date: 2005/03/15 15:49:36 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -209,19 +209,19 @@ const std::string castor::db::ora::OraStagerSvc::s_selectFiles2DeleteStatementSt
 
 /// SQL statement for filesDeleted
 const std::string castor::db::ora::OraStagerSvc::s_filesDeletedStatementString =
-  "BEGIN filesDeleted(:1); END;";
+  "BEGIN filesDeletedProc(:1); END;";
 
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateDoneStatementString =
-  "BEGIN getUpdateDone(:1); END;";
+  "BEGIN getUpdateDoneProc(:1); END;";
 
 /// SQL statement for getUpdateFailed
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateFailedStatementString =
-  "BEGIN getUpdateFailed(:1); END;";
+  "BEGIN getUpdateFailedProc(:1); END;";
 
 /// SQL statement for putFailed
 const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
-  "BEGIN putFailed(:1); END;";
+  "BEGIN putFailedProc(:1); END;";
 
 /// SQL statement for segmentsForTape
 const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =

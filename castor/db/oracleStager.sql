@@ -1034,47 +1034,50 @@ BEGIN
 END;
 
 /* PL/SQL method implementing filesDeleted */
-CREATE OR REPLACE PROCEDURE filesDeleted
-("numlist" IN fileIds) AS
+CREATE OR REPLACE PROCEDURE filesDeletedProc
+(fileIds IN castor."cnumList") AS
   cfId NUMBER;
   nb NUMBER;
 BEGIN
   -- Loop over the deleted files
-  FOR dcid IN fileIds LOOP
+  FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- delete the DiskCopy
-    DELETE FROM DiskCopy WHERE id = dcid
+    DELETE FROM DiskCopy WHERE id = fileIds(i)
       RETURNING castorFile INTO cfId;
     -- Lock the Castor File
-    SELECT * FROM CastorFile where id = cfID FOR UPDATE;
+    SELECT id INTO cfID FROM CastorFile where id = cfID FOR UPDATE;
     -- See whether the castorfile has no other DiskCopy
     SELECT count(*) INTO nb FROM DiskCopy
-      WHERE castorFile = cfId;
+     WHERE castorFile = cfId;
     -- If any DiskCopy, give up
-    IF nb > 0 THEN CONTINUE; END IF;
-    -- See whether the castorfile has any TapeCopy
-    SELECT count(*) INTO nb FROM TapeCopy
-      WHERE castorFile = cfId;
-    -- If any TapeCopy, give up
-    IF nb > 0 THEN CONTINUE; END IF;
-    -- See whether the castorfile has any SubRequest
-    SELECT count(*) INTO nb FROM SubRequest
-      WHERE castorFile = cfId;
-    -- If any SubRequest, give up
-    IF nb > 0 THEN CONTINUE; END IF;
-    -- Delete the CastorFile
-    DELETE FROM CastorFile WHERE id = cfId;
+    IF nb = 0 THEN
+      -- See whether the castorfile has any TapeCopy
+      SELECT count(*) INTO nb FROM TapeCopy
+       WHERE castorFile = cfId;
+      -- If any TapeCopy, give up
+      IF nb = 0 THEN
+      -- See whether the castorfile has any SubRequest
+        SELECT count(*) INTO nb FROM SubRequest
+         WHERE castorFile = cfId;
+      -- If any SubRequest, give up
+        IF nb = 0 THEN
+          -- Delete the CastorFile
+          DELETE FROM CastorFile WHERE id = cfId;
+        END IF;
+      END IF;
+    END IF;
   END LOOP;
 END;
 
 /* PL/SQL method implementing getUpdateDone */
-CREATE OR REPLACE PROCEDURE getUpdateDone
+CREATE OR REPLACE PROCEDURE getUpdateDoneProc
 (subReqId IN NUMBER) AS
 BEGIN
   archiveSubReq(subReqId);
 END;
 
 /* PL/SQL method implementing getUpdateFailed */
-CREATE OR REPLACE PROCEDURE getUpdateFailed
+CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 (subReqId IN NUMBER) AS
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
@@ -1082,7 +1085,7 @@ BEGIN
 END;
 
 /* PL/SQL method implementing segmentsForTape */
-CREATE OR REPLACE PROCEDURE putFailed
+CREATE OR REPLACE PROCEDURE putFailedProc
 (subReqId IN NUMBER) AS
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
