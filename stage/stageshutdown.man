@@ -1,0 +1,40 @@
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.1 $ $Date: 2001/01/31 19:04:27 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGESHUTDOWN l "$Date: 2001/01/31 19:04:27 $"
+.SH NAME
+stageshutdown \- tells stgdaemon to exit
+.SH SYNOPSIS
+.B stageshutdown
+[
+.B -F
+] [
+.BI -h " host"
+]
+.SH DESCRIPTION
+.B stageshutdown
+tells stgdaemon to exit. Before such exit, stgdaemon will send a interrupt signal to all of its child processes he is aware of.
+.B stageshutdown
+is a privileged command restricted for use by an administrator.
+.SH OPTIONS
+.TP
+.B \-F
+The command is executed immediately: new stage requests are rejected but
+the daemon does not wait for existing stage requests to complete,
+they just continue to run in parallel.
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Command aborted or another stageshutdown is pending.
+.br
+2	System error.
+.br
+4	Configuration error.
