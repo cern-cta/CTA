@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.55 $ $Date: 2000/03/30 06:36:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.56 $ $Date: 2000/03/31 15:24:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -503,9 +503,14 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             proc_cntl.nb_reserved_bufs--;
             /*
              * Check if disk IO has finished. If so, we don't need to sync.
-             * buffers anymore.
+             * buffers anymore. The test on diskIOstarted may seem a bit
+             * unlogical but in fact this flag should have been set by the
+             * thread started before we can allow no sync. access - there
+             * is a window where disk IO starter can exit before the last
+             * disk IO thread has started. 
              */
             if ( proc_cntl.diskIOfinished == 1 && 
+                 proc_cntl.diskIOstarted == 1 &&
                  proc_cntl.nb_diskIOactive == 0 ) {
                 rtcp_log(LOG_DEBUG,"MemoryToTape() disk IO has finished! Sync. not needed anymore\n");
                 NoSyncAccess = *diskIOfinished = 1;
@@ -1059,14 +1064,19 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              tape->local_retry++; \
              if ( mode == WRITE_ENABLE ) { \
                  (void) tellClient(&client_socket,X,Y,0); \
+                 (void)rtcpd_WaitCompletion(nexttape,nextfile); \
                  rtcpd_SetProcError(severity); \
                  (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG); \
              }\
          } \
          (void) tellClient(&client_socket,NULL,NULL,-1); \
          rtcp_CloseConnection(&client_socket); \
-         if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_ENABLE ) \
-             rtcpd_SetProcError(RTCP_RETRY_OK|severity); \
+         if ( (severity & RTCP_LOCAL_RETRY) != 0 ) { \
+             if ( mode == WRITE_ENABLE ) \
+                 rtcpd_SetProcError(RTCP_RETRY_OK|severity); \
+             else \
+                 rtcpd_WaitProcStatus(RTCP_LOCAL_RETRY); \
+         } \
          if ( rc == -1 ) return((void *)&failure); \
          else return((void *)&success); \
     }}
