@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.6 $ $Date: 2004/02/12 16:05:07 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.7 $ $Date: 2004/09/24 13:09:36 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000-2004 by CERN IT-ADC
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2004/02/12 16:05:07 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2004/09/24 13:09:36 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
@@ -81,6 +81,13 @@ Default is 2.
 .B RTCPD_THREAD_POOL
 \- Set the disk I/O thread pool size. This is the number of disk I/O transfers
 which can run in parallel. Default is 3.
+.PP
+.B RTCPD_PILEUP_WAIT_TIME
+\- Protect the tape writing from very slow disk IO streams. This option allows
+for suspening the tape writing for the given time if there are no buffers
+available. The intention is to avoid that the tape stops and starts at
+every buffer. The wait time should be configured to match the drive speed
+and the configured size of the rtcpd memory buffers. 
 .PP
 .B RTCOPYD_SELF_MONITOR
 \- Switch on the RTCOPY self monitor thread. The RTCOPY self monitoring thread

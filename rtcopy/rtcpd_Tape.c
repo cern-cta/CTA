@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.86 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.87 $ $Date: 2004/09/24 13:09:36 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -46,6 +46,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+char *getconfent _PROTO((char *, char *, int));
 
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
@@ -158,6 +159,15 @@ static void TapeIOfinished() {
     return;
 }
 
+int rtcpd_nbFullBufs(int increment) {
+    int rc;
+    (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    proc_cntl.nbFullBufs += increment;
+    rc = proc_cntl.nbFullBufs;
+    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    return(rc);
+}
 
 /*
  * Read from tape to memory
@@ -168,8 +178,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
+    int pileupWaitTime = 0, nbFullBufs;
     char *convert_buffer = NULL;
     void *convert_context = NULL;
+    char *p;
     register int Uformat;
     register int debug = Debug;
     register int convert, NoSyncAccess;
@@ -198,6 +210,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
     nb_truncated = spill = 0;
     NoSyncAccess = *diskIOfinished;
 
+    if ( ((p = getenv("RTCPD_PILEUP_WAIT_TIME")) != NULL) ||
+         ((p = getconfent("RTCPD","PILEUP_WAIT_TIME",0)) != NULL) )
+      pileupWaitTime = atoi(p);
+
     /*
      * Write loop to break out of
      */
@@ -210,6 +226,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * Synchronize access to next buffer
          */
         if ( NoSyncAccess == 0 ) {
+            TP_STATUS(RTCP_PS_WAITMTX);
+            nbFullBufs = rtcpd_nbFullBufs(0);
+            TP_STATUS(RTCP_PS_WAITMTX);
+            if ( (nbFullBufs < 1) && (pileupWaitTime > 0) ) {
+              rtcp_log(LOG_INFO,"Tape IO protection against disk IO slack: index=%d, nb full buffers=%d, wait %d seconds\n",
+                       i,
+                       nbFullBufs,
+                       pileupWaitTime);
+              rtcp_log(LOG_INFO,"path=%s\n",filereq->file_path);
+              sleep(pileupWaitTime);
+            }
             TP_STATUS(RTCP_PS_WAITMTX);
             rc = Cthread_mutex_lock_ext(databufs[i]->lock);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -553,6 +580,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         }
 
         if ( buf_done == TRUE && NoSyncAccess == 0 ) {
+            (void)rtcpd_nbFullBufs(-1);
             /*
              * Decrement the number of reserved buffers.
              */

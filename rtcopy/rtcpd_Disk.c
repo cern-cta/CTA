@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.107 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.108 $ $Date: 2004/09/24 13:09:36 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1288,6 +1288,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
              */
             databufs[i]->flag = BUFFER_FULL;
         }
+        if ( databufs[i]->flag == BUFFER_FULL ) (void)rtcpd_nbFullBufs(1);
         /*
          * Signal and release this buffer
          */
