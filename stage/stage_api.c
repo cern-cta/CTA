@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.2 2001/02/01 08:03:55 jdurand Exp $
+ * $Id: stage_api.c,v 1.3 2001/02/01 08:32:11 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -840,7 +840,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   int ntries;                   /* Number of retries */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
-
   char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
   size_t sendbuf_size;          /* Total socket send buffer length */
@@ -861,6 +860,11 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   char user_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
   int c;                        /* Output of build_linkname() */
   char *func = "stage_qry";
+  int nstcp_output_internal = 0;
+  struct stgcat_entry *stcp_output_internal = NULL;
+  int nstpp_output_internal = 0;
+  struct stgpath_entry *stpp_output_internal = NULL;
+  int rc;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -1048,58 +1052,81 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 
   /* Dial with the daemon */
   while (1) {
-    c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, nstpp_output, stpp_output);
+    c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
 
-  /* Unpack for the output */
-
 #if defined(_WIN32)
   WSACleanup();
 #endif
-  return (c == 0 ? 0 : -1);
+
+  if ((rc = c) == 0) {
+    /* If command was processed successfully */
+    if (((nstcp_output_internal > 0) && (stcp_output_internal == NULL)) ||
+        ((nstpp_output_internal > 0) && (stpp_output_internal == NULL))) {
+      /* Inconsistency */
+      serrno = SEINTERNAL;
+      rc = -1;
+    } else if ((nstcp_output_internal == 0) || (nstpp_output_internal == 0)) {
+      /* Nothing found */
+      serrno = ENOENT;
+      rc = -1;
+    }
+  }
+
+  if ((rc == 0) && (nstcp_output != NULL)) *nstcp_output = nstcp_output_internal;
+  if ((rc == 0) && (nstpp_output != NULL)) *nstpp_output = nstpp_output_internal;
+
+  if ((rc == 0) && (stcp_output != NULL)) {
+    /* We will not freeze internally allocated memory if it has been ever allocated */
+    *stcp_output =  stcp_output_internal;
+  } else {
+    /* User is not interested by this output regardless of rc - freeze it if necessary */
+    if (stcp_output_internal != NULL) free(stcp_output_internal);
+  }
+  if ((rc == 0) && (stpp_output != NULL)) {
+    /* We will not freeze internally allocated memory if it has been ever allocated */
+    *stpp_output =  stpp_output_internal;
+  } else {
+    /* User is not interested by this output regardless of rc - freeze it if necessary */
+    if (stpp_output_internal != NULL) free(stpp_output_internal);
+  }
+
+  return (rc);
 }
 
-int DLL_DECL stageqry_hsm_status(hostname,hsmname)
+int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
+     u_signed64 flags;
      char *hostname;
+     char *poolname;
      char *hsmname;
+     int *nstcp_output;
+     struct stgcat_entry **stcp_output;
+     int *nstpp_output;
+     struct stgpath_entry **stpp_output;
 {
   struct stgcat_entry stcp_input;
-  int nstcp_output;
-  struct stgcat_entry *stcp_output = NULL;
-  int stcp_status;
 
-  if ((hsmname == NULL) || (*hsmname == '\0')) {
+  /* Check hsmname in input */
+  if (hsmname == NULL) {
     serrno = EINVAL;
     return(-1);
   }
-  if (strlen(hsmname) > 166) {
+  /* Check hsmname length and poolname validity */
+  if (((*hsmname == '\0') || (strlen(hsmname)  > 166              )) ||
+      ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
     serrno = ENAMETOOLONG;
     return(-1);
   }
 
   /* We build the full stageqry API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-  strcpy(stcp_input.u1.h.xfile,hsmname);
-  if (stage_qry_hsm(STAGE_ALL|STAGE_NOREGEXP,hostname,1,&stcp_input,&nstcp_output,&stcp_output,NULL,NULL) != 0) {
-    return(-1);
-  }
-  if (nstcp_output <= 0) {
-    serrno = ENOENT;
-    return(-1);
-  }
-  /* Because of STAGE_NOREGEXP flag, if there is output, it cannot be anything but one */
-  if ((nstcp_output != 1) || (stcp_output == NULL)) {
-    if (stcp_output != NULL) free(stcp_output);
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  stcp_status = stcp_output->status;
-  free(stcp_output);
-  return(stcp_status);
+  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
+  return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 
