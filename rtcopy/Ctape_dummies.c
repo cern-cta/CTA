@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.10 $ $Date: 2000/08/07 14:46:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.11 $ $Date: 2000/08/25 08:38:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -65,7 +65,7 @@ static char unit[CA_MAXUNMLEN+1];
       errbuf = rtcpd_GetCtapeErrBuf(); \
     } \
     _rc = 0; \
-    jobID = getpgrp(); \
+    jobID = rtcpd_jobID(); \
     if ( errbuf != NULL ) strcpy(errbuf,msg); \
     if ( rc == 0 && strstr(#Z,"Ctape_mount") != NULL ) {\
       status = VDQM_UNIT_ASSIGN; \
@@ -81,7 +81,7 @@ static char unit[CA_MAXUNMLEN+1];
     } \
     if ( rc != 0 && strstr(#Z,"Ctape_position") != NULL ) { \
       status = VDQM_VOL_UNMOUNT; \
-      value = getpgrp(); \
+      value = rtcpd_jobID(); \
       if ( serrno != ETDNP ) \
         _rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&value,jobID); \
     } \

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.75 $ $Date: 2000/08/01 13:02:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.76 $ $Date: 2000/08/25 08:38:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -180,6 +180,7 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
         if ( rc != NULL ) *rc = UIDMISMATCH;
         return(-1);
     }
+#if !defined(_WIN32)
     if ( pw->pw_gid != gid ) {
         setgrent();
         while ( (gr = getgrent()) ) {
@@ -199,8 +200,17 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
             return(-1);
         }
     }
+#endif /* _WIN32 */
 
     return(0);
+}
+
+int rtcpd_jobID() {
+#if defined(_WIN32)
+    return((int)getpid());
+#else /* _WIN32 */
+    return((int)getpgrp());
+#endif /* _WIN32 */
 }
 
 /*
@@ -1423,7 +1433,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char acctstr[7] = "";
     char envacct[20];
 
+#if !defined(_WIN32)
     (void)setpgrp();
+#endif /* _WIN32 */
     AbortFlag = 0;
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();

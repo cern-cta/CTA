@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.11 $ $Date: 2000/05/26 08:28:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.12 $ $Date: 2000/08/25 08:38:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ int rtcp_AccountTiming(tape_list_t *tape, file_list_t *file) {
     else tapereq = &file->tape->tapereq;
 
     rtcptiming.jid = filereq->jobID;
-    if ( rtcptiming.jid <= 0 ) rtcptiming.jid = getpgrp();
+    if ( rtcptiming.jid <= 0 ) rtcptiming.jid = rtcpd_jobID();
 
     /*
      * File sizes
@@ -146,7 +146,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         mode = WRITE_DISABLE;
     }
     jobID = tapereq->jobID;
-    if ( jobID <= 0 ) jobID = getpgrp();
+    if ( jobID <= 0 ) jobID = rtcpd_jobID();
 
     if ( file != NULL ) {
         if ( *filereq->stageID != '\0' ) {
