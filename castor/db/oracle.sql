@@ -246,12 +246,12 @@ END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR,
-                                                     mountPoint OUT VARCHAR, path OUT VARCHAR,
+                                                     rmountPoint OUT VARCHAR, rpath OUT VARCHAR,
                                                      dci OUT INTEGER) AS
  fileSystemId NUMBER;
 BEGIN
-SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
- INTO diskServerName, mountPoint, path, dci
+SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, DiskCopy.path, DiskCopy.id
+ INTO diskServerName, rmountPoint, fileSystemId, rpath, dci
  FROM DiskServer, FileSystem, DiskPool2SvcClass,
       (SELECT id, svcClass from StageGetRequest UNION
        SELECT id, svcClass from StagePrepareToGetRequest UNION
