@@ -95,10 +95,10 @@ main(int argc, char *argv[]) {
 	     stage_statusName(response->status));
      ret = 1;
    } else {
-     fprintf(stdout, "%s\n", stage_geturl(response));
      if (args.display_reqid) {
        fprintf(stdout, "%s\n", reqid);
-     }
+     }  
+     fprintf(stdout, "%s\n", stage_geturl(response));
      ret = 0;
    }
    return ret;
