@@ -1,10 +1,12 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/03/17 19:12:35 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2004/06/09 16:10:39 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
 
 COMM		Make CASTOR tests for "common" directory
+
+#include <Project.tmpl>
 
 INCLUDES = FileName(FileName(..,..),h)
 INCLUDESWIN32 = FileName(FileName(..,..),win32)
