@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.31 2002/09/26 17:13:44 jdurand Exp $
+ * $Id: stageqry.c,v 1.32 2002/09/27 06:21:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.31 $ $Date: 2002/09/26 17:13:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.32 $ $Date: 2002/09/27 06:21:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -446,13 +446,13 @@ void record_callback(stcp,stpp)
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%7s" : "%s","blksize");
+					fprintf(fd,"%7s","blksize");
 					goto next_token_stcp;
 				}
 				if (stcp->t_or_d == 't') {
-					fprintf(fd,qnext ? "%7d" : "%d",stcp->blksize);
+					fprintf(fd,"%7d",stcp->blksize);
 				} else {
-					fprintf(fd,qnext ? "%7s" : "%s",thena);
+					fprintf(fd,"%7s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "charconv") == 0) {
@@ -482,13 +482,13 @@ void record_callback(stcp,stpp)
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%7s" : "%s","lrecl");
+					fprintf(fd,"%7s","lrecl");
 					goto next_token_stcp;
 				}
 				if (stcp->t_or_d == 't') {
-					fprintf(fd,qnext ? "%7d" : "%d",stcp->lrecl);
+					fprintf(fd,"%7d",stcp->lrecl);
 				} else {
-					fprintf(fd,qnext ? "%7s" : "%s",thena);
+					fprintf(fd,"%7s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "nread") == 0) {
@@ -631,54 +631,54 @@ void record_callback(stcp,stpp)
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%-10s" : "%s","uid");
+					fprintf(fd,"%10s","uid");
 					goto next_token_stcp;
 				}
 				if (stcp->uid) {
-					fprintf(fd,qnext ? "%-10d" : "%d",stcp->uid);
+					fprintf(fd,"%10d",stcp->uid);
 				} else {
-					fprintf(fd,qnext ? "%-10s" : "%s",thena);
+					fprintf(fd,"%10s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "gid") == 0) {
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%-10s" : "%s","gid");
+					fprintf(fd,"%10s","gid");
 					goto next_token_stcp;
 				}
 				if (stcp->gid) {
-					fprintf(fd,qnext ? "%-10d" : "%d",stcp->gid);
+					fprintf(fd,"%10d",stcp->gid);
 				} else {
-					fprintf(fd,qnext ? "%-10s" : "%s",thena);
+					fprintf(fd,"%10s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "mask") == 0) {
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%11s" : "%s","mask");
+					fprintf(fd,"%6s","mask");
 					goto next_token_stcp;
 				}
 				if (stcp->mask) {
 					char dummy[12];
 					sprintf(dummy, "0%o", stcp->mask);
-					fprintf(fd,qnext ? "%11s" : "%s",dummy);
+					fprintf(fd,"%6s",dummy);
 				} else {
-					fprintf(fd,qnext ? "%11s" : "%s",thena);
+					fprintf(fd,"%6s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "reqid") == 0) {
 				if (check_format_string) goto next_token_stcp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%10s" : "%s","reqid");
+					fprintf(fd,"%6s","reqid");
 					goto next_token_stcp;
 				}
 				if (stcp->reqid) {
-					fprintf(fd,qnext ? "%10d" : "%d",stcp->reqid);
+					fprintf(fd,"%6d",stcp->reqid);
 				} else {
-					fprintf(fd,qnext ? "%10s" : "%s",thena);
+					fprintf(fd,"%6s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "status") == 0) {
@@ -686,13 +686,13 @@ void record_callback(stcp,stpp)
 				if (withstatusnumber_flag) {
 					if ((! noheader_flag) && (! doneheader)) {
 						/* Do first the header */
-						fprintf(fd,qnext ? "%10s" : "%s","status");
+						fprintf(fd,"%10s","status");
 						goto next_token_stcp;
 					}
 					if (stcp->reqid) {
-						fprintf(fd,qnext ? "%10d" : "%d",stcp->status);
+						fprintf(fd,"%10d",stcp->status);
 					} else {
-						fprintf(fd,qnext ? "%10s" : "%s",thena);
+						fprintf(fd,"%10s",thena);
 					}
 				} else {
 					/* Short version of status user-friendly */
@@ -896,18 +896,10 @@ void record_callback(stcp,stpp)
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
 					/* Unless last token we have to reserve space */
-					if (qnext) {
-						fprintf(fd,"%*s",themax,"fseq");
-					} else {
-						fprintf(fd,"%s","fseq");
-					}
+					fprintf(fd,"%*s",themax,"fseq");
 					goto next_token_stcp;
 				}
-				if (qnext) {
-					fprintf(fd,"%*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
-				} else {
-					fprintf(fd,"%s",stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
-				}
+				fprintf(fd,"%*s",themax,stcp->t_or_d == 't' && stcp->u1.t.fseq[0] != '\0' ? stcp->u1.t.fseq : thena);
 				/* ----------------------------------- */
 			} else if (strcmp (q, "lbl") == 0) {
 				int themax;
@@ -1179,13 +1171,13 @@ void record_callback(stcp,stpp)
 				if (check_format_string) goto next_token_stpp;
 				if ((! noheader_flag) && (! doneheader)) {
 					/* Do first the header */
-					fprintf(fd,qnext ? "%10s" : "%s","reqid");
+					fprintf(fd,"%6s","reqid");
 					goto next_token_stpp;
 				}
 				if (stpp->reqid) {
-					fprintf(fd,qnext ? "%10d" : "%d",stpp->reqid);
+					fprintf(fd,"%6d",stpp->reqid);
 				} else {
-					fprintf(fd,qnext ? "%10s" : "%s",thena);
+					fprintf(fd,"%6s",thena);
 				}
 				/* ----------------------------------- */
 			} else if (strcmp (q, "upath") == 0) {
