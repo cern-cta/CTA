@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.4 $ $Date: 1999/11/08 07:55:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.5 $ $Date: 1999/11/10 14:25:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,12 +33,14 @@ extern char *sys_errlist[];
 #endif
 char *dvrname;
 char func[16];
+gid_t gid;
 char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
 char *path;
 fd_set readmask;
 int rpfd;
 int tapefd;
+uid_t uid;
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -57,7 +59,6 @@ char	**argv;
 	int flags;
 	int fsec;
 	int fseq;
-	gid_t gid;
 	char hdr1[LBLBUFSZ];
 	char hdr2[LBLBUFSZ];
 	int i;
@@ -80,7 +81,6 @@ char	**argv;
 	char sendbuf[REQBUFSZ];
 	int sonyraw;
 	char tpfid[CA_MAXFIDLEN+1];
-	uid_t uid;
 	int ux;
 	char *vid;
 	char vol1[LBLBUFSZ];
@@ -328,13 +328,41 @@ reply:
 
 void cleanup()
 {
+	int flags;
+	int msglen;
+	char *q;
+	char *sbp;
+	char sendbuf[REQBUFSZ];
+
 	tplogit (func, "cleanup started");
 	if (tapefd >= 0)
 		close (tapefd);
 
 	/* must unload and deassign */
 
-	(void) Ctape_rls (path, TPRLS_KEEP_RSV|TPRLS_UNLOAD|TPRLS_NOWAIT);
+	flags = TPRLS_KEEP_RSV|TPRLS_UNLOAD|TPRLS_NOWAIT;
+ 
+	/* Build request header */
+
+	sbp = sendbuf;
+	marshall_LONG (sbp, TPMAGIC);
+	marshall_LONG (sbp, TPRLS);
+	q = sbp;        /* save pointer. The next field will be updated */
+	msglen = 3 * LONGSIZE;
+	marshall_LONG (sbp, msglen);
+ 
+	/* Build request body */
+
+	marshall_WORD (sbp, uid);
+	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, jid);
+	marshall_WORD (sbp, flags);
+	marshall_STRING (sbp, path);
+
+	msglen = sbp - sendbuf;
+	marshall_LONG (q, msglen);	/* update length field */
+
+	(void) send2tpd (NULL, sendbuf, msglen, NULL, 0);
 }
 
 configdown(drive)
