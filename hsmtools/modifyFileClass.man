@@ -1,0 +1,97 @@
+.\" @(#)$RCSfile: modifyFileClass.man,v $ $Revision: 1.1 $ $Date: 2005/01/20 13:34:37 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH MODIFYFILECLASS 1 "$Date: 2005/01/20 13:34:37 $" CASTOR "stager catalogue administrative commands"
+.SH NAME
+modifyFileClass \- define a new file class in the stager catalogue
+.SH SYNOPSIS
+.B modifyFileClass
+[
+.BI -h, 
+.BI --help
+]
+.BI --name " name"
+[
+.BI --getFromCns
+]
+[
+.BI --nsHost " nameServerHostName"
+]
+[
+.BI --nbCopies " nbCopies"
+]
+[
+.BI --minFileSize " minFileSize"
+]
+[
+.BI --maxFileSize " maxFileSize"
+]
+.SH DESCRIPTION
+.B modifyFileClass
+modifies an existing file class definition in the CASTOR stager catalogue
+.LP
+This command requires database client access to the stager catalogue
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-\-name " name"
+is the name of the existing file class. An error is printed and the command
+fails if no file class with the that name is found
+.TP
+.BI \-\-getFromCns
+Modifies the file class with attributes taken from the CASTOR name server.
+An error is printed and the command fails if the file class is not defined
+in the CASTOR name server. If this option is specified together with
+options for setting attributes (e.g.
+.B --nbCopies
+), those latter will override the information taken from the name server.
+.TP
+.BI \-\-nsHost " nsHost"
+Use the name server host
+.IR nsHost
+when retrieving the file class information. This option has only effect
+together with the
+.BI \-\-getFromCns
+switch.
+.TP
+.BI \-\-nbCopies " nbCopies"
+Specifies the number of tape copies required for the CASTOR files belonging
+to this file class
+.TP
+.BI \-\-minFileSize
+Specifies the minimum file size required for files in this file class to be
+migrated to tape. This attribute is currently not supported by the CASTOR stager.
+.TP
+.BI \-\-maxFileSize
+Specifies the maximum file size required for files in this file class to be
+migrated to tape. This attribute is currently not supported by the CASTOR stager
+.LP
+The CASTOR stager retrieves the fileclass name for a given CASTOR file from the
+CASTOR name server. It does, however, only retrieve the name and will not use the
+fileclass attributes as they are defined in the CASTOR name server. Instead the
+FileClass together with the SvcClass attributes defined in the stager catalogue
+are used to determine, for instance, how many copies and which tape pools should
+be used when migrating the file to tape (see
+.B NOTES
+section below).
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR enterFileClass(1castor) ,
+.BR deleteFileClass(1castor)
+.SH NOTES
+The definition of FileClass and SvcClass classes in the stager catalogue is
+an important change with the new CASTOR stager. The previous CASTOR stgdaemon,
+toke the following important migration parameters from the CASTOR name server:
+number of copies on tape, the tape pools to be used and the maximum number of
+drives to be used when starting the migration streams. Those attributes are now
+defined in the FileClass and SvcClass tables of the stager catalogue. The
+basic motivation for this change was to be able to disentangle file attributes
+such as number of tape copies from resource attributes such as how many drives
+should be used for migration.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
