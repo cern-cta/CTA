@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.2 $ $Date: 1999/11/18 12:15:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.3 $ $Date: 1999/11/19 17:08:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -110,7 +110,7 @@ char	**argv;
 		vdqm_status = (status == CONF_UP) ? VDQM_UNIT_UP : VDQM_UNIT_DOWN;
 		tplogit (func, "calling vdqm_UnitStatus\n");
 		vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive,
-			&vdqm_status, NULL);
+			&vdqm_status, NULL, 0);
 		tplogit (func, "vdqm_UnitStatus returned %s\n",
 			vdqm_rc ? sstrerror(serrno) : "ok");
 	}

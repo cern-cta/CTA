@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.7 $ $Date: 1999/11/19 06:55:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 17:08:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -120,7 +120,8 @@ char	**argv;
 #if VDQM
 	vdqm_status = VDQM_UNIT_RELEASE;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
-	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status,
+		NULL, jid);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 	if (vdqm_status != VDQM_VOL_UNMOUNT && (rlsflags & TPRLS_UNLOAD) == 0)
@@ -207,7 +208,8 @@ reply:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
-	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status,
+		NULL, 0);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif

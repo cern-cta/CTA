@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 06:55:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.9 $ $Date: 1999/11/19 17:08:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -98,6 +98,7 @@ char	**argv;
 	char tpvsn[CA_MAXVIDLEN+1];
 	int ux;
 	int vdqm_rc;
+	int vdqm_reqid;
 	int vdqm_status;
 	char *vid;
 	char *vsn;
@@ -130,6 +131,7 @@ char	**argv;
 	path = argv[17];
 	den = atoi (argv[18]);
 	prelabel = atoi (argv[19]);
+	vdqm_reqid = atoi (argv[20]);
 
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
@@ -160,6 +162,15 @@ char	**argv;
 
 	pwd = getpwuid (uid);
 	strcpy (name, pwd->pw_name);
+#if VDQM
+	vdqm_status = VDQM_UNIT_ASSIGN;
+	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_ASSIGN)\n");
+	vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive, &vdqm_status,
+		&vdqm_reqid, jid);
+	tplogit (func, "vdqm_UnitStatus returned %s\n",
+		vdqm_rc ? sstrerror(serrno) : "ok");
+#endif
+
 #ifdef TMS
 	c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive);
 	if (c != 0) {
@@ -560,7 +571,8 @@ unload_loop1:
 #if VDQM
 	vdqm_status = VDQM_VOL_MOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
-	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status, &jid);
+	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status,
+		NULL, jid);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
