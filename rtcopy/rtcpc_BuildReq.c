@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.25 $ $Date: 2000/04/05 11:18:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.26 $ $Date: 2000/05/22 08:14:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -379,7 +379,7 @@ static int rtcpc_C_opt(int mode,
                      tape_list_t **tape) {
     int rc,i;
     int convert = -1;
-    char *p, *q,*w, *local_value;
+    char *p, *q, *local_value;
     char valid_convs[][7] = {"block","ascii","ebcdic",""};
     char conv_values[] = {FIXVAR,ASCCONV,EBCCONV};
     tape_list_t *tl;
@@ -401,8 +401,6 @@ static int rtcpc_C_opt(int mode,
         serrno = errno;
         return(-1);
     }
-    strcpy(local_value,value);
-    q = p = local_value;
 
     rc = 0;
     tl = *tape;
@@ -410,15 +408,16 @@ static int rtcpc_C_opt(int mode,
     tapereq = &tl->tapereq;
     
     CLIST_ITERATE_BEGIN(tl->file,fl) {
+        strcpy(local_value,value);
+        p = local_value;
         filereq = &fl->filereq;
         /*
         * Set option
         */
         if ( filereq->convert == -1 ) {
             if ( p != NULL ) convert = 0;
-            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
             do {
-                if ( (w = strstr(p,",")) != NULL ) *w = '\0';
+                if ( (q = strstr(p,",")) != NULL ) *q = '\0';
                 i=0;
                 while ( *valid_convs[i] != '\0' && strcmp(p,valid_convs[i]) ) i++;
                 if ( *valid_convs[i] == '\0' ) {
@@ -428,8 +427,8 @@ static int rtcpc_C_opt(int mode,
                     break;
                 }
                 convert |= conv_values[i];
-                if ( w != NULL ) p = w+1;
-            } while ( w != NULL );
+                if ( q != NULL ) p = q+1;
+            } while ( q != NULL );
             if ( !(convert & (ASCCONV | EBCCONV)) ) convert |= ASCCONV;
             
             filereq->convert = convert;
@@ -438,11 +437,6 @@ static int rtcpc_C_opt(int mode,
                 serrno = EINVAL;
                 rc = -1;
                 break;
-            }
-            
-            if ( q != NULL ) {
-                p = q;
-                p++;
             }
         }
     } CLIST_ITERATE_END(tl->file,fl);
