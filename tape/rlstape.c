@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.18 $ $Date: 2000/04/07 13:09:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.19 $ $Date: 2000/04/10 10:04:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,12 +57,14 @@ char	**argv;
 	char *dgn;
 	char *drive;
 	char *dvn;
+	char *getconfent();
 	gid_t gid;
 	char *loader;
 	int mode;
 	int msglen;
 	int n;
 	char name[CA_MAXUSRNAMELEN+1];
+	char *p;
 	struct passwd *pwd;
 	char *q;
 	int rlsflags;
@@ -103,19 +105,14 @@ char	**argv;
 		sonyraw = 0;
 #endif
 
-	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
-
-        /* initialize for select */
-
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
-        maxfds = getdtablesize();
-#else
-        maxfds = _NFILE;
-#endif
-        FD_ZERO (&readmask);
-
 	pwd = getpwuid (uid);
 	strcpy (name, pwd->pw_name);
+
+	/* delay VDQM_UNIT_RELEASE so that a new request for the same volume
+	   has a chance to keep the volume mounted */
+
+	if (p = getconfent ("TAPE", "RLSDELAY", 0))
+		sleep (atoi (p));
 
 #if VDQM
 	vdqm_status = VDQM_UNIT_RELEASE;
@@ -136,6 +133,17 @@ char	**argv;
 		goto vol_unmount;	/* before volume was requested on drive */
 	if (rlsflags & TPRLS_NOUNLOAD)
 		goto freevol;
+
+	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
+
+        /* initialize for select */
+
+#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+        maxfds = getdtablesize();
+#else
+        maxfds = _NFILE;
+#endif
+        FD_ZERO (&readmask);
 
 unload_loop:
 #if SONYRAW
