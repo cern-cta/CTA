@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape.h,v 1.33 2001/01/23 15:13:34 baud Exp $
+ * $Id: Ctape.h,v 1.34 2001/06/06 07:47:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.33 $ $Date: 2001/01/23 15:13:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.34 $ $Date: 2001/06/06 07:47:50 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -221,6 +221,7 @@
 #define	TP060	"TP060 - invalid combination of method and filstat\n"
 #define	TP061	"TP061 - filstat value incompatible with read-only mode\n"
 #define	TP062	"TP062 - tape %s to be prelabelled %s%s"
+#define	TP063	"TP063 - invalid user %d\n"
 
 			/* tape daemon internal tables */
 
@@ -298,6 +299,7 @@ struct tptab {		/* tape drive table */
 	struct tpfil *filp;	/* pointer to tape file description */
 	uid_t	uid;
 	gid_t	gid;
+	char	user[CA_MAXUSRNAMELEN+1];
 	char	acctname[7];	/* uuu$gg */
 	int	jid;		/* process group id or session id */
 
