@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.5 $ $Date: 2000/08/25 07:24:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.6 $ $Date: 2001/06/21 11:41:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -19,7 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.5 $ $Date: 
 #include <osdep.h>
 #include <serrno.h>
 
-int Cinitdaemon(name,wait4child)
+int DLL_DECL Cinitdaemon(name,wait4child)
 char *name;
 void (*wait4child) _PROTO((int));
 {
