@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.3 $ $Date: 2000/12/12 09:43:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.4 $ $Date: 2001/01/08 12:24:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*
@@ -22,7 +22,7 @@ int n;
 {
 	char *p;
 
-	(void) strncpy (*ptr, str, n);
+	(void) strncpy (str, *ptr, n);
 	if (p = memchr (str, 0, n)) {
 		*ptr += (p - str + 1);
 		return (0);
