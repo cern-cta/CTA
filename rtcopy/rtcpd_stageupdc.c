@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.49 $ $Date: 2000/11/07 13:30:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.50 $ $Date: 2000/12/29 14:31:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -160,6 +160,14 @@ int rtcpd_stageupdc(tape_list_t *tape,
                     (void)rtcpd_LockForTpPos(0);
                 return(0);
             }
+
+            if ( (rtcpd_CheckProcError() & (RTCP_FAILED | 
+                                            RTCP_RESELECT_SERV)) != 0 ) {
+                 if ( filereq->stageSubreqID == -1 ) 
+                     (void)rtcpd_LockForTpPos(0);
+                 return(0);
+            }
+
             rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
                      filereq->stageSubreqID,
@@ -249,6 +257,14 @@ int rtcpd_stageupdc(tape_list_t *tape,
               (nb_bytes > 0 || (filereq->concat & CONCAT_TO_EOD) != 0) &&  
               ((file->next->filereq.concat & CONCAT) == 0 ||
                 file->next == tape->file)) ) {
+
+            if ( (rtcpd_CheckProcError() & (RTCP_FAILED | 
+                                            RTCP_RESELECT_SERV)) != 0 ) {
+                 if ( filereq->stageSubreqID == -1 ) 
+                     (void)rtcpd_LockForTpPos(0);
+                 return(0);
+            }
+
             /*
              * Always give the return code
              */
