@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.98 2002/09/26 08:58:42 jdurand Exp $
+ * $Id: procqry.c,v 1.99 2002/09/26 14:40:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.98 $ $Date: 2002/09/26 08:58:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.99 $ $Date: 2002/09/26 14:40:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1688,7 +1688,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 			if (stpp->reqid == 0) break;
 			if ((this_reqid > 0) && (stpp->reqid != this_reqid)) continue;
 			if (! format_flag) sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
-			if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
+			if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp, magic);
 			if (dump_flag != 0) if (! format_flag) dump_stpp(&rpfd, stpp, &sendrep);
 		}
 		return;
@@ -1759,7 +1759,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 			if (stpp->reqid == 0) break;
 			if (stcp->reqid == stpp->reqid) {
 				if (! format_flag) sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
-				if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
+				if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp, magic);
 				if (dump_flag != 0) if (! format_flag) dump_stpp(&rpfd, stpp, &sendrep);
 			}
 		}
