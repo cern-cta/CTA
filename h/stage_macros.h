@@ -1,5 +1,5 @@
 /*
- * $Id: stage_macros.h,v 1.1 2001/11/30 10:45:00 jdurand Exp $
+ * $Id: stage_macros.h,v 1.2 2002/10/24 08:46:47 jdurand Exp $
  */
 
 #ifndef __stage_macros_h
@@ -144,7 +144,11 @@
 #ifdef CASTORFILE
 #undef CASTORFILE
 #endif
-#define CASTORFILE(xfile) strstr(xfile,"/castor/")
+#ifdef NSROOT
+#define CASTORFILE(xfile) strstr(xfile,NSROOT "/")
+#else
+#define CASTORFILE(xfile) NULL
+#endif
 
 /* Returns uppercased version of a string */
 #ifdef UPPER
