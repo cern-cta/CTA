@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.50 $ $Date: 2000/03/24 18:15:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.51 $ $Date: 2000/03/28 09:14:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -825,6 +825,24 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     return(-1);
                 }
                 tape_fd = -1;
+
+                /*
+                 * Note down the actual file size to
+                 * allow for start up of next disk IO thread.
+                 */
+                if ((filereq->maxsize > 0) &&
+                    (filereq->maxsize <= file->tapebytes_sofar) ) {
+                    /*
+                     * Truncated due to user specified max size.
+                     * Re-calculate number of bytes out and number
+                     * of tape records.
+                     */
+                    filereq->bytes_out = filereq->maxsize - filereq->startsize;
+                    if ( lrecl > 0 )
+                        filereq->nbrecs = filereq->bytes_out / lrecl;
+                } else
+                    filereq->bytes_out = file->tapebytes_sofar -
+                        filereq->startsize;
             }
 
             /*
@@ -844,29 +862,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              * to the control thread that a new disk IO thread can
              * be started.
              */
-            /*
-             * Note down the actual file size to 
-             * allow for start up of next disk IO thread.
-             */
             DEBUG_PRINT((LOG_DEBUG,
-                "TapeToMemory() tapebytes_sofar=%d, max=%d, start=%d\n",
+               "TapeToMemory() tapebytes_sofar=%d, max=%d, start=%d, bytes_out=%d\n",
                 (int)file->tapebytes_sofar,(int)filereq->maxsize,
-                (int)filereq->startsize));
-            if ((filereq->maxsize > 0) &&
-                (filereq->maxsize <= file->tapebytes_sofar) ) {
-                /*
-                 * Truncated due to user specified max size. 
-                 * Re-calculate number of bytes out and number
-                 * of tape records.
-                 */
-                filereq->bytes_out = filereq->maxsize - filereq->startsize;
-                if ( lrecl > 0 )
-                    filereq->nbrecs = filereq->bytes_out / lrecl;
-            } else
-                filereq->bytes_out = file->tapebytes_sofar - 
-                    filereq->startsize;
-            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() bytes_out=%d\n",
-                         (int)filereq->bytes_out));
+                (int)filereq->startsize,(int)filereq->bytes_out));
 
             /*
              * Tell main control thread that we finished by
