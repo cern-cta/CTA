@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.108 $ $Release$ $Date: 2005/01/06 15:56:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/08 07:14:03 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.108 $ $Release$ $Date: 2005/01/06 15:56:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/08 07:14:03 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1103,6 +1103,7 @@ static int procSegmentsForTape(
                         sstrerror(save_serrno),
                         RTCPCLD_LOG_WHERE
                         );
+        (void)C_Services_rollback(*svcs,iAddr);
         serrno = save_serrno;
         return(-1);
       }
@@ -1125,6 +1126,7 @@ static int procSegmentsForTape(
       fl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
       if ( fl->dbRef == NULL ) {
         LOG_SYSCALL_ERR("calloc()");
+        (void)C_Services_rollback(*svcs,iAddr);
         serrno = SESYSERR;
         return(-1);
       }
