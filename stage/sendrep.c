@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.25 2002/05/06 17:31:25 jdurand Exp $
+ * $Id: sendrep.c,v 1.26 2002/05/31 08:09:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.25 $ $Date: 2002/05/06 17:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.26 $ $Date: 2002/05/31 08:09:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -143,6 +143,9 @@ int sendrep(va_alist) va_dcl
 		} else if ((magic_client == STGMAGIC3) && (rc == SENAMETOOLONG)) {
 			/* Known pb with clients using STGMAGIC3 */
 			rc = EINVAL;
+		} else if ((magic_client <= STGMAGIC3) && (rc == ECUPVNACT)) {
+			/* Clients below STGMAGIC4 do not know about ECUPVNACT */
+			rc = SYERR;
 		}
 		marshall_LONG (sav_rbp_magic, magic_client);
 		marshall_LONG (rbp, rc);
