@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.28 2001/03/02 18:16:45 jdurand Exp $
+ * $Id: procalloc.c,v 1.29 2001/06/21 12:13:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.28 $ $Date: 2001/03/02 18:16:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.29 $ $Date: 2001/06/21 12:13:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -110,6 +110,7 @@ void procallocreq(req_data, clienthost)
 	unmarshall_WORD (rbp, clientpid);
 
 	nargs = req2argv (rbp, &argv);
+	stglogit (func, STG92, "stagealloc", stgreq.user, stgreq.uid, stgreq.gid, clienthost);
 #if SACCT
 	stageacct (STGCMDR, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, STAGEALLOC, 0, 0, NULL, "");
