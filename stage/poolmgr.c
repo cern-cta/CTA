@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.47 2000/11/11 08:45:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.48 2000/11/11 08:57:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.47 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.48 $ $Date: 2000/11/11 08:57:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1301,8 +1301,8 @@ int update_migpool(stcp,flag)
 		} else {
 			pool_p->migr->space_canbemig -= stcp->actual_size;
 		}
-		if ((stcp->status & BEING_MIGR) == BEING_MIGR) {
-			stcp->status &= ~BEING_MIGR;
+		if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+			if ((stcp->status & BEING_MIGR) == BEING_MIGR) stcp->status &= ~BEING_MIGR;
 			if (pool_p->migr->nbfiles_beingmig-- < 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)\n",
 						stcp->poolname);
