@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.30 2000/12/06 11:28:57 jdurand Exp $
+ * $Id: stage.h,v 1.31 2000/12/12 14:52:18 jdurand Exp $
  */
 
 /*
@@ -28,6 +28,17 @@
 
 /* This macro returns TRUE is the host is an hpss one */
 #define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
+
+/* This macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
+/* This handles: STAGEOUT|CAN_BE_MIGR */
+/*               STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
+/*               STAGEPUT|CAN_BE_MIGR */
+/*               STAGEWRT|CAN_BE_MIGR */
+/*               STAGEWRT|CAN_BE_MIGR|BEING_MIGR */
+/* This macro is used in particular in procqry.c to determine if we have to hardcoded a '*' instead of */
+/* allocated size */
+#define ISCASTORMIG(stcp) ((stcp->t_or_d == 'h') && ((stcp->status == (STAGEOUT|CAN_BE_MIGR)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR|BEING_MIGR)) || (stcp->status == (STAGEPUT|CAN_BE_MIGR)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR|BEING_MIGR))))
+#define ISHPSSMIG(stcp) ((stcp->t_or_d == 'm') && ((stcp->status == STAGEPUT) || (stcp->status == STAGEWRT)))
 
 /* This macro returns TRUE is the file is a castor one */
 #ifdef NSROOT
@@ -127,6 +138,8 @@
 #define	CAN_BE_MIGR	0x400	/* file can be migrated */
 #define	LAST_TPFILE	0x1000	/* last file on this tape */
 #define	BEING_MIGR	0x2000	/* file being migrated */
+#define ISSTAGEDBUSY 0x4000  /* Internal error while scanning catalog : matched twice in catalog and the one to delete is busy */
+#define ISSTAGEDSYERR 0x10000 /* Internal error while scanning catalog : matched twice in catalog and cannot delete one of them */
 
 			/* stage daemon messages */
 
@@ -307,9 +320,12 @@ struct waitq {
 	struct waitq *next;
 	char	pool_user[CA_MAXUSRNAMELEN+1];
 	char	clienthost[CA_MAXHOSTNAMELEN+1];
-	char	user[CA_MAXUSRNAMELEN+1];	/* login name */
-	uid_t	uid;		/* uid or Guid */
-	gid_t	gid;
+	char	req_user[CA_MAXUSRNAMELEN+1];	/* requestor login name */
+	uid_t	req_uid;		/* uid or Guid */
+	gid_t	req_gid;
+	char	rtcp_user[CA_MAXUSRNAMELEN+1];	/* running login name */
+	uid_t	rtcp_uid;		/* uid or Guid */
+	gid_t	rtcp_gid;
 	int	clientpid;
 	int	copytape;
 	int	Pflag;		/* stagealloc -P option */
@@ -332,6 +348,7 @@ struct waitq {
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
 	int	StageIDflag; /* Determine if done under stage:st or not */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
+	int	background; /* Determine if done in background or not */
 };
 
 struct migpolicy {
