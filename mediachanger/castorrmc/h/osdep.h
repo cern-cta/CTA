@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.2 $ $Date: 1999/10/08 06:33:36 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.3 $ $Date: 1999/10/13 13:32:30 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -20,6 +20,7 @@
 #define WORDSIZE        2
 #define LONGSIZE        4
 #define QUADSIZE        8
+#define HYPERSIZE       8
  
 typedef unsigned char   U_BYTE;
 typedef unsigned short  U_WORD;
@@ -49,7 +50,14 @@ typedef unsigned long long	u_signed64;
 #else
 typedef __int64			signed64;
 typedef unsigned __int64	u_signed64;
+typedef long gid_t;
+typedef long uid_t;
 #endif
+
+typedef signed64 HYPER;
+typedef u_signed64 U_HYPER;
+
+#
 
 /*
  * Byte swapping
@@ -71,4 +79,47 @@ typedef unsigned __int64	u_signed64;
 #define NETERROR  perror
 #define OSERROR   perror
  
+/* Macros for prototyping */
+#ifdef _PROTO
+#undef _PROTO
+#endif
+#ifdef __STDC__
+#define _PROTO(a) a
+#else
+#define _PROTO(a) ()
+#endif
+
+/* Macros for externalization (UNIX) (J.-D.Durand) */
+#ifdef EXTERN_C
+#undef EXTERN_C
+#endif
+#if defined(__cplusplus)
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+
+/* Macros for externalization (WIN32) (O.Barring)     */
+/* A correct exernalization of routines that          */
+/* _always_ returns an interger, in your              */
+/* <package>_api.h header file, is then:              */
+/* EXTERN_C <type> DLL_DECL routine _PROTO((...));    */
+/* [Please note the space before prototype itself]    */
+/* [Please note the two level parenthesis]            */
+/* If your externalized function do not return int    */
+/* but another type, you must get inspired by the     */
+/* following declaration of int and change       */
+#ifdef DLL_DECL
+#undef DLL_DECL
+#endif
+#if !(defined(_WIN32) && defined(_DLL))
+#define DLL_DECL
+#else
+#ifdef _EXPORTING
+#define DLL_DECL __declspec(dllexport) __cdecl
+#else
+#define DLL_DECL __declspec(dllimport) __cdecl
+#endif
+#endif
+
 #endif /* _OSDEP_H_INCLUDED_ */
