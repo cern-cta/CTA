@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.96 2002/08/28 10:29:45 jdurand Exp $
+ * $Id: procqry.c,v 1.97 2002/09/20 12:26:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.96 $ $Date: 2002/08/28 10:29:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.97 $ $Date: 2002/09/20 12:26:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -917,12 +917,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						else
 							sendrep (&rpfd, MSG_OUT, title);
 		}
-		if ((stcp->t_or_d == 'h') && (! ISWAITING(stcp))) {
-			if (class_flag) {
-				if ((ifileclass = upd_fileclass(NULL,stcp,0,1,1)) >= 0) {
-					if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
-						thismintime_beforemigr = mintime_beforemigr(ifileclass);
-					}
+		if (stcp->t_or_d == 'h') {
+			if ((ifileclass = upd_fileclass(NULL,stcp,3,1,1)) >= 0) {
+				if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
+					thismintime_beforemigr = mintime_beforemigr(ifileclass);
 				}
 			}
 		}
