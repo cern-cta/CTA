@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.135 2001/03/19 18:17:18 jdurand Exp $
+ * $Id: stager.c,v 1.136 2001/03/22 11:02:36 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.135 $ $Date: 2001/03/19 18:17:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.136 $ $Date: 2001/03/22 11:02:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -136,6 +136,7 @@ typedef unsigned char blockid_t[4];
 blockid_t nullblockid = { '\0', '\0', '\0', '\0' };
 blockid_t *hsm_blockid = NULL;      /* Current file sequence on current tape (vid) */
 int *hsm_flag = NULL;               /* Flag saying to hsmidx() not to consider this entry while scanning */
+int *hsm_ignore = NULL;             /* Flag saying to completely ignore this entry - use for migration stagewrt */
 char **hsm_vid = NULL;              /* Current vid pointer or NULL if not in current rtcpc request */
 char cns_error_buffer[512];         /* Cns error buffer */
 char vmgr_error_buffer[512];        /* Vmgr error buffer */
@@ -146,6 +147,7 @@ struct passwd start_passwd;
 int nuserlevel = 0;                 /* Number of user-level files */
 int nexplevel = 0;                  /* Number of experiment-level files */
 int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
+int fatal_callback_error = 0;       /* Flag to tell us that there error in the callback was fatal or not */
 int nhpss = 0;
 int ncastor = 0;
 int rtcpc_kill_cleanup = 0;         /* Flag to tell if we have to call rtcpc_kill() in the signal handler */
@@ -284,6 +286,7 @@ int save_euid, save_egid;
       (hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
       (hsm_blockid = (blockid_t *) calloc(nbcat_ent,sizeof(blockid_t)))            == NULL ||              \
       (hsm_flag = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||              \
+      (hsm_ignore = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
       (hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||              \
       (hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {              \
     SAVE_EID;                                    \
@@ -311,10 +314,36 @@ int save_euid, save_egid;
   if (hsm_fseq != NULL) free(hsm_fseq);                                      \
   if (hsm_blockid != NULL) free(hsm_blockid);                                \
   if (hsm_flag != NULL) free(hsm_flag);                                      \
+  if (hsm_ignore != NULL) free(hsm_ignore);                                  \
   if (hsm_status != NULL) free(hsm_status);                                  \
   if (hsm_vid != NULL) free(hsm_vid);                                        \
 }
   
+/* This macro will set a hsm_ignore[] field depending */
+/* on use_subreqid availability and current serrno */
+/* It is used ONLY in the HSM callback */
+#define SET_HSM_IGNORE(ihsm_ignore,error_code) { \
+  if (! use_subreqid) { \
+    fatal_callback_error = 1; \
+  } else { \
+    switch (error_code) { \
+    case ENOENT: \
+    case EISDIR: \
+    case EPERM: \
+    case EACCES: \
+      hsm_ignore[ihsm_ignore] = USERR; \
+      break; \
+    case SECOMERR: \
+    case SECONNDROP: \
+      hsm_ignore[ihsm_ignore] = SECOMERR; \
+      break; \
+    default: \
+      hsm_ignore[ihsm_ignore] = SYERR; \
+      break; \
+    } \
+  } \
+} \
+
 /* This macro call the cleanup at exit if necessary */
 /* If hsm_status != NULL then we know we were doing */
 /* CASTOR migration.                                */
@@ -322,6 +351,9 @@ int save_euid, save_egid;
 /* protocol error, but from the stager point of     */
 /* view, we can know of the migration of all the    */
 /* files did perform ok.                            */
+/* The subtility with hsm_ignore[] is that if we    */
+/* exit with USERR there will be no retry - if we   */
+/* exit with SYERR there will be a retry...         */
 #define RETURN(exit_code) {                      \
     int correct_exit_code;                       \
                                                  \
@@ -336,14 +368,34 @@ int save_euid, save_egid;
     if (hsm_status != NULL) {                    \
       int ihsm_status;                           \
       int global_found_error = 0;                \
+      int have_ignore = 0;                       \
       for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) { \
+        if (hsm_ignore[ihsm_status] != 0) {      \
+          have_ignore = 1;                       \
+          break;                                 \
+        }                                        \
         if (hsm_status[ihsm_status] != 1) {      \
           global_found_error = 1;                \
           break;                                 \
         }                                        \
       }                                          \
-      if (global_found_error == 0) {             \
+      if ((global_found_error == 0) && (! have_ignore)) { \
         correct_exit_code = 0;                   \
+      } else {                                   \
+        int global_userr = 0;                    \
+        int global_syerr = 0;                    \
+        for (ihsm_status = 0; ihsm_status < nbcat_ent; ihsm_status++) { \
+          if (! hsm_ignore[ihsm_status]) continue; \
+          switch (hsm_ignore[ihsm_status]) {     \
+          case SECOMERR:                         \
+            global_syerr++;                      \
+            break;                               \
+          default:                               \
+            global_userr++;                      \
+            break;                               \
+          }                                      \
+        }                                        \
+        correct_exit_code = (global_syerr ? SYERR : (global_userr ? USERR : exit_code)); \
       }                                          \
     }                                            \
 	FREEHSM;                                     \
@@ -565,12 +617,14 @@ int main(argc, argv)
 	}
     if (use_subreqid != 0) {
 		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
-			/* By precaution, we disallow async callbacks if anything but stagein */
-			SAVE_EID;
-    	    sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
-			RESTORE_EID;
-			free(stcs);
-	        exit(SYERR);
+			/* By precaution, we disallow async callbacks if anything but stagein or stagewrt to anything but tape */
+			if (stcs->t_or_d == 't') {
+				SAVE_EID;
+    		    sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
+				RESTORE_EID;
+				free(stcs);
+		        exit(SYERR);
+			}
 		}
     }
 	(void) umask (stcs->mask);
@@ -833,7 +887,7 @@ int hsmidx_vs_ipath(ipath)
 }
 
 /* This routine will return the index in the nbcat_ent entries of an HSM file       */
-/* provided the associated hsm_flag[] is == 0                                       */
+/* provided the associated hsm_flag[] and hsm_ignore[] are == 0                     */
 int hsmidx(stcp)
      struct stgcat_entry *stcp;
 {
@@ -842,11 +896,11 @@ int hsmidx(stcp)
 
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
 		if (ncastor > 0) {
-			if (strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0 && hsm_flag[i] == 0) {
+			if ((strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0) && (hsm_flag[i] == 0) && (hsm_ignore[i] == 0)) {
 				return(i);
 			}
 		} else {
-			if (strcmp(stcx->u1.m.xfile,stcp->u1.m.xfile) == 0 && hsm_flag[i] == 0) {
+			if ((strcmp(stcx->u1.m.xfile,stcp->u1.m.xfile) == 0) && (hsm_flag[i] == 0) && (hsm_ignore[i] == 0)) {
 				return(i);
 			}
 		}
@@ -1359,7 +1413,7 @@ int stagein_castor_hsm_file() {
 		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "vmgr_querytape",
 						 sstrerror (serrno));
-		sendrep (rpfd, MSG_ERR, "STG47 - %s : Retrying Volume Manager request in %d seconds\n", castor_hsm, RETRYI);
+		sendrep (rpfd, MSG_ERR, "STG47 - %s : Retrying request in %d seconds\n", castor_hsm, RETRYI);
 		RESTORE_EID;
 		sleep(RETRYI);
 	}
@@ -1486,6 +1540,7 @@ int stagein_castor_hsm_file() {
 		}
 	}
 
+	fatal_callback_error = callback_error = 0;
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -1571,7 +1626,6 @@ int stagewrt_castor_hsm_file() {
 #ifdef STAGER_DEBUG
 	char tmpbuf[21];
 	char tmpbuf1[21];
-	char tmpbuf2[21];
 #endif
 	extern char* poolname2tapepool _PROTO((char *));
     struct devinfo *devinfo;
@@ -1592,12 +1646,20 @@ int stagewrt_castor_hsm_file() {
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat",rfio_serror());
 			RESTORE_EID;
+			if (use_subreqid) {
+				SET_HSM_IGNORE(i,rfio_serrno());
+				continue;
+			}
 			RETURN (USERR);
 		}
 		if (statbuf.st_size == 0) {
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, "STG02 - %s is empty\n", stcp->ipath);
 			RESTORE_EID;
+			if (use_subreqid) {
+				SET_HSM_IGNORE(i,ENOENT);
+				continue;
+			}
 			RETURN (USERR);
 		}
 
@@ -1663,9 +1725,11 @@ int stagewrt_castor_hsm_file() {
 		int vmgr_gettape_nretry;
 		int vmgr_gettape_iretry;
 
+	gettape:
 		totalsize_to_transfer = 0;
 
 		for (i = 0; i < nbcat_ent; i++) {
+			if (hsm_ignore[i] != 0) continue;
 			totalsize_to_transfer += (hsm_totalsize[i] - hsm_transferedsize[i]);
 		}
 
@@ -1675,7 +1739,6 @@ int stagewrt_castor_hsm_file() {
 		}
 
 		/* We loop until everything is staged */
-	gettape:
 		Flags = 0;
 
 		SETTAPEEID(stcs->uid,stcs->gid);
@@ -1740,6 +1803,10 @@ int stagewrt_castor_hsm_file() {
 			for (stcp = stcs; stcp < stce; stcp++, i++) {
 				/* We always force the blocksize while migrating */
 				stcp->blksize = devinfo->defblksize;
+				if (hsm_ignore[i] != 0) {
+					/* To be skipped */
+					continue;
+				}
 				if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
 					/* Yet transfered */
 					continue;
@@ -1753,6 +1820,10 @@ int stagewrt_castor_hsm_file() {
 					/* New estimated free space available */
 					estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
 					for (++stcp, ++i; stcp < stce; stcp++, i++) {
+						if (hsm_ignore[i] != 0) {
+							/* To be skipped */
+							continue;
+						}
 						if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i])) {
 							estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
 							continue;
@@ -1793,7 +1864,7 @@ int stagewrt_castor_hsm_file() {
 			/* From now on we know that stcp[istart,iend] fulfill a-priori the requirement */
 			nbcat_ent_current = iend - istart + 1;
 			for (i = 0; i < nbcat_ent; i++) {
-				if (i >= istart && i <= iend) {
+				if ((i >= istart) && (i <= iend) && (hsm_ignore[i] == 0)) {
 					hsm_vid[i] = vid;
 					hsm_fseq[i] = fseq++;
 				} else {
@@ -1827,7 +1898,7 @@ int stagewrt_castor_hsm_file() {
 
 			/* We reset all the hsm_flags entries */
 			for (i = 0; i < nbcat_ent; i++) {
-				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
+				if ((hsm_totalsize[i] > hsm_transferedsize[i]) && (hsm_ignore[i] == 0)) {
 					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
 				} else {
 					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
@@ -1871,6 +1942,7 @@ int stagewrt_castor_hsm_file() {
 				}
 			}
 
+			fatal_callback_error = callback_error = 0;
 			rtcp_rc = rtcpc(rtcpcreqs[0]);
 			save_serrno = serrno;
 			rtcpc_kill_cleanup = 0;
@@ -1884,10 +1956,45 @@ int stagewrt_castor_hsm_file() {
 				RESTORE_EID;
 
 				if (callback_error != 0) {
-					/* This is a callback error - considered as fatal */
+					/* This is a callback error - considered as fatal only if we run in non-asynchroneous mode */
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback", sstrerror(serrno));
 					RESTORE_EID;
+					if ((use_subreqid != 0) && (fatal_callback_error == 0)) {
+						/* We continue as an acceptable error */
+						if ((Flags != TAPE_FULL) && (stagewrt_nomoreupdatetape == 0)) {
+							/* This will remove the BUSY flag in vmgr */
+							Flags = 0;
+#ifdef STAGER_DEBUG
+							SAVE_EID;
+							sendrep (rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,FilesWriten=0,Flags=%d)\n",vid,Flags);
+							RESTORE_EID;
+#endif
+							if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, Flags) != 0) {
+								SAVE_EID;
+								sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",sstrerror (serrno));
+								RESTORE_EID;
+							}
+						}
+						/* We precede a bit the calculation that is done at the gettape: label */
+						{
+							u_signed64 next_totalsize_to_transfer = 0;
+
+							for (i = 0; i < nbcat_ent; i++) {
+								if (hsm_ignore[i] != 0) continue;
+									next_totalsize_to_transfer += (hsm_totalsize[i] - hsm_transferedsize[i]);
+								}
+
+							if (next_totalsize_to_transfer > 0) {
+								/* Not yet finished */
+								SAVE_EID;
+								sendrep (rpfd, MSG_ERR, "Retrying request immediately\n");
+								RESTORE_EID;
+								break;
+							}
+						}
+						goto gettape;
+					}
 					RETURN (SYERR);
 				}
 
@@ -1924,7 +2031,7 @@ int stagewrt_castor_hsm_file() {
 						}
 					}
 				}
-				if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
+				if ((Flags != TAPE_FULL) && (stagewrt_nomoreupdatetape == 0)) {
 					/* If Flags is TAPE_FULL then it has already been set by the callback which called vmgr_updatetape */
 #ifdef STAGER_DEBUG
 					SAVE_EID;
@@ -1938,7 +2045,7 @@ int stagewrt_castor_hsm_file() {
 				}
 			}
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, "Retrying Volume Manager request in %d seconds\n", RETRYI);
+			sendrep (rpfd, MSG_ERR, "Retrying request in %d seconds\n", RETRYI);
 			RESTORE_EID;
 			sleep(RETRYI);
 			goto gettape;
@@ -2017,6 +2124,7 @@ int stage_tape() {
  reselect:
 	rtcpc_kill_cleanup = 1;
 	error_already_processed = 0; /* Not used in stager_tape_callback() */
+	fatal_callback_error = callback_error = 0;
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -2778,6 +2886,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					return(-1);
 				}
 			}
+			if (hsm_ignore[ihsm] != 0) continue;
 			if (hsm_totalsize[ihsm] == 0) {
 				serrno = SEINTERNAL;
 				SAVE_EID;
@@ -3177,7 +3286,7 @@ int stager_hsm_callback(tapereq,filereq)
 		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "### Received invalid callback (tapereq=0x%lx,filereq=0x%lx)\n", (unsigned long) tapereq, (unsigned long) filereq);
 		RESTORE_EID;
-		callback_error = 1;
+		fatal_callback_error = callback_error = 1;
 		return(-1);
 	}
 
@@ -3194,7 +3303,7 @@ int stager_hsm_callback(tapereq,filereq)
 		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",strerror(errno));
 		RESTORE_EID;
-		callback_error = 1;
+		fatal_callback_error = callback_error = 1;
 		return(-1);
 	}
 
@@ -3208,7 +3317,7 @@ int stager_hsm_callback(tapereq,filereq)
 		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
 		RESTORE_EID;
-		callback_error = 1;
+		fatal_callback_error = callback_error = 1;
 		return(-1);
 	}
 
@@ -3277,7 +3386,7 @@ int stager_hsm_callback(tapereq,filereq)
 				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape", sstrerror(serrno));
 				RESTORE_EID;
-				callback_error = 1;
+				fatal_callback_error = callback_error = 1;
 				return(-1);
 			}
 
@@ -3303,7 +3412,7 @@ int stager_hsm_callback(tapereq,filereq)
 						sendrep (rpfd, MSG_ERR, STG02, vid, "malloc", strerror(errno));
 						RESTORE_EID;
 						serrno = SEINTERNAL;
-						callback_error = 1;
+						fatal_callback_error = callback_error = 1;
 						return(-1);
 					}
 #ifdef STAGER_DEBUG
@@ -3322,7 +3431,7 @@ int stager_hsm_callback(tapereq,filereq)
 						sendrep (rpfd, MSG_ERR, STG02, vid, "realloc", strerror(errno));
 						RESTORE_EID;
 						serrno = SEINTERNAL;
-						callback_error = 1;
+						fatal_callback_error = callback_error = 1;
 						return(-1);
 					}
 					hsm_segments[stager_client_true_i] = dummy;
@@ -3382,6 +3491,7 @@ int stager_hsm_callback(tapereq,filereq)
 						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs", sstrerror(serrno));
 						RESTORE_EID;
 						callback_error = 1;
+						SET_HSM_IGNORE(stager_client_true_i,serrno);
 						return(-1);
 					}
 					/* If we reach this part of the code then we know undoubtly */
@@ -3417,6 +3527,7 @@ int stager_hsm_callback(tapereq,filereq)
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setatime", sstrerror(serrno));
 					RESTORE_EID;
 					callback_error = 1;
+					SET_HSM_IGNORE(stager_client_true_i,serrno);
 					return(-1);
 				}
 				/* If we reach this part of the code then we know undoubly */
@@ -3426,6 +3537,15 @@ int stager_hsm_callback(tapereq,filereq)
 		}
 	} else if (filereq->cprc != 0) {
 		stager_process_error(tapereq,filereq,castor_hsm);
+		if ((use_subreqid != 0) && ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) && (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs))) {
+			/* In the specific case of STAGEWRT or STAGEPUT we can exceptionnaly force a callback error */
+			/* that will prevent RTCOPY to send another callback to the stgdaemon itself, allowing us to */
+			/* continue with another rtcpc() request */
+			callback_error = 1;
+			SET_HSM_IGNORE(stager_client_true_i,filereq->err.errorcode);
+			serrno = filereq->err.errorcode; /* Can be unset at this step */
+			return(-1);
+		}
 	}
 
 	return(0);
@@ -3639,7 +3759,7 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 		if (vmgr_updatetape(tapereq->vid, 0, 0, 0, this_flag) != 0) {
 			sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
 			RESTORE_EID;
-			callback_error = 1;
+			fatal_callback_error = callback_error = 1;
 			return;
 		}
 		RESTORE_EID;
@@ -3652,6 +3772,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Monday 19 March, 2001 at 17:42:19 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 22 March, 2001 at 11:54:03 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
