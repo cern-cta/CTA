@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.21 2001/06/21 10:23:18 jdurand Exp $
+ * $Id: stage_api.c,v 1.22 2001/06/23 10:12:02 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -397,7 +397,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     case 'm':
     case 'h':
       /* The stager daemon will take care to verify if it is a valid HSM file... */
-      if (! ISCASTOR(thiscat->u1.m.xfile)) {
+      if (ISHPSS(thiscat->u1.m.xfile)) {
         char *dummy;
         char *optarg = thiscat->u1.m.xfile;
         char *hsm_host;
@@ -421,6 +421,25 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 #endif
             return(-1);
           }
+        }
+      } else if (thiscat->u1.h.xfile[0] != '/') {
+        char *thiscwd;
+        char dummy[167];
+
+        /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
+
+        if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
+          /* We check that we have enough room for such a CASTOR full pathname */
+          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile) + 1) > 167) {
+            free(thiscwd);
+            serrno = EFAULT;
+            return(-1);
+          }
+          strcpy(dummy, thiscwd);
+          strcat(dummy, "/");
+          strcat(dummy, thiscat->u1.h.xfile);
+          strcpy(thiscat->u1.h.xfile, dummy);
+          free(thiscwd);
         }
       }
       break;
@@ -994,82 +1013,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
       strcpy(thiscat->poolname, stgpool_forced);
     }
 
-    switch (t_or_d) {
-    case 't':                              /* For tape request we do some internal check */
-      /* tape request */
-      numvid = numvsn = 0;
-      for (i = 0; i < MAXVSN; i++) {
-        if (thiscat->u1.t.vid[i][0] != '\0') numvid++;
-        if (thiscat->u1.t.vsn[i][0] != '\0') numvsn++;
-      }
-      if (numvid || numvsn) {
-        if (numvid == 0) {
-          for (i = 0; i < numvsn; i++) {
-            strcpy(thiscat->u1.t.vid[i],thiscat->u1.t.vsn[i]);
-          }
-        }
-        if (strcmp(thiscat->u1.t.dgn,"CT1") == 0) strcpy(thiscat->u1.t.dgn,"CART");
-        if (strcmp(thiscat->u1.t.den,"38K") == 0) strcpy(thiscat->u1.t.dgn,"38000");
-        /* setting defaults (from TMS if installed) */
-        for (i = 0; i < numvid; i++) {
-#if TMS
-          if (stage_api_tmscheck (thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl)) {
-            /*
-            stage_errmsg(func, "STG02 - TMSCHECK(%s,%s,%s,%s,%s) error\n",
-                         thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl);
-            */
-            serrno = ESTTMSCHECK;
-#if defined(_WIN32)
-            WSACleanup();
-#endif
-            return(-1);
-          }
-#else
-          if (thiscat->u1.t.vsn[i][0] == '\0') {
-            strcpy(thiscat->u1.t.vsn[i],thiscat->u1.t.vid[i]);
-          }
-          if (thiscat->u1.t.dgn[0] == '\0')
-            strcpy (thiscat->u1.t.dgn, DEFDGN);
-          thiscat->u1.t.den[0] = '\0';      /* No default density */
-          if (thiscat->u1.t.lbl[0] == '\0')
-            strcpy (thiscat->u1.t.lbl, "sl");
-#endif
-        }
-      }
-      break;
-    case 'm':
-    case 'h':
-      /* The stager daemon will take care to verify if it is a valid HSM file... */
-      if (! ISCASTOR(thiscat->u1.m.xfile)) {
-        char *dummy;
-        char *optarg = thiscat->u1.m.xfile;
-        char *hsm_host;
-        char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
-
-        /* We prepend HSM_HOST only for non CASTOR-like files */
-        if (((dummy = strchr(optarg,':')) == NULL) || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
-          if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
-            strcat (hsm_path, optarg);
-          } else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
-            strcat (hsm_path, optarg);
-          } else {
-            stage_errmsg(func, STG54);
-            serrno = ESTHSMHOST;
-#if defined(_WIN32)
-            WSACleanup();
-#endif
-            return(-1);
-          }
-        }
-      }
-      break;
-    default:
-      break;
-    }
     thiscat->t_or_d = t_or_d;
   }
   sendbuf_size += (nstcp_input * sizeof(struct stgcat_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
@@ -1695,7 +1638,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     case 'm':
     case 'h':
       /* The stager daemon will take care to verify if it is a valid HSM file... */
-      if (! ISCASTOR(thiscat->u1.m.xfile)) {
+      if (ISHPSS(thiscat->u1.m.xfile)) {
         char *dummy;
         char *optarg = thiscat->u1.m.xfile;
         char *hsm_host;
@@ -1719,6 +1662,25 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 #endif
             return(-1);
           }
+        }
+      } else if (thiscat->u1.h.xfile[0] != '/') {
+        char *thiscwd;
+        char dummy[167];
+
+        /* This is a non-asbolute non-HPSS (e.g. CASTOR) HSM file */
+
+        if ((thiscwd = rfio_getcwd(NULL,CA_MAXPATHLEN+1)) != NULL) {
+          /* We check that we have enough room for such a CASTOR full pathname */
+          if ((strlen(thiscwd) + 1 + strlen(thiscat->u1.h.xfile) + 1) > 167) {
+            free(thiscwd);
+            serrno = EFAULT;
+            return(-1);
+          }
+          strcpy(dummy, thiscwd);
+          strcat(dummy, "/");
+          strcat(dummy, thiscat->u1.h.xfile);
+          strcpy(thiscat->u1.h.xfile, dummy);
+          free(thiscwd);
         }
       }
       break;
