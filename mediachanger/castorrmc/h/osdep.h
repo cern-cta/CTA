@@ -1,14 +1,14 @@
 /*
- * $Id: osdep.h,v 1.15 2002/03/06 13:49:30 jdurand Exp $
+ * $Id: osdep.h,v 1.16 2002/11/19 09:04:52 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/IP
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.15 $ $Date: 2002/03/06 13:49:30 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.16 $ $Date: 2002/11/19 09:04:52 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -144,6 +144,13 @@ typedef U_HYPER TIME_T;
 #else
 #define DLL_DECL
 #endif
+#endif
+
+#if defined(__alpha) && defined(__osf__)
+#define off64_t off_t
+#endif
+#if defined(_WIN32)
+#define off64_t __int64
 #endif
 
 #endif /* _OSDEP_H_INCLUDED_ */
