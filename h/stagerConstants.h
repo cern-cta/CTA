@@ -1,5 +1,5 @@
 /*
- * $Id: stagerConstants.h,v 1.7 2004/10/25 13:15:13 jdurand Exp $
+ * $Id: stagerConstants.h,v 1.8 2004/10/27 13:22:19 jdurand Exp $
  */
 
 #ifndef __stagerConstants_h
@@ -14,7 +14,9 @@
 #define STAGER_DEFAULT_DEBUG         0                   /* Default debug mode (!= 0 means yes) */
 #define STAGER_DEFAULT_TRACE         0                   /* Default trace mode (!= 0 means yes) */
 #define STAGER_DEFAULT_DB_NBTHREAD   5                   /* Default number of db threads */
-#define STAGER_DEFAULT_USER_NBTHREAD 5                   /* Default number of user threads */
+#define STAGER_DEFAULT_QUERY_NBTHREAD 5                  /* Default number of query threads */
+#define STAGER_DEFAULT_UPDATE_NBTHREAD 5                 /* Default number of update threads */
+#define STAGER_DEFAULT_GETNEXT_NBTHREAD 5                /* Default number of getnext threads */
 #define STAGER_DEFAULT_FACILITY   "stager"               /* Default Facility name */
 #define STAGER_DEFAULT_IGNORECOMMANDLINE   0             /* Default ignore-comamnd-line mode (!= 0 means yes) */
 #define STAGER_DEFAULT_HOST       "localhost"            /* Default stager host */
@@ -28,7 +30,9 @@
 #define STAGER_CLASS_DEBUG        "DEBUG"                /* Sub-label in config file for debug */
 #define STAGER_CLASS_TRACE        "TRACE"                /* Sub-label in config file for trace */
 #define STAGER_CLASS_DB_NBTHREAD  "DB_NBTHREAD"          /* Sub-label in config file for db_nbthread */
-#define STAGER_CLASS_USER_NBTHREAD "USER_NBTHREAD"       /* Sub-label in config file for user_nbthread */
+#define STAGER_CLASS_QUERY_NBTHREAD "QUERY_NBTHREAD"     /* Sub-label in config file for query_nbthread */
+#define STAGER_CLASS_UPDATE_NBTHREAD "UPDATE_NBTHREAD"   /* Sub-label in config file for update_nbthread */
+#define STAGER_CLASS_GETNEXT_NBTHREAD "GETNEXT_NBTHREAD" /* Sub-label in config file for getnext_nbthread */
 #define STAGER_CLASS_FACILITY     "FACILITY"             /* Sub-label in config file for facility */
 #define STAGER_CLASS_IGNORECOMMANDLINE  "IGNORECOMMANDLINE" /* Sub-label in config file for ignore-command-line */
 #define STAGER_CLASS_HOST         "HOST"                 /* Sub-label in config file for host */
@@ -40,7 +44,9 @@
 #define STAGER_ENV_DEBUG          "STAGER_DEBUG"         /* Environment variable for debug */
 #define STAGER_ENV_TRACE          "STAGER_TRACE"         /* Environment variable for trace */
 #define STAGER_ENV_DB_NBTHREAD    "STAGER_DB_NBTHREAD"   /* Environment variable for db_nbthread */
-#define STAGER_ENV_USER_NBTHREAD  "STAGER_USER_NBTHREAD" /* Environment variable for user_nbthread */
+#define STAGER_ENV_QUERY_NBTHREAD "STAGER_QUERY_NBTHREAD" /* Environment variable for query_nbthread */
+#define STAGER_ENV_UPDATE_NBTHREAD "STAGER_UPDATE_NBTHREAD" /* Environment variable for update_nbthread */
+#define STAGER_ENV_GETNEXT_NBTHREAD "STAGER_GETNEXT_NBTHREAD" /* Environment variable for getnext_nbthread */
 #define STAGER_ENV_FACILITY       "STAGER_FACILITY"      /* Environment variable for facility */
 #define STAGER_ENV_IGNORECOMMANDLINE "STAGER_IGNORECOMMANDLINE" /* Environment variable for ignore-command-line */
 #define STAGER_ENV_HOST           "STAGER_HOST"          /* Environment variable for host */
