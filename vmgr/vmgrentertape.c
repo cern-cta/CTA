@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.5 $ $Date: 2000/03/05 16:30:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.6 $ $Date: 2000/03/05 16:41:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentertape - enter a new tape volume */
@@ -90,7 +90,7 @@ char **argv;
                         break;
                 }
         }
-        if (Coptind < argc || vid == NULL || dgn == NULL) {
+        if (Coptind < argc || vid == NULL || dgn == NULL || model == NULL) {
                 errflg++;
         }
         if (errflg) {
