@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 15:30:52 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -59,7 +59,7 @@ LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 
 #if !defined(_WIN32)
 #if linux
-DEBUG  = -g -O
+DEBUG  = -g -O0
 #else
 DEBUG  = -g
 #endif

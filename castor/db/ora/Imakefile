@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:46:39 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 15:30:52 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -26,7 +26,7 @@
 
 #if !defined(_WIN32)
 #if linux
-DEBUG  = -g -O
+DEBUG  = -g -O0
 #else
 DEBUG  = -g
 #endif
@@ -43,6 +43,7 @@ ORALIB_OBJS = OraBaseCnv.Osuf \
               OraCastorFileCnv.Osuf \
               OraClientCnv.Osuf \
               OraCnvSvc.Osuf \
+              OraStagerSvc.Osuf \
               OraCuuidCnv.Osuf \
               OraDiskFileCnv.Osuf \
               OraDiskFileCopyCnv.Osuf \
