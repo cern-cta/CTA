@@ -24,6 +24,9 @@ static char sccsid[] = "@(#)connect.c,v 1.2 2003/10/30 11:00:34 CERN/IT/ADC/CA F
 #include <Cglobals.h>		/* thread local storage for global variables */
 #include <Cnetdb.h>		/* thread-safe network database routines */
 #include <osdep.h>
+#ifdef CSEC
+#include "Csec_api.h"
+#endif
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
@@ -328,7 +331,26 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    }
 
    TRACE(1, "rfio", "rfio_connect: return socket %d", s);
-   END_TRACE();
+#ifdef CSEC
+   /* Performing authentication */
+   {
+     Csec_context ctx;
+     char service[CA_MAXSERVICENAMELEN+1];
+     int ret_flags = 0;
+     int rc;
+     
+     TRACE(1, "rfio", "Going to establish security context !");
+     Csec_init_context(&ctx);
+     Csec_get_peer_service_name(&ctx, s, CSEC_SERVICE_TYPE_DISK,
+				service, CA_MAXSERVICENAMELEN);
+     
+     TRACE(1, "rfio", "Service is %s", service);
+     rc = Csec_client_establish_context(&ctx, s, service, &ret_flags);
+     
+     TRACE(1, "rfio", "client establish context returned %s", rc);
+   }
+#endif
+ END_TRACE();
    return(s);
 }
 

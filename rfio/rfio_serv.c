@@ -94,6 +94,11 @@ const char PrincipalName[] = RFIO_PRINCIPAL;
 const char KeyTabFile[] = RFIO_KEYTAB;
 #endif /* HPSS */
 
+#ifdef CSEC
+#include <Csec_api.h>
+Csec_context ctx;
+#endif
+
 extern char     *getconfent();
 #if !defined(_WIN32)
 extern char     *malloc();		/* Some systems forget this	*/
@@ -914,6 +919,26 @@ char tmpbuf[21], tmpbuf2[21];
    td = (struct thData*)TlsGetValue(tls_i);
 #endif /* WIN32 */  
    
+#ifdef CSEC
+#define CLIENT_NAME_SIZE 1000
+/* Perfom the authentication */
+ {
+   char client_name[CLIENT_NAME_SIZE];
+   int ret_flags = 0;
+   
+   Csec_init_context(&ctx);
+   if (Csec_server_establish_context(&ctx,
+				     s,
+				     client_name,
+				     CLIENT_NAME_SIZE -1,
+				     &ret_flags)<0) {
+     return -1;
+   }
+ }
+#endif
+
+
+
    /*
     * Initializing the info data structure.
     */
