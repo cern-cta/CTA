@@ -1,5 +1,5 @@
 /*
- * $Id: stager_messages.h,v 1.4 2004/12/09 09:38:07 jdurand Exp $
+ * $Id: stager_messages.h,v 1.5 2005/01/29 14:54:20 jdurand Exp $
  */
 
 #ifndef __stager_messages_h
@@ -8,9 +8,9 @@
 #include "dlf_api.h"
 
 #define STAGER_FACILITY_NAME "stager"
-#define STAGER_LOG_WHERE(file,line) "RequestUuid",DLF_MSG_PARAM_UUID,stager_request_uuid,"SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid,"File",DLF_MSG_PARAM_STR,file,"Line",DLF_MSG_PARAM_INT,line,"errno",DLF_MSG_PARAM_INT,errno,"serrno",DLF_MSG_PARAM_INT,serrno
+#define STAGER_LOG_WHERE(file,line) "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid,"File",DLF_MSG_PARAM_STR,file,"Line",DLF_MSG_PARAM_INT,line,"errno",DLF_MSG_PARAM_INT,errno,"serrno",DLF_MSG_PARAM_INT,serrno
 
-#define STAGER_NB_PARAMS 6 /* This is the number of arguments in STAGER_LOG_WHERE */
+#define STAGER_NB_PARAMS 5 /* This is the number of arguments in STAGER_LOG_WHERE */
 
 enum stagerMessagesNo {
   STAGER_MSG_EMERGENCY,
