@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.6 $ $Date: 2000/03/08 16:51:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.7 $ $Date: 2000/03/09 12:28:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -937,19 +937,18 @@ int vdqm_StartReplicaThread() {
      * Primary server. We are starting up! try to get queues from 
      * replica.
      */
-    hold = 1;
     secondary_host = (char *)calloc(1,CA_MAXHOSTNAMELEN+1);
     while ( (q = strtok(NULL," \t\n")) != NULL )  {
         strcpy(secondary_host,q);
         log(LOG_INFO,"vdqm_StartReplicaThread() trying to get queues from %s\n",
             secondary_host);
-        retry_replication = 1;
+        retry_replication = hold = 1;
         rc_p = (int *)vdqm_ReplicaListenThread(secondary_host);
         if ( rc_p == NULL || *rc_p == failure ) continue;
         /*
          * Repeat request to force secondary server to re-enter replication mode
          */
-        retry_replication = 1;
+        retry_replication = hold = 1;
         log(LOG_INFO,"vdqm_ReplicaListenThread() force %s to re-enter replica mode\n",
             secondary_host);
         (void)vdqm_ReplicaListenThread(secondary_host);
