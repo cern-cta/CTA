@@ -1,5 +1,5 @@
 /*
- * $Id: Cexportconf.c,v 1.1 2002/08/15 09:18:28 bcouturi Exp $
+ * $Id: Cexportconf.c,v 1.2 2003/10/31 12:53:24 jdurand Exp $
  */
 
 /*   
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cexportconf.c,v $ $Revision: 1.1 $ $Date: 2002/08/15 09:18:28 $ CERN IT/DS/HSM Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cexportconf.c,v $ $Revision: 1.2 $ $Date: 2003/10/31 12:53:24 $ CERN IT/DS/HSM Benjamin Couturier";
 #endif /* not lint */
 
 #include "Castor_limits.h"
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: Cexportconf.c,v $ $Revision: 1.1 $ $Date: 
 #include <sys/time.h>
 #include <sys/resource.h>  /* For getrlimit() */
 #include <unistd.h>
+#include "u64subr.h"
 #endif
 
 #define EXPORTCONF_FILENAME "rlimit"
@@ -40,6 +41,7 @@ int DLL_DECL Cexportconf(dirname)
   int i;
   char buf[500];
   int nb_limits = 0;
+  char tmpbuf1[21], tmpbuf2[21];
 
   /* The code below is for unices. With WIN32, this function just returns 0 */
 
@@ -129,7 +131,7 @@ int DLL_DECL Cexportconf(dirname)
     }
     
     memset(buf, 0, sizeof(buf));
-    sprintf(buf, "%s\t%d\t%d\n", rlimit_labels[i], rlim.rlim_cur, rlim.rlim_max);
+    sprintf(buf, "%s\t%s\t%s\n", rlimit_labels[i], u64tostr(rlim.rlim_cur, tmpbuf1, 0), u64tostr(rlim.rlim_max, tmpbuf2, 0));
     
     if ((write(fd, buf, strlen(buf) )) == -1) {
       close(fd);
