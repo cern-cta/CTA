@@ -3901,7 +3901,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen_v3: account: %s\n", account);
        log(LOG_DEBUG, "ropen_v3: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen_v3(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
-       (void) (mode_t) CORRECT_UMASK(mask)) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
 #if !defined(_WIN32)  
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
