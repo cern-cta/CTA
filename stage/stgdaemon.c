@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.119 2001/03/14 15:18:57 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.120 2001/03/19 12:42:36 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.119 $ $Date: 2001/03/14 15:18:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.120 $ $Date: 2001/03/19 12:42:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2833,6 +2833,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (strcmp (upath, stcp->ipath)) continue;
+				if ((req_type == STAGEUPDC) && (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
 				found = 1;
 				break;
 			}
@@ -2923,22 +2924,30 @@ int upd_staged(upath)
 	} else {
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
+			if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) continue;
 			if (strcmp (upath, stcp->ipath)) continue;
 			found = 1;
 			break;
 		}
 	}
-	if ((found == 0) || ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) || ((stcp->status & 0xF0) != STAGED)) {
+	if ((found == 0) || ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || (! (((stcp->status & 0xF0) == STAGED) || ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR))))) {
 		if (found == 0) {
 			sendrep (rpfd, MSG_ERR, STG22);
-		} else if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') {
-			sendrep (rpfd, MSG_ERR, "STG02 - Request should be a HSM file\n");
+		} else if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) {
+			sendrep (rpfd, MSG_ERR, "STG02 - Request should be on an HSM file\n");
+		} else if ((stcp->status & BEING_MIGR) == BEING_MIGR) {
+			sendrep (rpfd, MSG_ERR, "STG02 - Request should not be on a BEING_MIGR HSM file\n");
 		} else {
-			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be in STAGED or CAN_BE_MIGR status\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
+			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be on a STAGED or CAN_BE_MIGR HSM file\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
 		}
 		return (USERR);
 	}
+	if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
+		/* There are the migration counters to update */
+		update_migpool(&stcp,-1,0);
+	}
 	stcp->status = STAGEOUT;
+	rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 	stcp->a_time = time(NULL);
 	stcp->nbaccesses++;
 	if (*upath && strcmp (stcp->ipath, upath))
