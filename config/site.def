@@ -242,7 +242,8 @@
 #define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
-#define UseLsfVersion	6
+/* Supported lsf versions are: 5.1, 6.1 */
+#define UseLsfVersion	6.1
 #define UseExpert		YES
 #define UseMaui			YES
 
