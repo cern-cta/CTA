@@ -1,5 +1,14 @@
 /*
- * $Id: rtcp.h,v 1.4 1999/12/09 13:46:20 jdurand Exp $
+ * Copyright (C) 1999 by CERN IT-PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * $RCSfile: rtcp.h,v $ $Revision: 1.5 $ $Date: 1999/12/17 09:51:46 $ CERN IT-PDP/DM Olof Barring
+ */
+
+/*
+ * rtcp.h - basic rtcopy structures and macros common to client and server
  */
 
 #if !defined(RTCP_H)

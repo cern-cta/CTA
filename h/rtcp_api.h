@@ -1,5 +1,15 @@
 /*
- * $Id: rtcp_api.h,v 1.3 1999/12/09 13:46:20 jdurand Exp $
+ * Copyright (C) 1999 by CERN IT-PDP/DM
+ * All rights reserved
+ */
+
+
+/*
+ * $RCSfile: rtcp_api.h,v $ $Revision: 1.4 $ $Date: 1999/12/17 09:48:29 $ CERN IT-PDP/DM Olof Barring
+ */
+
+/*
+ * rtcp_api.h - rtcopy client API prototypes
  */
 
 #if !defined(RTCP_API_H)
