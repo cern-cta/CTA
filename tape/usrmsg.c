@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 09:48:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,7 +34,7 @@ usrmsg(va_alist) va_dcl
 	msg = va_arg (args, char *);
 #ifdef NOTRACE
 	vsprintf (prtbuf, msg, args);
-	fprintf (stderr, "%s: %s\n", func, prtbuf);
+	Ctape_errmsg (func, "%s\n", prtbuf);
 #else
 	sprintf (rep.data, "%s: ", func);
 	p = rep.data + strlen (rep.data);
