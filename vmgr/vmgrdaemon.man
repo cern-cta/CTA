@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.4 $ $Date: 2001/10/05 06:15:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.5 $ $Date: 2001/12/03 07:31:41 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 1 "$Date: 2001/10/05 06:15:53 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 1 "$Date: 2001/12/03 07:31:41 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
@@ -81,6 +81,11 @@ definition of VmgrHost in site.def.
 .LP
 The volume manager database keeps the information about tapes like vid, vsn,
 device group, density and status.
+When the Volume Manager is started for the first time, the database must be
+initialized. This can be done by executing the script
+.B vmgr_db_init.sh
+which defines the tape pool "default", the models of cartridges and the
+densities supported by CASTOR.
 .LP
 The volume manager configuration file contains password information for the
 database and must be readable/writable only by root.
