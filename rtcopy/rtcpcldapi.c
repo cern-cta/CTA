@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/29 09:34:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/07/29 14:23:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.23 $ $Date: 2004/07/29 09:34:33 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.24 $ $Date: 2004/07/29 14:23:28 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1653,10 +1653,10 @@ int rtcpcldc(tape)
       Cstager_Tape_setSide(rtcpcldTp->tp,tape->tapereq.side);
       Cstager_Tape_setTpmode(rtcpcldTp->tp,tape->tapereq.mode);
       Cstager_Tape_status(rtcpcldTp->tp,&currentStatus);
-      if ( currentStatus == TAPE_UNUSED ||
-           currentStatus == TAPE_FINISHED ||
-           currentStatus == TAPE_FAILED ||
-           currentStatus == TAPE_UNKNOWN ) {
+      if ( currentStatus != TAPE_PENDING &&
+           currentStatus != TAPE_WAITVDQM &&
+           currentStatus != TAPE_WAITMOUNT &&
+           currentStatus != TAPE_MOUNTED ) {
         Cstager_Tape_setStatus(rtcpcldTp->tp,TAPE_PENDING);
         rtcpcldTp->oldStatus = TAPE_PENDING;
       } else {
