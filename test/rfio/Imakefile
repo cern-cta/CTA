@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2001/05/29 06:22:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2001/09/18 21:31:24 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,15 +21,18 @@ LIBS = -L../../lib -lshift
 #endif
 #endif
 
-PROGS = ProgramTargetName(tpreseek)
+PROGS = ProgramTargetName(tpreseek) ProgramTargetName(mstat_test) ProgramTargetName(mstat_test_nothread)
 
-CFLAGS = -I$(INCLUDES)
+CFLAGS = -I$(INCLUDES) $(MTCCFLAGS)
+LDFLAGS = $(MTLDFLAGS)
 
 GLOBLIB = DepLibraryTargetName(FileName(..,lib),shift)
 
 all: $(PROGS)
 
-NormalProgramTarget(tpreseek,tpreseek.Osuf,$(GLOBLIB),$(LIBS))
+NormalProgramTarget(tpreseek,tpreseek.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(mstat_test,mstat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(mstat_test_nothread,mstat_test_nothread.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 
 MakeDepLibrary(FileName(..,lib),shift)
 
