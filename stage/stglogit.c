@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.8 1999/12/14 14:51:54 jdurand Exp $
+ * $Id: stglogit.c,v 1.9 1999/12/16 12:39:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 14:51:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.9 $ $Date: 1999/12/16 12:39:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.8 $ $Date: 199
 #include "stage.h"
 extern int reqid;
 
-stglogit(va_alist) va_dcl
+int stglogit(va_alist) va_dcl
 {
 	va_list args;
 	char *func;
@@ -30,7 +30,7 @@ stglogit(va_alist) va_dcl
 
 #ifdef __INSURE__
     /* Insure do not like at all this routine... */
-    return;
+    return(0);
 #endif
 
 	va_start (args);
