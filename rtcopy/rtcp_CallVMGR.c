@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.1 $ $Date: 2002/04/08 14:34:33 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.2 $ $Date: 2002/05/07 10:50:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     /* Make sure error buffer of VMGR do not go to stderr */
     vmgr_error_buffer[0] = '\0';
     if (vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
-      return(-1);
+		return(-1);
     }
 
     /* We need to know exact current uid/gid */
@@ -66,8 +66,8 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     gid = getgid();
 #if defined(_WIN32)
     if (uid < 0 || gid < 0) {
-      serrno = SEUSERUNKN;
-      return(-1);
+		serrno = SEUSERUNKN;
+		return(-1);
     }
 #endif
 
@@ -84,34 +84,38 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
             strcpy(tapereq->vid,tapereq->vsn);
         if ( ( *tapereq->density == '\0' && 
                strcmp(tapereq->dgn,"CART") != 0 ) ||
-                ( *tapereq->dgn == '\0' ) || 
-                ( *tapereq->label == '\0' ) || 
-                ( *tapereq->vsn == '\0' ) ) {
+			 ( *tapereq->dgn == '\0' ) || 
+			 ( *tapereq->label == '\0' ) || 
+			 ( *tapereq->vsn == '\0' ) ) {
             UPPERCASE(tapereq->vid);
             UPPERCASE(tapereq->vsn);
-	    if ((rc = vmgrcheck(tapereq->vid,
-				tapereq->vsn,
-				tapereq->dgn,
-				tapereq->density,
-				tapereq->label,
-				tapereq->mode,
-				uid,
-				gid)) != 0) {
+			if ((rc = vmgrcheck(tapereq->vid,
+								tapereq->vsn,
+								tapereq->dgn,
+								tapereq->density,
+								tapereq->label,
+								tapereq->mode,
+								uid,
+								gid)) != 0) {
 	      
+				if (vmgr_error_buffer[0] != '\0') {
 #if defined(RTCP_SERVER)
-	      rtcpd_AppendClientMsg(tl, NULL, "%s\n",vmgr_error_buffer);
+					rtcpd_AppendClientMsg(tl, NULL, "%s\n",vmgr_error_buffer);
 #else /* RTCP_SERVER */
-	      strcpy(tapereq->err.errmsgtxt,vmgr_error_buffer);
+					strcpy(tapereq->err.errmsgtxt,vmgr_error_buffer);
 #endif /* RTCP_SERVER */
-	      tapereq->err.severity = RTCP_USERR | RTCP_FAILED;
+				}
+				tapereq->err.severity = RTCP_USERR | RTCP_FAILED;
+				if (vmgr_error_buffer[0] != '\0') {
 #if defined(RTCP_SERVER)
-	      rtcp_log(LOG_ERR,"%s\n",vmgr_error_buffer);
+					rtcp_log(LOG_ERR,"%s\n",vmgr_error_buffer);
 #else /* RTCP_SERVER */
-	      rtcp_log(LOG_INFO,"! volume ID %s %s\n", tapereq->vid, vmgr_error_buffer);
+					rtcp_log(LOG_INFO,"! volume ID %s %s\n", tapereq->vid, vmgr_error_buffer);
 #endif /* RTCP_SERVER */
-	      serrno = tapereq->err.errorcode = rc;
-	      return(-1);
-	    }
+				}
+				serrno = tapereq->err.errorcode = rc;
+				return(-1);
+			}
             LOWERCASE(tapereq->label);
         }
     } CLIST_ITERATE_END(tape,tl);
