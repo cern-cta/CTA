@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.103 2002/10/01 09:27:58 jdurand Exp $
+ * $Id: procqry.c,v 1.104 2002/10/26 13:15:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.103 $ $Date: 2002/10/01 09:27:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.104 $ $Date: 2002/10/26 13:15:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -403,7 +403,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
-				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for non-empty u1.d.xfile member\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -452,17 +452,21 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((t_or_d == 'm') || (t_or_d == 'h')) {
 			/* This it is an HSM file, so implicit -M option */
 			mfile = (t_or_d == 'm' ? stcp_input.u1.m.xfile : stcp_input.u1.h.xfile);
-			if (! noregexp_flag) {
-				if (
+			if (mfile[0] != '\0') {
+				if (! noregexp_flag) {
+					if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-					regcomp (&preg, mfile, 0)
+						regcomp (&preg, mfile, 0)
 #else
-					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
+						! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-					) {
-					sendrep (&rpfd, MSG_ERR, STG06, "HSM Filename not a valid regexp");
-					errflg++;
+						) {
+						sendrep (&rpfd, MSG_ERR, STG06, "HSM Filename not a valid regexp");
+						errflg++;
+					}
 				}
+			} else {
+				mfile = NULL;
 			}
 		}
 		if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) {
