@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.49 $ $Release$ $Date: 2004/08/13 09:57:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.50 $ $Release$ $Date: 2004/08/13 12:11:10 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.49 $ $Date: 2004/08/13 09:57:33 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.50 $ $Date: 2004/08/13 12:11:10 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -913,10 +913,8 @@ static int lockTapeInDB(
                         )
      RtcpcldTapeList_t *tpList;
 {
-  struct C_IObject_t *iObj = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct Cstager_Tape_t *tp = NULL;
-  struct C_IAddress_t *iAddr = NULL;
   rtcpTapeRequest_t *tapereq = NULL;
   int rc, mode, side, save_serrno;
   char *vid = NULL;
@@ -925,10 +923,6 @@ static int lockTapeInDB(
     serrno = EINVAL;
     return(-1);
   }
-
-  iObj = Cstager_Tape_getIObject(tpList->tp);
-  rc = getIAddr(iObj,&iAddr);
-  if ( rc == -1 ) return(-1);
 
   tapereq = &(tpList->tape->tapereq);
 
@@ -994,6 +988,7 @@ static int unlockTapeInDB(
 {
   struct C_Services_t **dbSvc = NULL;
   struct C_IObject_t *iObj = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr = NULL;
   rtcpTapeRequest_t *tapereq = NULL;
   int rc, save_serrno;
@@ -1005,15 +1000,24 @@ static int unlockTapeInDB(
   }
   tapereq = &(tpList->tape->tapereq);
 
-  iObj = Cstager_Tape_getIObject(tpList->tp);
-  rc = getIAddr(iObj,&iAddr);
-  if ( rc == -1 ) return(-1);
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("C_BaseAddress_create()","");
+    tapereq->err.errorcode = save_serrno;
+    strcpy(tapereq->err.errmsgtxt,"DB address error");
+    tapereq->err.severity = RTCP_FAILED|RTCP_SYERR;
+    serrno = save_serrno;
+    return(-1);
+  }
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   dbSvc = NULL;
   rc = rtcpcld_getDbSvc(&dbSvc);
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("C_Services_create()","");
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -1031,10 +1035,12 @@ static int unlockTapeInDB(
       tapereq->err.severity = RTCP_FAILED|RTCP_SYERR;
       rtcp_log(LOG_ERR,"DB error: %s\n",
                tapereq->err.errmsgtxt);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }    
   } else {
+    iObj = Cstager_Tape_getIObject(tpList->tp);
     rc = C_Services_updateRep(*dbSvc,iAddr,iObj,1);
     if ( rc != 0 ) {
       LOG_FAILED_CALL("C_Services_updateRep()",
@@ -1048,10 +1054,15 @@ static int unlockTapeInDB(
       tapereq->err.severity = RTCP_FAILED|RTCP_SYERR;
       rtcp_log(LOG_ERR,"DB error: %s\n",
                tapereq->err.errmsgtxt);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
+    /* Not sure if this is needed but... */
+    (void)C_Services_rollback(*dbSvc,iAddr);
   }
+  C_IAddress_delete(iAddr);
+
   return(0);
 }
 
