@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape.h,v 1.18 2000/01/09 17:52:07 baud Exp $
+ * $Id: Ctape.h,v 1.19 2000/02/15 16:51:28 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.18 $ $Date: 2000/01/09 17:52:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.19 $ $Date: 2000/02/15 16:51:28 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -292,7 +292,7 @@ struct tptab {		/* tape drive table */
 	int	mntovly_pid;	/* pid of mounttape overlay */
 
 	char	vid[CA_MAXVIDLEN+1];
-	char	vsn[CA_MAXVIDLEN+1];
+	char	vsn[CA_MAXVSNLEN+1];
 	int	tobemounted;	/* 1 means tape to be mounted */
 	int	lblcode;	/* label code: AL, NL, SL or BLP */
 	int	mode;		/* WRITE_DISABLE or WRITE_ENABLE */
