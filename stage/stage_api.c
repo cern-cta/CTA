@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.36 2002/02/21 17:02:33 jdurand Exp $
+ * $Id: stage_api.c,v 1.37 2002/03/04 11:10:53 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -149,6 +149,8 @@ int DLL_DECL rc_castor2shift(rc)
     return(LIMBYSZ);
   case EINVAL:
     return(USERR);
+  case EACCES:
+    return(USERR);
   case SESYSERR:
     return(SYERR);
   case ESTNACT:
@@ -292,6 +294,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
+      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -303,6 +306,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
+        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -317,6 +321,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
+      stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
@@ -350,6 +355,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -616,7 +622,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) ||
+        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) ||
 		(serrno == EISDIR) ||
 		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
 		(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY)) break;
@@ -1052,6 +1058,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1145,7 +1152,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
-    if ((c == 0) || (serrno == EINVAL)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -1362,6 +1369,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
+      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -1373,6 +1381,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
+        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -1387,6 +1396,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
+      stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
@@ -1408,6 +1418,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1554,7 +1565,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL) || (serrno == ENOSPC)) break;
+        (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -1653,6 +1664,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 
   if ((flagsok & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
+      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -1664,6 +1676,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
+        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -1703,6 +1716,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1901,7 +1915,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   while (1) {
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF)) break;
+        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -2080,6 +2094,7 @@ int DLL_DECL stage_ping(flags,hostname)
 #endif
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
+    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -2144,7 +2159,7 @@ int DLL_DECL stage_ping(flags,hostname)
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
-    if ((c == 0) || (serrno == EINVAL)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
 	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
