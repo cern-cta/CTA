@@ -299,6 +299,7 @@ NSDAEMON_OBJS	=	Cns_main.Osuf \
 			nslogit.Osuf
 NSLIB_OBJS	=	Cns_access.Osuf \
 			Cns_apiinit.Osuf \
+			Cns_auth.Osuf    \
 			Cns_chclass.Osuf \
 			Cns_chdir.Osuf \
 			Cns_chmod.Osuf \

@@ -1,0 +1,36 @@
+.\" @(#)$RCSfile: Cns_setid.man,v $ $Date: 2004/11/03 09:43:05 $ CERN IT-ADC/CA Benjamin Couturier
+.\" Copyright (C) 2004 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CNS_SETID 3 "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_setid \- Sets the authorization ID for the CNS API
+.SH SYNOPSIS
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_setid (uid_t " uid ,
+.BI "gid_t " gid );
+.SH DESCRIPTION
+.B Cns_setid
+Sets the authorization uid and gid in the per-thread Cns context. These uid/gid are sent to the server
+which trusts them only if the client is a CASTOR service.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.TP
+.B ENOMEM
+Not enough memory was available to allocate the per-thead context.
+.TP
+.SH SEE ALSO
+.B Cns_unsetid(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

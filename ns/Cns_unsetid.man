@@ -1,0 +1,34 @@
+.\" @(#)$RCSfile: Cns_unsetid.man,v $ $Date: 2004/11/03 09:43:05 $ CERN IT-ADC/CA Benjamin Couturier
+.\" Copyright (C) 2004 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CNS_UNSETID 3 "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_unsetid \- Clears the CNS API authorization ID
+.SH SYNOPSIS
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_unsetid ();
+.SH DESCRIPTION
+.B Cns_unsetid
+Clears the authorization uid and gid in the per-thread Cns context.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.TP
+.B ENOMEM
+Not enough memory was available to allocate the per-thead context.
+.TP
+.SH SEE ALSO
+.B Cns_setid(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
