@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.15 $ $Date: 2002/08/21 13:56:44 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.16 $ $Date: 2003/04/28 16:06:01 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,8 +114,14 @@ COMPRESSION_STATS *comp_stats;
 	} else if (strncmp (devtype, "DLT", 3) == 0 ||
 		   strcmp (devtype, "SDLT") == 0 ||
 		   strcmp (devtype, "LTO") == 0) {	/* values in bytes */
-		while (p < endpage) {
-			parmcode = *p << 8 | *(p+1);
+
+        /* Fixed by BC 2003/04/22
+           On IBM/HP LTO drives, the number of bytes field can be
+           a negative offset.
+        */
+        
+        while (p < endpage) {
+            parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
 			case 0x2:
 				kbytes_to_host =
@@ -123,7 +129,7 @@ COMPRESSION_STATS *comp_stats;
 				break;
 			case 0x3:
 				kbytes_to_host +=
-				    *(p+5) << 6 | *(p+6) >> 2;
+				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x4:
 				kbytes_from_tape =
@@ -131,7 +137,7 @@ COMPRESSION_STATS *comp_stats;
 				break;
 			case 0x5:
 				kbytes_from_tape +=
-				    *(p+5) << 6 | *(p+6) >> 2;
+                     (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x6:
 				kbytes_from_host =
@@ -139,7 +145,7 @@ COMPRESSION_STATS *comp_stats;
 				break;
 			case 0x7:
 				kbytes_from_host +=
-				    *(p+5) << 6 | *(p+6) >> 2;
+                    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x8:
 				kbytes_to_tape =
@@ -147,7 +153,7 @@ COMPRESSION_STATS *comp_stats;
 				break;
 			case 0x9:
 				kbytes_to_tape +=
-				    *(p+5) << 6 | *(p+6) >> 2;
+				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			}
 			p += *(p+3) + 4;
