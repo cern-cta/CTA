@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_symlink.man,v 1.2 2001/09/26 09:13:54 jdurand Exp $
+.\" $Id: rfio_symlink.man,v 1.3 2001/11/13 17:25:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_symlink.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_symlink.man,v $ $Revision: 1.3 $ $Date: 2001/11/13 17:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_SYMLINK 3 "$Date: 2001/09/26 09:13:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_SYMLINK 3 "$Date: 2001/11/13 17:25:53 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_symlink \- create a symbolic link to a file
 .SH SYNOPSIS
@@ -13,8 +13,11 @@ rfio_symlink \- create a symbolic link to a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_symlink (const char *" oldpath ,
-.BI "const char *" newpath )
+.BI "int rfio_symlink (const char *" oldpath ", const char *" newpath ");"
+.br
+.BI "int rfio_msymlink (const char *" oldpath ", const char *" newpath ");"
+.br
+.BI "int rfio_symend ();"
 .SH DESCRIPTION
 .B rfio_symlink
 creates a symbolic link 
@@ -32,11 +35,24 @@ exists already, it will not be overwritten.
 Write permission is required on 
 .I newpath
 parent.
+.LP
+.B rfio_msymlink
+is identical to
+.B rfio_symlink
+but keeps the connection open to the server unless there are more than MAXMCON
+connections already opened. This is useful when issuing a series of symlink calls.
+The last
+.B rfio_msymlink
+call should be followed by a call to
+.BR rfio_symend .
+See NOTES section below.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
 .B serrno
 is set appropriately.
+.SH NOTES
+Multiple connections using rfio_msymlink are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_msymlink by its parent.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
