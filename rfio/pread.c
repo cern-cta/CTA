@@ -1,5 +1,5 @@
 /*
- * $Id: pread.c,v 1.7 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: pread.c,v 1.8 2000/11/13 17:29:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.8 $ $Date: 2000/11/13 17:29:44 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/
@@ -53,7 +53,7 @@ RFILE   *fp;                            /* remote file pointer          */
 	}
 	p = buf;
 	TRACE(3, "rfio", "rfio_pread: reading %d bytes", 2*LONGSIZE);
-	if (netread_timeout(fp->s, buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
+	if (netread_timeout(fp->s, buf, 2*LONGSIZE, -1) != (2*LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_pread: read(): ERROR occured (errno=%d)", errno);
 		END_TRACE();
 		return -1 ;
