@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.7 2002/06/10 15:06:10 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.8 2002/06/13 05:40:04 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -22,6 +22,7 @@ struct waitf {
 	int	subreqid;
 	int	waiting_on_req;
 	u_signed64 size_to_recall;             /* Only used in read-mode (asyncrhoneous callbacks from RTCOPY) */
+	u_signed64 hsmsize;                    /* Original file total size - Only used in read-mode (asyncrhoneous callbacks from RTCOPY) */
 	int nb_segments;
 	u_signed64 size_yet_recalled;
 	char	upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
