@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.23 2002/08/27 08:38:05 jdurand Exp $
+ * $Id: stage_util.c,v 1.24 2002/09/13 08:15:38 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -19,6 +19,7 @@
 #include "u64subr.h"
 #include "serrno.h"
 #include "stage_api.h"
+#include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -50,6 +51,14 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define PRINT_VALSTATUS(st,member) { \
 	char statusstring[1024]; \
 	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
+}
+#define DUMP_VALCHARCONV(rpfd,st,member) { \
+	char charconvstring[1024]; \
+	funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) st->member) == 0 ? charconvstring : "<?>"); \
+}
+#define PRINT_VALCHARCONV(st,member) { \
+	char charconvstring[1024]; \
+	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, stage_util_charconv2string((char *) charconvstring, (int) 1024, (int) st->member) == 0 ? charconvstring : "<?>"); \
 }
 #define DUMP_TIME(rpfd,st,member) {                                         \
     char tmpbuf[21];                                                        \
@@ -187,7 +196,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	DUMP_VAL(rpfd,stcp,reqid);
 	DUMP_VAL(rpfd,stcp,blksize);
 	DUMP_STRING(rpfd,stcp,filler);
-	DUMP_CHAR(rpfd,stcp,charconv);
+	DUMP_VALCHARCONV(rpfd,stcp,charconv);
 	DUMP_CHAR(rpfd,stcp,keep);
 	DUMP_VAL(rpfd,stcp,lrecl);
 	DUMP_VAL(rpfd,stcp,nread);
@@ -286,7 +295,7 @@ void DLL_DECL print_stcp(stcp)
 	PRINT_VAL(stcp,reqid);
 	PRINT_VAL(stcp,blksize);
 	PRINT_STRING(stcp,filler);
-	PRINT_CHAR(stcp,charconv);
+	PRINT_VALCHARCONV(stcp,charconv);
 	PRINT_CHAR(stcp,keep);
 	PRINT_VAL(stcp,lrecl);
 	PRINT_VAL(stcp,nread);
@@ -482,7 +491,6 @@ int DLL_DECL stage_util_status2string(output, maxsize, status)
 	int i;
 	struct stgcat_entry static_stcp;
 	struct stgcat_entry *stcp = &static_stcp;
-	int okflag;
 
 	struct flag2name status2name0[] = { /* Must be ANDed with 0xF */
 		{ STAGEIN    , "STAGEIN"    },
@@ -628,5 +636,47 @@ int DLL_DECL stage_util_check_for_strutou64(str)
 	default:
 		return(-1); /* Unknown unit */
 	}
+}
+
+int DLL_DECL stage_util_charconv2string(output, maxsize, charconv)
+	char *output;
+	size_t maxsize;
+	int charconv;
+{
+	char *thisp;
+	int i;
+
+	struct flag2name charconv2name[] = { /* Must be ANDed with 0xF */
+		{ FIXVAR     , "FIXVAR"  },
+		{ ASCCONV    , "ASCCONV" },
+		{ EBCCONV    , "EBCCONV" },
+        { 0          , NULL      }
+	};
+
+	if (output == NULL) {
+		serrno = EFAULT;
+		return(-1);
+	}
+
+	thisp = output;
+	*thisp = '\0';
+
+	i = -1;
+	while (1) {
+		if (charconv2name[++i].name == NULL) break;
+		if ((charconv & charconv2name[i].flag) == charconv2name[i].flag) {
+			if (strlen(output) > (maxsize - 3)) break;
+			if (*thisp != '\0') {
+				strcat(thisp, "|");
+			}
+			if (strlen(thisp) > (maxsize - 1 - strlen(charconv2name[i].name) - 1)) break;
+			strcat(thisp, charconv2name[i].name);
+		}
+	}
+
+	if (! *thisp) {
+		serrno = ENOENT;
+	}
+	return(*thisp != '\0' ? 0 : -1);
 }
 
