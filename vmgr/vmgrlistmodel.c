@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.5 $ $Date: 2000/08/22 13:13:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.6 $ $Date: 2001/01/19 11:21:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
@@ -88,13 +88,13 @@ char **argv;
 #endif
 			exit (USERR);
 		}
-		printf ("%-6s %s %-7s %d\n", model, media_letter,
+		printf ("%-6s %-2s %-7s %d\n", model, media_letter,
 		    u64tostru ((u_signed64)native_capacity * ONE_MB, tmpbuf, 7),
 		    media_cost);
 	} else {
 		flags = VMGR_LIST_BEGIN;
 		while ((lp = vmgr_listmodel (flags, &list)) != NULL) {
-			printf ("%-6s %s %-7s %d\n", lp->m_model, lp->m_media_letter,
+			printf ("%-6s %-2s %-7s %d\n", lp->m_model, lp->m_media_letter,
 			    u64tostru ((u_signed64)lp->native_capacity * ONE_MB, tmpbuf, 7),
 			    lp->media_cost_GB);
 			flags = VMGR_LIST_CONTINUE;

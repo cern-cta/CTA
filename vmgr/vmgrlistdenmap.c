@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistdenmap.c,v $ $Revision: 1.2 $ $Date: 2000/08/22 13:13:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistdenmap.c,v $ $Revision: 1.3 $ $Date: 2001/01/19 11:21:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistdenmap - list triplets model/media_letter/density */
@@ -48,7 +48,7 @@ char **argv;
 #endif
 	flags = VMGR_LIST_BEGIN;
 	while ((lp = vmgr_listdenmap (flags, &list)) != NULL) {
-		printf ("%-6s %s %s\n", lp->md_model, lp->md_media_letter,
+		printf ("%-6s %-2s %s\n", lp->md_model, lp->md_media_letter,
 		    lp->md_density);
 		flags = VMGR_LIST_CONTINUE;
 	}
