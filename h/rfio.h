@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.22 $ $Date: 2001/06/22 05:21:47 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.23 $ $Date: 2001/11/07 12:00:18 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -14,6 +14,9 @@
 #ifndef _RFIO_H_INCLUDED_
 #define _RFIO_H_INCLUDED_
 
+#ifdef CHECKI
+#undef CHECKI
+#endif
 #define CHECKI       5       /* max interval to check for work to be done */
 
 #include <stdio.h>              /* standard Input/Output                */
