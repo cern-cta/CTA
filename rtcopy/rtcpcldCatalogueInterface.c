@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.97 $ $Release$ $Date: 2004/12/06 08:25:01 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.98 $ $Release$ $Date: 2004/12/06 14:54:38 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.97 $ $Release$ $Date: 2004/12/06 08:25:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.98 $ $Release$ $Date: 2004/12/06 14:54:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1188,7 +1188,9 @@ static int nextSegmentToRecall(
   if ( (rc != 1) || (fl == NULL) ) {
     rc = procSegmentsForTape(tape);
     if ( rc == -1 ) {
-      if ( serrno != EAGAIN ) LOG_SYSCALL_ERR("procSegmentsForTape()");
+      save_serrno = serrno;
+      if ( (save_serrno != EAGAIN) && 
+           (save_serrno != ENOENT) ) LOG_SYSCALL_ERR("procSegmentsForTape()");
       return(-1);
     }
     fl = NULL;
