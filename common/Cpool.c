@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.35 $ $Date: 2004/03/18 10:11:01 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.36 $ $Date: 2004/03/18 10:12:38 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -2775,7 +2775,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 						}
 #endif
 					  
-						current->flag = 0;
+						current->flag = -2;
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
