@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.105 2002/05/23 10:22:32 jdurand Exp $
+ * $Id: procupd.c,v 1.106 2002/05/31 08:08:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.105 $ $Date: 2002/05/23 10:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.106 $ $Date: 2002/05/31 08:08:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -414,7 +414,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					found = 0;
 					for (stcp = stcs; stcp < stce; stcp++) {
 						if (stcp->reqid == 0) break;
-						if ((! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+						if ((stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
 						if (stpp->reqid != stcp->reqid) continue;
 						found = 1;
 						break;
@@ -422,7 +422,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				} else {
 					for (stcp = stcs; stcp < stce; stcp++) {
 						if (stcp->reqid == 0) break;
-						if ((! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+						if ((stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
 						if (strcmp (argv_i, stcp->ipath)) continue;
 						found = 1;
 						break;
