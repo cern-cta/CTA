@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.121 $ $Release$ $Date: 2005/02/01 12:34:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.122 $ $Release$ $Date: 2005/02/01 13:47:08 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2113,16 +2113,32 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       m_bestFileSystemForJobStatement->registerOutParam
         (5, oracle::occi::OCCISTRING, 2048);
     }
+    // Find max length of the input parameters
+    ub2 lensFS[fileSystemsNb], lensM[fileSystemsNb];
+    unsigned int maxFS = 0;
+    unsigned int maxM = 0;
+    for (int i = 0; i < fileSystemsNb; i++) {
+      lensFS[i] = strlen(fileSystems[i]);
+      if (lensFS[i] > maxFS) maxFS = lensFS[i];
+      lensM[i] = strlen(machines[i]);
+      if (lensM[i] > maxM) maxM = lensM[i];
+    }
+    // Allocate buffer for giving the parameters to ORACLE
+    char bufferFS[fileSystemsNb][maxFS];
+    char bufferM[fileSystemsNb][maxM];
+    // Copy inputs into the buffer
+    for (int i = 0; i < fileSystemsNb; i++) {
+      strncpy(bufferFS[i], fileSystems[i], lensFS[i]);
+      strncpy(bufferM[i], machines[i], lensM[i]);
+    }
     // execute the statement and see whether we found something
-    ub4 unused;
-    ub2 lens[fileSystemsNb];
-    for (int i = 0; i < fileSystemsNb; i++) lens[i] = 2048;
+    ub4 unused = fileSystemsNb;    
     m_bestFileSystemForJobStatement->setDataBufferArray
-      (1, fileSystems, oracle::occi::OCCI_SQLT_STR,
-       fileSystemsNb, &unused, 2048, lens);
+      (1, fileSystems, oracle::occi::OCCI_SQLT_CHR,
+       fileSystemsNb, &unused, maxFS, lensFS);
     m_bestFileSystemForJobStatement->setDataBufferArray
-      (2, machines, oracle::occi::OCCI_SQLT_STR,
-       fileSystemsNb, &unused, 2048, lens);
+      (2, machines, oracle::occi::OCCI_SQLT_CHR,
+       fileSystemsNb, &unused, maxM, lensM);
     m_bestFileSystemForJobStatement->setDouble(3, minFree);
     unsigned int nb = m_bestFileSystemForJobStatement->executeUpdate();
     if (0 == nb) {
