@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.35 2002/12/16 08:56:02 jdurand Exp $
+ * $Id: procfilchg.c,v 1.36 2003/05/12 12:37:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.35 $ $Date: 2002/12/16 08:56:02 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.36 $ $Date: 2003/05/12 12:37:44 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,7 +45,7 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.35 $ $Date: 
 
 void procfilchgreq _PROTO((int, int, char *, char *));
 
-extern char func[16];
+extern char func[];
 extern int reqid;
 extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
@@ -62,7 +62,7 @@ extern struct stgdb_fd dbfd;
 #endif
 extern char *findpoolname _PROTO((char *));
 
-extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
+extern char defpoolname[];
 static int mintime_beforemigr_flag = 0;
 static int reqid_flag = 0;
 static int retenp_on_disk_flag = 0;
@@ -128,6 +128,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	int poolflag = 0;
 	int ifileclass;
 	int nocheck_hsmsize = 0;
+	time_t thistime = time(NULL);
 	static struct Coptions longopts[] =
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,               'h'},
@@ -364,8 +365,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	} else if (doneretenp_on_disk) { /* --retenp_on_dik */
 		/* Note: MAX_SETRETENP can be < 0, e.g. allow no retention period set... */
 		if ((max_setretenp(poolname) != 0) && (thisretenp_on_disk > max_setretenp(poolname))) {
-			/* This apply unless user gave special value corresponding to AS_LONG_AS_POSSIBLE */
-			if (thisretenp_on_disk != AS_LONG_AS_POSSIBLE) {
+			/* This apply unless user gave special value corresponding to AS_LONG_AS_POSSIBLE, -1 (reset) or 0 (advisory delete) */
+			if ((thisretenp_on_disk != AS_LONG_AS_POSSIBLE) && (thisretenp_on_disk != -1) && (thisretenp_on_disk != 0)) {
 				char max_setretenp_timestr[64] ;
 
 				stage_util_retenp(max_setretenp(poolname),max_setretenp_timestr);
@@ -524,9 +525,36 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							 (thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
 				}
 			}
-			if (doneretenp_on_disk) { /* --retenp_on_disk */
-				if ((thisstcp.u1.h.retenp_on_disk = thisretenp_on_disk) != stcp->u1.h.retenp_on_disk) {
-					changed++;
+			if (doneretenp_on_disk) {
+				if (ISSTAGED(stcp)) { /* --retenp_on_disk : apply only on STAGED files */
+					/* For files that are not in STAGED status, this is a pool parameter */
+					/* see STAGEOUT_RETENP, STAGEALLOC_RETENP and PUT_FAILED_RETENP */
+					if (thisretenp_on_disk < 0) {
+						/* This is a reset */
+						if ((thisstcp.u1.h.retenp_on_disk = thisretenp_on_disk) != stcp->u1.h.retenp_on_disk) {
+							changed++;
+						}
+					} else if ((thisretenp_on_disk == AS_LONG_AS_POSSIBLE) || (thisretenp_on_disk == INFINITE_LIFETIME)) {
+						/* Or a set to special values : INFINITE_LIFETIME is possible only if MAX_SETERETENP allows this */
+						if ((thisstcp.u1.h.retenp_on_disk = thisretenp_on_disk) != stcp->u1.h.retenp_on_disk) {
+							changed++;
+						}
+					} else {
+						/* This is a new value (note that advisory delete fits in that category) */
+						if (thisretenp_on_disk <= (INT_MAX - (int) thistime)) {
+							if ((thisstcp.u1.h.retenp_on_disk = ((int) thistime + thisretenp_on_disk)) != stcp->u1.h.retenp_on_disk) {
+								changed++;
+							}
+						} else {
+							/* There is overflow */
+							if ((thisstcp.u1.h.retenp_on_disk = INT_MAX) != stcp->u1.h.retenp_on_disk) {
+								changed++;
+							}
+						}
+					}
+				} else {
+					sendrep (&rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, "retention period on disk can be changed only if status is STAGED");
+				errflg++;
 				}
 			}
 			if (donestatus) { /* --status */
@@ -694,7 +722,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			c = ENOENT;
 			goto reply;
 		} else {
-			c = 0;
+			c = errflg ? EINVAL : 0;
 		}
 	} else {
 		sendrep(&rpfd, MSG_ERR, "STG02 - Supply of options or parameters is mandatory\n");
