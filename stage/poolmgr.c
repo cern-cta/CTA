@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.217 2002/09/18 04:59:03 jdurand Exp $
+ * $Id: poolmgr.c,v 1.218 2002/09/20 12:21:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.217 $ $Date: 2002/09/18 04:59:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.218 $ $Date: 2002/09/20 12:21:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -184,6 +184,7 @@ void upd_last_tppool_used _PROTO((struct fileclass *));
 char *next_tppool _PROTO((struct fileclass *));
 int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int, int));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int *, struct fileclass *));
 int retenp_on_disk _PROTO((int));
@@ -2327,6 +2328,11 @@ void redomigpool()
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
+		if ((stcp->t_or_d == 'h') && (stcp->status == STAGEOUT)) {
+			/* Force a Cns_statx call for a STAGEOUT file */
+			/* upd_fileclass() will move to PUT_FAILED if necessary */
+			upd_fileclass(NULL,stcp,2,0,0);
+		}
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
 		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
 		insert_in_migpool(stcp);
@@ -2989,6 +2995,11 @@ int insert_in_migpool(stcp)
 		return(0);
 	}
 	if ((ifileclass = upd_fileclass(pool_p,stcp,0,0,0)) < 0) {
+		/* If the file does not exist anymore it will be ignored when executing migration stream */
+		/* e.g. once for all in the life of the stager daemon (unless stagechng on it). This is */
+		/* better than calling upd_fileclass() here with a flag that is forcing a call to */
+		/* Cns_statx() : this would always fail, doing always the same result, until migration */
+		/* stream is happening */
 		return(-1);
 	}
 
@@ -4141,6 +4152,25 @@ void poolmgr_wait4child(signo)
 #endif
 
 /* This routine is creating if necessary a new fileclass element in the fileclasses array */
+/* forced_Cns_statx can have the following values: */
+/*  0 : do not call Cns_statx if fileclass is already known in the structure */
+/*      skip eventual call to Cns_queryclass for */
+/*      STAGEOUT or STAGEOUT|CAN_BE_MIGR|PUT_FAILED files */
+/*  1 : call Cns_statx in any case except for STAGEOUT or STAGEOUT|CAN_BE_MIGR|PUT_FAILED files */
+/*      skip eventual call to Cns_queryclass for */
+/*      STAGEOUT or STAGEOUT|CAN_BE_MIGR|PUT_FAILED files */
+/*  2 : call Cns_statx even if it is a pure STAGEOUT or STAGEOUT|CAN_BE_MIGR|PUT_FAILED file */
+/*      in this case, if there is failure, a pure STAGEOUT record will be moved immediately to a */
+/*      STAGEOUT|CAN_BE_MIGR|PUT_FAILED entry */
+/*      eventual call to Cns_queryclass is not skipped */
+/*  3 : do never call Cns_statx() or Cns_queryclass : just check knowledge of fileclasses */
+/*  4 : do never call Cns_statx(), can call Cns_queryclass */
+/*  5 : Act completely regardless of stcp->status : if record is in the cache, return it, otherwite */
+/*      try to fetch */
+/* output can be: */
+/*  0 : ok */
+/* -1 : error (serrno is setted) */
+
 int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 	struct pool *pool_p;
 	struct stgcat_entry *stcp;
@@ -4154,18 +4184,92 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 	int ifileclass = -1;
 	int ifileclass_vs_migrator = -1;
 	int i;
-  
+	int skip_Cns_queryclass = 0;
+
 	if ((stcp == NULL) || (stcp->t_or_d != 'h')) {
 		serrno = SEINTERNAL;
 		return(-1);
+	}
+
+	if (forced_Cns_statx != 5) {
+		if ((stcp->status == STAGEOUT)   ||
+			(stcp->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED))) {
+			switch (forced_Cns_statx) {
+			case 0:
+				/* Default: never call Cns_statx() in such a case */
+				/* There is intentionnaly no break here */
+			case 1:
+				/* Always call Cns_statx() if necessary except in this case */
+				if ((stcp->u1.h.server[0] == '\0') || (stcp->u1.h.fileclass <= 0)) {
+					/* No valid definitions */
+					serrno = ENOENT;
+					return(-1);
+				}
+				forced_Cns_statx = 0;
+				/* Reset the flag and continue normal processing: */
+				/* Because we known that stcp->u1.h.fileclass > 0 AND */
+				/* forced_Cns_statx == 0, the if() statement after will */
+				/* never be executed */
+				skip_Cns_queryclass = 1;
+				/* We make sure that there is no call to name server in any case, even if */
+				/* fileclass would not be in our cache */
+				break;
+			default:
+				/* Otherwise accept forcing the call to Cns_statx() */
+				break;
+			}
+		}
+	}
+
+	if ((forced_Cns_statx == 3) || (forced_Cns_statx == 4)) {
+		if ((stcp->u1.h.server[0] == '\0') || (stcp->u1.h.fileclass <= 0)) {
+			/* Nope */
+			serrno = ENOENT;
+			return(-1);
+		}
+		/* Fileclass > 0 in structure - make sure we do not call Cns_queryclass not Cns_statx  */
+		forced_Cns_statx = 0;
+		if (forced_Cns_statx == 3) {
+			skip_Cns_queryclass = 1;
+		}
+	}
+
+	if (forced_Cns_statx == 5) {
+		/* Use cache as max as possible */
+		forced_Cns_statx = 0;
 	}
 
 	if ((stcp->u1.h.fileclass <= 0) || (forced_Cns_statx)) {
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
 		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
-			int save_serrno = serrno;
-			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+			int save_serrno;
+			int c;
+
+			save_serrno = serrno;
+			if (! only_memory) {
+				if (! no_db_update) {
+					if ((stcp->status == STAGEOUT) && (save_serrno == ENOENT) && (Cnsfileid.server[0] != '\0') && (Cnsfileid.fileid > 0)) {
+						/* We decrement the r/w counter on this file system */
+						/* In the case of startup, the rwcounters on filesystem were not yet */
+						/* incremented for this stcp - so decrementing will cause an */
+						/* error */
+						stglogit ("upd_fileclass", "%s is ENOENT: moving from STAGEOUT to STAGEOUT|CAN_BE_MIGR|PUT_FAILED\n", stcp->u1.h.xfile);
+						if ((c = upd_stageout (STAGEUPDC, stcp->ipath, NULL, 0, stcp, 0, 0)) != 0) {
+							serrno = (c == CLEARED) ? ESTCLEARED : c;
+							return(-1);
+						}
+						/* File have been definitely deleted from the name server */
+						stcp->status = STAGEOUT|CAN_BE_MIGR|PUT_FAILED;
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+					}
+					savereqs();
+				}
+			}
 			serrno = save_serrno;
 			return(-1);
 		}
@@ -4202,10 +4306,13 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 		char *pi, *pj, *pk;
 		int j, k, have_duplicate, nb_duplicate, new_nbtppools;
 
+		if (skip_Cns_queryclass != 0) {
+			serrno = ENOENT;
+			return(-1);
+		}
+
 		if (Cns_queryclass(stcp->u1.h.server, stcp->u1.h.fileclass, NULL, &Cnsfileclass) != 0) {
-			int save_serrno = serrno;
 			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", sstrerror(serrno));
-			serrno = save_serrno;
 			return(-1);
 		}
 
@@ -4963,10 +5070,13 @@ void check_delaymig() {
 		if (stcp->reqid == 0) break;
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 
-		if ((ifileclass = upd_fileclass(NULL,stcp,0,0,0)) < 0) continue; /* Unknown fileclass */
+		if (stcp->filler[0] != 'd') continue; /* Here is a candidate with delayed migration */
 
 		/* There is NO automatic deletion for any record that is waiting on something else */
 		if (ISWAITING(stcp)) continue;
+
+		/* Check fileclass */
+		if ((ifileclass = upd_fileclass(NULL,stcp,0,0,0)) < 0) continue; /* Unknown fileclass */
 
 		/* ============================================================================= */
 		/* CHECK CASTOR's STAGEOUT|CAN_BE_MIGR LATENCY (mintime_beforemigr -> canbemigr) */
