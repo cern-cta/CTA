@@ -1,5 +1,5 @@
 /*
- * connect.c,v 1.2 2003/10/30 11:00:34 jdurand Exp
+ * $Id: connect.c,v 1.6 2004/08/12 13:08:08 motiakov Exp $
  */
 
 /*
@@ -65,8 +65,9 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    char *last_host = NULL;
    int   last_host_len = 256;
    int timeout;
-
-
+#ifdef CSEC
+   int secure_connection = 0;
+#endif
    INIT_TRACE("RFIO_TRACE");
 /*
  * Should we use an alternate name ?
@@ -130,9 +131,37 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    else    {
       timeout=atoi(p);
    }
-
-
+#ifdef CSEC
+   if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
    if (port < 0) {
+#ifdef CSEC
+     if (secure_connection) { /* Secure connection should be made to secure port */
+	   /* Try environment variable */
+	   TRACE(2, "srfio", "rfio_connect: getenv(%s)","SRFIO_PORT");
+	   if ((p = getenv("SRFIO_PORT")) != NULL)  {
+		   TRACE(2, "srfio", "rfio_connect: *** Warning: using port %s", p);
+		   sin.sin_port = htons(atoi(p));
+	   } else {
+		   /* Try CASTOR configuration file */
+		   TRACE(2, "srfio", "rfio_connect: getconfent(%s,%s,0)","SRFIO","PORT");
+		   if ((p = getconfent("SRFIO","PORT",0)) != NULL) {
+			   TRACE(2, "srfio", "rfio_connect: *** Warning: using port %s", p);
+			   sin.sin_port = htons(atoi(p));
+		   } else {
+			   /* Try System configuration file */
+			   TRACE(2, "srfio", "rfio_connect: Cgetservbyname(%s, %s)",SRFIO_NAME, SRFIO_PROTO);
+			   if ((sp = Cgetservbyname(SRFIO_NAME,SRFIO_PROTO)) == NULL) {
+				   TRACE(2, "srfio", "rfio_connect: srfio/tcp no such service - using default port number %d", (int) SRFIO_PORT);
+				   sin.sin_port = htons((u_short) SRFIO_PORT);
+			   } else {
+				   sin.sin_port = sp->s_port;
+			   }
+		   }
+	   }
+     } else {
+#endif
+           /* Connection is unsecure */
 	   /* Try environment variable */
 	   TRACE(2, "rfio", "rfio_connect: getenv(%s)","RFIO_PORT");
 	   if ((p = getenv("RFIO_PORT")) != NULL)  {
@@ -155,6 +184,9 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 			   }
 		   }
 	   }
+#ifdef CSEC
+     }
+#endif
    } else {
 	   TRACE(2, "rfio", "rfio_connect: *** Warning: using forced port %d", port);
 	   sin.sin_port = htons(port);
@@ -332,28 +364,30 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 
    TRACE(1, "rfio", "rfio_connect: return socket %d", s);
 #ifdef CSEC
-   /* Performing authentication */
-   {
-     Csec_context_t ctx;
-     int rc;
+   if (secure_connection) {
+     /* Performing authentication */
+     {
+       Csec_context_t ctx;
+       int rc;
      
-     TRACE(1, "rfio", "Going to establish security context !");
-     if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
-       TRACE(2, "rfio", "Could not initiate context: %s", Csec_geterrmsg());
-     }
+       TRACE(1, "srfio", "Going to establish security context !");
+       if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
+	 TRACE(2, "srfio", "Could not initiate context: %s", Csec_geterrmsg());
+       }
      
-     TRACE(1, "rfio", "Service is %s", Csec_client_get_service_name(&ctx));
-     rc = Csec_client_establish_context(&ctx, s);
-     if (rc != 0) {
-       TRACE(2, "rfio", "Could not establish context: %s", Csec_geterrmsg());
-       close(s);
-       END_TRACE();
-       return(-1);
-     }
+       TRACE(1, "srfio", "Service is %s", Csec_client_get_service_name(&ctx));
+       rc = Csec_client_establish_context(&ctx, s);
+       if (rc != 0) {
+	 TRACE(2, "srfio", "Could not establish context: %s", Csec_geterrmsg());
+	 close(s);
+	 END_TRACE();
+	 return(-1);
+       }
      
-     Csec_clear_context(&ctx);
+       Csec_clear_context(&ctx);
 
-     TRACE(1, "rfio", "client establish context returned %s", rc);
+       TRACE(1, "srfio", "client establish context returned %s", rc);
+     }
    }
 #endif
  END_TRACE();
